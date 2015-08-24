@@ -11,7 +11,7 @@ mb = mi;
 Lc = 10; %Connection length
 width = 0.05; %SOL width
 %Define Fields
-B0 = 1;
+B0 = 0.1;
 B = B0*[0 -.141 .99]; %Magnitude multiplied by a normalized vector
 Tu = 25;
 Tt = 1;
@@ -22,10 +22,10 @@ nt = n0/2;
 cst = sqrt(2*Tt*q/mb);
 k0e = 1.8e3; %W/mev^-7/2 heat conductivities for hydrogenic species
 k0i = 60;
-D_perp = .01;
+D_perp = 0.2;
 Z = 1;
-cs = sqrt((2*Tu)*q/mb);
-lam_sol =sqrt(D_perp*Lc/cs); %characteristic SOL length
+cs0 = sqrt((2*Tu)*q/mb);
+
 q0e = shtc_e*nt*cst*Tt*q;
 q0i = shtc_e*nt*cst*Tt*q;
 
@@ -40,11 +40,20 @@ Z_test = 1;
     mu = mb/(mb+m);
     alpha = Z_test^2*0.71;
     beta = -3*(1- mu - 5*sqrt(2)*Z_test^2)*(1.1*mu^(5/2) - 0.35*mu^(3/2))/(2.6 - 2*mu+ 5.4*mu^2);
+file = '~/GitHub/gimp/matlab/ionization_rates/eH.txt';
 
+fileID = fopen(file, 'r');
+
+C = textscan(fileID, '%f32 %f32 %f32 %f32');
+
+C = [C{1}, C{2}];
+
+fclose('all');
+loglog(C(:,1),C(:,2))
 
 %Run specific parameters
 Nt = 1e6;
-dt = 2/wc/1e3;
+dt = 2/wc/1e2;
 
 %Initialize Energy-Angle for particle
 Ka = [1, pi/4,pi/4]; 
@@ -78,11 +87,10 @@ for j=1:Nt
         %Neutral particle mover
         r = r + v*dt;
 
-        % Made up ionization
-        s = rand(1);
-        if rand > 0.9999
-            ion = 1;
-        end
+        % Ionization module
+        ioniz
+
+
         
         
     else %particle mover for ions
@@ -105,10 +113,12 @@ dv = dt/m*(Z_test*q*([E_par E_perp 0] + cross(v,B)) ...
         r = r + v*dt - sqrt(D_perp*dt)*[0 1 0];
 
     end
+
      r_hist(j+1,:) = r;
          if r(2) < 0 
         break
-    end
+         end
+
 end
     
     %Plot position history
@@ -116,7 +126,7 @@ figure(1)
 plot3(r_hist(1:j,1),r_hist(1:j,3),r_hist(1:j,2))
 grid on
 set(gca, 'YDir', 'reverse')
-
+axis equal
 xlabel('x')
 ylabel('z')
 zlabel('y')

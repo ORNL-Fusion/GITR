@@ -1,7 +1,9 @@
 
+cs = cs0*(Lc/(2*r(1)) - sqrt(Lc/(2*r(1)) - 1));
+lam_sol =sqrt(D_perp*Lc/cs); %characteristic SOL length
 
-Tsr_e = (Tu^(7/2) - 7/2*q0e/k0e*r(1))^(2/7)*exp(-r(2)/lam_sol);
-Tsr_i = (Tu^(7/2) - 7/2*q0i/k0i*r(1))^(2/7)*exp(-r(2)/lam_sol);
+Tsr_e = (Tu^(7/2) - 7/2*q0e/k0e*r(1))^(2/7)*exp(-(width -r(2))/lam_sol);
+Tsr_i = (Tu^(7/2) - 7/2*q0i/k0i*r(1))^(2/7)*exp(-(width -r(2))/lam_sol);
 
 grad_Ts_e = q0e/k0e*(1+7/2*q0e/k0e*r(1)/Tsr_e)^(-5/7)*0*q;
 grad_Ts_i = q0i/k0i*(1+7/2*q0i/k0i*r(1)/Tsr_i)^(-5/7)*q;

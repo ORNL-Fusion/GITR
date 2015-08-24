@@ -1,4 +1,4 @@
-ne_rs = n0*r(1)^2/Lc/(Lc/2 - sqrt((Lc/2)^2-r(1)^2))*exp(-r(2)/lam_sol);
+ne_rs = n0*r(1)^2/Lc/(Lc/2 - sqrt((Lc/2)^2-r(1)^2))*exp(-(width - r(2))/lam_sol);
 
 lam_d = sqrt(e0*Tsr_e/(ne_rs*q));
 lam = 4*pi*ne_rs*lam_d^3;
@@ -22,11 +22,13 @@ tau_d = norm(v)^3*(1/(2*gam*ne_rs*(erf(x) - G)) + 1/(2*gam*ne_rs*(erf(x2) - G2))
 tau_e = norm(v)^3*(1/(4*2*gam*ne_rs*G)+ 1/(4*2*gam*ne_rs*G2));
 
 if tau_d < 0
-    stop
+    tau_d = 1e10;
+    
 end
 if tau_e < 0
-    stop
+    tau_e = 1e10;
 end
 if tau_s < 0
-    stop
+    tau_s = 1e10;
+    
 end
