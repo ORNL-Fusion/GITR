@@ -40,7 +40,7 @@ Z_test = 1;
     mu = mb/(mb+m);
     alpha = Z_test^2*0.71;
     beta = -3*(1- mu - 5*sqrt(2)*Z_test^2)*(1.1*mu^(5/2) - 0.35*mu^(3/2))/(2.6 - 2*mu+ 5.4*mu^2);
-file = '~/GitHub/gimp/matlab/ionization_rates/eH.txt';
+file = 'input/ionization_rates/eH.txt';
 
 fileID = fopen(file, 'r');
 
