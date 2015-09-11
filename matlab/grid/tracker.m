@@ -1,56 +1,3 @@
-
-%Define some constants
-e0 = 8.85e-12;
-me = 9.11e-31;
-mi = 1.66e-27;
-q = 1.602e-19;
-
-
-%Background Plasma parameters
-mb = mi;
-Lc = 10; %Connection length
-width = 0.05; %SOL width
-%Define Fields
-B0 = 0.1;
-B = B0*[0 -.141 .99]; %Magnitude multiplied by a normalized vector
-Tu = 25;
-Tt = 1;
-shtc_e = 7;
-shtc_i = 3.5;
-n0 = 1e19;
-nt = n0/2;
-cst = sqrt(2*Tt*q/mb);
-k0e = 1.8e3; %W/mev^-7/2 heat conductivities for hydrogenic species
-k0i = 60;
-D_perp = 0.2;
-Z = 1;
-cs0 = sqrt((2*Tu)*q/mb);
-
-q0e = shtc_e*nt*cst*Tt*q;
-q0i = shtc_e*nt*cst*Tt*q;
-
-
-
-
-%Test particle parameters
-ion = 0; %ionization state 1 = true, 0=false
-m = mi;
-wc = q/m*B0;
-Z_test = 1;
-    mu = mb/(mb+m);
-    alpha = Z_test^2*0.71;
-    beta = -3*(1- mu - 5*sqrt(2)*Z_test^2)*(1.1*mu^(5/2) - 0.35*mu^(3/2))/(2.6 - 2*mu+ 5.4*mu^2);
-file = '~/GitHub/gimp/matlab/ionization_rates/eH.txt';
-
-fileID = fopen(file, 'r');
-
-C = textscan(fileID, '%f32 %f32 %f32 %f32');
-
-C = [C{1}, C{2}];
-
-fclose('all');
-loglog(C(:,1),C(:,2))
-
 %Run specific parameters
 Nt = 1e6;
 dt = 2/wc/1e2;
@@ -80,7 +27,7 @@ r_hist(1,:) = r;
         v(2) = v0*sin(Ka(2))*sin(Ka(3));
         v(3) = v0*cos(Ka(2));
         
-        
+        ion = 0;
           %Main Loop
 for j=1:Nt
     if ion ==0
@@ -88,13 +35,25 @@ for j=1:Nt
         r = r + v*dt;
 
         % Ionization module
-        ioniz
+        %ioniz
+        
+        if (rand > 0.9)
+           ion = 1;
+        end
 
 
         
         
     else %particle mover for ions
         v0 = norm(v);
+r1 = isnan(r(1));
+r2 = isnan(r(2));
+r3 = isnan(r(3));
+if ((r1 >0) | (r2>0) | (r3>0) )
+    r = [-1e-5,-1e-5,-1e-5];
+    break
+end
+
 
 Ero_T
 Ero_E
@@ -116,14 +75,38 @@ dv = dt/m*(Z_test*q*([E_par E_perp 0]+ Eext + cross(v,B)) ...
     end
 
      r_hist(j+1,:) = r;
+%{     
+     figure(1)
+
+plot3(r_hist(1:j,1),r_hist(1:j,3),r_hist(1:j,2))
+grid on
+set(gca, 'YDir', 'reverse')
+axis equal
+xlabel('x')
+ylabel('z')
+zlabel('y')
+pause(0.1)
+%}
+    if ((r(1) >= Npol*Lp) | (r(3)>= Ntor*Lt) )
+    r
+    r = [-1e-5,-1e-5,-2e-5];
+    break
          if r(2) < 0 
         break
          end
 
+         end
+if ((r(1) <0) | (r(2)<0) | (r(3)<0) )
+    break
+end
+
 end
     
     %Plot position history
+   
+
 figure(1)
+
 plot3(r_hist(1:j,1),r_hist(1:j,3),r_hist(1:j,2))
 grid on
 set(gca, 'YDir', 'reverse')

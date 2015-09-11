@@ -11,7 +11,7 @@ mb = mi;
 Lc = 10; %Connection length
 width = 0.05; %SOL width
 %Define Fields
-B0 = 0.1;
+B0 = 1;
 B = B0*[0 -.141 .99]; %Magnitude multiplied by a normalized vector
 Tu = 25;
 Tt = 1;
@@ -34,7 +34,7 @@ q0i = shtc_e*nt*cst*Tt*q;
 
 %Test particle parameters
 ion = 0; %ionization state 1 = true, 0=false
-m = mi;
+m = 10*mi;
 wc = q/m*B0;
 Z_test = 1;
     mu = mb/(mb+m);
@@ -88,7 +88,11 @@ for j=1:Nt
         r = r + v*dt;
 
         % Ionization module
-        ioniz
+        %ioniz
+        
+        if (rand > 0.99)
+           ion = 1;
+        end
 
 
         
