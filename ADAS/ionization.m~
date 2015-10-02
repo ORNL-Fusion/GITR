@@ -1,0 +1,29 @@
+%function z = ionization(z,dt,n,T,State,RateCoeff)
+
+z=1;
+T=15;
+dt=1e-4;
+n=1e15;
+
+Nelem = size(Te(:,z));
+diff = Te(:,z)-T;
+
+for i=1:Nelem
+    if (diff(i) >=0)
+        i;
+        break
+    end
+end
+
+frac = (T-Te(i-1,z))/(Te(i,z)-Te(i-1,z));
+
+Coeff = RateCoeff(i-1,z) + frac*RateCoeff(i,z);
+
+tion = 1/(Coeff*n);
+P1 = exp(-dt/tion);
+
+if rate > 0
+ if rand >= P1
+    ion = 1;
+end   
+end
