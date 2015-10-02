@@ -1,8 +1,11 @@
 %function z = ionization(z,dt,n,T,State,RateCoeff)
+%Syntax for creating multiple random number streams
+rng('shuffle')
+[s1,s2,s3] = RandStream.create('mrg32k3a','NumStreams',3);
 
 z=1;
-T=15;
-dt=1e-4;
+T=750;
+dt=1e-9;
 n=1e15;
 
 Nelem = size(Te(:,z));
@@ -15,15 +18,23 @@ for i=1:Nelem
     end
 end
 
-frac = (T-Te(i-1,z))/(Te(i,z)-Te(i-1,z));
+frac = (T-Te(i-1,z))/(Te(i,z)-Te(i-1,z))
 
-Coeff = RateCoeff(i-1,z) + frac*RateCoeff(i,z);
+Coeff = RateCoeff(i-1,z) + frac*(RateCoeff(i,z) - RateCoeff(i-1,z))
 
-tion = 1/(Coeff*n);
-P1 = exp(-dt/tion);
+Coeff2 = interp1(Te(:,z),RateCoeff(:,z),T)
 
-if rate > 0
- if rand >= P1
-    ion = 1;
-end   
+if ( isnan(Coeff2) ) 
+    error('Ionization interpolation out of range')
 end
+
+tion = 1/(Coeff*n)
+P1 = 1-exp(-dt/tion)
+
+r1=rand(s1)
+ if r1 <= P1
+    z = z+1
+ end   
+
+r1 = rand(s1)
+r1 = rand(s1
