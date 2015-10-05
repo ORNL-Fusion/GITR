@@ -44,12 +44,12 @@ file = 'input/ionization_rates/eH.txt';
 
 fileID = fopen(file, 'r');
 
-C = textscan(fileID, '%f32 %f32 %f32 %f32');
+%C = textscan(fileID, '%f32 %f32 %f32 %f32');
 
-C = [C{1}, C{2}];
+%C = [C{1}, C{2}];
 
-fclose('all');
-loglog(C(:,1),C(:,2))
+%fclose('all');
+%loglog(C(:,1),C(:,2))
 
 %Run specific parameters
 Nt = 1e6;
@@ -99,6 +99,7 @@ for j=1:Nt
 Ero_T
 Ero_E
 Ero_Relax_max
+stop
 E_ext
         %Find parallel and perp velocity directions
         direct
