@@ -1,14 +1,14 @@
 clear variables
-Npol = 8;
-Ntor = 8;
+Npol = 9;%Number of surface cells
+Ntor = 9;
 
-Lt = 0.001;
+Lt = 0.001;%Length of each surface cell
 Lp = 0.001;
 
-Pp = 20;
+Pp = 20;%Number of particles launced per surface cell
 
-N = Npol*Ntor;
-A = Lt*Lp;
+N = Npol*Ntor;%Total number of cells
+A = Lt*Lp;%Area of each cell
 
 Tij = zeros(N,N);
 
