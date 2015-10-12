@@ -11,7 +11,7 @@ mb = mi;
 Lc = 10; %Connection length
 width = 0.05; %SOL width
 %Define Fields
-B0 = 0.1;
+B0 = 1;
 B = B0*[0 -.141 .99]; %Magnitude multiplied by a normalized vector
 Tu = 25;
 Tt = 1;
@@ -34,22 +34,22 @@ q0i = shtc_e*nt*cst*Tt*q;
 
 %Test particle parameters
 ion = 0; %ionization state 1 = true, 0=false
-m = mi;
+m = 10*mi;
 wc = q/m*B0;
 Z_test = 1;
     mu = mb/(mb+m);
     alpha = Z_test^2*0.71;
     beta = -3*(1- mu - 5*sqrt(2)*Z_test^2)*(1.1*mu^(5/2) - 0.35*mu^(3/2))/(2.6 - 2*mu+ 5.4*mu^2);
-file = 'input/ionization_rates/eH.txt';
+file = '~/GitHub/gimp/matlab/ionization_rates/eH.txt';
 
 fileID = fopen(file, 'r');
 
-%C = textscan(fileID, '%f32 %f32 %f32 %f32');
+C = textscan(fileID, '%f32 %f32 %f32 %f32');
 
-%C = [C{1}, C{2}];
+C = [C{1}, C{2}];
 
-%fclose('all');
-%loglog(C(:,1),C(:,2))
+fclose('all');
+loglog(C(:,1),C(:,2))
 
 %Run specific parameters
 Nt = 1e6;
@@ -88,7 +88,11 @@ for j=1:Nt
         r = r + v*dt;
 
         % Ionization module
-        ioniz
+        %ioniz
+        
+        if (rand > 0.99)
+           ion = 1;
+        end
 
 
         
@@ -99,7 +103,6 @@ for j=1:Nt
 Ero_T
 Ero_E
 Ero_Relax_max
-stop
 E_ext
         %Find parallel and perp velocity directions
         direct

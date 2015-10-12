@@ -8,4 +8,4 @@ else
     E_sh = 0;
 end
 
-Eext = [0 E_sh 0];
+Eext = [0 -E_sh 0];
