@@ -1,34 +1,5 @@
-%Run specific parameters
-Nt = 1e6;
-dt = 2/wc/1e2;
-
-%Initialize Energy-Angle for particle
-%Ka = [1, pi/4,pi/4]; 
-% Energy (eV), azimuthal angle (phi - 0 to pi), polar angle(theta - 0 to pi)
-
-
-%Set initial position
-%r = [0,0,0]; %(x,y,z), y=0 indicates the particle is on the surface
-
-
-
-
-
-
-
         
-%History 
-r_hist = zeros(Nt+1,3);
-r_hist(1,:) = r;
-        v0 = sqrt(Ka(1)*2*q/m);
-        v = zeros(1,3);
-        v_minus = zeros(1,3);
-        v(1) = v0*sin(Ka(2))*cos(Ka(3));
-        v(2) = v0*sin(Ka(2))*sin(Ka(3));
-        v(3) = v0*cos(Ka(2));
-        
-        ion = 0;
-          %Main Loop
+
 for j=1:Nt
     if ion ==0
         %Neutral particle mover

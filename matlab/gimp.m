@@ -51,6 +51,8 @@ Bx(:) = 0.0;
 By(:) = 1.0;
 Bz(:) = 0.14;
 
+BMag = sqrt( Bx.^2 + By.^2 + Bz.^2 );
+
 % Setup profiles
 
 Z = [-1 1]
@@ -140,23 +142,30 @@ for p=1:nP
    
 end
 
-N = Npol*Ntor;%Total number of cells
-A = Lt*Lp;%Area of each cell
-
-Pp = 20;%Number of particles launced per surface cell
-
-Tij = zeros(N,N);
+% N = Npol*Ntor;%Total number of cells
+% A = Lt*Lp;%Area of each cell
+% 
+% Pp = 20;%Number of particles launced per surface cell
+% 
+% Tij = zeros(N,N);
 
 %tracker_param
 
-for k2 = 1:Pp
-    
-    thomp
-    
-    p = (i2-1+rand)*Lp;
-    t = (j2-1+rand)*Lt;
-    r = [p,1e-6,t];
-    Ka;
+max_nT = 1e6;
+
+max_q = 3;
+max_B = max( BMag );
+min_m = 184 * mi;
+max_wc = max_q * max_B / min_m;
+
+nPtsPerGyroOrbit = 40;
+dt = 2*pi/max_wc / nPtsPerGyroOrbit;
+
+xHistory = zeros(max_nT, nP);
+yHistory = zeros(max_nT, nP);
+zHistory = zeros(max_nT, nP);
+
+for p = 1:nP
     
     tracker
     
