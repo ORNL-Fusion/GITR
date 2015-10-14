@@ -151,34 +151,27 @@ end
 
 %tracker_param
 
-max_nT = 1e6;
+nT = 1e2;
 
-max_q = 3;
-max_B = max( BMag );
+max_Z = 3;
+max_B = max( BMag(:) );
 min_m = 184 * mi;
-max_wc = max_q * max_B / min_m;
+max_wc = max_Z*q * max_B / min_m;
 
 nPtsPerGyroOrbit = 40;
 dt = 2*pi/max_wc / nPtsPerGyroOrbit;
 
-xHistory = zeros(max_nT, nP);
-yHistory = zeros(max_nT, nP);
-zHistory = zeros(max_nT, nP);
+xHistory = zeros(nT, nP);
+yHistory = zeros(nT, nP);
+zHistory = zeros(nT, nP);
 
 for p = 1:nP
-    
-    tracker
-    
-    r;
-    if ((r(1) > 0) && (r(3)>0))
-        pind = fix(r(1)/Lp) + 1;
-        tind = fix(r(3)/Lt) + 1;
+    p
+    for t=1:nT
         
-        Tij((i2-1)*Npol +j2, (pind-1)*Npol +tind) = Tij((i2-1)*Npol +j2, (pind-1)*Npol +tind)+1;
-        
+        status = particles(p).move(dt);
+    
     end
-    
-    
 end
 
 colormap('winter')
