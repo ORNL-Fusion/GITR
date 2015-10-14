@@ -51,6 +51,10 @@ Bx(:) = 0.0;
 By(:) = 1.0;
 Bz(:) = 0.14;
 
+Bfield.x = Bx;
+Bfield.y = By;
+Bfield.z = Bz;
+
 BMag = sqrt( Bx.^2 + By.^2 + Bz.^2 );
 
 % Setup profiles
@@ -67,6 +71,13 @@ Ex = zeros(nXv,nYv,nZv);
 Ey = zeros(nXv,nYv,nZv);
 Ez = zeros(nXv,nYv,nZv);
 
+Efield.x = Ex;
+Efield.y = Ey;
+Efield.z = Ez;
+
+xyz.x = xV;
+xyz.y = yV;
+xyz.z = zV;
 
 maxDensity = 1e19;
 densitySOLDecayLength = 0.01;
@@ -129,7 +140,7 @@ maxEnergy_eV = 100;
 for p=1:nP
    particles(p) = particle;
    
-   particles(p).Z = 0;
+   particles(p).Z = 1;
    particles(p).amu = 184;
    
    particles(p).x = 0;
@@ -158,7 +169,7 @@ max_B = max( BMag(:) );
 min_m = 184 * mi;
 max_wc = max_Z*q * max_B / min_m;
 
-nPtsPerGyroOrbit = 40;
+nPtsPerGyroOrbit = 4;
 dt = 2*pi/max_wc / nPtsPerGyroOrbit;
 
 xHistory = zeros(nT, nP);
@@ -167,11 +178,12 @@ zHistory = zeros(nT, nP);
 
 for p = 1:nP
     p
-    for t=1:nT
-        
-        status = particles(p).move(dt);
     
-    end
+    status = particles(p).move(nT*dt,dt,Efield,Bfield,xyz);
+    xHistory(t,p) = particles(p).x;
+    yHistory(t,p) = particles(p).y;
+    zHistory(t,p) = particles(p).z;
+    
 end
 
 colormap('winter')
