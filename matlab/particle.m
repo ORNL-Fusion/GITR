@@ -9,6 +9,7 @@ classdef particle
         vz
         Z
         amu
+        hitWall
     end
     
     methods
@@ -22,7 +23,15 @@ classdef particle
             
             options = odeset('InitialStep',dt,'MaxStep',dt);
                         
-            [T Y] = ode45(@(t,y) myode(t,y,p,E,B,xyz),tSpan,IC,options);
+            [T Y] = ode45(@(t,y) myode(t,y,p,E,B,xyz),tSpan,IC);%,options);
+            
+            p.x = Y(end,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
+            p.y = Y(end,2);
+            p.z = Y(end,3);
+            
+            p.vx = Y(end,4);
+            p.vy = Y(end,5);
+            p.vz = Y(end,6);
       
         end
     end 

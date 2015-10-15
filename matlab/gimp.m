@@ -127,7 +127,7 @@ title('Ex [V/m]')
 
 % Populate the particle list
 
-nP = 10000;
+nP = 100;
 yTileMin = -0.005;
 yTileMax = +0.005;
 zTileMin = -0.005;
@@ -143,14 +143,18 @@ for p=1:nP
    particles(p).Z = 1;
    particles(p).amu = 184;
    
-   particles(p).x = 0;
+   particles(p).x = 0.0;
    particles(p).y = (rand * (yTileMax-yTileMin) ) * yTileMin;
    particles(p).z = (rand * (zTileMax-zTileMin) ) * zTileMin;
    
    particles(p).vx = sign(energy_x(p)) * sqrt(2*abs(energy_x(p)*Q)/(particles(p).amu*MI));
    particles(p).vy = sign(energy_y(p)) * sqrt(2*abs(energy_y(p)*Q)/(particles(p).amu*MI));
    particles(p).vz = sign(energy_z(p)) * sqrt(2*abs(energy_z(p)*Q)/(particles(p).amu*MI));
-   
+  
+   if particles(p).vx > 0
+       'Initial particle given vx > 0 ... BAD ... flipping, but need to really fix'
+       particles(p).vx = -particles(p).vx;
+   end
 end
 
 % N = Npol*Ntor;%Total number of cells
@@ -162,7 +166,7 @@ end
 
 %tracker_param
 
-nT = 1e2;
+nT = 1e3;
 
 max_Z = 3;
 max_B = max( BMag(:) );
@@ -172,12 +176,21 @@ max_wc = max_Z*Q * max_B / min_m;
 nPtsPerGyroOrbit = 4;
 dt = 2*pi/max_wc / nPtsPerGyroOrbit;
 
-parfor p = 1:nP
+for p = 1:nP
     p
     [t,y] = particles(p).move(nT*dt,dt,Efield,Bfield,xyz);
     
     %plot3(y(:,1),y(:,2),y(:,3))
     
+end
+
+% find particles that returned to the wall
+
+particlesWall = [];
+for p = 1:nP
+    if particles(p).x > -dXv/10
+        particlesWall = [particlesWall particles(p)];
+    end
 end
 
 colormap('winter')
