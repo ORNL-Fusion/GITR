@@ -172,11 +172,11 @@ max_wc = max_Z*Q * max_B / min_m;
 nPtsPerGyroOrbit = 4;
 dt = 2*pi/max_wc / nPtsPerGyroOrbit;
 
-for p = 1:nP
-    
+parfor p = 1:nP
+    p
     [t,y] = particles(p).move(nT*dt,dt,Efield,Bfield,xyz);
     
-    plot3(y(:,1),y(:,2),y(:,3))
+    %plot3(y(:,1),y(:,2),y(:,3))
     
 end
 
