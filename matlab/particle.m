@@ -9,34 +9,34 @@ classdef particle < handle
         vz
         Z
         amu
+        hitWall
     end
     
     methods
-        function move(part,xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,dt)
 
-            BxPart = interpn(xV,yV,zV,Bx,part.x,part.y,part.z)
-            ByPart = interpn(xV,yV,zV,By,part.x,part.y,part.z)
-            BzPart = interpn(xV,yV,zV,Bz,part.x,part.y,part.z)
-         f = @(t,y) [[part.vx part.vy part.vz]'; part.Z/part.amu*cross([part.vx part.vy part.vz],[BxPart ByPart BzPart])'];
-         [t,y] = ode45(f,[0 dt], [part.x; part.y; part.z; part.vx; part.vy; part.vz]);
-t
-size(t)
-disp('y')
-y(:,1:3)
-size(y)
-
-part.x = y(end,1)
-part.y = y(end,2)
-part.z = y(end,3)
-part.vx = y(end,4);
-part.vy = y(end,5);
-part.vz = y(end,6)
-
-plot3(y(:,1),y(:,2),y(:,3))
-stop
+        function [T Y] = move (p, end_t, dt, E, B, xyz)
+            
+            
+            status = 0;
+            
+            IC = [p.x p.y p.z p.vx p.vy p.vz]';
+            tSpan = [0,end_t];
+            
+            options = odeset('InitialStep',dt,'MaxStep',dt);
+                        
+            [T Y] = ode45(@(t,y) myode(t,y,p,E,B,xyz),tSpan,IC);%,options);
+            
+            p.x = Y(end,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
+            p.y = Y(end,2);
+            p.z = Y(end,3);
+            
+            p.vx = Y(end,4);
+            p.vy = Y(end,5);
+            p.vz = Y(end,6);
+      
         end
-        
-                
+    end 
+
 
         function boris(part,xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,dt)
             q = 1.602e-19;
@@ -82,5 +82,6 @@ stop
         
     end
     
+
 end
 

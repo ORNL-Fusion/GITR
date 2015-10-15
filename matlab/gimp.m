@@ -51,12 +51,16 @@ Bx(:) = 0.0;
 By(:) = 1.0;
 Bz(:) = 0.14;
 
+Bfield.x = Bx;
+Bfield.y = By;
+Bfield.z = Bz;
+
 BMag = sqrt( Bx.^2 + By.^2 + Bz.^2 );
 
 % Setup profiles
 
 Z = [-1 1]
-amu = [me/mi 1];
+amu = [ME/MI 1];
 
 [n_ nS] = size(amu);
 
@@ -67,6 +71,13 @@ Ex = zeros(nXv,nYv,nZv);
 Ey = zeros(nXv,nYv,nZv);
 Ez = zeros(nXv,nYv,nZv);
 
+Efield.x = Ex;
+Efield.y = Ey;
+Efield.z = Ez;
+
+xyz.x = xV;
+xyz.y = yV;
+xyz.z = zV;
 
 maxDensity = 1e19;
 densitySOLDecayLength = 0.01;
@@ -116,7 +127,7 @@ title('Ex [V/m]')
 
 % Populate the particle list
 
-nP = 10000;
+nP = 100;
 yTileMin = -0.005;
 yTileMax = +0.005;
 zTileMin = -0.005;
@@ -132,14 +143,18 @@ for p=1:nP
    particles(p).Z = 1;
    particles(p).amu = 184;
    
-   particles(p).x = 0;
+   particles(p).x = 0.0;
    particles(p).y = (rand * (yTileMax-yTileMin) ) * yTileMin;
    particles(p).z = (rand * (zTileMax-zTileMin) ) * zTileMin;
    
-   particles(p).vx = sign(energy_x(p)) * sqrt(2*abs(energy_x(p)*q)/(particles(p).amu*mi));
-   particles(p).vy = sign(energy_y(p)) * sqrt(2*abs(energy_y(p)*q)/(particles(p).amu*mi));
-   particles(p).vz = sign(energy_z(p)) * sqrt(2*abs(energy_z(p)*q)/(particles(p).amu*mi));
-   
+   particles(p).vx = sign(energy_x(p)) * sqrt(2*abs(energy_x(p)*Q)/(particles(p).amu*MI));
+   particles(p).vy = sign(energy_y(p)) * sqrt(2*abs(energy_y(p)*Q)/(particles(p).amu*MI));
+   particles(p).vz = sign(energy_z(p)) * sqrt(2*abs(energy_z(p)*Q)/(particles(p).amu*MI));
+  
+   if particles(p).vx > 0
+       'Initial particle given vx > 0 ... BAD ... flipping, but need to really fix'
+       particles(p).vx = -particles(p).vx;
+   end
 end
 
 % N = Npol*Ntor;%Total number of cells
@@ -151,46 +166,50 @@ end
 
 %tracker_param
 
-max_nT = 1e2;
 
-max_q = 3*q;
-max_B = max(max(max( BMag )));
-min_m = 184 * mi;
-max_wc = max_q * max_B / min_m;
+nT = 1e3;
 
-nPtsPerGyroOrbit = 40;
-factor = 1;
-dt = 2*pi/max_wc / nPtsPerGyroOrbit*factor;
+max_Z = 3;
+max_B = max( BMag(:) );
+min_m = 184 * MI;
+max_wc = max_Z*Q * max_B / min_m;
+
+nPtsPerGyroOrbit = 4;
+dt = 2*pi/max_wc / nPtsPerGyroOrbit;
+
 
 xHistory = zeros(max_nT, nP);
 yHistory = zeros(max_nT, nP);
 zHistory = zeros(max_nT, nP);
 
-particles(1)
+
 for i=1: 200
-    i
-particles(1).boris(xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,dt);
-xHistory(1,i) = particles(1).x;
-yHistory(1,i) = particles(1).y;
-zHistory(1,i) = particles(1).z;
-particles(1)
+
+	particles(1).boris(xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,dt);
+	xHistory(1,i) = particles(1).x;
+	yHistory(1,i) = particles(1).y;
+	zHistory(1,i) = particles(1).z;
+
 end
+
 plot3(xHistory(1,1:200),yHistory(1,1:200),zHistory(1,1:200))
 
+
 for p = 1:nP
+    p
+    [t,y] = particles(p).move(nT*dt,dt,Efield,Bfield,xyz);
     
-    tracker
+    %plot3(y(:,1),y(:,2),y(:,3))
     
-    r;
-    if ((r(1) > 0) && (r(3)>0))
-        pind = fix(r(1)/Lp) + 1;
-        tind = fix(r(3)/Lt) + 1;
-        
-        Tij((i2-1)*Npol +j2, (pind-1)*Npol +tind) = Tij((i2-1)*Npol +j2, (pind-1)*Npol +tind)+1;
-        
+end
+
+% find particles that returned to the wall
+
+particlesWall = [];
+for p = 1:nP
+    if particles(p).x > -dXv/10
+        particlesWall = [particlesWall particles(p)];
     end
-    
-    
 end
 
 colormap('winter')

@@ -1,5 +1,7 @@
-%Define some constants
-e0 = 8.85e-12;
-me = 9.11e-31;
-mi = 1.66e-27;
-q = 1.602e-19;
+
+% Physical constants [SI Units]
+
+ME = 9.10938356e-31;
+MI = 1.6737236e-27;
+Q = 1.60217662e-19;
+
