@@ -60,7 +60,7 @@ BMag = sqrt( Bx.^2 + By.^2 + Bz.^2 );
 % Setup profiles
 
 Z = [-1 1]
-amu = [me/mi 1];
+amu = [ME/MI 1];
 
 [n_ nS] = size(amu);
 
@@ -147,9 +147,9 @@ for p=1:nP
    particles(p).y = (rand * (yTileMax-yTileMin) ) * yTileMin;
    particles(p).z = (rand * (zTileMax-zTileMin) ) * zTileMin;
    
-   particles(p).vx = sign(energy_x(p)) * sqrt(2*abs(energy_x(p)*q)/(particles(p).amu*mi));
-   particles(p).vy = sign(energy_y(p)) * sqrt(2*abs(energy_y(p)*q)/(particles(p).amu*mi));
-   particles(p).vz = sign(energy_z(p)) * sqrt(2*abs(energy_z(p)*q)/(particles(p).amu*mi));
+   particles(p).vx = sign(energy_x(p)) * sqrt(2*abs(energy_x(p)*Q)/(particles(p).amu*MI));
+   particles(p).vy = sign(energy_y(p)) * sqrt(2*abs(energy_y(p)*Q)/(particles(p).amu*MI));
+   particles(p).vz = sign(energy_z(p)) * sqrt(2*abs(energy_z(p)*Q)/(particles(p).amu*MI));
    
 end
 
@@ -166,23 +166,17 @@ nT = 1e2;
 
 max_Z = 3;
 max_B = max( BMag(:) );
-min_m = 184 * mi;
-max_wc = max_Z*q * max_B / min_m;
+min_m = 184 * MI;
+max_wc = max_Z*Q * max_B / min_m;
 
 nPtsPerGyroOrbit = 4;
 dt = 2*pi/max_wc / nPtsPerGyroOrbit;
 
-xHistory = zeros(nT, nP);
-yHistory = zeros(nT, nP);
-zHistory = zeros(nT, nP);
-
 for p = 1:nP
-    p
     
-    status = particles(p).move(nT*dt,dt,Efield,Bfield,xyz);
-    xHistory(t,p) = particles(p).x;
-    yHistory(t,p) = particles(p).y;
-    zHistory(t,p) = particles(p).z;
+    [t,y] = particles(p).move(nT*dt,dt,Efield,Bfield,xyz);
+    
+    plot3(y(:,1),y(:,2),y(:,3))
     
 end
 
