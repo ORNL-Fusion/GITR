@@ -54,6 +54,10 @@ for j=1:Nt
     else %particle mover for ions
         %update fields
         E = [0 -1e3 1/Lc*1e3];
+        
+%                 %Constants used in Boris method Lorentz Integrator
+%         q_prime = q/m*dt/2;
+%         coeff = 2*q_prime/(1+(q_prime*B0)^2);
 
         %Boris Method Lorentz Integrator
         v_minus = v + q_prime*E;
@@ -66,7 +70,7 @@ for j=1:Nt
      
         r = r + v*dt;
 
-
+stop
     end
     
     r_hist(j+1,:) = r;

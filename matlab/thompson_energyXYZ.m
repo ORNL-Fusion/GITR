@@ -18,11 +18,11 @@ fa = cos(alph);
 Fa = cumsum(abs(fa));
 Fa = Fa/Fa(end);
 
-theta = interp1(Fa,alph,rand(s2,1,nP));
-phi = interp1(Fa,alph,rand(s3,1,nP));
+theta = interp1(Fa,alph,rand(s2,1,nP)) + pi; %theta ranges from pi/2 to 3pi/2 with negative x coordinate towards surface
+phi = interp1(Fa,alph,rand(s3,1,nP)) + pi/2; %phi ranges from 0 to pi
 
-energy_x = energy .* sin(theta) .* cos(phi);
-energy_y = energy .* sin(theta) .* sin(phi);
-energy_z = energy .* cos(theta);
+energy_x = energy .* sin(phi) .* cos(theta);
+energy_y = energy .* sin(phi) .* sin(theta);
+energy_z = energy .* cos(phi);
 
 end

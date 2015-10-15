@@ -129,7 +129,7 @@ maxEnergy_eV = 100;
 for p=1:nP
    particles(p) = particle;
    
-   particles(p).Z = 0;
+   particles(p).Z = 1;
    particles(p).amu = 184;
    
    particles(p).x = 0;
@@ -151,19 +151,31 @@ end
 
 %tracker_param
 
-max_nT = 1e6;
+max_nT = 1e2;
 
-max_q = 3;
-max_B = max( BMag );
+max_q = 3*q;
+max_B = max(max(max( BMag )));
 min_m = 184 * mi;
 max_wc = max_q * max_B / min_m;
 
 nPtsPerGyroOrbit = 40;
-dt = 2*pi/max_wc / nPtsPerGyroOrbit;
+factor = 1;
+dt = 2*pi/max_wc / nPtsPerGyroOrbit*factor;
 
 xHistory = zeros(max_nT, nP);
 yHistory = zeros(max_nT, nP);
 zHistory = zeros(max_nT, nP);
+
+particles(1)
+for i=1: 200
+    i
+particles(1).boris(xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,dt);
+xHistory(1,i) = particles(1).x;
+yHistory(1,i) = particles(1).y;
+zHistory(1,i) = particles(1).z;
+particles(1)
+end
+plot3(xHistory(1,1:200),yHistory(1,1:200),zHistory(1,1:200))
 
 for p = 1:nP
     
