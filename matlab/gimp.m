@@ -98,11 +98,11 @@ for i=1:nXv
             temp_eV(i,j,k,:) = maxTemp_eV * exp( (xMinV-xV(i)) / tempSOLDecayLength );
             
             if i>1 && i<nXv
-                Ex(i,j,k) = (V(i+1)-V(i-1)) / (2*dXv);
+                Ex(i,j,k) = -(V(i+1)-V(i-1)) / (2*dXv);
             elseif i==1
-                Ex(i,j,k) = (-1*V(i)+V(i+1)) / dXv;
+                Ex(i,j,k) = -(-1*V(i)+V(i+1)) / dXv;
             elseif i==nXv
-                Ex(i,j,k) = (-V(i-1)+V(i)) / dXv;
+                Ex(i,j,k) = -(-V(i-1)+V(i)) / dXv;
             end
             Ey(i,j,k) = 0;
             Ez(i,j,k) = 0;
@@ -110,7 +110,7 @@ for i=1:nXv
         end
     end
 end
-
+figure(1)
 subplot(2,2,1)
 semilogy(xV,density(:,1,1,1))
 title('Electron density')
@@ -168,6 +168,7 @@ end
 
 
 nT = 1e3;
+max_nT = nT;
 
 max_Z = 3;
 max_B = max( BMag(:) );
@@ -177,24 +178,63 @@ max_wc = max_Z*Q * max_B / min_m;
 nPtsPerGyroOrbit = 4;
 dt = 2*pi/max_wc / nPtsPerGyroOrbit;
 
-
+%%%%%%%%%%%%%%%Comparison of Integrators
 xHistory = zeros(max_nT, nP);
 yHistory = zeros(max_nT, nP);
 zHistory = zeros(max_nT, nP);
+  %%%%%Set particle parameters for test case
+  %%%%% Boris=1, matlabRK4 = 2, Rk4 = 3
+for p=1:3
+   particles(p).x = -0.05;
+   particles(p).y = 0;
+   particles(p).z = 0;
 
-
-for i=1: 200
+   
+   particles(p).vx = 0;
+   particles(p).vy = 1e3;
+   particles(p).vz = 1e3;
+end
+   %%%%%%Boris integrator
+   boris0 = cputime;
+for i=1: 100
 
 	particles(1).boris(xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,dt);
-	xHistory(1,i) = particles(1).x;
-	yHistory(1,i) = particles(1).y;
-	zHistory(1,i) = particles(1).z;
+	xHistory(i,1) = particles(1).x;
+	yHistory(i,1) = particles(1).y;
+	zHistory(i,1) = particles(1).z;
 
 end
+boris1 = cputime-boris0
+figure (2)
+plot3(xHistory(1:100,1),yHistory(1:100,1),zHistory(1:100,1))
+xlabel('x axis')
+ylabel('y axis')
+zlabel('z axis')
+title('Boris Method')
 
-plot3(xHistory(1,1:200),yHistory(1,1:200),zHistory(1,1:200))
 
-
+%%%%-------------Matlab rk4 integrator
+mtlbrk40 = cputime;
+[t,y] = particles(2).move(100*dt,dt,Efield,Bfield,xyz);
+mtlbrk41 = cputime - mtlbrk40
+figure(3)
+plot3(y(:,1),y(:,2),y(:,3))
+xlabel('x axis')
+ylabel('y axis')
+zlabel('z axis')
+title('Matlab RK4')
+%%%%------------- rk4 integrator
+rk40 = cputime;
+[T Yr] = particles(3).rk4(xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,100*dt,dt,100);
+rk41 = cputime-rk40
+figure(4)
+plot3(Yr(:,1),Yr(:,2),Yr(:,3))
+xlabel('x axis')
+ylabel('y axis')
+zlabel('z axis')
+title('RK4')
+%%%%%---------------------------
+stop
 for p = 1:nP
     p
     [t,y] = particles(p).move(nT*dt,dt,Efield,Bfield,xyz);
