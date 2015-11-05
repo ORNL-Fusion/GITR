@@ -1,9 +1,11 @@
-clear variables
-%User defined variables
-file = 'ca09_w.dat';
+
+file = 'ADAS/ca09_w.dat';
 
 
 fileID = fopen(file,'r');
+if fileID == -1
+    print('Could not find ionization file')
+end
 tline = fgetl(fileID);
 NSEL = strread(tline, '%f %*s %*s %*s %*s %*s');
 

@@ -1,41 +1,34 @@
-%function z = ionization(z,dt,n,T,RecombState,RecombRateCoeff)
+function recombination(p,Bfield,Efield,xyz,dt,temp_eV,density,RecombRateCoeff,NTe,NNe)
 
 z=1;
 T=15;
 dt=1e-4;
 n=1e11;
 
-logn = log10(n);
-logT = log10(T);
-
-NTe = size(DTEVD);
-NNe = size(DDENSD);
-Tediff = DTEVD-logT;
-Nediff = DDENSD-logn;
-
-
-for i=1:NTe
-    if (Tediff(i) >=0)
-        i;
-        break
-    end
-end
-
-for j=1:NNe
-    if (Nediff(j) >=0
-        j;
-        break
-    end
-end
+            amu_mass = 1.66e-27;
+            q = 1.602e-19;
+            %T = 0.5*p.amu*amu_mass*(p.vx^2 +p.vy^2+ p.vz^2)/q;
+            
+            minT = min(DTEVD)
+            minN = min(DDENSD)
+            T=interpn(xyz.x,xyz.y,xyz.z,temp_eV(:,:,:,1),p.x,p.y,p.z)
+            n=interpn(xyz.x,xyz.y,xyz.z,density(:,:,:,1),p.x,p.y,p.z)
+            T = log10(T)
+            n = log10(n)
+           if (T > minT) && (n > minN)
+            
 
 
-lin1 = [RecombCoeff(i-1,j-1,z),]
-Coeff = ;
+
+
+
+Coeff = interp1(DTEVD,DDENSD,RecombRateCoeff(:,p.Z),T,n);
 
 tion = 1/(Coeff*n)
 P1 = exp(-dt/tion)
 
 
  if rand >= P1
-    z = z+1
-end   
+    p.Z = p.Z-1
+ end   
+           end

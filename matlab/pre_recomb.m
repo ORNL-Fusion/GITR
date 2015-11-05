@@ -1,13 +1,17 @@
-file_re = 'acd50_w.dat';
+
+file_re = 'ADAS/acd50_w.dat';
 
 
 fileID = fopen(file_re,'r');
-tline = fgetl(fileID)
+if fileID == -1
+    print('Could not find recombination file')
+end
+tline = fgetl(fileID);
 C = strsplit(tline, '/');
 [IZMAX, IDMAXD, ITMAXD, IZ1MIN, IZ1MAX] = strread(C{1}, '%f %f %f %f %f');
-tline = fgetl(fileID)
-DDENSD = fscanf(fileID, '%f',IDMAXD)
-DTEVD = fscanf(fileID, '%f',ITMAXD)
+tline = fgetl(fileID);
+DDENSD = fscanf(fileID, '%f',IDMAXD);
+DTEVD = fscanf(fileID, '%f',ITMAXD);
 tline = fgetl(fileID);
 
 RecombRateCoeff = zeros(ITMAXD,IDMAXD,ISEL);

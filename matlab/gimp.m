@@ -3,7 +3,9 @@ clear variables
 % SI Units throughout
 
 constants
-
+set_rand
+pre_ioniz
+pre_recomb
 % Surface grid
 
 nY = 9;%Number of surface cells
@@ -80,13 +82,13 @@ xyz.y = yV;
 xyz.z = zV;
 
 maxDensity = 1e19;
-densitySOLDecayLength = 0.01;
+densitySOLDecayLength = 0.1;
 
 maxTemp_eV = 20;
-tempSOLDecayLength = 0.02;
+tempSOLDecayLength = 0.1;
 
 sheathPotential = -60;
-sheathWidth = 0.005;
+sheathWidth = 0.00005;
 
 V = sheathPotential * exp( xV / sheathWidth );
 
@@ -144,8 +146,8 @@ for p=1:nP
    particles(p).amu = 184;
    
    particles(p).x = 0.0;
-   particles(p).y = (rand * (yTileMax-yTileMin) ) * yTileMin;
-   particles(p).z = (rand * (zTileMax-zTileMin) ) * zTileMin;
+   particles(p).y = (rand(s1) * (yTileMax-yTileMin) ) * yTileMin;
+   particles(p).z = (rand(s2) * (zTileMax-zTileMin) ) * zTileMin;
    
    particles(p).vx = sign(energy_x(p)) * sqrt(2*abs(energy_x(p)*Q)/(particles(p).amu*MI));
    particles(p).vy = sign(energy_y(p)) * sqrt(2*abs(energy_y(p)*Q)/(particles(p).amu*MI));
@@ -157,14 +159,7 @@ for p=1:nP
    end
 end
 
-% N = Npol*Ntor;%Total number of cells
-% A = Lt*Lp;%Area of each cell
-% 
-% Pp = 20;%Number of particles launced per surface cell
-% 
-% Tij = zeros(N,N);
 
-%tracker_param
 
 
 nT = 1e3;
@@ -178,6 +173,10 @@ max_wc = max_Z*Q * max_B / min_m;
 nPtsPerGyroOrbit = 4;
 dt = 2*pi/max_wc / nPtsPerGyroOrbit;
 
+
+%particles(1).ionization(Bfield,Efield,xyz,dt,temp_eV,density,RateCoeff,Te,s3);
+%particles(1).recombination(Bfield,Efield,xyz,dt,temp_eV,density,RecombRateCoeff,DTEVD,DDENSD,s4)
+%stop
 %%%%%%%%%%%%%%%Comparison of Integrators
 xHistory = zeros(max_nT, nP);
 yHistory = zeros(max_nT, nP);
@@ -185,28 +184,39 @@ zHistory = zeros(max_nT, nP);
   %%%%%Set particle parameters for test case
   %%%%% Boris=1, matlabRK4 = 2, Rk4 = 3
 for p=1:3
-   particles(p).x = -0.05;
+   particles(p).x = -0.08;
    particles(p).y = 0;
    particles(p).z = 0;
 
+
    
    particles(p).vx = 0;
-   particles(p).vy = 1e3;
-   particles(p).vz = 1e3;
+   particles(p).vy = 1e4;
+   particles(p).vz = 1e4;
 end
-   %%%%%%Boris integrator
-   boris0 = cputime;
-for i=1: 100
 
-	particles(1).boris(xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,dt);
+%%%%%%Testing of slowing down times
+particles(1).slow(xyz,Bx,By,Bz,BMag,Ex,Ey,Ez,temp_eV,density,dt,nS,amu,Z,s5,s6,s7)
+stop
+%%%%%%%%%%%%%%
+
+   %%%%%%Boris integrator
+   t_boris = zeros(1,500);
+   E_last = [0 0 0];
+   B_last = [0 0 0];
+   boris0 = cputime;
+  
+for i=1: 300
+
+	[E_last B_last] = particles(1).boris(xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,dt/3,E_last,B_last);
 	xHistory(i,1) = particles(1).x;
 	yHistory(i,1) = particles(1).y;
 	zHistory(i,1) = particles(1).z;
-
+    t_boris(i) = i*dt/3;
 end
 boris1 = cputime-boris0
 figure (2)
-plot3(xHistory(1:100,1),yHistory(1:100,1),zHistory(1:100,1))
+plot3(xHistory(1:300,1),yHistory(1:300,1),zHistory(1:300,1))
 xlabel('x axis')
 ylabel('y axis')
 zlabel('z axis')
@@ -223,18 +233,7 @@ xlabel('x axis')
 ylabel('y axis')
 zlabel('z axis')
 title('Matlab RK4')
-%%%%------------- rk4 integrator
-rk40 = cputime;
-[T Yr] = particles(3).rk4(xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,100*dt,dt,100);
-rk41 = cputime-rk40
-figure(4)
-plot3(Yr(:,1),Yr(:,2),Yr(:,3))
-xlabel('x axis')
-ylabel('y axis')
-zlabel('z axis')
-title('RK4')
-%%%%%---------------------------
-stop
+
 for p = 1:nP
     p
     [t,y] = particles(p).move(nT*dt,dt,Efield,Bfield,xyz);
