@@ -38,31 +38,15 @@ classdef particle < handle
 
 
 
-        function [E_last B_last] = boris(part,xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,dt,E_last,B_last)
-            q = 1.602e-19;
-            amu_mass = 1.66e-27;
-            B(1) = interpn(xV,yV,zV,Bx,part.x,part.y,part.z);
-            B(2) = interpn(xV,yV,zV,By,part.x,part.y,part.z);
-            B(3) = interpn(xV,yV,zV,Bz,part.x,part.y,part.z);
+        function  boris(part,B_local,E_local,dt)
+            constants
             
-            
-            E(1) = interpn(xV,yV,zV,Ex,part.x,part.y,part.z);
-            E(2) = interpn(xV,yV,zV,Ey,part.x,part.y,part.z);
-            E(3) = interpn(xV,yV,zV,Ez,part.x,part.y,part.z);
-
-            
-            
-            if any([isnan(E) isnan(B)]) == 1
-                E = E_last;
-                B = B_last;
-            else
-                E_last = E;
-                B_last = B;
-            end
-            
+            B = B_local;
+            E = E_local;
             BMagPart =norm(B);
-            %                 %Constants used in Boris method Lorentz Integrator
-            q_prime = part.Z*q/(part.amu*amu_mass)*dt/2;
+            
+            %%Constants used in Boris method Lorentz Integrator
+            q_prime = part.Z*Q/(part.amu*MI)*dt/2;
             coeff = 2*q_prime/(1+(q_prime*BMagPart).^2);
             
             %Boris Method Lorentz Integrator
@@ -88,10 +72,10 @@ classdef particle < handle
         end
         
         function [T Yr] = rk4(part,xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,end_t,dt,steps)
-            q = 1.602e-19;
-            amu_mass = 1.66e-27;
-            m = amu_mass*part.amu;
-            q_m = part.Z*q/m;
+            constants
+
+            m = MI*part.amu;
+            q_m = part.Z*Q/m;
             E = [0 0 0];
             B = [0 0 0];
     
@@ -144,145 +128,242 @@ classdef particle < handle
             end
         
         end
-        function  ionization(p,Bfield,Efield,xyz,dt,temp_eV,density,RateCoeff,Te,s3)
+        function  ionization(p,dt,T_local,n_local,RateCoeff,Te,s3)
+            constants
             
-            amu_mass = 1.66e-27;
-            q = 1.602e-19;
-            %T = 0.5*p.amu*amu_mass*(p.vx^2 +p.vy^2+ p.vz^2)/q;
             
             minT = min(Te(:))
-            T=interpn(xyz.x,xyz.y,xyz.z,temp_eV(:,:,:,1),p.x,p.y,p.z)
-           if T > minT
-            n=interpn(xyz.x,xyz.y,xyz.z,density(:,:,:,1),p.x,p.y,p.z)
-            
-            
-            Coeff = interp1(Te(:,p.Z),RateCoeff(:,p.Z),T)
-            
-            if ( isnan(Coeff) )
-                error('Ionization interpolation out of range')
+            T=T_local(1);
+            if T > minT
+                n=n_local(1);
+                Coeff = interp1(Te(:,p.Z),RateCoeff(:,p.Z),T)
+                
+                if ( isnan(Coeff) )
+                    error('Ionization interpolation out of range')
+                end
+                
+                tion = 1/(Coeff*n)
+                P1 = 1-exp(-dt/tion)
+                
+                r1=rand(s3)
+                if r1 <= P1
+                    p.Z = p.Z+1
+                end
             end
-            
-            tion = 1/(Coeff*n)
-            P1 = 1-exp(-dt/tion)
-            
-            r1=rand(s3)
-            if r1 <= P1
-                p.Z = p.Z+1
-            end
-           end
         end
         
-        function recombination(p,Bfield,Efield,xyz,dt,temp_eV,density,RecombRateCoeff,DTEVD,DDENSD,s4)
-
-
-
-            amu_mass = 1.66e-27;
-            q = 1.602e-19;
-            %T = 0.5*p.amu*amu_mass*(p.vx^2 +p.vy^2+ p.vz^2)/q;
+        function recombination(p,dt,T_local,n_local,RecombRateCoeff,DTEVD,DDENSD,s4)
+            
+            constants
             
             minT = min(DTEVD)
             minN = min(DDENSD)
-            T=interpn(xyz.x,xyz.y,xyz.z,temp_eV(:,:,:,1),p.x,p.y,p.z)
-            n=interpn(xyz.x,xyz.y,xyz.z,density(:,:,:,1),p.x,p.y,p.z)
+            T=T_local(1);
+            n=n_local(1);
             T = log10(T)
             n = log10(n)
-           if (T > minT) && (n > minN) && p.Z >0
-            
+            if (T > minT) && (n > minN) && p.Z >0
 
-
-
-
-
-Coeff = interpn(DTEVD,DDENSD,RecombRateCoeff(:,:,p.Z),T,n);
-
-tion = 1/(Coeff*10^n)
-P1 = exp(dt/tion)
-
-
- if rand(s4) >= P1
-    p.Z = p.Z-1
- end   
-           end
+                Coeff = interpn(DTEVD,DDENSD,RecombRateCoeff(:,:,p.Z),T,n);
+                
+                tion = 1/(Coeff*10^n)
+                P1 = exp(dt/tion)
+                
+                
+                if rand(s4) >= P1
+                    p.Z = p.Z-1
+                end
+            end
         end
         
-        function slow(part,xyz,Bx,By,Bz,BMag,Ex,Ey,Ez,temp_eV,density,dt,nS,amu,Z,s5,s6,s7)
-            e0 = 8.85e-12;
-            mi = 1.66e-27;
-            q = 1.602e-19;
+        function [nu_s, nu_d, nu_par, nu_E] = slow(part,T_local,n_local,nS,amu,Z)
+
+            constants
+            persistent v_norm_persistent;
             
-            E = [0 0 0];
-            B = [0 0 0];
             v = [part.vx part.vy part.vz];
-            r = [part.x part.y part.z];
-            
-            T=interpn(xyz.x,xyz.y,xyz.z,temp_eV(:,:,:,1),part.x,part.y,part.z)
-            n=interpn(xyz.x,xyz.y,xyz.z,density(:,:,:,1),part.x,part.y,part.z)
             
             flow_v = [0 0 0]; %This will need to be calculated or interpolated in the future
             v_relative = v - flow_v;
             v_norm = norm(v_relative);
-            [E B] = field_interp(r,xyz,Bx,By,Bz,Ex,Ey,Ez);
-            nu_totals = [0 0 0];
+            if v_norm == 0
+                v_norm = v_norm_persistent;
+            else
+                v_norm_persistent = v_norm;
+            end
+            nu_s = 0;
+            nu_d = 0;
+            nu_par = 0;
+            nu_E = 0;
             
             z = part.Z;
-            m = part.amu*mi;
+            m = part.amu*MI;
             for j=1:nS
-              
+                
                 zbackground = Z(j);
                 
-                mbackground = amu(j)*mi
+                mbackground = amu(j)*MI;
+                T = T_local(j);
+                n = n_local(j);
                 
-                lam_d = sqrt(e0*T/(n*zbackground^2*q));%only one q in order to convert to J
+                lam_d = sqrt(EPS0*T/(n*zbackground^2*Q));%only one q in order to convert to J
                 lam = 4*pi*n*lam_d^3;
-                gam = q^4*z^2*zbackground^2*log(lam)/(m*m*4*pi*e0*e0);
-                a = mbackground/(2*T*q); %q is just to convert units - no z needed
+                gam = Q^4*z^2*zbackground^2*log(lam)/(m*m*4*pi*EPS0*EPS0);
+
+                a = mbackground/(2*T*Q); %q is just to convert units - no z needed
                 
-                x = v_norm^2*a
-                psi_prime = 2*sqrt(x/pi)*exp(-x)
-                psi_psiprime = erf(sqrt(x))
-                psi = psi_psiprime - psi_prime
-                nu_0 = gam*n/v_norm^3
-                nu_s = -(1+m/mbackground)*psi*nu_0
-                nu_pitchangle = 2*(psi_psiprime - psi/(2*x))*nu_0
-                nu_par = psi/x*nu_0
-                nu_E = 2*(m/mbackground*psi - psi_prime)*nu_0
-                nu_E =2*(m/mbackground*psi)*nu_0
-                nu_totals(1) = nu_totals(1)+nu_s;
-                nu_totals(2) = nu_totals(2)+nu_pitchangle;
-                nu_totals(3) = nu_totals(3) + nu_E;
+                x = v_norm^2*a;
+                psi_prime = 2*sqrt(x/pi)*exp(-x);
+                psi_psiprime = erf(sqrt(x));
+                psi = psi_psiprime - psi_prime;
+                nu_0 = gam*n/v_norm^3;
+                nu_s =nu_s -(1+m/mbackground)*psi*nu_0;
+                nu_d = nu_d + 2*(psi_psiprime - psi/(2*x))*nu_0;
+                nu_par = nu_par + psi/x*nu_0;
+                nu_E = nu_E+2*(m/mbackground*psi - psi_prime)*nu_0;
+
+
             end
-            nu_totals
-            [e1 e2 e3] = direction(B, v_relative);
-            dv_relax = [0 0 0];
-            dv_relax = dv_relax + e1*(nu_totals(1)*v_norm*dt + sqrt(nu_totals(3)*v_norm^2*dt));
-            %nu_s*norm(v_relative)*dt + sqrt(nu_E*norm(v_relative)^2*dt)
-            %norm(dv_relax)
-            dv_relax = dv_relax + e2*sqrt(nu_totals(2)/2*v_norm^2*dt);
-            dv_relax = dv_relax + e3*sqrt(nu_totals(2)/2*v_norm^2*dt)
-            function [E B] = field_interp(r,xyz,Bx,By,Bz,Ex,Ey,Ez)
-                B(1) = interpn(xyz.x,xyz.y,xyz.z,Bx,r(1),r(2),r(3));
-                B(2) = interpn(xyz.x,xyz.y,xyz.z,By,r(1),r(2),r(3));
-                B(3) = interpn(xyz.x,xyz.y,xyz.z,Bz,r(1),r(2),r(3));
-                
-                
-                E(1) = interpn(xyz.x,xyz.y,xyz.z,Ex,r(1),r(2),r(3));
-                E(2) = interpn(xyz.x,xyz.y,xyz.z,Ey,r(1),r(2),r(3));
-                E(3) = interpn(xyz.x,xyz.y,xyz.z,Ez,r(1),r(2),r(3));
+          
+
+
             end
+                   function [e1 e2 e3] = direction(p,B_local,E_local,s6,s7,s8)
+                       
+                        
+                       persistent f1;
+                       persistent f2;
+                       persistent f3;
+                        
+                       v = [p.vx p.vy p.vz];
+
+                       
+
+                       B_unit = B_local/norm(B_local);
+                       
+                       flow_v = [0 0 0]; %This will need to be calculated or interpolated in the future
+                       v_relative = v - flow_v;
+                       
+                       g = v_relative;
+                       e3 = g/norm(g);
+                       
+                       s1 = dot(e3,B_unit);
+                       s2 = sqrt(1-s1^2);
+                       
+                       e1 = 1/s2*(s1*e3 - B_unit);
+                       e2 = -1/s2*cross(e3,B_unit);
+
+                        %vector_plot
+                       if any([isnan(e1) isnan(e2) isnan(e3)]) == 0
+                           f1 = e1;
+                           f2 = e2;
+                           f3 = e3;
+                       else
+                           e1 = f1;
+                           e2 = f2;
+                           e3 = f3;
+                       end
+                      
+                   end
             
-            function [e1 e2 e3] = direction(B, v_relative)
-                B_unit = B/norm(B);
-                g = v_relative;
-                e3 = g/norm(g);
+                   function cfDiffusion(p,B_local,xyz,Dperp,dt,s8)
+                       
+                       B_unit = B_local/norm(B_local);
+                       %%%%%%%%%%Calculation of direction perpendicular to B
+                       
+                       phi_rnd = 2*pi*rand(s8);
+                       eperp(1) = cos(phi_rnd);
+                       eperp(2) = sin(phi_rnd);
+                       eperp(3) = (-eperp(1)*B_unit(1) - eperp(2)*B_unit(2))/B_unit(3);
+                       norme = norm([eperp(1) eperp(2) eperp(3)]);
+                       eperp(1) = eperp(1)/norme;
+                       eperp(2) = eperp(2)/norme;
+                       eperp(3) = eperp(3)/norme;
+                       
+                       D_local = interpn(xyz.x,xyz.y,xyz.z,Dperp,p.x,p.y,p.z);
+                       p.x = p.x + sqrt(6*D_local*dt)*eperp(1);
+                       p.y = p.y + sqrt(6*D_local*dt)*eperp(2);
+                       p.z = p.z + sqrt(6*D_local*dt)*eperp(3);
+                       
+                       
+                   end
+                   
+                   function diagnostics = dv_coll(p, e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,s3,s4,s5)
+                       constants
+                       
+                       v_norm = norm([p.vx p.vy p.vz]);
+                       T = v_norm^2*p.amu*MI*pi/8/Q;
+
+                       dv_slow =  e1*(nu_s*dt);
+                       norm_slow = norm(v_norm*dv_slow);
+                       
+                       plus_minus1 = round(rand(s3))*2-1;
+                       dv_par = e1*plus_minus1*sqrt(nu_par*dt);
+                       dv_parallel = dv_slow+ dv_par;
+                       norm_par = norm(v_norm*dv_par);
+                       norm_parallel = norm(v_norm*dv_parallel);
+
+
+                       plus_minus2 = randi(s4,[0,1])*2-1;
+                       dv_perp1 =  e1*plus_minus2*sqrt(nu_d/2*dt);
+                       norm_perp1 = plus_minus2*norm(v_norm*dv_perp1);
+                       plus_minus3 = round(rand(s5))*2-1;
+                       dv_perp2 =  e2*plus_minus3*sqrt(nu_d/2*dt);
+                       norm_perp2 = plus_minus3*norm(v_norm*dv_perp2);
+
+                     
+                       ez = (1+nu_s*dt+ plus_minus1*sqrt(nu_par*dt) );%
+                       v_collisions = v_norm*(1-nu_E/2*dt)*(e3*ez + dv_perp1 + dv_perp2); %+ dv_perp1 + dv_perp2
+                       p.vx = v_collisions(1);
+                       p.vy = v_collisions(2);
+                       p.vz = v_collisions(3);
+                       
+                       dv_collisions = v_collisions - v_norm;
+                       
+                       diagnostics = [T dv_collisions norm_slow norm_par norm_parallel norm_perp1 norm_perp2];
+                   end
+                   
+             function [E_local, B_local] = field_interp(p,xyz,Bfield,Efield)
+                 persistent E;
+                 persistent B;
+                 
+                 
+                 
+                 B_local(1) = interpn(xyz.x,xyz.y,xyz.z,Bfield.x,p.x,p.y,p.z);
+                 B_local(2) = interpn(xyz.x,xyz.y,xyz.z,Bfield.y,p.x,p.y,p.z);
+                 B_local(3) = interpn(xyz.x,xyz.y,xyz.z,Bfield.z,p.x,p.y,p.z);
+                 
+                 
+                 E_local(1) = interpn(xyz.x,xyz.y,xyz.z,Efield.x,p.x,p.y,p.z);
+                 E_local(2) = interpn(xyz.x,xyz.y,xyz.z,Efield.y,p.x,p.y,p.z);
+                 E_local(3) = interpn(xyz.x,xyz.y,xyz.z,Efield.z,p.x,p.y,p.z);
+                 
+                 if any([isnan(E_local) isnan(B_local)]) == 0
+                     E=E_local;
+                      B=B_local;
+                 else
+                     E_local = E;
+                     B_local = B;
+                 end
+             end
+            function [T_local, n_local] = Tn_interp(part,xyz,temp_eV,density,nS)
+                persistent T;
+                persistent n;
+                T_local = zeros(nS,1);
+                n_local = zeros(nS,1);
+                for s=1:nS
+                    T_local(s)=interpn(xyz.x,xyz.y,xyz.z,temp_eV(:,:,:,s),part.x,part.y,part.z);
+                    n_local(s)=interpn(xyz.x,xyz.y,xyz.z,density(:,:,:,s),part.x,part.y,part.z);
+                end
                 
-                s1 = dot(e3,B_unit);
-                s2 = sqrt(1-s1^2);
-                
-                e1 = 1/s2*(s1*e3 - B_unit);
-                e2 = -1/s2*cross(e3,B_unit);
+                if any([isnan(T_local) isnan(n_local)]) == 0
+                    T=T_local;
+                    n=n_local;
+                else
+                    T_local = T;
+                    n_local = n;
+                end
             end
-            end
-        
     end
 end
 

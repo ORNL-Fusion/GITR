@@ -3,31 +3,34 @@ clear variables
 % SI Units throughout
 
 constants
+init
 set_rand
 pre_ioniz
 pre_recomb
+
 % Surface grid
-
-nY = 9;%Number of surface cells
-nZ = 10;
-
-yMin = -0.05;
-yMax = +0.05;
-
-zMin = -0.05;
-zMax = +0.05;
-
+if exist('nY','var') == 0
+    nY = 9;%Number of surface cells
+    nZ = 10;
+    
+    yMin = -0.05;
+    yMax = +0.05;
+    
+    zMin = -0.05;
+    zMax = +0.05;
+end
 y = linspace(yMin,yMax,nY);
 z = linspace(zMin,zMax,nZ);
 
 % Volume grid
-
-nXv = 100;
-nYv = 80;
-nZv = 50;
-
-xMinV = -0.1;
-xMaxV = 0;
+if exist('nXv','var') == 0
+    nXv = 100;
+    nYv = 80;
+    nZv = 50;
+    
+    xMinV = -0.005;
+    xMaxV = 0;
+end
 
 yMinV = yMin;
 yMaxV = yMax;
@@ -49,9 +52,15 @@ Bx = zeros(nXv,nYv,nZv);
 By = zeros(nXv,nYv,nZv);
 Bz = zeros(nXv,nYv,nZv);
 
-Bx(:) = 0.0;
+Bx(:) = -0.2;
 By(:) = 1.0;
-Bz(:) = 0.14;
+Bz(:) = 0.3;
+
+if exist('Bfieldx_dat','var')==1
+    Bx(:) = Bfieldx_dat;
+    By(:) = Bfieldy_dat;
+    Bz(:) = Bfieldz_dat;
+end
 
 Bfield.x = Bx;
 Bfield.y = By;
@@ -61,8 +70,8 @@ BMag = sqrt( Bx.^2 + By.^2 + Bz.^2 );
 
 % Setup profiles
 
-Z = [-1 1]
-amu = [ME/MI 1];
+Z = [-1 1];
+amu = [ME/MI 2];
 
 [n_ nS] = size(amu);
 
@@ -73,6 +82,7 @@ Ex = zeros(nXv,nYv,nZv);
 Ey = zeros(nXv,nYv,nZv);
 Ez = zeros(nXv,nYv,nZv);
 
+Dperp = zeros(nXv,nYv,nZv);
 Efield.x = Ex;
 Efield.y = Ey;
 Efield.z = Ez;
@@ -81,14 +91,18 @@ xyz.x = xV;
 xyz.y = yV;
 xyz.z = zV;
 
-maxDensity = 1e19;
-densitySOLDecayLength = 0.1;
-
-maxTemp_eV = 20;
-tempSOLDecayLength = 0.1;
-
-sheathPotential = -60;
-sheathWidth = 0.00005;
+if exist('maxDensity','var')==0
+    maxDensity = 1e19;
+    densitySOLDecayLength = .01;
+    
+    maxTemp_eV = 20;
+    tempSOLDecayLength = 1e-2;
+    
+    sheathPotential = -60;
+    sheathWidth = 0.0001;
+    
+    Dperp_dat = 0.4;
+end
 
 V = sheathPotential * exp( xV / sheathWidth );
 
@@ -98,6 +112,8 @@ for i=1:nXv
             
             density(i,j,k,:) = maxDensity * exp( (xMinV-xV(i)) / densitySOLDecayLength );
             temp_eV(i,j,k,:) = maxTemp_eV * exp( (xMinV-xV(i)) / tempSOLDecayLength );
+            
+            Dperp(i,j,k) = Dperp_dat;
             
             if i>1 && i<nXv
                 Ex(i,j,k) = -(V(i+1)-V(i-1)) / (2*dXv);
@@ -128,41 +144,50 @@ title('Ex [V/m]')
 
 
 % Populate the particle list
+if exist('nP','var')==0
+    nP = 1;
+    Ex_dat = 1;
+    Ey_dat = -1;
+    Ez_dat = -1;
+    x_dat = -0.004;
+    y_dat = 0;
+    z_dat = 0;
+end
 
-nP = 100;
 yTileMin = -0.005;
 yTileMax = +0.005;
 zTileMin = -0.005;
 zTileMax = +0.005;
 
-bindingEnergy_eV = 8;
-maxEnergy_eV = 100;
-[energy_x, energy_y, energy_z] = thompson_energyXYZ( bindingEnergy_eV, maxEnergy_eV, nP);
-
+%bindingEnergy_eV = 8;
+%maxEnergy_eV = 100;
+%[energy_x, energy_y, energy_z] = thompson_energyXYZ( bindingEnergy_eV, maxEnergy_eV, nP);
+energy_x(1:nP) = Ex_dat;
+energy_y(1:nP) = Ey_dat;
+energy_z(1:nP) = Ez_dat;
+x_start = x_dat;
+y_start = y_dat;
+z_start = z_dat;
 for p=1:nP
    particles(p) = particle;
    
    particles(p).Z = 1;
-   particles(p).amu = 184;
+   particles(p).amu = 12;
    
-   particles(p).x = 0.0;
-   particles(p).y = (rand(s1) * (yTileMax-yTileMin) ) * yTileMin;
-   particles(p).z = (rand(s2) * (zTileMax-zTileMin) ) * zTileMin;
+   particles(p).x = x_start;
+   particles(p).y = y_start;%(rand(s1) * (yTileMax-yTileMin) ) * yTileMin;
+   particles(p).z = z_start;%(rand(s2) * (zTileMax-zTileMin) ) * zTileMin;
    
    particles(p).vx = sign(energy_x(p)) * sqrt(2*abs(energy_x(p)*Q)/(particles(p).amu*MI));
    particles(p).vy = sign(energy_y(p)) * sqrt(2*abs(energy_y(p)*Q)/(particles(p).amu*MI));
    particles(p).vz = sign(energy_z(p)) * sqrt(2*abs(energy_z(p)*Q)/(particles(p).amu*MI));
   
-   if particles(p).vx > 0
-       'Initial particle given vx > 0 ... BAD ... flipping, but need to really fix'
-       particles(p).vx = -particles(p).vx;
-   end
 end
 
 
 
 
-nT = 1e3;
+nT = 1e5;
 max_nT = nT;
 
 max_Z = 3;
@@ -170,92 +195,65 @@ max_B = max( BMag(:) );
 min_m = 184 * MI;
 max_wc = max_Z*Q * max_B / min_m;
 
-nPtsPerGyroOrbit = 4;
+nPtsPerGyroOrbit = 1e3;
 dt = 2*pi/max_wc / nPtsPerGyroOrbit;
 
+pre_history
 
-%particles(1).ionization(Bfield,Efield,xyz,dt,temp_eV,density,RateCoeff,Te,s3);
-%particles(1).recombination(Bfield,Efield,xyz,dt,temp_eV,density,RecombRateCoeff,DTEVD,DDENSD,s4)
-%stop
-%%%%%%%%%%%%%%%Comparison of Integrators
-xHistory = zeros(max_nT, nP);
-yHistory = zeros(max_nT, nP);
-zHistory = zeros(max_nT, nP);
-  %%%%%Set particle parameters for test case
-  %%%%% Boris=1, matlabRK4 = 2, Rk4 = 3
-for p=1:3
-   particles(p).x = -0.08;
-   particles(p).y = 0;
-   particles(p).z = 0;
+for n_steps = 1:nT
+    time = n_steps*dt;
 
+    for p=1:nP
+        
+        
+        [T_local, n_local] = particles(p).Tn_interp(xyz,temp_eV,density,nS);
+        
+        %particles(p).ionization(dt,T_local,n_local,RateCoeff,Te,s3);
+        
+        [nu_s, nu_d, nu_par,nu_E] = particles(p).slow(T_local,n_local,nS,amu,Z);
+        
+        
+        [E_local, B_local] = particles(p).field_interp(xyz,Bfield,Efield);
+        
+        [e1, e2, e3] = particles(p).direction(B_local,E_local,s6,s7,s8);
+        
+        particles(p).cfDiffusion(B_local,xyz,Dperp,dt,s8);
+        
+        
+        
+        
+        diagnostics = particles(p).dv_coll(e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,s3,s4,s5);
+        
 
-   
-   particles(p).vx = 0;
-   particles(p).vy = 1e4;
-   particles(p).vz = 1e4;
-end
+        
+        
+        
+        %%%%%%Boris integrator
+        
+        particles(p).boris(B_local,E_local,dt);
 
-%%%%%%Testing of slowing down times
-particles(1).slow(xyz,Bx,By,Bz,BMag,Ex,Ey,Ez,temp_eV,density,dt,nS,amu,Z,s5,s6,s7)
-stop
-%%%%%%%%%%%%%%
+        history
+        
+        
+        
+    end
+history_plot
 
-   %%%%%%Boris integrator
-   t_boris = zeros(1,500);
-   E_last = [0 0 0];
-   B_last = [0 0 0];
-   boris0 = cputime;
-  
-for i=1: 300
-
-	[E_last B_last] = particles(1).boris(xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,dt/3,E_last,B_last);
-	xHistory(i,1) = particles(1).x;
-	yHistory(i,1) = particles(1).y;
-	zHistory(i,1) = particles(1).z;
-    t_boris(i) = i*dt/3;
-end
-boris1 = cputime-boris0
-figure (2)
-plot3(xHistory(1:300,1),yHistory(1:300,1),zHistory(1:300,1))
-xlabel('x axis')
-ylabel('y axis')
-zlabel('z axis')
-title('Boris Method')
-
-
-%%%%-------------Matlab rk4 integrator
-mtlbrk40 = cputime;
-[t,y] = particles(2).move(100*dt,dt,Efield,Bfield,xyz);
-mtlbrk41 = cputime - mtlbrk40
-figure(3)
-plot3(y(:,1),y(:,2),y(:,3))
-xlabel('x axis')
-ylabel('y axis')
-zlabel('z axis')
-title('Matlab RK4')
-
-for p = 1:nP
-    p
-    [t,y] = particles(p).move(nT*dt,dt,Efield,Bfield,xyz);
     
-    %plot3(y(:,1),y(:,2),y(:,3))
-    
-end
-
-% find particles that returned to the wall
+    % find particles that returned to the wall
 
 particlesWall = [];
 for p = 1:nP
-    if particles(p).x > -dXv/10
+    if particles(p).x > 0%-dXv/10
         particlesWall = [particlesWall particles(p)];
+        particles(p).amu = 1e20;
+        particles(p).vx = 0;
+        particles(p).vy = 0;
+        particles(p).vz = 0;
     end
 end
+end
 
-colormap('winter')
-imagesc(Tij)
-colorbar
 
-map2 = transpose(reshape(Tij(37,:), [Npol,Ntor]));
+surface_scatter
 
-imagesc(map2)
-colorbar

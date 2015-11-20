@@ -1,0 +1,65 @@
+Text input file for GITR0.0
+xmin
+-.005
+xmax
+0.0
+ymin
+-0.05
+ymax
+0.05
+zmin
+-0.05
+zmax
+0.05
+Surface cells in y
+9
+Surface cells in z
+10
+Volume cells in x
+100
+Volume cells in y
+80
+Volume cells in z
+50
+Sheath potential
+-60
+Potential decay length
+0.0001
+Bfieldx
+-0.2
+Bfieldy
+1.0
+Bfieldz
+0.3
+Density
+1e19
+Density Decay length
+0.01
+Temperature (in eV)
+20
+Temperature decay length
+.01
+Dperp
+0.04
+Number of particles
+2
+Starting position in x
+-0.004
+Starting position in y
+0.0
+Starting position in z
+0.0
+Starting energy in x
+1.0
+Starting energy in y
+-1.0
+Starting energy in z
+-1.0
+Particle Mass
+12.0
+Particles Charge State
+1.0
+Ionization
+1
+Recombination
+0
