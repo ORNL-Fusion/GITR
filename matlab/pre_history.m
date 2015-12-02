@@ -1,10 +1,10 @@
    t_boris = [0:dt:nT*dt];
 
-xHistory = zeros(max_nT, nP);
-yHistory = zeros(max_nT, nP);
-zHistory = zeros(max_nT, nP);
-vxHistory = zeros(max_nT, nP);
-vyHistory = zeros(max_nT, nP);
-vzHistory = zeros(max_nT, nP);
+xHistory = zeros(nT, nP);
+yHistory = zeros(nT, nP);
+zHistory = zeros(nT, nP);
+vxHistory = zeros(nT, nP);
+vyHistory = zeros(nT, nP);
+vzHistory = zeros(nT, nP);
 
 coll_hist = zeros(nT,7);

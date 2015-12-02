@@ -3,10 +3,13 @@ clear variables
 % SI Units throughout
 
 constants
-init
-set_rand
-pre_ioniz
-pre_recomb
+init2
+
+
+[Tb_inz, dens_inz, RateCoeff_inz, State_inz] = ADF11(file_inz);
+
+[Tb_rcmb, dens_rcmb, RateCoeff_rcmb, State_rcmb] = ADF11(file_rcmb);
+clearvars file_inz file_rcmb;
 
 % Surface grid
 if exist('nY','var') == 0
@@ -18,9 +21,24 @@ if exist('nY','var') == 0
     
     zMin = -0.05;
     zMax = +0.05;
+    surf_slope = 0;
+    surf_incpt = 0;
 end
 y = linspace(yMin,yMax,nY);
 z = linspace(zMin,zMax,nZ);
+surfx = zeros(nY,nZ);
+surf_hist = surfx;
+for k=1:nZ 
+surfx(:,k) = surf_slope*y + surf_incpt;
+end
+figure(3)
+
+surf(z,y,surfx,surf_hist)
+            xlabel('z axis')
+            ylabel('y axis')
+            zlabel('x axis')
+            title('Surface')
+            axis equal
 
 % Volume grid
 if exist('nXv','var') == 0
@@ -152,6 +170,8 @@ if exist('nP','var')==0
     x_dat = -0.004;
     y_dat = 0;
     z_dat = 0;
+    charge = 1;
+    mass = 12;
 end
 
 yTileMin = -0.005;
@@ -168,11 +188,13 @@ energy_z(1:nP) = Ez_dat;
 x_start = x_dat;
 y_start = y_dat;
 z_start = z_dat;
+charge = charge_dat;
+mass = mass_dat;
 for p=1:nP
    particles(p) = particle;
    
-   particles(p).Z = 1;
-   particles(p).amu = 12;
+   particles(p).Z = charge;
+   particles(p).amu = mass;
    
    particles(p).x = x_start;
    particles(p).y = y_start;%(rand(s1) * (yTileMax-yTileMin) ) * yTileMin;
@@ -182,52 +204,58 @@ for p=1:nP
    particles(p).vy = sign(energy_y(p)) * sqrt(2*abs(energy_y(p)*Q)/(particles(p).amu*MI));
    particles(p).vz = sign(energy_z(p)) * sqrt(2*abs(energy_z(p)*Q)/(particles(p).amu*MI));
   
+   particles(p).hitWall = 0;
 end
 
 
 
-
-nT = 1e5;
-max_nT = nT;
-
-max_Z = 3;
-max_B = max( BMag(:) );
-min_m = 184 * MI;
-max_wc = max_Z*Q * max_B / min_m;
-
-nPtsPerGyroOrbit = 1e3;
-dt = 2*pi/max_wc / nPtsPerGyroOrbit;
+if exist('nT','var')==0
+    nT = 1e3;
+    max_nT = nT;
+    
+    max_Z = 3;
+    max_B = max( BMag(:) );
+    min_m = 184 * MI;
+    max_wc = max_Z*Q * max_B / min_m;
+    
+    nPtsPerGyroOrbit = 1e3;
+    dt = 2*pi/max_wc / nPtsPerGyroOrbit;
+    
+    ionization_factor = 1e2;
+end
 
 pre_history
 
+set_rand
 for n_steps = 1:nT
     time = n_steps*dt;
 
     for p=1:nP
         
         
-        [T_local, n_local] = particles(p).Tn_interp(xyz,temp_eV,density,nS);
-        
-        %particles(p).ionization(dt,T_local,n_local,RateCoeff,Te,s3);
-        
+        [T_local, n_local] = particles(p).Tn_interp(xyz,temp_eV,density,nS)
+        if mod(n_steps, ionization_factor) == 0
+            particles(p).ionization(ionization_factor*dt,T_local,n_local,RateCoeff_inz,Tb_inz, dens_inz,State_inz,random(p,n_steps,1));
+            particles(p).recombination(ionization_factor*dt,T_local,n_local,RateCoeff_rcmb,Tb_rcmb,dens_rcmb,State_rcmb,random(p,n_steps,2));
+        end
+      
         [nu_s, nu_d, nu_par,nu_E] = particles(p).slow(T_local,n_local,nS,amu,Z);
-        
+
         
         [E_local, B_local] = particles(p).field_interp(xyz,Bfield,Efield);
+
+        [e1, e2, e3] = particles(p).direction(B_local,E_local);
         
-        [e1, e2, e3] = particles(p).direction(B_local,E_local,s6,s7,s8);
-        
-        particles(p).cfDiffusion(B_local,xyz,Dperp,dt,s8);
-        
-        
+        particles(p).cfDiffusion(B_local,xyz,Dperp,dt,random(p,n_steps,3));
         
         
-        diagnostics = particles(p).dv_coll(e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,s3,s4,s5);
+ 
+        diagnostics = particles(p).dv_coll(e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,random(p,n_steps,4:6));
         
 
         
         
-        
+
         %%%%%%Boris integrator
         
         particles(p).boris(B_local,E_local,dt);
@@ -244,12 +272,13 @@ history_plot
 
 particlesWall = [];
 for p = 1:nP
-    if particles(p).x > 0%-dXv/10
+    if particles(p).x > surf_slope*particles(p).y + surf_incpt;%-dXv/10
         particlesWall = [particlesWall particles(p)];
         particles(p).amu = 1e20;
         particles(p).vx = 0;
         particles(p).vy = 0;
         particles(p).vz = 0;
+        particles(p).hitWall = 1;
     end
 end
 end

@@ -11,8 +11,8 @@ n=1e19;
 z=1;
 zbackground=1;
 m=12*mi;
-mbackground=mi;
-v= [0 0 1e4];
+mbackground=2*mi;
+v= [0 0 7.5e3];
 
 flow_v = [0 0 0];
 

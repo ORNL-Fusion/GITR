@@ -23,13 +23,18 @@ for i=1:NSEL
     
     D = strsplit(C{2}, '+');
     IZ1 = str2num(D{2});
+    D = strsplit(C{5}, '=');
+    ICODE = str2num(D{2});
+    D = strsplit(C{6}, '=');
+    FCODE = str2num(D{2});
+
     NTE = str2num(C{3});
     BWNO = strread(C{4}, '%*s %*s %f');
     METI = strread(C{5}, '%*s %*s %f');
     METF = strread(C{6}, '%*s %*s %f');
     ISEL = strread(C{7}, '%*s %*s %f');
     
-    State = [State; [IZ IZ1]];
+    State = [State; [IZ ICODE IZ1 FCODE]];
     Te_in = [];
     RC_in = [];
     j=0;

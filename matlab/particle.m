@@ -128,50 +128,53 @@ classdef particle < handle
             end
         
         end
-        function  ionization(p,dt,T_local,n_local,RateCoeff,Te,s3)
+        function  ionization(p,dt,T_local,n_local,RateCoeff,T_b,dens_b,State,r1)
+            max_state = max(State(:));
+            if p.Z < max_state
             constants
             
             
-            minT = min(Te(:))
+            minT = min(T_b(:));
             T=T_local(1);
-            if T > minT
+            if log10(T) > minT
                 n=n_local(1);
-                Coeff = interp1(Te(:,p.Z),RateCoeff(:,p.Z),T)
+                Coeff = interpn(dens_b,T_b,RateCoeff(:,:,p.Z+1),log10(n/1e6),log10(T));
                 
                 if ( isnan(Coeff) )
                     error('Ionization interpolation out of range')
                 end
                 
-                tion = 1/(Coeff*n)
-                P1 = 1-exp(-dt/tion)
+                tion = 1/(10^Coeff*n/1E6);
+                P1 = 1-exp(-dt/tion);
                 
-                r1=rand(s3)
+               
                 if r1 <= P1
-                    p.Z = p.Z+1
+                    p.Z = p.Z+1;
                 end
+            end
             end
         end
         
-        function recombination(p,dt,T_local,n_local,RecombRateCoeff,DTEVD,DDENSD,s4)
+        function recombination(p,dt,T_local,n_local,RecombCoeff,T_b,dens_b,State,r2)
             
             constants
             
-            minT = min(DTEVD)
-            minN = min(DDENSD)
+            minT = min(T_b);
+            minN = min(dens_b);
             T=T_local(1);
             n=n_local(1);
-            T = log10(T)
-            n = log10(n)
+            T = log10(T);
+            n = log10(n/1e6);
             if (T > minT) && (n > minN) && p.Z >0
 
-                Coeff = interpn(DTEVD,DDENSD,RecombRateCoeff(:,:,p.Z),T,n);
+                Coeff = interpn(dens_b,T_b,RecombCoeff(:,:,p.Z),n,T);
                 
-                tion = 1/(Coeff*10^n)
-                P1 = exp(dt/tion)
+                tion = 1/(10^Coeff*10^n);
+                P1 = 1-exp(-dt/tion);
                 
                 
-                if rand(s4) >= P1
-                    p.Z = p.Z-1
+                if r2 <= P1
+                    p.Z = p.Z-1;
                 end
             end
         end
@@ -207,12 +210,12 @@ classdef particle < handle
                 n = n_local(j);
                 
                 lam_d = sqrt(EPS0*T/(n*zbackground^2*Q));%only one q in order to convert to J
-                lam = 4*pi*n*lam_d^3;
+                lam = 4*pi*n*lam_d^3
                 gam = Q^4*z^2*zbackground^2*log(lam)/(m*m*4*pi*EPS0*EPS0);
 
                 a = mbackground/(2*T*Q); %q is just to convert units - no z needed
                 
-                x = v_norm^2*a;
+                x = v_norm^2*a
                 psi_prime = 2*sqrt(x/pi)*exp(-x);
                 psi_psiprime = erf(sqrt(x));
                 psi = psi_psiprime - psi_prime;
@@ -228,7 +231,7 @@ classdef particle < handle
 
 
             end
-                   function [e1 e2 e3] = direction(p,B_local,E_local,s6,s7,s8)
+                   function [e1 e2 e3] = direction(p,B_local,E_local)
                        
                         
                        persistent f1;
@@ -266,12 +269,12 @@ classdef particle < handle
                       
                    end
             
-                   function cfDiffusion(p,B_local,xyz,Dperp,dt,s8)
-                       
+                   function cfDiffusion(p,B_local,xyz,Dperp,dt,s3)
+                       persistent Dperp_pers;
                        B_unit = B_local/norm(B_local);
                        %%%%%%%%%%Calculation of direction perpendicular to B
                        
-                       phi_rnd = 2*pi*rand(s8);
+                       phi_rnd = 2*pi*s3;
                        eperp(1) = cos(phi_rnd);
                        eperp(2) = sin(phi_rnd);
                        eperp(3) = (-eperp(1)*B_unit(1) - eperp(2)*B_unit(2))/B_unit(3);
@@ -281,6 +284,20 @@ classdef particle < handle
                        eperp(3) = eperp(3)/norme;
                        
                        D_local = interpn(xyz.x,xyz.y,xyz.z,Dperp,p.x,p.y,p.z);
+                       if isnan(D_local) ==1
+                           D_local = 0;
+                       else
+                           Dperp_pers = D_local;
+                       end
+                       
+                       if p.hitWall == 1
+                           D_local = 0;
+                       end
+                       
+                       if p.Z == 0
+                           D_local = 0;
+                       end
+                       
                        p.x = p.x + sqrt(6*D_local*dt)*eperp(1);
                        p.y = p.y + sqrt(6*D_local*dt)*eperp(2);
                        p.z = p.z + sqrt(6*D_local*dt)*eperp(3);
@@ -288,7 +305,7 @@ classdef particle < handle
                        
                    end
                    
-                   function diagnostics = dv_coll(p, e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,s3,s4,s5)
+                   function diagnostics = dv_coll(p, e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,random)
                        constants
                        
                        v_norm = norm([p.vx p.vy p.vz]);
@@ -297,17 +314,17 @@ classdef particle < handle
                        dv_slow =  e1*(nu_s*dt);
                        norm_slow = norm(v_norm*dv_slow);
                        
-                       plus_minus1 = round(rand(s3))*2-1;
+                       plus_minus1 = round(random(1))*2-1;
                        dv_par = e1*plus_minus1*sqrt(nu_par*dt);
                        dv_parallel = dv_slow+ dv_par;
                        norm_par = norm(v_norm*dv_par);
                        norm_parallel = norm(v_norm*dv_parallel);
 
 
-                       plus_minus2 = randi(s4,[0,1])*2-1;
+                       plus_minus2 = round(random(2))*2-1;
                        dv_perp1 =  e1*plus_minus2*sqrt(nu_d/2*dt);
                        norm_perp1 = plus_minus2*norm(v_norm*dv_perp1);
-                       plus_minus3 = round(rand(s5))*2-1;
+                       plus_minus3 = round(random(3))*2-1;
                        dv_perp2 =  e2*plus_minus3*sqrt(nu_d/2*dt);
                        norm_perp2 = plus_minus3*norm(v_norm*dv_perp2);
 

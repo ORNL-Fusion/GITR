@@ -12,7 +12,7 @@ zbackground=1;
 m=12*mi;
 mbackground=2*mi;
 v= [9e3 -9e3 -9e3];
-v = [2e6 0 0];
+v = [3.8e4 0 0];
 flow_v = [0 0 0];
 
 
