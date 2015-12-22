@@ -10,6 +10,7 @@ classdef particle < handle
         Z
         amu
         hitWall
+        streams
     end
     
     methods
