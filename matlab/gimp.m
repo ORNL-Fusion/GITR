@@ -32,7 +32,6 @@ for k=1:nZ
 surfx(:,k) = surf_slope*y + surf_incpt;
 end
 figure(3)
-
 surf(z,y,surfx,surf_hist)
             xlabel('z axis')
             ylabel('y axis')
@@ -101,6 +100,7 @@ Ey = zeros(nXv,nYv,nZv);
 Ez = zeros(nXv,nYv,nZv);
 
 Dperp = zeros(nXv,nYv,nZv);
+
 Efield.x = Ex;
 Efield.y = Ey;
 Efield.z = Ez;
@@ -233,7 +233,7 @@ for n_steps = 1:nT
     for p=1:nP
         
         
-        [T_local, n_local] = particles(p).Tn_interp(xyz,temp_eV,density,nS)
+        [T_local, n_local] = particles(p).Tn_interp(xyz,temp_eV,density,nS);
         if mod(n_steps, ionization_factor) == 0
             particles(p).ionization(ionization_factor*dt,T_local,n_local,RateCoeff_inz,Tb_inz, dens_inz,State_inz,random(p,n_steps,1));
             particles(p).recombination(ionization_factor*dt,T_local,n_local,RateCoeff_rcmb,Tb_rcmb,dens_rcmb,State_rcmb,random(p,n_steps,2));

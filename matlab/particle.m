@@ -210,12 +210,12 @@ classdef particle < handle
                 n = n_local(j);
                 
                 lam_d = sqrt(EPS0*T/(n*zbackground^2*Q));%only one q in order to convert to J
-                lam = 4*pi*n*lam_d^3
+                lam = 4*pi*n*lam_d^3;
                 gam = Q^4*z^2*zbackground^2*log(lam)/(m*m*4*pi*EPS0*EPS0);
 
                 a = mbackground/(2*T*Q); %q is just to convert units - no z needed
                 
-                x = v_norm^2*a
+                x = v_norm^2*a;
                 psi_prime = 2*sqrt(x/pi)*exp(-x);
                 psi_psiprime = erf(sqrt(x));
                 psi = psi_psiprime - psi_prime;
