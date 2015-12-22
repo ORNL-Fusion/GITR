@@ -26,11 +26,17 @@ sheathPotential = -60;
 % Potential decay length
 sheathWidth = 0.0001;
 % Bfieldx
-Bfieldx_dat =0.1;
+Bx_in = +0.1;
 % Bfieldy
-Bfieldy_dat =1.0;
+By_in = +1.0;
 % Bfieldz
-Bfieldz_dat =-0.3;
+Bz_in = -0.3;
+
+% Background species info
+
+background_Z = [-1 1];
+background_amu = [ME/MI 2];
+
 % Density
 maxDensity = 1e19;
 % Density Decay length
@@ -40,36 +46,43 @@ maxTemp_eV = 20;
 %Temperature decay length
 tempSOLDecayLength = .1;
 %Dperp
-Dperp_dat = 0.04;
-%Number of particles
+perDiffusionCoeff_in = 0.04;
+
+
+% Impurity particles 
+
 nP = 1;
-%Starting position in x
-x_dat = -0.0075;
-%Starting position in y
-y_dat = -0.01;
-%Starting position in z
-z_dat = 0.0;
-%Starting energy in x
-Ex_dat = 1.0;
-%Starting energy in y
-Ey_dat = 1.5;
-%Starting energy in z
-Ez_dat = -1.0;
-%Particle Mass
-mass_dat = 12.0;
-%Particles Charge State
-charge_dat = 1.0;
+
+x_start = -0.0075;
+y_start = -0.01;
+z_start = 0.0;
+
+energy_eV_x_start = 1.0;
+energy_eV_y_start = 1.5;
+energy_eV_z_start = -1.0;
+
+impurity_amu = 12.0;
+impurity_Z = 1.0;
+
 %Slope of parameterized surface (X = m*Y +b)
 surf_slope = -0.1;
 %Intercept of parameterized surface
 surf_incpt = -0.002;
-%Time step
-dt = 1e-9;
-%Number of steps for timeout
-nT = 3e3;
-%Number of timesteps per ionization check
-ionization_factor = 100;
+
+
 %Ionization
 file_inz = 'ADAS/scd93_c.dat';
 %Recombination
 file_rcmb = 'ADAS/acd93_c.dat';
+
+% Particle time stepping control
+
+nPtsPerGyroOrbit = 1e3;
+ionization_nDtPerApply = 100;
+%dt = 1e-9;
+max_nT = 3000;
+
+% Plots
+
+plotInitialSurface = 1;
+plot1DProfileSlices = 1;
