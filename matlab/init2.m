@@ -51,9 +51,9 @@ perDiffusionCoeff_in = 0.04;
 
 % Impurity particles 
 
-nP = 1;
+nP = 2;
 
-x_start = -0.0075;
+x_start = -0.004;
 y_start = -0.01;
 z_start = 0.0;
 

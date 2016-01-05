@@ -306,7 +306,7 @@ classdef particle < handle
                        
                    end
                    
-                   function diagnostics = dv_coll(p, e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,random)
+                   function diagnostics = dv_coll(p, e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,rand_parVelocityDiffusion,rand_per1VelocityDiffusion,rand_per2VelocityDiffusion)
                        constants
                        
                        v_norm = norm([p.vx p.vy p.vz]);
@@ -315,17 +315,17 @@ classdef particle < handle
                        dv_slow =  e1*(nu_s*dt);
                        norm_slow = norm(v_norm*dv_slow);
                        
-                       plus_minus1 = round(random(1))*2-1;
+                       plus_minus1 = round(rand_parVelocityDiffusion)*2-1;
                        dv_par = e1*plus_minus1*sqrt(nu_par*dt);
                        dv_parallel = dv_slow+ dv_par;
                        norm_par = norm(v_norm*dv_par);
                        norm_parallel = norm(v_norm*dv_parallel);
 
 
-                       plus_minus2 = round(random(2))*2-1;
+                       plus_minus2 = round(rand_per1VelocityDiffusion)*2-1;
                        dv_perp1 =  e1*plus_minus2*sqrt(nu_d/2*dt);
                        norm_perp1 = plus_minus2*norm(v_norm*dv_perp1);
-                       plus_minus3 = round(random(3))*2-1;
+                       plus_minus3 = round(rand_per2VelocityDiffusion)*2-1;
                        dv_perp2 =  e2*plus_minus3*sqrt(nu_d/2*dt);
                        norm_perp2 = plus_minus3*norm(v_norm*dv_perp2);
 

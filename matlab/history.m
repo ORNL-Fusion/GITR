@@ -6,6 +6,7 @@
         % coll_hist(n_steps,6) = diagnostics(6);
         % coll_hist(n_steps,7) = diagnostics(7);
         
-                xHistory(n_steps,p) = particles(p).x;
+        xHistory(n_steps,p) = particles(p).x;
         yHistory(n_steps,p) = particles(p).y;
         zHistory(n_steps,p) = particles(p).z;
+        

@@ -24,21 +24,21 @@ surf_hist = zeros(nY,nZ);
 for k=1:nZ 
     surf_x2D(:,k) = surf_slope * surf_y1D + surf_incpt;
 end
-<<<<<<< HEAD
-figure(3)
-surf(z,y,surfx,surf_hist)
-=======
+
 
 % Plot initial (zeroed) surface histogram
 
 if plotInitialSurface 
-    surf(surf_z1D,surf_y1D,surf_x2D,surf_hist)
->>>>>>> 8358c2105cf590dc60ae75ac979063528eb89f2d
+    figure(1)
+   h1 =  surf(surf_z1D,surf_y1D,surf_x2D,surf_hist);
+
             xlabel('z axis')
             ylabel('y axis')
             zlabel('x axis')
             title('Surface')
             axis equal
+            drawnow
+            set(gca,'Zdir','reverse')
 end
 
 % Create volume grid
@@ -88,17 +88,11 @@ Ex = zeros(nXv,nYv,nZv);
 Ey = zeros(nXv,nYv,nZv);
 Ez = zeros(nXv,nYv,nZv);
 
-<<<<<<< HEAD
-Dperp = zeros(nXv,nYv,nZv);
 
-Efield.x = Ex;
-Efield.y = Ey;
-Efield.z = Ez;
-=======
 Efield_3D.x = Ex; % Create E field structure
 Efield_3D.y = Ey;
 Efield_3D.z = Ez;
->>>>>>> 8358c2105cf590dc60ae75ac979063528eb89f2d
+
 
 perDiffusionCoeff = zeros(nXv,nYv,nZv);
 
@@ -130,7 +124,7 @@ end
 
 % Plot slices through the profiles
 if plot1DProfileSlices
-    figure(1)
+    figure(2)
     subplot(2,2,1)
     semilogy(xV_1D,density_m3(:,1,1,1))
     title('Electron density')
@@ -183,55 +177,51 @@ dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
 
 % Setup arrays for tracking particle histories
 
-pre_history
+%pre_history
+nT = max_nT;
 
 
-<<<<<<< HEAD
-    for p=1:nP
-        
-        
-        [T_local, n_local] = particles(p).Tn_interp(xyz,temp_eV,density,nS);
-=======
 % Main loop 
-
+t = cputime;
 for p=1:nP
     
     for n_steps = 1:nT
             
         time = n_steps * dt;
          
-        [T_local, n_local] = particles(p).Tn_interp(xyz,temp_eV,density,nS)
+        [T_local, n_local] = particles(p).Tn_interp(xyz,temp_eV,density_m3,nS);
         
->>>>>>> 8358c2105cf590dc60ae75ac979063528eb89f2d
-        if mod(n_steps, ionization_factor) == 0
-            particles(p).ionization(ionization_factor*dt,T_local,n_local,RateCoeff_inz,Tb_inz, dens_inz,State_inz,random(p,n_steps,1));
-            particles(p).recombination(ionization_factor*dt,T_local,n_local,RateCoeff_rcmb,Tb_rcmb,dens_rcmb,State_rcmb,random(p,n_steps,2));
+
+        if mod(n_steps, ionization_nDtPerApply) == 0
+            n_ionization_apply = n_steps/ionization_nDtPerApply;
+            particles(p).ionization(ionization_nDtPerApply*dt,T_local,n_local,RateCoeff_inz,Tb_inz, dens_inz,State_inz,rand(particles(p).streams.ionization));
+            particles(p).recombination(ionization_nDtPerApply*dt,T_local,n_local,RateCoeff_rcmb,Tb_rcmb,dens_rcmb,State_rcmb,rand(particles(p).streams.recombination));
         end
       
-        [nu_s, nu_d, nu_par,nu_E] = particles(p).slow(T_local,n_local,nS,amu,Z);
+        [nu_s, nu_d, nu_par,nu_E] = particles(p).slow(T_local,n_local,nS,background_amu,background_Z);
   
         [E_local, B_local] = particles(p).field_interp(xyz,Bfield,Efield_3D);
 
         [e1, e2, e3] = particles(p).direction(B_local,E_local);
         
-        particles(p).cfDiffusion(B_local,xyz,perDiffusionCoeff,dt,random(p,n_steps,3));
+        particles(p).cfDiffusion(B_local,xyz,perDiffusionCoeff,dt,rand(particles(p).streams.perDiffusion));
         
-        diagnostics = particles(p).dv_coll(e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,random(p,n_steps,4:6));
+        diagnostics = particles(p).dv_coll(e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,rand(particles(p).streams.parVelocityDiffusion), rand(particles(p).streams.per1VelocityDiffusion), rand(particles(p).streams.per2VelocityDiffusion));
         
         % Boris integrator
         
         particles(p).boris(B_local,E_local,dt);
 
-        history
+%        history
                 
-    end
     
-    history_plot
     
+%    history_plot
+
     % find particles that returned to the wall
 
 particlesWall = [];
-for p = 1:nP
+
     if particles(p).x > surf_slope*particles(p).y + surf_incpt;%-dXv/10
         particlesWall = [particlesWall particles(p)];
         particles(p).amu = 1e20;
@@ -240,9 +230,10 @@ for p = 1:nP
         particles(p).vz = 0;
         particles(p).hitWall = 1;
     end
-end
-end
 
+    end
+end
+e = cputime-t
 
 surface_scatter
 

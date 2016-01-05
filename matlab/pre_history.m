@@ -1,3 +1,4 @@
+nT = max_nT;
 t_boris = [0:dt:nT*dt];
 
 xHistory = zeros(nT, nP);
