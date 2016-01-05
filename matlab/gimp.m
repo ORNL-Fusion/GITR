@@ -14,33 +14,6 @@ init2
 [Tb_inz, dens_inz, RateCoeff_inz, State_inz] = ADF11(file_inz);
 [Tb_rcmb, dens_rcmb, RateCoeff_rcmb, State_rcmb] = ADF11(file_rcmb);
 
-% Create surface grid
-
-surf_y1D = linspace(yMin,yMax,nY);
-surf_z1D = linspace(zMin,zMax,nZ);
-surf_x2D = zeros(nY,nZ);
-surf_hist = zeros(nY,nZ);
-
-for k=1:nZ 
-    surf_x2D(:,k) = surf_slope * surf_y1D + surf_incpt;
-end
-
-
-% Plot initial (zeroed) surface histogram
-
-if plotInitialSurface 
-    figure(1)
-   h1 =  surf(surf_z1D,surf_y1D,surf_x2D,surf_hist);
-
-            xlabel('z axis')
-            ylabel('y axis')
-            zlabel('x axis')
-            title('Surface')
-            axis equal
-            drawnow
-            set(gca,'Zdir','reverse')
-end
-
 % Create volume grid
 
 yMinV = yMin;
@@ -57,9 +30,44 @@ dXv = xV_1D(2)-xV_1D(1);
 dYv = yV_1D(2)-yV_1D(1);
 dZv = zV_1D(2)-zV_1D(1);
 
+global xyz 
 xyz.x = xV_1D; % Create volume coordinate strucutre
 xyz.y = yV_1D;
 xyz.z = zV_1D;
+
+% Create surface grid
+
+surf_y1D = linspace(yMin,yMax,nY);
+surf_z1D = linspace(zMin,zMax,nZ);
+surf_x2D = zeros(nY,nZ);
+surf_hist = zeros(nY,nZ);
+
+for j=1:nY 
+    surf_x2D(j,:) =  (surf_z1D - surface_zIntercept) / surface_dz_dx;
+end
+
+% Plot initial (zeroed) surface histogram
+
+if plotInitialSurface 
+    figure(1)
+   h1 =  surf(surf_z1D,surf_y1D,surf_x2D,surf_hist);
+
+            %xlabel('z axis')
+            %ylabel('y axis')
+            %zlabel('x axis')
+            title('Surface')
+            axis equal
+            drawnow
+            xlim([xMinV xMaxV])
+            ylim([yMinV yMaxV])
+            zlim([zMinV zMaxV])
+            az = 90;
+            el = 90;
+            view(az,el);
+            %set(gca,'Zdir','reverse')
+end
+
+
 
 % Setup B field
 
@@ -87,7 +95,6 @@ temp_eV = zeros(nXv,nYv,nZv,nS);
 Ex = zeros(nXv,nYv,nZv); 
 Ey = zeros(nXv,nYv,nZv);
 Ez = zeros(nXv,nYv,nZv);
-
 
 Efield_3D.x = Ex; % Create E field structure
 Efield_3D.y = Ey;
@@ -175,22 +182,20 @@ min_m = impurity_amu * MI;
 max_wc = impurity_Z * Q * max_B / min_m;
 dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
 
-% Setup arrays for tracking particle histories
+% Setup arrays to store history
 
-%pre_history
-nT = max_nT;
+pre_history    
 
+% Main loop
 
-% Main loop 
 t = cputime;
-for p=1:nP
+parfor p=1:nP
     
     for n_steps = 1:nT
             
         time = n_steps * dt;
          
         [T_local, n_local] = particles(p).Tn_interp(xyz,temp_eV,density_m3,nS);
-        
 
         if mod(n_steps, ionization_nDtPerApply) == 0
             n_ionization_apply = n_steps/ionization_nDtPerApply;
@@ -210,29 +215,31 @@ for p=1:nP
         
         % Boris integrator
         
-        particles(p).boris(B_local,E_local,dt);
+        particles(p).boris(xyz,Efield_3D,B_local,dt);
 
-%        history
-                
-    
-    
-%    history_plot
+        %history
+        xHistory(n_steps,p) = particles(p).x;
+        yHistory(n_steps,p) = particles(p).y;
+        zHistory(n_steps,p) = particles(p).z;
+       
 
-    % find particles that returned to the wall
+        % find particles that returned to the wall
 
-particlesWall = [];
-
-    if particles(p).x > surf_slope*particles(p).y + surf_incpt;%-dXv/10
-        particlesWall = [particlesWall particles(p)];
-        particles(p).amu = 1e20;
-        particles(p).vx = 0;
-        particles(p).vy = 0;
-        particles(p).vz = 0;
-        particles(p).hitWall = 1;
-    end
+        if particles(p).x > ( particles(p).z - surface_zIntercept ) / surface_dz_dx;
+           
+            particles(p).amu = 1e20;
+            particles(p).vx = 0;
+            particles(p).vy = 0;
+            particles(p).vz = 0;
+            particles(p).hitWall = 1;
+            
+        end
 
     end
 end
+
+history_plot
+
 e = cputime-t
 
 surface_scatter

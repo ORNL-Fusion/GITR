@@ -39,20 +39,20 @@ classdef particle < handle
 
 
 
-        function  boris(part,B_local,E_local,dt)
+        function  boris(this,xyz,Efield_3D,B_local,dt)
             constants
             
             B = B_local;
-            E = E_local;
+            E = this.getE(xyz,Efield_3D);
             BMagPart =norm(B);
             
             %%Constants used in Boris method Lorentz Integrator
-            q_prime = part.Z*Q/(part.amu*MI)*dt/2;
+            q_prime = this.Z*Q/(this.amu*MI)*dt/2;
             coeff = 2*q_prime/(1+(q_prime*BMagPart).^2);
             
             %Boris Method Lorentz Integrator
-            v = [part.vx part.vy part.vz];
-            r = [part.x part.y part.z];
+            v = [this.vx this.vy this.vz];
+            r = [this.x this.y this.z];
             
             v_minus = v + q_prime*E;
             
@@ -64,12 +64,12 @@ classdef particle < handle
             
             r = r + v*dt;
 
-            part.x =r(1);
-            part.y =r(2);
-            part.z =r(3);
-            part.vx = v(1);
-            part.vy = v(2);
-            part.vz = v(3);
+            this.x =r(1);
+            this.y =r(2);
+            this.z =r(3);
+            this.vx = v(1);
+            this.vy = v(2);
+            this.vz = v(3);
         end
         
         function [T Yr] = rk4(part,xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,end_t,dt,steps)
@@ -341,7 +341,14 @@ classdef particle < handle
                        diagnostics = [T dv_collisions norm_slow norm_par norm_parallel norm_perp1 norm_perp2];
                    end
                    
-             function [E_local, B_local] = field_interp(p,xyz,Bfield,Efield)
+                   function E = getE(this,xyz,Efield_3D)
+                        E(1) = interpn(xyz.x,xyz.y,xyz.z,Efield_3D.x,this.x,this.y,this.z);
+                        E(2) = interpn(xyz.x,xyz.y,xyz.z,Efield_3D.y,this.x,this.y,this.z);
+                        E(3) = interpn(xyz.x,xyz.y,xyz.z,Efield_3D.z,this.x,this.y,this.z);
+                   end
+                   
+                   
+            function [E_local, B_local] = field_interp(p,xyz,Bfield,Efield)
                  persistent E;
                  persistent B;
                  
