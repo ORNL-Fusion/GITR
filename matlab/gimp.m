@@ -22,7 +22,7 @@ surf_x2D = zeros(nY,nZ);
 surf_hist = zeros(nY,nZ);
 
 for k=1:nZ 
-    surf_x2D(:,k) = surf_slope * surf_y1D + surf_incpt;
+    surf_x2D(:,k) = surf_slope * surf_y1D + surf_xincpt;
 end
 
 
