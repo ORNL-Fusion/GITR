@@ -1,17 +1,17 @@
 figure(1)
 hold on
-    if mod(n_steps,100) == 0
-
+    %if mod(n_steps,100) == 0
+for p=1:nP
            ax = gca;
             ax.ColorOrderIndex = p;
             
             plot_p = p;
-            plot3(zHistory(1:n_steps,plot_p),yHistory(1:n_steps,plot_p),xHistory(1:n_steps,plot_p))
+            plot3(zHistory(:,plot_p),yHistory(:,plot_p),xHistory(:,plot_p))
 %             xlabel('x axis')
 %             ylabel('y axis')
 %             zlabel('z axis')
 %             title('Boris Method')
-            legend(num2str(time))
+%            legend(num2str(time))
           %  hold on
             
             % figure (3)

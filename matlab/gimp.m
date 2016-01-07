@@ -1,5 +1,5 @@
 clear variables
-
+close all
 % Load physical constants
 % SI Units throughout
 
@@ -13,33 +13,6 @@ init2
 
 [Tb_inz, dens_inz, RateCoeff_inz, State_inz] = ADF11(file_inz);
 [Tb_rcmb, dens_rcmb, RateCoeff_rcmb, State_rcmb] = ADF11(file_rcmb);
-
-% Create surface grid
-
-surf_y1D = linspace(yMin,yMax,nY);
-surf_z1D = linspace(zMin,zMax,nZ);
-surf_x2D = zeros(nY,nZ);
-surf_hist = zeros(nY,nZ);
-
-for k=1:nZ 
-    surf_x2D(:,k) = surf_slope * surf_y1D + surf_xincpt;
-end
-
-
-% Plot initial (zeroed) surface histogram
-
-if plotInitialSurface 
-    figure(1)
-   h1 =  surf(surf_z1D,surf_y1D,surf_x2D,surf_hist);
-
-            xlabel('z axis')
-            ylabel('y axis')
-            zlabel('x axis')
-            title('Surface')
-            axis equal
-            drawnow
-            set(gca,'Zdir','reverse')
-end
 
 % Create volume grid
 
@@ -57,9 +30,51 @@ dXv = xV_1D(2)-xV_1D(1);
 dYv = yV_1D(2)-yV_1D(1);
 dZv = zV_1D(2)-zV_1D(1);
 
+global xyz 
 xyz.x = xV_1D; % Create volume coordinate strucutre
 xyz.y = yV_1D;
 xyz.z = zV_1D;
+
+% Create surface grid
+
+surf_y1D = linspace(yMin,yMax,nY);
+surf_z1D = linspace(zMin,zMax,nZ);
+surf_x2D = zeros(nY,nZ);
+surf_hist = zeros(nY,nZ);
+
+
+for j=1:nY 
+    surf_x2D(j,:) =  (surf_z1D - surface_zIntercept) / surface_dz_dx;
+end
+
+% Plot initial (zeroed) surface histogram
+
+if plotInitialSurface 
+    figure(1)
+   h1 =  surf(surf_z1D,surf_y1D,surf_x2D,surf_hist);
+
+            xlabel('z axis')
+            ylabel('y axis')
+            zlabel('x axis')
+            title('Surface')
+            axis equal
+            drawnow
+            xlim([zMinV zMaxV])
+            ylim([yMinV yMaxV])
+            zlim([xMinV xMaxV])
+            az = 0;
+            el = 0;
+            view(az,el);
+            
+            set(gca,'Zdir','reverse')
+
+            az = 45;
+            el = 45;
+            view(az,el);
+            
+            
+end
+
 
 % Setup B field
 
@@ -87,7 +102,6 @@ temp_eV = zeros(nXv,nYv,nZv,nS);
 Ex = zeros(nXv,nYv,nZv); 
 Ey = zeros(nXv,nYv,nZv);
 Ez = zeros(nXv,nYv,nZv);
-
 
 Efield_3D.x = Ex; % Create E field structure
 Efield_3D.y = Ey;
@@ -142,7 +156,7 @@ end
 % Populate the impurity particle list
 
 for p=1:nP
-   particles(p) = particle;
+   particles(p) = particle_1d;
    
    particles(p).Z = impurity_Z;
    particles(p).amu = impurity_amu;
@@ -156,6 +170,7 @@ for p=1:nP
    particles(p).vz = sign(energy_eV_z_start) * sqrt(2*abs(energy_eV_z_start*Q)/(particles(p).amu*MI));
   
    particles(p).hitWall = 0;
+   particles(p).leftVolume = 0;
    
    [s1,s2,s3,s4,s5,s6] = RandStream.create('mrg32k3a','NumStreams',6,'Seed','shuffle'); %Include ,'Seed','shuffle' to get different values each time
 
@@ -175,65 +190,78 @@ min_m = impurity_amu * MI;
 max_wc = impurity_Z * Q * max_B / min_m;
 dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
 
-% Setup arrays for tracking particle histories
+% Setup arrays to store history
 
-%pre_history
-nT = max_nT;
+pre_history    
 
-
-% Main loop 
-t = cputime;
-for p=1:nP
+% Main loop
+tic
+parfor p=1:nP
     
     for n_steps = 1:nT
-            
-        time = n_steps * dt;
-         
-        [T_local, n_local] = particles(p).Tn_interp(xyz,temp_eV,density_m3,nS);
-        
 
+        % Ionization and Recombination performed once every
+        % ionization_nDtPerApply steps
+        
         if mod(n_steps, ionization_nDtPerApply) == 0
             n_ionization_apply = n_steps/ionization_nDtPerApply;
-            particles(p).ionization(ionization_nDtPerApply*dt,T_local,n_local,RateCoeff_inz,Tb_inz, dens_inz,State_inz,rand(particles(p).streams.ionization));
-            particles(p).recombination(ionization_nDtPerApply*dt,T_local,n_local,RateCoeff_rcmb,Tb_rcmb,dens_rcmb,State_rcmb,rand(particles(p).streams.recombination));
+            particles(p).ionization(ionization_nDtPerApply*dt,xyz,density_m3,temp_eV,nS,RateCoeff_inz,Tb_inz, dens_inz,State_inz,rand(particles(p).streams.ionization));
+            particles(p).recombination(ionization_nDtPerApply*dt,xyz,density_m3,temp_eV,nS,RateCoeff_rcmb,Tb_rcmb,dens_rcmb,State_rcmb,rand(particles(p).streams.recombination));
         end
-      
-        [nu_s, nu_d, nu_par,nu_E] = particles(p).slow(T_local,n_local,nS,background_amu,background_Z);
-  
-        [E_local, B_local] = particles(p).field_interp(xyz,Bfield,Efield_3D);
 
-        [e1, e2, e3] = particles(p).direction(B_local,E_local);
-        
-        particles(p).cfDiffusion(B_local,xyz,perDiffusionCoeff,dt,rand(particles(p).streams.perDiffusion));
-        
+        [nu_s, nu_d, nu_par,nu_E] = particles(p).slow(xyz,density_m3,temp_eV,nS,background_amu,background_Z);
+  
+
+        [e1, e2, e3] = particles(p).direction(xyz,Bfield);
+
+        particles(p).cfDiffusion(Bfield,xyz,perDiffusionCoeff,dt,rand(particles(p).streams.perDiffusion));
+
         diagnostics = particles(p).dv_coll(e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,rand(particles(p).streams.parVelocityDiffusion), rand(particles(p).streams.per1VelocityDiffusion), rand(particles(p).streams.per2VelocityDiffusion));
-        
+
         % Boris integrator
         
-        particles(p).boris(B_local,E_local,dt);
+        particles(p).boris(xyz,Efield_3D,Bfield,dt);
 
-%        history
+        %history
+
+        xHistory(n_steps,p) = particles(p).x;
+        yHistory(n_steps,p) = particles(p).y;
+        zHistory(n_steps,p) = particles(p).z;
+       
+
+        % find particles that returned to the wall
+
+        if particles(p).x > ( particles(p).z - surface_zIntercept ) / surface_dz_dx;
+           
+            particles(p).amu = 1e20;
+            particles(p).vx = 0;
+            particles(p).vy = 0;
+            particles(p).vz = 0;
+            particles(p).hitWall = 1;
+            
+        end
+        
+                % find particles that have exited the volume
+
+        if particles(p).x > xMaxV || particles(p).x < xMinV ...
+          || particles(p).y > yMax || particles(p).y < yMin ...
+          || particles(p).z > zMax || particles(p).z < zMin;
                 
-    
-    
-%    history_plot
-
-    % find particles that returned to the wall
-
-particlesWall = [];
-
-    if particles(p).x > surf_slope*particles(p).y + surf_incpt;%-dXv/10
-        particlesWall = [particlesWall particles(p)];
-        particles(p).amu = 1e20;
-        particles(p).vx = 0;
-        particles(p).vy = 0;
-        particles(p).vz = 0;
-        particles(p).hitWall = 1;
-    end
+           
+            particles(p).amu = 1e20;
+            particles(p).vx = 0;
+            particles(p).vy = 0;
+            particles(p).vz = 0;
+            particles(p).leftVolume = 1;
+            
+        end
 
     end
 end
-e = cputime-t
+toc
+history_plot
+
+
 
 surface_scatter
 

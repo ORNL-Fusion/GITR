@@ -1,4 +1,4 @@
-classdef particle < handle
+classdef particle_1d < handle
     
     properties
         x
@@ -279,7 +279,10 @@ classdef particle < handle
                    end
             
                    function cfDiffusion(this,Bfield,xyz,Dperp,dt,s3)
-                       persistent Dperp_pers;
+
+                       if this.hitWall == 0 && this.leftVolume == 0 && this.Z > 0
+                           
+                       
                        B_local = this.getB(xyz,Bfield);
                        B_unit = B_local/norm(B_local);
                        %%%%%%%%%%Calculation of direction perpendicular to B
@@ -293,25 +296,14 @@ classdef particle < handle
                        eperp(2) = eperp(2)/norme;
                        eperp(3) = eperp(3)/norme;
                        
-                       D_local = interpn(xyz.x,xyz.y,xyz.z,Dperp,this.x,this.y,this.z);
-                       if isnan(D_local) ==1
-                           D_local = 0;
-                       else
-                           Dperp_pers = D_local;
-                       end
+                       D_local = interpn(xyz.x,Dperp(:,1,1),this.x);
                        
-                       if this.hitWall == 1
-                           D_local = 0;
-                       end
-                       
-                       if this.Z == 0
-                           D_local = 0;
-                       end
+
                        
                        this.x = this.x + sqrt(6*D_local*dt)*eperp(1);
                        this.y = this.y + sqrt(6*D_local*dt)*eperp(2);
                        this.z = this.z + sqrt(6*D_local*dt)*eperp(3);
-                       
+                       end
                        
                    end
                    
@@ -357,26 +349,16 @@ classdef particle < handle
                            E_persistent = [0 0 0];
                        end
                        
-                       E(1) = interpn(xyz.x,xyz.y,xyz.z,Efield_3D.x,this.x,this.y,this.z,'linear',E_persistent(1));
-                       E(2) = interpn(xyz.x,xyz.y,xyz.z,Efield_3D.y,this.x,this.y,this.z,'linear',E_persistent(2));
-                       E(3) = interpn(xyz.x,xyz.y,xyz.z,Efield_3D.z,this.x,this.y,this.z,'linear',E_persistent(3));
+                       E(1) = interp1(xyz.x,Efield_3D.x(:,1,1),this.x,'linear',E_persistent(1));
+                       E(2) = 0;%interpn(xyz.x,xyz.y,xyz.z,Efield_3D.y,this.x,this.y,this.z,'linear',E_persistent(2));
+                       E(3) = 0;%interpn(xyz.x,xyz.y,xyz.z,Efield_3D.z,this.x,this.y,this.z,'linear',E_persistent(3));
                        
                        E_persistent = E;
                    end
                    
                    function B = getB(this,xyz,Bfield)
-                       persistent B_persistent;
-                       
-                       if isempty(B_persistent)
-                           B_persistent = [0 0 0];
-                       end
-                       
-                       B(1) = interpn(xyz.x,xyz.y,xyz.z,Bfield.x,this.x,this.y,this.z,'linear',B_persistent(1));
-                       B(2) = interpn(xyz.x,xyz.y,xyz.z,Bfield.y,this.x,this.y,this.z,'linear',B_persistent(2));
-                       B(3) = interpn(xyz.x,xyz.y,xyz.z,Bfield.z,this.x,this.y,this.z,'linear',B_persistent(3));
-                       
-                       B_persistent = B;
-                   end
+                       B = [Bfield.x(1,1,1) Bfield.y(1,1,1) Bfield.z(1,1,1)];
+                    end
                    
                    function T = getT(this,xyz,temp_eV,nS)
                        persistent T_persistent;
@@ -386,7 +368,7 @@ classdef particle < handle
                        end
                        
                        for s=1:nS
-                           T(s)=interpn(xyz.x,xyz.y,xyz.z,temp_eV(:,:,:,s),this.x,this.y,this.z,'linear',T_persistent(s));
+                           T(s)=interp1(xyz.x,temp_eV(:,1,1,s),this.x,'linear',T_persistent(s));
                        end
                        
                        T_persistent = T;
@@ -400,7 +382,7 @@ classdef particle < handle
                        end
                        
                        for s=1:nS
-                           n(s)=interpn(xyz.x,xyz.y,xyz.z,density_m3(:,:,:,s),this.x,this.y,this.z,'linear',n_persistent(s));
+                           n(s)=interpn(xyz.x,density_m3(:,1,1,s),this.x,'linear',n_persistent(s));
                        end
                        
                        n_persistent = n;

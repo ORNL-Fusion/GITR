@@ -1,16 +1,18 @@
 %input file for GITR0.0
-%xmin
-xMinV =-.01;
-% xmax
-xMaxV =0.0;
-% ymin
-yMin = -0.02;
-% ymax
-yMax = 0.02;
-% zmin
-zMin = -0.02;
-% zmax
-zMax = 0.02;
+
+% Volume definition
+
+xMinV =-0.005;
+xMaxV =+0.005;
+
+% Surface definition
+
+yMin = -0.005;
+yMax = 0.005;
+
+zMin = -0.005;
+zMax = 0.005;
+
 % Surface cells in y
 nY = 30;
 % Surface cells in z
@@ -26,11 +28,11 @@ sheathPotential = -60;
 % Potential decay length
 sheathWidth = 0.0001;
 % Bfieldx
-Bx_in = +0.1;
+Bx_in = +0.4;
 % Bfieldy
-By_in = +1.0;
+By_in = +0.1;
 % Bfieldz
-Bz_in = -0.3;
+Bz_in = -1.0;
 
 % Background species info
 
@@ -53,9 +55,9 @@ perDiffusionCoeff_in = 0.04;
 
 nP = 2;
 
-x_start = -0.004;
-y_start = -0.01;
-z_start = 0.0;
+x_start = -0.002;
+y_start = 0.00;
+z_start = 0.003;
 
 energy_eV_x_start = 1.0;
 energy_eV_y_start = 1.5;
@@ -64,11 +66,10 @@ energy_eV_z_start = -1.0;
 impurity_amu = 12.0;
 impurity_Z = 1.0;
 
-%Slope of parameterized surface (X = m*Y +b)
-surf_slope = -0.1;
-%Intercept of parameterized surface
-surf_incpt = -0.002;
+% Surface parameterization z = dz/dx * x + b
 
+surface_dz_dx = 5;
+surface_zIntercept = 0;
 
 %Ionization
 file_inz = 'ADAS/scd93_c.dat';
@@ -79,8 +80,7 @@ file_rcmb = 'ADAS/acd93_c.dat';
 
 nPtsPerGyroOrbit = 1e3;
 ionization_nDtPerApply = 100;
-%dt = 1e-9;
-max_nT = 3000;
+nT = 3000;
 
 % Plots
 
