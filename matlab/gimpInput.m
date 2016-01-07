@@ -86,3 +86,8 @@ nT = 3000;
 
 plotInitialSurface = 1;
 plot1DProfileSlices = 1;
+
+% Interpolator Dimensionality Selection
+
+selectedInterpolator = @gimpInterp1D;
+%selectedInterpolator = @gimpInterp3D;

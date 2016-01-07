@@ -7,7 +7,7 @@ constants
 
 % Load run input file
 
-init2
+gimpInput
 
 % Load ADAS data (cross sections, ionization rates, etc)
 
@@ -30,7 +30,6 @@ dXv = xV_1D(2)-xV_1D(1);
 dYv = yV_1D(2)-yV_1D(1);
 dZv = zV_1D(2)-zV_1D(1);
 
-global xyz 
 xyz.x = xV_1D; % Create volume coordinate strucutre
 xyz.y = yV_1D;
 xyz.z = zV_1D;
@@ -86,9 +85,9 @@ Bx(:) = Bx_in;
 By(:) = By_in;
 Bz(:) = Bz_in;
 
-Bfield.x = Bx; % Create background B strucutre
-Bfield.y = By;
-Bfield.z = Bz;
+Bfield3D.x = Bx; % Create background B strucutre
+Bfield3D.y = By;
+Bfield3D.z = Bz;
 
 BMag = sqrt( Bx.^2 + By.^2 + Bz.^2 );
 
@@ -103,9 +102,17 @@ Ex = zeros(nXv,nYv,nZv);
 Ey = zeros(nXv,nYv,nZv);
 Ez = zeros(nXv,nYv,nZv);
 
-Efield_3D.x = Ex; % Create E field structure
-Efield_3D.y = Ey;
-Efield_3D.z = Ez;
+Efield3D.x = Ex; % Create E field structure
+Efield3D.y = Ey;
+Efield3D.z = Ez;
+
+% load interpolators
+
+%interpolators
+
+%interpolator1D = @g_interp1D;
+%interpolator3D = @g_interp3D;
+
 
 
 perDiffusionCoeff = zeros(nXv,nYv,nZv);
@@ -122,15 +129,15 @@ for i=1:nXv
             perDiffusionCoeff(i,j,k) = perDiffusionCoeff_in;
             
             if i>1 && i<nXv
-                Efield_3D.x(i,j,k) = -(V_1D(i+1)-V_1D(i-1)) / (2*dXv);
+                Efield3D.x(i,j,k) = -(V_1D(i+1)-V_1D(i-1)) / (2*dXv);
             elseif i==1
-                Efield_3D.x(i,j,k) = -(-1*V_1D(i)+V_1D(i+1)) / dXv;
+                Efield3D.x(i,j,k) = -(-1*V_1D(i)+V_1D(i+1)) / dXv;
             elseif i==nXv
-                Efield_3D.x(i,j,k) = -(-V_1D(i-1)+V_1D(i)) / dXv;
+                Efield3D.x(i,j,k) = -(-V_1D(i-1)+V_1D(i)) / dXv;
             end
             
-            Efield_3D.y(i,j,k) = 0;
-            Efield_3D.z(i,j,k) = 0;
+            Efield3D.y(i,j,k) = 0;
+            Efield3D.z(i,j,k) = 0;
             
         end
     end
@@ -156,7 +163,7 @@ end
 % Populate the impurity particle list
 
 for p=1:nP
-   particles(p) = particle_1d;
+   particles(p) = particle;
    
    particles(p).Z = impurity_Z;
    particles(p).amu = impurity_amu;
@@ -212,15 +219,15 @@ parfor p=1:nP
         [nu_s, nu_d, nu_par,nu_E] = particles(p).slow(xyz,density_m3,temp_eV,nS,background_amu,background_Z);
   
 
-        [e1, e2, e3] = particles(p).direction(xyz,Bfield);
+        [e1, e2, e3] = particles(p).direction(xyz,Bfield3D);
 
-        particles(p).cfDiffusion(Bfield,xyz,perDiffusionCoeff,dt,rand(particles(p).streams.perDiffusion));
+        particles(p).cfDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,rand(particles(p).streams.perDiffusion));
 
         diagnostics = particles(p).dv_coll(e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,rand(particles(p).streams.parVelocityDiffusion), rand(particles(p).streams.per1VelocityDiffusion), rand(particles(p).streams.per2VelocityDiffusion));
 
         % Boris integrator
         
-        particles(p).boris(xyz,Efield_3D,Bfield,dt);
+        particles(p).boris(xyz,Efield3D,Bfield3D,dt,selectedInterpolator);
 
         %history
 

@@ -7,6 +7,12 @@ classdef particle < handle
         vx
         vy
         vz
+        xPrevious
+        yPrevious
+        zPrevious
+        vxPrevious
+        vyPrevious
+        vzPrevious
         Z
         amu
         hitWall
@@ -40,11 +46,16 @@ classdef particle < handle
 
 
 
-        function  boris(this,xyz,Efield_3D,Bfield,dt)
+        function  boris(this,xyz,Efield3D,Bfield3D,dt,interpolatorHandle)
+            
             constants
 
-            B = this.getB(xyz,Bfield);
-            E = this.getE(xyz,Efield_3D);
+            %B = this.getB(fieldPosition,Bfield3D);
+            %E = this.getE(fieldPosition,Efield3D);
+            
+            E = interpolatorHandle(this,xyz,Efield3D);
+            B = interpolatorHandle(this,xyz,Bfield3D);
+            
             BMagPart =norm(B);
             
             %%Constants used in Boris method Lorentz Integrator
