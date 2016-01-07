@@ -49,9 +49,6 @@ classdef particle < handle
         function  boris(this,xyz,Efield3D,Bfield3D,dt,interpolatorHandle)
             
             constants
-
-            %B = this.getB(fieldPosition,Bfield3D);
-            %E = this.getE(fieldPosition,Efield3D);
             
             E = interpolatorHandle(this,xyz,Efield3D);
             B = interpolatorHandle(this,xyz,Bfield3D);
@@ -141,16 +138,24 @@ classdef particle < handle
             end
         
         end
-        function  ionization(this,dt,xyz,density_m3,temp_eV,nS,RateCoeff,T_b,dens_b,State,r1)
+        function  ionization(this,dt,xyz,density_m3,temp_eV,nS,RateCoeff,T_b,dens_b,State,r1,interpolatorHandle)
             max_state = max(State(:));
             if this.Z < max_state
             constants
             
             
             minT = min(T_b(:));
-            T_local = this.getT(xyz,temp_eV,nS);
-            n_local = this.getn(xyz,density_m3,nS);
+            
+            T_local = zeros(nS);
+            n_local = zeros(nS);
+            
+            for s=1:nS
+                T_local(s) = interpolatorHandle(this,xyz,temp_eV(:,:,:,s));
+                n_local(s) = interpolatorHandle(this,xyz,density_m3(:,:,:,s));
+            end
+            
             T=T_local(1);
+            
             if log10(T) > minT
                 n=n_local(1);
                 Coeff = interpn(dens_b,T_b,RateCoeff(:,:,this.Z+1),log10(n/1e6),log10(T));
@@ -170,12 +175,17 @@ classdef particle < handle
             end
         end
         
-        function recombination(this,dt,xyz,density_m3,temp_eV,nS,RecombCoeff,T_b,dens_b,State,r2)
+        function recombination(this,dt,xyz,density_m3,temp_eV,nS,RecombCoeff,T_b,dens_b,State,r2,interpolatorHandle)
             
             constants
             
-            T_local = this.getT(xyz,temp_eV,nS);
-            n_local = this.getn(xyz,density_m3,nS);
+            T_local = zeros(nS);
+            n_local = zeros(nS);
+            
+            for s=1:nS
+                T_local(s) = interpolatorHandle(this,xyz,temp_eV(:,:,:,s));
+                n_local(s) = interpolatorHandle(this,xyz,density_m3(:,:,:,s));
+            end
             
             minT = min(T_b);
             minN = min(dens_b);
@@ -197,13 +207,19 @@ classdef particle < handle
             end
         end
         
-        function [nu_s, nu_d, nu_par, nu_E] = slow(this,xyz,density_m3,temp_eV,nS,amu,Z)
+        function [nu_s, nu_d, nu_par, nu_E] = slow(this,xyz,density_m3,temp_eV,nS,amu,Z,interpolatorHandle)
 
             constants
             persistent v_norm_persistent;
             
-            T_local = this.getT(xyz,temp_eV,nS);
-            n_local = this.getn(xyz,density_m3,nS);
+            T_local = zeros(nS);
+            n_local = zeros(nS);
+            
+            for s=1:nS
+                T_local(s) = interpolatorHandle(this,xyz,temp_eV(:,:,:,s));
+                n_local(s) = interpolatorHandle(this,xyz,density_m3(:,:,:,s));
+            end
+            
             v = [this.vx this.vy this.vz];
             
             flow_v = [0 0 0]; %This will need to be calculated or interpolated in the future
@@ -251,7 +267,7 @@ classdef particle < handle
 
 
             end
-                   function [e1 e2 e3] = direction(this,xyz,Bfield)
+                   function [e1 e2 e3] = direction(this,xyz,Bfield,interpolatorHandle)
                        
                         
                        persistent f1;
@@ -260,7 +276,7 @@ classdef particle < handle
                         
                        v = [this.vx this.vy this.vz];
 
-                       B_local = this.getB(xyz,Bfield);
+                       B_local = interpolatorHandle(this,xyz,Bfield);
 
                        B_unit = B_local/norm(B_local);
                        
@@ -289,9 +305,11 @@ classdef particle < handle
                       
                    end
             
-                   function cfDiffusion(this,Bfield,xyz,Dperp,dt,s3)
+                   function cfDiffusion(this,Bfield,xyz,Dperp,dt,s3,interpolatorHandle)
                        persistent Dperp_pers;
-                       B_local = this.getB(xyz,Bfield);
+                       
+                       B_local = interpolatorHandle(this,xyz,Bfield);
+                       
                        B_unit = B_local/norm(B_local);
                        %%%%%%%%%%Calculation of direction perpendicular to B
                        
@@ -359,62 +377,6 @@ classdef particle < handle
                        dv_collisions = v_collisions - v_norm;
                        
                        diagnostics = [T dv_collisions norm_slow norm_par norm_parallel norm_perp1 norm_perp2];
-                   end
-                   
-                   function E = getE(this,xyz,Efield_3D)
-                       persistent E_persistent;
-                       
-                       if isempty(E_persistent)
-                           E_persistent = [0 0 0];
-                       end
-                       
-                       E(1) = interpn(xyz.x,xyz.y,xyz.z,Efield_3D.x,this.x,this.y,this.z,'linear',E_persistent(1));
-                       E(2) = interpn(xyz.x,xyz.y,xyz.z,Efield_3D.y,this.x,this.y,this.z,'linear',E_persistent(2));
-                       E(3) = interpn(xyz.x,xyz.y,xyz.z,Efield_3D.z,this.x,this.y,this.z,'linear',E_persistent(3));
-                       
-                       E_persistent = E;
-                   end
-                   
-                   function B = getB(this,xyz,Bfield)
-                       persistent B_persistent;
-                       
-                       if isempty(B_persistent)
-                           B_persistent = [0 0 0];
-                       end
-                       
-                       B(1) = interpn(xyz.x,xyz.y,xyz.z,Bfield.x,this.x,this.y,this.z,'linear',B_persistent(1));
-                       B(2) = interpn(xyz.x,xyz.y,xyz.z,Bfield.y,this.x,this.y,this.z,'linear',B_persistent(2));
-                       B(3) = interpn(xyz.x,xyz.y,xyz.z,Bfield.z,this.x,this.y,this.z,'linear',B_persistent(3));
-                       
-                       B_persistent = B;
-                   end
-                   
-                   function T = getT(this,xyz,temp_eV,nS)
-                       persistent T_persistent;
-                       
-                       if isempty(T_persistent)
-                           T_persistent = zeros(nS,1);
-                       end
-                       
-                       for s=1:nS
-                           T(s)=interpn(xyz.x,xyz.y,xyz.z,temp_eV(:,:,:,s),this.x,this.y,this.z,'linear',T_persistent(s));
-                       end
-                       
-                       T_persistent = T;
-                   end
-                   
-                   function n = getn(this,xyz,density_m3,nS)
-                       persistent n_persistent;
-                       
-                       if isempty(n_persistent)
-                           n_persistent = zeros(nS,1);
-                       end
-                       
-                       for s=1:nS
-                           n(s)=interpn(xyz.x,xyz.y,xyz.z,density_m3(:,:,:,s),this.x,this.y,this.z,'linear',n_persistent(s));
-                       end
-                       
-                       n_persistent = n;
                    end
                    
     end

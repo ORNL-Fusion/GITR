@@ -13,16 +13,16 @@ yMax = 0.005;
 zMin = -0.005;
 zMax = 0.005;
 
-% Surface cells in y
+% Surface grid
+
 nY = 30;
-% Surface cells in z
 nZ = 40;
-% Volume cells in x
-nXv = 100;
-% Volume cells in y
+
+% Volume grid
+nXv = 50;
 nYv = 80;
-% Volume cells in z
 nZv = 50;
+
 % Sheath potential
 sheathPotential = -60;
 % Potential decay length
@@ -53,7 +53,7 @@ perDiffusionCoeff_in = 0.04;
 
 % Impurity particles 
 
-nP = 24;
+nP = 2;
 
 x_start = -0.002;
 y_start = 0.00;
@@ -80,7 +80,7 @@ file_rcmb = 'ADAS/acd93_c.dat';
 
 nPtsPerGyroOrbit = 1e3;
 ionization_nDtPerApply = 100;
-nT = 300;
+nT = 3000;
 
 % Plots
 
@@ -89,5 +89,7 @@ plot1DProfileSlices = 1;
 
 % Interpolator Dimensionality Selection
 
-%selectedInterpolator = @gimpInterp1D;
-selectedInterpolator = @gimpInterp3D;
+selectedVectorInterpolator = @gimpInterpVector1D;
+selectedScalarInterpolator = @gimpInterpScalar1D;
+
+%selectedInterpolator = @gimpInterp3D;

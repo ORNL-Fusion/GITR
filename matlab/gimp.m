@@ -189,7 +189,7 @@ pre_history
 % Main loop
 
 tic
-parfor p=1:nP
+for p=1:nP
     
     for n_steps = 1:nT
 
@@ -198,21 +198,21 @@ parfor p=1:nP
         
         if mod(n_steps, ionization_nDtPerApply) == 0
             n_ionization_apply = n_steps/ionization_nDtPerApply;
-            particles(p).ionization(ionization_nDtPerApply*dt,xyz,density_m3,temp_eV,nS,RateCoeff_inz,Tb_inz, dens_inz,State_inz,rand(particles(p).streams.ionization));
-            particles(p).recombination(ionization_nDtPerApply*dt,xyz,density_m3,temp_eV,nS,RateCoeff_rcmb,Tb_rcmb,dens_rcmb,State_rcmb,rand(particles(p).streams.recombination));
+            particles(p).ionization(ionization_nDtPerApply*dt,xyz,density_m3,temp_eV,nS,RateCoeff_inz,Tb_inz, dens_inz,State_inz,rand(particles(p).streams.ionization),selectedScalarInterpolator);
+            particles(p).recombination(ionization_nDtPerApply*dt,xyz,density_m3,temp_eV,nS,RateCoeff_rcmb,Tb_rcmb,dens_rcmb,State_rcmb,rand(particles(p).streams.recombination),selectedScalarInterpolator);
         end
 
-        [nu_s, nu_d, nu_par,nu_E] = particles(p).slow(xyz,density_m3,temp_eV,nS,background_amu,background_Z);
+        [nu_s, nu_d, nu_par,nu_E] = particles(p).slow(xyz,density_m3,temp_eV,nS,background_amu,background_Z,selectedScalarInterpolator);
   
-        [e1, e2, e3] = particles(p).direction(xyz,Bfield3D);
+        [e1, e2, e3] = particles(p).direction(xyz,Bfield3D,selectedVectorInterpolator);
 
-        particles(p).cfDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,rand(particles(p).streams.perDiffusion));
+        particles(p).cfDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,rand(particles(p).streams.perDiffusion),selectedVectorInterpolator);
 
         diagnostics = particles(p).dv_coll(e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,rand(particles(p).streams.parVelocityDiffusion), rand(particles(p).streams.per1VelocityDiffusion), rand(particles(p).streams.per2VelocityDiffusion));
 
         % Boris integrator
         
-        particles(p).boris(xyz,Efield3D,Bfield3D,dt,selectedInterpolator);
+        particles(p).boris(xyz,Efield3D,Bfield3D,dt,selectedVectorInterpolator);
 
         %history
 
