@@ -53,11 +53,11 @@ perDiffusionCoeff_in = 0.04;
 
 % Impurity particles 
 
-nP = 2;
+nP = 24;
 
 x_start = -0.002;
 y_start = 0.00;
-z_start = 0.003;
+z_start = 0.00;
 
 energy_eV_x_start = 1.0;
 energy_eV_y_start = 1.5;
@@ -80,7 +80,7 @@ file_rcmb = 'ADAS/acd93_c.dat';
 
 nPtsPerGyroOrbit = 1e3;
 ionization_nDtPerApply = 100;
-nT = 3000;
+nT = 300;
 
 % Plots
 
@@ -89,5 +89,5 @@ plot1DProfileSlices = 1;
 
 % Interpolator Dimensionality Selection
 
-selectedInterpolator = @gimpInterp1D;
-%selectedInterpolator = @gimpInterp3D;
+%selectedInterpolator = @gimpInterp1D;
+selectedInterpolator = @gimpInterp3D;

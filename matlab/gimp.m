@@ -1,7 +1,7 @@
 clear variables
 close all
+
 % Load physical constants
-% SI Units throughout
 
 constants
 
@@ -50,30 +50,24 @@ end
 
 if plotInitialSurface 
     figure(1)
-   h1 =  surf(surf_z1D,surf_y1D,surf_x2D,surf_hist);
-
-            xlabel('z axis')
-            ylabel('y axis')
-            zlabel('x axis')
-            title('Surface')
-            axis equal
-            drawnow
-            xlim([zMinV zMaxV])
-            ylim([yMinV yMaxV])
-            zlim([xMinV xMaxV])
-            az = 0;
-            el = 0;
-            view(az,el);
-            
-            set(gca,'Zdir','reverse')
-
-            az = 45;
-            el = 45;
-            view(az,el);
-            
-            
+    h1 =  surf(surf_z1D,surf_y1D,surf_x2D,surf_hist);
+    xlabel('z axis')
+    ylabel('y axis')
+    zlabel('x axis')
+    title('Surface')
+    axis equal
+    drawnow
+    xlim([zMinV zMaxV])
+    ylim([yMinV yMaxV])
+    zlim([xMinV xMaxV])
+    az = 0;
+    el = 0;
+    view(az,el);
+    set(gca,'Zdir','reverse')
+    az = 45;
+    el = 45;
+    view(az,el);
 end
-
 
 % Setup B field
 
@@ -105,15 +99,6 @@ Ez = zeros(nXv,nYv,nZv);
 Efield3D.x = Ex; % Create E field structure
 Efield3D.y = Ey;
 Efield3D.z = Ez;
-
-% load interpolators
-
-%interpolators
-
-%interpolator1D = @g_interp1D;
-%interpolator3D = @g_interp3D;
-
-
 
 perDiffusionCoeff = zeros(nXv,nYv,nZv);
 
@@ -202,6 +187,7 @@ dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
 pre_history    
 
 % Main loop
+
 tic
 parfor p=1:nP
     
@@ -218,7 +204,6 @@ parfor p=1:nP
 
         [nu_s, nu_d, nu_par,nu_E] = particles(p).slow(xyz,density_m3,temp_eV,nS,background_amu,background_Z);
   
-
         [e1, e2, e3] = particles(p).direction(xyz,Bfield3D);
 
         particles(p).cfDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,rand(particles(p).streams.perDiffusion));
@@ -235,7 +220,6 @@ parfor p=1:nP
         yHistory(n_steps,p) = particles(p).y;
         zHistory(n_steps,p) = particles(p).z;
        
-
         % find particles that returned to the wall
 
         if particles(p).x > ( particles(p).z - surface_zIntercept ) / surface_dz_dx;
@@ -248,12 +232,11 @@ parfor p=1:nP
             
         end
         
-                % find particles that have exited the volume
+        % find particles that have exited the volume
 
         if particles(p).x > xMaxV || particles(p).x < xMinV ...
           || particles(p).y > yMax || particles(p).y < yMin ...
-          || particles(p).z > zMax || particles(p).z < zMin;
-                
+          || particles(p).z > zMax || particles(p).z < zMin;           
            
             particles(p).amu = 1e20;
             particles(p).vx = 0;
@@ -262,13 +245,9 @@ parfor p=1:nP
             particles(p).leftVolume = 1;
             
         end
-
     end
 end
 toc
+
 history_plot
-
-
-
 surface_scatter
-
