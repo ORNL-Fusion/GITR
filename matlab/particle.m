@@ -46,20 +46,23 @@ classdef particle < handle
 
 
 
-        function  boris(this,xyz,Efield3D,Bfield3D,dt,interpolatorHandle)
+        function borisMove(this,xyz,Efield3D,Bfield3D,dt,interpolatorHandle)
             
-            constants
+            ME = 9.10938356e-31;
+            MI = 1.6737236e-27;
+            Q = 1.60217662e-19;
+            EPS0 = 8.854187e-12;
             
             E = interpolatorHandle(this,xyz,Efield3D);
             B = interpolatorHandle(this,xyz,Bfield3D);
             
             BMagPart =norm(B);
             
-            %%Constants used in Boris method Lorentz Integrator
+            % Constants used in Boris method Lorentz Integrator
             q_prime = this.Z*Q/(this.amu*MI)*dt/2;
             coeff = 2*q_prime/(1+(q_prime*BMagPart).^2);
             
-            %Boris Method Lorentz Integrator
+            % Boris Method Lorentz Integrator
             v = [this.vx this.vy this.vz];
             r = [this.x this.y this.z];
             
@@ -79,10 +82,15 @@ classdef particle < handle
             this.vx = v(1);
             this.vy = v(2);
             this.vz = v(3);
+            
         end
         
         function [T Yr] = rk4(part,xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,end_t,dt,steps)
-            constants
+            
+            ME = 9.10938356e-31;
+            MI = 1.6737236e-27;
+            Q = 1.60217662e-19;
+            EPS0 = 8.854187e-12;
 
             m = MI*part.amu;
             q_m = part.Z*Q/m;
@@ -138,46 +146,63 @@ classdef particle < handle
             end
         
         end
-        function  ionization(this,dt,xyz,density_m3,temp_eV,nS,RateCoeff,T_b,dens_b,State,r1,interpolatorHandle)
-            max_state = max(State(:));
-            if this.Z < max_state
-            constants
+        
+        function ionization(this,dt,xyz,density_m3,temp_eV,...
+                IonizationRateCoeff,IonizationTemp,IonizationDensity,...
+                ChargeState,interpolatorHandle)
             
+            ME = 9.10938356e-31;
+            MI = 1.6737236e-27;
+            Q = 1.60217662e-19;
+            EPS0 = 8.854187e-12;
             
-            minT = min(T_b(:));
+            if this.Z < max(ChargeState(:));
             
-            T_local = zeros(nS);
-            n_local = zeros(nS);
-            
-            for s=1:nS
-                T_local(s) = interpolatorHandle(this,xyz,temp_eV(:,:,:,s));
-                n_local(s) = interpolatorHandle(this,xyz,density_m3(:,:,:,s));
-            end
-            
-            T=T_local(1);
-            
-            if log10(T) > minT
-                n=n_local(1);
-                Coeff = interpn(dens_b,T_b,RateCoeff(:,:,this.Z+1),log10(n/1e6),log10(T));
+                r1 = rand(this.streams.ionization);
                 
-                if ( isnan(Coeff) )
-                    error('Ionization interpolation out of range')
+                minT = min(IonizationTemp(:));
+                
+                nS = size(density_m3,4);
+                
+                T_local = zeros(nS);
+                n_local = zeros(nS);
+                
+                for s=1:nS
+                    T_local(s) = interpolatorHandle(this,xyz,temp_eV(:,:,:,s));
+                    n_local(s) = interpolatorHandle(this,xyz,density_m3(:,:,:,s));
                 end
                 
-                tion = 1/(10^Coeff*n/1E6);
-                P1 = 1-exp(-dt/tion);
+                T=T_local(1);
                 
-               
-                if r1 <= P1
-                    this.Z = this.Z+1;
+                if log10(T) > minT
+                    n=n_local(1);
+                    
+                    Coeff = interpn(IonizationDensity,IonizationTemp,IonizationRateCoeff(:,:,this.Z+1),log10(n/1e6),log10(T),'linear',0);
+                    
+                    if ( isnan(Coeff) )
+                        error('Ionization interpolation out of range')
+                    end
+                    
+                    tion = 1/(10^Coeff*n/1E6);
+                    P1 = 1-exp(-dt/tion);
+                    
+                    if r1 <= P1
+                        this.Z = this.Z+1;
+                    end
                 end
-            end
             end
         end
         
-        function recombination(this,dt,xyz,density_m3,temp_eV,nS,RecombCoeff,T_b,dens_b,State,r2,interpolatorHandle)
+        function recombination(this,dt,xyz,density_m3,temp_eV,...
+                RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
+                ChargeState,interpolatorHandle)
             
-            constants
+            ME = 9.10938356e-31;
+            MI = 1.6737236e-27;
+            Q = 1.60217662e-19;
+            EPS0 = 8.854187e-12;
+            
+            nS = size(density_m3,4);
             
             T_local = zeros(nS);
             n_local = zeros(nS);
@@ -187,30 +212,37 @@ classdef particle < handle
                 n_local(s) = interpolatorHandle(this,xyz,density_m3(:,:,:,s));
             end
             
-            minT = min(T_b);
-            minN = min(dens_b);
+            minT = min(RecombinationTemp);
+            minN = min(RecombinationDensity);
             T=T_local(1);
             n=n_local(1);
             T = log10(T);
             n = log10(n/1e6);
             if (T > minT) && (n > minN) && this.Z >0
-
-                Coeff = interpn(dens_b,T_b,RecombCoeff(:,:,this.Z),n,T);
+                
+                r2 = rand(this.streams.recombination);
+                
+                Coeff = interpn(RecombinationDensity,RecombinationTemp,RecombinationRateCoeff(:,:,this.Z),n,T);
                 
                 tion = 1/(10^Coeff*10^n);
                 P1 = 1-exp(-dt/tion);
-                
-                
+      
                 if r2 <= P1
                     this.Z = this.Z-1;
                 end
             end
         end
         
-        function [nu_s, nu_d, nu_par, nu_E] = slow(this,xyz,density_m3,temp_eV,nS,amu,Z,interpolatorHandle)
+        function [nu_s, nu_d, nu_par, nu_E] = slow(this,xyz,density_m3,temp_eV,amu,Z,interpolatorHandle)
 
-            constants
-            persistent v_norm_persistent;
+            ME = 9.10938356e-31;
+            MI = 1.6737236e-27;
+            Q = 1.60217662e-19;
+            EPS0 = 8.854187e-12;
+            
+            %persistent v_norm_persistent;
+            
+            nS = size(density_m3,4);
             
             T_local = zeros(nS);
             n_local = zeros(nS);
@@ -225,11 +257,11 @@ classdef particle < handle
             flow_v = [0 0 0]; %This will need to be calculated or interpolated in the future
             v_relative = v - flow_v;
             v_norm = norm(v_relative);
-            if v_norm == 0
-                v_norm = v_norm_persistent;
-            else
-                v_norm_persistent = v_norm;
-            end
+%             if v_norm == 0
+%                 v_norm = v_norm_persistent;
+%             else
+%                 v_norm_persistent = v_norm;
+%             end
             nu_s = 0;
             nu_d = 0;
             nu_par = 0;
@@ -240,8 +272,8 @@ classdef particle < handle
             for j=1:nS
                 
                 zbackground = Z(j);
-                
                 mbackground = amu(j)*MI;
+                
                 T = T_local(j);
                 n = n_local(j);
                 
@@ -261,13 +293,12 @@ classdef particle < handle
                 nu_par = nu_par + psi/x*nu_0;
                 nu_E = nu_E+2*(m/mbackground*psi - psi_prime)*nu_0;
 
-
             end
           
 
 
             end
-                   function [e1 e2 e3] = direction(this,xyz,Bfield,interpolatorHandle)
+                   function [e1, e2, e3] = direction(this,xyz,Bfield,interpolatorHandle)
                        
                         
                        persistent f1;
@@ -304,53 +335,54 @@ classdef particle < handle
                        end
                       
                    end
-            
-                   function cfDiffusion(this,Bfield,xyz,Dperp,dt,s3,interpolatorHandle)
-                       persistent Dperp_pers;
-                       
-                       B_local = interpolatorHandle(this,xyz,Bfield);
-                       
-                       B_unit = B_local/norm(B_local);
-                       %%%%%%%%%%Calculation of direction perpendicular to B
-                       
-                       phi_rnd = 2*pi*s3;
-                       eperp(1) = cos(phi_rnd);
-                       eperp(2) = sin(phi_rnd);
-                       eperp(3) = (-eperp(1)*B_unit(1) - eperp(2)*B_unit(2))/B_unit(3);
-                       norme = norm([eperp(1) eperp(2) eperp(3)]);
-                       eperp(1) = eperp(1)/norme;
-                       eperp(2) = eperp(2)/norme;
-                       eperp(3) = eperp(3)/norme;
-                       
-                       D_local = interpn(xyz.x,xyz.y,xyz.z,Dperp,this.x,this.y,this.z);
-                       if isnan(D_local) ==1
-                           D_local = 0;
-                       else
-                           Dperp_pers = D_local;
+                   
+                   function CrossFieldDiffusion(this,Bfield,xyz,Dperp,dt,ScalarInterpolatorHandle,VectorInterpolatorHandle)
+
+                       if this.hitWall == 0 && this.leftVolume == 0 && this.Z > 0
+                           
+                           s3 = rand(this.streams.perDiffusion);
+                           
+                           B_local = VectorInterpolatorHandle(this,xyz,Bfield);
+                           B_unit = B_local/norm(B_local);
+                           
+                           % Calculation of direction perpendicular to B
+                           
+                           phi_rnd = 2*pi*s3;
+                           eperp(1) = cos(phi_rnd);
+                           eperp(2) = sin(phi_rnd);
+                           eperp(3) = (-eperp(1)*B_unit(1) - eperp(2)*B_unit(2))/B_unit(3);
+                           norme = norm([eperp(1) eperp(2) eperp(3)]);
+                           eperp(1) = eperp(1)/norme;
+                           eperp(2) = eperp(2)/norme;
+                           eperp(3) = eperp(3)/norme;
+                      
+                           D_local = ScalarInterpolatorHandle(this,xyz,Dperp);
+                           
+                           this.x = this.x + sqrt(6*D_local*dt)*eperp(1);
+                           this.y = this.y + sqrt(6*D_local*dt)*eperp(2);
+                           this.z = this.z + sqrt(6*D_local*dt)*eperp(3);
                        end
-                       
-                       if this.hitWall == 1
-                           D_local = 0;
-                       end
-                       
-                       if this.Z == 0
-                           D_local = 0;
-                       end
-                       
-                       this.x = this.x + sqrt(6*D_local*dt)*eperp(1);
-                       this.y = this.y + sqrt(6*D_local*dt)*eperp(2);
-                       this.z = this.z + sqrt(6*D_local*dt)*eperp(3);
-                       
                        
                    end
                    
-                   function diagnostics = dv_coll(p, e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,rand_parVelocityDiffusion,rand_per1VelocityDiffusion,rand_per2VelocityDiffusion)
-                       constants
+                   function diagnostics = CoulombCollisions(this,xyz,Bfield,density_m3,temp_eV,...
+                           background_amu,background_Z,dt,selectedVectorInterpolator,selectedScalarInterpolator)
                        
-                       v_norm = norm([p.vx p.vy p.vz]);
-                       T = v_norm^2*p.amu*MI*pi/8/Q;
+                       global ME MI Q EPS0;
+                       
+                       rand_parVelocityDiffusion = rand(this.streams.parVelocityDiffusion);
+                       rand_per1VelocityDiffusion = rand(this.streams.per1VelocityDiffusion);
+                       rand_per2VelocityDiffusion = rand(this.streams.per2VelocityDiffusion);
+                       
+                       [e1, e2, e3] = this.direction(xyz,Bfield,selectedVectorInterpolator);
+                       
+                       [nu_s, nu_d, nu_par, nu_E] = this.slow(xyz,density_m3,temp_eV,...
+                           background_amu,background_Z,selectedScalarInterpolator);
 
-                       dv_slow =  e1*(nu_s*dt);
+                       v_norm = norm([this.vx this.vy this.vz]);
+                       T = v_norm^2*this.amu*MI*pi/8/Q;
+
+                       dv_slow = e1*(nu_s*dt);
                        norm_slow = norm(v_norm*dv_slow);
                        
                        plus_minus1 = round(rand_parVelocityDiffusion)*2-1;
@@ -370,13 +402,42 @@ classdef particle < handle
                      
                        ez = (1+nu_s*dt+ plus_minus1*sqrt(nu_par*dt) );%
                        v_collisions = v_norm*(1-nu_E/2*dt)*(e3*ez + dv_perp1 + dv_perp2); %+ dv_perp1 + dv_perp2
-                       p.vx = v_collisions(1);
-                       p.vy = v_collisions(2);
-                       p.vz = v_collisions(3);
+                       this.vx = v_collisions(1);
+                       this.vy = v_collisions(2);
+                       this.vz = v_collisions(3);
                        
                        dv_collisions = v_collisions - v_norm;
                        
                        diagnostics = [T dv_collisions norm_slow norm_par norm_parallel norm_perp1 norm_perp2];
+                   end
+                   
+                   function HitWallCheck(this,surface_zIntercept,surface_dz_dx)
+                       
+                       if this.x > ( this.z - surface_zIntercept ) / surface_dz_dx;
+                           
+                           this.amu = 1e20;
+                           this.vx = 0;
+                           this.vy = 0;
+                           this.vz = 0;
+                           this.hitWall = 1;
+                           
+                       end
+                       
+                   end
+        
+                   function OutOfDomainCheck(this,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV)
+                       
+                       if this.x > xMaxV || this.x < xMinV ...
+                               || this.y > yMaxV || this.y < yMinV ...
+                               || this.z > zMaxV || this.z < zMinV;
+                           
+                           this.amu = 1e20;
+                           this.vx = 0;
+                           this.vy = 0;
+                           this.vz = 0;
+                           this.leftVolume = 1;
+                           
+                       end
                    end
                    
     end

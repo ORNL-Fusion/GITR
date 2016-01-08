@@ -11,8 +11,8 @@ gimpInput
 
 % Load ADAS data (cross sections, ionization rates, etc)
 
-[Tb_inz, dens_inz, RateCoeff_inz, State_inz] = ADF11(file_inz);
-[Tb_rcmb, dens_rcmb, RateCoeff_rcmb, State_rcmb] = ADF11(file_rcmb);
+[IonizationTemp, IonizationDensity, IonizationRateCoeff, IonizationChargeState] = ADF11(file_inz);
+[RecombinationTemp, RecombinationDensity, RecombinationRateCoeff, RecombinationChargeState] = ADF11(file_rcmb);
 
 % Create volume grid
 
@@ -87,7 +87,7 @@ BMag = sqrt( Bx.^2 + By.^2 + Bz.^2 );
 
 % Setup profiles
 
-[n_ nS] = size(background_amu);
+[n_, nS] = size(background_amu);
 
 density_m3 = zeros(nXv,nYv,nZv,nS);
 temp_eV = zeros(nXv,nYv,nZv,nS);
@@ -147,7 +147,7 @@ end
 
 % Populate the impurity particle list
 
-for p=1:nP
+parfor p=1:nP
    particles(p) = particle;
    
    particles(p).Z = impurity_Z;
@@ -188,63 +188,42 @@ pre_history
 
 % Main loop
 
+IonizationTimeStep = ionization_nDtPerApply*dt;
+
 tic
-for p=1:nP
+parfor p=1:nP
     
     for n_steps = 1:nT
-
-        % Ionization and Recombination performed once every
-        % ionization_nDtPerApply steps
         
         if mod(n_steps, ionization_nDtPerApply) == 0
-            n_ionization_apply = n_steps/ionization_nDtPerApply;
-            particles(p).ionization(ionization_nDtPerApply*dt,xyz,density_m3,temp_eV,nS,RateCoeff_inz,Tb_inz, dens_inz,State_inz,rand(particles(p).streams.ionization),selectedScalarInterpolator);
-            particles(p).recombination(ionization_nDtPerApply*dt,xyz,density_m3,temp_eV,nS,RateCoeff_rcmb,Tb_rcmb,dens_rcmb,State_rcmb,rand(particles(p).streams.recombination),selectedScalarInterpolator);
+            
+            particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
+                IonizationRateCoeff,IonizationTemp, IonizationDensity,...
+                IonizationChargeState,selectedScalarInterpolator);
+            
+            particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
+                RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
+                RecombinationChargeState,selectedScalarInterpolator);
+        
         end
 
-        [nu_s, nu_d, nu_par,nu_E] = particles(p).slow(xyz,density_m3,temp_eV,nS,background_amu,background_Z,selectedScalarInterpolator);
-  
-        [e1, e2, e3] = particles(p).direction(xyz,Bfield3D,selectedVectorInterpolator);
-
-        particles(p).cfDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,rand(particles(p).streams.perDiffusion),selectedVectorInterpolator);
-
-        diagnostics = particles(p).dv_coll(e1,e2,e3,nu_s,nu_d,nu_par,nu_E,dt,rand(particles(p).streams.parVelocityDiffusion), rand(particles(p).streams.per1VelocityDiffusion), rand(particles(p).streams.per2VelocityDiffusion));
-
-        % Boris integrator
+        particles(p).CrossFieldDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,...
+            selectedScalarInterpolator,selectedVectorInterpolator);
         
-        particles(p).boris(xyz,Efield3D,Bfield3D,dt,selectedVectorInterpolator);
-
-        %history
+        diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,density_m3,temp_eV,...
+            background_amu,background_Z,dt,...
+            selectedVectorInterpolator,selectedScalarInterpolator);
+        
+        particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,selectedVectorInterpolator);
 
         xHistory(n_steps,p) = particles(p).x;
         yHistory(n_steps,p) = particles(p).y;
         zHistory(n_steps,p) = particles(p).z;
        
-        % find particles that returned to the wall
-
-        if particles(p).x > ( particles(p).z - surface_zIntercept ) / surface_dz_dx;
-           
-            particles(p).amu = 1e20;
-            particles(p).vx = 0;
-            particles(p).vy = 0;
-            particles(p).vz = 0;
-            particles(p).hitWall = 1;
-            
-        end
+        particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
         
-        % find particles that have exited the volume
-
-        if particles(p).x > xMaxV || particles(p).x < xMinV ...
-          || particles(p).y > yMax || particles(p).y < yMin ...
-          || particles(p).z > zMax || particles(p).z < zMin;           
-           
-            particles(p).amu = 1e20;
-            particles(p).vx = 0;
-            particles(p).vy = 0;
-            particles(p).vz = 0;
-            particles(p).leftVolume = 1;
-            
-        end
+        particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx);
+        
     end
 end
 toc

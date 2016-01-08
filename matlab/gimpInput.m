@@ -53,9 +53,9 @@ perDiffusionCoeff_in = 0.04;
 
 % Impurity particles 
 
-nP = 2;
+nP = 24;
 
-x_start = -0.002;
+x_start = xMinV*0.95;
 y_start = 0.00;
 z_start = 0.00;
 
@@ -78,9 +78,9 @@ file_rcmb = 'ADAS/acd93_c.dat';
 
 % Particle time stepping control
 
-nPtsPerGyroOrbit = 1e3;
+nPtsPerGyroOrbit = 5e2;
 ionization_nDtPerApply = 100;
-nT = 3000;
+nT = 1000;
 
 % Plots
 
