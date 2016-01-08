@@ -193,9 +193,9 @@ IonizationTimeStep = ionization_nDtPerApply*dt;
 tic
 parfor p=1:nP
     
-    for n_steps = 1:nT
+    for tt = 1:nT
         
-        if mod(n_steps, ionization_nDtPerApply) == 0
+        if mod(tt, ionization_nDtPerApply) == 0
             
             particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
                 IonizationRateCoeff,IonizationTemp, IonizationDensity,...
@@ -216,9 +216,9 @@ parfor p=1:nP
         
         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,selectedVectorInterpolator);
 
-        xHistory(n_steps,p) = particles(p).x;
-        yHistory(n_steps,p) = particles(p).y;
-        zHistory(n_steps,p) = particles(p).z;
+        xHistory(tt,p) = particles(p).x;
+        yHistory(tt,p) = particles(p).y;
+        zHistory(tt,p) = particles(p).z;
        
         particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
         
