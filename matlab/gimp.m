@@ -42,13 +42,13 @@ surf_x2D = zeros(nY,nZ);
 surf_hist = zeros(nY,nZ);
 
 
-for j=1:nY 
+for j=1:nY
     surf_x2D(j,:) =  (surf_z1D - surface_zIntercept) / surface_dz_dx;
 end
 
 % Plot initial (zeroed) surface histogram
 
-if plotInitialSurface 
+if plotInitialSurface
     figure(1)
     h1 =  surf(surf_z1D,surf_y1D,surf_x2D,surf_hist);
     xlabel('z axis')
@@ -92,7 +92,7 @@ BMag = sqrt( Bx.^2 + By.^2 + Bz.^2 );
 density_m3 = zeros(nXv,nYv,nZv,nS);
 temp_eV = zeros(nXv,nYv,nZv,nS);
 
-Ex = zeros(nXv,nYv,nZv); 
+Ex = zeros(nXv,nYv,nZv);
 Ey = zeros(nXv,nYv,nZv);
 Ez = zeros(nXv,nYv,nZv);
 
@@ -148,31 +148,31 @@ end
 % Populate the impurity particle list
 
 parfor p=1:nP
-   particles(p) = particle;
-   
-   particles(p).Z = impurity_Z;
-   particles(p).amu = impurity_amu;
-   
-   particles(p).x = x_start;
-   particles(p).y = y_start;
-   particles(p).z = z_start;
-   
-   particles(p).vx = sign(energy_eV_x_start) * sqrt(2*abs(energy_eV_x_start*Q)/(particles(p).amu*MI));
-   particles(p).vy = sign(energy_eV_y_start) * sqrt(2*abs(energy_eV_y_start*Q)/(particles(p).amu*MI));
-   particles(p).vz = sign(energy_eV_z_start) * sqrt(2*abs(energy_eV_z_start*Q)/(particles(p).amu*MI));
-  
-   particles(p).hitWall = 0;
-   particles(p).leftVolume = 0;
-   
-   [s1,s2,s3,s4,s5,s6] = RandStream.create('mrg32k3a','NumStreams',6,'Seed','shuffle'); %Include ,'Seed','shuffle' to get different values each time
-
-   particles(p).streams.ionization = s1;
-   particles(p).streams.recombination = s2;
-   particles(p).streams.perDiffusion = s3;
-   particles(p).streams.parVelocityDiffusion = s4;
-   particles(p).streams.per1VelocityDiffusion = s5;
-   particles(p).streams.per2VelocityDiffusion = s6;
-
+    particles(p) = particle;
+    
+    particles(p).Z = impurity_Z;
+    particles(p).amu = impurity_amu;
+    
+    particles(p).x = x_start;
+    particles(p).y = y_start;
+    particles(p).z = z_start;
+    
+    particles(p).vx = sign(energy_eV_x_start) * sqrt(2*abs(energy_eV_x_start*Q)/(particles(p).amu*MI));
+    particles(p).vy = sign(energy_eV_y_start) * sqrt(2*abs(energy_eV_y_start*Q)/(particles(p).amu*MI));
+    particles(p).vz = sign(energy_eV_z_start) * sqrt(2*abs(energy_eV_z_start*Q)/(particles(p).amu*MI));
+    
+    particles(p).hitWall = 0;
+    particles(p).leftVolume = 0;
+    
+    [s1,s2,s3,s4,s5,s6] = RandStream.create('mrg32k3a','NumStreams',6,'Seed','shuffle'); %Include ,'Seed','shuffle' to get different values each time
+    
+    particles(p).streams.ionization = s1;
+    particles(p).streams.recombination = s2;
+    particles(p).streams.perDiffusion = s3;
+    particles(p).streams.parVelocityDiffusion = s4;
+    particles(p).streams.per1VelocityDiffusion = s5;
+    particles(p).streams.per2VelocityDiffusion = s6;
+    
 end
 
 % Calculate time step (dt)
@@ -184,7 +184,7 @@ dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
 
 % Setup arrays to store history
 
-pre_history    
+pre_history
 
 % Main loop
 
@@ -204,9 +204,9 @@ parfor p=1:nP
             particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
                 RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
                 RecombinationChargeState,selectedScalarInterpolator);
-        
+            
         end
-
+        
         particles(p).CrossFieldDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,...
             selectedScalarInterpolator,selectedVectorInterpolator);
         
@@ -215,11 +215,11 @@ parfor p=1:nP
             selectedVectorInterpolator,selectedScalarInterpolator);
         
         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,selectedVectorInterpolator);
-
+        
         xHistory(tt,p) = particles(p).x;
         yHistory(tt,p) = particles(p).y;
         zHistory(tt,p) = particles(p).z;
-       
+        
         particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
         
         particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx);
