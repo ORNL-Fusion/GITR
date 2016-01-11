@@ -46,7 +46,8 @@ classdef particle < handle
         
         
         
-        function borisMove(this,xyz,Efield3D,Bfield3D,dt,interpolatorHandle)
+        function borisMove(this,xyz,Efield3D,Bfield3D,dt,interpolatorHandle,...
+                positionStepTolerance,velocityChangeTolerance)
             
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
@@ -65,7 +66,7 @@ classdef particle < handle
             % Boris Method Lorentz Integrator
             v = [this.vx this.vy this.vz];
             r = [this.x this.y this.z];
-            
+            v_start = v;
             v_minus = v + q_prime*E;
             
             v = v_minus + q_prime*cross(v_minus,B);
@@ -74,7 +75,18 @@ classdef particle < handle
             
             v = v + q_prime*E;
             
-            r = r + v*dt;
+            step = v*dt;
+            r = r + step;
+            
+            if step > positionStepTolerance
+                error('Position step is too large in Boris integrator')
+                step
+            end
+            
+            if (abs(norm(v_start)) - abs(norm(v)))/abs(norm(v_start)) > velocityChangeTolerance
+                error('Velocity change is too large in Boris integrator')
+                step
+            end            
             
             this.x =r(1);
             this.y =r(2);
@@ -149,7 +161,7 @@ classdef particle < handle
         
         function ionization(this,dt,xyz,density_m3,temp_eV,...
                 IonizationRateCoeff,IonizationTemp,IonizationDensity,...
-                ChargeState,interpolatorHandle)
+                ChargeState,interpolatorHandle, ionizationProbabilityTolerance)
             
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
@@ -186,6 +198,11 @@ classdef particle < handle
                     tion = 1/(10^Coeff*n/1E6);
                     P1 = 1-exp(-dt/tion);
                     
+                    if P1 > ionizationProbabilityTolerance
+                        error('Ionization probability is too large')
+                        P1
+                    end
+                    
                     if r1 <= P1
                         this.Z = this.Z+1;
                     end
@@ -195,7 +212,7 @@ classdef particle < handle
         
         function recombination(this,dt,xyz,density_m3,temp_eV,...
                 RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
-                ChargeState,interpolatorHandle)
+                ChargeState,interpolatorHandle,ionizationProbabilityTolerance)
             
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
@@ -226,6 +243,11 @@ classdef particle < handle
                 
                 tion = 1/(10^Coeff*10^n);
                 P1 = 1-exp(-dt/tion);
+                
+                if P1 > ionizationProbabilityTolerance
+                    error('Recombination probability is too large')
+                    P1
+                end
                 
                 if r2 <= P1
                     this.Z = this.Z-1;
@@ -301,10 +323,6 @@ classdef particle < handle
         function [e1, e2, e3] = direction(this,xyz,Bfield,interpolatorHandle)
             
             
-            persistent f1;
-            persistent f2;
-            persistent f3;
-            
             v = [this.vx this.vy this.vz];
             
             B_local = interpolatorHandle(this,xyz,Bfield);
@@ -323,20 +341,10 @@ classdef particle < handle
             e1 = 1/s2*(s1*e3 - B_unit);
             e2 = -1/s2*cross(e3,B_unit);
             
-            %vector_plot
-            if any([isnan(e1) isnan(e2) isnan(e3)]) == 0
-                f1 = e1;
-                f2 = e2;
-                f3 = e3;
-            else
-                e1 = f1;
-                e2 = f2;
-                e3 = f3;
-            end
             
         end
         
-        function CrossFieldDiffusion(this,Bfield,xyz,Dperp,dt,ScalarInterpolatorHandle,VectorInterpolatorHandle)
+        function CrossFieldDiffusion(this,Bfield,xyz,Dperp,dt,ScalarInterpolatorHandle,VectorInterpolatorHandle,positionStepTolerance)
             
             if this.hitWall == 0 && this.leftVolume == 0 && this.Z > 0
                 
@@ -357,16 +365,22 @@ classdef particle < handle
                 eperp(3) = eperp(3)/norme;
                 
                 D_local = ScalarInterpolatorHandle(this,xyz,Dperp);
+                 step = sqrt(6*D_local*dt);
+                if step > positionStepTolerance
+                    error('Position step is too large in cross-field diffusion')
+                    step
+                end
                 
-                this.x = this.x + sqrt(6*D_local*dt)*eperp(1);
-                this.y = this.y + sqrt(6*D_local*dt)*eperp(2);
-                this.z = this.z + sqrt(6*D_local*dt)*eperp(3);
+                this.x = this.x + step*eperp(1);
+                this.y = this.y + step*eperp(2);
+                this.z = this.z + step*eperp(3);
             end
             
         end
         
         function diagnostics = CoulombCollisions(this,xyz,Bfield,density_m3,temp_eV,...
-                background_amu,background_Z,dt,selectedVectorInterpolator,selectedScalarInterpolator)
+                background_amu,background_Z,dt,selectedVectorInterpolator,...
+                selectedScalarInterpolator,velocityChangeTolerance)
             
             global ME MI Q EPS0;
             
@@ -408,6 +422,11 @@ classdef particle < handle
             
             dv_collisions = v_collisions - v_norm;
             
+            if dv_collisions > velocityChangeTolerance
+                error('Velocity change is too large in Coulomb Collisions')
+                dv_collisions
+            end
+            
             diagnostics = [T dv_collisions norm_slow norm_par norm_parallel norm_perp1 norm_perp2];
         end
         
@@ -438,6 +457,16 @@ classdef particle < handle
                 this.leftVolume = 1;
                 
             end
+        end
+        
+        function UpdatePrevious(this)
+            this.xPrevious = this.x;
+            this.yPrevious = this.y;
+            this.zPrevious = this.z;
+            
+            this.vxPrevious = this.vx;
+            this.vyPrevious = this.vy;
+            this.vzPrevious = this.vz;
         end
         
     end

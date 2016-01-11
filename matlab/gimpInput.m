@@ -53,9 +53,9 @@ perDiffusionCoeff_in = 0.04;
 
 % Impurity particles 
 
-nP = 96;
+nP = 2;
 
-x_start = xMinV*0.95;
+x_start = xMinV*0.85;
 y_start = 0.00;
 z_start = 0.00;
 
@@ -80,7 +80,7 @@ file_rcmb = 'ADAS/acd93_c.dat';
 
 nPtsPerGyroOrbit = 1e2;
 ionization_nDtPerApply = 100;
-nT = 200;
+nT = 1000;
 
 % Plots
 
@@ -92,4 +92,10 @@ plot1DProfileSlices = 1;
 selectedVectorInterpolator = @gimpInterpVector1D;
 selectedScalarInterpolator = @gimpInterpScalar1D;
 
-%selectedInterpolator = @gimpInterp3D;
+%selectedInterpolator = @gimpInterVectorp3D;
+%selectedInterpolator = @gimpInterpScalar3D;
+
+% Checks on Monte Carlo Probability and Step Size
+ionizationProbabilityTolerance = 0.2;
+velocityChangeTolerance = 0.1; % Fraction of previous speed
+positionStepTolerance = 1e-3;

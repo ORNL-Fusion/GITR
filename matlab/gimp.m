@@ -146,10 +146,9 @@ if plot1DProfileSlices
 end
 
 % Populate the impurity particle list
-
-parfor p=1:nP
-    particles(p) = particle;
+    particles(nP) = particle;
     
+parfor p=1:nP 
     particles(p).Z = impurity_Z;
     particles(p).amu = impurity_amu;
     
@@ -199,22 +198,27 @@ parfor p=1:nP
             
             particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
                 IonizationRateCoeff,IonizationTemp, IonizationDensity,...
-                IonizationChargeState,selectedScalarInterpolator);
+                IonizationChargeState,selectedScalarInterpolator,ionizationProbabilityTolerance);
             
             particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
                 RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
-                RecombinationChargeState,selectedScalarInterpolator);
+                RecombinationChargeState,selectedScalarInterpolator,ionizationProbabilityTolerance);
             
         end
         
+        if particles(p).hitWall == 0 && particles(p).leftVolume ==0
+            particles(p).UpdatePrevious();
+        end
+        
         particles(p).CrossFieldDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,...
-            selectedScalarInterpolator,selectedVectorInterpolator);
+            selectedScalarInterpolator,selectedVectorInterpolator,positionStepTolerance);
         
         diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,density_m3,temp_eV,...
             background_amu,background_Z,dt,...
-            selectedVectorInterpolator,selectedScalarInterpolator);
+            selectedVectorInterpolator,selectedScalarInterpolator,velocityChangeTolerance);
         
-        particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,selectedVectorInterpolator);
+        particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
+            selectedVectorInterpolator,positionStepTolerance,velocityChangeTolerance);
         
         xHistory(tt,p) = particles(p).x;
         yHistory(tt,p) = particles(p).y;
