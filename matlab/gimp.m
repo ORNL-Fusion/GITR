@@ -147,8 +147,9 @@ end
 
 % Populate the impurity particle list
     particles(nP) = particle;
+ 
     
-parfor p=1:nP 
+for p=1:nP 
     particles(p).Z = impurity_Z;
     particles(p).amu = impurity_amu;
     
@@ -172,6 +173,8 @@ parfor p=1:nP
     particles(p).streams.per1VelocityDiffusion = s5;
     particles(p).streams.per2VelocityDiffusion = s6;
     
+    particles(p).UpdatePrevious();
+    
 end
 
 % Calculate time step (dt)
@@ -190,7 +193,7 @@ pre_history
 IonizationTimeStep = ionization_nDtPerApply*dt;
 
 tic
-parfor p=1:nP
+for p=1:nP
     
     for tt = 1:nT
         
@@ -205,13 +208,12 @@ parfor p=1:nP
                 RecombinationChargeState,selectedScalarInterpolator,ionizationProbabilityTolerance);
             
         end
-        
-        if particles(p).hitWall == 0 && particles(p).leftVolume ==0
-            particles(p).UpdatePrevious();
-        end
-        
+
+
         particles(p).CrossFieldDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,...
             selectedScalarInterpolator,selectedVectorInterpolator,positionStepTolerance);
+
+       
         
         diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,density_m3,temp_eV,...
             background_amu,background_Z,dt,...
@@ -220,17 +222,31 @@ parfor p=1:nP
         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
             selectedVectorInterpolator,positionStepTolerance,velocityChangeTolerance);
         
-        xHistory(tt,p) = particles(p).x;
-        yHistory(tt,p) = particles(p).y;
-        zHistory(tt,p) = particles(p).z;
+%         [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
+%             selectedVectorInterpolator,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
+%             surface_zIntercept,surface_dz_dx)
+        
+        xHistory(tt,p) = particles(p).xPrevious;
+        yHistory(tt,p) = particles(p).yPrevious;
+        zHistory(tt,p) = particles(p).zPrevious;
         
         particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
         
         particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx);
         
+        if particles(p).hitWall == 0 && particles(p).leftVolume ==0
+            particles(p).UpdatePrevious();
+        end
+        
     end
+    end_pos(p,:) = [particles(p).xPrevious particles(p).yPrevious particles(p).zPrevious];
 end
 toc
 
 history_plot
 surface_scatter
+
+fileID = fopen('end_positions.txt','w');
+
+fprintf(fileID,'%f %f %f\n',end_pos);
+fclose(fileID);

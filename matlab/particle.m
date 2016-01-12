@@ -22,25 +22,37 @@ classdef particle < handle
     
     methods
         
-        function [T Y] = move (p, end_t, dt, E, B, xyz)
+        function [T Y] = move (this, end_t, dt, E, B, xyz,interpolatorHandle,...
+                xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
+                surface_zIntercept,surface_dz_dx)
             
             
             status = 0;
             
-            IC = [p.x p.y p.z p.vx p.vy p.vz]';
+            IC = [this.x this.y this.z this.vx this.vy this.vz]';
             tSpan = [0,end_t];
             
             options = odeset('InitialStep',dt,'MaxStep',dt);
             
-            [T Y] = ode45(@(t,y) myode(t,y,p,E,B,xyz),tSpan,IC);%,options);
+            [T Y] = ode45(@(t,y) myode(t,y,this,E,B,xyz,interpolatorHandle),tSpan,IC);%,options);
             
-            p.x = Y(end,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
-            p.y = Y(end,2);
-            p.z = Y(end,3);
+            n_steps = length(T);
+            index = 0;
+            while this.hitWall == 0 && this.leftVolume ==0
+                this.OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
+                this.HitWallCheck(surface_zIntercept,surface_dz_dx);
+                index = index+1;
+            end
+            if index ~= n_steps
+                stop
+            end
+            this.x = Y(end,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
+            this.y = Y(end,2);
+            this.z = Y(end,3);
             
-            p.vx = Y(end,4);
-            p.vy = Y(end,5);
-            p.vz = Y(end,6);
+            this.vx = Y(end,4);
+            this.vy = Y(end,5);
+            this.vz = Y(end,6);
             
         end
         
@@ -359,6 +371,14 @@ classdef particle < handle
                 eperp(1) = cos(phi_rnd);
                 eperp(2) = sin(phi_rnd);
                 eperp(3) = (-eperp(1)*B_unit(1) - eperp(2)*B_unit(2))/B_unit(3);
+                if B_unit == [1 0 0]
+                    eperp(3) = eperp(1);
+                    eperp(1) = 0;
+                elseif B_unit == [0 1 0]
+                    eperp(2) = 0;
+                elseif B_unit == [0 0 1]
+                    eperp(3) = 0;
+                end
                 norme = norm([eperp(1) eperp(2) eperp(3)]);
                 eperp(1) = eperp(1)/norme;
                 eperp(2) = eperp(2)/norme;

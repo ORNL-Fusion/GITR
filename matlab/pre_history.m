@@ -9,3 +9,5 @@ vyHistory = zeros(nT, nP);
 vzHistory = zeros(nT, nP);
 
 coll_hist = zeros(nT,7);
+
+end_pos = zeros(nP,3);

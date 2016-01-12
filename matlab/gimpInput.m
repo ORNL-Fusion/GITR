@@ -30,9 +30,9 @@ sheathWidth = 0.0001;
 % Bfieldx
 Bx_in = +0.4;
 % Bfieldy
-By_in = +0.1;
+By_in = +0.0;
 % Bfieldz
-Bz_in = -1.0;
+Bz_in = 0.0;
 
 % Background species info
 
@@ -60,8 +60,8 @@ y_start = 0.00;
 z_start = 0.00;
 
 energy_eV_x_start = 1.0;
-energy_eV_y_start = 0;
-energy_eV_z_start = 0;
+energy_eV_y_start = 0.1;
+energy_eV_z_start = 0.2;
 
 impurity_amu = 12.0;
 impurity_Z = 1.0;
@@ -80,7 +80,7 @@ file_rcmb = 'ADAS/acd93_c.dat';
 
 nPtsPerGyroOrbit = 1e2;
 ionization_nDtPerApply = 100;
-nT = 1000;
+nT = 100;
 
 % Plots
 
