@@ -92,6 +92,9 @@ BMag = sqrt( Bx.^2 + By.^2 + Bz.^2 );
 density_m3 = zeros(nXv,nYv,nZv,nS);
 temp_eV = zeros(nXv,nYv,nZv,nS);
 
+impurityDensity = zeros(nXv,nYv,nZv);
+
+
 Ex = zeros(nXv,nYv,nZv);
 Ey = zeros(nXv,nYv,nZv);
 Ez = zeros(nXv,nYv,nZv);
@@ -193,7 +196,7 @@ pre_history
 IonizationTimeStep = ionization_nDtPerApply*dt;
 
 tic
-for p=1:nP
+parfor p=1:nP
     
     for tt = 1:nT
         
@@ -236,6 +239,12 @@ for p=1:nP
         
         if particles(p).hitWall == 0 && particles(p).leftVolume ==0
             particles(p).UpdatePrevious();
+            
+%             [Mx, xIndex] = min(abs(xyz.x-particles(p).x));
+%             [My, yIndex] = min(abs(xyz.y-particles(p).y));
+%             [Mz, zIndex] = min(abs(xyz.z-particles(p).z));
+%             
+%             impurityDensity(xIndex,yIndex,zIndex) = impurityDensity(xIndex,yIndex,zIndex) + dt;
         end
         
     end

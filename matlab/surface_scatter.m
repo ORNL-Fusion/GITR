@@ -43,3 +43,12 @@ surf(surf_z1D,surf_y1D,surf_x2D,h)
         Energy =  quiver3(z_start,y_start,x_start,energy_eV_z_start*plot_fac/norm(B_in),energy_eV_y_start*plot_fac/norm(B_in),energy_eV_x_start*plot_fac/norm(B_in),'Color','g');
          legend([Bvec Energy],{'B-Field','Initial Energy'});
          hold off
+         
+         figure(4)
+         a = zeros(nYv,nZv);
+for i=1:nYv
+    a(i,:) = impurityDensity(12,i,:);
+end
+surf(zV_1D,yV_1D,a)
+
+colorbar

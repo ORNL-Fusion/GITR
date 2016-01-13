@@ -21,7 +21,7 @@ nZ = 40;
 % Volume grid
 nXv = 50;
 nYv = 80;
-nZv = 50;
+nZv = 60;
 
 % Sheath potential
 sheathPotential = -60;

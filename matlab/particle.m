@@ -488,7 +488,7 @@ classdef particle < handle
             this.vyPrevious = this.vy;
             this.vzPrevious = this.vz;
         end
-        
+       
     end
 end
 
