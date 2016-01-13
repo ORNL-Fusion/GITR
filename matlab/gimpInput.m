@@ -27,11 +27,9 @@ nZv = 60;
 sheathPotential = -60;
 % Potential decay length
 sheathWidth = 0.0001;
-% Bfieldx
+
 Bx_in = +0.4;
-% Bfieldy
-By_in = +0.0;
-% Bfieldz
+By_in = 0.001;
 Bz_in = 0.0;
 
 % Background species info
@@ -53,15 +51,16 @@ perDiffusionCoeff_in = 0.04;
 
 % Impurity particles 
 
-nP = 2;
+nP = 10;
 
-x_start = xMinV*0.85;
+x_start = -0.0045;
 y_start = 0.00;
 z_start = 0.00;
 
 energy_eV_x_start = 1.0;
-energy_eV_y_start = 0.1;
-energy_eV_z_start = 0.2;
+energy_eV_y_start = 0.5;
+energy_eV_z_start = 0;
+
 
 impurity_amu = 12.0;
 impurity_Z = 1.0;
@@ -78,7 +77,7 @@ file_rcmb = 'ADAS/acd93_c.dat';
 
 % Particle time stepping control
 
-nPtsPerGyroOrbit = 1e2;
+nPtsPerGyroOrbit = 2e3;
 ionization_nDtPerApply = 100;
 nT = 100;
 
