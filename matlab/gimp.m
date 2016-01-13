@@ -148,7 +148,7 @@ end
 % Populate the impurity particle list
     particles(nP) = particle;
     
-parfor p=1:nP 
+for p=1:nP 
     particles(p).Z = impurity_Z;
     particles(p).amu = impurity_amu;
     
@@ -190,26 +190,22 @@ pre_history
 IonizationTimeStep = ionization_nDtPerApply*dt;
 
 tic
-parfor p=1:nP
+for p=1:nP
     
     for tt = 1:nT
         
         if mod(tt, ionization_nDtPerApply) == 0
             
-            particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
-                IonizationRateCoeff,IonizationTemp, IonizationDensity,...
-                IonizationChargeState,selectedScalarInterpolator,ionizationProbabilityTolerance);
+            %particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
+            %    IonizationRateCoeff,IonizationTemp, IonizationDensity,...
+            %    IonizationChargeState,selectedScalarInterpolator,ionizationProbabilityTolerance);
             
-            particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
-                RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
-                RecombinationChargeState,selectedScalarInterpolator,ionizationProbabilityTolerance);
+            %particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
+            %    RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
+            %    RecombinationChargeState,selectedScalarInterpolator,ionizationProbabilityTolerance);
             
         end
-        
-        if particles(p).hitWall == 0 && particles(p).leftVolume ==0
-            particles(p).UpdatePrevious();
-        end
-        
+            
         particles(p).CrossFieldDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,...
             selectedScalarInterpolator,selectedVectorInterpolator,positionStepTolerance);
         
@@ -220,14 +216,20 @@ parfor p=1:nP
         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
             selectedVectorInterpolator,positionStepTolerance,velocityChangeTolerance);
         
-        xHistory(tt,p) = particles(p).x;
-        yHistory(tt,p) = particles(p).y;
-        zHistory(tt,p) = particles(p).z;
-        
         particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
         
         particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx);
         
+        if particles(p).hitWall == 0 && particles(p).leftVolume == 0
+            particles(p).UpdatePrevious();
+        else
+            particles(p);
+        end
+        
+        xHistory(tt,p) = particles(p).xPrevious;
+        yHistory(tt,p) = particles(p).yPrevious;
+        zHistory(tt,p) = particles(p).zPrevious;
+          
     end
 end
 toc
