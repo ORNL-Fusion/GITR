@@ -2,7 +2,7 @@
 part_pos = [];
 for i=1:nP
     if particles(i).amu == 1e20
-   part_pos = [part_pos; [particles(i).x,particles(i).y,particles(i).z]];
+   part_pos = [part_pos; [particles(i).xPrevious,particles(i).yPrevious,particles(i).zPrevious]];
     end
 
 end
@@ -44,11 +44,11 @@ surf(surf_z1D,surf_y1D,surf_x2D,h)
          legend([Bvec Energy],{'B-Field','Initial Energy'});
          hold off
          
-         figure(4)
-         a = zeros(nYv,nZv);
-for i=1:nYv
-    a(i,:) = impurityDensity(12,i,:);
-end
-surf(zV_1D,yV_1D,a)
-
-colorbar
+%          figure(4)
+%          a = zeros(nYv,nZv);
+% for i=1:nYv
+%     a(i,:) = impurityDensity(12,i,:);
+% end
+% surf(zV_1D,yV_1D,a)
+% 
+% colorbar

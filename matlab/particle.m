@@ -18,6 +18,7 @@ classdef particle < handle
         hitWall
         leftVolume
         streams
+        perpDistanceToSurface
     end
     
     methods
@@ -38,14 +39,14 @@ classdef particle < handle
             
             n_steps = length(T);
             index = 0;
-            while this.hitWall == 0 && this.leftVolume ==0
-                this.OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
-                this.HitWallCheck(surface_zIntercept,surface_dz_dx);
-                index = index+1;
-            end
-            if index ~= n_steps
-                stop
-            end
+%             if this.hitWall == 0 && this.leftVolume ==0
+%                 this.OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
+%                 this.HitWallCheck(surface_zIntercept,surface_dz_dx);
+%                 index = index+1;
+%             end
+%             if index ~= n_steps
+%                 stop
+%             end
             this.x = Y(end,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
             this.y = Y(end,2);
             this.z = Y(end,3);
@@ -59,14 +60,17 @@ classdef particle < handle
         
         
         function borisMove(this,xyz,Efield3D,Bfield3D,dt,interpolatorHandle,...
-                positionStepTolerance,velocityChangeTolerance)
-            
+                positionStepTolerance,velocityChangeTolerance, ...
+                decayLength, potential,surface_dz_dx,background_Z,background_amu,maxTemp_eV)
+
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
             Q = 1.60217662e-19;
             EPS0 = 8.854187e-12;
             
-            E = interpolatorHandle(this,xyz,Efield3D);
+            E = this.getAnalyticalEfield(decayLength, potential,surface_dz_dx,xyz,Bfield3D, ...
+                interpolatorHandle,background_Z,background_amu,maxTemp_eV);
+            %E = interpolatorHandle(this,xyz,Efield3D);
             B = interpolatorHandle(this,xyz,Bfield3D);
             
             BMagPart =norm(B);
@@ -91,13 +95,13 @@ classdef particle < handle
             r = r + step;
             
             if step > positionStepTolerance
-                error('Position step is too large in Boris integrator')
                 step
+                error('Position step is too large in Boris integrator')
             end
             
             if (abs(norm(v_start)) - abs(norm(v)))/abs(norm(v_start)) > velocityChangeTolerance
+                (abs(norm(v_start)) - abs(norm(v)))/abs(norm(v_start))
                 error('Velocity change is too large in Boris integrator')
-                step
             end            
             
             this.x =r(1);
@@ -106,7 +110,7 @@ classdef particle < handle
             this.vx = v(1);
             this.vy = v(2);
             this.vz = v(3);
-            
+
         end
         
         function [T Yr] = rk4(part,xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,end_t,dt,steps)
@@ -201,6 +205,7 @@ classdef particle < handle
                 if log10(T) > minT
                     n=n_local(1);
                     
+                   % isreal(n) == 0 | isreal(T) == 0
                     Coeff = interpn(IonizationDensity,IonizationTemp,IonizationRateCoeff(:,:,this.Z+1),log10(n/1e6),log10(T),'linear',0);
                     
                     if ( isnan(Coeff) )
@@ -267,7 +272,8 @@ classdef particle < handle
             end
         end
         
-        function [nu_s, nu_d, nu_par, nu_E] = slow(this,xyz,density_m3,temp_eV,amu,Z,interpolatorHandle)
+        function [nu_s, nu_d, nu_par, nu_E] = slow(this,xyz,density_m3,temp_eV,amu,Z,interpolatorHandle,Bfield, ...
+                vectorInterpolatorHandle, connectionLength,surface_dz_dx,surface_zIntercept,maxTemp_eV,background_amu)
             
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
@@ -287,9 +293,9 @@ classdef particle < handle
             end
             
             v = [this.vx this.vy this.vz];
-            
-            flow_v = [0 0 0]; %This will need to be calculated or interpolated in the future
-            v_relative = v - flow_v;
+           
+            flowVelocity = this.GetFlowVelocity(xyz,Bfield,vectorInterpolatorHandle,connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept); %This will need to be calculated or interpolated in the future
+            v_relative = v - flowVelocity;
             v_norm = norm(v_relative);
             %             if v_norm == 0
             %                 v_norm = v_norm_persistent;
@@ -332,7 +338,7 @@ classdef particle < handle
             
             
         end
-        function [e1, e2, e3] = direction(this,xyz,Bfield,interpolatorHandle)
+        function [e1, e2, e3] = direction(this,xyz,Bfield,interpolatorHandle,connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept)
             
             
             v = [this.vx this.vy this.vz];
@@ -341,8 +347,14 @@ classdef particle < handle
             
             B_unit = B_local/norm(B_local);
             
-            flow_v = [0 0 0]; %This will need to be calculated or interpolated in the future
-            v_relative = v - flow_v;
+            
+            flowVelocity = this.GetFlowVelocity(xyz,Bfield,interpolatorHandle, ...
+                connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
+            if this.Z ==0
+                flowVelocity = [0 0 0];
+            end
+            
+            v_relative = v- flowVelocity ;
             
             g = v_relative;
             e3 = g/norm(g);
@@ -353,7 +365,7 @@ classdef particle < handle
             e1 = 1/s2*(s1*e3 - B_unit);
             e2 = -1/s2*cross(e3,B_unit);
             
-            
+
         end
         
         function CrossFieldDiffusion(this,Bfield,xyz,Dperp,dt,ScalarInterpolatorHandle,VectorInterpolatorHandle,positionStepTolerance)
@@ -371,6 +383,10 @@ classdef particle < handle
                 eperp(1) = cos(phi_rnd);
                 eperp(2) = sin(phi_rnd);
                 eperp(3) = (-eperp(1)*B_unit(1) - eperp(2)*B_unit(2))/B_unit(3);
+                if B_unit(3) == 0
+                    eperp(3) = eperp(2);
+                    eperp(2) = (-eperp(1)*B_unit(1) - eperp(3)*B_unit(3))/B_unit(2);
+                end
                 if B_unit == [1 0 0]
                     eperp(3) = eperp(1);
                     eperp(1) = 0;
@@ -400,20 +416,31 @@ classdef particle < handle
         
         function diagnostics = CoulombCollisions(this,xyz,Bfield,density_m3,temp_eV,...
                 background_amu,background_Z,dt,selectedVectorInterpolator,...
-                selectedScalarInterpolator,velocityChangeTolerance)
+                selectedScalarInterpolator,velocityChangeTolerance, connectionLength,maxTemp_eV, ...
+                surface_dz_dx,surface_zIntercept)
             
             global ME MI Q EPS0;
             
             rand_parVelocityDiffusion = rand(this.streams.parVelocityDiffusion);
             rand_per1VelocityDiffusion = rand(this.streams.per1VelocityDiffusion);
             rand_per2VelocityDiffusion = rand(this.streams.per2VelocityDiffusion);
-            
-            [e1, e2, e3] = this.direction(xyz,Bfield,selectedVectorInterpolator);
+
+            [e1, e2, e3] = this.direction(xyz,Bfield,selectedVectorInterpolator,connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
             
             [nu_s, nu_d, nu_par, nu_E] = this.slow(xyz,density_m3,temp_eV,...
-                background_amu,background_Z,selectedScalarInterpolator);
+                background_amu,background_Z,selectedScalarInterpolator,Bfield,...
+                selectedVectorInterpolator,connectionLength,surface_dz_dx,surface_zIntercept,maxTemp_eV,background_amu);
+            v = [this.vx this.vy this.vz];
+            v_norm = norm(v);
             
-            v_norm = norm([this.vx this.vy this.vz]);
+            flowVelocity = this.GetFlowVelocity(xyz,Bfield,selectedVectorInterpolator, ...
+                connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
+            if this.Z ==0
+                flowVelocity = [0 0 0];
+            end
+            v_relative = v- flowVelocity ;
+            vRelative_norm = norm(v_relative);
+            
             T = v_norm^2*this.amu*MI*pi/8/Q;
             
             dv_slow = e1*(nu_s*dt);
@@ -434,11 +461,13 @@ classdef particle < handle
             norm_perp2 = plus_minus3*norm(v_norm*dv_perp2);
             
             
-            ez = (1+nu_s*dt+ plus_minus1*sqrt(nu_par*dt) );%
-            v_collisions = v_norm*(1-nu_E/2*dt)*(e3*ez + dv_perp1 + dv_perp2); %+ dv_perp1 + dv_perp2
-            this.vx = v_collisions(1);
-            this.vy = v_collisions(2);
-            this.vz = v_collisions(3);
+             ez = (1+nu_s*dt+ plus_minus1*sqrt(nu_par*dt) );%
+             v_collisions = vRelative_norm*(1-nu_E/2*dt)*(e3*ez + dv_perp1 + dv_perp2);
+
+
+            this.vx = v_collisions(1)+ flowVelocity(1);
+            this.vy = v_collisions(2)+ flowVelocity(2);
+            this.vz = v_collisions(3)+ flowVelocity(3);
             
             dv_collisions = v_collisions - v_norm;
             
@@ -446,7 +475,7 @@ classdef particle < handle
                 error('Velocity change is too large in Coulomb Collisions')
                 dv_collisions
             end
-            
+
             diagnostics = [T dv_collisions norm_slow norm_par norm_parallel norm_perp1 norm_perp2];
         end
         
@@ -487,6 +516,52 @@ classdef particle < handle
             this.vxPrevious = this.vx;
             this.vyPrevious = this.vy;
             this.vzPrevious = this.vz;
+        end
+        
+        function PerpDistanceToSurface(this,surface_dz_dx,surface_zIntercept)
+            if this.hitWall == 0 && this.leftVolume ==0
+            this.perpDistanceToSurface = ( -surface_dz_dx*this.x + this.z + surface_zIntercept)/sqrt(surface_dz_dx^2+1);
+            end
+        end
+        
+        function flowVelocity = GetFlowVelocity(this,xyz,Bfield,VectorInterpolatorHandle,connectionLength, ...
+                maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept)
+            B_local = VectorInterpolatorHandle(this,xyz,Bfield);
+            B_unit = B_local/norm(B_local);
+            thermalVelocity = 9823.8*sqrt((maxTemp_eV + maxTemp_eV)/background_amu(2));
+            
+            s = (surface_zIntercept - this.z + surface_dz_dx*this.x)/(B_unit(3) - surface_dz_dx*B_unit(1));
+            s = connectionLength/2 - s;
+            flowVelocity = thermalVelocity*(connectionLength/(2*s)- sqrt((connectionLength/(2*s))^2 - 1))*B_unit;
+            
+            if s >= connectionLength/2
+                flowVelocity = [0 0 0];
+            end
+
+        end
+        
+        function Efield = getAnalyticalEfield(this, decayLength, potential,surface_dz_dx,xyz,Bfield, ...
+                VectorInterpolatorHandle,background_Z,background_amu,maxTemp_eV)
+            B_local = VectorInterpolatorHandle(this,xyz,Bfield);
+            B_unit = B_local/norm(B_local);
+            
+            surfaceDirection = [surface_dz_dx 0 1];
+            surfaceDirection_unit = surfaceDirection/norm(surfaceDirection);
+            
+            normal_B_angle = acosd(dot(surfaceDirection_unit,B_unit));
+            
+            fd = -4.2682E-11*normal_B_angle^6 + 9.5856E-09*normal_B_angle^5 - ...
+                8.2917E-07*normal_B_angle^4 + 3.3591E-05*normal_B_angle^3 - ...
+                7.0040E-04*normal_B_angle^2 + 5.1220E-03*normal_B_angle + 9.8992E-01;
+
+            
+            E_sheath = potential*fd/(2*decayLength)*exp(-this.perpDistanceToSurface/(2*decayLength));
+            
+            larmor_radius = 1.44e-4*sqrt(background_amu(2)*maxTemp_eV)/(background_Z(2)*norm(B_local));
+            E_magneticPresheath = potential*(1-fd)*exp(-this.perpDistanceToSurface/(larmor_radius));
+            
+            Efield = (E_sheath+E_magneticPresheath)*surfaceDirection_unit;
+            
         end
        
     end

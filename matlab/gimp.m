@@ -1,5 +1,5 @@
 clear variables
-close all
+
 
 % Load physical constants
 
@@ -92,8 +92,8 @@ BMag = sqrt( Bx.^2 + By.^2 + Bz.^2 );
 density_m3 = zeros(nXv,nYv,nZv,nS);
 temp_eV = zeros(nXv,nYv,nZv,nS);
 
-impurityDensity = zeros(nXv,nYv,nZv);
-
+impurityDensity = zeros(nT,nP);
+volumeGridSize = [nXv nYv nZv];
 
 Ex = zeros(nXv,nYv,nZv);
 Ey = zeros(nXv,nYv,nZv);
@@ -106,6 +106,8 @@ Efield3D.z = Ez;
 perDiffusionCoeff = zeros(nXv,nYv,nZv);
 
 V_1D = sheathPotential * exp( xV_1D / sheathWidth );
+
+debyeLength = sqrt(EPS0*maxTemp_eV/(maxDensity*background_Z(2)^2*Q));%only one q in order to convert to J
 
 for i=1:nXv
     for j=1:nYv
@@ -131,6 +133,7 @@ for i=1:nXv
     end
 end
 
+
 % Plot slices through the profiles
 if plot1DProfileSlices
     figure(2)
@@ -144,7 +147,7 @@ if plot1DProfileSlices
     plot(xV_1D,V_1D(:))
     title('Sheath potential [V]')
     subplot(2,2,4)
-    plot(xV_1D,Ex(:,1,1))
+    plot(xV_1D,Efield3D.x(:,1,1))
     title('Ex [V/m]')
 end
 
@@ -186,6 +189,9 @@ max_B = max( BMag(:) );
 min_m = impurity_amu * MI;
 max_wc = impurity_Z * Q * max_B / min_m;
 dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
+if impurity_Z == 0
+    dt = 1e-6/nPtsPerGyroOrbit;
+end
 
 % Setup arrays to store history
 
@@ -196,41 +202,43 @@ pre_history
 IonizationTimeStep = ionization_nDtPerApply*dt;
 
 tic
-for p=1:nP
+parfor p=1:nP
     
     for tt = 1:nT
         
+        particles(p).PerpDistanceToSurface(surface_dz_dx,surface_zIntercept);
+      
+
         if mod(tt, ionization_nDtPerApply) == 0
             
-            %particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
-            %    IonizationRateCoeff,IonizationTemp, IonizationDensity,...
-            %    IonizationChargeState,selectedScalarInterpolator,ionizationProbabilityTolerance);
+            particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
+               IonizationRateCoeff,IonizationTemp, IonizationDensity,...
+               IonizationChargeState,selectedScalarInterpolator,ionizationProbabilityTolerance);
             
-            %particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
-            %    RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
-            %    RecombinationChargeState,selectedScalarInterpolator,ionizationProbabilityTolerance);
+            particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
+               RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
+               RecombinationChargeState,selectedScalarInterpolator,ionizationProbabilityTolerance);
             
         end
-            
-        particles(p).CrossFieldDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,...
-            selectedScalarInterpolator,selectedVectorInterpolator,positionStepTolerance);
 
-       
-        
+%         particles(p).CrossFieldDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,...
+%             selectedScalarInterpolator,selectedVectorInterpolator,positionStepTolerance);
+
+
         diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,density_m3,temp_eV,...
             background_amu,background_Z,dt,...
-            selectedVectorInterpolator,selectedScalarInterpolator,velocityChangeTolerance);
-        
+            selectedVectorInterpolator,selectedScalarInterpolator, ...
+            velocityChangeTolerance, connectionLength,maxTemp_eV,surface_dz_dx,surface_zIntercept);
+
         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
-            selectedVectorInterpolator,positionStepTolerance,velocityChangeTolerance);
-        
+            selectedVectorInterpolator,positionStepTolerance,velocityChangeTolerance, ...
+            debyeLength, -3*maxTemp_eV,surface_dz_dx,background_Z,background_amu,maxTemp_eV);
+
 %         [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
 %             selectedVectorInterpolator,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
 %             surface_zIntercept,surface_dz_dx)
         
-        xHistory(tt,p) = particles(p).xPrevious;
-        yHistory(tt,p) = particles(p).yPrevious;
-        zHistory(tt,p) = particles(p).zPrevious;
+
         
 
 
@@ -242,22 +250,20 @@ for p=1:nP
         if particles(p).hitWall == 0 && particles(p).leftVolume ==0
             particles(p).UpdatePrevious();
             
-%             [Mx, xIndex] = min(abs(xyz.x-particles(p).x));
-%             [My, yIndex] = min(abs(xyz.y-particles(p).y));
-%             [Mz, zIndex] = min(abs(xyz.z-particles(p).z));
-%             
-%             impurityDensity(xIndex,yIndex,zIndex) = impurityDensity(xIndex,yIndex,zIndex) + dt;
+            [Mx, xIndex] = min(abs(xyz.x-particles(p).x));
+            [My, yIndex] = min(abs(xyz.y-particles(p).y));
+            [Mz, zIndex] = min(abs(xyz.z-particles(p).z));
+             
+             impurityDensity(tt,p) = sub2ind(volumeGridSize,xIndex,yIndex,zIndex);
         end
         
-        if particles(p).hitWall == 0 && particles(p).leftVolume == 0
-            particles(p).UpdatePrevious();
-        else
-            particles(p);
-        end
         
         xHistory(tt,p) = particles(p).xPrevious;
         yHistory(tt,p) = particles(p).yPrevious;
         zHistory(tt,p) = particles(p).zPrevious;
+        vxHistory(tt,p) = particles(p).vxPrevious;
+        vyHistory(tt,p) = particles(p).vyPrevious;
+        vzHistory(tt,p) = particles(p).vzPrevious;
           
     end
     end_pos(p,:) = [particles(p).xPrevious particles(p).yPrevious particles(p).zPrevious];
