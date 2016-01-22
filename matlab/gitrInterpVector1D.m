@@ -1,4 +1,4 @@
-function OutputField = gimpInterpVector1D(particle,xyz,field)
+function OutputField = gitrInterpVector1D(particle,xyz,field)
 
     x = xyz.x;
 

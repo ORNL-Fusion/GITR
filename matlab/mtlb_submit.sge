@@ -1,0 +1,5 @@
+#$ -N GITR
+#$ -q medium*
+#$ -pe threads 4
+#$ -cwd
+matlab -r 'gimp'
