@@ -72,7 +72,7 @@ classdef particle < handle
             B = BfieldInterpolator(this,xyz,Bfield3D);
             
             EfieldInterpolator = interpolators{1};
-            E = EfieldInterpolator(this, decayLength, potential,surface_dz_dx,xyz,B, ...
+            E = EfieldInterpolator(this,xyz,Efield3D, decayLength, potential,surface_dz_dx,xyz,B, ...
                background_Z,background_amu,maxTemp_eV);
             %E = interpolatorHandle(this,xyz,Efield3D);
 
@@ -272,7 +272,7 @@ classdef particle < handle
         end
         
         function [nu_s, nu_d, nu_par, nu_E] = slow(this,xyz,density_m3,temp_eV,amu,Z,interpolators,Bfield, ...
-                connectionLength,surface_dz_dx,surface_zIntercept,maxTemp_eV,background_amu)
+                connectionLength,surface_dz_dx,surface_zIntercept,maxTemp_eV,background_amu,flowVelocity_ms)
             
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
@@ -299,9 +299,11 @@ classdef particle < handle
             B_local = BfieldInterpolator(this,xyz,Bfield);
             
             
+            for s=1:nS
             flowVelocityInterpolator = interpolators{3};
-            flowVelocity = flowVelocityInterpolator(this,xyz,B_local, ...
-                connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept); 
+            flowVelocity = flowVelocityInterpolator(this,xyz,flowVelocity_ms,s,B_local, ...
+                connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
+            end 
             
             v_relative = v - flowVelocity;
             v_norm = norm(v_relative);
@@ -346,18 +348,21 @@ classdef particle < handle
             
             
         end
-        function [e1, e2, e3] = direction(this,xyz,Bfield,interpolators,connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept)
+        function [e1, e2, e3] = direction(this,xyz,Bfield,flowVelocity_ms,interpolators,connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept)
             
-            
+            nS = size(flowVelocity_ms.x,4);
             v = [this.vx this.vy this.vz];
             BfieldInterpolator = interpolators{2};
             B_local = BfieldInterpolator(this,xyz,Bfield);
             
             B_unit = B_local/norm(B_local);
             
+            for s=1:nS
             flowVelocityInterpolator = interpolators{3};
-            flowVelocity = flowVelocityInterpolator(this,xyz,B_local, ...
+            flowVelocity = flowVelocityInterpolator(this,xyz,flowVelocity_ms,s,B_local, ...
                 connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
+            end
+            
             if this.Z ==0
                 flowVelocity = [0 0 0];
             end
@@ -423,7 +428,7 @@ classdef particle < handle
         end
         
         function diagnostics = CoulombCollisions(this,xyz,Bfield,density_m3,temp_eV,...
-                background_amu,background_Z,dt,interpolators,...
+                background_amu,background_Z,flowVelocity_ms,dt,interpolators,...
                 velocityChangeTolerance, connectionLength,maxTemp_eV, ...
                 surface_dz_dx,surface_zIntercept)
             
@@ -433,21 +438,24 @@ classdef particle < handle
             rand_per1VelocityDiffusion = rand(this.streams.per1VelocityDiffusion);
             rand_per2VelocityDiffusion = rand(this.streams.per2VelocityDiffusion);
             
-            [e1, e2, e3] = this.direction(xyz,Bfield,interpolators,connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
+            [e1, e2, e3] = this.direction(xyz,Bfield,flowVelocity_ms,interpolators,connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
             
             [nu_s, nu_d, nu_par, nu_E] = this.slow(xyz,density_m3,temp_eV,...
                 background_amu,background_Z,interpolators,Bfield,...
-                connectionLength,surface_dz_dx,surface_zIntercept,maxTemp_eV,background_amu);
+                connectionLength,surface_dz_dx,surface_zIntercept,maxTemp_eV,background_amu,flowVelocity_ms);
             v = [this.vx this.vy this.vz];
             v_norm = norm(v);
             
             BfieldInterpolator = interpolators{2};
             B_local = BfieldInterpolator(this,xyz,Bfield);
             
-            
-            flowVelocityInterpolator = interpolators{3};
-            flowVelocity = flowVelocityInterpolator(this,xyz,B_local, ...
+            nS = size(density_m3,4);
+            flowVelocityInterpolator = interpolators{3};            
+            for s=1:nS
+
+            flowVelocity = flowVelocityInterpolator(this,xyz,flowVelocity_ms,s,B_local, ...
                 connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
+            end
             
             if this.Z ==0
                 flowVelocity = [0 0 0];

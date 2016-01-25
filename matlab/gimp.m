@@ -71,67 +71,40 @@ end
 
 % Setup B field
 
-Bx = zeros(nXv,nYv,nZv);
-By = zeros(nXv,nYv,nZv);
-Bz = zeros(nXv,nYv,nZv);
+Bfield3D.x = zeros(nXv,nYv,nZv);
+Bfield3D.y = zeros(nXv,nYv,nZv);
+Bfield3D.z = zeros(nXv,nYv,nZv);
+Bfield3D.mag = zeros(nXv,nYv,nZv);
 
-Bx(:) = Bx_in;
-By(:) = By_in;
-Bz(:) = Bz_in;
+BfieldInitialization
 
-Bfield3D.x = Bx; % Create background B strucutre
-Bfield3D.y = By;
-Bfield3D.z = Bz;
-
-BMag = sqrt( Bx.^2 + By.^2 + Bz.^2 );
-
-% Setup profiles
+% Setup background plasma profiles - temperature, density, flow velocity
 
 [n_, nS] = size(background_amu);
 
 density_m3 = zeros(nXv,nYv,nZv,nS);
 temp_eV = zeros(nXv,nYv,nZv,nS);
+flowVelocity_ms.x = zeros(nXv,nYv,nZv,nS);
+flowVelocity_ms.y = zeros(nXv,nYv,nZv,nS);
+flowVelocity_ms.z = zeros(nXv,nYv,nZv,nS);
 
-impurityDensity = zeros(nT,nP);
-volumeGridSize = [nXv nYv nZv];
+backgroundPlasmaInitialization
 
-Ex = zeros(nXv,nYv,nZv);
-Ey = zeros(nXv,nYv,nZv);
-Ez = zeros(nXv,nYv,nZv);
 
-Efield3D.x = Ex; % Create E field structure
-Efield3D.y = Ey;
-Efield3D.z = Ez;
-
-perDiffusionCoeff = zeros(nXv,nYv,nZv);
-
-V_1D = sheathPotential * exp( xV_1D / sheathWidth );
-
+% Setup E field
 debyeLength = sqrt(EPS0*maxTemp_eV/(maxDensity*background_Z(2)^2*Q));%only one q in order to convert to J
 
-for i=1:nXv
-    for j=1:nYv
-        for k=1:nZv
-            
-            density_m3(i,j,k,:) = maxDensity * exp( (xMinV-xV_1D(i)) / densitySOLDecayLength );
-            temp_eV(i,j,k,:) = maxTemp_eV * exp( (xMinV-xV_1D(i)) / tempSOLDecayLength );
-            
-            perDiffusionCoeff(i,j,k) = perDiffusionCoeff_in;
-            
-            if i>1 && i<nXv
-                Efield3D.x(i,j,k) = -(V_1D(i+1)-V_1D(i-1)) / (2*dXv);
-            elseif i==1
-                Efield3D.x(i,j,k) = -(-1*V_1D(i)+V_1D(i+1)) / dXv;
-            elseif i==nXv
-                Efield3D.x(i,j,k) = -(-V_1D(i-1)+V_1D(i)) / dXv;
-            end
-            
-            Efield3D.y(i,j,k) = 0;
-            Efield3D.z(i,j,k) = 0;
-            
-        end
-    end
-end
+Efield3D.x = zeros(nXv,nYv,nZv);
+Efield3D.y = zeros(nXv,nYv,nZv);
+Efield3D.z = zeros(nXv,nYv,nZv);
+
+EfieldInitialization
+
+
+% Setup perpedicular diffusion coefficient
+perDiffusionCoeff = zeros(nXv,nYv,nZv);
+
+perDiffusionCoeffInitialization
 
 
 % Plot slices through the profiles
@@ -144,7 +117,7 @@ if plot1DProfileSlices
     semilogy(xV_1D,temp_eV(:,1,1,1))
     title('Electron temp [eV]')
     subplot(2,2,3)
-    plot(xV_1D,V_1D(:))
+   % plot(xV_1D,V_1D(:))
     title('Sheath potential [V]')
     subplot(2,2,4)
     plot(xV_1D,Efield3D.x(:,1,1))
@@ -185,7 +158,7 @@ end
 
 % Calculate time step (dt)
 
-max_B = max( BMag(:) );
+max_B = max( Bfield3D.mag(:) );
 min_m = impurity_amu * MI;
 max_wc = impurity_Z * Q * max_B / min_m;
 dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
@@ -196,13 +169,15 @@ end
 % Setup arrays to store history
 
 pre_history
+impurityDensityTally = zeros(nT,nP);
+volumeGridSize = [nXv nYv nZv];
 
 % Main loop
 
 IonizationTimeStep = ionization_nDtPerApply*dt;
 
 tic
-parfor p=1:nP
+for p=1:nP
     
     for tt = 1:nT
         
@@ -226,7 +201,7 @@ parfor p=1:nP
 
 
         diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,density_m3,temp_eV,...
-            background_amu,background_Z,dt,...
+            background_amu,background_Z,flowVelocity_ms,dt,...
             interpolators, ...
             velocityChangeTolerance, connectionLength,maxTemp_eV,surface_dz_dx,surface_zIntercept);
 
@@ -254,7 +229,7 @@ parfor p=1:nP
             [My, yIndex] = min(abs(xyz.y-particles(p).y));
             [Mz, zIndex] = min(abs(xyz.z-particles(p).z));
              
-             impurityDensity(tt,p) = sub2ind(volumeGridSize,xIndex,yIndex,zIndex);
+             impurityDensityTally(tt,p) = sub2ind(volumeGridSize,xIndex,yIndex,zIndex);
         end
         
         
@@ -273,9 +248,11 @@ toc
 history_plot
 surface_scatter
 
-density
+density_calc
 
 fileID = fopen('end_positions.txt','w');
 
 fprintf(fileID,'%f %f %f\n',end_pos);
 fclose(fileID);
+
+%print_profiles

@@ -27,6 +27,8 @@ nZv = 50;
 sheathPotential = -60.0;
 % Potential decay length
 sheathWidth = 0.0001;
+% Constant E field value - only used when EfieldInterpolator_number = 0
+Efield_in = [1e2 0 0]
 
 Bx_in = 0.00;
 By_in = 0.00;
@@ -36,13 +38,14 @@ Bz_in = -2.0;
 
 background_Z = [-1 1];
 background_amu = [ME/MI 2];
+background_flow = [0.90 0.90];%Fraction of thermal velocity - only used when FlowVelocityInterpolator_number = 0
 
 % Density
-maxDensity = 1e19;
+maxDensity = [1e19 1e19];
 % Density Decay length
 densitySOLDecayLength =1e4;
 %Temperature (in eV)
-maxTemp_eV = 20;
+maxTemp_eV = [20 20];
 %Temperature decay length
 tempSOLDecayLength = 1e4;
 %Dperp
@@ -51,7 +54,7 @@ perDiffusionCoeff_in = 0.04;
 
 % Impurity particles 
 
-nP = 10;
+nP = 2;
 
 x_start = 0.00;
 y_start = 0.00;
@@ -88,12 +91,13 @@ plot1DProfileSlices = 1;
 
 % Interpolator Dimensionality Selection
 
-EfieldInterpolator = 2;
-BfieldInterpolator = 0;
-FlowVelocityInterpolator = 2;
+EfieldInterpolator_number = 3;
+BfieldInterpolator_number = 3;
+FlowVelocityInterpolator_number = 3;
 
-temperatureInterpolator = 0;
-densityInterpolator = 0;
+temperatureInterpolator_number = 3;
+densityInterpolator_number = 3;
+perDiffusionCoefficientInterpolator_number = 3;
 
 
 % Checks on Monte Carlo Probability and Step Size
@@ -103,72 +107,9 @@ positionStepTolerance = 1e-3;
 
 connectionLength = 50;
 
-if EfieldInterpolator ==0
-    EfieldInterpolator = @gitrEfieldConstant;
-else if EfieldInterpolator == 1
-        EfieldInterpolator = @gitrInterpVector1D;
-    else if EfieldInterpolator == 2
-            EfieldInterpolator = @gitrEfieldAnalytic;
-        else if EfieldInterpolator == 3
-                EfieldInterpolator = @gimpInterVectorp3D;
-            end
-        end
-    end
-end
-
-if BfieldInterpolator ==0
-    BfieldInterpolator = @gitrBfieldConstant;
-else if EfieldInterpolator == 1
-        BfieldInterpolator = @gitrInterpVector1D;
-    else if BfieldInterpolator == 2
-            BfieldInterpolator = @gitrBfieldAnalytic;
-        else if BfieldInterpolator == 3
-                BfieldInterpolator = @gimpInterVectorp3D;
-            end
-        end
-    end
-end
     
-if FlowVelocityInterpolator ==0
-    FlowVelocityInterpolator = @gitrFlowVelocityConstant;
-else if FlowVelocityInterpolator == 1
-        FlowVelocityInterpolator = @gitrInterpVector1D;
-    else if FlowVelocityInterpolator == 2
-            FlowVelocityInterpolator = @gitrFlowVelocityAnalytic;
-        else if FlowVelocityInterpolator == 3
-                FlowVelocityInterpolator = @gimpInterVectorp3D;
-            end
-        end
-    end
-end
-    
-if temperatureInterpolator ==0
-    temperatureInterpolator = @gitrTemperatureConstant;
-else if EfieldInterpolator == 1
-        temperatureInterpolator = @gitrInterpScalar1D;
-    else if temperatureInterpolator == 2
-            temperatureInterpolator = @gitrTemperatureAnalytic;
-        else if temperatureInterpolator == 3
-                temperatureInterpolator = @gimpInterpScalar3D;
-            end
-        end
-    end
-end
 
-if densityInterpolator ==0
-    densityInterpolator = @gitrDensityConstant;
-else if EfieldInterpolator == 1
-        densityInterpolator = @gitrInterpScalar1D;
-    else if densityInterpolator == 2
-            densityInterpolator = @gitrDensityAnalytic;
-        else if densityInterpolator == 3
-                densityInterpolator = @gimpInterpScalar3D;
-            end
-        end
-    end
-end
+
+
 
     
-interpolators = {EfieldInterpolator; BfieldInterpolator;...
-    FlowVelocityInterpolator; temperatureInterpolator; ...
-    densityInterpolator};

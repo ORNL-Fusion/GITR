@@ -3,8 +3,8 @@ density = zeros(volumeGridSize);
 for p=1:nP
     
     for tt = 1:nT
-        if impurityDensity(tt,p)
-        [i, j, k] = ind2sub(volumeGridSize, impurityDensity(tt,p));
+        if impurityDensityTally(tt,p)
+        [i, j, k] = ind2sub(volumeGridSize, impurityDensityTally(tt,p));
         density(i,j,k) = density(i,j,k) + dt;
         end
     end
