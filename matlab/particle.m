@@ -72,7 +72,7 @@ classdef particle < handle
             B = BfieldInterpolator(this,xyz,Bfield3D);
             
             EfieldInterpolator = interpolators{1};
-            E = EfieldInterpolator(this,xyz,Efield3D, decayLength, potential,surface_dz_dx,xyz,B, ...
+            E = EfieldInterpolator(this,xyz,Efield3D, decayLength, potential,surface_dz_dx,B, ...
                background_Z,background_amu,maxTemp_eV);
             %E = interpolatorHandle(this,xyz,Efield3D);
 
@@ -272,7 +272,7 @@ classdef particle < handle
         end
         
         function [nu_s, nu_d, nu_par, nu_E] = slow(this,xyz,density_m3,temp_eV,amu,Z,interpolators,Bfield, ...
-                connectionLength,surface_dz_dx,surface_zIntercept,maxTemp_eV,background_amu,flowVelocity_ms)
+                connectionLength,surface_dz_dx,surface_zIntercept,background_amu,flowVelocity_ms)
             
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
@@ -302,7 +302,7 @@ classdef particle < handle
             for s=1:nS
             flowVelocityInterpolator = interpolators{3};
             flowVelocity = flowVelocityInterpolator(this,xyz,flowVelocity_ms,s,B_local, ...
-                connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
+                connectionLength,temp_eV,background_amu,surface_dz_dx,surface_zIntercept);
             end 
             
             v_relative = v - flowVelocity;
@@ -348,20 +348,11 @@ classdef particle < handle
             
             
         end
-        function [e1, e2, e3] = direction(this,xyz,Bfield,flowVelocity_ms,interpolators,connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept)
+        function [e1, e2, e3] = direction(this,flowVelocity,B_local)
             
-            nS = size(flowVelocity_ms.x,4);
+            
             v = [this.vx this.vy this.vz];
-            BfieldInterpolator = interpolators{2};
-            B_local = BfieldInterpolator(this,xyz,Bfield);
-            
             B_unit = B_local/norm(B_local);
-            
-            for s=1:nS
-            flowVelocityInterpolator = interpolators{3};
-            flowVelocity = flowVelocityInterpolator(this,xyz,flowVelocity_ms,s,B_local, ...
-                connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
-            end
             
             if this.Z ==0
                 flowVelocity = [0 0 0];
@@ -372,22 +363,27 @@ classdef particle < handle
             g = v_relative;
             e3 = g/norm(g);
             
-            s1 = dot(e3,B_unit);
+            s1 = e3(1)*B_unit(1)+e3(2)*B_unit(2)+e3(3)*B_unit(3);
             s2 = sqrt(1-s1^2);
             
             e1 = 1/s2*(s1*e3 - B_unit);
             e2 = -1/s2*cross(e3,B_unit);
             
+%            if this.Z == 1
+%                 e3
+%             end
+            
 
         end
-        
-        function CrossFieldDiffusion(this,Bfield,xyz,Dperp,dt,ScalarInterpolatorHandle,VectorInterpolatorHandle,positionStepTolerance)
+
+        function CrossFieldDiffusion(this,xyz,Bfield,Dperp,interpolators,dt,positionStepTolerance)
             
             if this.hitWall == 0 && this.leftVolume == 0 && this.Z > 0
                 
                 s3 = rand(this.streams.perDiffusion);
                 
-                B_local = VectorInterpolatorHandle(this,xyz,Bfield);
+                BfieldInterpolatorHandle = interpolators{2};
+                B_local = BfieldInterpolatorHandle(this,xyz,Bfield);
                 B_unit = B_local/norm(B_local);
                 
                 % Calculation of direction perpendicular to B
@@ -413,11 +409,12 @@ classdef particle < handle
                 eperp(2) = eperp(2)/norme;
                 eperp(3) = eperp(3)/norme;
                 
-                D_local = ScalarInterpolatorHandle(this,xyz,Dperp);
+                DiffusionInterpolatorHandle = interpolators{6};
+                D_local = DiffusionInterpolatorHandle(this,xyz,Dperp);
                  step = sqrt(6*D_local*dt);
                 if step > positionStepTolerance
-                    error('Position step is too large in cross-field diffusion')
                     step
+                    error('Position step is too large in cross-field diffusion')
                 end
                 
                 this.x = this.x + step*eperp(1);
@@ -426,10 +423,10 @@ classdef particle < handle
             end
             
         end
-        
-        function diagnostics = CoulombCollisions(this,xyz,Bfield,density_m3,temp_eV,...
-                background_amu,background_Z,flowVelocity_ms,dt,interpolators,...
-                velocityChangeTolerance, connectionLength,maxTemp_eV, ...
+
+        function diagnostics = CoulombCollisions(this,xyz,Bfield,flowVelocity_ms,density_m3,temp_eV,...
+                background_amu,background_Z,interpolators,...
+                dt,velocityChangeTolerance, connectionLength, ...
                 surface_dz_dx,surface_zIntercept)
             
             global ME MI Q EPS0;
@@ -438,24 +435,25 @@ classdef particle < handle
             rand_per1VelocityDiffusion = rand(this.streams.per1VelocityDiffusion);
             rand_per2VelocityDiffusion = rand(this.streams.per2VelocityDiffusion);
             
-            [e1, e2, e3] = this.direction(xyz,Bfield,flowVelocity_ms,interpolators,connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
-            
-            [nu_s, nu_d, nu_par, nu_E] = this.slow(xyz,density_m3,temp_eV,...
-                background_amu,background_Z,interpolators,Bfield,...
-                connectionLength,surface_dz_dx,surface_zIntercept,maxTemp_eV,background_amu,flowVelocity_ms);
-            v = [this.vx this.vy this.vz];
-            v_norm = norm(v);
-            
             BfieldInterpolator = interpolators{2};
             B_local = BfieldInterpolator(this,xyz,Bfield);
             
             nS = size(density_m3,4);
-            flowVelocityInterpolator = interpolators{3};            
+            flowVelocityInterpolator = interpolators{3};
             for s=1:nS
-
-            flowVelocity = flowVelocityInterpolator(this,xyz,flowVelocity_ms,s,B_local, ...
-                connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
+                
+                flowVelocity = flowVelocityInterpolator(this,xyz,flowVelocity_ms,s,B_local, ...
+                    connectionLength,temp_eV,background_amu,surface_dz_dx,surface_zIntercept);
             end
+            
+            [e1, e2, e3] = this.direction(flowVelocity,B_local);
+            
+            [nu_s, nu_d, nu_par, nu_E] = this.slow(xyz,density_m3,temp_eV,...
+                background_amu,background_Z,interpolators,Bfield,...
+                connectionLength,surface_dz_dx,surface_zIntercept,background_amu,flowVelocity_ms);
+            v = [this.vx this.vy this.vz];
+            v_norm = norm(v);
+            
             
             if this.Z ==0
                 flowVelocity = [0 0 0];
@@ -492,7 +490,7 @@ classdef particle < handle
             this.vz = v_collisions(3)+ flowVelocity(3);
             
             dv_collisions = v_collisions - v_norm;
-            
+
             if dv_collisions > velocityChangeTolerance
                 error('Velocity change is too large in Coulomb Collisions')
                 dv_collisions

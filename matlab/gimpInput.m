@@ -26,9 +26,9 @@ nZv = 50;
 % Sheath potential
 sheathPotential = -60.0;
 % Potential decay length
-sheathWidth = 0.0001;
+sheathWidth = 0.00001;
 % Constant E field value - only used when EfieldInterpolator_number = 0
-Efield_in = [1e2 0 0]
+Efield_in = [1e2 0 0];
 
 Bx_in = 0.00;
 By_in = 0.00;
@@ -38,7 +38,7 @@ Bz_in = -2.0;
 
 background_Z = [-1 1];
 background_amu = [ME/MI 2];
-background_flow = [0.90 0.90];%Fraction of thermal velocity - only used when FlowVelocityInterpolator_number = 0
+background_flow = [0.95 0.95];%Fraction of thermal velocity - only used when FlowVelocityInterpolator_number = 0
 
 % Density
 maxDensity = [1e19 1e19];
@@ -49,12 +49,12 @@ maxTemp_eV = [20 20];
 %Temperature decay length
 tempSOLDecayLength = 1e4;
 %Dperp
-perDiffusionCoeff_in = 0.04;
+perDiffusionCoeff_in = 0.000004;
 
 
 % Impurity particles 
 
-nP = 2;
+nP = 100;
 
 x_start = 0.00;
 y_start = 0.00;
@@ -70,7 +70,7 @@ impurity_Z = 0.0;
 
 % Surface parameterization z = dz/dx * x + b
 
-surface_dz_dx = 5;
+surface_dz_dx = 1.73205;
 surface_zIntercept = 0;
 
 %Ionization
@@ -80,32 +80,38 @@ file_rcmb = 'ADAS/acd50_w.dat';
 
 % Particle time stepping control
 
-nPtsPerGyroOrbit = 70;
-ionization_nDtPerApply = 50;
+nPtsPerGyroOrbit = 100;
+ionization_nDtPerApply = 10;
 nT = 1500;
 
 % Plots
 
-plotInitialSurface = 1;
-plot1DProfileSlices = 1;
+plotInitialSurface = 0;
+plot1DProfileSlices = 0;
+
+trackHistory = 1;
 
 % Interpolator Dimensionality Selection
 
-EfieldInterpolator_number = 3;
-BfieldInterpolator_number = 3;
-FlowVelocityInterpolator_number = 3;
+EfieldInterpolator_number = 2;
+BfieldInterpolator_number = 0;
+FlowVelocityInterpolator_number = 0;
 
-temperatureInterpolator_number = 3;
-densityInterpolator_number = 3;
-perDiffusionCoefficientInterpolator_number = 3;
+temperatureInterpolator_number = 0;
+densityInterpolator_number = 0;
+perDiffusionCoefficientInterpolator_number = 0;
 
 
 % Checks on Monte Carlo Probability and Step Size
-ionizationProbabilityTolerance = 0.9;
+ionizationProbabilityTolerance = 0.5;
 velocityChangeTolerance = 1; % Fraction of previous speed
 positionStepTolerance = 1e-3;
 
 connectionLength = 50;
+
+% Output options
+printProfiles = 1;
+printHistory = 1;
 
     
 

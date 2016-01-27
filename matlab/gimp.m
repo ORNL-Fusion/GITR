@@ -117,8 +117,8 @@ if plot1DProfileSlices
     semilogy(xV_1D,temp_eV(:,1,1,1))
     title('Electron temp [eV]')
     subplot(2,2,3)
-   % plot(xV_1D,V_1D(:))
-    title('Sheath potential [V]')
+    plot(zV_1D,flowVelocity_ms.z(:,1,1,2))
+    title('Ion flow velocity in z')
     subplot(2,2,4)
     plot(xV_1D,Efield3D.x(:,1,1))
     title('Ex [V/m]')
@@ -154,6 +154,8 @@ for p=1:nP
     
     particles(p).UpdatePrevious();
     
+    particles(p).PerpDistanceToSurface(surface_dz_dx,surface_zIntercept);
+    
 end
 
 % Calculate time step (dt)
@@ -175,13 +177,12 @@ volumeGridSize = [nXv nYv nZv];
 % Main loop
 
 IonizationTimeStep = ionization_nDtPerApply*dt;
-
+disp('Initialization Completed... Starting Main Loop')
 tic
-for p=1:nP
+parfor p=1:nP
     
     for tt = 1:nT
-        
-        particles(p).PerpDistanceToSurface(surface_dz_dx,surface_zIntercept);
+       
       
 
         if mod(tt, ionization_nDtPerApply) == 0
@@ -196,14 +197,13 @@ for p=1:nP
             
         end
 
-%         particles(p).CrossFieldDiffusion(Bfield3D,xyz,perDiffusionCoeff,dt,...
-%             selectedScalarInterpolator,selectedVectorInterpolator,positionStepTolerance);
+%         particles(p).CrossFieldDiffusion(xyz,Bfield3D,perDiffusionCoeff,...
+%             interpolators,dt,positionStepTolerance);
 
 
-        diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,density_m3,temp_eV,...
-            background_amu,background_Z,flowVelocity_ms,dt,...
-            interpolators, ...
-            velocityChangeTolerance, connectionLength,maxTemp_eV,surface_dz_dx,surface_zIntercept);
+        diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,flowVelocity_ms,density_m3,temp_eV,...
+            background_amu,background_Z,interpolators, ...
+            dt,velocityChangeTolerance, connectionLength,surface_dz_dx,surface_zIntercept);
 
         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
             interpolators,positionStepTolerance,velocityChangeTolerance, ...
@@ -232,27 +232,37 @@ for p=1:nP
              impurityDensityTally(tt,p) = sub2ind(volumeGridSize,xIndex,yIndex,zIndex);
         end
         
-        
+                particles(p).PerpDistanceToSurface(surface_dz_dx,surface_zIntercept);
+        if trackHistory
         xHistory(tt,p) = particles(p).xPrevious;
         yHistory(tt,p) = particles(p).yPrevious;
         zHistory(tt,p) = particles(p).zPrevious;
         vxHistory(tt,p) = particles(p).vxPrevious;
         vyHistory(tt,p) = particles(p).vyPrevious;
         vzHistory(tt,p) = particles(p).vzPrevious;
-          
+        Z_History(tt,p) = particles(p).Z;
+        end
     end
-    end_pos(p,:) = [particles(p).xPrevious particles(p).yPrevious particles(p).zPrevious];
+    end_pos(p,:) = [particles(p).xPrevious particles(p).yPrevious particles(p).zPrevious ...
+        particles(p).vxPrevious particles(p).vyPrevious particles(p).vzPrevious ...
+        particles(p).Z];
 end
 toc
 
-history_plot
-surface_scatter
 
-density_calc
+fileID = fopen('run_param.txt','w');
+run_param = [nS, dt];
 
+fprintf(fileID,'%e\n',run_param);
+fclose(fileID);
 fileID = fopen('end_positions.txt','w');
 
-fprintf(fileID,'%f %f %f\n',end_pos);
+fprintf(fileID,'%f %f %f %f %f %f %f\n',transpose(end_pos));
 fclose(fileID);
 
-%print_profiles
+print_profiles
+print_History
+
+dlmwrite('impurityDensityTally_out.txt',impurityDensityTally,'delimiter','\t','precision',4)
+
+%postProcessing

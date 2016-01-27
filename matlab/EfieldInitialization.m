@@ -23,6 +23,7 @@ else if EfieldInterpolator_number == 1
         Efield3D.y = reshape(dlmread('Efield_y_out.txt','\t'),nXv, nYv, nZv);
         Efield3D.z = reshape(dlmread('Efield_z_out.txt','\t'),nXv, nYv, nZv);
     else if EfieldInterpolator_number == 2
+            if printProfiles
             initPart = particle;
             for i=1:nXv
                 for j=1:nYv
@@ -36,11 +37,11 @@ else if EfieldInterpolator_number == 1
                         
                         if initPart.perpDistanceToSurface > 0
                             
-                            EfieldInterpolator = interpolators{1};
+                           
                             potential = -3*temp_eV(i,j,k,1);
                             B = [Bfield3D.x(i,j,k) Bfield3D.y(i,j,k) Bfield3D.z(i,j,k)];
                             
-                            E = EfieldInterpolator(initPart, debyeLength, potential,surface_dz_dx,xyz,B, ...
+                            E = EfieldInterpolator(initPart,xyz,Efield3D, debyeLength, potential,surface_dz_dx,B, ...
                                 background_Z,background_amu,maxTemp_eV);
                             
                             if E(1) > 1e10
@@ -60,6 +61,7 @@ else if EfieldInterpolator_number == 1
             Efield3D.x(isinf(Efield3D.x)) = 0;
             Efield3D.y(isinf(Efield3D.y)) = 0;
             Efield3D.z(isinf(Efield3D.z)) = 0;
+            end
         else if EfieldInterpolator_number == 3
                 Efield3D.x = reshape(dlmread('Efield_x_out.txt','\t'),nXv, nYv, nZv);
                 Efield3D.y = reshape(dlmread('Efield_y_out.txt','\t'),nXv, nYv, nZv);

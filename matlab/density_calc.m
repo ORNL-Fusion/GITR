@@ -1,3 +1,4 @@
+volumeGridSize = [nXv nYv nZv];
 density = zeros(volumeGridSize);
 
 for p=1:nP
@@ -10,7 +11,7 @@ for p=1:nP
     end
 end
 xslice = 0;
-yslice = -0.005;
+yslice = -0.01;
 zslice = 0;
 figure(4)
 slice(xV_1D,yV_1D,zV_1D,density,xslice,yslice,zslice)

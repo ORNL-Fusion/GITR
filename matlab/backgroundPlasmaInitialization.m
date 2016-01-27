@@ -80,6 +80,7 @@ else if FlowVelocityInterpolator_number == 1
         flowVelocity_ms.y = reshape(dlmread('flowVelocity_y_out.txt','\t'),nXv, nYv, nZv,nS);
         flowVelocity_ms.z = reshape(dlmread('flowVelocity_z_out.txt','\t'),nXv, nYv, nZv,nS);
     else if FlowVelocityInterpolator_number == 2
+            if printProfiles
             initPart = particle;
             for i=1:nXv
                 for j=1:nYv
@@ -90,15 +91,19 @@ else if FlowVelocityInterpolator_number == 1
                         
                         B_local = [Bfield3D.x(i,j,k) Bfield3D.y(i,j,k) Bfield3D.z(i,j,k)];
                         
-                        flowVelocityInterpolator = interpolators{3};
                         
-                        flowVelocity = flowVelocityInterpolator(initPart,xyz,B_local, ...
-                            connectionLength,maxTemp_eV,background_amu,surface_dz_dx,surface_zIntercept);
+                        
+            for s=1:nS
+
+            flowVelocity = FlowVelocityInterpolator(initPart,xyz,flowVelocity_ms,s,B_local, ...
+                connectionLength,temp_eV,background_amu,surface_dz_dx,surface_zIntercept);
+            end 
                         flowVelocity_ms.x(i,j,k,:) = flowVelocity(1);
                         flowVelocity_ms.y(i,j,k,:) = flowVelocity(2);
                         flowVelocity_ms.z(i,j,k,:) = flowVelocity(3);
                     end
                 end
+            end
             end
         else if FlowVelocityInterpolator_number == 3
                 flowVelocity_ms.x = reshape(dlmread('flowVelocity_x_out.txt','\t'),nXv, nYv, nZv,nS);
