@@ -1,4 +1,5 @@
-function dydt = myode(t,y,this,E,B,xyz,interpolatorHandle)
+function dydt = myode(t,y,this,E,B,xyz,Einterpolator,Binterpolator, decayLength, potential,surface_dz_dx, ...
+               background_Z,background_amu,maxTemp_eV)
     
     constants
     
@@ -7,9 +8,10 @@ function dydt = myode(t,y,this,E,B,xyz,interpolatorHandle)
     thisE = [0 0 0];
     thisB = [0 0 0];
 
+    thisB = Binterpolator(this,xyz,B);
+    thisE = Einterpolator(this,xyz,E, decayLength, potential,surface_dz_dx,thisB, ...
+               background_Z,background_amu,maxTemp_eV);
 
-    thisE = interpolatorHandle(this,xyz,E);
-    thisB = interpolatorHandle(this,xyz,B);
     
 
         dydt(1:3) = y(4:6);    

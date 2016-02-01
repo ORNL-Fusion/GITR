@@ -23,9 +23,10 @@ classdef particle < handle
     
     methods
         
-        function [T Y] = move (this, end_t, dt, E, B, xyz,interpolatorHandle,...
+        function [T Y] = move (this, end_t, dt, E, B, xyz,interpolators,...
                 xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
-                surface_zIntercept,surface_dz_dx)
+                surface_zIntercept,surface_dz_dx, ...
+                decayLength, potential,background_Z,background_amu,maxTemp_eV)
             
             
             status = 0;
@@ -34,8 +35,11 @@ classdef particle < handle
             tSpan = [0,end_t];
             
             options = odeset('InitialStep',dt,'MaxStep',dt);
-            
-            [T Y] = ode45(@(t,y) myode(t,y,this,E,B,xyz,interpolatorHandle),tSpan,IC);%,options);
+            Einterpolator = interpolators{1};
+            Binterpolator = interpolators{2};
+            [T Y] = ode45(@(t,y) myode(t,y,this,E,B,xyz,Einterpolator,Binterpolator, ...
+                 decayLength, potential,surface_dz_dx, ...
+               background_Z,background_amu,maxTemp_eV),tSpan,IC);%,options);
             
             n_steps = length(T);
             index = 0;
@@ -73,7 +77,7 @@ classdef particle < handle
             
             EfieldInterpolator = interpolators{1};
             E = EfieldInterpolator(this,xyz,Efield3D, decayLength, potential,surface_dz_dx,B, ...
-               background_Z,background_amu,maxTemp_eV);
+               background_Z,background_amu,maxTemp_eV)
             %E = interpolatorHandle(this,xyz,Efield3D);
 
             
@@ -97,6 +101,8 @@ classdef particle < handle
             
             step = v*dt;
             r = r + step;
+            
+
             
             if step > positionStepTolerance
                 step
@@ -218,6 +224,7 @@ classdef particle < handle
                     
                     if r1 <= P1
                         this.Z = this.Z+1;
+                        this.perpDistanceToSurface;
                     end
                 end
             end

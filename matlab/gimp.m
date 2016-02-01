@@ -171,15 +171,19 @@ end
 % Setup arrays to store history
 
 pre_history
-impurityDensityTally = zeros(nT,nP);
+%impurityDensityTally = zeros(nT,nP);
 volumeGridSize = [nXv nYv nZv];
+dens = zeros(volumeGridSize);
+
 
 % Main loop
-
+adaptive_distance = 10*debyeLength;
 IonizationTimeStep = ionization_nDtPerApply*dt;
+SheathTimeStep = dt/sheath_timestep_factor;
 disp('Initialization Completed... Starting Main Loop')
+%parpool(2)
 tic
-parfor p=1:nP
+for p=1:nP
     
     for tt = 1:nT
        
@@ -191,9 +195,9 @@ parfor p=1:nP
                IonizationRateCoeff,IonizationTemp, IonizationDensity,...
                IonizationChargeState,interpolators,ionizationProbabilityTolerance);
             
-            particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
-               RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
-               RecombinationChargeState,interpolators,ionizationProbabilityTolerance);
+%             particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
+%                RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
+%                RecombinationChargeState,interpolators,ionizationProbabilityTolerance);
             
         end
 
@@ -205,13 +209,19 @@ parfor p=1:nP
             background_amu,background_Z,interpolators, ...
             dt,velocityChangeTolerance, connectionLength,surface_dz_dx,surface_zIntercept);
 
+                        particles(p).PerpDistanceToSurface(surface_dz_dx,surface_zIntercept)
+                        
+
+                                
         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
             interpolators,positionStepTolerance,velocityChangeTolerance, ...
             debyeLength, -3*maxTemp_eV,surface_dz_dx,background_Z,background_amu,maxTemp_eV);
-
+                        
+% 
 %         [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
-%             selectedVectorInterpolator,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
-%             surface_zIntercept,surface_dz_dx)
+%             interpolators,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
+%             surface_zIntercept,surface_dz_dx, ...
+%             debyeLength, -3*maxTemp_eV,background_Z,background_amu,maxTemp_eV)
         
 
         
@@ -225,14 +235,16 @@ parfor p=1:nP
         if particles(p).hitWall == 0 && particles(p).leftVolume ==0
             particles(p).UpdatePrevious();
             
-            [Mx, xIndex] = min(abs(xyz.x-particles(p).x));
-            [My, yIndex] = min(abs(xyz.y-particles(p).y));
-            [Mz, zIndex] = min(abs(xyz.z-particles(p).z));
-             
-             impurityDensityTally(tt,p) = sub2ind(volumeGridSize,xIndex,yIndex,zIndex);
+%             [Mx, xIndex] = min(abs(xyz.x-particles(p).x));
+%             [My, yIndex] = min(abs(xyz.y-particles(p).y));
+%             [Mz, zIndex] = min(abs(xyz.z-particles(p).z));
+%              
+%              impurityDensityTally(tt,p) = sub2ind(volumeGridSize,xIndex,yIndex,zIndex);
         end
         
-                particles(p).PerpDistanceToSurface(surface_dz_dx,surface_zIntercept);
+
+
+                    
         if trackHistory
         xHistory(tt,p) = particles(p).xPrevious;
         yHistory(tt,p) = particles(p).yPrevious;
@@ -263,6 +275,7 @@ fclose(fileID);
 print_profiles
 print_History
 
-dlmwrite('impurityDensityTally_out.txt',impurityDensityTally,'delimiter','\t','precision',4)
+%dlmwrite('impurityDensityTally_out.txt',impurityDensityTally,'delimiter','\t','precision',4)
 
 %postProcessing
+%quit
