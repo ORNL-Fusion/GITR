@@ -82,7 +82,7 @@ file_rcmb = 'ADAS/acd50_w.dat';
 
 nPtsPerGyroOrbit = 1e3;
 ionization_nDtPerApply = 1;
-nT = 1e3;
+nT = 1e4;
 sheath_timestep_factor = 1e4;
 
 % Plots

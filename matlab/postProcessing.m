@@ -95,7 +95,8 @@ end
 
 % Surface particle impact histogram
 
-histogram2(particles.y,particles.z,'DisplayStyle','tile','ShowEmptyBins','on')
+histogram2([particlesOut.y],[particlesOut.z],surf_y1D,surf_z1D,...
+    'DisplayStyle','tile','ShowEmptyBins','on')
 
 surface_scatter
 

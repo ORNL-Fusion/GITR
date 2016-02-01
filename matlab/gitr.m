@@ -125,10 +125,10 @@ if plot1DProfileSlices
 end
 
 % Populate the impurity particle list
-    particles(nP) = particle;
-    end_pos(nP) = particle;
- 
-for p=1:nP 
+particles(nP) = particle;
+end_pos(nP) = particle;
+
+for p=1:nP
     particles(p).Z = impurity_Z;
     particles(p).amu = impurity_amu;
     
@@ -175,73 +175,70 @@ pre_history
 volumeGridSize = [nXv nYv nZv];
 dens = zeros(volumeGridSize);
 
-
 % Main loop
+
 adaptive_distance = 10*debyeLength;
 IonizationTimeStep = ionization_nDtPerApply*dt;
 SheathTimeStep = dt/sheath_timestep_factor;
-disp('Initialization Completed... Starting Main Loop')
-%parpool(2)
+
 tic
-for p=1:nP
+
+PreviousParticlePosition_x = [particles.x];
+PreviousParticlePosition_y = [particles.y];
+PreviousParticlePosition_z = [particles.z];
+
+parfor p=1:nP
     
     p
     
     for tt = 1:nT
-       
-      
-
+        
         if mod(tt, ionization_nDtPerApply) == 0
             
             particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
-               IonizationRateCoeff,IonizationTemp, IonizationDensity,...
-               IonizationChargeState,interpolators,ionizationProbabilityTolerance);
+                IonizationRateCoeff,IonizationTemp, IonizationDensity,...
+                IonizationChargeState,interpolators,ionizationProbabilityTolerance);
             
-%             particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
-%                RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
-%                RecombinationChargeState,interpolators,ionizationProbabilityTolerance);
+            %             particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
+            %                RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
+            %                RecombinationChargeState,interpolators,ionizationProbabilityTolerance);
             
         end
-
-%         particles(p).CrossFieldDiffusion(xyz,Bfield3D,perDiffusionCoeff,...
-%             interpolators,dt,positionStepTolerance);
-
-
+        
+        %         particles(p).CrossFieldDiffusion(xyz,Bfield3D,perDiffusionCoeff,...
+        %             interpolators,dt,positionStepTolerance);
+        
+        
         diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,flowVelocity_ms,density_m3,temp_eV,...
             background_amu,background_Z,interpolators, ...
             dt,velocityChangeTolerance, connectionLength,surface_dz_dx,surface_zIntercept);
-
-                        particles(p).PerpDistanceToSurface(surface_dz_dx,surface_zIntercept)
-                        
-
-                                
+        
+        particles(p).PerpDistanceToSurface(surface_dz_dx,surface_zIntercept)
+        
+        
         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
             interpolators,positionStepTolerance,velocityChangeTolerance, ...
             debyeLength, -3*maxTemp_eV,surface_dz_dx,background_Z,background_amu,maxTemp_eV);
-                        
-% 
-%         [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
-%             interpolators,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
-%             surface_zIntercept,surface_dz_dx, ...
-%             debyeLength, -3*maxTemp_eV,background_Z,background_amu,maxTemp_eV)
         
-
+        %
+        %         [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
+        %             interpolators,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
+        %             surface_zIntercept,surface_dz_dx, ...
+        %             debyeLength, -3*maxTemp_eV,background_Z,background_amu,maxTemp_eV)
         
-
-
         particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
         
         particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx);
         
-
+        
         if particles(p).hitWall == 0 && particles(p).leftVolume ==0
             particles(p).UpdatePrevious();
             
-%             [Mx, xIndex] = min(abs(xyz.x-particles(p).x));
-%             [My, yIndex] = min(abs(xyz.y-particles(p).y));
-%             [Mz, zIndex] = min(abs(xyz.z-particles(p).z));
-%              
-%              impurityDensityTally(tt,p) = sub2ind(volumeGridSize,xIndex,yIndex,zIndex);
+            %             [Mx, xIndex] = min(abs(xyz.x-particles(p).x));
+            %             [My, yIndex] = min(abs(xyz.y-particles(p).y));
+            %             [Mz, zIndex] = min(abs(xyz.z-particles(p).z));
+            %
+            %              impurityDensityTally(tt,p) = sub2ind(volumeGridSize,xIndex,yIndex,zIndex);
         end
         
         if trackHistory
@@ -254,11 +251,19 @@ for p=1:nP
             history(tt,p).Z = particles(p).Z;
         end
         
+        % This is to account for matlab not storing 
+        % structure arrays in parfor
+        
+        PreviousParticlePosition_x(p) = particles(p).xPrevious;
+        PreviousParticlePosition_y(p) = particles(p).yPrevious;
+        PreviousParticlePosition_z(p) = particles(p).zPrevious;
+        
     end
     
 end
 toc
 
+particlesOut = struct('x',PreviousParticlePosition_x,'y',PreviousParticlePosition_y,'z',PreviousParticlePosition_z);
 
 status = mkdir('output');
 
@@ -268,10 +273,12 @@ end
 
 run_param.nS = nS;
 run_param.dt = dt;
+run_param.surf_y1D = surf_y1D;
+run_param.surf_z1D = surf_z1D;
 
 save('output/gitrRunParameters.mat','run_param');
 
-save('output/gitrParticles.mat','particles');
+save('output/gitrParticles.mat','particlesOut');
 
 print_profiles
 
