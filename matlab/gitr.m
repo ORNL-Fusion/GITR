@@ -187,6 +187,8 @@ PreviousParticlePosition_x = [particles.x];
 PreviousParticlePosition_y = [particles.y];
 PreviousParticlePosition_z = [particles.z];
 
+xHist = 0;
+
 parfor p=1:nP
     
     p
@@ -257,6 +259,11 @@ parfor p=1:nP
         PreviousParticlePosition_x(p) = particles(p).xPrevious;
         PreviousParticlePosition_y(p) = particles(p).yPrevious;
         PreviousParticlePosition_z(p) = particles(p).zPrevious;
+        
+        idx = round((PreviousParticlePosition_y(p)-yMin)/(yMax-yMin)*(nY-1)+1);
+        temp = zeros(nY);
+        temp(idx) = 1;
+        xHist = xHist + temp;
         
     end
     
