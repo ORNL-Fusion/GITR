@@ -14,13 +14,16 @@ ion = 0; %ionization state 1 = true, 0=false
 B0 = 1;
 B = B0*[0 -1/sqrt(2) 1/sqrt(2)]; %Magnitude multiplied by a normalized vector
 
+%Background plasma parameters
+Te = 25;
+D_perp = 1e-4;
 
 %Set constants and time steps
 Nt = 1e6;
 q = 1.602e-19;
 m = 1.66e-27;
 wc = q/m*B0;
-dt = 2/wc/1e4
+dt = 2/wc/1e3
 
         %Constants used in Boris method Lorentz Integrator
         q_prime = q/m*dt/2;
@@ -35,8 +38,10 @@ r_hist(1,:) = r;
         v(1) = v0*sin(Ka(2))*cos(Ka(3));
         v(2) = v0*sin(Ka(2))*sin(Ka(3));
         v(3) = v0*cos(Ka(2));
-        
-        
+       
+%Calculate relaxation times for the given particle,
+% velocity and background plasma
+relax_time_max
         
         %Main Loop
 for j=1:Nt
@@ -46,7 +51,7 @@ for j=1:Nt
 
         % Made up ionization
         s = rand(1);
-        if rand > 0.99999
+        if rand > 0.9999
             ion = 1;
         end
         
@@ -54,23 +59,27 @@ for j=1:Nt
     else %particle mover for ions
         %update fields
         E = [0 -1e3 1/Lc*1e3];
-        
-%                 %Constants used in Boris method Lorentz Integrator
-%         q_prime = q/m*dt/2;
-%         coeff = 2*q_prime/(1+(q_prime*B0)^2);
-
+v0 = norm(v);
+        %Find parallel and perp velocity directions
+        direct
         %Boris Method Lorentz Integrator
-        v_minus = v + q_prime*E;
-        
+        v_minus = v + q_prime*E + v0/tau_s*dt/2*dir1  ...
+            + randn*sqrt(v0^2/tau_e*dt/2)*dir1 ...
+            + randn*sqrt(1/2*v0^2/tau_d*dt/2)*dir2 ...
+            + randn*sqrt(1/2*v0^2/tau_d*dt/2)*dir3;
+
         v = v_minus + q_prime*cross(v_minus,B);
         
         v = v_minus + coeff*cross(v,B);
         
-        v = v + q_prime*E;
+        v = v + q_prime*E + v0/tau_s*dt/2*dir1  ...
+            + randn*sqrt(v0^2/tau_e*dt/2)*dir1 ...
+            + randn*sqrt(1/2*v0^2/tau_d*dt/2)*dir2 ...
+            + randn*sqrt(1/2*v0^2/tau_d*dt/2)*dir3;
      
-        r = r + v*dt;
+        r = r + v*dt - sqrt(D_perp*dt)*[0 1 0];
 
-stop
+
     end
     
     r_hist(j+1,:) = r;
