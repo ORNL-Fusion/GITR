@@ -7,7 +7,7 @@ constants
 
 % Load run input file
 
-gimpInput
+gitrInput
 
 % Load ADAS data (cross sections, ionization rates, etc)
 
@@ -126,8 +126,8 @@ end
 
 % Populate the impurity particle list
     particles(nP) = particle;
+    end_pos(nP) = particle;
  
-    
 for p=1:nP 
     particles(p).Z = impurity_Z;
     particles(p).amu = impurity_amu;
@@ -184,6 +184,8 @@ disp('Initialization Completed... Starting Main Loop')
 %parpool(2)
 tic
 for p=1:nP
+    
+    p
     
     for tt = 1:nT
        
@@ -242,38 +244,36 @@ for p=1:nP
 %              impurityDensityTally(tt,p) = sub2ind(volumeGridSize,xIndex,yIndex,zIndex);
         end
         
-
-
-                    
         if trackHistory
-        xHistory(tt,p) = particles(p).xPrevious;
-        yHistory(tt,p) = particles(p).yPrevious;
-        zHistory(tt,p) = particles(p).zPrevious;
-        vxHistory(tt,p) = particles(p).vxPrevious;
-        vyHistory(tt,p) = particles(p).vyPrevious;
-        vzHistory(tt,p) = particles(p).vzPrevious;
-        Z_History(tt,p) = particles(p).Z;
+            history(tt,p).z = particles(p).xPrevious;
+            history(tt,p).y = particles(p).yPrevious;
+            history(tt,p).z = particles(p).zPrevious;
+            history(tt,p).vx = particles(p).vxPrevious;
+            history(tt,p).vy = particles(p).vyPrevious;
+            history(tt,p).vz = particles(p).vzPrevious;
+            history(tt,p).Z = particles(p).Z;
         end
+        
     end
-    end_pos(p,:) = [particles(p).xPrevious particles(p).yPrevious particles(p).zPrevious ...
-        particles(p).vxPrevious particles(p).vyPrevious particles(p).vzPrevious ...
-        particles(p).Z];
+    
 end
 toc
 
 
-fileID = fopen('run_param.txt','w');
-run_param = [nS, dt];
+status = mkdir('output');
 
-fprintf(fileID,'%e\n',run_param);
-fclose(fileID);
-fileID = fopen('end_positions.txt','w');
+if trackHistory
+    save('output/gitrHistories.mat','history');
+end
 
-fprintf(fileID,'%f %f %f %f %f %f %f\n',transpose(end_pos));
-fclose(fileID);
+run_param.nS = nS;
+run_param.dt = dt;
+
+save('output/gitrRunParameters.mat','run_param');
+
+save('output/gitrParticles.mat','particles');
 
 print_profiles
-print_History
 
 %dlmwrite('impurityDensityTally_out.txt',impurityDensityTally,'delimiter','\t','precision',4)
 

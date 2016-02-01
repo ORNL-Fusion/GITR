@@ -77,7 +77,7 @@ classdef particle < handle
             
             EfieldInterpolator = interpolators{1};
             E = EfieldInterpolator(this,xyz,Efield3D, decayLength, potential,surface_dz_dx,B, ...
-               background_Z,background_amu,maxTemp_eV)
+               background_Z,background_amu,maxTemp_eV);
             %E = interpolatorHandle(this,xyz,Efield3D);
 
             

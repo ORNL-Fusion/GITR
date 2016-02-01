@@ -1,32 +1,26 @@
 clear variables
 close all
 constants
-% filePath = '~/GitHub/gimp/matlab/data/01272016/'
-% inputFile = strcat(filePath,'gimpInput.m')
-%  run inputFile
 
+HistoryFileName = 'output/gitrHistories.mat';
+InputFileName = 'gitrInput.m'
+RunParametersFileName = 'output/gitrRunParameters.mat';
+ParticlesFileName = 'output/gitrParticles.mat';
 
-[FileName,PathName,FilterIndex] = uigetfile;
-inpPath = strcat(PathName,FileName);
-run(inpPath)
-plotScatter = 1;
-plotTracks = 1;
-plotDens = 0;
-plotProfiles = 1;
-filenames = {'end_positions.txt','run_param.txt','Bfield_x_out.txt','Bfield_y_out.txt','Bfield_z_out.txt','Bfield_mag_out.txt', ...
-   'temp_eV_out.txt','density_m3_out.txt','flowVelocity_x_out.txt','flowVelocity_y_out.txt','flowVelocity_z_out.txt', ...
-   'Efield_x_out.txt','Efield_y_out.txt','Efield_z_out.txt','xHistory_out.txt','yHistory_out.txt','zHistory_out.txt', ...
-   'vxHistory_out.txt','vyHistory_out.txt','vzHistory_out.txt','Z_History_out.txt','impurityDensityTally_out.txt'};
-for i=1:numel(filenames)
-full_path{i} = fullfile ( PathName, filenames{i} );
+if exist(InputFileName)
+   run(InputFileName);
+else
+    error('Could not find GITR input file ... WTF?');
 end
-end_pos = dlmread(full_path{1},' ');  
-run_param = dlmread(full_path{2}, ' ');
-params = num2cell(run_param);
- [nS, dt] = deal(params{:});
 
+plotScatter = 0;
+plotTracks = 0;
+plotDens = 0;
+plotProfiles = 0;
+plot3D = 0;
 
-
+load(RunParametersFileName);
+load(ParticlesFileName);
 
 if plotProfiles
 Bfield3D.x = reshape(dlmread(full_path{3},'\t'),nXv, nYv, nZv);
@@ -47,14 +41,7 @@ Bfield3D.x = reshape(dlmread(full_path{3},'\t'),nXv, nYv, nZv);
         Efield3D.z = reshape(dlmread(full_path{14},'\t'),nXv, nYv, nZv);
 end
         if plotTracks
-        xHistory =  dlmread(full_path{15},' ');
-        yHistory =  dlmread(full_path{16},' ');
-        zHistory =  dlmread(full_path{17},' ');
-        vxHistory =  dlmread(full_path{18},' ');
-        vyHistory =  dlmread(full_path{19},' ');
-        vzHistory =  dlmread(full_path{20},' ');
-        
-        Z_History = dlmread(full_path{21}, ' ');
+
         end
         yMinV = yMin;
 yMaxV = yMax;
@@ -101,7 +88,15 @@ end
     view(az,el);
 
 
-history_plot
+if exist(HistoryFileName)
+    load(HistoryFileName);
+    history_plot
+end
+
+% Surface particle impact histogram
+
+histogram2(particles.y,particles.z,'DisplayStyle','tile','ShowEmptyBins','on')
+
 surface_scatter
 
 density_calc
