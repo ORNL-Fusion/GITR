@@ -18,7 +18,7 @@ surf(surf_z1D,surf_y1D,surf_x2D,h)
             xlabel('z axis')
             ylabel('y axis')
             zlabel('x axis')
-            title('Deposition')
+            title('Deposition [# particles]')
             axis equal
             colorbar
             ax.XDir = 'normal';
@@ -58,7 +58,7 @@ end
             xlabel('z axis')
             ylabel('y axis')
             zlabel('x axis')
-            title('Mean Energy')
+            title('Mean Energy [eV]')
             axis equal
             colorbar
             ax.XDir = 'normal';

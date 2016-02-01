@@ -38,7 +38,7 @@ Bz_in = -2.0;
 
 background_Z = [-1 1];
 background_amu = [ME/MI 2];
-background_flow = [0.95 0.95];%Fraction of thermal velocity - only used when FlowVelocityInterpolator_number = 0
+background_flow = [0.99 0.99];%Fraction of thermal velocity - only used when FlowVelocityInterpolator_number = 0
 
 % Density
 maxDensity = [1e19 1e19];
@@ -54,19 +54,19 @@ perDiffusionCoeff_in = 0.000004;
 
 % Impurity particles 
 
-nP = 100;
+nP = 1;
 
 x_start = 0.00;
 y_start = 0.00;
-z_start = 0.00;
+z_start = 0.02;
 
-energy_eV_x_start = -10.0;
+energy_eV_x_start = 0.0;
 energy_eV_y_start = 0.0;
-energy_eV_z_start = 0.0;
+energy_eV_z_start = -10.0;
 
 
 impurity_amu = 184.0;
-impurity_Z = 0.0;
+impurity_Z = 1.0;
 
 % Surface parameterization z = dz/dx * x + b
 
@@ -80,9 +80,10 @@ file_rcmb = 'ADAS/acd50_w.dat';
 
 % Particle time stepping control
 
-nPtsPerGyroOrbit = 100;
-ionization_nDtPerApply = 10;
-nT = 1500;
+nPtsPerGyroOrbit = 1e3;
+ionization_nDtPerApply = 1;
+nT = 1e3;
+sheath_timestep_factor = 1e4;
 
 % Plots
 
@@ -110,7 +111,7 @@ positionStepTolerance = 1e-3;
 connectionLength = 50;
 
 % Output options
-printProfiles = 1;
+printProfiles = 0;
 printHistory = 1;
 
     

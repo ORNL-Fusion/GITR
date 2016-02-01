@@ -8,6 +8,7 @@ vxHistory = zeros(nT, nP);
 vyHistory = zeros(nT, nP);
 vzHistory = zeros(nT, nP);
 Z_History = zeros(nT, nP);
+EHistory = zeros(nT,nP);
 
 coll_hist = zeros(nT,7);
 end
