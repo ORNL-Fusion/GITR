@@ -2,16 +2,16 @@
 
 % Volume definition
 
-xMinV =-0.05;
-xMaxV =+0.05;
+xMinV =-0.02;
+xMaxV =+0.02;
 
 % Surface definition
 
-yMin = -0.05;
-yMax = 0.05;
+yMin = -0.01;
+yMax = 0.01;
 
-zMin = -0.05;
-zMax = 0.05;
+zMin = -0.02;
+zMax = 0.02;
 
 % Surface grid
 
@@ -54,7 +54,8 @@ perDiffusionCoeff_in = 0.000004;
 
 % Impurity particles 
 
-nP = 100;
+nP = 200;
+sourceStrength = 1e19;
 
 x_start = 0.00;
 y_start = 0.00;
@@ -68,6 +69,8 @@ energy_eV_z_start = 0.0;
 impurity_amu = 184.0;
 impurity_Z = 0.0;
 
+densityChargeBins = [0 1];
+
 % Surface parameterization z = dz/dx * x + b
 
 surface_dz_dx = 1.73205;
@@ -77,12 +80,14 @@ surface_zIntercept = 0;
 file_inz = 'ADAS/scd50_w.dat';
 %Recombination
 file_rcmb = 'ADAS/acd50_w.dat';
+%Recombination
+file_emission = 'ADAS/plt50_w.dat';
 
 % Particle time stepping control
 
-nPtsPerGyroOrbit = 1e3;
-ionization_nDtPerApply = 1;
-nT = 1e4;
+nPtsPerGyroOrbit = 1e2;
+ionization_nDtPerApply = 10;
+nT = 1e3;
 sheath_timestep_factor = 1e4;
 
 % Plots
@@ -111,7 +116,7 @@ positionStepTolerance = 1e-3;
 connectionLength = 50;
 
 % Output options
-printProfiles = 0;
+printProfiles = 1;
 printHistory = 1;
 
     

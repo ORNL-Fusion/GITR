@@ -35,29 +35,38 @@ classdef particle < handle
             tSpan = [0,end_t];
             
             options = odeset('InitialStep',dt,'MaxStep',dt);
+            options = odeset('RelTol', 1e-4);
             Einterpolator = interpolators{1};
             Binterpolator = interpolators{2};
             [T Y] = ode45(@(t,y) myode(t,y,this,E,B,xyz,Einterpolator,Binterpolator, ...
                  decayLength, potential,surface_dz_dx, ...
-               background_Z,background_amu,maxTemp_eV),tSpan,IC);%,options);
+               background_Z,background_amu,maxTemp_eV),tSpan,IC,options);
             
             n_steps = length(T);
             index = 0;
-%             if this.hitWall == 0 && this.leftVolume ==0
-%                 this.OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
-%                 this.HitWallCheck(surface_zIntercept,surface_dz_dx);
-%                 index = index+1;
-%             end
-%             if index ~= n_steps
-%                 stop
-%             end
-            this.x = Y(end,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
-            this.y = Y(end,2);
-            this.z = Y(end,3);
+            while this.hitWall == 0 && this.leftVolume ==0 && index < n_steps
+                index = index+1;
+                this.x = Y(index,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
+                this.y = Y(index,2);
+                this.z = Y(index,3);
+                
+                this.vx = Y(index,4);
+                this.vy = Y(index,5);
+                this.vz = Y(index,6);
+                this.OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
+                this.HitWallCheck(surface_zIntercept,surface_dz_dx);
+                
+            end
+            if index ~= n_steps
+                stop
+            end
+            this.x = Y(index,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
+            this.y = Y(index,2);
+            this.z = Y(index,3);
             
-            this.vx = Y(end,4);
-            this.vy = Y(end,5);
-            this.vz = Y(end,6);
+            this.vx = Y(index,4);
+            this.vy = Y(index,5);
+            this.vz = Y(index,6);
             
         end
         
@@ -65,12 +74,21 @@ classdef particle < handle
         
         function borisMove(this,xyz,Efield3D,Bfield3D,dt,interpolators,...
                 positionStepTolerance,velocityChangeTolerance, ...
-                decayLength, potential,surface_dz_dx,background_Z,background_amu,maxTemp_eV)
+                decayLength, potential,surface_dz_dx,background_Z, ...
+                background_amu,maxTemp_eV, sheath_timestep_factor)
 
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
             Q = 1.60217662e-19;
             EPS0 = 8.854187e-12;
+            
+            iterations = 1;
+            if this.perpDistanceToSurface < 20*decayLength
+                dt = dt/sheath_timestep_factor;
+                iterations = sheath_timestep_factor;
+            end
+            
+            for i=1:iterations
             
             BfieldInterpolator = interpolators{2};
             B = BfieldInterpolator(this,xyz,Bfield3D);
@@ -120,7 +138,8 @@ classdef particle < handle
             this.vx = v(1);
             this.vy = v(2);
             this.vz = v(3);
-
+            
+            end
         end
         
         function [T Yr] = rk4(part,xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,end_t,dt,steps)
@@ -174,7 +193,7 @@ classdef particle < handle
             
         end
         
-        function ionization(this,dt,xyz,density_m3,temp_eV,...
+        function  ionization(this,dt,xyz,density_m3,temp_eV,...
                 IonizationRateCoeff,IonizationTemp,IonizationDensity,...
                 ChargeState,interpolators, ionizationProbabilityTolerance)
             
@@ -371,16 +390,18 @@ classdef particle < handle
             e3 = g/norm(g);
             
             s1 = e3(1)*B_unit(1)+e3(2)*B_unit(2)+e3(3)*B_unit(3);
-            s2 = sqrt(1-s1^2);
+            s2 = sqrt(1-s1*s1);
             
             e1 = 1/s2*(s1*e3 - B_unit);
             e2 = -1/s2*cross(e3,B_unit);
             
-%            if this.Z == 1
-%                 e3
-%             end
+            if s2 == 0
+                e2 = [e3(3) e3(1) e3(2)];
+                s1 = e3(1)*e2(1)+e3(2)*e2(2)+e3(3)*e2(3);
+                s2 = sqrt(1-s1*s1);
+                e1 = -1/s2*cross(e3,e2);
+            end
             
-
         end
 
         function CrossFieldDiffusion(this,xyz,Bfield,Dperp,interpolators,dt,positionStepTolerance)
@@ -506,7 +527,7 @@ classdef particle < handle
             diagnostics = [T dv_collisions norm_slow norm_par norm_parallel norm_perp1 norm_perp2];
         end
         
-        function HitWallCheck(this,surface_zIntercept,surface_dz_dx)
+        function HitWallCheck(this,surface_zIntercept,surface_dz_dx,tt)
             
             if this.x > ( this.z - surface_zIntercept ) / surface_dz_dx;
                 
