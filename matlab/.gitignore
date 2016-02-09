@@ -1,8 +1,4 @@
 *.m~
-~/ADAS/
-~/fd/
-~/examples/
-~/matlab/grid/
 	ADAS/
 	ERO/
 	Figures/
