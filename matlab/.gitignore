@@ -1,5 +1,5 @@
 *.m~
-ADAS/
-fd/
-examples/
-matlab/grid/
+../ADAS/
+../fd/
+../examples/
+grid/
