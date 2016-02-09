@@ -1,5 +1,7 @@
 *.m~
 ADAS/
-fd/
-examples/
-matlab/grid/
+ERO/
+Figures/
+SOLPS/
+Utilities/
+grid/
