@@ -126,7 +126,7 @@ end
 
 % Populate the impurity particle list
 particles(nP) = particle;
-end_pos(nP) = particle;
+particles_out(nP) = particle;
 
 for p=1:nP
     particles(p).Z = impurity_Z;
@@ -160,20 +160,21 @@ end
 
 % Calculate time step (dt)
 
-max_B = max( Bfield3D.mag(:) );
-min_m = impurity_amu * MI;
-max_wc = impurity_Z * Q * max_B / min_m;
-dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
-if impurity_Z == 0
+% max_B = max( Bfield3D.mag(:) );
+% min_m = impurity_amu * MI;
+% max_wc = impurity_Z * Q * max_B / min_m;
+% dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
+% if impurity_Z == 0
     dt = 1e-6/nPtsPerGyroOrbit;
-end
+% end
 
 % Setup arrays to store history
 
 pre_history
-%impurityDensityTally = zeros(nT,nP);
-volumeGridSize = [nXv nYv nZv];
-dens = zeros(volumeGridSize);
+nChargeStates = length(densityChargeBins);
+nDensityBins = nChargeStates+1; %The chosen charge states and total
+impurityDensityTally = zeros(nXv,nYv,nZv,nDensityBins);
+
 
 % Main loop
 
@@ -181,19 +182,21 @@ adaptive_distance = 10*debyeLength;
 IonizationTimeStep = ionization_nDtPerApply*dt;
 SheathTimeStep = dt/sheath_timestep_factor;
 
+disp('Initialization complete... Starting main loop')
 tic
 
 PreviousParticlePosition_x = [particles.x];
 PreviousParticlePosition_y = [particles.y];
 PreviousParticlePosition_z = [particles.z];
 
-parfor p=1:nP
+
+for p=1:nP
     
     p
-    
+    tmp = zeros(nXv,nYv,nZv,nDensityBins);
     for tt = 1:nT
         
-        if mod(tt, ionization_nDtPerApply) == 0
+        if mod(tt, ionization_nDtPerApply) == 0 &&  particles(p).hitWall == 0 && particles(p).leftVolume ==0
             
             particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
                 IonizationRateCoeff,IonizationTemp, IonizationDensity,...
@@ -213,36 +216,45 @@ parfor p=1:nP
             background_amu,background_Z,interpolators, ...
             dt,velocityChangeTolerance, connectionLength,surface_dz_dx,surface_zIntercept);
         
-        particles(p).PerpDistanceToSurface(surface_dz_dx,surface_zIntercept)
-        
-        
         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
             interpolators,positionStepTolerance,velocityChangeTolerance, ...
-            debyeLength, -3*maxTemp_eV,surface_dz_dx,background_Z,background_amu,maxTemp_eV);
+            debyeLength, -3*maxTemp_eV,surface_dz_dx,surface_zIntercept,background_Z,background_amu,maxTemp_eV, ...
+            sheath_timestep_factor);
         
-        %
-        %         [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
-        %             interpolators,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
-        %             surface_zIntercept,surface_dz_dx, ...
-        %             debyeLength, -3*maxTemp_eV,background_Z,background_amu,maxTemp_eV)
         
-        particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
-        
-        particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx);
+%                 [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
+%                     interpolators,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
+%                     surface_zIntercept,surface_dz_dx, ...
+%                     debyeLength, -3*maxTemp_eV,background_Z,background_amu,maxTemp_eV);
+         
+
         
         
         if particles(p).hitWall == 0 && particles(p).leftVolume ==0
             particles(p).UpdatePrevious();
+            % particles(p).perpDistanceToSurface;
             
-            %             [Mx, xIndex] = min(abs(xyz.x-particles(p).x));
-            %             [My, yIndex] = min(abs(xyz.y-particles(p).y));
-            %             [Mz, zIndex] = min(abs(xyz.z-particles(p).z));
-            %
-            %              impurityDensityTally(tt,p) = sub2ind(volumeGridSize,xIndex,yIndex,zIndex);
+            [Mx, xIndex] = min(abs(xyz.x-particles(p).x));
+            [My, yIndex] = min(abs(xyz.y-particles(p).y));
+            [Mz, zIndex] = min(abs(xyz.z-particles(p).z));
+            
+            
+            % This is to account for matlab not storing
+            % structure arrays in parfor
+            comp = find(particles(p).Z == densityChargeBins);
+            if comp 
+            tmp(xIndex,yIndex,zIndex,comp) = tmp(xIndex,yIndex,zIndex,comp)+  dt;
+            end
+            tmp(xIndex,yIndex,zIndex,end) = tmp(xIndex,yIndex,zIndex,end)+  dt;
+            
         end
         
+                particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
+        
+        particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx,tt);
+        
         if trackHistory
-            history(tt,p).z = particles(p).xPrevious;
+            history(tt,p).x = particles(p).xPrevious;
             history(tt,p).y = particles(p).yPrevious;
             history(tt,p).z = particles(p).zPrevious;
             history(tt,p).vx = particles(p).vxPrevious;
@@ -251,19 +263,19 @@ parfor p=1:nP
             history(tt,p).Z = particles(p).Z;
         end
         
-        % This is to account for matlab not storing 
-        % structure arrays in parfor
-        
-        PreviousParticlePosition_x(p) = particles(p).xPrevious;
-        PreviousParticlePosition_y(p) = particles(p).yPrevious;
-        PreviousParticlePosition_z(p) = particles(p).zPrevious;
-        
     end
-    
+    particles(p).Energy;
+    % This is to account for matlab not storing
+    % structure arrays in parfor
+    particles_out(p) = particles(p);
+    PreviousParticlePosition_x(p) = particles(p).xPrevious;
+    PreviousParticlePosition_y(p) = particles(p).yPrevious;
+    PreviousParticlePosition_z(p) = particles(p).zPrevious;
+    impurityDensityTally = impurityDensityTally + tmp;
 end
 toc
 
-particlesOut = struct('x',PreviousParticlePosition_x,'y',PreviousParticlePosition_y,'z',PreviousParticlePosition_z);
+%particlesOut = struct('x',PreviousParticlePosition_x,'y',PreviousParticlePosition_y,'z',PreviousParticlePosition_z);
 
 status = mkdir('output');
 
@@ -273,16 +285,21 @@ end
 
 run_param.nS = nS;
 run_param.dt = dt;
+run_param.surf_x2D = surf_x2D;
 run_param.surf_y1D = surf_y1D;
 run_param.surf_z1D = surf_z1D;
+run_param.xV_1D = xV_1D;
+run_param.yV_1D = yV_1D;
+run_param.zV_1D = zV_1D;
 
 save('output/gitrRunParameters.mat','run_param');
 
-save('output/gitrParticles.mat','particlesOut');
+save('output/gitrParticles.mat','particles_out');
+save('output/gitrImpurityDensityTally.mat','impurityDensityTally');
 
 print_profiles
 
-%dlmwrite('impurityDensityTally_out.txt',impurityDensityTally,'delimiter','\t','precision',4)
+
 
 %postProcessing
 %quit
