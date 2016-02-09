@@ -1,5 +1,10 @@
 *.m~
-../ADAS/
-../fd/
-../examples/
-grid/
+~/ADAS/
+~/fd/
+~/examples/
+~/matlab/grid/
+	ADAS/
+	ERO/
+	Figures/
+	SOLPS/
+	Utilities/
