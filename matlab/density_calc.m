@@ -5,7 +5,7 @@ n = 4;
     dx = xV_1D(2) - xV_1D(1);
     dz = zV_1D(2) - zV_1D(1);
 density = impurityDensityTally(:,:,:,1)*sourceStrength/(dx*dy*dz)/nP;
-run('ADAS/w0_400875.m')
+run(file_emission{1})
 radiance = zeros(nXv,nYv,nZv);
 
 [a,b,c] =  ind2sub(size(density),find(density ~= 0));
@@ -62,7 +62,7 @@ surf(run_param.xV_1D, run_param.zV_1D,sightLine)
 
 
 density = impurityDensityTally(:,:,:,2)*sourceStrength/(dx*dy*dz)/nP;
-run('ADAS/w1_434811.m')
+run(file_emission{2})
 radiance = zeros(nXv,nYv,nZv);
 
 [a,b,c] =  ind2sub(size(density),find(density ~= 0));

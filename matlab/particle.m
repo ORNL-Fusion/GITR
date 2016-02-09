@@ -13,12 +13,14 @@ classdef particle < handle
         vxPrevious
         vyPrevious
         vzPrevious
+        energy
         Z
         amu
         hitWall
         leftVolume
         streams
         perpDistanceToSurface
+        impactAngle
     end
     
     methods
@@ -34,113 +36,134 @@ classdef particle < handle
             IC = [this.x this.y this.z this.vx this.vy this.vz]';
             tSpan = [0,end_t];
             
-            options = odeset('InitialStep',dt,'MaxStep',dt);
-            options = odeset('RelTol', 1e-4);
+            maxStep = dt;
+            if this.perpDistanceToSurface < 1e-3 && this.hitWall == 0 && this.leftVolume ==0
+                maxStep = 5e-12;
+            end
+            eventHandle = @(t,y)myEvent(t,y,surface_dz_dx,surface_zIntercept);
+            options = odeset('Events',eventHandle,'InitialStep',maxStep,'MaxStep',maxStep); 
+            %options = odeset('RelTol', 1e-2);
             Einterpolator = interpolators{1};
             Binterpolator = interpolators{2};
-            [T Y] = ode45(@(t,y) myode(t,y,this,E,B,xyz,Einterpolator,Binterpolator, ...
+            [T ,Y, TE, YE, IE] = ode45(@(t,y) myode(t,y,this,E,B,xyz,Einterpolator,Binterpolator, ...
                  decayLength, potential,surface_dz_dx, ...
                background_Z,background_amu,maxTemp_eV),tSpan,IC,options);
-            
-            n_steps = length(T);
-            index = 0;
-            while this.hitWall == 0 && this.leftVolume ==0 && index < n_steps
-                index = index+1;
-                this.x = Y(index,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
-                this.y = Y(index,2);
-                this.z = Y(index,3);
-                
-                this.vx = Y(index,4);
-                this.vy = Y(index,5);
-                this.vz = Y(index,6);
-                this.OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
-                this.HitWallCheck(surface_zIntercept,surface_dz_dx);
-                
-            end
-            if index ~= n_steps
+            if TE
                 stop
             end
-            this.x = Y(index,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
-            this.y = Y(index,2);
-            this.z = Y(index,3);
             
-            this.vx = Y(index,4);
-            this.vy = Y(index,5);
-            this.vz = Y(index,6);
+%             n_steps = length(T);
+%             index = 0;
+%             while this.hitWall == 0 && this.leftVolume ==0 && index < n_steps
+%                 index = index+1;
+%                 this.x = Y(index,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
+%                 this.y = Y(index,2);
+%                 this.z = Y(index,3);
+%                 
+%                 this.vx = Y(index,4);
+%                 this.vy = Y(index,5);
+%                 this.vz = Y(index,6);
+%                 this.OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
+%                 this.HitWallCheck(surface_zIntercept,surface_dz_dx);
+%                 
+%             end
+%             if index ~= n_steps
+%                 stop
+%             end
+            this.x = Y(end,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
+            this.y = Y(end,2);
+            this.z = Y(end,3);
+            
+            this.vx = Y(end,4);
+            this.vy = Y(end,5);
+            this.vz = Y(end,6);
             
         end
         
         
         
         function borisMove(this,xyz,Efield3D,Bfield3D,dt,interpolators,...
-                positionStepTolerance,velocityChangeTolerance, ...
-                decayLength, potential,surface_dz_dx,background_Z, ...
+                positionStepTolerance,dv_threshold, ...
+                decayLength, potential,surface_dz_dx,surface_zIntercept,background_Z, ...
                 background_amu,maxTemp_eV, sheath_timestep_factor)
-
+            if this.hitWall == 0 && this.leftVolume ==0
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
             Q = 1.60217662e-19;
             EPS0 = 8.854187e-12;
             
-            iterations = 1;
-            if this.perpDistanceToSurface < 20*decayLength
-                dt = dt/sheath_timestep_factor;
-                iterations = sheath_timestep_factor;
-            end
+            time = 0;
+            tspan = dt;
+            tolerance = 1e-16;
             
-            for i=1:iterations
+            surfaceDirection = [surface_dz_dx 0 -1];
+            surfaceDirection_unit = surfaceDirection/norm(surfaceDirection);
             
-            BfieldInterpolator = interpolators{2};
-            B = BfieldInterpolator(this,xyz,Bfield3D);
-            
-            EfieldInterpolator = interpolators{1};
-            E = EfieldInterpolator(this,xyz,Efield3D, decayLength, potential,surface_dz_dx,B, ...
-               background_Z,background_amu,maxTemp_eV);
-            %E = interpolatorHandle(this,xyz,Efield3D);
+            perpDistanceToSurface1 = ( -surface_dz_dx*this.x + this.z + surface_zIntercept)/sqrt(surface_dz_dx^2+1);
+            while abs(tspan - time) > tolerance && perpDistanceToSurface1 >= 0
 
-            
-            BMagPart =norm(B);
-            
-            % Constants used in Boris method Lorentz Integrator
-            q_prime = this.Z*Q/(this.amu*MI)*dt/2;
-            coeff = 2*q_prime/(1+(q_prime*BMagPart).^2);
-            
-            % Boris Method Lorentz Integrator
-            v = [this.vx this.vy this.vz];
-            r = [this.x this.y this.z];
-            v_start = v;
-            v_minus = v + q_prime*E;
-            
-            v = v_minus + q_prime*cross(v_minus,B);
-            
-            v = v_minus + coeff*cross(v,B);
-            
-            v = v + q_prime*E;
-            
-            step = v*dt;
-            r = r + step;
-            
-
-            
-            if step > positionStepTolerance
-                step
-                error('Position step is too large in Boris integrator')
+                
+                BfieldInterpolator = interpolators{2};
+                B = BfieldInterpolator(this,xyz,Bfield3D);
+                
+                EfieldInterpolator = interpolators{1};
+                E = EfieldInterpolator(this,xyz,Efield3D, decayLength, potential,surface_dz_dx,B, ...
+                    background_Z,background_amu,maxTemp_eV);
+                
+                BMagPart =norm(B);
+                
+                % Constants used in Boris method Lorentz Integrator
+                q_prime = this.Z*Q/(this.amu*MI)*dt/2;
+                coeff = 2*q_prime/(1+(q_prime*BMagPart).^2);
+                
+                % Boris Method Lorentz Integrator
+                v = [this.vx this.vy this.vz];
+                r = [this.x this.y this.z];
+                v_start = v;
+                v_minus = v + q_prime*E;
+                
+                v = v_minus + q_prime*[v_minus(2)*B(3) - v_minus(3)*B(2), v_minus(3)*B(1) - v_minus(1)*B(3),v_minus(1)*B(2) - v_minus(2)*B(1)];
+                
+                v = v_minus + coeff*[v(2)*B(3) - v(3)*B(2), v(3)*B(1) - v(1)*B(3),v(1)*B(2) - v(2)*B(1)];
+                
+                v = v + q_prime*E;
+                
+                step = v*dt;
+                r = r + step;
+                
+                if abs(norm(v) - norm(v_start))/norm(v_start) > dv_threshold
+                    dt = dt/10;
+                else
+                    perpDistanceToSurface1 = ( -surface_dz_dx*r(1) + r(3) + surface_zIntercept)/sqrt(surface_dz_dx^2+1);
+                    if perpDistanceToSurface1 < 0
+                        this.hitWall = 1;
+                        t = (-surface_zIntercept + surface_dz_dx*this.x - this.z)/(-surface_dz_dx*(this.x -r(1)) + (this.z -r(3)));
+                        this.x = this.x + (this.x - r(1))*t;
+                        this.y = this.y + (this.y - r(2))*t;
+                        this.z = this.z + (this.z - r(3))*t;
+                        this.impactAngle = acosd((surfaceDirection_unit(1)*v(1) + surfaceDirection_unit(2)*v(2)+ surfaceDirection_unit(3)*v(3))/norm(v));
+                        this.vx = v(1);%this.vx + (this.vx - v(1))*v_interpFactor;
+                        this.vy = v(2);%this.vy + (this.vy - v(2))*v_interpFactor;
+                        this.vz = v(3);%this.vz + (this.vz - v(3))*v_interpFactor;
+                        this.vxPrevious = this.vx;
+                        this.vyPrevious = this.vy;
+                        this.vzPrevious = this.vz;
+                        
+                    else
+                        this.x =r(1);
+                        this.y =r(2);
+                        this.z =r(3);
+                        this.vx = v(1);
+                        this.vy = v(2);
+                        this.vz = v(3);
+                    end
+                    this.PerpDistanceToSurface(surface_dz_dx,surface_zIntercept);
+                    time = time + dt;
+                end
             end
-            
-            if (abs(norm(v_start)) - abs(norm(v)))/abs(norm(v_start)) > velocityChangeTolerance
-                (abs(norm(v_start)) - abs(norm(v)))/abs(norm(v_start))
-                error('Velocity change is too large in Boris integrator')
-            end            
-            
-            this.x =r(1);
-            this.y =r(2);
-            this.z =r(3);
-            this.vx = v(1);
-            this.vy = v(2);
-            this.vz = v(3);
-            
             end
         end
+        
         
         function [T Yr] = rk4(part,xV,yV,zV,Bx,By,Bz,BMag,Ex,Ey,Ez,end_t,dt,steps)
             
@@ -531,7 +554,7 @@ classdef particle < handle
             
             if this.x > ( this.z - surface_zIntercept ) / surface_dz_dx;
                 
-                this.amu = 1e20;
+                this.amu = 1e200;
                 this.vx = 0;
                 this.vy = 0;
                 this.vz = 0;
@@ -547,7 +570,7 @@ classdef particle < handle
                     || this.y > yMaxV || this.y < yMinV ...
                     || this.z > zMaxV || this.z < zMinV;
                 
-                this.amu = 1e20;
+                this.amu = 1e200;
                 this.vx = 0;
                 this.vy = 0;
                 this.vz = 0;
@@ -570,6 +593,12 @@ classdef particle < handle
             if this.hitWall == 0 && this.leftVolume ==0
             this.perpDistanceToSurface = ( -surface_dz_dx*this.x + this.z + surface_zIntercept)/sqrt(surface_dz_dx^2+1);
             end
+        end
+        
+        function Energy(this)
+                        MI = 1.6737236e-27;
+            Q = 1.60217662e-19;
+            this.energy = 0.5*184*MI*(this.vxPrevious^2 +this.vyPrevious^2 + this.vzPrevious^2)/Q;
         end
         
        

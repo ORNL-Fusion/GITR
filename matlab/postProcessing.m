@@ -156,3 +156,4 @@ hold on
 set(gca,'ZDir','reverse');
 view([180 90]);
 density_calc
+plot_profiles

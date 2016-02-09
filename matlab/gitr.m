@@ -160,13 +160,13 @@ end
 
 % Calculate time step (dt)
 
-max_B = max( Bfield3D.mag(:) );
-min_m = impurity_amu * MI;
-max_wc = impurity_Z * Q * max_B / min_m;
-dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
-if impurity_Z == 0
+% max_B = max( Bfield3D.mag(:) );
+% min_m = impurity_amu * MI;
+% max_wc = impurity_Z * Q * max_B / min_m;
+% dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
+% if impurity_Z == 0
     dt = 1e-6/nPtsPerGyroOrbit;
-end
+% end
 
 % Setup arrays to store history
 
@@ -198,9 +198,9 @@ for p=1:nP
         
         if mod(tt, ionization_nDtPerApply) == 0 &&  particles(p).hitWall == 0 && particles(p).leftVolume ==0
             
-%             particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
-%                 IonizationRateCoeff,IonizationTemp, IonizationDensity,...
-%                 IonizationChargeState,interpolators,ionizationProbabilityTolerance);
+            particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
+                IonizationRateCoeff,IonizationTemp, IonizationDensity,...
+                IonizationChargeState,interpolators,ionizationProbabilityTolerance);
             
             %             particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
             %                RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
@@ -216,27 +216,23 @@ for p=1:nP
             background_amu,background_Z,interpolators, ...
             dt,velocityChangeTolerance, connectionLength,surface_dz_dx,surface_zIntercept);
         
-        particles(p).PerpDistanceToSurface(surface_dz_dx,surface_zIntercept)
+        particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
+            interpolators,positionStepTolerance,velocityChangeTolerance, ...
+            debyeLength, -3*maxTemp_eV,surface_dz_dx,surface_zIntercept,background_Z,background_amu,maxTemp_eV, ...
+            sheath_timestep_factor);
+        
+        
+%                 [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
+%                     interpolators,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
+%                     surface_zIntercept,surface_dz_dx, ...
+%                     debyeLength, -3*maxTemp_eV,background_Z,background_amu,maxTemp_eV);
+         
 
-        
-%         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
-%             interpolators,positionStepTolerance,velocityChangeTolerance, ...
-%             debyeLength, -3*maxTemp_eV,surface_dz_dx,background_Z,background_amu,maxTemp_eV, ...
-%             sheath_timestep_factor);
-        
-        
-                [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
-                    interpolators,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
-                    surface_zIntercept,surface_dz_dx, ...
-                    debyeLength, -3*maxTemp_eV,background_Z,background_amu,maxTemp_eV);
-        
-        particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
-        
-        particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx,tt);
         
         
         if particles(p).hitWall == 0 && particles(p).leftVolume ==0
             particles(p).UpdatePrevious();
+            % particles(p).perpDistanceToSurface;
             
             [Mx, xIndex] = min(abs(xyz.x-particles(p).x));
             [My, yIndex] = min(abs(xyz.y-particles(p).y));
@@ -253,6 +249,10 @@ for p=1:nP
             
         end
         
+                particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
+        
+        particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx,tt);
+        
         if trackHistory
             history(tt,p).x = particles(p).xPrevious;
             history(tt,p).y = particles(p).yPrevious;
@@ -264,6 +264,7 @@ for p=1:nP
         end
         
     end
+    particles(p).Energy;
     % This is to account for matlab not storing
     % structure arrays in parfor
     particles_out(p) = particles(p);

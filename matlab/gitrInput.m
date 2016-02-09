@@ -2,16 +2,16 @@
 
 % Volume definition
 
-xMinV =-0.05;
-xMaxV =+0.05;
+xMinV =-0.02;
+xMaxV =+0.02;
 
 % Surface definition
 
-yMin = -0.05;
-yMax = 0.05;
+yMin = -0.01;
+yMax = 0.01;
 
-zMin = -0.05;
-zMax = 0.05;
+zMin = -0.02;
+zMax = 0.02;
 
 % Surface grid
 
@@ -23,10 +23,6 @@ nXv = 50;
 nYv = 50;
 nZv = 50;
 
-% Sheath potential
-sheathPotential = -60.0;
-% Potential decay length
-sheathWidth = 0.00001;
 % Constant E field value - only used when EfieldInterpolator_number = 0
 Efield_in = [1e2 0 0];
 
@@ -54,19 +50,22 @@ perDiffusionCoeff_in = 0.000004;
 
 % Impurity particles 
 
-nP = 1;
+nP = 10;
+sourceStrength = 1e19;
 
 x_start = 0.00;
 y_start = 0.00;
-z_start = 0.02;
+z_start = 0.00;
 
-energy_eV_x_start = 0.0;
+energy_eV_x_start = -10.0;
 energy_eV_y_start = 0.0;
-energy_eV_z_start = -10.0;
+energy_eV_z_start = 0.0;
 
 
 impurity_amu = 184.0;
-impurity_Z = 1.0;
+impurity_Z = 0.0;
+
+densityChargeBins = [0 1];
 
 % Surface parameterization z = dz/dx * x + b
 
@@ -77,12 +76,14 @@ surface_zIntercept = 0;
 file_inz = 'ADAS/scd50_w.dat';
 %Recombination
 file_rcmb = 'ADAS/acd50_w.dat';
+%Emission
+file_emission = {'ADAS/w0_400875.m','ADAS/w1_434811.m'};
 
 % Particle time stepping control
 
-nPtsPerGyroOrbit = 1e3;
-ionization_nDtPerApply = 1;
-nT = 1e3;
+nPtsPerGyroOrbit = 1e2;
+ionization_nDtPerApply = 10;
+nT = 2e3;
 sheath_timestep_factor = 1e4;
 
 % Plots
@@ -111,7 +112,7 @@ positionStepTolerance = 1e-3;
 connectionLength = 50;
 
 % Output options
-printProfiles = 0;
+printProfiles = 1;
 printHistory = 1;
 
     
