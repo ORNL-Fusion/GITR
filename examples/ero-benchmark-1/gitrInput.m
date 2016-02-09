@@ -23,10 +23,6 @@ nXv = 50;
 nYv = 50;
 nZv = 50;
 
-% Sheath potential
-sheathPotential = -60.0;
-% Potential decay length
-sheathWidth = 0.00001;
 % Constant E field value - only used when EfieldInterpolator_number = 0
 Efield_in = [1e2 0 0];
 
@@ -54,7 +50,7 @@ perDiffusionCoeff_in = 0.000004;
 
 % Impurity particles 
 
-nP = 200;
+nP = 10;
 sourceStrength = 1e19;
 
 x_start = 0.00;
@@ -80,14 +76,14 @@ surface_zIntercept = 0;
 file_inz = 'ADAS/scd50_w.dat';
 %Recombination
 file_rcmb = 'ADAS/acd50_w.dat';
-%Recombination
-file_emission = 'ADAS/plt50_w.dat';
+%Emission
+file_emission = {'ADAS/w0_400875.m','ADAS/w1_434811.m'};
 
 % Particle time stepping control
 
 nPtsPerGyroOrbit = 1e2;
 ionization_nDtPerApply = 10;
-nT = 1e3;
+nT = 2e3;
 sheath_timestep_factor = 1e4;
 
 % Plots

@@ -54,7 +54,7 @@ perDiffusionCoeff_in = 0.000004;
 
 % Impurity particles 
 
-nP = 1;
+nP = 5;
 sourceStrength = 1e19;
 
 x_start = 0.00;
@@ -67,7 +67,7 @@ energy_eV_z_start = -10.0;
 
 
 impurity_amu = 184.0;
-impurity_Z = 1.0;
+impurity_Z = 2.0;
 
 densityChargeBins = [0 1];
 
@@ -85,9 +85,9 @@ file_emission = 'ADAS/plt50_w.dat';
 
 % Particle time stepping control
 
-nPtsPerGyroOrbit = 1e3;
+nPtsPerGyroOrbit = 1e2;
 ionization_nDtPerApply = 10;
-nT = 1e3;
+nT = 2e2;
 sheath_timestep_factor = 1e3;
 
 % Plots
@@ -110,7 +110,7 @@ perDiffusionCoefficientInterpolator_number = 0;
 
 % Checks on Monte Carlo Probability and Step Size
 ionizationProbabilityTolerance = 0.5;
-velocityChangeTolerance = 1; % Fraction of previous speed
+velocityChangeTolerance = 1e-3; % Fraction of previous speed
 positionStepTolerance = 1e-3;
 
 connectionLength = 50;
