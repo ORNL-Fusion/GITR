@@ -24,7 +24,7 @@ for i=1:len1
 sightLine = sum(radiance,2)*dy;
 sightLine = reshape(sightLine,[nXv,nZv]);
 figure(n+1)
-surf(run_param.xV_1D, run_param.zV_1D,sightLine)
+surf( run_param.zV_1D,run_param.xV_1D,sightLine)
     xlabel('z axis')
     ylabel('x axis')
     zlabel('y axis')
@@ -81,7 +81,7 @@ for i=1:len1
 sightLine = sum(radiance,2)*dy;
 sightLine = reshape(sightLine,[nXv,nZv]);
 figure(n+2)
-surf(run_param.xV_1D, run_param.zV_1D,sightLine)
+surf(run_param.zV_1D, run_param.xV_1D,sightLine)
     xlabel('z axis')
     ylabel('x axis')
     zlabel('y axis')
