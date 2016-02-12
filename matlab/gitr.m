@@ -9,6 +9,9 @@ constants
 
 gitrInput
 
+disp(['Number of particles: ', num2str(nP)])
+disp(['Number of time steps: ', num2str(nT)])
+
 % Load ADAS data (cross sections, ionization rates, etc)
 
 [IonizationTemp, IonizationDensity, IonizationRateCoeff, IonizationChargeState] = ADF11(file_inz);
@@ -294,13 +297,10 @@ run_param.yV_1D = yV_1D;
 run_param.zV_1D = zV_1D;
 
 save('output/gitrRunParameters.mat','run_param');
-
 save('output/gitrParticles.mat','particles_out');
 save('output/gitrImpurityDensityTally.mat','impurityDensityTally');
 
 print_profiles
 
 
-
-%postProcessing
 %quit
