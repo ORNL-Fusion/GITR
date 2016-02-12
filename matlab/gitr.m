@@ -183,6 +183,7 @@ IonizationTimeStep = ionization_nDtPerApply*dt;
 SheathTimeStep = dt/sheath_timestep_factor;
 
 disp('Initialization complete... Starting main loop')
+%parpool(30)
 tic
 
 PreviousParticlePosition_x = [particles.x];
@@ -190,7 +191,7 @@ PreviousParticlePosition_y = [particles.y];
 PreviousParticlePosition_z = [particles.z];
 
 
-for p=1:nP
+parfor p=1:nP
     
     p
     tmp = zeros(nXv,nYv,nZv,nDensityBins);
@@ -208,8 +209,8 @@ for p=1:nP
             
         end
         
-        %         particles(p).CrossFieldDiffusion(xyz,Bfield3D,perDiffusionCoeff,...
-        %             interpolators,dt,positionStepTolerance);
+                particles(p).CrossFieldDiffusion(xyz,Bfield3D,perDiffusionCoeff,...
+                    interpolators,dt,positionStepTolerance);
         
         
         diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,flowVelocity_ms,density_m3,temp_eV,...

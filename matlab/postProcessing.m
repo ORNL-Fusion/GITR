@@ -15,11 +15,11 @@ else
 end
 
 plotScatter = 0;
-plotTracks = 1;
+plotTracks = 0;
 plotDens = 0;
 plotProfiles = 1;
 plot3D = 0;
-plotDensity = 1;
+plotDensity = 0;
 
 load(RunParametersFileName);
 load(ParticlesFileName);
@@ -95,8 +95,14 @@ if exist(HistoryFileName)
 end
 
 % Surface particle impact histogram
+hit = [particles_out(:).hitWall];
+noHit = find(hit ==0);
+z_pos = [particles_out.zPrevious];
+y_pos = [particles_out.yPrevious];
+ z_pos(noHit) = [];
+  y_pos(noHit) = [];
 figure(2)
-h = histogram2([particles_out.zPrevious],[particles_out.yPrevious],surf_z1D,surf_y1D,...
+h = histogram2(z_pos,y_pos,surf_z1D,surf_y1D,...
     'DisplayStyle','tile','ShowEmptyBins','on')
     xlabel('z axis')
     ylabel('y axis')
@@ -105,18 +111,19 @@ h = histogram2([particles_out.zPrevious],[particles_out.yPrevious],surf_z1D,surf
      az = 180;
     el = 90;
     view(az,el);
+    colormap jet
 colorbar
 
 % Surface Energy impact histogram
 
 %%%%%%%% Mean energy
-EnergyBins = zeros(nY-1,nZ-1);
-ChargeBins = zeros(nY-1,nZ-1);
-Tallys = zeros(nY-1,nZ-1);
+EnergyBins = zeros(nY,nZ);
+ChargeBins = zeros(nY,nZ);
+Tallys = zeros(nY,nZ);
 
     
-    yIndex =  round(([particles_out.yPrevious]- yMin)/(yMax - yMin)*(nY))+1;
-    zIndex = round(([particles_out.zPrevious]- zMin)/(zMax - zMin)*(nZ))+1;
+    yIndex =  round((y_pos- yMin)/(yMax - yMin)*(nY));
+    zIndex = round((z_pos- zMin)/(zMax - zMin)*(nZ));
     len2 = length(zIndex)
     for i=1:len2
     EnergyBins(yIndex(i),zIndex(i)) = EnergyBins(yIndex(i),zIndex(i)) + 0.5.*impurity_amu.*([particles_out(i).vxPrevious].^2 + ...
@@ -133,6 +140,7 @@ xlabel('z axis')
 ylabel('y axis')
 zlabel('x axis')
 title('Mean Energy [eV]')
+    colormap jet
 colorbar
 ax.XDir = 'normal';
 hold on
@@ -149,11 +157,31 @@ xlabel('z axis')
 ylabel('y axis')
 zlabel('x axis')
 title('Mean Charge [#]')
+    colormap jet
 colorbar
 ax.XDir = 'normal';
 hold on
 
 set(gca,'ZDir','reverse');
 view([180 90]);
+
+
+figure(9)
+
+ 
+surf(surf_z1D,surf_y1D,surf_x2D,log10(Tallys))
+xlabel('z axis')
+ylabel('y axis')
+zlabel('x axis')
+title('Deposition [particles] - log10 Scale')
+    colormap jet
+colorbar
+caxis([0 max(log10(Tallys(:)))])
+ax.XDir = 'normal';
+hold on
+
+set(gca,'ZDir','reverse');
+view([180 90]);
+
 density_calc
-plot_profiles
+%plot_profiles
