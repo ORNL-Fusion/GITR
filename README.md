@@ -10,3 +10,13 @@ The physics implemented in GITR is based on the trace-impurity assumption. i.e. 
 The code is manifested in the time stepping of a particle with a set of initial conditions through a set of operators until certain conditions on the particles are reached (crossing a boundary or timing out). The operators acting on the particles are dependent on the prescibed fields and profiles of the background.
 
 ![Operator Loop and Equation of Motion](PlasmaTransp.png)
+
+Inputs to the code are set up in the gitrInput.m file and include
+1. Volume specification and gridding
+2. Surface parameterization and gridding
+3. Background fields and profiles
+4. Number of particles and initial conditions
+5. Time stepping information
+6. Desired output
+
+There also exists a postProcessing.m routine to be run in order to produce plots of desired output.
