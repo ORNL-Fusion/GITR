@@ -127,6 +127,7 @@ if plot1DProfileSlices
     title('Ex [V/m]')
 end
 
+disp('Initialization of fields complete... Beginning particle initialization')
 % Populate the impurity particle list
 particles(nP) = particle;
 particles_out(nP) = particle;
@@ -186,7 +187,7 @@ IonizationTimeStep = ionization_nDtPerApply*dt;
 SheathTimeStep = dt/sheath_timestep_factor;
 
 disp('Initialization complete... Starting main loop')
-%parpool(30)
+parpool(32)
 tic
 
 PreviousParticlePosition_x = [particles.x];
@@ -303,4 +304,4 @@ save('output/gitrImpurityDensityTally.mat','impurityDensityTally');
 print_profiles
 
 
-%quit
+quit

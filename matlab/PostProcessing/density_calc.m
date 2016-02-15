@@ -31,6 +31,8 @@ surf( run_param.zV_1D,run_param.xV_1D,sightLine)
     number = num2str(1);
     title0 = strcat('Tungsten  ', number, ' Line intensity (4009 Angstrom) [Photons/sr/s/m^2]');
     title(title0)
+        axis([-0.008 0.008 -0.013 0.002])
+        colormap jet
 % h2 = histogram2(density(:,1),density(:,2),surf_y1D,surf_z1D,...
 %     'DisplayStyle','tile','ShowEmptyBins','on')
 % colorbar
@@ -50,6 +52,7 @@ surf( run_param.zV_1D,run_param.xV_1D,sightLine)
     el = 90;
     view(az,el);
     colorbar
+
 %end
 %  
 %      xlabel('x axis')
@@ -88,10 +91,13 @@ surf(run_param.zV_1D, run_param.xV_1D,sightLine)
     number = num2str(2);
     title0 = strcat('Tungsten  ', number, ' Line intensity (4348 Angstrom) [Photons/sr/s/m^2]');
     title(title0)
+            axis([-0.01 0.010 -0.015 0.005])
+            colormap jet
      hold on
  plot3(run_param.surf_z1D,run_param.surf_x2D(1,:),0*run_param.surf_z1D)
  hold off
      az = 180;
     el = 90;
     view(az,el);
+
     colorbar

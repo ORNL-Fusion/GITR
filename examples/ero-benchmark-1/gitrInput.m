@@ -45,7 +45,7 @@ perDiffusionCoeff_in = 0.0;
 
 % Impurity particles 
 
-nP = 100;
+nP = 1e4;
 sourceStrength = 1e19;
 
 x_start = 0.00;
@@ -76,7 +76,7 @@ file_emission = {'ADAS/w0_400875.m','ADAS/w1_434811.m'};
 % Particle time stepping control
 
 nPtsPerGyroOrbit = 1e2;
-ionization_nDtPerApply = 10;
+ionization_nDtPerApply = 5;
 nT = 2e3;
 sheath_timestep_factor = 1e4;
 
@@ -85,7 +85,7 @@ sheath_timestep_factor = 1e4;
 plotInitialSurface = 0;
 plot1DProfileSlices = 0;
 
-trackHistory = 1;
+trackHistory = 0;
 
 % Interpolator Dimensionality Selection
 
