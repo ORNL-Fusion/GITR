@@ -1,0 +1,5 @@
+#$ -N GITR1e4_flowAndDiff
+#$ -q medium*
+#$ -pe threads 32
+#$ -cwd
+matlab -r 'gitr’
