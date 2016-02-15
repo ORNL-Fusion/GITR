@@ -19,4 +19,4 @@ Inputs to the code are set up in the gitrInput.m file and include
 5. Time stepping information
 6. Desired output
 
-There also exists a postProcessing.m routine to be run in order to produce plots of desired output.
+There also exists a folder for processing output data /matlab/PostProcessing and a postProcessing.m routine to be run in order to produce plots of desired output.
