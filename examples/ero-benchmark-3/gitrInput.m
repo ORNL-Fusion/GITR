@@ -10,26 +10,22 @@ xMaxV =+0.02;
 
 % Surface definition
 
-yMin = -0.01;
-yMax = 0.01;
+yMin = -0.03;
+yMax = 0.03;
 
-zMin = -0.02;
-zMax = 0.02;
+zMin = -0.03;
+zMax = 0.03;
 
 % Surface grid
 
-nY = 100;
-nZ = 100;
+nY = 150;
+nZ = 150;
 
 % Volume grid
-nXv = 50;
-nYv = 50;
-nZv = 50;
+nXv = 100;
+nYv = 150;
+nZv = 150;
 
-% Sheath potential
-sheathPotential = -60.0;
-% Potential decay length
-sheathWidth = 0.00001;
 % Constant E field value - only used when EfieldInterpolator_number = 0
 Efield_in = [1e2 0 0];
 
@@ -41,36 +37,30 @@ Bz_in = -2.0;
 
 background_Z = [-1 1];
 background_amu = [ME/MI 2];
-background_flow = [0.99 0.99];%Fraction of thermal velocity - only used when FlowVelocityInterpolator_number = 0
+background_flow = [0.999 0.999];%Fraction of thermal velocity - only used when FlowVelocityInterpolator_number = 0
 
 % Density
 maxDensity = [1e19 1e19];
-% Density Decay length
 densitySOLDecayLength =1e4;
-%Temperature (in eV)
 maxTemp_eV = [20 20];
-%Temperature decay length
 tempSOLDecayLength = 1e4;
-%Dperp
-perDiffusionCoeff_in = 0.000004;
-
+perDiffusionCoeff_in = 0.0;
 
 % Impurity particles 
 
-nP = 5;
+nP = 1e4;
 sourceStrength = 1e19;
 
 x_start = 0.00;
 y_start = 0.00;
-z_start = 0.005;
+z_start = 0.00;
 
-energy_eV_x_start = 0.0;
+energy_eV_x_start = -10.0;
 energy_eV_y_start = 0.0;
-energy_eV_z_start = -10.0;
-
+energy_eV_z_start = 0.0;
 
 impurity_amu = 184.0;
-impurity_Z = 2.0;
+impurity_Z = 0.0;
 
 densityChargeBins = [0 1];
 
@@ -83,22 +73,22 @@ surface_zIntercept = 0;
 file_inz = 'ADAS/scd50_w.dat';
 %Recombination
 file_rcmb = 'ADAS/acd50_w.dat';
-%Recombination
-file_emission = 'ADAS/plt50_w.dat';
+%Emission
+file_emission = {'ADAS/w0_400875.m','ADAS/w1_434811.m'};
 
 % Particle time stepping control
 
 nPtsPerGyroOrbit = 1e2;
 ionization_nDtPerApply = 10;
-nT = 2e2;
-sheath_timestep_factor = 1e3;
+nT = 1e4;
+sheath_timestep_factor = 1e4;
 
 % Plots
 
 plotInitialSurface = 0;
 plot1DProfileSlices = 0;
 
-trackHistory = 1;
+trackHistory = 0;
 
 % Interpolator Dimensionality Selection
 
@@ -110,21 +100,12 @@ temperatureInterpolator_number = 0;
 densityInterpolator_number = 0;
 perDiffusionCoefficientInterpolator_number = 0;
 
-
 % Checks on Monte Carlo Probability and Step Size
 ionizationProbabilityTolerance = 0.5;
-velocityChangeTolerance = 1e-3; % Fraction of previous speed
+velocityChangeTolerance = 1e-2; % Fraction of previous speed
 positionStepTolerance = 1e-3;
 
 connectionLength = 50;
 
 % Output options
 printProfiles = 1;
-printHistory = 1;
-
-    
-
-
-
-
-    

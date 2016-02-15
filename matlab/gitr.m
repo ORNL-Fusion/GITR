@@ -187,7 +187,7 @@ IonizationTimeStep = ionization_nDtPerApply*dt;
 SheathTimeStep = dt/sheath_timestep_factor;
 
 disp('Initialization complete... Starting main loop')
-parpool(32)
+parpool(nThreads)
 tic
 
 PreviousParticlePosition_x = [particles.x];
@@ -304,4 +304,4 @@ save('output/gitrImpurityDensityTally.mat','impurityDensityTally');
 print_profiles
 
 
-quit
+%quit
