@@ -1,0 +1,22 @@
+=======================================================================
+ ERO warning/error log file, Feb  4 2016
+=======================================================================
+
+Warning in 'irvar.c'(103):
+    Using default value for parameter
+    <bisection_dz>, <particle_reflect_from_midth>, <sheath_on>, <sheat_factor>, <PerpDiffFac>, <intervall_polar>, <intervall_azimut>, <cosine_distribution>, <parent_number>, <ChemProcFN>, <MatlabDensTOutput>
+Totally 11 events.
+Statistics: None provided for this warning
+
+
+Warning in 'irvar.c'(155):
+    Unknown keyword
+    <BM_BMNum>, <BM_PlParCase>, <element2_tracing>, <sheat_on>, <sheath_factor>, <PhErosMod>, <CarbydeRate_Be>, <IonizationOfNtrl>, <PSCWallReflProb>, <PSCNtrlDensRedF>
+Totally 10 events.
+Statistics: None provided for this warning
+
+
+Totally 2 problems encounted . . .
+Nothing important . . .
+
+======================== End of warning summary =======================
