@@ -162,6 +162,10 @@ classdef particle < handle
                 end
             end
             end
+            
+            if isnan(this.x) == 1
+                stop
+            end
         end
         
         
@@ -224,6 +228,7 @@ classdef particle < handle
             MI = 1.6737236e-27;
             Q = 1.60217662e-19;
             EPS0 = 8.854187e-12;
+            
             
             if this.Z < max(ChargeState(:));
                 
@@ -368,7 +373,7 @@ classdef particle < handle
             
             z = this.Z;
             m = this.amu*MI;
-            for j=1:nS
+            for j=2:nS
                 
                 zbackground = Z(j);
                 mbackground = amu(j)*MI;
@@ -532,8 +537,8 @@ classdef particle < handle
             norm_perp2 = plus_minus3*norm(v_norm*dv_perp2);
             
             
-             ez = (1+nu_s*dt+ plus_minus1*sqrt(nu_par*dt) );%
-             v_collisions = vRelative_norm*(1-nu_E/2*dt)*(e3*ez + dv_perp1 + dv_perp2);
+             ez = (1+nu_s*dt+ plus_minus1*sqrt(nu_par*dt/2) );%
+             v_collisions = vRelative_norm*(1-nu_E*dt)*(e3*ez + dv_perp1 + dv_perp2);
 
 
             this.vx = v_collisions(1)+ flowVelocity(1);

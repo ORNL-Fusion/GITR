@@ -15,7 +15,7 @@ else
 end
 
 plotScatter = 0;
-plotTracks = 0;
+plotTracks = 1;
 plotDens = 0;
 plotProfiles = 1;
 plot3D = 0;
@@ -178,6 +178,8 @@ set(gca,'ZDir','reverse');
 view([180 90]);
 axis([-0.02 0.005 -0.01 0.006])
 
+gitr_ME = a;
+gitr_MQ = b;
 density_calc
 %plot_profiles
 
@@ -185,3 +187,4 @@ density_calc
 figure(1)
 hold on
 scatter3([particles_out(noHit).z],[particles_out(noHit).y],[particles_out(noHit).x])
+
