@@ -510,9 +510,9 @@ loading ini. values
 The puffing vector is rotated by angle
   0.00 Rad (0.0 Grad) in toroidal plane.
   0.00 Rad (0.0 Grad) in poloidal plane.
-% Wed Feb 10 10:52:42 2016
+% Tue Feb 23 09:57:45 2016
 % Zeit fuer die vorinitialisierung:
-% 0.010986 milliseconds
+% 0.011963 milliseconds
 
 %------------------------------
 
@@ -527,15 +527,15 @@ The puffing vector is rotated by angle
 ==> Loop #8000 (80% complete).
 ==> Loop #9000 (90% complete).
 ==> Loop #9999 (99% complete).
-% Wed Feb 10 10:57:59 2016
+% Tue Feb 23 10:03:45 2016
 % Zeit fuer die gesamte Schleife:
-% 317424.621094 milliseconds
+% 359779.012207 milliseconds
 
 %------------------------------
 
-% Wed Feb 10 10:57:59 2016
+% Tue Feb 23 10:03:45 2016
 % CYCLE of NORMAL SOURCE:
-% 317424.708008 milliseconds
+% 359779.108887 milliseconds
 
 %------------------------------
 
@@ -652,21 +652,21 @@ Matlab output complete.
 ---------------------------------------------------
            END of TOTAL OUTPUT                     
 ---------------------------------------------------
-% Wed Feb 10 10:58:10 2016
+% Tue Feb 23 10:03:55 2016
  % Total Processtime:
- 332.271124
+ 375.341951
 
 %------------------------------
 
-% Wed Feb 10 10:58:10 2016
+% Tue Feb 23 10:03:55 2016
 % Total Realtime:
-% 333.000000 seconds
+% 375.000000 seconds
 
 %------------------------------
 
-% Wed Feb 10 10:58:10 2016
+% Tue Feb 23 10:03:55 2016
 % Total Programtime:
-% 332938.412109 milliseconds
+% 375413.838135 milliseconds
 
 %------------------------------
 
