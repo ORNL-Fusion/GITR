@@ -1,10 +1,10 @@
 %============================================================
 % Created by ERO (Standard Version)
 % for the task 'Time_Measuring'.
-% Wed Feb 10 10:58:10 2016
+% Tue Feb 23 10:03:55 2016
 %============================================================
 %
 TskName= 'Time_Measuring';
 CompName= 'STD';
 %
-main =    332.0000;
+main =    375.0000;
