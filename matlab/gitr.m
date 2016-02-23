@@ -184,15 +184,14 @@ impurityDensityTally = zeros(nXv,nYv,nZv,nDensityBins);
 
 adaptive_distance = 10*debyeLength;
 IonizationTimeStep = ionization_nDtPerApply*dt;
+CollisionTimeStep = collision_nDtPerApply*dt;
 SheathTimeStep = dt/sheath_timestep_factor;
 
 disp('Initialization complete... Starting main loop')
-parpool(nThreads)
+%parpool(nThreads)
 tic
 
-PreviousParticlePosition_x = [particles.x];
-PreviousParticlePosition_y = [particles.y];
-PreviousParticlePosition_z = [particles.z];
+p_count = 0;
 
 
 parfor p=1:nP
@@ -207,24 +206,28 @@ parfor p=1:nP
                 IonizationRateCoeff,IonizationTemp, IonizationDensity,...
                 IonizationChargeState,interpolators,ionizationProbabilityTolerance);
             
-            %             particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
-            %                RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
-            %                RecombinationChargeState,interpolators,ionizationProbabilityTolerance);
+                        particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
+                           RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
+                           RecombinationChargeState,interpolators,ionizationProbabilityTolerance);
             
         end
         
-                particles(p).CrossFieldDiffusion(xyz,Bfield3D,perDiffusionCoeff,...
-                    interpolators,dt,positionStepTolerance);
+        particles(p).CrossFieldDiffusion(xyz,Bfield3D,perDiffusionCoeff,...
+            interpolators,dt,positionStepTolerance);
         
-        
-        diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,flowVelocity_ms,density_m3,temp_eV,...
-            background_amu,background_Z,interpolators, ...
-            dt,velocityChangeTolerance, connectionLength,surface_dz_dx,surface_zIntercept);
+        if mod(tt, collision_nDtPerApply) == 0 
+            
+            diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,flowVelocity_ms,density_m3,temp_eV,...
+                background_amu,background_Z,interpolators, ...
+                CollisionTimeStep,velocityChangeTolerance, connectionLength,surface_dz_dx,surface_zIntercept);
+            
+        end
         
         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
             interpolators,positionStepTolerance,velocityChangeTolerance, ...
             debyeLength, -3*maxTemp_eV,surface_dz_dx,surface_zIntercept,background_Z,background_amu,maxTemp_eV, ...
             sheath_timestep_factor);
+        
         
         
 %                 [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
@@ -254,7 +257,7 @@ parfor p=1:nP
             
         end
         
-                particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
+        particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
         
         particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx,tt);
         
@@ -273,14 +276,10 @@ parfor p=1:nP
     % This is to account for matlab not storing
     % structure arrays in parfor
     particles_out(p) = particles(p);
-    PreviousParticlePosition_x(p) = particles(p).xPrevious;
-    PreviousParticlePosition_y(p) = particles(p).yPrevious;
-    PreviousParticlePosition_z(p) = particles(p).zPrevious;
     impurityDensityTally = impurityDensityTally + tmp;
 end
 toc
 
-%particlesOut = struct('x',PreviousParticlePosition_x,'y',PreviousParticlePosition_y,'z',PreviousParticlePosition_z);
 
 status = mkdir('output');
 
@@ -302,6 +301,6 @@ save('output/gitrParticles.mat','particles_out');
 save('output/gitrImpurityDensityTally.mat','impurityDensityTally');
 
 print_profiles
-
+disp('Warning: fd is set to a fixed value')
 
 %quit
