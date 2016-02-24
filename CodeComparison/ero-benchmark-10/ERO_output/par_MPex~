@@ -1,0 +1,509 @@
+#
+surface_model
+0
+# All the results will be written into files starting with the 
+# choosen characters
+pathtoresult
+Wtile_test_
+# Carbon target with Be seeding . . . 
+# --------------------------------------------------------------------------------
+# Number of particles for the external source per time step
+# or file with a column of numbers (named *.dat)
+loops
+10000
+# Random initializator
+Random_Seed
+1
+# --------------------------------------------------------------------------------
+# time grid
+# real number for the total simulation time [s] and the time step
+total_time
+1.
+time_per_step
+1.
+# --------------------------------------------------------------------------------
+# Job Class:
+# At the moment 2 job classes are possible:
+# 1
+# 10
+job_class
+10
+# --------------------------------------------------------------------------------
+# NumerikDialog
+# dt1: general time step for solving the equation of motion
+# dt2: time step near the limiter surface
+# collision time: cycle time for friction and collision (~10 x dt1)
+# time out: maximum tracing time for particle (~1E-4)
+dt1
+2.e-08
+dt2
+0.2e-09
+collision_time
+1.e-07
+time_out
+1.0e-02
+# --------------------------------------------------------------------------------
+# Number of boxes for the calculation
+# length [mm] of the tracing boxes in radial,poloidal and toroidal direction
+radial_box
+35
+poloidal_box
+60
+toroidal_box
+60
+# --------------------------------------------------------------------------------
+# ITER_BM (ITER Be Wall project . . . )
+BM_BMNum
+101
+BM_PlParCase
+1  #80836
+# --------------------------------------------------------------------------------
+# Limiter geometry
+# pol radius:     tor radius:   [mm]
+#    =0               =0    plain surface
+#    =0           >0    cylinder along y-axis, opposite along x-axis
+#             =         sphere
+#             >         "poloidal" torus
+#             <         "totroidal" torus
+poloidal_radius
+0.
+poloidal_length
+60.
+toroidal_radius
+0
+toroidal_length
+60.
+# Toroidal Angle of the surface normal with the x-axis for a plane limiter
+toroidal_angle
+30
+# surface temperature in degree Celsius
+surface_temperatur
+500
+# sec. electr. emission coefficient e: 0 LE e LE 1 (LE=less equal)
+secondary_electron_emission
+0.0
+# isotropic heat conductance
+heat_conductance
+0.8
+# sheath energy transmission factor (~7-8)
+sheath_transmission
+8
+# thickness of surface layer which is taken into account [nm]
+interaction_depth
+100
+# Be 12.347E+13
+# a-CH 4.3000E+13
+# C 11.181E+13
+Int_Sh_Dens
+12.347E+13
+flux_win_max
+90
+smoothing_length
+-1
+# --------------------------------------------------------------------------------
+# Surface net: The net must not extend the limiter size
+# all dimensions are projected onto the x-y plane [mm]
+# the length should usually be: +- the poloidal length of the limiter
+#                           and +- the toroidal length
+s_poloidal_boundary_max
+30.
+s_poloidal_boundary_min
+-30.
+s_toroidal_boundary_max
+30.
+s_toroidal_boundary_min
+-30.
+# cell size of surface mesh [mm] in y- and x-direction
+s_cell_dpoloidal
+.4
+s_cell_dtoroidal
+.4
+# eroded limiter bulk material will be traced (=0) or not (=1)
+substrat_tracing_on
+0
+# Substrat material, and two further materials to be traced (23 = no tracing)
+substrat
+_w
+element1_tracing
+End
+element2_tracing
+End
+# --------------------------------------------------------------------------------
+# Spektroskopienetz = Volumennetz
+# on = 0; off = 1, real numbers for boxes which should be equivalent to the
+# boxes defined before
+spectroscopy_on
+0
+emission_on
+0
+v_poloidal_boundary_max
+30.
+v_poloidal_boundary_min
+-30.
+v_toroidal_boundary_max
+30.
+v_toroidal_boundary_min
+-30.
+v_radial_boundary_max
+35.
+v_radial_boundary_min
+0.
+# cell sizes for the volume grid along the y-, x-, z-direction
+v_cell_dpoloidal
+.4
+v_cell_dtoroidal
+.4
+v_cell_dradial
+.4
+AxialProfileRadius
+10.
+AxialProfileLength
+150.
+# --------------------------------------------------------------------------------
+# Fine mesh . . .
+# 0 - no fine mesh; any number - number of additional fine meshes
+FineMesh
+0
+# --------------------------------------------------------------------------------
+# The following input describes the edge and SOL plasma
+# PlasmaDialog
+# 0 = hydrogen, 1 = deuterium, 3 = tritium
+plasmaions
+1
+# percentage of helium impurities [0,100]
+# for PISCES - Be
+helium
+0
+# exponetial decay length [mm]
+he_abfall
+0.
+# mean charge state of helium
+he_charge
+1
+# percentage of carbon impurities [0,100]
+carbon
+0.
+# exponetial decay length [mm]
+c_abfall
+0.
+# mean charge state of carbon
+c_charge
+3
+# equivalent for oxygen
+oxygen
+0
+o_abfall
+0.
+o_charge
+5
+# equivalent for neon
+neon
+0.
+ne_abfall
+0.
+ne_charge
+2
+# electron-, ion-temperatures, electron-density at the LCFS and
+# the corresponding decay lengths [mm]
+te
+20
+te_abf
+0
+ti
+20
+ti_abf
+0
+ne
+2.000000e+13
+ne_abf
+0.
+# scaling of a negative electron density decay length
+ne_factor
+1.0
+# Additional voltage at limiter [eV]
+BiasPot
+0
+# -------- Collisions with neutrals--------
+TempNtrl
+50
+DensNtrl
+-5.00000e-03
+# if <0: Tor, else Bar
+MassNtrl
+4.028
+NtrlColMod
+1
+# Deuterim D2
+# ---------Collisions with neutrals (end) --
+#  
+# B-field: 0 = on; 1 = off
+bfield_on
+0
+# B-field in [Tesla]
+bfield
+2.0
+# The B-field is pointing towards the origin
+# azimuthal angle between the B-field projected onto the xy-plane and the x-axis
+pol_angle_of_bfield
+0
+# polar angle of the B-field with the z-axis
+tor_angle_of_bfield
+270
+# LCFS on the limiter tip: 0 = yes; 1 = no
+lcfs_ontip
+1
+# if 1 then elevation in [mm]  > 0 !!!
+elev_of_lcfs
+35
+# plasma velocity decay length in positive and negative direction
+cs_abf0
+1.0e8
+cs_abf1
+1.0e8
+# Connection lenth [mm]
+connection_length
+1.0e8
+FlVelFactor #A.L.; test no flow
+0.0
+# 0 parallel to B, 1 antiparallel to B, 2 limiter tip is the symmetry point
+sign_of_con_length
+1
+# distance from symmetry point
+limiter_con_length
+1.0e8
+# sheath potential: 0 = on; 1 = off
+sheat_on
+0
+# two models for potential drop: [0,1]
+potential_drop
+0
+# enhancement factor for sheath potential
+sheath_factor
+1.0
+# enhancement factor for pre-sheath radial field
+presheath_factor
+0.0
+# cross field diffusion: 0 = usual diffusion; 1 = no diff.
+#                        2 = Alcator like scaling; 3 = Alcator scaling
+diffusion_on
+0
+# Ion collision frequency: 0 = calculated; >0 [real] fixed in [1/s]
+collision_for_diffusion
+0.
+# cross field diffusion coefficient [mm**2 /s]
+perpendicular_diffusion
+0.0
+# --------------------------------------------------------------------------------
+# The following input will switch on or off the erosion/reflection/sputtering
+# processes (0=on, 1=off)   handbook: page 41 
+physical_erosion
+1
+PhErosMod
+0
+BGPhErHardY
+-1
+chemical_erosion
+1
+# < 0: yield of erosion according to Roth-formula; > 0 hard wired
+hardwired_chemical_erosion
+1.5
+CarbydeRate_Be
+0
+factor_chem
+20.
+factor_phys
+1.
+oxygen_erosion
+1
+background_deposition
+1
+particle_sputtering
+1
+particle_reflection
+1
+NeutralElastCol
+1
+IonizationOfNtrl
+0
+PSCWallReflProb
+0
+PSCNtrlDensRedF
+0
+FollowEroded
+0
+MolFracID
+0
+Recombination
+1
+# --------------------------------------------------------------------------------
+# External Source Data   handbook: page 49
+# external source: 0 = on; 1 = off
+source_on
+0
+# 0 - point (def), 1 - disk, ...
+source_type
+0
+source_size
+0
+# energy distribution: 0 = monoenergetic; 1 = maxwellian; 2 = not defined;
+#                      3 = thompsonian
+which_distribution
+0
+PAngCO
+0
+# respectively: Energy(0), mean energy(1), surface binding energy(3)
+mean_energy
+10
+SourceTempr
+-1
+# number of particles launched from each surface cell when sputtering 
+# distribution is build
+intervall_energy
+10
+# polar angle distribution: 0 = fixed angle; 1 = uniform in [0,90[
+#                           2 = cosine;      3 = through cylindrical tube
+polar_distribution
+0
+polar_angle
+0.0
+# azimut angle distrib.: 0 = single angle; 1 = uniform distribution
+azimut_distribution
+0
+azimut_angle
+0
+# source rate in [paticles/sourcepoint/sec.]: real number or file [*.dat]
+source_rate
+10000
+SourceTimeDelay
+0.
+# source location in xy-plane (0=yes, 1=no)
+# 195*cos(Pi/4) = 137.886
+source_location_y
+0
+source_location_x
+0
+source_location_z
+0
+moving_source_on
+1
+moving_source_form
+1
+moving_dx
+.2
+moving_dy
+90.
+intervall_dx
+5
+intervall_dy
+4
+# Rotation in xz plane (Grad)
+tor_rot_ang
+0.0
+pol_rot_ang
+0.0
+# --------------------------------------------------------------------------------
+# Choose your source element; handbook page 49,51
+element_choice1
+42
+element_choice2
+23
+freemass
+0.
+# --------------------------------------------------------------------------------
+# Markerdaten 0=rund 1 = rechteck
+number_of_markers
+0
+# --------------------------------------------------------------------------------
+# chemical data (0 = on; 1 = off)
+# 0 = source particles are molecules; 1 = source part. are atoms
+chemie_on
+1
+#parent_name == si or _c   !! only methane & silane
+parent
+_c
+#child_name == h for hydrogen | d for deuterium | t for tritium
+child
+d
+# number of child atoms e.g. n = 4 -> CH4
+child_number
+4
+# Reflection model: 0 = reflected as XH4, thompsonian
+# for radicals      1 = reflected as is, thompsonian
+#                   2 = as XH4, maxwellian
+#                   3 = as is, maxwellian
+#                   4 = as XH4, same energy as incoming energy
+#                   5 = as is, same energy
+model_of_radical
+4
+# reflection coefficient [0,1]
+reflection_of_radical
+0.
+# Ion reflection model: see above for energy distribution:
+#                       0,2,4 = neutralized and refelcted as XH4
+#                       1,3,5 = neutralized and refelcted as is
+model_of_ion
+4
+# reflection coefficient [0,1]
+reflection_of_ion
+0.
+# same models for subtrate material C
+ch4_model_of_radical
+4
+ch4_reflection_of_radical
+0.
+ch4_model_of_ion
+4
+ch4_reflection_of_ion
+0.
+# --------------------------------------------------------------------------------
+# Species (ions / neutrals) to be traced spectroscopically
+element_anzahl
+2
+element1_name
+_w
+element1_charge
+0
+element2_name
+_w
+element2_charge
+1
+# ======================== General Options ===========================
+# ----------- Rates ------------
+ProtReactReadFromF
+Yes
+ProtReactFN
+c2h6_proton.dat 
+#rat_aix_BE.dat
+SpecMerlinFN
+SM_standart.cfg
+IzMerlinFN
+IM_ADAS96.cfg
+PhErMerlinFN
+PEM_standart.cfg
+RecMerlinFN
+RM_ADAS96.cfg
+# ----------- Output -----------
+BinaryOutput
+No
+MatlabOutput
+Yes
+MatlabSpecOutput
+Yes
+Matlab3DOutput
+No
+MatlabEFieldOutput
+Yes
+# default - 0 (no); positive - step to be printed; negative - every step;
+MatlabDensTOutput2D
+1
+# ----------- Misc. ------------
+AdjSpecZToLim
+No
+Change_TimeTmp
+No
+GeomType
+2
+CompressDataSwitch
+No
+TarDataSwitch
+No
