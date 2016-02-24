@@ -60,7 +60,7 @@ energy_eV_y_start = 0.0;
 energy_eV_z_start = 0.0;
 
 impurity_amu = 184.0;
-impurity_Z = 0.0;
+impurity_Z = 1.0;
 
 densityChargeBins = [0 1];
 
@@ -80,6 +80,7 @@ file_emission = {'ADAS/w0_400875.m','ADAS/w1_434811.m'};
 
 nPtsPerGyroOrbit = 1e2;
 ionization_nDtPerApply = 10;
+collision_nDtPerApply = 10;
 nT = 2e3;
 sheath_timestep_factor = 1e4;
 
