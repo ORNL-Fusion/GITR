@@ -1,0 +1,32 @@
+Energy-distribution of redeposited particles
+Element: _w
+#atoms with E = 0 - 25 : 1.000000e+00 
+#atoms with E = 25 - 50 : 2.000000e+00 
+#atoms with E = 50 - 75 : 1.100000e+01 
+#atoms with E = 75 - 100 : 0.000000e+00 
+#atoms with E = 100 - 125 : 1.200000e+01 
+#atoms with E = 125 - 150 : 3.300000e+01 
+#atoms with E = 150 - 175 : 2.000000e+00 
+#atoms with E = 175 - 200 : 2.000000e+01 
+#atoms with E = 200 - 225 : 1.000000e+00 
+#atoms with E = 225 - 250 : 7.000000e+00 
+#atoms with E = 250 - 275 : 7.000000e+00 
+#atoms with E = 275 - 300 : 0.000000e+00 
+#atoms with E = 300 - 325 : 4.000000e+00 
+#atoms with E = 325 - 350 : 0.000000e+00 
+#atoms with E = 350 - 375 : 0.000000e+00 
+#atoms with E = 375 - 400 : 0.000000e+00 
+#atoms with E = 400 - 425 : 0.000000e+00 
+#atoms with E = 425 - 450 : 0.000000e+00 
+#atoms with E = 450 - 475 : 0.000000e+00 
+#atoms with E = 475 - 500 : 0.000000e+00 
+#atoms with E = 500 - 525 : 0.000000e+00 
+#atoms with E = 525 - 550 : 0.000000e+00 
+#atoms with E = 550 - 575 : 0.000000e+00 
+#atoms with E = 575 - 600 : 0.000000e+00 
+#atoms with E = 600 - 625 : 0.000000e+00 
+#atoms with E = 625 - 650 : 0.000000e+00 
+#atoms with E = 650 - 675 : 0.000000e+00 
+#atoms with E = 675 - 700 : 0.000000e+00 
+#atoms with E = 700 - 725 : 0.000000e+00 
+#atoms with E = 725 - 750 : 0.000000e+00 

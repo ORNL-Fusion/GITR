@@ -3,7 +3,7 @@
 1. No flow, no Dperp, No erosion/reflection, No Electric Presheath
 2. Finer surface and volumetric grid, 0.1mm in each direction
 3. Higher number of particles, NP = 1e5
-4. TBD
+4. Export ERO output for GITR; include thermal f. and flow v.; NP 100
 5. TBD
 6. TBD
 7. TBD
