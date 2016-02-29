@@ -188,6 +188,19 @@ CollisionTimeStep = collision_nDtPerApply*dt;
 SheathTimeStep = dt/sheath_timestep_factor;
 
 disp('Initialization complete... Starting main loop')
+pc = parcluster('local');
+
+% Make temporary folder for storing the cluster control files changing to suit 
+% your username and project details (replace things in <> with your specific paths)
+scratch_dir = 'scratch';
+mkdir(scratch_dir);
+
+% Explicitly set the JobStorageLocation to the temp directory that you
+% have created in this script (above)
+pc.JobStorageLocation = scratch_dir;
+
+% Start the parallel pool with the number workers that matches your job
+poolobj = parpool(pc,nThreads);
 %parpool(nThreads)
 tic
 
@@ -199,18 +212,6 @@ parfor p=1:nP
     p
     tmp = zeros(nXv,nYv,nZv,nDensityBins);
     for tt = 1:nT
-        
-        if mod(tt, ionization_nDtPerApply) == 0 &&  particles(p).hitWall == 0 && particles(p).leftVolume ==0
-            
-            particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
-                IonizationRateCoeff,IonizationTemp, IonizationDensity,...
-                IonizationChargeState,interpolators,ionizationProbabilityTolerance);
-            
-                        particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
-                           RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
-                           RecombinationChargeState,interpolators,ionizationProbabilityTolerance);
-            
-        end
         
         particles(p).CrossFieldDiffusion(xyz,Bfield3D,perDiffusionCoeff,...
             interpolators,dt,positionStepTolerance);
@@ -261,6 +262,18 @@ parfor p=1:nP
         
         particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx,tt);
         
+        if mod(tt, ionization_nDtPerApply) == 0 &&  particles(p).hitWall == 0 && particles(p).leftVolume ==0
+            
+            particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
+                IonizationRateCoeff,IonizationTemp, IonizationDensity,...
+                IonizationChargeState,interpolators,ionizationProbabilityTolerance);
+            
+            particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
+                RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
+                RecombinationChargeState,interpolators,ionizationProbabilityTolerance);
+            
+        end
+        
         if trackHistory
             history(tt,p).x = particles(p).xPrevious;
             history(tt,p).y = particles(p).yPrevious;
@@ -302,5 +315,9 @@ save('output/gitrImpurityDensityTally.mat','impurityDensityTally');
 
 print_profiles
 disp('Warning: fd is set to a fixed value')
+% At the completion of the job tidy up
+delete(poolobj);
 
-%quit
+% Clean up the temporary files
+rmdir(scratch_dir,'s');
+quit

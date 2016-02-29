@@ -1,5 +1,5 @@
-#$ -N GITR1e4_Diff
+#$ -N GITR
 #$ -q medium*
 #$ -pe threads 32
 #$ -cwd
-matlab -r 'gitr’
+matlab -r 'gitr'

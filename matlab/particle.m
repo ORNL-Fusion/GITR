@@ -163,9 +163,6 @@ classdef particle < handle
             end
             end
             
-            if isnan(this.x) == 1
-                stop
-            end
         end
         
         
@@ -263,6 +260,7 @@ classdef particle < handle
                     
                     tion = 1/(10^Coeff*n/1E6);
                     P1 = 1-exp(-dt/tion);
+                    
                     
                     if P1 > ionizationProbabilityTolerance
                         error('Ionization probability is too large')
@@ -537,7 +535,7 @@ classdef particle < handle
             norm_perp2 = plus_minus3*norm(v_norm*dv_perp2);
             
             
-             ez = (1+nu_s*dt+ plus_minus1*sqrt(nu_par*dt/2) );%
+             ez = (1+nu_s*dt+ plus_minus1*sqrt(nu_par*dt) );%
              v_collisions = vRelative_norm*(1-nu_E*dt)*(e3*ez + dv_perp1 + dv_perp2);
 
 
@@ -596,7 +594,7 @@ classdef particle < handle
         
         function PerpDistanceToSurface(this,surface_dz_dx,surface_zIntercept)
             if this.hitWall == 0 && this.leftVolume ==0
-            this.perpDistanceToSurface = ( -surface_dz_dx*this.x + this.z + surface_zIntercept)/sqrt(surface_dz_dx^2+1);
+            this.perpDistanceToSurface = ( -surface_dz_dx*this.x + this.z + surface_zIntercept)/realsqrt(surface_dz_dx*surface_dz_dx+1);
             end
         end
         
