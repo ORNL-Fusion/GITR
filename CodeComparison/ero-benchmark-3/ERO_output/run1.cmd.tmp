@@ -1,0 +1,56 @@
+# Loadleveler file for JUMP
+#------------------------------------------------------------------
+# DEFAULTS - change only if necessary
+#------------------------------------------------------------------
+# Limits:
+#  A class is set automatically according to the
+#   specified resource requirements
+#-------------------------------------------------------------------
+#
+#
+# - specification of time limits always include seconds
+#   (00:40 = 40 sec, 2:30 = 2,5 min, 3:00:00 = 3 h)
+# @ wall_clock_limit = 10:00:00
+# @ data_limit=  2GB
+# @ stack_limit= 1.50GB
+#
+#
+# - jobtype (parallel or serial)
+# @ job_type = serial
+#
+# -- notification = status notification -- 
+# -- possible values = complete,error,start,always,never -- 
+# @ notification = complete
+#   
+#   
+# -- initialdir = directory where the executable file resides  -- 
+# @ initialdir = /home/a7l/ERO/ero_master/cases/code_compar/tungsten/grid_NP/NP1e5
+# -- STANDARD OUTPUT FILE: stdout  -- (default is /dev/null)
+# @ output = out.$(schedd_host).$(jobid).$(stepid).1
+#   
+# -- STANDARD ERROR FILE: stderr  -- (default is /dev/null)
+# @ error =  err.$(schedd_host).$(jobid).$(stepid).1
+# 
+# -- STANDARD I/O -- 
+# @ input = /dev/null 
+#   
+# -- Job should restart if vacated (restarts on different machine)
+# -- possible values: yes | no  
+# @ restart = no
+# @ queue 
+#------------------------------------------------------------------- 
+# Please add your commands after the last line:
+#-------------------------------------------------------------------
+#----------------------------------------------------------------------------
+#   handle executable
+#-----------------------------------------------------------------------------
+#  - Environment variables for program execution
+#  - change this line if running an OpenMP program
+/home/a7l/ERO/ero_master/ero_exe/ERO.prg.std_MtlbgradT_v23.02 par_MPex
+#----------------------------------------------------------------------------
+#   handle chemistry
+#-----------------------------------------------------------------------------
+#----------------------------------------------------------------------------
+#  submit next relevant job
+#-----------------------------------------------------------------------------
+llsubmit run2.cmd

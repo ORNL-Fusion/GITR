@@ -1,0 +1,207 @@
+loops: 100000
+dt1: 2.e-08
+dt2: 0.2e-09
+bisection_dz: -1.000e+00
+collision_time: 1.e-07
+time_out: 1.0e-02
+radial_box: 3.500e+01
+poloidal_box: 6.000e+01
+toroidal_box: 6.000e+01
+FineMesh: 0
+pathtoresult: Wtile_test_
+job_class: 10
+physical_erosion: 1
+BGPhErHardY: -1.000e+00
+chemical_erosion: 1
+MolFracID: 0
+hardwired_chemical_erosion: 1.5
+factor_chem: 20.
+factor_phys: 1.
+NeutralElastCol: 1
+Recombination: 1
+FollowEroded: 0
+oxygen_erosion: 1
+background_deposition: 1
+particle_sputtering: 1
+particle_reflection: 1
+particle_reflect_from_midth: 1 (Yes)
+plasmaions: 1
+helium: 0
+he_abfall: 0.
+he_charge: 1
+carbon: 0.
+c_abfall: 0.
+c_charge: 3
+oxygen: 0
+o_abfall: 0.
+o_charge: 5
+neon: 0.
+ne_abfall: 0.
+ne_charge: 2
+te: 20
+te_abf: 0
+ti: 20
+ti_abf: 0
+ne: 2.000000e+13
+ne_abf: 0.
+ne_factor: 1.0
+TempNtrl: 5.000e+01
+DensNtrl: -5.000e-03
+MassNtrl: 4.028e+00
+NtrlColMod: 1
+BiasPot: 0.000e+00
+bfield_on: 0
+bfield: 2.0
+pol_angle_of_bfield: 0
+tor_angle_of_bfield: 270
+lcfs_ontip: 1
+elev_of_lcfs: 35
+cs_abf0: 1.0e8
+cs_abf1: 1.0e8
+FlVelFactor: 0.0
+connection_length: 1.0e8
+sign_of_con_length: 1
+limiter_con_length: 1.0e8
+smoothing_length: -1
+sheath_on: 0
+potential_drop: 0
+sheat_factor: 1
+presheath_factor: 0.0
+diffusion_on: 0
+collision_for_diffusion: 0.
+perpendicular_diffusion: 0.0
+PerpDiffFac: 1.000e+00
+flux_win_max: 9.000e+01
+element_choice1: 42
+element_choice2: 23
+freemass: 0.
+poloidal_radius: 0.000e+00
+poloidal_length: 6.000e+01
+toroidal_radius: 0.000e+00
+toroidal_length: 6.000e+01
+toroidal_angle: 3.000e+01
+surface_temperatur: 5.000e+02
+secondary_electron_emission: 0.000e+00
+heat_conductance: 8.000e-01
+sheath_transmission: 8.000e+00
+interaction_depth: 1.000e+02
+Int_Sh_Dens: 1.235e+14
+source_on: 0
+source_type: 0
+source_size: 0.000e+00
+which_distribution: 0
+PAngCO: 0
+mean_energy: 1.000e+01
+SourceTempr: -1.000e+00
+intervall_energy: 10
+intervall_polar: 1
+intervall_azimut: 1
+polar_distribution: 0
+polar_angle: 0.000e+00
+cosine_distribution: 1
+azimut_distribution: 0
+azimut_angle: 0.000e+00
+SourceTimeDelay: 0.000e+00
+source_rate: 100000
+source_location_y: 0.000e+00
+source_location_x: 0.000e+00
+source_location_z: 0.000e+00
+moving_source_on: 1
+moving_source_form: 1
+moving_dx: 2.000e-01
+moving_dy: 9.000e+01
+intervall_dx: 5
+intervall_dy: 4
+tor_rot_ang: 0.000e+00
+pol_rot_ang: 0.000e+00
+number_of_markers: 0
+chemie_on: 1
+parent: _c
+parent_number: 1
+child: d
+child_number: 4
+model_of_radical: 4
+reflection_of_radical: 0.
+model_of_ion: 4
+reflection_of_ion: 0.
+ch4_model_of_radical: 4
+ch4_reflection_of_radical: 0.
+ch4_model_of_ion: 4
+ch4_reflection_of_ion: 0.
+s_poloidal_boundary_max: 3.000e+01
+s_poloidal_boundary_min: -3.000e+01
+s_toroidal_boundary_max: 3.000e+01
+s_toroidal_boundary_min: -3.000e+01
+s_cell_dpoloidal: 4.000e-01
+s_cell_dtoroidal: 4.000e-01
+substrat_tracing_on: 0
+substrat: _w
+element1_tracing: End
+spectroscopy_on: 0
+emission_on: 0
+v_poloidal_boundary_max: 3.000e+01
+v_poloidal_boundary_min: -3.000e+01
+v_toroidal_boundary_max: 3.000e+01
+v_toroidal_boundary_min: -3.000e+01
+v_radial_boundary_max: 3.500e+01
+v_radial_boundary_min: 0.000e+00
+v_cell_dpoloidal: 4.000e-01
+v_cell_dtoroidal: 4.000e-01
+v_cell_dradial: 4.000e-01
+AxialProfileRadius: 1.000e+01
+AxialProfileLength: 1.500e+02
+surface_model: 0
+ProtReactReadFromF: 1 (Yes)
+ProtReactFN: c2h6_proton.dat
+SpecMerlinFN: SM_standart.cfg
+IzMerlinFN: IM_ADAS96.cfg
+RecMerlinFN: RM_ADAS96.cfg
+ChemProcFN: EROOLD
+PhErMerlinFN: PEM_standart.cfg
+GeomType: 0 (No)
+MatlabOutput: 1 (Yes)
+MatlabSpecOutput: 1 (Yes)
+Matlab3DOutput: 0 (No)
+MatlabEFieldOutput: 1 (Yes)
+MatlabDensTOutput: 0
+MatlabDensTOutput2D: 1
+BinaryOutput: 0 (No)
+Change_TimeTmp: 0 (No)
+AdjSpecZToLim: 0 (No)
+CompressDataSwitch: 0 (No)
+TarDataSwitch: 0 (No)
+Random_Seed: 1
+element_anzahl: 2
+element1_name: _w
+element1_charge: 0
+element2_name: _w
+element2_charge: 1
+total_time: 1.
+time_per_step: 1.
+
+***** Warning: unknown keyword 'BM_BMNum' with value '101'. ***
+
+***** Warning: unknown keyword 'BM_PlParCase' with value '1  #80836'. ***
+
+***** Warning: unknown keyword 'element2_tracing' with value 'End'. ***
+
+***** Warning: unknown keyword 'sheat_on' with value '0'. ***
+
+***** Warning: unknown keyword 'sheath_factor' with value '1.0'. ***
+
+***** Warning: unknown keyword 'PhErosMod' with value '0'. ***
+
+***** Warning: unknown keyword 'CarbydeRate_Be' with value '0'. ***
+
+***** Warning: unknown keyword 'IonizationOfNtrl' with value '0'. ***
+
+***** Warning: unknown keyword 'PSCWallReflProb' with value '0'. ***
+
+***** Warning: unknown keyword 'PSCNtrlDensRedF' with value '0'. ***
+CROSS_SECTION: /home/a7l/ERO/ero_master/ero1/ERO.DATA/ION/
+DATA: /home/a7l/ERO/ero_master/ero1/ERO.DATA/SPUTTER/sput.kor
+SPUTTER_INTEGRAL: /home/a7l/ERO/ero_master/ero1/ERO.DATA/INTEGRAL/i_sputt.dat
+REFLECTION_DATA: /home/a7l/ERO/ero_master/ero1/ERO.DATA/REFLECTION/
+EMISSION: /home/a7l/ERO/ero_master/ero1/ERO.DATA/EMISSION/
+CHEMCHAINS: /home/a7l/ERO/ero_master/ero1/ERO.DATA/ChemChains/
+SDTrimSP: /home/a7l/ERO/ero_master/ero1/ERO.DATA/SDTrimSP/
