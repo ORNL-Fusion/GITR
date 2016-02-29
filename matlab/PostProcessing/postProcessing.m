@@ -131,7 +131,7 @@ figure(3)
 
 a = EnergyBins./Tallys;
 a(isnan(a)) = 0;
-surf(surf_z1D,surf_y1D,surf_x2D,a)
+surf(surf_z1D ,surf_y1D,surf_x2D,rot90(a,2),'EdgeColor','none')
 xlabel('z axis [m]')
 ylabel('y axis [m]')
 zlabel('x axis [m]')
@@ -142,12 +142,12 @@ ax.XDir = 'normal';
 hold on
 
 set(gca,'ZDir','reverse');
-view([180 90]);
-axis([-0.02 0.005 -0.01 0.006])
+view([0 90]);
+axis([-0.005 0.02 -0.006 0.01])
 figure(4)
 b = ChargeBins./Tallys;
 b(isnan(b)) = 0;
-surf(surf_z1D,surf_y1D,surf_x2D,b)
+surf(surf_z1D ,surf_y1D,surf_x2D,b,'EdgeColor','none')
 xlabel('z axis [m]')
 ylabel('y axis [m]')
 zlabel('x axis [m]')
@@ -163,7 +163,7 @@ axis([-0.02 0.005 -0.01 0.006])
 
 figure(9)
 
-surf(surf_z1D,surf_y1D,surf_x2D,log10(Tallys))
+surf(surf_z1D ,surf_y1D,surf_x2D,log10(flipud(fliplr(Tallys))),'EdgeColor','none')
 xlabel('z axis [m]')
 ylabel('y axis [m]')
 zlabel('x axis [m]')
@@ -171,12 +171,12 @@ title('Deposition [particles] - log10 Scale')
 colormap jet
 colorbar
 caxis([-1 max(log10(Tallys(:)))])
-ax.XDir = 'normal';
-hold on
-
-set(gca,'ZDir','reverse');
-view([180 90]);
-axis([-0.02 0.005 -0.01 0.006])
+% ax.XDir = 'normal';
+% hold on
+% 
+% set(gca,'ZDir','reverse');
+% view([180 90]);
+axis([-0.005 0.02  -0.006 0.01 ])
 
 gitr_ME = a;
 gitr_MQ = b;

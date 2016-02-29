@@ -9,7 +9,7 @@ NC = SurfCell(1,2,:,:);
 NC = reshape(NC,iNX,iNY);
 
 figure(1)
-surf(x,y,zeros(iNX,iNY),log10(NC))
+surf(x,y,zeros(iNX,iNY),log10(NC),'EdgeColor','none')
 
 xlabel('x axis [m]')
 ylabel('y axis [m]')
@@ -26,7 +26,7 @@ ME = SurfCell(1,5,:,:);
 ME = reshape(ME,iNX,iNY);
 
 figure(2)
-surf(x,y,zeros(iNX,iNY),ME)
+surf(x,y,zeros(iNX,iNY),ME,'EdgeColor','none')
 
 xlabel('x axis [m]')
 ylabel('y axis [m]')
@@ -42,7 +42,7 @@ MQ = SurfCell(1,6,:,:);
 MQ = reshape(MQ,iNX,iNY);
 
 figure(3)
-surf(x,y,zeros(iNX,iNY),MQ)
+surf(x,y,zeros(iNX,iNY),MQ,'EdgeColor','none')
 
 xlabel('x axis [m]')
 ylabel('y axis [m]')

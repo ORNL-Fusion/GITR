@@ -8,13 +8,13 @@ R = corrcoef(rot90(rot90(Tallys)),Come)
 
 figure(11)
 gitrDeposition = rot90(rot90(Tallys));
-set(gcf,'Position',[300 300 900 600])
+set(gcf,'Position',[300 300 500 600])
 subplot(2,1,1)
-surf(x,y,zeros(iNX,iNY),log10(gitrDeposition),'EdgeColor','none')
+surf(x,y,zeros(iNX,iNY),(gitrDeposition),'EdgeColor','none')
 colormap hot
 colorbar
-axis([-2 15 -5 8])
-caxis([-1 3.5])
+axis([-0.5 2 -1 4])
+caxis([0 385])
 xlabel('x axis [mm]','FontSize',axisLabelFont)
 ylabel('y axis [mm]','FontSize',axisLabelFont)
 zlabel('z axis [mm]','FontSize',axisLabelFont)
@@ -23,11 +23,11 @@ set(gca,'FontSize',tickFont)
 
 
 subplot(2,1,2)
-surf(x,y,zeros(iNX,iNY),log10(Come),'EdgeColor','none')
+surf(x,y,zeros(iNX,iNY),(Come),'EdgeColor','none')
 colormap hot
 colorbar
-axis([-2 15 -5 8])
-caxis([-1 3.5])
+axis([-0.5 2 -1 4])
+caxis([0 385])
 xlabel('x axis [mm]','FontSize',axisLabelFont)
 ylabel('y axis [mm]','FontSize',axisLabelFont)
 zlabel('z axis [mm]','FontSize',axisLabelFont)
@@ -86,17 +86,17 @@ set(gca,'FontSize',tickFont)
 whitebg('white')
 figure(12)
 %histogram2(Come,gitrDeposition)
-
-xx = reshape(gitrDeposition,[150*150,1]);
-yy = reshape(Come, [150*150, 1]);
+sizes  = length(x)*length(y)
+xx = reshape(gitrDeposition,[sizes,1]);
+yy = reshape(Come, [sizes, 1]);
 
 b1 = xx\yy;
 scatter(log10(xx),log10(yy))
 
-vals = 0:1:700;
+vals = 0:1:3;
 bs = vals*b1;
 hold on
-plot(log10(vals),log10(bs))
+plot(vals,bs)
 xlabel('log10 GITR Deposition Values','FontSize',axisLabelFont)
 ylabel('log10 ERO Deposition Values','FontSize',axisLabelFont)
 title('Least Squares Fit for GITR-ERO Comparison of Deposition','FontSize',titleFont)

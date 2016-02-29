@@ -1,7 +1,7 @@
 %input file for GITR0.0
 
 % Number of threads to run on 
-nThreads = 2;
+nThreads = 32;
 
 % Volume definition
 
@@ -44,7 +44,7 @@ maxDensity = [1e19 1e19];
 densitySOLDecayLength =1e4;
 maxTemp_eV = [20 20];
 tempSOLDecayLength = 1e4;
-perDiffusionCoeff_in = 0.04;
+perDiffusionCoeff_in = 0.0;
 
 % Impurity particles 
 
@@ -78,9 +78,10 @@ file_emission = {'ADAS/w0_400875.m','ADAS/w1_434811.m'};
 
 % Particle time stepping control
 
-nPtsPerGyroOrbit = 1e2;
-ionization_nDtPerApply = 10;
-nT = 1e4;
+nPtsPerGyroOrbit = 50;
+ionization_nDtPerApply = 1;
+collision_nDtPerApply = 5;
+nT = 5e3;
 sheath_timestep_factor = 1e4;
 
 % Plots

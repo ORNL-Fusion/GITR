@@ -1,7 +1,7 @@
 %input file for GITR0.0
 
 % Number of threads to run on 
-nThreads = 2;
+nThreads = 32;
 
 % Volume definition
 
@@ -78,9 +78,10 @@ file_emission = {'ADAS/w0_400875.m','ADAS/w1_434811.m'};
 
 % Particle time stepping control
 
-nPtsPerGyroOrbit = 1e2;
-ionization_nDtPerApply = 10;
-nT = 1e4;
+nPtsPerGyroOrbit = 50;
+ionization_nDtPerApply = 1;
+collision_nDtPerApply = 5;
+nT = 5e3;
 sheath_timestep_factor = 1e4;
 
 % Plots
