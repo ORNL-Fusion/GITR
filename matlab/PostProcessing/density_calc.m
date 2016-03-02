@@ -24,8 +24,6 @@ for i=1:len1
 sightLine = sum(radiance,2)*dy;
 sightLine = reshape(sightLine,[nXv,nZv]);
 
-finds = find(sightLine ==0);
-sightLine(finds) = -1e25;
 figure(n+1)
 surf( run_param.zV_1D,run_param.xV_1D,sightLine)
     xlabel('z axis')

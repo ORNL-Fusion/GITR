@@ -12,10 +12,27 @@ gitrInput
 disp(['Number of particles: ', num2str(nP)])
 disp(['Number of time steps: ', num2str(nT)])
 
-% Load ADAS data (cross sections, ionization rates, etc)
+p = gcp('nocreate');
 
-[IonizationTemp, IonizationDensity, IonizationRateCoeff, IonizationChargeState] = ADF11(file_inz);
-[RecombinationTemp, RecombinationDensity, RecombinationRateCoeff, RecombinationChargeState] = ADF11(file_rcmb);
+if isempty(p) == 1
+% Create cluster objec
+pc = parcluster('local');
+
+% Make temporary folder for storing the cluster control files 
+scratch_dir = 'scratch';
+mkdir(scratch_dir);
+
+% Explicitly set the JobStorageLocation to the temp directory that you
+% have created in this script (above)
+pc.JobStorageLocation = scratch_dir;
+
+% Start the parallel pool with the number workers that matches your job
+poolobj = parpool(pc,nThreads);
+end
+% Load Processed ADAS data (cross sections, ionization rates, etc)
+
+load('ADAS/IonizationData.mat');
+load('ADAS/RecombinationData.mat');
 
 % Create volume grid
 
@@ -130,7 +147,6 @@ end
 disp('Initialization of fields complete... Beginning particle initialization')
 % Populate the impurity particle list
 particles(nP) = particle;
-particles_out(nP) = particle;
 
 for p=1:nP
     particles(p).Z = impurity_Z;
@@ -168,9 +184,8 @@ end
 % min_m = impurity_amu * MI;
 % max_wc = impurity_Z * Q * max_B / min_m;
 % dt = 2 * pi / max_wc / nPtsPerGyroOrbit;
-% if impurity_Z == 0
     dt = 1e-6/nPtsPerGyroOrbit;
-% end
+
 
 % Setup arrays to store history
 
@@ -182,62 +197,35 @@ impurityDensityTally = zeros(nXv,nYv,nZv,nDensityBins);
 
 % Main loop
 
-adaptive_distance = 10*debyeLength;
 IonizationTimeStep = ionization_nDtPerApply*dt;
 CollisionTimeStep = collision_nDtPerApply*dt;
-SheathTimeStep = dt/sheath_timestep_factor;
 
-disp('Initialization complete... Starting main loop')
-pc = parcluster('local');
+disp('Particle initialization complete... Starting main loop')
 
-% Make temporary folder for storing the cluster control files changing to suit 
-% your username and project details (replace things in <> with your specific paths)
-scratch_dir = 'scratch';
-mkdir(scratch_dir);
-
-% Explicitly set the JobStorageLocation to the temp directory that you
-% have created in this script (above)
-pc.JobStorageLocation = scratch_dir;
-
-% Start the parallel pool with the number workers that matches your job
-poolobj = parpool(pc,nThreads);
-%parpool(nThreads)
 tic
 
-p_count = 0;
-
+% Progress bar
+barLength = nP/progressInterval;
+fprintf('Progress:\n');
+fprintf(['\n' repmat('.',1,barLength) '\n\n']);
 
 parfor p=1:nP
     
-    p
     tmp = zeros(nXv,nYv,nZv,nDensityBins);
+    
     for tt = 1:nT
-        
-        particles(p).CrossFieldDiffusion(xyz,Bfield3D,perDiffusionCoeff,...
-            interpolators,dt,positionStepTolerance);
-        
-        if mod(tt, collision_nDtPerApply) == 0 
-            
-            diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,flowVelocity_ms,density_m3,temp_eV,...
-                background_amu,background_Z,interpolators, ...
-                CollisionTimeStep,velocityChangeTolerance, connectionLength,surface_dz_dx,surface_zIntercept);
-            
-        end
         
         particles(p).borisMove(xyz,Efield3D,Bfield3D,dt,...
             interpolators,positionStepTolerance,velocityChangeTolerance, ...
-            debyeLength, -3*maxTemp_eV,surface_dz_dx,surface_zIntercept,background_Z,background_amu,maxTemp_eV, ...
-            sheath_timestep_factor);
+            debyeLength, -3*maxTemp_eV,surface_dz_dx,surface_zIntercept,background_Z,background_amu,maxTemp_eV);
         
+        %                 [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
+        %                     interpolators,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
+        %                     surface_zIntercept,surface_dz_dx, ...
+        %                     debyeLength, -3*maxTemp_eV,background_Z,background_amu,maxTemp_eV);
         
-        
-%                 [T Y] =  particles(p).move(dt,dt,Efield3D,Bfield3D,xyz,...
-%                     interpolators,xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV,...
-%                     surface_zIntercept,surface_dz_dx, ...
-%                     debyeLength, -3*maxTemp_eV,background_Z,background_amu,maxTemp_eV);
-         
-
-        
+        particles(p).CrossFieldDiffusion(xyz,Bfield3D,perDiffusionCoeff,...
+            interpolators,dt,positionStepTolerance);
         
         if particles(p).hitWall == 0 && particles(p).leftVolume ==0
             particles(p).UpdatePrevious();
@@ -251,8 +239,8 @@ parfor p=1:nP
             % This is to account for matlab not storing
             % structure arrays in parfor
             comp = find(particles(p).Z == densityChargeBins);
-            if comp 
-            tmp(xIndex,yIndex,zIndex,comp) = tmp(xIndex,yIndex,zIndex,comp)+  dt;
+            if comp
+                tmp(xIndex,yIndex,zIndex,comp) = tmp(xIndex,yIndex,zIndex,comp)+  dt;
             end
             tmp(xIndex,yIndex,zIndex,end) = tmp(xIndex,yIndex,zIndex,end)+  dt;
             
@@ -260,20 +248,25 @@ parfor p=1:nP
         
         particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
         
-        particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx,tt);
-        
-        if mod(tt, ionization_nDtPerApply) == 0 &&  particles(p).hitWall == 0 && particles(p).leftVolume ==0
+        particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx);
+        if  particles(p).hitWall == 0 && particles(p).leftVolume ==0
             
-            particles(p).ionization(IonizationTimeStep,xyz,density_m3,temp_eV,...
-                IonizationRateCoeff,IonizationTemp, IonizationDensity,...
-                IonizationChargeState,interpolators,ionizationProbabilityTolerance);
+            particles(p).ionization(dt,xyz,density_m3,temp_eV,...
+                IonizationData,interpolators,ionizationProbabilityTolerance);
             
-            particles(p).recombination(IonizationTimeStep,xyz,density_m3,temp_eV,...
-                RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
-                RecombinationChargeState,interpolators,ionizationProbabilityTolerance);
-            
+            particles(p).recombination(dt,xyz,density_m3,temp_eV,...
+                RecombinationData,interpolators,ionizationProbabilityTolerance);
         end
         
+        
+        
+        if mod(tt, collision_nDtPerApply) == 0
+            
+            diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,flowVelocity_ms,density_m3,temp_eV,...
+                background_amu,background_Z,interpolators, ...
+                CollisionTimeStep,velocityChangeTolerance, connectionLength,surface_dz_dx,surface_zIntercept);
+            
+        end
         if trackHistory
             history(tt,p).x = particles(p).xPrevious;
             history(tt,p).y = particles(p).yPrevious;
@@ -287,9 +280,13 @@ parfor p=1:nP
     end
     particles(p).Energy;
     % This is to account for matlab not storing
-    % structure arrays in parfor
-    particles_out(p) = particles(p);
+    % structure arrays in parfor - propagate worker changes back to client
+    particles(p) = particles(p);
     impurityDensityTally = impurityDensityTally + tmp;
+    
+    if mod(p,progressInterval) == 0
+        fprintf('\b|\n');
+    end
 end
 toc
 
@@ -310,14 +307,14 @@ run_param.yV_1D = yV_1D;
 run_param.zV_1D = zV_1D;
 
 save('output/gitrRunParameters.mat','run_param');
-save('output/gitrParticles.mat','particles_out');
+save('output/gitrParticles.mat','particles');
 save('output/gitrImpurityDensityTally.mat','impurityDensityTally');
 
 print_profiles
-disp('Warning: fd is set to a fixed value')
 % At the completion of the job tidy up
 delete(poolobj);
+%delete(gcp('nocreate'))
 
 % Clean up the temporary files
 rmdir(scratch_dir,'s');
-quit
+%quit

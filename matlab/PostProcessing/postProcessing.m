@@ -1,6 +1,7 @@
 clear variables
 close all
 constants
+gitrInput
 
 HistoryFileName = 'output/gitrHistories.mat';
 InputFileName = 'gitrInput.m';
@@ -15,9 +16,9 @@ else
 end
 
 plotScatter = 0;
-plotTracks = 1;
+plotTracks = trackHistory;
 plotDens = 0;
-plotProfiles = 1;
+plotProfiles = 0;
 plot3D = 0;
 plotDensity = 0;
 
@@ -25,13 +26,13 @@ load(RunParametersFileName);
 load(ParticlesFileName);
 load(ImpurityDensiyTallyFileName);
 
+    load('output/gitrDensity_m3.mat');
+        load('output/gitrTemp_eV.mat');
 if plotProfiles
     load('output/gitrBfield.mat')
     load('output/gitrEfield.mat')
     load('output/gitrFlowVelocity_ms.mat')
     load('output/gitrPerDiffCoeff.mat')
-    load('output/gitrDensity_m3.mat');
-    load('output/gitrTemp_eV.mat');
 end
 
 yMinV = yMin;
@@ -89,10 +90,10 @@ if exist(HistoryFileName)
 end
 
 % Surface particle impact histogram
-hit = [particles_out(:).hitWall];
+hit = [particles(:).hitWall];
 noHit = find(hit ==0);
-z_pos = [particles_out.zPrevious];
-y_pos = [particles_out.yPrevious];
+z_pos = [particles.zPrevious];
+y_pos = [particles.yPrevious];
 % z_pos(noHit) = [];
 % y_pos(noHit) = [];
 figure(2)
@@ -120,10 +121,10 @@ yIndex =  round((y_pos- yMin)/(yMax - yMin)*(nY));
 zIndex = round((z_pos- zMin)/(zMax - zMin)*(nZ));
 len2 = length(zIndex)
 for i=1:len2
-    if particles_out(i).hitWall == 1
-    EnergyBins(yIndex(i),zIndex(i)) = EnergyBins(yIndex(i),zIndex(i)) + 0.5.*impurity_amu.*([particles_out(i).vxPrevious].^2 + ...
-        [particles_out(i).vyPrevious].^2 + [particles_out(i).vzPrevious].^2).*MI./Q;
-    ChargeBins(yIndex(i),zIndex(i)) = ChargeBins(yIndex(i),zIndex(i)) + [particles_out(i).Z];
+    if particles(i).hitWall == 1
+    EnergyBins(yIndex(i),zIndex(i)) = EnergyBins(yIndex(i),zIndex(i)) + 0.5.*impurity_amu.*([particles(i).vxPrevious].^2 + ...
+        [particles(i).vyPrevious].^2 + [particles(i).vzPrevious].^2).*MI./Q;
+    ChargeBins(yIndex(i),zIndex(i)) = ChargeBins(yIndex(i),zIndex(i)) + [particles(i).Z];
     Tallys(yIndex(i),zIndex(i)) = Tallys(yIndex(i),zIndex(i)) + 1;
     end
 end
@@ -180,11 +181,14 @@ axis([-0.005 0.02  -0.006 0.01 ])
 
 gitr_ME = a;
 gitr_MQ = b;
-density_calc
-%plot_profiles
+
+
+
 
 % Find out where particles that didnt hit wall went
 figure(1)
 hold on
-scatter3([particles_out(noHit).z],[particles_out(noHit).y],[particles_out(noHit).x])
+scatter3([particles(noHit).z],[particles(noHit).y],[particles(noHit).x])
 
+density_calc
+%plot_profiles

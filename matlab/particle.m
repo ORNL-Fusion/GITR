@@ -85,8 +85,10 @@ classdef particle < handle
         function borisMove(this,xyz,Efield3D,Bfield3D,dt,interpolators,...
                 positionStepTolerance,dv_threshold, ...
                 decayLength, potential,surface_dz_dx,surface_zIntercept,background_Z, ...
-                background_amu,maxTemp_eV, sheath_timestep_factor)
+                background_amu,maxTemp_eV)
+            
             if this.hitWall == 0 && this.leftVolume ==0
+                
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
             Q = 1.60217662e-19;
@@ -100,9 +102,9 @@ classdef particle < handle
             surfaceDirection_unit = surfaceDirection/norm(surfaceDirection);
             
             perpDistanceToSurface1 = ( -surface_dz_dx*this.x + this.z + surface_zIntercept)/sqrt(surface_dz_dx^2+1);
+            
             while abs(tspan - time) > tolerance && perpDistanceToSurface1 >= 0
-
-                
+       
                 BfieldInterpolator = interpolators{2};
                 B = BfieldInterpolator(this,xyz,Bfield3D);
                 
@@ -218,8 +220,7 @@ classdef particle < handle
         end
         
         function  ionization(this,dt,xyz,density_m3,temp_eV,...
-                IonizationRateCoeff,IonizationTemp,IonizationDensity,...
-                ChargeState,interpolators, ionizationProbabilityTolerance)
+                IonizationData,interpolators, ionizationProbabilityTolerance)
             
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
@@ -227,11 +228,11 @@ classdef particle < handle
             EPS0 = 8.854187e-12;
             
             
-            if this.Z < max(ChargeState(:));
+            if this.Z < max(IonizationData.ChargeState(:));
                 
                 r1 = rand(this.streams.ionization);
                 
-                minT = min(IonizationTemp(:));
+                minT = min(IonizationData.Temp(:));
                 
                 nS = size(density_m3,4);
                 
@@ -248,17 +249,17 @@ classdef particle < handle
                 
                 T=T_local(1);
                 
-                if log10(T) > minT
+                if T > minT
                     n=n_local(1);
                     
                    % isreal(n) == 0 | isreal(T) == 0
-                    Coeff = interpn(IonizationDensity,IonizationTemp,IonizationRateCoeff(:,:,this.Z+1),log10(n/1e6),log10(T),'linear',0);
+                    Coeff = interpn(IonizationData.Density,IonizationData.Temp,IonizationData.RateCoeff(:,:,this.Z+1),n,T,'linear',0);
                     
                     if ( isnan(Coeff) )
                         error('Ionization interpolation out of range')
                     end
                     
-                    tion = 1/(10^Coeff*n/1E6);
+                    tion = 1/(Coeff*n);
                     P1 = 1-exp(-dt/tion);
                     
                     
@@ -276,8 +277,7 @@ classdef particle < handle
         end
         
         function recombination(this,dt,xyz,density_m3,temp_eV,...
-                RecombinationRateCoeff,RecombinationTemp,RecombinationDensity,...
-                ChargeState,interpolators,ionizationProbabilityTolerance)
+                RecombinationData,interpolators,ionizationProbabilityTolerance)
             
             ME = 9.10938356e-31;
             MI = 1.6737236e-27;
@@ -297,19 +297,17 @@ classdef particle < handle
                     n_local(s) = densityInterpolator(this,xyz,density_m3,s);
                 end
             
-            minT = min(RecombinationTemp);
-            minN = min(RecombinationDensity);
+            minT = min(RecombinationData.Temp);
+            minN = min(RecombinationData.Density);
             T=T_local(1);
             n=n_local(1);
-            T = log10(T);
-            n = log10(n/1e6);
             if (T > minT) && (n > minN) && this.Z >0
                 
                 r2 = rand(this.streams.recombination);
                 
-                Coeff = interpn(RecombinationDensity,RecombinationTemp,RecombinationRateCoeff(:,:,this.Z),n,T);
+                Coeff = interpn(RecombinationData.Density,RecombinationData.Temp,RecombinationData.RateCoeff(:,:,this.Z),n,T);
                 
-                tion = 1/(10^Coeff*10^n);
+                tion = 1/(Coeff*n);
                 P1 = 1-exp(-dt/tion);
                 
                 if P1 > ionizationProbabilityTolerance
@@ -553,7 +551,7 @@ classdef particle < handle
             diagnostics = [T dv_collisions norm_slow norm_par norm_parallel norm_perp1 norm_perp2];
         end
         
-        function HitWallCheck(this,surface_zIntercept,surface_dz_dx,tt)
+        function HitWallCheck(this,surface_zIntercept,surface_dz_dx)
             
             if this.x > ( this.z - surface_zIntercept ) / surface_dz_dx;
                 
