@@ -10,11 +10,11 @@ figure(11)
 gitrDeposition = rot90(rot90(Tallys));
 set(gcf,'Position',[300 300 500 600])
 subplot(2,1,1)
-surf(x,y,zeros(iNX,iNY),(gitrDeposition),'EdgeColor','none')
+surf(x,y,zeros(iNX,iNY),log10(gitrDeposition),'EdgeColor','none')
 colormap hot
 colorbar
-axis([-0.5 2 -1 4])
-caxis([0 385])
+axis([-2 15 -2 8])
+caxis([-1 3])
 xlabel('x axis [mm]','FontSize',axisLabelFont)
 ylabel('y axis [mm]','FontSize',axisLabelFont)
 zlabel('z axis [mm]','FontSize',axisLabelFont)
@@ -23,11 +23,11 @@ set(gca,'FontSize',tickFont)
 
 
 subplot(2,1,2)
-surf(x,y,zeros(iNX,iNY),(Come),'EdgeColor','none')
+surf(x,y,zeros(iNX,iNY),log10(Come),'EdgeColor','none')
 colormap hot
 colorbar
-axis([-0.5 2 -1 4])
-caxis([0 385])
+axis([-2 15 -2 8])
+caxis([-1 3])
 xlabel('x axis [mm]','FontSize',axisLabelFont)
 ylabel('y axis [mm]','FontSize',axisLabelFont)
 zlabel('z axis [mm]','FontSize',axisLabelFont)

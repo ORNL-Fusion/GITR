@@ -1,5 +1,5 @@
 
-t_boris = [0:dt:nT*dt];
+%t_boris = [0:dt:nT*dt];
 
 if trackHistory
     
