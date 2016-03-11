@@ -52,24 +52,24 @@ classdef particle < handle
                 stop
             end
             
-%             n_steps = length(T);
-%             index = 0;
-%             while this.hitWall == 0 && this.leftVolume ==0 && index < n_steps
-%                 index = index+1;
-%                 this.x = Y(index,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
-%                 this.y = Y(index,2);
-%                 this.z = Y(index,3);
-%                 
-%                 this.vx = Y(index,4);
-%                 this.vy = Y(index,5);
-%                 this.vz = Y(index,6);
-%                 this.OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
-%                 this.HitWallCheck(surface_zIntercept,surface_dz_dx);
-%                 
-%             end
-%             if index ~= n_steps
-%                 stop
-%             end
+            n_steps = length(T);
+            index = 0;
+            while this.hitWall == 0 && this.leftVolume ==0 && index < n_steps
+                index = index+1;
+                this.x = Y(index,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
+                this.y = Y(index,2);
+                this.z = Y(index,3);
+                
+                this.vx = Y(index,4);
+                this.vy = Y(index,5);
+                this.vz = Y(index,6);
+                this.OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
+                this.HitWallCheck(surface_zIntercept,surface_dz_dx);
+                
+            end
+            if index ~= n_steps
+                stop
+            end
             this.x = Y(end,1); % this doesn't seem to work, i.e., cannot modify p outside this scope :(
             this.y = Y(end,2);
             this.z = Y(end,3);
@@ -133,9 +133,9 @@ classdef particle < handle
                 step = v*dt;
                 r = r + step;
                 
-                if abs(norm(v) - norm(v_start))/norm(v_start) > dv_threshold
-                    dt = dt/10;
-                else
+%                 if abs(norm(v) - norm(v_start))/norm(v_start) > dv_threshold
+%                     dt = dt/10;
+%                 else
                     perpDistanceToSurface1 = ( -surface_dz_dx*r(1) + r(3) + surface_zIntercept)/sqrt(surface_dz_dx^2+1);
                     if perpDistanceToSurface1 < 0
                         this.hitWall = 1;
@@ -161,7 +161,7 @@ classdef particle < handle
                     end
                     this.PerpDistanceToSurface(surface_dz_dx,surface_zIntercept);
                     time = time + dt;
-                end
+%                 end
             end
             end
             
@@ -261,7 +261,7 @@ classdef particle < handle
                     
                     tion = 1/(Coeff*n);
                     P1 = 1-exp(-dt/tion);
-                    
+                   
                     
                     if P1 > ionizationProbabilityTolerance
                         error('Ionization probability is too large')
