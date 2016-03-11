@@ -23,7 +23,8 @@ for i=1:len1
 
 sightLine = sum(radiance,2)*dy;
 sightLine = reshape(sightLine,[nXv,nZv]);
-
+sightZeros = find(sightLine == 0);
+sightLine(sightZeros) = -1e22;
 figure(n+1)
 surf( run_param.zV_1D,run_param.xV_1D,sightLine)
     xlabel('z axis')
@@ -34,6 +35,7 @@ surf( run_param.zV_1D,run_param.xV_1D,sightLine)
     title(title0)
         axis([-0.008 0.008 -0.013 0.002])
         colormap jet
+        caxis([0 max(sightLine(:))])
 % h2 = histogram2(density(:,1),density(:,2),surf_y1D,surf_z1D,...
 %     'DisplayStyle','tile','ShowEmptyBins','on')
 % colorbar

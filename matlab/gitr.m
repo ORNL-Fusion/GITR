@@ -27,7 +27,7 @@ mkdir(scratch_dir);
 pc.JobStorageLocation = scratch_dir;
 
 % Start the parallel pool with the number workers that matches your job
-poolobj = parpool(pc,nThreads);
+poolobj = parpool(pc);
 end
 % Load Processed ADAS data (cross sections, ionization rates, etc)
 
@@ -248,8 +248,8 @@ parfor p=1:nP
         
         particles(p).OutOfDomainCheck(xMinV,xMaxV,yMinV,yMaxV,zMinV,zMaxV);
         
-        particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx);
-        if  particles(p).hitWall == 0 && particles(p).leftVolume ==0
+%         particles(p).HitWallCheck(surface_zIntercept,surface_dz_dx);
+         if  particles(p).hitWall == 0 && particles(p).leftVolume ==0
             
             particles(p).ionization(dt,xyz,density_m3,temp_eV,...
                 IonizationData,interpolators,ionizationProbabilityTolerance);
@@ -312,9 +312,9 @@ save('output/gitrImpurityDensityTally.mat','impurityDensityTally');
 
 print_profiles
 % At the completion of the job tidy up
-delete(poolobj);
-%delete(gcp('nocreate'))
-
-% Clean up the temporary files
-rmdir(scratch_dir,'s');
+% delete(poolobj);
+% %delete(gcp('nocreate'))
+% 
+% % Clean up the temporary files
+% rmdir(scratch_dir,'s');
 %quit

@@ -1,11 +1,8 @@
 %input file for GITR0.0
 
-% Number of threads to run on 
-nThreads = 32;
-
 % Impurity particles 
 
-nP = 1e4;
+nP = 10000;
 sourceStrength = 1e19;
 
 x_start = 0.00;
@@ -23,16 +20,16 @@ densityChargeBins = [0 1];
 
 % Volume definition
 
-xMinV =-0.02;
-xMaxV =+0.02;
+xMinV =-0.002;
+xMaxV =+0.002;
 
 % Surface definition
 
-yMin = -0.03;
-yMax = 0.03;
+yMin = -0.003;
+yMax = 0.003;
 
-zMin = -0.03;
-zMax = 0.03;
+zMin = -0.003;
+zMax = 0.003;
 
 % Volume grid
 nXv = 100;
@@ -102,13 +99,13 @@ maxTemp_eV = [20 20];
 tempSOLDecayLength = 1e4;
 
 % Checks on Monte Carlo Probability and Step Size
-ionizationProbabilityTolerance = 0.99;
+ionizationProbabilityTolerance = 2.0;
 velocityChangeTolerance = 1e-2; % Fraction of previous speed
 positionStepTolerance = 1e-3;
 
 % Output options
 printProfiles = 0;
-trackHistory = 0;
+trackHistory = 1;
 
 % Plots
 
