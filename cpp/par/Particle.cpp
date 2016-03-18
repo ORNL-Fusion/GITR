@@ -15,12 +15,13 @@ void Particle::BorisMove(double dt,double xMinV,double xMaxV,double yMin,double 
 	double B[3] = {0, 0, -2};
 	double E[3] = {0, 0, 0};
 	double r[3] = {0, 0, 0};
-	double surfaceDirection[3] = {1.7321, 0, -1.00};
-	double surfaceDirection_unit[3] = {0.866, 0, -0.50};
+	double surfaceDirection[3] = {1.7321, 0, -1.00};//{1.4281, 0, -1.00};//{2.1445, 0, -1.00};//{1.7321, 0, -1.00};
+	double surfaceDirection_unit[3] = {0.866, 0, -0.50};//{0.9063, 0, -0.4226}; // {0.866, 0, -0.50};
+	double perpd;
 	
 
-	perpDistanceToSurface = ( -surfaceDirection[0]*x + z )/2.0;
-	
+	perpDistanceToSurface = ( -surfaceDirection[0]*x + z )/2.0;//1.7434;// 2.0 2.3662;
+	//perpd = ( -0.5773*x + z )/1.1547;
 Efield( E, perpDistanceToSurface);
 	
 	double Bmag = 2;
