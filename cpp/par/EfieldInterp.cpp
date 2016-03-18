@@ -13,10 +13,9 @@ void Efield(double E[], double perpDistanceToSurface)
 
 #elif EInterpNumber == 2
 	double Emag;
-	double surfaceDirection[3] = {1.7321, 0, -1.00};
-	double surfaceDirection_unit[3] = {0.866, 0, -0.50};
+	double surfaceDirection_unit[3] =  {0.866, 0, -0.50};//{0.8192, 0,  -0.5736};//;//{0.9063, 0, -0.4226};
 	
-	Emag = 60*(0.85/(2.1e-5)*exp(-perpDistanceToSurface/2.1e-5)+ 0.15/(3.64479e-4)*exp(-perpDistanceToSurface/3.64479e-4) );
+	Emag = 60*(0.7478/(2.1026e-05)*exp(-perpDistanceToSurface/2.1026e-05)+ (1.0 - 0.7478)/(3.2199-4)*exp(-perpDistanceToSurface/3.2199-4) );
 	E[0] = Emag*surfaceDirection_unit[0];
 	E[1] = Emag*surfaceDirection_unit[1];
 	E[2] = Emag*surfaceDirection_unit[2];

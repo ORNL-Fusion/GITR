@@ -226,14 +226,14 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 			
 				RECV_2doutput_MPI( nWRs, nY, nZ,MSurfaceBinsCharge,MSurfaceBinsChargeGlobal);
 				
-				 		std::cout << "Master values  " << std::endl ;
- 								 for(int j=0 ; j<nY ; j++)
-				{	std::cout<< std::endl;
-					for(int k=0 ; k<nZ ; k++)
-					{
-					std::cout << "  " << MSurfaceBinsChargeGlobal[j][k] ;
-					}
-					}
+	// 			 		std::cout << "Master values  " << std::endl ;
+//  								 for(int j=0 ; j<nY ; j++)
+// 				{	std::cout<< std::endl;
+// 					for(int k=0 ; k<nZ ; k++)
+// 					{
+// 					std::cout << "  " << MSurfaceBinsChargeGlobal[j][k] ;
+// 					}
+// 					}
 	
 			MPI_Barrier( MPI_COMM_WORLD );
 // 				RECV_2doutput_MPI( nWRs, nY, nZ,MSurfaceBins,MSurfaceBinsEnergy);
