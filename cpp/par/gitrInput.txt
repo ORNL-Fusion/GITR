@@ -1,5 +1,5 @@
 %ImpurityparticlesnP
-1000
+10000
 sourceStrength
 1E+19
 x_start
