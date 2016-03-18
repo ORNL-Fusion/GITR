@@ -191,7 +191,7 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 	
 	for(int p=0 ; p<nParticlesPerProcessor ; p++)
 	{
-	std::cout << "p" << p<<std::endl;
+	//std::cout << "p" << p<<std::endl;
 		for(int tt = 0; tt< nT; tt++)
 		{
 			if (Particles[p].perpDistanceToSurface >= 0.0 && Particles[p].x > xMinV
@@ -203,18 +203,22 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 			Particles[p].Ionization(dt);
 			}
 			
-			else break;
-		}
-		
-		surfaceIndexY = int(floor((Particles[p].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
+			else
+			{
+					surfaceIndexY = int(floor((Particles[p].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
 		surfaceIndexZ = int(floor((Particles[p].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
 		//std::cout << "Pos " << Particles[p].y << "  " << Particles[p].z << std::endl;
-		std::cout << "indices y z " << surfaceIndexY << "  " << surfaceIndexZ << std::endl;
+		//std::cout << "indices y z " << surfaceIndexY << "  " << surfaceIndexZ << std::endl;
 		incr = incr + 1.0;
 		SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
-		std::cout << "incr " << incr <<std::endl;
+		//std::cout << "incr " << incr <<std::endl;
 		SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += Particles[p].Z ;
 		SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*Particles[p].amu*1.6737236e-27*(Particles[p].vx*Particles[p].vx +  Particles[p].vy*Particles[p].vy+ Particles[p].vz*Particles[p].vz)*1.60217662e-19;
+			 break;
+			 }
+		}
+		
+
 		
 	
 	}
@@ -236,13 +240,13 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 	
  		MPI_Barrier( MPI_COMM_WORLD );
  		
- 								 for(int j=0 ; j<nY ; j++)
-				{	std::cout<< std::endl;
-					for(int k=0 ; k<nZ ; k++)
-					{
-					std::cout << "  " << SurfaceBinsCharge[j][k] ;
-					}
-					}
+//  								 for(int j=0 ; j<nY ; j++)
+// 				{	std::cout<< std::endl;
+// 					for(int k=0 ; k<nZ ; k++)
+// 					{
+// 					std::cout << "  " << SurfaceBinsCharge[j][k] ;
+// 					}
+// 					}
 		
 
 			SEND_2doutput_MPI(myID,nY, nZ,SurfaceBinsCharge);
