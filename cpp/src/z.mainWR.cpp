@@ -177,7 +177,6 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 				dt = 1e-6/nPtsPerGyroOrbit;
 				nParticlesPerProcessor = nP/(nWRs);
 				
-				//std::cout << "workers and nppp " << nWRs << nParticlesPerProcessor << std::endl;
 				
 					Particle Particles[nParticlesPerProcessor];
 	INIT(myID,  nWRs,nP,Particles);
@@ -187,11 +186,10 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 	unsigned long seed=(unsigned long)(time(NULL) + myID*nWRs);
 	srand(seed);
 	
-	//std::cout<< "Worker: " << myID <<"timenull: " <<seed<< "mult: " << (1.0*myID)/(1.0*nWRs)*32.0 << std::endl;
 	
 	for(int p=0 ; p<nParticlesPerProcessor ; p++)
 	{
-	//std::cout << "p" << p<<std::endl;
+
 		for(int tt = 0; tt< nT; tt++)
 		{
 			if (Particles[p].perpDistanceToSurface >= 0.0 && Particles[p].x > xMinV
@@ -207,11 +205,9 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 			{
 					surfaceIndexY = int(floor((Particles[p].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
 		surfaceIndexZ = int(floor((Particles[p].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
-		//std::cout << "Pos " << Particles[p].y << "  " << Particles[p].z << std::endl;
-		//std::cout << "indices y z " << surfaceIndexY << "  " << surfaceIndexZ << std::endl;
 		incr = incr + 1.0;
 		SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
-		//std::cout << "incr " << incr <<std::endl;
+
 		SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += Particles[p].Z ;
 		SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*Particles[p].amu*1.6737236e-27*(Particles[p].vx*Particles[p].vx +  Particles[p].vy*Particles[p].vy+ Particles[p].vz*Particles[p].vz)*1.60217662e-19;
 			 break;
@@ -223,30 +219,15 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 	
 	}
 	
-	//std::cout<< "Processor done " << myID << std::endl;
 
 			
 	MPI_Barrier( MPI_COMM_WORLD );
-	
-// 						 for(int j=0 ; j<nY ; j++)
-// 				{	std::cout<< std::endl;
-// 					for(int k=0 ; k<nZ ; k++)
-// 					{
-// 					std::cout << "  " << SurfaceBins[j][k] ;
-// 					}
-// 					}
-// 	
+	 	
 	SEND_2doutput_MPI(myID,nY, nZ,SurfaceBins);
 	
  		MPI_Barrier( MPI_COMM_WORLD );
  		
-//  								 for(int j=0 ; j<nY ; j++)
-// 				{	std::cout<< std::endl;
-// 					for(int k=0 ; k<nZ ; k++)
-// 					{
-// 					std::cout << "  " << SurfaceBinsCharge[j][k] ;
-// 					}
-// 					}
+
 		
 
 			SEND_2doutput_MPI(myID,nY, nZ,SurfaceBinsCharge);
