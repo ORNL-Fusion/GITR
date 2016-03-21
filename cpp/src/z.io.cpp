@@ -29,7 +29,6 @@ string string1;
   {
 	gitrInputFile >> string1;
 	gitrInputFile >> nP;
-		std::cout << "string" << string1 << std::endl;
 			std::cout << "nP" << nP << std::endl;
 	
 	gitrInputFile >> string1;
@@ -162,9 +161,6 @@ string string1;
 	gitrInputFile2 >> maxTemp_eV[i];
 	}
 	
-	
-		std::cout << "string" << string1 << std::endl;
-			std::cout << "maxTemp" << maxTemp_eV[1] << std::endl;
 	
 	
 
