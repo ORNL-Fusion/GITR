@@ -203,6 +203,8 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 			
 			else
 			{
+			std::cout << " Particle position in xyz " << Particles[p].x << " " << Particles[p].y << " " << Particles[p].z << std::endl;
+			std::cout << " Particle velocity in xyz " << Particles[p].vx << " " << Particles[p].vy << " " << Particles[p].vz << std::endl;
 					surfaceIndexY = int(floor((Particles[p].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
 		surfaceIndexZ = int(floor((Particles[p].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
 		incr = incr + 1.0;

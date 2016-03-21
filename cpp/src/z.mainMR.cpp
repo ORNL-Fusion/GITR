@@ -112,7 +112,6 @@ INPUT( nP,  sourceStrength, x_start, y_start, z_start, energy_eV_x_start, energy
 	 nYv, nZv, nY, nZ, surface_dz_dx, surface_zIntercept, connectionLength,
 	 nBackgroundSpecies, nPtsPerGyroOrbit,	 ionization_nDtPerApply, collision_nDtPerApply, nT, Bx_in,
 	 By_in, Bz_in, perDiffusionCoeff_in, densitySOLDecayLength, tempSOLDecayLength	);
-std::cout << "tempSOLDecayLength" << tempSOLDecayLength << std::endl;
 
 densityChargeBins = new int[nDensityChargeBins];
 
@@ -123,7 +122,7 @@ maxDensity = new double[nBackgroundSpecies];
 maxTemp_eV = new double[nBackgroundSpecies];
 
 INPUT2(nDensityChargeBins,nBackgroundSpecies,densityChargeBins,background_Z,background_amu,background_flow,maxDensity,maxTemp_eV);
-  std::cout << "maxTemp" << maxTemp_eV[1] << std::endl;
+
   
 	
 	iparms[0] = nP;
