@@ -2,7 +2,6 @@
 #include <cmath>
 #include <fstream>
 #include <stdlib.h>
-#include <mpi.h>
 #include "h1.h"
 using namespace std;
 
@@ -28,6 +27,7 @@ void Particle::BorisMove(double dt,double xMinV,double xMaxV,double yMin,double 
 	//std::cout << " Particle position in xyz " << x << " " << y << " " << z << std::endl;
 	//perpd = ( -0.5773*x + z )/1.1547;
 Efield( E, perpDistanceToSurface);
+//cout << Z <<  E[0] << E[1] << E[2] << endl;
 	
 	double Bmag = 2;
 	
@@ -65,20 +65,20 @@ Efield( E, perpDistanceToSurface);
                 
                 perpDistanceToSurface = ( -surfaceDirection[0]*r[0] + r[2] )/2.0;
                 
-                			if (perpDistanceToSurface < 0)
-			{
-			            t = (surface_dz_dx*x - z)/(-surface_dz_dx*(x -r[0]) + (z -r[2]));
-                        x = x + (x - r[0])*t;
-                        y = y + (y - r[1])*t;
-                        z = z + (z - r[2])*t;
-
-			}
-			else
-			{
+//                 			if (perpDistanceToSurface < 0)
+// 			{
+// 			            t = (surface_dz_dx*x - z)/(-surface_dz_dx*(x -r[0]) + (z -r[2]));
+//                         x = x + (x - r[0])*t;
+//                         y = y + (y - r[1])*t;
+//                         z = z + (z - r[2])*t;
+// 
+// 			}
+// 			else
+// 			{
 			x = r[0];
 			y = r[1];
 			z = r[2];
-			}
+// 			}
 			
 			vx = v[0];
 			vy = v[1];
@@ -97,13 +97,15 @@ void Particle::Ionization(double dt)
 	tion = 1/(Coeffs[int(floor(Z+ 0.5f))]*density);
 	
 	P1 = 1-exp(-dt/tion);
-	
+
 	double r1=((double)rand()/(double)RAND_MAX);
 	
-	if( Z == 0)
-	{ P1 = 1.0;
-	}
-	else P1 = 0.0;
+		//cout << " Z " << Z << " P1 " << P1 << " r1 " << r1 << endl;
+	
+// 	if( Z == 0)
+// 	{ P1 = 1.0;
+// 	}
+// 	else P1 = 0.0;
 	
 	if(r1 <= P1)
 	{
