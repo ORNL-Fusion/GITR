@@ -3,7 +3,6 @@
 #include <iostream>
 #include <cmath>
 #include <stdlib.h>
-#include <mpi.h>
 #include "h1.h"
 using namespace std;
 
