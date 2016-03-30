@@ -189,10 +189,15 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 	for(int i = 0; i < D.size(); i++)
 	    std::cout << "D[" << i << "] = " << D[i] << std::endl;
 
-	cudaParticle p = generateParticle(x);
-	std::cout << p.x << p.y << p.z << std::endl;
-	thrust::host_vector<cudaParticle> hostCudaParticleVector(100);
-//	thrust::generate(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), p);
+	//cudaParticle p = generateParticle(x);
+
+	//std::cout << p.x << p.y << p.z << std::endl;
+	cudaParticle p1(x,y,z,Ex,Ey,Ez,Z,amu);
+	std::cout << p1.x << p1.y << p1.z << std::endl;
+	std::cout << p1.vx << p1.vy << p1.vz << std::endl;
+	std::cout << p1.Z << p1.amu << std::endl;
+	thrust::host_vector<cudaParticle> hostCudaParticleVector(100,p1);
+	//thrust::generate(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), p);
 
 	for(int i=0; i < hostCudaParticleVector.size(); i++)
 	    std::cout << hostCudaParticleVector[i].x << std::endl;
@@ -213,33 +218,33 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
 	for(int p=0 ; p<nP ; p++)
 	{
-
-		for(int tt = 0; tt< nT; tt++)
-		{
-			if (Particles[p].perpDistanceToSurface >= 0.0 && Particles[p].x > xMinV
-			&& Particles[p].x < xMaxV && Particles[p].y > yMin && Particles[p].y < yMax
-			&& Particles[p].z > zMin && Particles[p].z < zMax)
-			{
-			    Particles[p].BorisMove(dt,  xMinV, xMaxV, yMin, yMax, zMin, zMax);
-			    Particles[p].Ionization(dt);
-			}
-			
-			else
-			{
-	        surfaceIndexY = int(floor((Particles[p].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
-		        surfaceIndexZ = int(floor((Particles[p].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
-		        SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
-
-		        SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += Particles[p].Z ;
-		        SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*Particles[p].amu*1.6737236e-27*(Particles[p].vx*Particles[p].vx +  Particles[p].vy*Particles[p].vy+ Particles[p].vz*Particles[p].vz)*1.60217662e-19;
-			break;
-			 }
-		}
+//
+//		for(int tt = 0; tt< nT; tt++)
+//		{
+//			if (Particles[p].perpDistanceToSurface >= 0.0 && Particles[p].x > xMinV
+//			&& Particles[p].x < xMaxV && Particles[p].y > yMin && Particles[p].y < yMax
+//			&& Particles[p].z > zMin && Particles[p].z < zMax)
+//			{
+//			    Particles[p].BorisMove(dt,  xMinV, xMaxV, yMin, yMax, zMin, zMax);
+//			    Particles[p].Ionization(dt);
+//			}
+//			
+//			else
+//			{
+//	        surfaceIndexY = int(floor((Particles[p].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
+//		        surfaceIndexZ = int(floor((Particles[p].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
+//		        SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
+//
+//		        SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += Particles[p].Z ;
+//		        SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*Particles[p].amu*1.6737236e-27*(Particles[p].vx*Particles[p].vx +  Particles[p].vy*Particles[p].vy+ Particles[p].vz*Particles[p].vz)*1.60217662e-19;
+//			break;
+//			 }
+//		}
 	}
 	
-    OUTPUT( outname,nY, nZ, SurfaceBins);
-    OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
-    OUTPUT( outnameEnergy,nY, nZ, SurfaceBinsEnergy);
+//    OUTPUT( outname,nY, nZ, SurfaceBins);
+//    OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
+//    OUTPUT( outnameEnergy,nY, nZ, SurfaceBinsEnergy);
 			
 	return 0;
 }
