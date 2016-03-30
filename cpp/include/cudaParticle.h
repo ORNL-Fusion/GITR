@@ -9,11 +9,20 @@
 
 class cudaParticle {
 	public:
-		float x;
+		double x;
+		float y;
+		float z;
+      		float vx;
+      		float vy;
+      		float vz;
+      		float Z;
+      		float amu;
 
 		__host__ __device__ 
         cudaParticle() {
             x=0.0;
+	    y=0.0;
+	    z=0.0;
         };
 };
 
