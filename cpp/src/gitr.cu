@@ -15,6 +15,16 @@
 using namespace std;
 using namespace libconfig;
 
+__host__ __device__
+ cudaParticle       generateParticle(double x1){
+		cudaParticle p; 
+               p.x = x1;
+               p.y = 2.0;
+               p.z = 3.0;
+		
+		return p;
+        };
+
 int main()
 {
 
@@ -111,6 +121,16 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
 cout << maxTemp_eV[i];
  }
 
+double x = cfg.lookup("impurityParticleSource.initialConditions.x_start");
+double y = cfg.lookup("impurityParticleSource.initialConditions.y_start");
+double z = cfg.lookup("impurityParticleSource.initialConditions.z_start");
+
+double Ex = cfg.lookup("impurityParticleSource.initialConditions.energy_eV_x_start");
+double Ey = cfg.lookup("impurityParticleSource.initialConditions.energy_eV_y_start");
+double Ez = cfg.lookup("impurityParticleSource.initialConditions.energy_eV_z_start");
+
+double amu = cfg.lookup("impurityParticleSource.initialConditions.impurity_amu");
+double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
 	double **SurfaceBins;
 	double **SurfaceBinsCharge;
@@ -169,8 +189,10 @@ cout << maxTemp_eV[i];
 	for(int i = 0; i < D.size(); i++)
 	    std::cout << "D[" << i << "] = " << D[i] << std::endl;
 
+	cudaParticle p = generateParticle(x);
+	std::cout << p.x << p.y << p.z << std::endl;
 	thrust::host_vector<cudaParticle> hostCudaParticleVector(100);
-	hostCudaParticleVector[0].x = 3.2;
+//	thrust::generate(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), p);
 
 	for(int i=0; i < hostCudaParticleVector.size(); i++)
 	    std::cout << hostCudaParticleVector[i].x << std::endl;
