@@ -2,7 +2,7 @@
 
 % Impurity particles 
 
-nP = 1;
+nP = 4;
 sourceStrength = 1e19;
 
 x_start = 0.00;
@@ -62,10 +62,10 @@ file_emission = {'ADAS/w0_400875.m','ADAS/w1_434811.m'};
 
 % Particle time stepping control
 
-nPtsPerGyroOrbit = 50;
+nPtsPerGyroOrbit = 100;
 ionization_nDtPerApply = 1;
 collision_nDtPerApply = 5;
-nT = 5e3;
+nT = 10;
 
 % Interpolator Dimensionality Selection
 
