@@ -41,8 +41,8 @@ nZv = 150;
 
 % Surface grid
 
-nY = 150;
-nZ = 150;
+nY = 600;
+nZ = 600;
 
 % Surface parameterization z = dz/dx * x + b
 
