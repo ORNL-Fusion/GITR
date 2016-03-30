@@ -209,7 +209,7 @@ barLength = nP/progressInterval;
 fprintf('Progress:\n');
 fprintf(['\n' repmat('.',1,barLength) '\n\n']);
 
-parfor p=1:nP
+for p=1:nP
     
     tmp = zeros(nXv,nYv,nZv,nDensityBins);
     
@@ -262,9 +262,9 @@ parfor p=1:nP
         
         if mod(tt, collision_nDtPerApply) == 0
             
-            diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,flowVelocity_ms,density_m3,temp_eV,...
-                background_amu,background_Z,interpolators, ...
-                CollisionTimeStep,velocityChangeTolerance, connectionLength,surface_dz_dx,surface_zIntercept);
+%             diagnostics = particles(p).CoulombCollisions(xyz,Bfield3D,flowVelocity_ms,density_m3,temp_eV,...
+%                 background_amu,background_Z,interpolators, ...
+%                 CollisionTimeStep,velocityChangeTolerance, connectionLength,surface_dz_dx,surface_zIntercept);
             
         end
         if trackHistory
@@ -312,9 +312,9 @@ save('output/gitrImpurityDensityTally.mat','impurityDensityTally');
 
 print_profiles
 % At the completion of the job tidy up
-% delete(poolobj);
-% %delete(gcp('nocreate'))
-% 
-% % Clean up the temporary files
-% rmdir(scratch_dir,'s');
+%delete(poolobj);
+%delete(gcp('nocreate'))
+
+% Clean up the temporary files
+rmdir(scratch_dir,'s');
 %quit

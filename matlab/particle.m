@@ -267,6 +267,11 @@ classdef particle < handle
                         error('Ionization probability is too large')
                         P1
                     end
+                    if this.Z == 0
+                        P1 = 1.0;
+                    else
+                        P1 = 0.0;
+                    end
                     
                     if r1 <= P1
                         this.Z = this.Z+1;
