@@ -117,8 +117,8 @@ EnergyBins = zeros(nY,nZ);
 ChargeBins = zeros(nY,nZ);
 Tallys = zeros(nY,nZ);
 
-yIndex =  round((y_pos- yMin)/(yMax - yMin)*(nY));
-zIndex = round((z_pos- zMin)/(zMax - zMin)*(nZ));
+yIndex =  round((y_pos- yMin)/(yMax - yMin)*(nY) + 1);
+zIndex = round((z_pos- zMin)/(zMax - zMin)*(nZ) + 1);
 len2 = length(zIndex)
 for i=1:len2
     if particles(i).hitWall == 1
