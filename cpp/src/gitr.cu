@@ -2,7 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include <stdlib.h>
-//#include "h1.h"
+#include "h1.h"
 #include <iomanip>
 #include <cstdlib>
 #include <libconfig.h++>
@@ -144,17 +144,17 @@ cout << maxTemp_eV[i];
 
 	int nP = cfg.lookup("impurityParticleSource.nP");
  	cout << "Number of particles: " << nP << endl;				
-	//Particle Particles[nP];
-	//INIT(nP,Particles, cfg);
+	Particle Particles[nP];
+	INIT(nP,Particles, cfg);
 
-	//unsigned long seed=(unsigned long)(time(NULL));
-	//srand(seed);
-	//
-	//int nT = cfg.lookup("timeStep.nT");
-    //cout << "Number of time steps: " << nT << endl;	
-    //
-    //int surfaceIndexY;
-	//int surfaceIndexZ;
+	unsigned long seed=(unsigned long)(time(NULL));
+	srand(seed);
+	
+	int nT = cfg.lookup("timeStep.nT");
+    cout << "Number of time steps: " << nT << endl;	
+    
+    int surfaceIndexY;
+	int surfaceIndexZ;
 
 	thrust::host_vector<int> H(4); 
 	H[0] = 14;
@@ -189,34 +189,35 @@ cout << maxTemp_eV[i];
 
 
 
-	//for(int p=0 ; p<nP ; p++)
-	//{
+	for(int p=0 ; p<nP ; p++)
+	{
 
-	//	for(int tt = 0; tt< nT; tt++)
-	//	{
-	//		if (Particles[p].perpDistanceToSurface >= 0.0 && Particles[p].x > xMinV
-	//		&& Particles[p].x < xMaxV && Particles[p].y > yMin && Particles[p].y < yMax
-	//		&& Particles[p].z > zMin && Particles[p].z < zMax)
-	//		{
-	//		    Particles[p].BorisMove(dt,  xMinV, xMaxV, yMin, yMax, zMin, zMax);
-	//		    Particles[p].Ionization(dt);
-	//		}
-	//		
-	//		else
-	//		{
-	//	        surfaceIndexY = int(floor((Particles[p].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
-	//	        surfaceIndexZ = int(floor((Particles[p].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
-	//	        SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
+		for(int tt = 0; tt< nT; tt++)
+		{
+			if (Particles[p].perpDistanceToSurface >= 0.0 && Particles[p].x > xMinV
+			&& Particles[p].x < xMaxV && Particles[p].y > yMin && Particles[p].y < yMax
+			&& Particles[p].z > zMin && Particles[p].z < zMax)
+			{
+			    Particles[p].BorisMove(dt,  xMinV, xMaxV, yMin, yMax, zMin, zMax);
+			    Particles[p].Ionization(dt);
+			}
+			
+			else
+			{
+	        surfaceIndexY = int(floor((Particles[p].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
+		        surfaceIndexZ = int(floor((Particles[p].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
+		        SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
 
-	//	        SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += Particles[p].Z ;
-	//	        SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*Particles[p].amu*1.6737236e-27*(Particles[p].vx*Particles[p].vx +  Particles[p].vy*Particles[p].vy+ Particles[p].vz*Particles[p].vz)*1.60217662e-19;
-	//		 }
-	//	}
-	//}
+		        SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += Particles[p].Z ;
+		        SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*Particles[p].amu*1.6737236e-27*(Particles[p].vx*Particles[p].vx +  Particles[p].vy*Particles[p].vy+ Particles[p].vz*Particles[p].vz)*1.60217662e-19;
+			break;
+			 }
+		}
+	}
 	
-    //OUTPUT( outname,nY, nZ, SurfaceBins);
-    //OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
-    //OUTPUT( outnameEnergy,nY, nZ, SurfaceBinsEnergy);
+    OUTPUT( outname,nY, nZ, SurfaceBins);
+    OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
+    OUTPUT( outnameEnergy,nY, nZ, SurfaceBinsEnergy);
 			
 	return 0;
 }
