@@ -1,0 +1,5 @@
+#$ -N GITR
+#$ -q medium*
+#$ -pe threads 32
+#$ -cwd
+matlab -r 'gitr'
