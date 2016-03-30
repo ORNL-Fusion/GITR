@@ -2,7 +2,7 @@
 
 % Impurity particles 
 
-nP = 1;
+nP = 1e4;
 sourceStrength = 1e19;
 
 x_start = 0.00;
@@ -105,7 +105,7 @@ positionStepTolerance = 1e-3;
 
 % Output options
 printProfiles = 0;
-trackHistory = 1;
+trackHistory = 0;
 
 % Plots
 
