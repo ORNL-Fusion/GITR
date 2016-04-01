@@ -10,6 +10,7 @@
 #include <thrust/device_vector.h>
 #include "cudaParticle.h"
 #include "boris.h"
+#include "ionize.h"
 #include <algorithm>
 
 using namespace std;
@@ -206,10 +207,14 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
     thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris() );
 
+    thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize() );
+
+    //thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize() );
+
     thrust::host_vector<cudaParticle> hostCudaParticleVector2 = deviceCudaParticleVector;
 
     for(int i=0; i < hostCudaParticleVector2.size(); i++)
-        std::cout << hostCudaParticleVector2[i].x << std::endl;
+        std::cout << hostCudaParticleVector2[i].vx << std::endl;
 
 	std::vector<cudaParticle> particleVector(100);
     std::for_each( particleVector.begin(), particleVector.end(), move_boris() );
