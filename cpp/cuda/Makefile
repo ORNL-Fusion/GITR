@@ -14,6 +14,11 @@ NVCC := nvcc
 
 MODULES := src include
 
+# Boost
+
+INCLUDEFLAGS+=
+LIBS+= -lboost_system -lboost_timer
+
 # Libconfig
 
 INCLUDEFLAGS+= -I $(LIBCONFIGINCLUDE)
