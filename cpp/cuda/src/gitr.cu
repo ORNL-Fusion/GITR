@@ -12,9 +12,11 @@
 #include "boris.h"
 #include "ionize.h"
 #include <algorithm>
+#include <boost/timer/timer.hpp>
 
 using namespace std;
 using namespace libconfig;
+using namespace boost::timer;
 
 __host__ __device__
  cudaParticle       generateParticle(double x1){
@@ -159,9 +161,9 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 					}
 				}
 	
-	double dt;
-	double nPtsPerGyroOrbit = cfg.lookup("timeStep.nPtsPerGyroOrbit");
-	dt = 1e-6/nPtsPerGyroOrbit;
+	//double dt;
+	//double nPtsPerGyroOrbit = cfg.lookup("timeStep.nPtsPerGyroOrbit");
+	//dt = 1e-6/nPtsPerGyroOrbit;
 
 	int nP = cfg.lookup("impurityParticleSource.nP");
  	cout << "Number of particles: " << nP << endl;				
@@ -190,66 +192,51 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 	for(int i = 0; i < D.size(); i++)
 	    std::cout << "D[" << i << "] = " << D[i] << std::endl;
 
-	//cudaParticle p = generateParticle(x);
+    float dt = 1e-4;
+	cudaParticle p1(x,y,z,Ex,Ey,Ez,Z,amu,dt);
 
-	//std::cout << p.x << p.y << p.z << std::endl;
-	cudaParticle p1(x,y,z,Ex,Ey,Ez,Z,amu);
-	std::cout << p1.x << p1.y << p1.z << std::endl;
-	std::cout << p1.vx << p1.vy << p1.vz << std::endl;
-	std::cout << p1.Z << p1.amu << std::endl;
-	thrust::host_vector<cudaParticle> hostCudaParticleVector(100,p1);
-	//thrust::generate(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), p);
+    int nParticles = 10e6;
+	thrust::host_vector<cudaParticle> hostCudaParticleVector(nParticles,p1);
 
-	for(int i=0; i < hostCudaParticleVector.size(); i++)
-	    std::cout << hostCudaParticleVector[i].x << std::endl;
+	//for(int i=0; i < hostCudaParticleVector.size(); i++)
+	//    std::cout << hostCudaParticleVector[i].x << std::endl;
+
+    cpu_timer timer;
 
 	thrust::device_vector<cudaParticle> deviceCudaParticleVector = hostCudaParticleVector;
 
+    cpu_times copyToDeviceTime = timer.elapsed();
+    std::cout << "copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
+
     thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris() );
+
+    cpu_times moveTimeGPU = timer.elapsed();
+    std::cout << "moveTimeGPU: " << moveTimeGPU.wall*1e-9 << '\n';
 
     thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize() );
 
-    //thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize() );
+    cpu_times ionizeTimeGPU = timer.elapsed();
+    std::cout << "ionizeTimeGPU: " << ionizeTimeGPU.wall*1e-9 << '\n';
 
     thrust::host_vector<cudaParticle> hostCudaParticleVector2 = deviceCudaParticleVector;
 
-    for(int i=0; i < hostCudaParticleVector2.size(); i++)
-        std::cout << hostCudaParticleVector2[i].vx << std::endl;
+    cpu_times copyToHostTime = timer.elapsed();
+    std::cout << "copyToHostTime: " << copyToHostTime.wall*1e-9 << '\n';
 
-	std::vector<cudaParticle> particleVector(100);
+    //for(int i=0; i < hostCudaParticleVector2.size(); i++)
+    //    std::cout << hostCudaParticleVector2[i].vx << std::endl;
+
+	std::vector<cudaParticle> particleVector(nParticles);
+
+    cpu_times createParticlesTimeCPU = timer.elapsed();
+    std::cout << "createParticesTimeCPU: " << createParticlesTimeCPU.wall*1e-9 << '\n';
+
     std::for_each( particleVector.begin(), particleVector.end(), move_boris() );
 
+    cpu_times moveTimeCPU = timer.elapsed();
+    std::cout << "moveTimeCPU: " << moveTimeCPU.wall*1e-9 << '\n';
 
+    std::cout << "GPU Speedup: " << moveTimeCPU.wall / moveTimeGPU.wall << '\n';
 
-	for(int p=0 ; p<nP ; p++)
-	{
-//
-//		for(int tt = 0; tt< nT; tt++)
-//		{
-//			if (Particles[p].perpDistanceToSurface >= 0.0 && Particles[p].x > xMinV
-//			&& Particles[p].x < xMaxV && Particles[p].y > yMin && Particles[p].y < yMax
-//			&& Particles[p].z > zMin && Particles[p].z < zMax)
-//			{
-//			    Particles[p].BorisMove(dt,  xMinV, xMaxV, yMin, yMax, zMin, zMax);
-//			    Particles[p].Ionization(dt);
-//			}
-//			
-//			else
-//			{
-//	        surfaceIndexY = int(floor((Particles[p].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
-//		        surfaceIndexZ = int(floor((Particles[p].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
-//		        SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
-//
-//		        SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += Particles[p].Z ;
-//		        SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*Particles[p].amu*1.6737236e-27*(Particles[p].vx*Particles[p].vx +  Particles[p].vy*Particles[p].vy+ Particles[p].vz*Particles[p].vz)*1.60217662e-19;
-//			break;
-//			 }
-//		}
-	}
-	
-//    OUTPUT( outname,nY, nZ, SurfaceBins);
-//    OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
-//    OUTPUT( outnameEnergy,nY, nZ, SurfaceBinsEnergy);
-			
 	return 0;
 }
