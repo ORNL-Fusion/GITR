@@ -195,7 +195,8 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     float dt = 1e-6;
 	cudaParticle p1(x,y,z,Ex,Ey,Ez,Z,amu,dt);
 
-    int nParticles = 1e5;
+    long nParticles = 1e5;
+    std::cout << "nParticles: " << nParticles << std::endl;
 	thrust::host_vector<cudaParticle> hostCudaParticleVector(nParticles,p1);
 
 	//for(int i=0; i < hostCudaParticleVector.size(); i++)
@@ -203,28 +204,36 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
     cpu_timer timer;
 
+	std::cout << "Initial x position GPU: " << hostCudaParticleVector[1].x << std::endl;
+
 	thrust::device_vector<cudaParticle> deviceCudaParticleVector = hostCudaParticleVector;
+
+    cudaThreadSynchronize();
 
     cpu_times copyToDeviceTime = timer.elapsed();
     std::cout << "copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
 
     thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris() );
 
+    cudaThreadSynchronize();
+
     cpu_times moveTimeGPU = timer.elapsed();
     std::cout << "moveTimeGPU: " << (moveTimeGPU.wall-copyToDeviceTime.wall)*1e-9 << '\n';
 
-//    thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize() );
+    //thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize() );
 
-  //  cpu_times ionizeTimeGPU = timer.elapsed();
-  //  std::cout << "ionizeTimeGPU: " << ionizeTimeGPU.wall*1e-9 << '\n';
+    //cpu_times ionizeTimeGPU = timer.elapsed();
+    //std::cout << "ionizeTimeGPU: " << ionizeTimeGPU.wall*1e-9 << '\n';
 
     thrust::host_vector<cudaParticle> hostCudaParticleVector2 = deviceCudaParticleVector;
 
+    cudaThreadSynchronize();
+
     cpu_times copyToHostTime = timer.elapsed();
     std::cout << "copyToHostTime: " << (copyToHostTime.wall-moveTimeGPU.wall)*1e-9 << '\n';
-	std::cout << "Final x position GPU: " << hostCudaParticleVector2[0].x << std::endl;
-    //for(int i=0; i < hostCudaParticleVector2.size(); i++)
-    //    std::cout << hostCudaParticleVector2[i].vx << std::endl;
+	std::cout << "Final x position GPU: " << hostCudaParticleVector2.back().x << std::endl;
+
+    // CPU
 
 	std::vector<cudaParticle> particleVector(nParticles,p1);
 
@@ -237,6 +246,6 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     std::cout << "moveTimeCPU: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall)*1e-9 << '\n';
 
     std::cout << "GPU Speedup: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall) / (moveTimeGPU.wall-copyToDeviceTime.wall) << '\n';
-	std::cout << "Final x position CPU: " << particleVector[1].x << std::endl;
+	std::cout << "Final x position CPU: " << particleVector.back().x << std::endl;
 	return 0;
 }
