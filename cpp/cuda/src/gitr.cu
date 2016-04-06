@@ -242,35 +242,39 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
     	cpu_times copyToDeviceTime = timer.elapsed();
     	std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
+	for(int tt=0; tt< nT; tt++)
+	{
+    		thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt) );
 
-    thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt) );
+    		//cudaThreadSynchronize();
 
-    cudaThreadSynchronize();
+    		//cpu_times moveTimeGPU = timer.elapsed();
+    		//std::cout << "moveTimeGPU: " << (moveTimeGPU.wall-copyToDeviceTime.wall)*1e-9 << '\n';
 
-    cpu_times moveTimeGPU = timer.elapsed();
-    std::cout << "moveTimeGPU: " << (moveTimeGPU.wall-copyToDeviceTime.wall)*1e-9 << '\n';
-
-    thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize(dt) );
-
+    		thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize(dt) );
+	}
     cpu_times ionizeTimeGPU = timer.elapsed();
     std::cout << "ionizeTimeGPU: " << ionizeTimeGPU.wall*1e-9 << '\n';
 
     thrust::host_vector<cudaParticle> hostCudaParticleVector2 = deviceCudaParticleVector;
 
+	for(int i=0; i < hostCudaParticleVector2.size(); i++){
+		surfaceIndexY = int(floor((hostCudaParticleVector2[i].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
+		surfaceIndexZ = int(floor((hostCudaParticleVector2[i].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
+		SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
+
+		SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += hostCudaParticleVector2[i].Z ;
+		SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*hostCudaParticleVector2[i].amu*1.6737236e-27*(hostCudaParticleVector2[i].vx*hostCudaParticleVector2[i].vx +  hostCudaParticleVector2[i].vy*hostCudaParticleVector2[i].vy+ hostCudaParticleVector2[i].vz*hostCudaParticleVector2[i].vz)*1.60217662e-19;
+	}
+
+			OUTPUT( outname,nY, nZ, SurfaceBins);
+			OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
+			OUTPUT( outnameEnergy,nY, nZ, SurfaceBinsEnergy);
     cudaThreadSynchronize();
 
     cpu_times copyToHostTime = timer.elapsed();
-    std::cout << "copyToHostTime: " << (copyToHostTime.wall-moveTimeGPU.wall)*1e-9 << '\n';
+    //std::cout << "copyToHostTime: " << (copyToHostTime.wall-moveTimeGPU.wall)*1e-9 << '\n';
 	std::cout << "Final x position GPU: " << hostCudaParticleVector2.back().x << std::endl;
-        for(int i=0; i < hostCudaParticleVector2.size(); i++)                 std::cout <<  hostCudaParticleVector2[i].vx << "  " <<  hostCudaParticleVector2[i].vy << "  " << hostCudaParticleVector2[i].Z << std::endl;
-	double tally=0;    
-	for(int i=0; i < hostCudaParticleVector2.size(); i++)
-{
-if(hostCudaParticleVector2[i].Z == 1)
-tally = tally + 1.0;
-}
-tally = tally/nP;
-std::cout << "percent ionized: " << tally << std::endl;
 
 	std::vector<cudaParticle> particleVector(nParticles,p1);
 
@@ -282,7 +286,7 @@ std::cout << "percent ionized: " << tally << std::endl;
     cpu_times moveTimeCPU = timer.elapsed();
     std::cout << "moveTimeCPU: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall)*1e-9 << '\n';
 
-    std::cout << "GPU Speedup: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall) / (moveTimeGPU.wall-copyToDeviceTime.wall) << '\n';
+    //std::cout << "GPU Speedup: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall) / (moveTimeGPU.wall-copyToDeviceTime.wall) << '\n';
 	std::cout << "Final x position CPU: " << particleVector.back().x << std::endl;
 	return 0;
 }
