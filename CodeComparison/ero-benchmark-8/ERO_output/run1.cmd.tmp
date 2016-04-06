@@ -24,7 +24,7 @@
 #   
 #   
 # -- initialdir = directory where the executable file resides  -- 
-# @ initialdir = /home/a7l/ERO/ero_master/cases/code_compar/tungsten/issue_solving/maxcharge/Te20_norecomb
+# @ initialdir = /home/a7l/ERO/ero_master/cases/code_compar/tungsten/issue_solving/maxcharge/Te20_recomb
 # -- STANDARD OUTPUT FILE: stdout  -- (default is /dev/null)
 # @ output = out.$(schedd_host).$(jobid).$(stepid).1
 #   
