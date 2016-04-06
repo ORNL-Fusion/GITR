@@ -21,6 +21,7 @@ class cudaParticle {
       	float Z;
       	float amu;
 	curandState s;
+	float hitWall;
 	//thrust::default_random_engine stream;
 
 		__host__ __device__ 
@@ -38,6 +39,7 @@ class cudaParticle {
 
 	        this->Z = Z;
 		    this->amu = amu;
+		this->hitWall = 0.0;
 
 		    this->vx = Ex/fabs(Ex)*sqrt(2.0*fabs(Ex)*1.60217662e-19/(amu*1.6737236e-27));
 		    this->vy = Ey/fabs(Ey)*sqrt(2.0*fabs(Ey)*1.60217662e-19/(amu*1.6737236e-27));

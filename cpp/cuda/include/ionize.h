@@ -29,7 +29,8 @@ struct ionize {
         ionize(double _dt) : dt(_dt) {}
          __device__ 
                 void operator()(cudaParticle &p) const { 
-        	double tion;
+	if(p.hitWall == 0.0){        
+	double tion;
 	double trec;
 	double P1;
 	double Prec;
@@ -67,6 +68,8 @@ struct ionize {
 //	{
 //		p.Z = p.Z-1;
 //	}         
+	}	
+
 	} 
 };
 
