@@ -1,7 +1,7 @@
 #include "h1.h"
 #include <math.h>
 #include <iostream>
-
+#include <random>
 #include <iomanip>
 #include <cstdlib>
 #include <libconfig.h++>
@@ -50,6 +50,9 @@ if(energy_eV_z_start == 0.0) vz = 0.0;
 	p[i].amu = impurity_amu;
 	p[i].perpDistanceToSurface = 0.0;
 	//std::cout<< "amu: " << p[i].amu << std::endl;
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	p[i].stream = mt;
 	}
 	
 }
