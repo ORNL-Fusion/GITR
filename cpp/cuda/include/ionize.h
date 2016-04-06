@@ -2,7 +2,8 @@
 #define _IONIZE_
 
 #include "cudaParticle.h"
-#include "thrust/random.h"
+#include <thrust/random.h>
+//#include "thrust/uniform_real_distribution.h"
 //const double B[3] = {0.0,0.0,-2.0};
 //
 __host__ 
@@ -13,7 +14,7 @@ double randgen  () {
 
     __device__
 	double randgen2 () {
-        thrust::default_random_engine rng(12345);
+        thrust::default_random_engine rng;
 	//thrust::uniform_int_distribution<double> dist(0.0, 1.0);
         //rng.discard(2*12345);
 	double r;
@@ -24,10 +25,10 @@ double randgen  () {
     }
 
 struct ionize { 
-
+	           const double dt;
+        ionize(double _dt) : dt(_dt) {}
          __device__ 
                 void operator()(cudaParticle &p) const { 
-	double dt = 1e-9;
         	double tion;
 	double trec;
 	double P1;
@@ -50,17 +51,18 @@ struct ionize {
 	
 	P1 = 1-exp(-dt/tion);
 	
-	double r1;
-	r1=randgen2();
-	p.vx = r1;
+	double r1;	
+	r1 = curand_uniform(&p.s);
 	//double r2=randgen;
-//	
-//
-//	if(r1 <= P1)
-//	{
-//		p.Z = p.Z+1;
-//	} 
-//						
+	
+
+	if(r1 <= P1)
+	{
+		p.Z = p.Z+1;
+	} 
+						
+	p.vx = P1;
+	p.vy = r1;	
 //	if(r2 <= Prec)
 //	{
 //		p.Z = p.Z-1;

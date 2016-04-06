@@ -26,7 +26,8 @@ double * getE ( double x, double y, double z ) {
 }
 
 struct move_boris { 
-    
+           const double span;
+        move_boris(double _span) : span(_span) {} 
 __host__ __device__ 
 void operator()(cudaParticle &p) const { 
 
@@ -46,7 +47,7 @@ void operator()(cudaParticle &p) const {
 	double q_prime = p.Z*1.60217662e-19/(p.amu*1.6737236e-27)*dt*0.5;
     double coeff = 2*q_prime/(1+(q_prime*Bmag)*(q_prime*Bmag));
   
-    int nSteps = p.dt / dt;
+    int nSteps = span / dt;
 
     for ( int s=0; s<nSteps; s++ ) 
     {

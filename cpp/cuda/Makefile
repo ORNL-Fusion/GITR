@@ -30,6 +30,7 @@ NVCCFLAGS += $(INCLUDEFLAGS)
 
 CPPFLAGS:=
 CPPFLAGS+= -DUSEMPI=0
+CPPFLAGS+= -std=c++11
 
 
 # You shouldn't have to go below here

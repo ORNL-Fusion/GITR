@@ -145,6 +145,8 @@ cout << maxTemp_eV[i];
 	Particle Particles[nP];
 	INIT(nP,Particles, cfg);
 
+   
+
 	unsigned long seed=(unsigned long)(time(NULL));
 	//cout << seed << endl;
 	srand(seed);
