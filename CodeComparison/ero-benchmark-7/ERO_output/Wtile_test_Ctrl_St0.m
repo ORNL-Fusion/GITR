@@ -1,7 +1,7 @@
 %============================================================
 % Created by ERO (Standard Version)
 % for the task 'Wtile_test_'.
-% Wed Mar  9 21:58:27 2016
+% Tue Apr  5 15:13:47 2016
 %============================================================
 %
 TskName= 'Wtile_test_';
@@ -22,45 +22,45 @@ Combiantions = [
  '_w_w';
 ];
 %
-% Wed Mar  9 21:58:27 2016
+% Tue Apr  5 15:13:47 2016
 % time needed to allocate spectroscopy:
 % 0.000000 seconds
 
 %------------------------------
 
-% Wed Mar  9 21:58:27 2016
+% Tue Apr  5 15:13:47 2016
 % time needed to allocate surface grid:
 % 0.000000 seconds
 
 %------------------------------
 
-% Wed Mar  9 21:58:31 2016
+% Tue Apr  5 15:13:51 2016
 % time needed to calculate concentrations:
-% 4.000000 seconds
+% 3.000000 seconds
 
 %------------------------------
 
-% Wed Mar  9 22:17:43 2016
+% Wed Apr  6 07:48:14 2016
 % time of physical source loop:
-% 1150961.940186 milliseconds
+% 59661942.351074 milliseconds
 
 %------------------------------
 
-% Wed Mar  9 22:17:43 2016
+% Wed Apr  6 07:48:14 2016
  % CYCLE of NORMAL SOURCE:
- 1129.799012
+ 11654.880972
 
 %------------------------------
 
-% Wed Mar  9 22:17:43 2016
+% Wed Apr  6 07:48:14 2016
 % time needed to calculate source cycle:
-% 1151.000000 seconds
+% 59662.000000 seconds
 
 %------------------------------
 
-% Wed Mar  9 22:19:31 2016
+% Wed Apr  6 07:56:58 2016
 % time needed for info output:
-% 108.000000 seconds
+% 524.000000 seconds
 
 %------------------------------
 

@@ -24,7 +24,7 @@
 #   
 #   
 # -- initialdir = directory where the executable file resides  -- 
-# @ initialdir = /home/a7l/ERO/ero_master/cases/code_compar/tungsten/no_collis/dT1e9_stdgrid_NP1e4
+# @ initialdir = /home/a7l/ERO/ero_master/cases/code_compar/tungsten/issue_solving/maxcharge/Te20_norecomb
 # -- STANDARD OUTPUT FILE: stdout  -- (default is /dev/null)
 # @ output = out.$(schedd_host).$(jobid).$(stepid).1
 #   
@@ -46,7 +46,7 @@
 #-----------------------------------------------------------------------------
 #  - Environment variables for program execution
 #  - change this line if running an OpenMP program
-/home/a7l/ERO/ero_master/ero_exe/ERO.prg.std_v09.03 par_MPex
+/home/a7l/ERO/ero_master/ero_exe/ERO.prg.std_maxcharge_v05.04 par_MPex
 #----------------------------------------------------------------------------
 #   handle chemistry
 #-----------------------------------------------------------------------------

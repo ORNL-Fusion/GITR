@@ -191,6 +191,7 @@ ERO will trace 0 'marker' (non-substrat) elements.
 
 Data log is cleared for output . . .
 
+max charge 10 
 notice for the thomsonian:
 max. transferabel energy is set to Eo= 3.000000e+01 eV
 and projectile mass is set to M= 1.000000e+00, where M is a redundant
@@ -524,9 +525,9 @@ loading ini. values
 The puffing vector is rotated by angle
   0.00 Rad (0.0 Grad) in toroidal plane.
   0.00 Rad (0.0 Grad) in poloidal plane.
-% Wed Mar  9 21:58:32 2016
+% Tue Apr  5 15:13:52 2016
 % Zeit fuer die vorinitialisierung:
-% 0.015137 milliseconds
+% 0.005859 milliseconds
 
 %------------------------------
 
@@ -541,15 +542,15 @@ The puffing vector is rotated by angle
 ==> Loop #8000 (80% complete).
 ==> Loop #9000 (90% complete).
 ==> Loop #9999 (99% complete).
-% Wed Mar  9 22:17:43 2016
+% Wed Apr  6 07:48:14 2016
 % Zeit fuer die gesamte Schleife:
-% 1150939.967041 milliseconds
+% 59661911.602051 milliseconds
 
 %------------------------------
 
-% Wed Mar  9 22:17:43 2016
+% Wed Apr  6 07:48:14 2016
 % CYCLE of NORMAL SOURCE:
-% 1150962.013916 milliseconds
+% 59661943.179932 milliseconds
 
 %------------------------------
 
@@ -672,21 +673,21 @@ Matlab output complete.
 ---------------------------------------------------
            END of TOTAL OUTPUT                     
 ---------------------------------------------------
-% Wed Mar  9 22:19:31 2016
+% Wed Apr  6 07:56:58 2016
  % Total Processtime:
- 1242.528670
+ 11861.025713
 
 %------------------------------
 
-% Wed Mar  9 22:19:31 2016
+% Wed Apr  6 07:56:58 2016
 % Total Realtime:
-% 1264.000000 seconds
+% 60191.000000 seconds
 
 %------------------------------
 
-% Wed Mar  9 22:19:31 2016
+% Wed Apr  6 07:56:58 2016
 % Total Programtime:
-% 1264869.046875 milliseconds
+% 60191437.566895 milliseconds
 
 %------------------------------
 
