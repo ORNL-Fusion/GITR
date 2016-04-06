@@ -6,9 +6,8 @@
 const double B[3] = {0.0,0.0,-2.0};
 
 __host__ __device__ 
-double * getE ( double x, double y, double z ) {
+void getE ( double x, double y, double z, double E[] ) {
 
-	double E[3] = {0.0,0.0,0.0};
 	double Emag;
 	double surfaceDirection[3] = {1.7321, 0, -1.00};
 	double surfaceDirection_unit[3] =  {0.866, 0, -0.50};
@@ -22,7 +21,6 @@ double * getE ( double x, double y, double z ) {
 	E[0] = Emag*surfaceDirection_unit[0];
 	E[1] = Emag*surfaceDirection_unit[1];
 	E[2] = Emag*surfaceDirection_unit[2];
-    return E;
 }
 
 struct move_boris { 
@@ -50,27 +48,24 @@ void operator()(cudaParticle &p) const {
   
     int nSteps = span / dt;
 
-    for ( int s=0; s<nSteps; s++ ) 
-    {
-
-	    Emag = getE(p.x,p.y,p.z);
+   // for ( int s=0; s<nSteps; s++ ) 
+    //{
+	dt = span;
+	    getE(p.x,p.y,p.z,E);
 	    surface_dz_dx = surfaceDirection[0];
 
-	    E[0] = Emag[0];
-	    E[1] = Emag[1];
-	    E[2] = Emag[2];	
            
 	    v[0] = p.vx;
-        v[1] = p.vy;
+            v[1] = p.vy;
 	    v[2] = p.vz;
           
 	    r[0] = p.x;
-        r[1] = p.y;
+            r[1] = p.y;
 	    r[2] = p.z;	
 	    	  
 	    v_minus[0] = v[0] + q_prime*E[0];
 	    v_minus[1] = v[1] + q_prime*E[1];
-        v_minus[2] = v[2] + q_prime*E[2];
+            v_minus[2] = v[2] + q_prime*E[2];
 	                                                       
         v[0] = v_minus[0] + q_prime*(v_minus[1]*B[2] - v_minus[2]*B[1]);
         v[1] = v_minus[1] + q_prime*(v_minus[2]*B[0] - v_minus[0]*B[2]);
@@ -107,9 +102,15 @@ void operator()(cudaParticle &p) const {
 	    p.vx = v[0];
 	    p.vy = v[1];
 	    p.vz = v[2];
-    
+
+// 	p.x = dt;
+//	p.y = span;
+//	p.z = 1.0*nSteps;
+//	p.vx = E[0];
+//	p.vy = E[1];
+//	p.vz = E[2];	   
 	}
-	}
+//	}
 } 
 
 };
