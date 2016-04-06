@@ -2,6 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include <stdlib.h>
+#include <random>
 #include "h1.h"
 using namespace std;
 
@@ -99,7 +100,9 @@ void Particle::Ionization(double dt)
 	P1 = 1-exp(-dt/tion);
 
 	double r1=((double)rand()/(double)RAND_MAX);
-	
+
+std::uniform_real_distribution<double> dist(0.0, 1.0);
+//std::cout << dist(stream) << "\n";	
 		//cout << " Z " << Z << " P1 " << P1 << " r1 " << r1 << endl;
 	
 // 	if( Z == 0)

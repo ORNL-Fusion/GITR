@@ -1,4 +1,4 @@
-
+#include <random>
 
 class Particle
 {
@@ -12,6 +12,7 @@ class Particle
       double Z;
       double amu;
       double perpDistanceToSurface;
+	std::mt19937 stream;	
       
       void BorisMove(double dt, double xMinV,double xMaxV,double yMin,double yMax,double zMin,double zMax);
       void Ionization(double dt);         

@@ -7,6 +7,8 @@
 #include <thrust/copy.h>
 #include <cstdlib>
 #include <cmath>
+#include <thrust/random.h>
+#include <curand_kernel.h>
 
 class cudaParticle {
 	public:
@@ -18,7 +20,8 @@ class cudaParticle {
       	float vz;
       	float Z;
       	float amu;
-        float dt;
+	curandState s;
+	//thrust::default_random_engine stream;
 
 		__host__ __device__ 
         cudaParticle() {
@@ -27,10 +30,8 @@ class cudaParticle {
 	        z=0.0;
         };
 		__host__ __device__
-        cudaParticle(float x,float y, float z, float Ex, float Ey, float Ez, float Z, float amu, float dt){
+        cudaParticle(float x,float y, float z, float Ex, float Ey, float Ez, float Z, float amu){
     
-            this->dt = dt;
-
             this->x = x;
             this->y = y;
             this->z = z;
@@ -44,7 +45,9 @@ class cudaParticle {
 		    
 		    if(Ex == 0.0) this->vx = 0.0;
 		    if(Ey == 0.0) this->vy = 0.0;
-		    if(Ez == 0.0) this->vz = 0.0; 
+		    if(Ez == 0.0) this->vz = 0.0;
+	
+	//this->stream = eng; 
         };
 };
 
