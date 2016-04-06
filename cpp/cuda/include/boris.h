@@ -30,7 +30,8 @@ struct move_boris {
         move_boris(double _span) : span(_span) {} 
 __host__ __device__ 
 void operator()(cudaParticle &p) const { 
-
+	if(p.hitWall == 0.0){
+	
 	double v_minus[3]= {0, 0, 0};
 	double v[3]= {0, 0, 0};
 	double E[3] = {0, 0, 0};
@@ -95,6 +96,7 @@ void operator()(cudaParticle &p) const {
 	        p.x = p.x + (p.x - r[0])*t;
 	        p.y = p.y + (p.y - r[1])*t;
 	        p.z = p.z + (p.z - r[2])*t;
+		p.hitWall = 1.0;
 	    } 
         else {
 	        p.x = r[0];
@@ -105,7 +107,9 @@ void operator()(cudaParticle &p) const {
 	    p.vx = v[0];
 	    p.vy = v[1];
 	    p.vz = v[2];
-    }
+    
+	}
+	}
 } 
 
 };
