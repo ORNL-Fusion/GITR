@@ -62,8 +62,8 @@ struct ionize {
 		p.Z = p.Z+1;
 	} 
 						
-	p.vx = P1;
-	p.vy = r1;	
+	//p.vx = P1;
+	//p.vy = r1;	
 //	if(r2 <= Prec)
 //	{
 //		p.Z = p.Z-1;

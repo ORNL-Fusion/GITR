@@ -207,7 +207,7 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
     	cpu_timer timer;
 
-	std::cout << "Initial x position GPU: " << hostCudaParticleVector[1].x << std::endl;
+	std::cout << "Initial x position GPU: " << hostCudaParticleVector[1].x << "  " << hostCudaParticleVector[0].y << "  " << hostCudaParticleVector[0].z << "  " << hostCudaParticleVector[0].vx << "  " << hostCudaParticleVector[0].vy << "  " << hostCudaParticleVector[0].vz<< "  " << hostCudaParticleVector[0].Z << std::endl;
 
 	thrust::device_vector<cudaParticle> deviceCudaParticleVector = hostCudaParticleVector;
 
@@ -233,8 +233,8 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
     	thrust::transform(Z1.begin(), Z1.end(), count.begin(), count.begin(), thrust::multiplies<float>());
 
-        for(int i=0; i < hostCudaParticleVector.size(); i++)
-                 std::cout << count[i] << std::endl;
+        //for(int i=0; i < hostCudaParticleVector.size(); i++)
+          //       std::cout << count[i] << std::endl;
 
         thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),count.begin(),deviceCudaParticleVector.begin(), randInit(dist(rd)));
 	
@@ -244,6 +244,7 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     	std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
 	for(int tt=0; tt< nT; tt++)
 	{
+	//	std::cout << "loop number: " << tt << std::endl;
     		thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt) );
 
     		//cudaThreadSynchronize();
@@ -259,12 +260,14 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     thrust::host_vector<cudaParticle> hostCudaParticleVector2 = deviceCudaParticleVector;
 
 	for(int i=0; i < hostCudaParticleVector2.size(); i++){
+		if(hostCudaParticleVector2[i].hitWall == 1){
 		surfaceIndexY = int(floor((hostCudaParticleVector2[i].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
 		surfaceIndexZ = int(floor((hostCudaParticleVector2[i].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
 		SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
 
 		SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += hostCudaParticleVector2[i].Z ;
 		SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*hostCudaParticleVector2[i].amu*1.6737236e-27*(hostCudaParticleVector2[i].vx*hostCudaParticleVector2[i].vx +  hostCudaParticleVector2[i].vy*hostCudaParticleVector2[i].vy+ hostCudaParticleVector2[i].vz*hostCudaParticleVector2[i].vz)*1.60217662e-19;
+		}	
 	}
 
 			OUTPUT( outname,nY, nZ, SurfaceBins);
@@ -274,7 +277,7 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
     cpu_times copyToHostTime = timer.elapsed();
     //std::cout << "copyToHostTime: " << (copyToHostTime.wall-moveTimeGPU.wall)*1e-9 << '\n';
-	std::cout << "Final x position GPU: " << hostCudaParticleVector2.back().x << std::endl;
+	std::cout << "Final x position GPU: " << hostCudaParticleVector2[0].x << "  " << hostCudaParticleVector2[0].y << "  " << hostCudaParticleVector2[0].z << "  " << hostCudaParticleVector2[0].vx << "  " << hostCudaParticleVector2[0].vy << "  " << hostCudaParticleVector2[0].vz<< "  " << hostCudaParticleVector2[0].Z << std::endl;
 
 	std::vector<cudaParticle> particleVector(nParticles,p1);
 
@@ -287,6 +290,6 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     std::cout << "moveTimeCPU: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall)*1e-9 << '\n';
 
     //std::cout << "GPU Speedup: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall) / (moveTimeGPU.wall-copyToDeviceTime.wall) << '\n';
-	std::cout << "Final x position CPU: " << particleVector.back().x << std::endl;
+	std::cout << "Final x position CPU: " << particleVector[0].x << "  " << particleVector[0].y << "  " << particleVector[0].z << "  " << particleVector[0].vx << "  " << particleVector[0].vy << "  " << particleVector[0].vz << "  " << particleVector[0].Z << std::endl;
 	return 0;
 }
