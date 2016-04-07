@@ -10,20 +10,46 @@
 #include <thrust/device_vector.h>
 #include "cudaParticle.h"
 #include "boris.h"
+#include "ionize.h"
 #include <algorithm>
+#include <boost/timer/timer.hpp>
+#include <random>
+#include <curand.h>
+#include <curand_kernel.h>
+#include <thrust/sequence.h>
+#include <thrust/transform.h>
+#include <thrust/functional.h>
 
 using namespace std;
 using namespace libconfig;
+using namespace boost::timer;
 
-__host__ __device__
- cudaParticle       generateParticle(double x1){
-		cudaParticle p; 
-               p.x = x1;
-               p.y = 2.0;
-               p.z = 3.0;
-		
-		return p;
-        };
+
+struct randInit 
+{
+
+	const float b;
+	randInit(float _b) : b(_b) {}
+  __device__
+  cudaParticle operator()(cudaParticle& p, float& count)
+  {
+
+    unsigned int seed = (unsigned int)(count*1e3);
+
+    curandState s;
+
+    // seed a random number generator
+    curand_init(seed, 0, 0, &s);
+
+      // draw a sample from the unit square
+      p.s = s;
+	// = curand_uniform(&s);
+	return p;
+}
+};
+
+
+
 
 int main()
 {
@@ -164,87 +190,103 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
 	int nP = cfg.lookup("impurityParticleSource.nP");
  	cout << "Number of particles: " << nP << endl;				
-	Particle Particles[nP];
-	INIT(nP,Particles, cfg);
-
-	unsigned long seed=(unsigned long)(time(NULL));
-	srand(seed);
-	
+	long nParticles = nP;
 	int nT = cfg.lookup("timeStep.nT");
     cout << "Number of time steps: " << nT << endl;	
     
-    int surfaceIndexY;
+    	int surfaceIndexY;
 	int surfaceIndexZ;
 
-	thrust::host_vector<int> H(4); 
-	H[0] = 14;
- 	H[1] = 20;
-	H[2] = 38;
-	H[3] = 46;
-
-	thrust::device_vector<int> D = H;
-	D[0] = 99;
-	D[1] = 88;  
-
-	for(int i = 0; i < D.size(); i++)
-	    std::cout << "D[" << i << "] = " << D[i] << std::endl;
-
-	//cudaParticle p = generateParticle(x);
-
-	//std::cout << p.x << p.y << p.z << std::endl;
 	cudaParticle p1(x,y,z,Ex,Ey,Ez,Z,amu);
-	std::cout << p1.x << p1.y << p1.z << std::endl;
-	std::cout << p1.vx << p1.vy << p1.vz << std::endl;
-	std::cout << p1.Z << p1.amu << std::endl;
-	thrust::host_vector<cudaParticle> hostCudaParticleVector(100,p1);
-	//thrust::generate(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), p);
 
-	for(int i=0; i < hostCudaParticleVector.size(); i++)
-	    std::cout << hostCudaParticleVector[i].x << std::endl;
+    	std::cout << "nParticles: " << nParticles << std::endl;
+	thrust::host_vector<cudaParticle> hostCudaParticleVector(nParticles,p1);
+
+	//for(int i=0; i < hostCudaParticleVector.size(); i++)
+	//    std::cout << hostCudaParticleVector[i].x << std::endl;
+
+    	cpu_timer timer;
+
+	std::cout << "Initial x position GPU: " << hostCudaParticleVector[1].x << std::endl;
 
 	thrust::device_vector<cudaParticle> deviceCudaParticleVector = hostCudaParticleVector;
 
-    thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris() );
+	std::random_device rd;
+	std::uniform_real_distribution<float> dist(0, 1E+3);
+	std::cout << "rd: " <<  dist(rd) << std::endl;
+    
+	cudaThreadSynchronize();
+	
+	thrust::device_vector<float> count(nP);
+	thrust::device_vector<float> Z1(nP);
+	thrust::device_vector<float> ones(nP);
+
+	thrust::sequence(count.begin(), count.end());
+    	thrust::fill(ones.begin(), ones.end(), 1);
+
+	thrust::transform(count.begin(), count.end(),ones.begin(), count.begin(), thrust::plus<float>());
+
+        thrust::fill(ones.begin(), ones.end(), nP);
+        thrust::transform(count.begin(), count.end(),ones.begin(), count.begin(), thrust::divides<float>());
+
+    	thrust::fill(Z1.begin(), Z1.end(), dist(rd));
+
+    	thrust::transform(Z1.begin(), Z1.end(), count.begin(), count.begin(), thrust::multiplies<float>());
+
+        for(int i=0; i < hostCudaParticleVector.size(); i++)
+                 std::cout << count[i] << std::endl;
+
+        thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),count.begin(),deviceCudaParticleVector.begin(), randInit(dist(rd)));
+	
+	cudaThreadSynchronize();
+
+    	cpu_times copyToDeviceTime = timer.elapsed();
+    	std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
+	for(int tt=0; tt< nT; tt++)
+	{
+    		thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt) );
+
+    		//cudaThreadSynchronize();
+
+    		//cpu_times moveTimeGPU = timer.elapsed();
+    		//std::cout << "moveTimeGPU: " << (moveTimeGPU.wall-copyToDeviceTime.wall)*1e-9 << '\n';
+
+    		thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize(dt) );
+	}
+    cpu_times ionizeTimeGPU = timer.elapsed();
+    std::cout << "ionizeTimeGPU: " << ionizeTimeGPU.wall*1e-9 << '\n';
 
     thrust::host_vector<cudaParticle> hostCudaParticleVector2 = deviceCudaParticleVector;
 
-    for(int i=0; i < hostCudaParticleVector2.size(); i++)
-        std::cout << hostCudaParticleVector2[i].x << std::endl;
+	for(int i=0; i < hostCudaParticleVector2.size(); i++){
+		surfaceIndexY = int(floor((hostCudaParticleVector2[i].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
+		surfaceIndexZ = int(floor((hostCudaParticleVector2[i].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
+		SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
 
-	std::vector<cudaParticle> particleVector(100);
-    std::for_each( particleVector.begin(), particleVector.end(), move_boris() );
-
-
-
-	for(int p=0 ; p<nP ; p++)
-	{
-//
-//		for(int tt = 0; tt< nT; tt++)
-//		{
-//			if (Particles[p].perpDistanceToSurface >= 0.0 && Particles[p].x > xMinV
-//			&& Particles[p].x < xMaxV && Particles[p].y > yMin && Particles[p].y < yMax
-//			&& Particles[p].z > zMin && Particles[p].z < zMax)
-//			{
-//			    Particles[p].BorisMove(dt,  xMinV, xMaxV, yMin, yMax, zMin, zMax);
-//			    Particles[p].Ionization(dt);
-//			}
-//			
-//			else
-//			{
-//	        surfaceIndexY = int(floor((Particles[p].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
-//		        surfaceIndexZ = int(floor((Particles[p].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
-//		        SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
-//
-//		        SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += Particles[p].Z ;
-//		        SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*Particles[p].amu*1.6737236e-27*(Particles[p].vx*Particles[p].vx +  Particles[p].vy*Particles[p].vy+ Particles[p].vz*Particles[p].vz)*1.60217662e-19;
-//			break;
-//			 }
-//		}
+		SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += hostCudaParticleVector2[i].Z ;
+		SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*hostCudaParticleVector2[i].amu*1.6737236e-27*(hostCudaParticleVector2[i].vx*hostCudaParticleVector2[i].vx +  hostCudaParticleVector2[i].vy*hostCudaParticleVector2[i].vy+ hostCudaParticleVector2[i].vz*hostCudaParticleVector2[i].vz)*1.60217662e-19;
 	}
-	
-//    OUTPUT( outname,nY, nZ, SurfaceBins);
-//    OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
-//    OUTPUT( outnameEnergy,nY, nZ, SurfaceBinsEnergy);
-			
+
+			OUTPUT( outname,nY, nZ, SurfaceBins);
+			OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
+			OUTPUT( outnameEnergy,nY, nZ, SurfaceBinsEnergy);
+    cudaThreadSynchronize();
+
+    cpu_times copyToHostTime = timer.elapsed();
+    //std::cout << "copyToHostTime: " << (copyToHostTime.wall-moveTimeGPU.wall)*1e-9 << '\n';
+	std::cout << "Final x position GPU: " << hostCudaParticleVector2.back().x << std::endl;
+
+	std::vector<cudaParticle> particleVector(nParticles,p1);
+
+    cpu_times createParticlesTimeCPU = timer.elapsed();
+    std::cout << "createParticesTimeCPU: " << (createParticlesTimeCPU.wall-copyToHostTime.wall)*1e-9 << '\n';
+
+    std::for_each( particleVector.begin(), particleVector.end(), move_boris(dt) );
+
+    cpu_times moveTimeCPU = timer.elapsed();
+    std::cout << "moveTimeCPU: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall)*1e-9 << '\n';
+
+    //std::cout << "GPU Speedup: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall) / (moveTimeGPU.wall-copyToDeviceTime.wall) << '\n';
+	std::cout << "Final x position CPU: " << particleVector.back().x << std::endl;
 	return 0;
 }

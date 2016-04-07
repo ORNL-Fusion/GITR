@@ -14,6 +14,11 @@ NVCC := nvcc
 
 MODULES := src include
 
+# Boost
+
+INCLUDEFLAGS+=
+LIBS+= -lboost_system -lboost_timer
+
 # Libconfig
 
 INCLUDEFLAGS+= -I $(LIBCONFIGINCLUDE)
@@ -25,6 +30,7 @@ NVCCFLAGS += $(INCLUDEFLAGS)
 
 CPPFLAGS:=
 CPPFLAGS+= -DUSEMPI=0
+CPPFLAGS+= -std=c++11
 
 
 # You shouldn't have to go below here
