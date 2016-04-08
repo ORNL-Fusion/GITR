@@ -1,6 +1,7 @@
 axisLabelFont = 20;
 tickFont = 12;
 titleFont = 60;
+xmax = 15;
 
 dA = CellProp{6}.data;
 Come = NC*dA(1,1);
@@ -13,7 +14,7 @@ subplot(2,2,1)
 surf(x,y,zeros(iNX,iNY),log10(gitrDeposition),'EdgeColor','none')
 colormap hot
 colorbar
-axis([-2 15 -2 8])
+axis([-2 xmax -2 8])
 caxis([-1 3])
 xlabel('x axis [mm]','FontSize',axisLabelFont)
 ylabel('y axis [mm]','FontSize',axisLabelFont)
@@ -26,7 +27,7 @@ subplot(2,2,3)
 surf(x,y,zeros(iNX,iNY),log10(Come),'EdgeColor','none')
 colormap hot
 colorbar
-axis([-2 15 -2 8])
+axis([-2 xmax -2 8])
 caxis([-1 3])
 xlabel('x axis [mm]','FontSize',axisLabelFont)
 ylabel('y axis [mm]','FontSize',axisLabelFont)
@@ -41,7 +42,7 @@ gMQ(isnan(gMQ)) = 0;
 surf(x,y,zeros(iNX,iNY),rot90(rot90(gMQ)),'EdgeColor','none')
 colormap hot
 colorbar
-axis([-2 15 -2 8])
+axis([-2 xmax -2 8])
 caxis([0 6])
 xlabel('x axis [mm]','FontSize',axisLabelFont)
 ylabel('y axis [mm]','FontSize',axisLabelFont)
@@ -53,7 +54,7 @@ subplot(2,2,4)
 surf(x,y,zeros(iNX,iNY),MQ,'EdgeColor','none')
 colormap hot
 colorbar
-axis([-2 15 -2 8])
+axis([-2 xmax -2 8])
 caxis([0 6])
 xlabel('x axis [mm]','FontSize',axisLabelFont)
 ylabel('y axis [mm]','FontSize',axisLabelFont)

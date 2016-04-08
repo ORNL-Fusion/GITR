@@ -142,7 +142,8 @@ cout << maxTemp_eV[i];
 				
 	int nP = cfg.lookup("impurityParticleSource.nP");
  	cout << "Number of particles: " << nP << endl;				
-	Particle Particles[nP];
+	Particle *Particles;
+	Particles = new Particle[nP];
 	INIT(nP,Particles, cfg);
 
    

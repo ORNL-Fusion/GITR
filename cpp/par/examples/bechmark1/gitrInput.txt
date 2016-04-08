@@ -57,7 +57,7 @@ ionization_nDtPerApply
 collision_nDtPerApply
 5
 nT
-100000000
+10000000
 %ConstantBfieldvalue-onlyusedwhenBfieldInterpolator_number0Bx_in
 0.00
 By_in

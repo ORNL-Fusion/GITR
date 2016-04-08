@@ -25,3 +25,7 @@ imagesc((fliplr(ME)))
 colorbar
 caxis([-1 max((ME(:)))])
 colormap jet
+
+Tallys = Depo;
+gitr_MQ = gMQ;
+gitr_ME = ME;
