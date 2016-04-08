@@ -177,8 +177,8 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 				dt = 1e-6/nPtsPerGyroOrbit;
 				nParticlesPerProcessor = nP/(nWRs);
 				
-				
-					Particle Particles[nParticlesPerProcessor];
+					Particle *Particles;
+					Particles = new Particle[nParticlesPerProcessor];
 	INIT(myID,  nWRs,nP,Particles);
 	std::cout<< "ppp: " << nParticlesPerProcessor << std::endl;
 

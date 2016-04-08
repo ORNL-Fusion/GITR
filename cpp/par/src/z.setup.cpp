@@ -2,6 +2,11 @@
 #include <mpi.h>
 #include <math.h>
 #include <iostream>
+#include <random>
+#include <iomanip>
+#include <cstdlib>
+#include <libconfig.h++>
+#include <cmath>
 
 //MESH
 
@@ -60,6 +65,9 @@ void INIT(int myID, int nWRs, int nP, Particle p[])
 	p[i].amu = 184.0;
 	p[i].perpDistanceToSurface = 0.0;
 	//std::cout<< "amu: " << p[i].amu << std::endl;
+		std::random_device rd;
+	std::mt19937 mt(rd());
+	p[i].stream = mt;
 	}
 	
 }
