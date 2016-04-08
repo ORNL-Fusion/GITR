@@ -21,6 +21,7 @@ class cudaParticle {
       	float Z;
       	float amu;
 	curandState s;
+    float seed0;
 	float hitWall;
 	//thrust::default_random_engine stream;
 
