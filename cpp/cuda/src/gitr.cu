@@ -27,28 +27,17 @@ using namespace boost::timer;
 
 struct randInit 
 {
+    __device__
+    cudaParticle operator()(cudaParticle& p, float& seed)
+    {
+        curandState s;
+        curand_init(seed, 0, 0, &s);
+        p.seed0 = seed;
+        p.s = s;
 
-	const float b;
-	randInit(float _b) : b(_b) {}
-  __device__
-  cudaParticle operator()(cudaParticle& p, float& count)
-  {
-
-    unsigned int seed = (unsigned int)(count*1e3);
-
-    curandState s;
-
-    // seed a random number generator
-    curand_init(seed, 0, 0, &s);
-
-      // draw a sample from the unit square
-      p.s = s;
-	// = curand_uniform(&s);
-	return p;
-}
+        return p;
+    }
 };
-
-
 
 
 int main()
@@ -103,7 +92,7 @@ int ionization_nDtPerApply  = cfg.lookup("timeStep.ionization_nDtPerApply");
 int collision_nDtPerApply  = cfg.lookup("timeStep.collision_nDtPerApply");
 cout << "collision_nDtPerApply  " << collision_nDtPerApply << endl;
 // Perp DiffusionCoeff - only used when Diffusion interpolator is = 0
-double perDiffusionCoeff_in;
+double perandom_deviceiffusionCoeff_in;
 
 // Background profile values used Density, temperature interpolators are 0
 // or 2
@@ -194,65 +183,67 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 	int nT = cfg.lookup("timeStep.nT");
     cout << "Number of time steps: " << nT << endl;	
     
-    	int surfaceIndexY;
+    int surfaceIndexY;
 	int surfaceIndexZ;
 
 	cudaParticle p1(x,y,z,Ex,Ey,Ez,Z,amu);
 
-    	std::cout << "nParticles: " << nParticles << std::endl;
+    std::cout << "nParticles: " << nParticles << std::endl;
 	thrust::host_vector<cudaParticle> hostCudaParticleVector(nParticles,p1);
 
 	//for(int i=0; i < hostCudaParticleVector.size(); i++)
 	//    std::cout << hostCudaParticleVector[i].x << std::endl;
 
-    	cpu_timer timer;
+    cpu_timer timer;
 
 	std::cout << "Initial x position GPU: " << hostCudaParticleVector[1].x << "  " << hostCudaParticleVector[0].y << "  " << hostCudaParticleVector[0].z << "  " << hostCudaParticleVector[0].vx << "  " << hostCudaParticleVector[0].vy << "  " << hostCudaParticleVector[0].vz<< "  " << hostCudaParticleVector[0].Z << std::endl;
 
 	thrust::device_vector<cudaParticle> deviceCudaParticleVector = hostCudaParticleVector;
 
-	std::random_device rd;
-	std::uniform_real_distribution<float> dist(0, 1E+3);
-	std::cout << "rd: " <<  dist(rd) << std::endl;
-    
+	//std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(),std::numeric_limits<float>::max());
+	std::uniform_real_distribution<float> dist(0,1e6);
+
+    std::default_random_engine generator;
+   
+    std::vector<float> seeds(nP);
+    std::generate( seeds.begin(), seeds.end(), [&]() { return dist(generator); } );
+    thrust::device_vector<float> deviceSeeds = seeds;
+
 	cudaThreadSynchronize();
 	
-	thrust::device_vector<float> count(nP);
-	thrust::device_vector<float> Z1(nP);
-	thrust::device_vector<float> ones(nP);
+    thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), deviceSeeds.begin(), deviceCudaParticleVector.begin(), randInit() );
 
-	thrust::sequence(count.begin(), count.end());
-    	thrust::fill(ones.begin(), ones.end(), 1);
+	thrust::host_vector<cudaParticle> hostCudaParticleVectorTmp = deviceCudaParticleVector;
 
-	thrust::transform(count.begin(), count.end(),ones.begin(), count.begin(), thrust::plus<float>());
+    for (auto const& c : seeds)
+        std::cout << c << ' ';
 
-        thrust::fill(ones.begin(), ones.end(), nP);
-        thrust::transform(count.begin(), count.end(),ones.begin(), count.begin(), thrust::divides<float>());
+    //std::cout<<std::endl;
 
-    	thrust::fill(Z1.begin(), Z1.end(), dist(rd));
+    //for (auto const& c : hostCudaParticleVectorTmp)
+    //    std::cout << c.seed0 << ' ';
 
-    	thrust::transform(Z1.begin(), Z1.end(), count.begin(), count.begin(), thrust::multiplies<float>());
+    //std::map<int,int> hist;
+    //for (int n=0; n<nP; ++n)
+    //{ 
+    //    ++hist[std::round(hostCudaParticleVector
+    //}
 
-        //for(int i=0; i < hostCudaParticleVector.size(); i++)
-          //       std::cout << count[i] << std::endl;
-
-        thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),count.begin(),deviceCudaParticleVector.begin(), randInit(dist(rd)));
-	
 	cudaThreadSynchronize();
 
-    	cpu_times copyToDeviceTime = timer.elapsed();
-    	std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
+    cpu_times copyToDeviceTime = timer.elapsed();
+    std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
 	for(int tt=0; tt< nT; tt++)
 	{
 	//	std::cout << "loop number: " << tt << std::endl;
-    		thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt) );
+    	thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt) );
 
-    		//cudaThreadSynchronize();
+    	//cudaThreadSynchronize();
 
-    		//cpu_times moveTimeGPU = timer.elapsed();
-    		//std::cout << "moveTimeGPU: " << (moveTimeGPU.wall-copyToDeviceTime.wall)*1e-9 << '\n';
+    	//cpu_times moveTimeGPU = timer.elapsed();
+    	//std::cout << "moveTimeGPU: " << (moveTimeGPU.wall-copyToDeviceTime.wall)*1e-9 << '\n';
 
-    		thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize(dt) );
+    	thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize(dt) );
 	}
     cpu_times ionizeTimeGPU = timer.elapsed();
     std::cout << "ionizeTimeGPU: " << ionizeTimeGPU.wall*1e-9 << '\n';
@@ -270,9 +261,9 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 		}	
 	}
 
-			OUTPUT( outname,nY, nZ, SurfaceBins);
-			OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
-			OUTPUT( outnameEnergy,nY, nZ, SurfaceBinsEnergy);
+	OUTPUT( outname,nY, nZ, SurfaceBins);
+	OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
+	OUTPUT( outnameEnergy,nY, nZ, SurfaceBinsEnergy);
     cudaThreadSynchronize();
 
     cpu_times copyToHostTime = timer.elapsed();
