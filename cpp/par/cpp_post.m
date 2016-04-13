@@ -1,4 +1,4 @@
-%clear variables
+clear variables
 
 Deposition
 Depo = Dep;

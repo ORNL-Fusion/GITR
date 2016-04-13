@@ -28,7 +28,7 @@ void Particle::BorisMove(double dt,double xMinV,double xMaxV,double yMin,double 
 	//std::cout << "Perp dist" << perpDistanceToSurface << std::endl;
 	//std::cout << " Particle position in xyz " << x << " " << y << " " << z << std::endl;
 	//perpd = ( -0.5773*x + z )/1.1547;
-Efield( E, perpDistanceToSurface);
+Efield( E, perpDistanceToSurface,z,x);
 	
 	double Bmag = 2;
 	
@@ -69,9 +69,9 @@ Efield( E, perpDistanceToSurface);
                 			if (perpDistanceToSurface < 0)
 			{
 			            t = (surface_dz_dx*x - z)/(-surface_dz_dx*(x -r[0]) + (z -r[2]));
-                        x = x + (x - r[0])*t;
-                        y = y + (y - r[1])*t;
-                        z = z + (z - r[2])*t;
+                        //x = x + (x - r[0])*t;
+                        //y = y + (y - r[1])*t;
+                        //z = z + (z - r[2])*t;
 
 			}
 			else

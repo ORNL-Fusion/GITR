@@ -93,7 +93,7 @@ sizes  = length(x)*length(y)
 xx = reshape(gitrDeposition,[sizes,1]);
 yy = reshape(Come, [sizes, 1]);
 
-b1 = xx\yy;
+b1 = xx\yy
 scatter(log10(xx),log10(yy))
 
 vals = 0:1:3;
@@ -126,7 +126,7 @@ for i=1:sizes
     end
         
 end
-b1 = xx\yy;
+b1 = xx\yy
 scatter(xx,yy)
 
 vals = 0:1:7;
