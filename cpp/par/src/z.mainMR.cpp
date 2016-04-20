@@ -189,19 +189,22 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 	double **MSurfaceBinsCharge;
 	double **MSurfaceBinsChargeGlobal;
 	double **MSurfaceBinsEnergy;
+	double **MSurfaceBinsEnergyGlobal;
 	
 					  MSurfaceBins = new double*[nY];
 					  MSurfaceBinsCharge = new double*[nY];
 					  MSurfaceBinsChargeGlobal = new double*[nY];
 					  MSurfaceBinsEnergy = new double*[nY];
 					  MSurfaceBinsGlobal = new double*[nY];
-
+					MSurfaceBinsEnergy = new double*[nY];
+						
  				 MSurfaceBins[0] = new double[nY*nZ];
  				 MSurfaceBinsCharge[0] = new double[nY*nZ];
  				 MSurfaceBinsChargeGlobal[0] = new double[nY*nZ];
  				 MSurfaceBinsEnergy[0] = new double[nY*nZ];
  				 MSurfaceBinsGlobal[0] = new double[nY*nZ];
-			
+				MSurfaceBinsEnergyGlobal[0] = new double[nY*nZ];
+				
 			 for(int i=0 ; i<nY ; i++)
 				{
 					MSurfaceBins[i] = &MSurfaceBins[0][i*nZ];
@@ -209,6 +212,7 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 					MSurfaceBinsChargeGlobal[i] = &MSurfaceBinsChargeGlobal[0][i*nZ];
 					MSurfaceBinsEnergy[i] = &MSurfaceBinsEnergy[0][i*nZ];
 					MSurfaceBinsGlobal[i] = &MSurfaceBinsGlobal[0][i*nZ];
+					MSurfaceBinsEnergyGlobal[i] = &MSurfaceBinsEnergyGlobal[0][i*nZ];
 					
 					for(int j=0 ; j<nZ ; j++)
 					{
@@ -216,6 +220,7 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 						MSurfaceBinsCharge[i][j] = 0;
 						MSurfaceBinsChargeGlobal[i][j] = 0;
 						MSurfaceBinsEnergy[i][j] = 0;
+						MSurfaceBinsEnergyGlobal[i][j] = 0;
 						MSurfaceBinsGlobal[i][j] = 0;
 					}
 				}
@@ -232,12 +237,12 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 				
 	
 			MPI_Barrier( MPI_COMM_WORLD );
-// 				RECV_2doutput_MPI( nWRs, nY, nZ,MSurfaceBins,MSurfaceBinsEnergy);
-// 	
-// 			MPI_Barrier( MPI_COMM_WORLD );
+ 				RECV_2doutput_MPI( nWRs, nY, nZ,MSurfaceBinsEnergy,MSurfaceBinsEnergyGlobal);
+ 	
+ 			//MPI_Barrier( MPI_COMM_WORLD );
 			
 			OUTPUT( outname,nY, nZ, MSurfaceBinsGlobal);
 			OUTPUT( outnameCharge,nY, nZ, MSurfaceBinsChargeGlobal);
-			OUTPUT( outnameEnergy,nY, nZ, MSurfaceBinsEnergy);
+			OUTPUT( outnameEnergy,nY, nZ, MSurfaceBinsEnergyGlobal);
 	
 }

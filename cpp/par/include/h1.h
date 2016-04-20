@@ -24,5 +24,5 @@ void OUTPUT(char outname[],int nX, int nY, double **array2d);
 void SEND_2doutput_MPI(int myID,int nX, int nY,double **arr);
 void RECV_2doutput_MPI(int nWRs, int nX, int nY,double **local, double **global);
 
-void Efield(double E[], double perpDistanceToSurface);
+void Efield(double E[], double perpDistanceToSurface, double z, double x);
 
