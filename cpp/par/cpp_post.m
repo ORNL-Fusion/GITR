@@ -20,10 +20,11 @@ colormap jet
 Energy
 Energies = Dep;
 ME = Energies./Depo;
+ME(isnan(ME)) = 0;
 figure(33)
 imagesc((fliplr(ME)))
 colorbar
-caxis([-1 max((ME(:)))])
+caxis([0 max((ME(:)))])
 colormap jet
 
 Tallys = Depo;

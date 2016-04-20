@@ -211,7 +211,8 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 		SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
 
 		SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += Particles[p].Z ;
-		SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*Particles[p].amu*1.6737236e-27*(Particles[p].vx*Particles[p].vx +  Particles[p].vy*Particles[p].vy+ Particles[p].vz*Particles[p].vz)*1.60217662e-19;
+		//std::cout << " Particle energy " << 0.5*Particles[p].amu*1.6737236e-27*(Particles[p].vx*Particles[p].vx +  Particles[p].vy*Particles[p].vy+ Particles[p].vz*Particles[p].vz)/1.60217662e-19 << std::endl;
+		SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*Particles[p].amu*1.6737236e-27*(Particles[p].vx*Particles[p].vx +  Particles[p].vy*Particles[p].vy+ Particles[p].vz*Particles[p].vz)/1.60217662e-19;
 			 break;
 			 }
 		}
@@ -227,15 +228,13 @@ MPI_Bcast( &parms, Nparms, MPI_DOUBLE_PRECISION, 0,MPI_COMM_WORLD);
 	 	
 	SEND_2doutput_MPI(myID,nY, nZ,SurfaceBins);
 	
- 		MPI_Barrier( MPI_COMM_WORLD );
+ 	MPI_Barrier( MPI_COMM_WORLD );
  		
 
-		
-
-			SEND_2doutput_MPI(myID,nY, nZ,SurfaceBinsCharge);
+	SEND_2doutput_MPI(myID,nY, nZ,SurfaceBinsCharge);
 	
-		MPI_Barrier( MPI_COMM_WORLD );
-// 			SEND_2doutput_MPI(myID,nY, nZ,SurfaceBinsEnergy);
-// 	
- //		MPI_Barrier( MPI_COMM_WORLD );
+	MPI_Barrier( MPI_COMM_WORLD );
+ 	SEND_2doutput_MPI(myID,nY, nZ,SurfaceBinsEnergy);
+ 	
+ 	//MPI_Barrier( MPI_COMM_WORLD );
 }
