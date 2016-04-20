@@ -51,7 +51,7 @@ connectionLength
 %Backgroundspeciesinfobackground_Z
 2
 %ParticletimesteppingcontrolnPtsPerGyroOrbit
-1000
+10000
 ionization_nDtPerApply
 1
 collision_nDtPerApply

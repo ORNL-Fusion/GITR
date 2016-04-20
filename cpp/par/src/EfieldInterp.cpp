@@ -46,10 +46,10 @@ void Efield(double E[], double perpDistanceToSurface,double z, double x)
 	
 	//std::cout << "s: " << s<< std::endl;
 	//std::cout << "Epara: " << Epara << std::endl;
-	Emag = 60*(0.8357/(2.0*1.0513e-05)*exp(-perpDistanceToSurface/(2.0*1.0513e-05))+ (1.0 - 0.8357)/(3.64479e-4)*exp(-perpDistanceToSurface/(3.64479e-4)) );
+	Emag = 60*(0.8357/(2.0*1.05058e-05)*exp(-perpDistanceToSurface/(2.0*1.05058e-05))+ (1.0 - 0.8357)/(3.64479e-4)*exp(-perpDistanceToSurface/(3.64479e-4)) );
 	E[0] = Emag*surfaceDirection_unit[0];
 	E[1] = Emag*surfaceDirection_unit[1];
-	E[2] = Emag*surfaceDirection_unit[2] - Epara;
+	E[2] = Emag*surfaceDirection_unit[2];
 	//std::cout << "Ez: " << E[2] << std::endl;
 
 #endif
