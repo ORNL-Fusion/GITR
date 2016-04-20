@@ -1,686 +1,0 @@
-######################################################################
-##############        THIS is ERO - TEXTOR            ################
-######################################################################
-######################################################################
-##############            VERSION 1.2                 ################
-######################################################################
-######################################################################
-##############  LAST MAJOR UPDATE:  FEBRUARY-JULY '04 ################
-######################################################################
-************************************************************************************
-************************************************************************************
-       P R O G R A M M E R S  D I S C L A I M  T O  T H E  E R O - TX - C O D E  
-************************************************************************************
-************************************************************************************
-
-************************************************************************************
-****************The ERO code comes without any warranty***************************** 
-************************************************************************************
-
-			(c) 1994, 1995 and 1996 by U.Koegler
-                        (c) 1993 and 1994 by D.Naujoks
-
-COPYRIGHT Notiz zur ERO-Software in der KFA-Juelich          1. 8.1996              
-                                                                                
-                                                                                
-Die ERO-TX-Software wurde im Forschungszentrum Juelich fuer den eigenen             
-Bedarf entwickelt und wird nur nach Ruecksprache zur Verfuegung gestellt.             
-                                                                                
-Die Software darf im wissenschaftlich-technischen Bereich eingesetzt            
-werden, jedoch nicht im kommerziellen Bereich.                                  
-Die Source-Programme der ERO-TX-Software enthalten eine COPYRIGHT Notiz.            
-Wir bitten darum, diese nicht zu entfernen und den Source nur nach Rueck-
-sprache zu veraendern.
-Bei eventuell auftretenden Fehlern Mail an mich.                                
-                                                                                
-Die Dokumentation befindet sich in vorbereitung zum Druck.
-vorversionen bei mir erhaeltlich                                          
-                                                                                
-Viel Erfolg bei der Installation                                                
-ulrich koegler                     bitte mail an  u.koegler@kfa-juelich.de         
-************************************************************************************
-************************************************************************************
-       P R O G R A M M E R S  D I S C L A I M  T O  T H E  E R O -- C O D E  
-************************************************************************************
-************************************************************************************
-
-
-************************************************************************************
-************************************************************************************
-NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**  
-************************************************************************************
-************************************************************************************
-
-  
-major UpGrade major UpGrade major UpGrade major UpGrade major UpGrade major UpGrade ma
-jor UpGrade major UpGrade major UpGrade major UpGrade major UpGrade major UpGrade majo
-
-                              RELEASE :R3-96
-                              RELEASE :R3-96
-
-		RRRRRRR 333333 		9999999 666666
-		RR   RR	    33		99   99 66
-		RR   R	  3333 	 ===	9999999 66
-		RRRRRR	  3333   ===	 999999 666666
-		RR  RR	    33	             99 66  66 
-		RR   RR	333333	    	     99 666666
-
-                              RELEASE :R3-96
-                              RELEASE :R3-96
- 
-major UpGrade major UpGrade major UpGrade major UpGrade major UpGrade major UpGrade ma
-jor UpGrade major UpGrade major UpGrade major UpGrade major UpGrade major UpGrade majo
-
-
-older update notices :
-----------------------
-zusaetzliche files : - chem.dat
-                     - cell.dat 
-
-update notice from Release 1/96:
---------------------------------
-- es wird mit sticking impurity gerechnet
-- es wird mit methane gerechnet
-- es gibt !!!keine!!! gauss verteilten zufallszahlen
-
-notices from Release R3 UpGrade 2/96:
--------------------------------------
-
-please be sure that the parameter files contain the following informations:
-
-1)  physical erosion (on/off)          
-2)  chemical erosion (on/off)          
-3)  hardwired chemical erosion
-     (== -1  => Roth formula ; 
-      >= 0.0 => hardwired erosion yield in percent)
-4)  oxygen erosion (on/off)    
-4a) deposition from background plasma (on/off)    
-5)  decay length for plasma impurities
-6)  the enhancement factor for the sheath potential (usually "1") and 
-    the enhancement factor for the pre sheath radial electric field
-7)  interaction depth for erosion volume 
-8)  the toroidal angle of a plane limiter relative to the x-axis
-8)  Surface temperature [C]           
-9)  secondary electron emission       
-10)  heatconductance [K cm^2/W s^0.5]  
-11)  sheath energy transmission factor 
-12) interaction depth [nm]
-13) for molecular flow conditions of injected impurities, choose
-    pol_distribution == 3
-14) reflection model for injected molecules !!
-    model_of_radical (reflection)
-    reflection_of_radical (coefficient)
-    model_of_ion (reflection)
-    reflection_of_ion (coefficient)
-15) same as 12) for background hydrocarbon formation!!
-    model_of_radical (reflection)
-    reflection_of_radical (coefficient)
-    model_of_ion (reflection)
-    reflection_of_ion (coefficient)
-
-comments on numerical instabilities:
-------------------------------------
-i) numerical instability occured, when a particle is reflected and for toroidal
-   limiter geometry the position of the particle was set to the midthpoint of    
-   the surface cell. therefore the position of the particle is set to 
-   (midth[0],midth[1],midth[2]+1.0e-03) 	
-
-
-************************************************************************************
-************************************************************************************
-NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**NEWS**  
-************************************************************************************
-****************M*I*N*D**T*H*E**V*E*R*S*I*O**N**************************************
-************************************************************************************
-****************M*I*N*D**T*H*E**V*E*R*S*I*O**N**************************************
-
-MMMMMMMMMMMMMMMMMMMMMMMM
-messages from the code :
-MMMMMMMMMMMMMMMMMMMMMMMM
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Input file name: 'par_MPex'.
-
-Converting parameters for neutrals:
-T_n = 2.79e-02 [eV]   n_n = 1.49e+14 [cm^-3]:
-Tracing of all elements starting from #1 is forbidden.
-
-ERO will trace 0 'marker' (non-substrat) elements.
-
-***** Warning: unknown keyword 'BM_BMNum' with value '101' in the parameter file.
-
-***** Warning: unknown keyword 'BM_PlParCase' with value '1  #80836' in the parameter file.
-
-***** Warning: unknown keyword 'element2_tracing' with value 'End' in the parameter file.
-
-***** Warning: unknown keyword 'sheat_on' with value '0' in the parameter file.
-
-***** Warning: unknown keyword 'sheath_factor' with value '1.0' in the parameter file.
-
-***** Warning: unknown keyword 'PhErosMod' with value '0' in the parameter file.
-
-***** Warning: unknown keyword 'CarbydeRate_Be' with value '0' in the parameter file.
-
-***** Warning: unknown keyword 'IonizationOfNtrl' with value '0' in the parameter file.
-
-***** Warning: unknown keyword 'PSCWallReflProb' with value '0' in the parameter file.
-
-***** Warning: unknown keyword 'PSCNtrlDensRedF' with value '0' in the parameter file.
-
-Data log is cleared for output . . .
-
-notice for the thomsonian:
-max. transferabel energy is set to Eo= 3.000000e+01 eV
-and projectile mass is set to M= 1.000000e+00, where M is a redundant
-variable and Eo will be set to 4*Te(local) in the relevant routine  
-charges set to:
- q(D)=1; q(He)=1; q(C)=3; q(O)=5;
-Creating ASCII file 'Wtile_test_Ctrl_St0.m' . . . Complete!
-defined amount of integral impurity-material combinations: 1
-preparing to load _c as selfcombi-element
-in total there are 2 kombinations
-Assuming Charge States of TEXTOR-94 boundary 
-i.e  H,D,T  q = 1 
-     He     q = 1 
-     _C     q = 3 
-     _O     q = 5 
-     Ne     q = 2 
-load reflection
-reading from /home/a7l/ERO/ero_master/ero1/ERO.DATA/REFLECTION/_w_on__w.dat
-iDefSurfType: the surface type is 0.
---------------------------------------
-the lcfs in p_nTData is at: 6.964102e+01
-the lcfs in m_ptr is at: 6.964102e+01
-max rad is at: 6.964102e+01
---------------------------------------
-Creating ASCII file 'Wtile_test_PTraj_St0.m' . . . Complete!
-
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/ION/IM_ADAS96.cfg' . . .
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/ION/IM_ADAS96.cfg' complete.
-
-
-Processing ADAS file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/ION/adas/scd50_w.dat' . . .
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1= 1   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1= 2   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1= 3   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1= 4   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1= 5   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1= 6   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1= 7   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1= 8   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1= 9   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=10   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=11   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=12   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=13   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=14   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=15   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=16   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=17   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=18   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=19   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=20   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=21   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=22   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=23   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=24   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=25   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=26   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=27   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=28   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=29   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=30   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=31   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=32   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=33   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=34   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=35   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=36   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=37   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=38   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=39   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=40   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=41   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=42   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=43   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=44   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=45   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=46   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=47   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=48   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=49   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=50   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=51   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=52   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=53   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=54   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=55   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=56   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=57   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=58   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=59   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=60   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=61   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=62   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=63   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=64   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=65   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=66   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=67   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=68   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=69   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=70   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=71   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=72   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=73   / DATE= 10.02.06
---------------------/ IPRT= 1  / IGRD= 1  /IONIS   / Z1=74   / DATE= 10.02.06
-Processing of ADAS file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/ION/adas/scd50_w.dat' complete.
-
-
-   Ionization DATA LIST   
-----------------------------------------------------------
-  1    _w  ADAS adf11 Totaly 74 states:
-          => (0)->( 1):  ADAS adf11 2D:24x24.
-          => (0)->( 2):  ADAS adf11 2D:24x24.
-          => (0)->( 3):  ADAS adf11 2D:24x24.
-          => (0)->( 4):  ADAS adf11 2D:24x24.
-          => (0)->( 5):  ADAS adf11 2D:24x24.
-          => (0)->( 6):  ADAS adf11 2D:24x24.
-          => (0)->( 7):  ADAS adf11 2D:24x24.
-          => (0)->( 8):  ADAS adf11 2D:24x24.
-          => (0)->( 9):  ADAS adf11 2D:24x24.
-          => (0)->(10):  ADAS adf11 2D:24x24.
-          => (0)->(11):  ADAS adf11 2D:24x24.
-          => (0)->(12):  ADAS adf11 2D:24x24.
-          => (0)->(13):  ADAS adf11 2D:24x24.
-          => (0)->(14):  ADAS adf11 2D:24x24.
-          => (0)->(15):  ADAS adf11 2D:24x24.
-          => (0)->(16):  ADAS adf11 2D:24x24.
-          => (0)->(17):  ADAS adf11 2D:24x24.
-          => (0)->(18):  ADAS adf11 2D:24x24.
-          => (0)->(19):  ADAS adf11 2D:24x24.
-          => (0)->(20):  ADAS adf11 2D:24x24.
-          => (0)->(21):  ADAS adf11 2D:24x24.
-          => (0)->(22):  ADAS adf11 2D:24x24.
-          => (0)->(23):  ADAS adf11 2D:24x24.
-          => (0)->(24):  ADAS adf11 2D:24x24.
-          => (0)->(25):  ADAS adf11 2D:24x24.
-          => (0)->(26):  ADAS adf11 2D:24x24.
-          => (0)->(27):  ADAS adf11 2D:24x24.
-          => (0)->(28):  ADAS adf11 2D:24x24.
-          => (0)->(29):  ADAS adf11 2D:24x24.
-          => (0)->(30):  ADAS adf11 2D:24x24.
-          => (0)->(31):  ADAS adf11 2D:24x24.
-          => (0)->(32):  ADAS adf11 2D:24x24.
-          => (0)->(33):  ADAS adf11 2D:24x24.
-          => (0)->(34):  ADAS adf11 2D:24x24.
-          => (0)->(35):  ADAS adf11 2D:24x24.
-          => (0)->(36):  ADAS adf11 2D:24x24.
-          => (0)->(37):  ADAS adf11 2D:24x24.
-          => (0)->(38):  ADAS adf11 2D:24x24.
-          => (0)->(39):  ADAS adf11 2D:24x24.
-          => (0)->(40):  ADAS adf11 2D:24x24.
-          => (0)->(41):  ADAS adf11 2D:24x24.
-          => (0)->(42):  ADAS adf11 2D:24x24.
-          => (0)->(43):  ADAS adf11 2D:24x24.
-          => (0)->(44):  ADAS adf11 2D:24x24.
-          => (0)->(45):  ADAS adf11 2D:24x24.
-          => (0)->(46):  ADAS adf11 2D:24x24.
-          => (0)->(47):  ADAS adf11 2D:24x24.
-          => (0)->(48):  ADAS adf11 2D:24x24.
-          => (0)->(49):  ADAS adf11 2D:24x24.
-          => (0)->(50):  ADAS adf11 2D:24x24.
-          => (0)->(51):  ADAS adf11 2D:24x24.
-          => (0)->(52):  ADAS adf11 2D:24x24.
-          => (0)->(53):  ADAS adf11 2D:24x24.
-          => (0)->(54):  ADAS adf11 2D:24x24.
-          => (0)->(55):  ADAS adf11 2D:24x24.
-          => (0)->(56):  ADAS adf11 2D:24x24.
-          => (0)->(57):  ADAS adf11 2D:24x24.
-          => (0)->(58):  ADAS adf11 2D:24x24.
-          => (0)->(59):  ADAS adf11 2D:24x24.
-          => (0)->(60):  ADAS adf11 2D:24x24.
-          => (0)->(61):  ADAS adf11 2D:24x24.
-          => (0)->(62):  ADAS adf11 2D:24x24.
-          => (0)->(63):  ADAS adf11 2D:24x24.
-          => (0)->(64):  ADAS adf11 2D:24x24.
-          => (0)->(65):  ADAS adf11 2D:24x24.
-          => (0)->(66):  ADAS adf11 2D:24x24.
-          => (0)->(67):  ADAS adf11 2D:24x24.
-          => (0)->(68):  ADAS adf11 2D:24x24.
-          => (0)->(69):  ADAS adf11 2D:24x24.
-          => (0)->(70):  ADAS adf11 2D:24x24.
-          => (0)->(71):  ADAS adf11 2D:24x24.
-          => (0)->(72):  ADAS adf11 2D:24x24.
-          => (0)->(73):  ADAS adf11 2D:24x24.
-          => (0)->(74):  ADAS adf11 2D:24x24.
-  
-----------------------------------------------------------
-
-
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/INTEGRAL/PEM_standart.cfg' . . .
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/INTEGRAL/PEM_standart.cfg' complete.
-
-
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/INTEGRAL/PISCES__Final__d_on_be.m' . . .
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/INTEGRAL/PISCES__Final__d_on_be.m' complete.
-
-
-   Sputtering DATA LIST   
-----------------------------------------------------------
-  1    be  Data as an M-file 2D:9x4.  
-----------------------------------------------------------
-
-spectroscopy on
-
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/EMISSION/SM_standart.cfg' . . .
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/EMISSION/SM_standart.cfg' complete.
-
-Data for H-Gamma ignored . . . 
-
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/EMISSION/w0_400875.m' . . .
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/EMISSION/w0_400875.m' complete.
-
-Data for H-Gamma ignored . . . 
-
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/EMISSION/w1_434811.m' . . .
-Processing m-file '/home/a7l/ERO/ero_master/ero1/ERO.DATA/EMISSION/w1_434811.m' complete.
-
-
-   Spectroscopy DATA LIST   
-----------------------------------------------------------
-  1    _w(+0)   4008A  Data as an M-file 2D:11x26.  
-  2    _w(+1)   4348A  Data as an M-file 2D:11x26.  
-----------------------------------------------------------
-
-allocating surfacegrid
-Calculation of POWER_LOAD 
-here is the powerload-routine
-sheath transmission factor set to 8.000000e+00
-the heatconductance of the material is set to 8.000000e-01
-here is the powerload-routine
-sheath transmission factor set to 8.000000e+00
-the heatconductance of the material is set to 8.000000e-01
-Calculation of RELATIVE CONCENTRATIONS 
-Creating ASCII file 'BegConc_Film.m' . . . Complete!
-SUM OF DEVIATIONS in concentrate-routine
-#DEVIATIONS:       0 
- max. DEVIATION  = 0.000000e+00 
-*** Endof calculate concentrations ***
----------------------------------------------------
-                NET-CHECK                          
----------------------------------------------------
-Deviations of different resources checked:
-#NO# Deviations found
----------------------------------------------------
-              END of NET-CHECK                     
----------------------------------------------------
-time_grid schleife no.:0
----------------------------------------------------
-     CASE0: PHYSICAL SPUTTERING from surface cell  
----------------------------------------------------
----------------------------------------------------
-                 no physical erosion
----------------------------------------------------
-*** Endof physical erosion ***
----------------------------------------------------
-                NET-CHECK                          
----------------------------------------------------
-Deviations of different resources checked:
-#NO# Deviations found
----------------------------------------------------
-              END of NET-CHECK                     
----------------------------------------------------
----------------------------------------------------
-  CASE1: CHEMICALLY SPUTTERING of C and/or Be by D 
----------------------------------------------------
----------------------------------------------------
-              no chemical erosion
----------------------------------------------------
-*** Endof chemical erosion ***
----------------------------------------------------
-                NET-CHECK                          
----------------------------------------------------
-Deviations of different resources checked:
-#NO# Deviations found
----------------------------------------------------
-              END of NET-CHECK                     
----------------------------------------------------
----------------------------------------------------
-  CASE2: CHEMICALLY EROSION of C by O 
----------------------------------------------------
----------------------------------------------------------
-           no chemical erosion due to oxygen
----------------------------------------------------------
-*** Endof chemical erosion due to oxygen ***
----------------------------------------------------
-                NET-CHECK                          
----------------------------------------------------
-Deviations of different resources checked:
-#NO# Deviations found
----------------------------------------------------
-              END of NET-CHECK                     
----------------------------------------------------
----------------------------------------------------------
-  CASE 3: DEPOSITION FROM BACKGROUND PLASMA              
----------------------------------------------------------
----------------------------------------------------
-   no deposition of background plasma impurities
----------------------------------------------------
-*** Endof deposition background plasma ***
----------------------------------------------------
-                NET-CHECK                          
----------------------------------------------------
-Deviations of different resources checked:
-#NO# Deviations found
----------------------------------------------------
-              END of NET-CHECK                     
----------------------------------------------------
----------------------------------------------------
-       CASE 4: EXTERNAL SOURCE                     
----------------------------------------------------
----------------------------------------------------
-             NORMAL SOURCE CYCLE (ATOMS)			
----------------------------------------------------
-loading ini. values
-The puffing vector is rotated by angle
-  0.00 Rad (0.0 Grad) in toroidal plane.
-  0.00 Rad (0.0 Grad) in poloidal plane.
-% Tue Mar  1 16:31:41 2016
-% Zeit fuer die vorinitialisierung:
-% 0.013916 milliseconds
-
-%------------------------------
-
-==> Loop #0 (0% complete).
-==> Loop #1000 (10% complete).
-==> Loop #2000 (20% complete).
-==> Loop #3000 (30% complete).
-==> Loop #4000 (40% complete).
-==> Loop #5000 (50% complete).
-==> Loop #6000 (60% complete).
-==> Loop #7000 (70% complete).
-==> Loop #8000 (80% complete).
-==> Loop #9000 (90% complete).
-==> Loop #9999 (99% complete).
-% Tue Mar  1 16:33:50 2016
-% Zeit fuer die gesamte Schleife:
-% 128862.387939 milliseconds
-
-%------------------------------
-
-% Tue Mar  1 16:33:50 2016
-% CYCLE of NORMAL SOURCE:
-% 128862.502930 milliseconds
-
-%------------------------------
-
----------------------------------------------------
-        END of EXTERNAL SOURCE CYCLE               
----------------------------------------------------
-reset of child factor
----------------------------------------------------
-                NET-CHECK                          
----------------------------------------------------
-Deviations of different resources checked:
-#NO# Deviations found
----------------------------------------------------
-              END of NET-CHECK                     
----------------------------------------------------
-----------------------------------------------------------------------
-		CASE 5: METHANE EROSION and/or BeD EROSION TRANSPORT          
-----------------------------------------------------------------------
----------------------------------------------------
-             no chemical erosion
----------------------------------------------------
----------------------------------------------------
-                NET-CHECK                          
----------------------------------------------------
-Deviations of different resources checked:
-#NO# Deviations found
----------------------------------------------------
-              END of NET-CHECK                     
----------------------------------------------------
-End of Case 5: Methane and/or BeD Erosion
----------------------------------------------------
-           CASE 6: PHYSICAL SPUTTERED TRANSPORT    
-             independent of species!               
----------------------------------------------------
----------------------------------------------------
-              no physical erosion
----------------------------------------------------
----------------------------------------------------
-                NET-CHECK                          
----------------------------------------------------
-Deviations of different resources checked:
-#NO# Deviations found
----------------------------------------------------
-              END of NET-CHECK                     
----------------------------------------------------
-End of Case 6
----------------------------------------------------
-        Calculation of RELATIVE FLUXES
----------------------------------------------------
----------------------------------------------------
-      END of Calculation of RELATIVE FLUXES
----------------------------------------------------
----------------------------------------------------
-                NET-CHECK                          
----------------------------------------------------
-Deviations of different resources checked:
-#NO# Deviations found
----------------------------------------------------
-              END of NET-CHECK                     
----------------------------------------------------
----------------------------------------------------
-               TOTAL OUTPUT                        
----------------------------------------------------
-
-Starting matlab surface output . . .
-Creating ASCII file 'Wtile_test_limiter.m' . . . Complete!
-Limiter data output complete.
-Creating ASCII file 'Wtile_test_Surface_step0.m' . . . Complete!
-Creating ASCII file 'Wtile_test_Filmdata_St0.m' . . . Complete!
-Matlab surface output complete.
-
-common surface information output
-writing surface information in Wtile_test__w_R.tmp
-writing surface information in Wtile_test_surface_t.tmp
-writing surface information in Wtile_test_total_flux0.tmp
-*** Endof memory free ***
----------------------------------------------------
-                NET-CHECK                          
----------------------------------------------------
-Deviations of different resources checked:
-#NO# Deviations found
----------------------------------------------------
-              END of NET-CHECK                     
----------------------------------------------------
-Writing E_field . . .
-Creating ASCII file 'Wtile_test_EField.m' . . . Complete!
-output progress . . . 00%output progress . . . 000%output progress . . . 002%output progress . . . 005%output progress . . . 007%output progress . . . 010%output progress . . . 012%output progress . . . 015%output progress . . . 017%output progress . . . 020%output progress . . . 022%output progress . . . 025%output progress . . . 027%output progress . . . 030%output progress . . . 032%output progress . . . 035%output progress . . . 037%output progress . . . 040%output progress . . . 042%output progress . . . 045%output progress . . . 047%output progress . . . 050%output progress . . . 052%output progress . . . 055%output progress . . . 057%output progress . . . 060%output progress . . . 062%output progress . . . 065%output progress . . . 067%output progress . . . 070%output progress . . . 072%output progress . . . 075%output progress . . . 077%output progress . . . 080%output progress . . . 082%output progress . . . 085%output progress . . . 087%output progress . . . 090%output progress . . . 092%output progress . . . 095%output progress . . . 097%output progress . . . 100%
-Writing of E_field complete.
-Writing Plasma Parameters . . .
-Creating ASCII file 'Wtile_test_PlPar_St0.m' . . . Complete!
-Writing of plasma parameter complete.
-
-Exporting plasma parameters for GITR . . .
-Includes:  ne, Te, Ti, grad_ne, grad_Te, grad_Ti, flow velocity, 
-           E_field and thermal force (for mass 183.85 charge 1) 
-Creating ASCII file 'Wtile_test_GITRinput_St0.m' . . . Complete!
-Exporting plasma parameters for GITR complete
-
-Starting matlab output . . .
-Writing Ionization rates . . .
-Creating ASCII file 'Wtile_test_IzRates_St0.m' . . . Complete!
-Writing of ionization rates complete.
-
-Calculating emission for every cell . . .
-Calculating Ne, Te . . . Complete!
-Specie #1,  '_w'.
-Specie #2,  '_w'.
-Emission calculation complete!
-
-Starting profile output . . .
-Processing mesh #0 . . .
-Creating ASCII file 'Wtile_test_Prf_Axial_St0.m' . . . Complete!
-Profile output complete.
-Creating ASCII file 'Wtile_test_PlPar2D_step0.m' . . . Complete!
-Creating ASCII file 'Wtile_test_Emission_step0.m' . . . Complete!
-Writing emission of '_w__' . . . Complete!
-Writing emission of '_w__' . . . Complete!
-Matlab output complete.
-
----------------------------------------------------
-           END of TOTAL OUTPUT                     
----------------------------------------------------
-% Tue Mar  1 16:34:43 2016
- % Total Processtime:
- 186.840336
-
-%------------------------------
-
-% Tue Mar  1 16:34:43 2016
-% Total Realtime:
-% 187.000000 seconds
-
-%------------------------------
-
-% Tue Mar  1 16:34:43 2016
-% Total Programtime:
-% 187228.508057 milliseconds
-
-%------------------------------
-
-
-
-
-Complete!
----------
-
-
-Creating ASCII file 'Time_Measuring_St0.m' . . . Complete!

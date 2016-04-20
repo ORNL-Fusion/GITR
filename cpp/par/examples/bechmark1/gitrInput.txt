@@ -51,13 +51,13 @@ connectionLength
 %Backgroundspeciesinfobackground_Z
 2
 %ParticletimesteppingcontrolnPtsPerGyroOrbit
-1000
+10000
 ionization_nDtPerApply
 1
 collision_nDtPerApply
 5
 nT
-100000000
+10000000
 %ConstantBfieldvalue-onlyusedwhenBfieldInterpolator_number0Bx_in
 0.00
 By_in

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <stdlib.h>
 #include <mpi.h>
+#include <random>
 #include "h1.h"
 using namespace std;
 
@@ -27,7 +28,7 @@ void Particle::BorisMove(double dt,double xMinV,double xMaxV,double yMin,double 
 	//std::cout << "Perp dist" << perpDistanceToSurface << std::endl;
 	//std::cout << " Particle position in xyz " << x << " " << y << " " << z << std::endl;
 	//perpd = ( -0.5773*x + z )/1.1547;
-Efield( E, perpDistanceToSurface);
+Efield( E, perpDistanceToSurface,z,x);
 	
 	double Bmag = 2;
 	
@@ -68,9 +69,9 @@ Efield( E, perpDistanceToSurface);
                 			if (perpDistanceToSurface < 0)
 			{
 			            t = (surface_dz_dx*x - z)/(-surface_dz_dx*(x -r[0]) + (z -r[2]));
-                        x = x + (x - r[0])*t;
-                        y = y + (y - r[1])*t;
-                        z = z + (z - r[2])*t;
+                        //x = x + (x - r[0])*t;
+                        //y = y + (y - r[1])*t;
+                        //z = z + (z - r[2])*t;
 
 			}
 			else
@@ -111,7 +112,8 @@ void Particle::Ionization(double dt)
 	
 	P1 = 1-exp(-dt/tion);
 	
-	double r1=((double)rand()/(double)RAND_MAX);
+	std::uniform_real_distribution<double> dist(0.0, 1.0);
+	double r1=dist(stream);
 	double r2=((double)rand()/(double)RAND_MAX);
 	
 
@@ -122,10 +124,10 @@ void Particle::Ionization(double dt)
 		//std::cout << " Particle position in xyz " << x << " " << y << " " << z << std::endl;
 	} 
 	
-	if(r2 <= Prec)
-	{
-		Z = Z-1;
-	} 
+// 	if(r2 <= Prec)
+// 	{
+// 		Z = Z-1;
+// 	} 
 	
 	//std::cout << "P1 and r1" << P1 << r1 << std::endl;
 }

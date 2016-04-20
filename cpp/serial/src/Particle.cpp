@@ -102,6 +102,7 @@ void Particle::Ionization(double dt)
 	double r1=((double)rand()/(double)RAND_MAX);
 
 std::uniform_real_distribution<double> dist(0.0, 1.0);
+
 //std::cout << dist(stream) << "\n";	
 		//cout << " Z " << Z << " P1 " << P1 << " r1 " << r1 << endl;
 	
