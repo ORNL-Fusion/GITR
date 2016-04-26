@@ -54,7 +54,7 @@ struct ionize {
 	
 	double r1;	
 	r1 = curand_uniform(&p.s);
-	//double r2=randgen;
+	double r2=curand_uniform(&p.s2);
 	
 
 	if(r1 <= P1)
@@ -64,10 +64,10 @@ struct ionize {
 						
 	//p.vx = P1;
 	//p.vy = r1;	
-//	if(r2 <= Prec)
-//	{
-//		p.Z = p.Z-1;
-//	}         
+	if(r2 <= Prec)
+	{
+		p.Z = p.Z-1;
+	}         
 	}	
 
 	} 

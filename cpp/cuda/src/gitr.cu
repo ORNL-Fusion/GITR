@@ -39,6 +39,19 @@ struct randInit
     }
 };
 
+struct randInit2
+{
+    __device__
+    cudaParticle operator()(cudaParticle& p, float& seed)
+    {
+        curandState s2;
+        curand_init(seed, 0, 0, &s2);
+        p.seed0 = seed;
+        p.s2 = s2;
+
+        return p;
+    }
+};
 
 int main()
 {
@@ -202,16 +215,19 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
 	//std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(),std::numeric_limits<float>::max());
 	std::uniform_real_distribution<float> dist(0,1e6);
-
-    std::default_random_engine generator;
+    std::random_device rd;
+    std::default_random_engine generator(rd());
    
-    std::vector<float> seeds(nP);
+    std::vector<float> seeds(nP),seeds2(nP);
     std::generate( seeds.begin(), seeds.end(), [&]() { return dist(generator); } );
-    thrust::device_vector<float> deviceSeeds = seeds;
+    std::generate( seeds2.begin(), seeds2.end(), [&]() { return dist(generator); } );
+
+	thrust::device_vector<float> deviceSeeds = seeds, deviceSeeds2 = seeds2;
 
 	cudaThreadSynchronize();
 	
     thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), deviceSeeds.begin(), deviceCudaParticleVector.begin(), randInit() );
+	thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), deviceSeeds.begin(), deviceCudaParticleVector.begin(), randInit2() );
 
 	thrust::host_vector<cudaParticle> hostCudaParticleVectorTmp = deviceCudaParticleVector;
 
@@ -249,6 +265,7 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     std::cout << "ionizeTimeGPU: " << ionizeTimeGPU.wall*1e-9 << '\n';
 
     thrust::host_vector<cudaParticle> hostCudaParticleVector2 = deviceCudaParticleVector;
+
 
 	for(int i=0; i < hostCudaParticleVector2.size(); i++){
 		if(hostCudaParticleVector2[i].hitWall == 1){
