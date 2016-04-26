@@ -12,15 +12,18 @@ void getE ( double x, double y, double z, double E[] ) {
 	double surfaceDirection[3] = {1.7321, 0, -1.00};
 	double surfaceDirection_unit[3] =  {0.866, 0, -0.50};
 	double perpDistanceToSurface = ( -surfaceDirection[0]*x + z )/2.0;
-	double fd = 0.825;
+	double fd = 0.8357;
 	double lane = 3.64479e-04;
-	double dl = 1.0513e-05;
+	double dl = 1.05058e-05;
 	double pot = 60.0;
 	
 	Emag = pot*(fd/(2.0*dl)*exp(-perpDistanceToSurface/(2.0*dl))+ (1.0 - fd)/(lane)*exp(-perpDistanceToSurface/lane) );
 	E[0] = Emag*surfaceDirection_unit[0];
 	E[1] = Emag*surfaceDirection_unit[1];
 	E[2] = Emag*surfaceDirection_unit[2];
+
+
+
 }
 
 struct move_boris { 
@@ -90,9 +93,9 @@ struct move_boris {
 	            if (perpDistanceToSurface < 0) 
                 {
 	                t = (surface_dz_dx*p.x - p.z)/(-surface_dz_dx*(p.x -r[0]) + (p.z -r[2]));
-	                p.x = p.x + (p.x - r[0])*t;
-	                p.y = p.y + (p.y - r[1])*t;
-	                p.z = p.z + (p.z - r[2])*t;
+	                //p.x = p.x + (p.x - r[0])*t;
+	                //p.y = p.y + (p.y - r[1])*t;
+	                //p.z = p.z + (p.z - r[2])*t;
 	        	    p.hitWall = 1.0;
 	            } 
                 else 

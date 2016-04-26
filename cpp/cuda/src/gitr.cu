@@ -215,8 +215,8 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
 	thrust::host_vector<cudaParticle> hostCudaParticleVectorTmp = deviceCudaParticleVector;
 
-    for (auto const& c : seeds)
-        std::cout << c << ' ';
+//    for (auto const& c : seeds)
+//        std::cout << c << ' ';
 
     //std::cout<<std::endl;
 
