@@ -1,7 +1,7 @@
 #ifndef _IONIZE_
 #define _IONIZE_
 
-#include "cudaParticle.h"
+#include "Particle.h"
 #include <thrust/random.h>
 //#include "thrust/uniform_real_distribution.h"
 //const double B[3] = {0.0,0.0,-2.0};
@@ -28,7 +28,7 @@ struct ionize {
 	           const double dt;
         ionize(double _dt) : dt(_dt) {}
          __device__ 
-                void operator()(cudaParticle &p) const { 
+                void operator()(Particle &p) const { 
 	if(p.hitWall == 0.0){        
 	double tion;
 	double trec;
@@ -62,8 +62,6 @@ struct ionize {
 		p.Z = p.Z+1;
 	} 
 						
-	//p.vx = P1;
-	//p.vy = r1;	
 	if(r2 <= Prec)
 	{
 		p.Z = p.Z-1;

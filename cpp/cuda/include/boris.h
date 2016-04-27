@@ -1,7 +1,7 @@
 #ifndef _BORIS_
 #define _BORIS_
 
-#include "cudaParticle.h"
+#include "Particle.h"
 
 const double B[3] = {0.0,0.0,-2.0};
 
@@ -33,7 +33,7 @@ struct move_boris {
     move_boris(double _span) : span(_span) {} 
 
     __host__ __device__ 
-    void operator()(cudaParticle &p) const { 
+    void operator()(Particle &p) const { 
 
 	    if(p.hitWall == 0.0)
         {

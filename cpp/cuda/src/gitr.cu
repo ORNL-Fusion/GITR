@@ -6,52 +6,26 @@
 #include <iomanip>
 #include <cstdlib>
 #include <libconfig.h++>
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
-#include "cudaParticle.h"
 #include "boris.h"
 #include "ionize.h"
 #include <algorithm>
-#include <boost/timer/timer.hpp>
 #include <random>
+#include "Particle.h"
+
+#ifdef __CUDACC__
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <boost/timer/timer.hpp>
 #include <curand.h>
 #include <curand_kernel.h>
 #include <thrust/sequence.h>
 #include <thrust/transform.h>
 #include <thrust/functional.h>
+#endif
 
 using namespace std;
 using namespace libconfig;
 using namespace boost::timer;
-
-
-struct randInit 
-{
-    __device__
-    cudaParticle operator()(cudaParticle& p, float& seed)
-    {
-        curandState s;
-        curand_init(seed, 0, 0, &s);
-        p.seed0 = seed;
-        p.s = s;
-
-        return p;
-    }
-};
-
-struct randInit2
-{
-    __device__
-    cudaParticle operator()(cudaParticle& p, float& seed)
-    {
-        curandState s2;
-        curand_init(seed, 0, 0, &s2);
-        p.seed0 = seed;
-        p.s2 = s2;
-
-        return p;
-    }
-};
 
 int main()
 {
@@ -194,29 +168,30 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
  	cout << "Number of particles: " << nP << endl;				
 	long nParticles = nP;
 	int nT = cfg.lookup("timeStep.nT");
-    cout << "Number of time steps: " << nT << endl;	
+	cout << "Number of time steps: " << nT << endl;	
     
-    int surfaceIndexY;
+	int surfaceIndexY;
 	int surfaceIndexZ;
 
-	cudaParticle p1(x,y,z,Ex,Ey,Ez,Z,amu);
+	Particle p1(x,y,z,Ex,Ey,Ez,Z,amu);
 
-    std::cout << "nParticles: " << nParticles << std::endl;
-	thrust::host_vector<cudaParticle> hostCudaParticleVector(nParticles,p1);
-
-	//for(int i=0; i < hostCudaParticleVector.size(); i++)
-	//    std::cout << hostCudaParticleVector[i].x << std::endl;
-
-    cpu_timer timer;
+	std::cout << "nParticles: " << nParticles << std::endl;
+	#ifdef __CUDACC__
+		thrust::host_vector<Particle> hostCudaParticleVector(nParticles,p1);
+	#endif
+	#ifdef __GNUC__
+		std::vector<Particle> hosCudaParticleVector(nParticles,p1);
+	#endif
+    	cpu_timer timer;
 
 	std::cout << "Initial x position GPU: " << hostCudaParticleVector[1].x << "  " << hostCudaParticleVector[0].y << "  " << hostCudaParticleVector[0].z << "  " << hostCudaParticleVector[0].vx << "  " << hostCudaParticleVector[0].vy << "  " << hostCudaParticleVector[0].vz<< "  " << hostCudaParticleVector[0].Z << std::endl;
 
-	thrust::device_vector<cudaParticle> deviceCudaParticleVector = hostCudaParticleVector;
+/*	thrust::device_vector<Particle> deviceCudaParticleVector = hostCudaParticleVector;
 
 	//std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(),std::numeric_limits<float>::max());
 	std::uniform_real_distribution<float> dist(0,1e6);
-    std::random_device rd;
-    std::default_random_engine generator(rd());
+    	std::random_device rd;
+    	std::default_random_engine generator(rd());
    
     std::vector<float> seeds(nP),seeds2(nP);
     std::generate( seeds.begin(), seeds.end(), [&]() { return dist(generator); } );
@@ -226,10 +201,10 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
 	cudaThreadSynchronize();
 	
-    thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), deviceSeeds.begin(), deviceCudaParticleVector.begin(), randInit() );
+	thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), deviceSeeds.begin(), deviceCudaParticleVector.begin(), randInit() );
 	thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), deviceSeeds.begin(), deviceCudaParticleVector.begin(), randInit2() );
 
-	thrust::host_vector<cudaParticle> hostCudaParticleVectorTmp = deviceCudaParticleVector;
+	thrust::host_vector<Particle> hostCudaParticleVectorTmp = deviceCudaParticleVector;
 
 //    for (auto const& c : seeds)
 //        std::cout << c << ' ';
@@ -264,7 +239,7 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     cpu_times ionizeTimeGPU = timer.elapsed();
     std::cout << "ionizeTimeGPU: " << ionizeTimeGPU.wall*1e-9 << '\n';
 
-    thrust::host_vector<cudaParticle> hostCudaParticleVector2 = deviceCudaParticleVector;
+    thrust::host_vector<Particle> hostCudaParticleVector2 = deviceCudaParticleVector;
 
 
 	for(int i=0; i < hostCudaParticleVector2.size(); i++){
@@ -287,7 +262,7 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     //std::cout << "copyToHostTime: " << (copyToHostTime.wall-moveTimeGPU.wall)*1e-9 << '\n';
 	std::cout << "Final x position GPU: " << hostCudaParticleVector2[0].x << "  " << hostCudaParticleVector2[0].y << "  " << hostCudaParticleVector2[0].z << "  " << hostCudaParticleVector2[0].vx << "  " << hostCudaParticleVector2[0].vy << "  " << hostCudaParticleVector2[0].vz<< "  " << hostCudaParticleVector2[0].Z << std::endl;
 
-	std::vector<cudaParticle> particleVector(nParticles,p1);
+	std::vector<Particle> particleVector(nParticles,p1);
 
     cpu_times createParticlesTimeCPU = timer.elapsed();
     std::cout << "createParticesTimeCPU: " << (createParticlesTimeCPU.wall-copyToHostTime.wall)*1e-9 << '\n';
@@ -298,6 +273,6 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     std::cout << "moveTimeCPU: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall)*1e-9 << '\n';
 
     //std::cout << "GPU Speedup: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall) / (moveTimeGPU.wall-copyToDeviceTime.wall) << '\n';
-	std::cout << "Final x position CPU: " << particleVector[0].x << "  " << particleVector[0].y << "  " << particleVector[0].z << "  " << particleVector[0].vx << "  " << particleVector[0].vy << "  " << particleVector[0].vz << "  " << particleVector[0].Z << std::endl;
+	std::cout << "Final x position CPU: " << particleVector[0].x << "  " << particleVector[0].y << "  " << particleVector[0].z << "  " << particleVector[0].vx << "  " << particleVector[0].vy << "  " << particleVector[0].vz << "  " << particleVector[0].Z << std::endl; */
 	return 0;
 }
