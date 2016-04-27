@@ -1,18 +1,35 @@
 #ifndef _IONIZE_
 #define _IONIZE_
 
+#ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER_DEVICE __device__
+#define CUDA_CALLABLE_MEMBER_HOST __host__
+#else
+#define CUDA_CALLABLE_MEMBER_DEVICE
+#define CUDA_CALLABLE_MEMBER_HOST
+#endif
+
 #include "Particle.h"
+#ifdef __CUDACC__
 #include <thrust/random.h>
+#endif
+
+#ifdef __GNUC__ 
+#include <random>
+#include <stdlib.h>
+#endif
 //#include "thrust/uniform_real_distribution.h"
 //const double B[3] = {0.0,0.0,-2.0};
 //
-__host__ 
+//
+/*
+CUDA_CALLABLE_MEMBER
 double randgen  () {
 	double r=((double)rand()/(double)RAND_MAX);
     return r;
 }
 
-    __device__
+    CUDA_CALLABLE_MEMBER
 	double randgen2 () {
         thrust::default_random_engine rng;
 	//thrust::uniform_int_distribution<double> dist(0.0, 1.0);
@@ -23,11 +40,11 @@ double randgen  () {
 	//r = (double)rng() / thrust::default_random_engine::max; 
     	return r;
     }
-
+*/
 struct ionize { 
 	           const double dt;
         ionize(double _dt) : dt(_dt) {}
-         __device__ 
+        CUDA_CALLABLE_MEMBER_DEVICE 
                 void operator()(Particle &p) const { 
 	if(p.hitWall == 0.0){        
 	double tion;
@@ -52,10 +69,14 @@ struct ionize {
 	
 	P1 = 1-exp(-dt/tion);
 	
-	double r1;	
-	r1 = curand_uniform(&p.s);
+	#ifdef __CUDACC__
+	double r1 = curand_uniform(&p.s);
 	double r2=curand_uniform(&p.s2);
-	
+	#else
+	std::uniform_real_distribution<double> dist(0.0, 1.0);
+	double r1=dist(p.s);
+	double r2=dist(p.s2);
+	#endif
 
 	if(r1 <= P1)
 	{

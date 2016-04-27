@@ -1,11 +1,17 @@
 #ifndef _BORIS_
 #define _BORIS_
 
+#ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER __host__ __device__
+#else
+#define CUDA_CALLABLE_MEMBER
+#endif
+
 #include "Particle.h"
 
 const double B[3] = {0.0,0.0,-2.0};
 
-__host__ __device__ 
+CUDA_CALLABLE_MEMBER
 void getE ( double x, double y, double z, double E[] ) {
 
 	double Emag;
@@ -32,8 +38,8 @@ struct move_boris {
 
     move_boris(double _span) : span(_span) {} 
 
-    __host__ __device__ 
-    void operator()(Particle &p) const { 
+CUDA_CALLABLE_MEMBER    
+void operator()(Particle &p) const { 
 
 	    if(p.hitWall == 0.0)
         {
