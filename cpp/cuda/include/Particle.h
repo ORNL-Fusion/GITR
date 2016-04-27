@@ -19,6 +19,10 @@
 #include <curand_kernel.h>
 #endif
 
+#ifdef __GNUC__
+#include <random>
+#endif
+
 class Particle {
 	public:
 	float x;
@@ -32,11 +36,14 @@ class Particle {
 	#ifdef __CUDACC__
 	curandState s;
 	curandState s2;
-	float seed0;
-	#endif
+	#else
+        std::mt19937 s;
+        std::mt19937 s2;
+        #endif
+	
 	float hitWall;
 	float perpDistanceToSurface;
-      
+	float seed0;
 	void BorisMove(double dt, double xMinV,double xMaxV,double yMin,double yMax,double zMin,double zMax);
 	void Ionization(double dt);
 
