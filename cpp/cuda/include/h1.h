@@ -1,6 +1,11 @@
 #ifndef _GITRUTILS_
 #define _GITRUTILS_
 
+#ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER_DEVICE __device__
+#else
+#define CUDA_CALLABLE_MEMBER_DEVICE
+#endif
 
 #include "Particle.h"
 #include "libconfig.h++"
@@ -26,14 +31,18 @@ void RECV_2doutput_MPI(int nWRs, int nX, int nY,double **local, double **global)
 
 void Efield(double E[], double perpDistanceToSurface);
 
-#ifdef __CUDACC__
+
 struct randInit
 {
-    __device__
+    CUDA_CALLABLE_MEMBER_DEVICE
     Particle operator()(Particle& p, float& seed)
     {
+	#ifdef __CUDACC__
         curandState s;
         curand_init(seed, 0, 0, &s);
+	#else
+        std::mt19937 s(seed);
+	#endif
         p.seed0 = seed;
         p.s = s;
 
@@ -43,16 +52,19 @@ struct randInit
 
 struct randInit2
 {
-    __device__
+    CUDA_CALLABLE_MEMBER_DEVICE
     Particle operator()(Particle& p, float& seed)
     {
+	#ifdef __CUDACC__
         curandState s2;
         curand_init(seed, 0, 0, &s2);
+	#else
+	std::mt19937 s2(seed);
+	#endif
         p.seed0 = seed;
         p.s2 = s2;
 
         return p;
     }
 };
-#endif
 #endif

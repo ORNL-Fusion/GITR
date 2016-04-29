@@ -184,20 +184,22 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     	cpu_timer timer;
 
 	std::cout << "Initial x position GPU: " << hostCudaParticleVector[1].x << "  " << hostCudaParticleVector[0].y << "  " << hostCudaParticleVector[0].z << "  " << hostCudaParticleVector[0].vx << "  " << hostCudaParticleVector[0].vy << "  " << hostCudaParticleVector[0].vz<< "  " << hostCudaParticleVector[0].Z << std::endl;
-
-/*	thrust::device_vector<Particle> deviceCudaParticleVector = hostCudaParticleVector;
+	
+	#ifdef __CUDACC__
+	thrust::device_vector<Particle> deviceCudaParticleVector = hostCudaParticleVector;
+	#endif
 
 	//std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(),std::numeric_limits<float>::max());
 	std::uniform_real_distribution<float> dist(0,1e6);
     	std::random_device rd;
     	std::default_random_engine generator(rd());
    
-    std::vector<float> seeds(nP),seeds2(nP);
-    std::generate( seeds.begin(), seeds.end(), [&]() { return dist(generator); } );
-    std::generate( seeds2.begin(), seeds2.end(), [&]() { return dist(generator); } );
+	std::vector<float> seeds(nP),seeds2(nP);
+	std::generate( seeds.begin(), seeds.end(), [&]() { return dist(generator); } );
+	std::generate( seeds2.begin(), seeds2.end(), [&]() { return dist(generator); } );
 
+	#ifdef __CUDACC__
 	thrust::device_vector<float> deviceSeeds = seeds, deviceSeeds2 = seeds2;
-
 	cudaThreadSynchronize();
 	
 	thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), deviceSeeds.begin(), deviceCudaParticleVector.begin(), randInit() );
@@ -220,9 +222,13 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     //}
 
 	cudaThreadSynchronize();
+	#else
+	std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), deviceSeeds.begin(), hostCudaParticleVector.begin(), randInit() );
+        std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), deviceSeeds.begin(), hostCudaParticleVector.begin(), randInit2() );
+	#endif
 
-    cpu_times copyToDeviceTime = timer.elapsed();
-    std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
+	cpu_times copyToDeviceTime = timer.elapsed();
+	std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
 	for(int tt=0; tt< nT; tt++)
 	{
 	//	std::cout << "loop number: " << tt << std::endl;
@@ -272,6 +278,6 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     std::cout << "moveTimeCPU: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall)*1e-9 << '\n';
 
     //std::cout << "GPU Speedup: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall) / (moveTimeGPU.wall-copyToDeviceTime.wall) << '\n';
-	std::cout << "Final x position CPU: " << particleVector[0].x << "  " << particleVector[0].y << "  " << particleVector[0].z << "  " << particleVector[0].vx << "  " << particleVector[0].vy << "  " << particleVector[0].vz << "  " << particleVector[0].Z << std::endl; */
+	std::cout << "Final x position CPU: " << particleVector[0].x << "  " << particleVector[0].y << "  " << particleVector[0].z << "  " << particleVector[0].vx << "  " << particleVector[0].vy << "  " << particleVector[0].vz << "  " << particleVector[0].Z << std::endl; 
 	return 0;
 }
