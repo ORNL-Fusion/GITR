@@ -231,6 +231,7 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 	std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
 	for(int tt=0; tt< nT; tt++)
 	{
+	#ifdef __CUDACC__
 	//	std::cout << "loop number: " << tt << std::endl;
     	thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt) );
 
@@ -240,12 +241,16 @@ double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
     	//std::cout << "moveTimeGPU: " << (moveTimeGPU.wall-copyToDeviceTime.wall)*1e-9 << '\n';
 
     	thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize(dt) );
+	#else
+	std::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt) );
+	std::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize(dt) );
+	#endif
 	}
     cpu_times ionizeTimeGPU = timer.elapsed();
     std::cout << "ionizeTimeGPU: " << ionizeTimeGPU.wall*1e-9 << '\n';
-
+	#ifdef __CUDACC__
     thrust::host_vector<Particle> hostCudaParticleVector2 = deviceCudaParticleVector;
-
+	#endif
 
 	for(int i=0; i < hostCudaParticleVector2.size(); i++){
 		if(hostCudaParticleVector2[i].hitWall == 1){
