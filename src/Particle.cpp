@@ -2,7 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include <stdlib.h>
-#include "h1.h"
+#include "h1.cuh"
 using namespace std;
 
 

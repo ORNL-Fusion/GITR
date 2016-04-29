@@ -1,4 +1,4 @@
-#include "h1.h"
+#include "h1.cuh"
 #include <math.h>
 #include <iostream>
 

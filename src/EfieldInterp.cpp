@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include <stdlib.h>
-#include "h1.h"
+#include "h1.cuh"
 using namespace std;
 
 void Efield(double E[], double perpDistanceToSurface)

@@ -9,7 +9,6 @@
 
 #include "Particle.h"
 #include "libconfig.h++"
-//#include "cudaParticle.h"
 
 void INPUT(int& nP, double& sourceStrength,double& x_start,double& y_start,double& z_start,double& energy_eV_x_start,double& energy_eV_y_start,
 	double&	energy_eV_z_start,double& impurity_amu, double& impurity_Z,int& nDensityChargeBins	,double& xMinV,double& xMaxV,double& yMin,double& yMax,double& zMin,double& zMax,	int& nXv,
@@ -21,9 +20,7 @@ void INPUT2(int nDensityChargeBins,int nBackgroundSpecies,int densityChargeBins[
 
 void MESH(int myID, int nWRs,double r[], double z[], double dr,double dz, int localMz, int Mrp1, double Rin, double Rout, double Ztop, double Ar[], double Az[], double Vij[]);
 
-#ifdef __GNUC__
 void INIT(int nP, Particle p[], libconfig::Config &cfg);
-#endif
 void OUTPUT(char outname[],int nX, int nY, double **array2d);
 
 void SEND_2doutput_MPI(int myID,int nX, int nY,double **arr);

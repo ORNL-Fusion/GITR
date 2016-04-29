@@ -1,7 +1,8 @@
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cu
 
-USECUDA := 1
+USECUDA := 0
+USEMPI := 0
 
 NAME := bin/GITR
 
@@ -29,9 +30,8 @@ CXXFLAGS += $(INCLUDEFLAGS)
 NVCCFLAGS += $(INCLUDEFLAGS) 
 
 CPPFLAGS:=
-CPPFLAGS+= -DUSEMPI=0
+CPPFLAGS+= -DUSEMPI=${USEMPI}
 CPPFLAGS+= -std=c++11
-
 
 # You shouldn't have to go below here
 #
@@ -54,12 +54,15 @@ CXXFLAGS += $(INCLUDEFLAGS)
 NVCCFLAGS += $(INCLUDEFLAGS) 
 
 # determine the object files
-SRCTYPES := c cpp 
+SRCTYPES := c cpp cu
 LINK := $(CPP) ${CXXFLAGS} ${LFLAGS}
+
 ifeq ($(USECUDA),1)
-SRCTYPES += cu
 LINK := $(NVCC) ${NVCCFLAGS} ${LFLAGS}
+else
+NVCCFLAGS+= --x c++
 endif
+
 OBJ := $(foreach srctype, $(SRCTYPES), $(patsubst %.$(srctype), obj/%.o, $(wildcard $(patsubst %, %/*.$(srctype), $(MODULES)))))
 
 # link the program
