@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <stdio.h>
+#include <vector>
 
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
@@ -17,11 +18,11 @@
 #include <thrust/copy.h>
 #include <thrust/random.h>
 #include <curand_kernel.h>
-#endif
-
-#ifdef __GNUC__
+#else
 #include <random>
 #endif
+
+CUDA_CALLABLE_MEMBER
 
 class Particle {
 	public:
@@ -34,11 +35,13 @@ class Particle {
       	float Z;
       	float amu;
 	#ifdef __CUDACC__
-	curandState s;
+	curandState streams[3];
+	curandState s1;
 	curandState s2;
 	#else
-        std::mt19937 s;
-        std::mt19937 s2;
+        std::mt19937 streams[3];
+        std::mt19937 s1;
+	std::mt19937 s2;
         #endif
 	
 	float hitWall;
@@ -55,7 +58,8 @@ class Particle {
         };
 	
 	CUDA_CALLABLE_MEMBER
-        Particle(float x,float y, float z, float Ex, float Ey, float Ez, float Z, float amu){
+        Particle(float x,float y, float z, float Ex, float Ey, float Ez, float Z, float amu)
+		{
     
 		this->x = x;
 		this->y = y;

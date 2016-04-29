@@ -70,12 +70,13 @@ struct ionize {
 	P1 = 1-exp(-dt/tion);
 	
 	#ifdef __CUDACC__
-	double r1 = curand_uniform(&p.s);
-	double r2=curand_uniform(&p.s2);
+	curandState tmpState;
+	double r1 = curand_uniform(&p.streams[0]);
+	double r2 = curand_uniform(&p.streams[1]);
 	#else
 	std::uniform_real_distribution<double> dist(0.0, 1.0);
-	double r1=dist(p.s);
-	double r2=dist(p.s2);
+	double r1=dist(p.streams[0]);
+	double r2=dist(p.streams[1]);
 	#endif
 
 	if(r1 <= P1)

@@ -197,28 +197,31 @@ cout << maxTemp_eV[i];
     	std::random_device rd;
     	std::default_random_engine generator(rd());
    
-	std::vector<float> seeds(nP),seeds2(nP);
+	std::vector<float> seeds(nP),seeds2(nP), seeds3(nP);
 	std::generate( seeds.begin(), seeds.end(), [&]() { return dist(generator); } );
 	std::generate( seeds2.begin(), seeds2.end(), [&]() { return dist(generator); } );
-
+	std::generate( seeds3.begin(), seeds3.end(), [&]() { return dist(generator); } );
 #ifdef __CUDACC__
-	thrust::device_vector<float> deviceSeeds = seeds, deviceSeeds2 = seeds2;
+	thrust::device_vector<float> deviceSeeds = seeds, deviceSeeds2 = seeds2,
+		 deviceSeeds3 = seeds3;
 	cudaThreadSynchronize();
 	
 	thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), 
-                    deviceSeeds.begin(), deviceCudaParticleVector.begin(), randInit() );
+                    deviceSeeds.begin(), deviceCudaParticleVector.begin(), randInit(0) );
 	thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), 
-                    deviceSeeds.begin(), deviceCudaParticleVector.begin(), randInit2() );
-
+                    deviceSeeds2.begin(), deviceCudaParticleVector.begin(), randInit(1) );
+	thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),
+                    deviceSeeds3.begin(), deviceCudaParticleVector.begin(), randInit(2) );
 	thrust::host_vector<Particle> hostCudaParticleVectorTmp = deviceCudaParticleVector;
 
 	cudaThreadSynchronize();
 #else
-    std::vector<float> deviceSeeds = seeds, deviceSeeds2 = seeds2;
 	std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), 
-                    deviceSeeds.begin(), hostCudaParticleVector.begin(), randInit() );
-    std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), 
-                    deviceSeeds.begin(), hostCudaParticleVector.begin(), randInit2() );
+                    seeds.begin(), hostCudaParticleVector.begin(), randInit(0) );
+	std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), 
+                    seeds2.begin(), hostCudaParticleVector.begin(), randInit(1) );
+	std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
+                    seeds3.begin(), hostCudaParticleVector.begin(), randInit(2) );
 #endif
 
 	cpu_times copyToDeviceTime = timer.elapsed();
