@@ -10,6 +10,7 @@
 #include "ionize.h"
 #include "recombine.h"
 #include "crossFieldDiffusion.h"
+#include "coulombCollisions.h"
 #include <algorithm>
 #include <random>
 #include "Particle.h"
