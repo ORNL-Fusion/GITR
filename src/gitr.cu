@@ -8,6 +8,8 @@
 #include <libconfig.h++>
 #include "boris.h"
 #include "ionize.h"
+#include "recombine.h"
+#include "crossFieldDiffusion.h"
 #include <algorithm>
 #include <random>
 #include "Particle.h"
@@ -77,7 +79,7 @@ int ionization_nDtPerApply  = cfg.lookup("timeStep.ionization_nDtPerApply");
 int collision_nDtPerApply  = cfg.lookup("timeStep.collision_nDtPerApply");
 cout << "collision_nDtPerApply  " << collision_nDtPerApply << endl;
 // Perp DiffusionCoeff - only used when Diffusion interpolator is = 0
-double perandom_deviceiffusionCoeff_in;
+double perDiffusionCoeff_in = cfg.lookup("perpDiffusion.perDiffusionCoeff_in");
 
 // Background profile values used Density, temperature interpolators are 0 or 2
 double densitySOLDecayLength;
@@ -196,44 +198,95 @@ cout << maxTemp_eV[i];
 	std::uniform_real_distribution<float> dist(0,1e6);
     	std::random_device rd;
     	std::default_random_engine generator(rd());
-   
-	std::vector<float> seeds(nP),seeds2(nP), seeds3(nP);
-	std::generate( seeds.begin(), seeds.end(), [&]() { return dist(generator); } );
-	std::generate( seeds2.begin(), seeds2.end(), [&]() { return dist(generator); } );
-	std::generate( seeds3.begin(), seeds3.end(), [&]() { return dist(generator); } );
+   	
+#if USEIONIZATION > 0
+	std::vector<float> seeds0(nP);
+	std::generate( seeds0.begin(), seeds0.end(), [&]() { return dist(generator); } );
 #ifdef __CUDACC__
-	thrust::device_vector<float> deviceSeeds = seeds, deviceSeeds2 = seeds2,
-		 deviceSeeds3 = seeds3;
-	cudaThreadSynchronize();
-	
-	thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), 
-                    deviceSeeds.begin(), deviceCudaParticleVector.begin(), randInit(0) );
-	thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), 
-                    deviceSeeds2.begin(), deviceCudaParticleVector.begin(), randInit(1) );
+	thrust::device_vector<float> deviceSeeds0 = seeds0;
 	thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),
-                    deviceSeeds3.begin(), deviceCudaParticleVector.begin(), randInit(2) );
-	thrust::host_vector<Particle> hostCudaParticleVectorTmp = deviceCudaParticleVector;
-
-	cudaThreadSynchronize();
+                    deviceSeeds0.begin(), deviceCudaParticleVector.begin(), randInit(0) );
 #else
-	std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), 
-                    seeds.begin(), hostCudaParticleVector.begin(), randInit(0) );
-	std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), 
-                    seeds2.begin(), hostCudaParticleVector.begin(), randInit(1) );
 	std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
-                    seeds3.begin(), hostCudaParticleVector.begin(), randInit(2) );
+                    seeds0.begin(), hostCudaParticleVector.begin(), randInit(0) );
+#endif
 #endif
 
+#if USERECOMBINATION > 0
+        std::vector<float> seeds1(nP);
+        std::generate( seeds1.begin(), seeds1.end(), [&]() { return dist(generator); } );
+#ifdef __CUDACC__
+        thrust::device_vector<float> deviceSeeds1 = seeds1;
+        thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),
+                    deviceSeeds1.begin(), deviceCudaParticleVector.begin(), randInit(1) );
+#else
+        std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
+                    seeds1.begin(), hostCudaParticleVector.begin(), randInit(1) );
+#endif
+#endif
+
+#if USEPERPDIFFUSION > 0
+        std::vector<float> seeds2(nP);
+        std::generate( seeds2.begin(), seeds2.end(), [&]() { return dist(generator); } );
+#ifdef __CUDACC__
+        thrust::device_vector<float> deviceSeeds2 = seeds2;
+        thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),
+                    deviceSeeds2.begin(), deviceCudaParticleVector.begin(), randInit(2) );
+#else
+        std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
+                    seeds2.begin(), hostCudaParticleVector.begin(), randInit(2) );
+#endif
+#endif
+
+#if USECOULOMBCOLLISIONS > 0
+        std::vector<float> seeds3(nP),seeds4(nP),seeds5(nP);
+        std::generate( seeds3.begin(), seeds3.end(), [&]() { return dist(generator); } );
+	std::generate( seeds4.begin(), seeds4.end(), [&]() { return dist(generator); } );
+	std::generate( seeds5.begin(), seeds5.end(), [&]() { return dist(generator); } );
+#ifdef __CUDACC__
+        thrust::device_vector<float> deviceSeeds3 = seeds3,deviceSeeds4 = seeds4,deviceSeeds5 = seeds5;
+        thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),
+                    deviceSeeds3.begin(), deviceCudaParticleVector.begin(), randInit(3) );
+	thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),
+                    deviceSeeds4.begin(), deviceCudaParticleVector.begin(), randInit(4) );
+        thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),
+                    deviceSeeds5.begin(), deviceCudaParticleVector.begin(), randInit(5) );
+#else
+        std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
+                    seeds3.begin(), hostCudaParticleVector.begin(), randInit(3) );
+        std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
+                    seeds4.begin(), hostCudaParticleVector.begin(), randInit(4) );
+        std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
+                    seeds5.begin(), hostCudaParticleVector.begin(), randInit(5) );
+#endif
+#endif
+	
 	cpu_times copyToDeviceTime = timer.elapsed();
 	std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
 	for(int tt=0; tt< nT; tt++)
 	{
 #ifdef __CUDACC__
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt) );
+#if USEIONIZATION > 0
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize(dt) );
+#endif
+#if USERECOMBINATION > 0
+	thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), recombine(dt) );
+#endif
+#if USEPERPDIFFUSION > 0
+	thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), crossFieldDiffusion(dt,perDiffusionCoeff_in));
+#endif
 #else
-	    std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), move_boris(dt) );
-	    std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), ionize(dt) );
+	std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), move_boris(dt) );
+#if USEIONIZATION > 0
+	std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), ionize(dt) );
+#endif
+#if USERECOMBINATION > 0
+	std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), recombine(dt) );
+#endif
+#if USEPERPDIFFUSION > 0
+        std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), crossFieldDiffusion(dt,perDiffusionCoeff_in));
+#endif
 #endif
 	}
     cpu_times ionizeTimeGPU = timer.elapsed();

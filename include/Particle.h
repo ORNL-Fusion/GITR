@@ -22,7 +22,7 @@
 #include <random>
 #endif
 
-CUDA_CALLABLE_MEMBER
+//CUDA_CALLABLE_MEMBER
 
 class Particle {
 	public:
@@ -35,13 +35,9 @@ class Particle {
       	float Z;
       	float amu;
 	#ifdef __CUDACC__
-	curandState streams[3];
-	curandState s1;
-	curandState s2;
+	curandState streams[6];
 	#else
-        std::mt19937 streams[3];
-        std::mt19937 s1;
-	std::mt19937 s2;
+        std::mt19937 streams[6];
         #endif
 	
 	float hitWall;
