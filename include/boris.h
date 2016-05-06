@@ -99,9 +99,9 @@ void operator()(Particle &p) const {
 	            if (perpDistanceToSurface < 0) 
                 {
 	                t = (surface_dz_dx*p.x - p.z)/(-surface_dz_dx*(p.x -r[0]) + (p.z -r[2]));
-	                //p.x = p.x + (p.x - r[0])*t;
-	                //p.y = p.y + (p.y - r[1])*t;
-	                //p.z = p.z + (p.z - r[2])*t;
+	                p.x = p.x + (p.x - r[0])*t;
+	                p.y = p.y + (p.y - r[1])*t;
+	                p.z = p.z + (p.z - r[2])*t;
 	        	    p.hitWall = 1.0;
 	            } 
                 else 

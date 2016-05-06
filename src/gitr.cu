@@ -11,6 +11,8 @@
 #include "recombine.h"
 #include "crossFieldDiffusion.h"
 #include "coulombCollisions.h"
+#include "thermalForce.h"
+#include "surfaceModel.h"
 #include <algorithm>
 #include <random>
 #include "Particle.h"
@@ -143,28 +145,32 @@ cout << maxTemp_eV[i];
 	double **SurfaceBins;
 	double **SurfaceBinsCharge;
 	double **SurfaceBinsEnergy;
+	double **SurfaceBinsErosion;
 	
 	SurfaceBins = new double*[nY];
 	SurfaceBinsCharge = new double*[nY];
 	SurfaceBinsEnergy = new double*[nY];
+	SurfaceBinsErosion = new double*[nY];
 
  	SurfaceBins[0] = new double[nY*nZ];
  	SurfaceBinsCharge[0] = new double[nY*nZ];
  	SurfaceBinsEnergy[0] = new double[nY*nZ];
+	SurfaceBinsErosion[0] = new double[nY*nZ];
 			
 	for(int i=0 ; i<nY ; i++)
-				{
-					SurfaceBins[i] = &SurfaceBins[0][i*nZ];
-					SurfaceBinsCharge[i] = &SurfaceBinsCharge[0][i*nZ];
-					SurfaceBinsEnergy[i] = &SurfaceBinsEnergy[0][i*nZ];
-					
-				for(int j=0 ; j<nZ ; j++)
-					{
-						SurfaceBins[i][j] = 0;
-						SurfaceBinsCharge[i][j] = 0;
-						SurfaceBinsEnergy[i][j] = 0;
-					}
-				}
+	{
+		SurfaceBins[i] = &SurfaceBins[0][i*nZ];
+		SurfaceBinsCharge[i] = &SurfaceBinsCharge[0][i*nZ];
+		SurfaceBinsEnergy[i] = &SurfaceBinsEnergy[0][i*nZ];
+		SurfaceBinsErosion[i] = &SurfaceBinsErosion[0][i*nZ];				
+		for(int j=0 ; j<nZ ; j++)
+		{
+			SurfaceBins[i][j] = 0;
+			SurfaceBinsCharge[i][j] = 0;
+			SurfaceBinsEnergy[i][j] = 0;
+			SurfaceBinsErosion[i][j] = 0;
+		}
+	}
 	
 	double dt;
 	double nPtsPerGyroOrbit = cfg.lookup("timeStep.nPtsPerGyroOrbit");
@@ -261,6 +267,19 @@ cout << maxTemp_eV[i];
                     seeds5.begin(), hostCudaParticleVector.begin(), randInit(5) );
 #endif
 #endif
+
+#if USESURFACEMODEL > 0
+        std::vector<float> seeds6(nP);
+        std::generate( seeds6.begin(), seeds6.end(), [&]() { return dist(generator); } );
+#ifdef __CUDACC__
+        thrust::device_vector<float> deviceSeeds6 = seeds6;
+        thrust::transform(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),
+                    deviceSeeds6.begin(), deviceCudaParticleVector.begin(), randInit(6) );
+#else
+        std::transform(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
+                    seeds6.begin(), hostCudaParticleVector.begin(), randInit(6) );
+#endif
+#endif
 	
 	cpu_times copyToDeviceTime = timer.elapsed();
 	std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
@@ -277,6 +296,12 @@ cout << maxTemp_eV[i];
 #if USEPERPDIFFUSION > 0
 	thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), crossFieldDiffusion(dt,perDiffusionCoeff_in));
 #endif
+#if USECOULOMBCOLLISIONS > 0
+	thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), coulombCollisions(dt) );
+#endif
+#if USETHERMALFORCE > 0
+        thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), thermalForce(dt) );
+#endif
 #else
 	std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), move_boris(dt) );
 #if USEIONIZATION > 0
@@ -287,6 +312,12 @@ cout << maxTemp_eV[i];
 #endif
 #if USEPERPDIFFUSION > 0
         std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), crossFieldDiffusion(dt,perDiffusionCoeff_in));
+#endif
+#if USECOULOMBCOLLISIONS > 0
+        std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), coulombCollisions(dt) );
+#endif
+#if USETHERMALFORCE > 0
+        std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), thermalForce(dt) );
 #endif
 #endif
 	}

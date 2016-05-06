@@ -35,9 +35,9 @@ class Particle {
       	float Z;
       	float amu;
 	#ifdef __CUDACC__
-	curandState streams[6];
+	curandState streams[7];
 	#else
-        std::mt19937 streams[6];
+        std::mt19937 streams[7];
         #endif
 	
 	float hitWall;
