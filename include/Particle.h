@@ -26,9 +26,12 @@
 
 class Particle {
 	public:
-	float x;
-	float y;
-	float z;
+	    float x;
+	    float y;
+	    float z;
+        float xprevious;
+        float yprevious;
+        float zprevious;
       	float vx;
       	float vy;
       	float vz;
@@ -57,9 +60,9 @@ class Particle {
         Particle(float x,float y, float z, float Ex, float Ey, float Ez, float Z, float amu)
 		{
     
-		this->x = x;
-		this->y = y;
-		this->z = z;
+		this->xprevious = x;
+		this->yprevious = y;
+		this->zprevious = z;
 		this->Z = Z;
 		this->amu = amu;
 		this->hitWall = 0.0;
