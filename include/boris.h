@@ -53,7 +53,7 @@ void operator()(Particle &p) const {
 	        double surface_dz_dx;
 	        double * Emag;
 	        double B[3] = {0.0,0.0,-2.0};
-	        double perpDistanceToSurface = ( -surfaceDirection[0]*p.x + p.z )/2.0;	
+	        double perpDistanceToSurface = ( -surfaceDirection[0]*p.xprevious + p.zprevious )/2.0;	
 	        double dt = 1e-9;
 	        double Bmag = 2;
 	        double q_prime = p.Z*1.60217662e-19/(p.amu*1.6737236e-27)*dt*0.5;
@@ -63,16 +63,16 @@ void operator()(Particle &p) const {
 
             for ( int s=0; s<nSteps; s++ ) 
             {
-	            getE(p.x,p.y,p.z,E);
+	            getE(p.xprevious,p.yprevious,p.zprevious,E);
 	            surface_dz_dx = surfaceDirection[0];
                    
 	            v[0] = p.vx;
                 v[1] = p.vy;
 	            v[2] = p.vz;
                   
-	            r[0] = p.x;
-                r[1] = p.y;
-	            r[2] = p.z;	
+	            r[0] = p.xprevious;
+                r[1] = p.yprevious;
+	            r[2] = p.zprevious;	
 	            	  
 	            v_minus[0] = v[0] + q_prime*E[0];
 	            v_minus[1] = v[1] + q_prime*E[1];
@@ -90,26 +90,11 @@ void operator()(Particle &p) const {
 	            v[1] = v[1] + q_prime*E[1];
 	            v[2] = v[2] + q_prime*E[2];
 	                                                                    
-	            r[0] = p.x + v[0]*dt;
-	            r[1] = p.y + v[1]*dt;
-	            r[2] = p.z + v[2]*dt;
+	            p.x = p.xprevious + v[0]*dt;
+	            p.y = p.yprevious + v[1]*dt;
+	            p.z = p.zprevious + v[2]*dt;
 	                                                                    
-	            perpDistanceToSurface = ( -surfaceDirection[0]*r[0] + r[2] )/2.0;
 	                             
-	            if (perpDistanceToSurface < 0) 
-                {
-	                t = (surface_dz_dx*p.x - p.z)/(-surface_dz_dx*(p.x -r[0]) + (p.z -r[2]));
-	                p.x = p.x + (p.x - r[0])*t;
-	                p.y = p.y + (p.y - r[1])*t;
-	                p.z = p.z + (p.z - r[2])*t;
-	        	    p.hitWall = 1.0;
-	            } 
-                else 
-                {
-	                p.x = r[0];
-	                p.y = r[1];
-	                p.z = r[2];
-	            }
 	            						
 	            p.vx = v[0];
 	            p.vy = v[1];
