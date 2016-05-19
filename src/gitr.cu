@@ -17,9 +17,12 @@
 #include <algorithm>
 #include <random>
 #include "Particle.h"
+#include "Boundary.h"
 #include <boost/timer/timer.hpp>
+#include <vector>
 
 #ifdef __CUDACC__
+#include <thrust/copy.h>
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 #include <curand.h>
@@ -36,14 +39,41 @@ using namespace boost::timer;
 int main()
 {
 
-Config cfg;
+Config cfg,cfg_geom;
 
 cfg.readFile("gitrInput.cfg");
+cfg_geom.readFile("gitrGeometry.cfg");
 
 char outname[] = "Deposition.m";
 char outnameCharge[] = "Charge.m";
 char outnameEnergy[] = "Energy.m";
 
+//Geometry Definition
+Setting& geom = cfg_geom.lookup("geom");
+int nLines = geom["x1"].getLength();
+std::cout << "geometric objects " << nLines << std::endl;
+#ifdef __CUDACC__
+        thrust::host_vector<Boundary> hostBoundaryVector(nLines+1);
+#else
+        std::vector<Boundary> hostBoundaryVector(nLines+1);
+#endif
+for(int i=0 ; i<nLines ; i++)
+    {
+     hostBoundaryVector[i].x1 = geom["x1"][i];
+     hostBoundaryVector[i].z1 = geom["z1"][i];
+     hostBoundaryVector[i].x2 = geom["x2"][i];
+     hostBoundaryVector[i].z2 = geom["z2"][i];
+     hostBoundaryVector[i].slope_dzdx = geom["slope"][i];
+     hostBoundaryVector[i].intercept_z = geom["intercept"][i];
+     hostBoundaryVector[i].length = geom["length"][i];
+    }    
+hostBoundaryVector[nLines].y1 = geom["y1"];
+hostBoundaryVector[nLines].y2 = geom["y2"];
+hostBoundaryVector[nLines].periodic = geom["periodic"];
+  std::cout << "Bc line stuff: " << "  " << hostBoundaryVector[nLines].x1 << "  " << hostBoundaryVector[nLines].x2 << "  " << hostBoundaryVector[nLines].y1 << "  " << hostBoundaryVector[nLines].y2<< "  " << hostBoundaryVector[nLines].periodic << std::endl;
+#ifdef __CUDACC__
+    thrust::device_vector<Boundary> deviceBoundaryVector = hostBoundaryVector;
+#endif
 // Volume definition
 
 double xMinV = cfg.lookup("volumeDefinition.xMinV");
@@ -190,14 +220,27 @@ cout << maxTemp_eV[i];
 
     std::cout << "nParticles: " << nParticles << std::endl;
 #ifdef __CUDACC__
-        thrust::host_vector<Particle> hostCudaParticleVector(nParticles,p1);
+      thrust::host_vector<Particle> hostCudaParticleVector(nParticles,p1);
 #else
         std::vector<Particle> hostCudaParticleVector(nParticles,p1);
 #endif
-        cpu_timer timer;
 
-    std::cout << "Initial x position GPU: " << hostCudaParticleVector[1].x << "  " << hostCudaParticleVector[0].y << "  " << hostCudaParticleVector[0].z << "  " << hostCudaParticleVector[0].vx << "  " << hostCudaParticleVector[0].vy << "  " << hostCudaParticleVector[0].vz<< "  " << hostCudaParticleVector[0].Z << std::endl;
-    
+            std::uniform_real_distribution<float> dist2(0,1);
+            std::random_device rd2;
+            std::cout << "rand for energies " << dist2(rd2) << " " << dist2(rd2) << std::endl;
+       
+      for (int i=0 ; i<nParticles ; i++)
+            {
+                hostCudaParticleVector[i].vx = 3e3*(dist2(rd2) - 0.5);
+                hostCudaParticleVector[i].vy = 3e3*(dist2(rd2) - 0.5);
+                hostCudaParticleVector[i].vz = 3e3*(dist2(rd2) - 0.5);
+            }
+           
+            cpu_timer timer;
+
+  std::cout << "Initial x position GPU: " << hostCudaParticleVector[1].x << "  " << hostCudaParticleVector[1].y << "  " << hostCudaParticleVector[1].z << "  " << hostCudaParticleVector[1].vx << "  " << hostCudaParticleVector[1].vy << "  " << hostCudaParticleVector[1].vz<< "  " << hostCudaParticleVector[1].Z << std::endl;
+  
+     
 #ifdef __CUDACC__
     thrust::device_vector<Particle> deviceCudaParticleVector = hostCudaParticleVector;
 #endif
@@ -288,7 +331,8 @@ cout << maxTemp_eV[i];
     {
 #ifdef __CUDACC__
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt) );
-        thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), geometry_check(1.0) );
+    Boundary * dv_ptr = thrust::raw_pointer_cast(deviceBoundaryVector.data());
+        thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), geometry_check(nLines,dv_ptr) );
 #if USEIONIZATION > 0
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize(dt) );
 #endif
@@ -306,7 +350,7 @@ cout << maxTemp_eV[i];
 #endif
 #else
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), move_boris(dt) );
-    std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), geometry_check(1.0) );
+    std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), geometry_check(nLines,hostBoundaryVector) );
 #if USEIONIZATION > 0
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), ionize(dt) );
 #endif
@@ -326,25 +370,37 @@ cout << maxTemp_eV[i];
     }
     cpu_times ionizeTimeGPU = timer.elapsed();
     std::cout << "ionizeTimeGPU: " << ionizeTimeGPU.wall*1e-9 << '\n';
+
 #ifdef __CUDACC__
     hostCudaParticleVector = deviceCudaParticleVector;
 #endif
 
     for(int i=0; i < hostCudaParticleVector.size(); i++){
-        //std::cout << " final pos" << hostCudaParticleVector[i].x << " " << hostCudaParticleVector[i].y << " " << hostCudaParticleVector[i].z << std::endl;
-        if(hostCudaParticleVector[i].hitWall == 1){
+       //std::cout << " final pos" <<  i << " " <<hostCudaParticleVector[i].x << " " << hostCudaParticleVector[i].y << " " << hostCudaParticleVector[i].z << std::endl;
+        /*if(hostCudaParticleVector[i].hitWall == 1){
         surfaceIndexY = int(floor((hostCudaParticleVector[i].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
         surfaceIndexZ = int(floor((hostCudaParticleVector[i].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
         SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
 
         SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += hostCudaParticleVector[i].Z ;
         SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*hostCudaParticleVector[i].amu*1.6737236e-27*(hostCudaParticleVector[i].vx*hostCudaParticleVector[i].vx +  hostCudaParticleVector[i].vy*hostCudaParticleVector[i].vy+ hostCudaParticleVector[i].vz*hostCudaParticleVector[i].vz)/1.60217662e-19;
-        }   
+        }  */ 
     }
 
     OUTPUT( outname,nY, nZ, SurfaceBins);
     OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
     OUTPUT( outnameEnergy,nY, nZ, SurfaceBinsEnergy);
+
+    ofstream outfile2;
+    outfile2.open ("positions.m");
+    for(int i=1 ; i<=nP ; i++)
+      {
+        outfile2 << "Pos( " << i<< ",:) = [ " ;
+        outfile2 << hostCudaParticleVector[i-1].x << " " << hostCudaParticleVector[i-1].y << " " << hostCudaParticleVector[i-1].z << " ];" << std::endl;
+      }
+       outfile2.close();
+
+
 #ifdef __CUDACC__
     cudaThreadSynchronize();
 #endif

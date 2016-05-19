@@ -63,6 +63,9 @@ class Particle {
 		this->xprevious = x;
 		this->yprevious = y;
 		this->zprevious = z;
+        this->x = x;
+        this->y = y;
+        this->z = z;
 		this->Z = Z;
 		this->amu = amu;
 		this->hitWall = 0.0;

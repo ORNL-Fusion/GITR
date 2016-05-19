@@ -4,8 +4,23 @@
 #include <stdlib.h>
 #include <string>
 #include <cstring>
+
+#ifdef __CUDACC__
+#include <thrust/host_vector.h>
+#endif
+
+#ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER __host__ __device__
+#define CUDA_CALLABLE_MEMBER_DEVICE __device__
+#else
+#define CUDA_CALLABLE_MEMBER
+#define CUDA_CALLABLE_MEMBER_DEVICE
+#endif
+
 using namespace std;
 
+#include "Boundary.h"
+#include "Particle.h"
 
 
 //IO
