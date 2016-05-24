@@ -10,11 +10,11 @@
 #include "Particle.h"
 #include "Boundary.h"
 
-template <typename T>
+/*template <typename T>
 CUDA_CALLABLE_MEMBER_DEVICE
 int sgn(T val) {
         return (T(0) < val) - (val < T(0));
-}
+}*/
 
 struct geometry_check { 
 
@@ -23,12 +23,14 @@ struct geometry_check {
     const Boundary * boundaryVector;
 #else    
     const std::vector<Boundary> & boundaryVector;
+//    const Boundary * boundaryVector;
 #endif
 
 #ifdef __CUDACC__
     geometry_check(int _nLines,Boundary *  _boundaryVector) : nLines(_nLines), boundaryVector(_boundaryVector) {}
 #else    
     geometry_check(int _nLines,std::vector<Boundary> & _boundaryVector) : nLines(_nLines), boundaryVector(_boundaryVector) {} 
+//geometry_check(int _nLines,Boundary * _boundaryVector) : nLines(_nLines), boundaryVector(_boundaryVector) {}
 #endif
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(Particle &p) const { 
