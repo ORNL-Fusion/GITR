@@ -3,16 +3,25 @@
 
 #ifdef __CUDACC__
 #define CUDA_CALLABLE_MEMBER __host__ __device__
+#define CUDA_CALLABLE_MEMBER_DEVICE __device__
 #else
 #define CUDA_CALLABLE_MEMBER
+#define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
 
+#include <algorithm>
 #include "Particle.h"
-
+#include "Boundary.h"
 const double B[3] = {0.0,0.0,-2.0};
 
+template <typename T>
+CUDA_CALLABLE_MEMBER_DEVICE
+int sgn(T val) {
+            return (T(0) < val) - (val < T(0));
+}
+
 CUDA_CALLABLE_MEMBER
-void getE ( double x, double y, double z, double E[] ) {
+void getE ( double x, double y, double z, double E[], std::vector<Boundary> & boundaryVector ) {
 
 	double Emag;
 	double surfaceDirection[3] = {1.7321, 0, -1.00};
@@ -22,21 +31,127 @@ void getE ( double x, double y, double z, double E[] ) {
 	double lane = 3.64479e-04;
 	double dl = 1.05058e-05;
 	double pot = 60.0;
-	
-	Emag = pot*(fd/(2.0*dl)*exp(-perpDistanceToSurface/(2.0*dl))+ (1.0 - fd)/(lane)*exp(-perpDistanceToSurface/lane) );
-	E[0] = Emag*surfaceDirection_unit[0];
-	E[1] = Emag*surfaceDirection_unit[1];
-	E[2] = Emag*surfaceDirection_unit[2];
+    int minIndex;
+    double minDistance = 1e12;
+    int direction_type;
+    double tol = 1e12;
+    double point1_dist;
+    double point2_dist;
+    double perp_dist;
+    double directionUnitVector[3] = {0.0,0.0,0.0};
+    double vectorMagnitude;
+//    std::cout << "getE line slopes " << boundaryVector[0].slope_dzdx << " " << boundaryVector[1].slope_dzdx << " " <<
+//        boundaryVector[0].Z << " " << boundaryVector.size() << std::endl;
+    for (int j=0; j<boundaryVector.size(); j++)
+    {
+        if (boundaryVector[j].Z != 0.0)
+        {
+            point1_dist = sqrt((x - boundaryVector[j].x1)*(x - boundaryVector[j].x1) + 
+                    (z - boundaryVector[j].z1)*(z - boundaryVector[j].z1));
+            point2_dist = sqrt((x - boundaryVector[j].x2)*(x - boundaryVector[j].x2) + 
+                                        (z - boundaryVector[j].z2)*(z - boundaryVector[j].z2));
+            perp_dist = (boundaryVector[j].slope_dzdx*x - z + boundaryVector[j].intercept_z)/
+                sqrt(boundaryVector[j].slope_dzdx*boundaryVector[j].slope_dzdx + 1);   
 
+        //    std::cout << "perp dist "<< boundaryVector[j].slope_dzdx<< " " << x << " "<< z << " " << perp_dist << std::endl; 
+            if (boundaryVector[j].length*boundaryVector[j].length + perp_dist*perp_dist >=
+                    std::max(point1_dist,point2_dist)*std::max(point1_dist,point2_dist))
+            {
+                boundaryVector[j].distanceToParticle =fabs( perp_dist);
+                boundaryVector[j].pointLine = 1;
+            }
+            else
+            {
+                boundaryVector[j].distanceToParticle = std::min(point1_dist,point2_dist);
+                if (boundaryVector[j].distanceToParticle == point1_dist)
+                {
+                    boundaryVector[j].pointLine = 2;
+                }
+                else
+                {
+                    boundaryVector[j].pointLine = 3;
+                }
+            }
 
+            if (boundaryVector[j].distanceToParticle < minDistance)
+            {
+                minDistance = boundaryVector[j].distanceToParticle;
+                minIndex = j;
+                direction_type = boundaryVector[j].pointLine;
+            }
+        }
+        else
+        {
+            boundaryVector[j].distanceToParticle = tol;
+        }
+        // std::cout << "getE distances to surface " << boundaryVector[0].distanceToParticle << " " << boundaryVector[1].distanceToParticle << " " <<
+                    //    boundaryVector[0].pointLine << " " << boundaryVector[1].pointLine << std::endl;
+    if (direction_type == 1)
+    {
+        if (boundaryVector[minIndex].slope_dzdx == 0)
+        {
+            directionUnitVector[0] = 0.0;
+            directionUnitVector[1] = 0.0;
+            directionUnitVector[2] = 1.0*sgn(boundaryVector[minIndex].z1 - z);
+        }
+        else if (fabs(boundaryVector[minIndex].slope_dzdx)>= 0.75*tol)
+        {
+            
+            directionUnitVector[0] = boundaryVector[minIndex].x1 - x;
+            directionUnitVector[1] = 0.0;
+            directionUnitVector[2] = 0.0;
+        }
+        else
+        {
+            directionUnitVector[0] = -1.0*sgn(boundaryVector[minIndex].slope_dzdx)*sgn(perp_dist);
+            directionUnitVector[1] = 0.0;
+            directionUnitVector[2] = -1.0*directionUnitVector[0]/(boundaryVector[minIndex].slope_dzdx);
+        }
+    }
+    else if (direction_type == 2)
+    {
+        directionUnitVector[0] = (boundaryVector[minIndex].x1 - x);
+        directionUnitVector[1] = 0.0;
+        directionUnitVector[2] = (boundaryVector[minIndex].z1 - z);
+    }
+    else
+    {
+        directionUnitVector[0] = (boundaryVector[minIndex].x2 - x);
+        directionUnitVector[1] = 0.0;
+        directionUnitVector[2] = (boundaryVector[minIndex].z2 - z);
+    }
+
+    vectorMagnitude = sqrt(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
+                                + directionUnitVector[2]*directionUnitVector[2]);
+    directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
+    directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
+    directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
+   
+    //std::cout << "directionUnitVector " << directionUnitVector[0] << " " << directionUnitVector[1] <<
+    //    " " << directionUnitVector[2] << " " << minDistance << std::endl;
+        Emag = pot*(fd/(2.0*dl)*exp(-minDistance/(2.0*dl))+ (1.0 - fd)/(lane)*exp(-minDistance/lane) );
+        E[0] = Emag*directionUnitVector[0];
+        E[1] = Emag*directionUnitVector[1];
+        E[2] = Emag*directionUnitVector[2];
+
+        //std::cout << "Emagnitude " << Emag << std::endl;
+    
+    }
 
 }
 
 struct move_boris { 
-
+#ifdef __CUDACC__
+        const Boundary * boundaryVector;
+#else
+        std::vector<Boundary> & boundaryVector;
+#endif
     const double span;
-
-    move_boris(double _span) : span(_span) {} 
+#ifdef __CUDACC__
+    move_boris(double _span, Boundary *  _boundaryVector) : span(_span), boundaryVector(_boundaryVector) {}
+#else
+    move_boris(double _span, std::vector<Boundary> & _boundaryVector) : span(_span), boundaryVector(_boundaryVector) {}
+#endif    
 
 CUDA_CALLABLE_MEMBER    
 void operator()(Particle &p) const { 
@@ -54,7 +169,7 @@ void operator()(Particle &p) const {
 	        double * Emag;
 	        double B[3] = {0.0,0.0,-2.0};
 	        double perpDistanceToSurface = ( -surfaceDirection[0]*p.xprevious + p.zprevious )/2.0;	
-	        double dt = 1e-9;
+	        double dt = span;
 	        double Bmag = 2;
 	        double q_prime = p.Z*1.60217662e-19/(p.amu*1.6737236e-27)*dt*0.5;
             double coeff = 2*q_prime/(1+(q_prime*Bmag)*(q_prime*Bmag));
@@ -63,7 +178,7 @@ void operator()(Particle &p) const {
 
             for ( int s=0; s<nSteps; s++ ) 
             {
-	            getE(p.xprevious,p.yprevious,p.zprevious,E);
+	            getE(p.xprevious,p.yprevious,p.zprevious,E,boundaryVector);
 	            surface_dz_dx = surfaceDirection[0];
                    
 	            v[0] = p.vx;
