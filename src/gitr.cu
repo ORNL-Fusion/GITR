@@ -30,6 +30,7 @@
 #include <thrust/sequence.h>
 #include <thrust/transform.h>
 #include <thrust/functional.h>
+#include <thrust/device_ptr.h>
 #endif
 
 using namespace std;
@@ -59,6 +60,7 @@ std::cout << "geometric objects " << nLines << std::endl;
 #endif
 for(int i=0 ; i<nLines ; i++)
     {
+  //      std::cout << " i " << i << std::endl;
      hostBoundaryVector[i].x1 = geom["x1"][i];
      hostBoundaryVector[i].z1 = geom["z1"][i];
      hostBoundaryVector[i].x2 = geom["x2"][i];
@@ -67,7 +69,8 @@ for(int i=0 ; i<nLines ; i++)
      hostBoundaryVector[i].slope_dzdx = geom["slope"][i];
      hostBoundaryVector[i].intercept_z = geom["intercept"][i];
      hostBoundaryVector[i].length = geom["length"][i];
-    }    
+    }   
+//std::cout << " completed loop" << std::endl;
 hostBoundaryVector[nLines].Z = geom["Z"][nLines];
 hostBoundaryVector[nLines].y1 = geom["y1"];
 hostBoundaryVector[nLines].y2 = geom["y2"];
@@ -76,8 +79,11 @@ hostBoundaryVector[nLines].periodic = geom["periodic"];
 #ifdef __CUDACC__
     thrust::device_vector<Boundary> deviceBoundaryVector = hostBoundaryVector;
     Boundary * BoundaryDevicePointer = thrust::raw_pointer_cast(deviceBoundaryVector.data());
+    //thrust::device_ptr<Boundary>  boundaryVectorDevicePointer = thrust::device_pointer_cast(BoundaryDevicePointer);
+    //thrust::device_vector<Boundary> * deviceBoundaryVectorPointer = &deviceBoundaryVector;
+    thrust::device_vector<Boundary> * boundaryVectorDevicePointer = thrust::raw_pointer_cast(&deviceBoundaryVector);
 #else
-    Boundary * BoundaryHostPointer = &hostBoundaryVector[0];    
+    std::vector<Boundary> * BoundaryHostPointer = &hostBoundaryVector;    
 #endif
 // Volume definition
 
@@ -229,8 +235,7 @@ cout << maxTemp_eV[i];
 #else
         std::vector<Particle> hostCudaParticleVector(nParticles,p1);
 #endif
-
-        /*    std::uniform_real_distribution<float> dist2(0,1);
+            std::uniform_real_distribution<float> dist2(0,1);
             std::random_device rd2;
             std::cout << "rand for energies " << dist2(rd2) << " " << dist2(rd2) << std::endl;
        
@@ -241,11 +246,11 @@ cout << maxTemp_eV[i];
                 hostCudaParticleVector[i].vx = mag*cos(theta)*sin(phi);
                 hostCudaParticleVector[i].vy = mag*sin(theta)*sin(phi);
                 hostCudaParticleVector[i].vz = mag*cos(phi);
-            }*/
-           
+            }
+       
             cpu_timer timer;
 
-  std::cout << "Initial x position GPU: " << hostCudaParticleVector[1].x << "  " << hostCudaParticleVector[1].y << "  " << hostCudaParticleVector[1].z << "  " << hostCudaParticleVector[1].vx << "  " << hostCudaParticleVector[1].vy << "  " << hostCudaParticleVector[1].vz<< "  " << hostCudaParticleVector[1].Z << std::endl;
+  std::cout << "Initial x position GPU: " << hostCudaParticleVector[0].x << "  " << hostCudaParticleVector[0].y << "  " << hostCudaParticleVector[0].z << "  " << hostCudaParticleVector[0].vx << "  " << hostCudaParticleVector[0].vy << "  " << hostCudaParticleVector[0].vz<< "  " << hostCudaParticleVector[0].Z << std::endl;
   
      
 #ifdef __CUDACC__
@@ -337,7 +342,7 @@ cout << maxTemp_eV[i];
     for(int tt=0; tt< nT; tt++)
     {
 #ifdef __CUDACC__
-        thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt) );
+        thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt,BoundaryDevicePointer, nLines) );
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), geometry_check(nLines,BoundaryDevicePointer) );
 #if USEIONIZATION > 0
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize(dt) );
@@ -355,7 +360,7 @@ cout << maxTemp_eV[i];
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), thermalForce(dt) );
 #endif
 #else
-    std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), move_boris(dt,hostBoundaryVector) );
+    std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), move_boris(dt,hostBoundaryVector,nLines) );
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), geometry_check(nLines,hostBoundaryVector) );
 #if USEIONIZATION > 0
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), ionize(dt) );
@@ -383,14 +388,14 @@ cout << maxTemp_eV[i];
 
     for(int i=0; i < hostCudaParticleVector.size(); i++){
        //std::cout << " final pos" <<  i << " " <<hostCudaParticleVector[i].x << " " << hostCudaParticleVector[i].y << " " << hostCudaParticleVector[i].z << std::endl;
-        if(hostCudaParticleVector[i].hitWall == 1){
+        /*if(hostCudaParticleVector[i].hitWall == 1){
         surfaceIndexY = int(floor((hostCudaParticleVector[i].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
         surfaceIndexZ = int(floor((hostCudaParticleVector[i].z - zMin)/(zMax - zMin)*(nZ) + 0.0f));
         SurfaceBins[surfaceIndexY][surfaceIndexZ] +=  1.0 ;
 
         SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += hostCudaParticleVector[i].Z ;
         SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*hostCudaParticleVector[i].amu*1.6737236e-27*(hostCudaParticleVector[i].vx*hostCudaParticleVector[i].vx +  hostCudaParticleVector[i].vy*hostCudaParticleVector[i].vy+ hostCudaParticleVector[i].vz*hostCudaParticleVector[i].vz)/1.60217662e-19;
-        }  
+        } */ 
     }
 
     OUTPUT( outname,nY, nZ, SurfaceBins);
