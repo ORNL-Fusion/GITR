@@ -4,6 +4,7 @@
 #ifdef __CUDACC__
 #define CUDA_CALLABLE_MEMBER __host__ __device__
 #define CUDA_CALLABLE_MEMBER_DEVICE __device__
+#include "thrust/extrema.h"
 #else
 #define CUDA_CALLABLE_MEMBER
 #define CUDA_CALLABLE_MEMBER_DEVICE
@@ -15,14 +16,18 @@
 const double B[3] = {0.0,0.0,-2.0};
 
 template <typename T>
-CUDA_CALLABLE_MEMBER_DEVICE
+CUDA_CALLABLE_MEMBER
 int sgn(T val) {
             return (T(0) < val) - (val < T(0));
 }
 
 CUDA_CALLABLE_MEMBER
-void getE ( double x, double y, double z, double E[], std::vector<Boundary> & boundaryVector ) {
 
+#ifdef __CUDACC__
+void getE ( double x, double y, double z, double E[], Boundary *  boundaryVector, int nLines ) {
+#else
+void getE ( double x, double y, double z, double E[], std::vector<Boundary> & boundaryVector, int nLines ) {
+#endif
 	double Emag;
 	double surfaceDirection[3] = {1.7321, 0, -1.00};
 	double surfaceDirection_unit[3] =  {0.866, 0, -0.50};
@@ -40,9 +45,13 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> & bo
     double perp_dist;
     double directionUnitVector[3] = {0.0,0.0,0.0};
     double vectorMagnitude;
-//    std::cout << "getE line slopes " << boundaryVector[0].slope_dzdx << " " << boundaryVector[1].slope_dzdx << " " <<
-//        boundaryVector[0].Z << " " << boundaryVector.size() << std::endl;
-    for (int j=0; j<boundaryVector.size(); j++)
+    //thrust::device_reference<Boundary> tmp = *boundaryVector;
+    double ztest = boundaryVector[0].Z;
+    double max = 0.0;
+    double min = 0.0;
+    //std::cout << "getE line slopes " << boundaryVector[0].slope_dzdx << " " << boundaryVector[1].slope_dzdx << " " <<
+        //boundaryVector[0].Z << " " << boundaryVector.size() << std::endl;
+    for (int j=0; j< nLines; j++)
     {
         if (boundaryVector[j].Z != 0.0)
         {
@@ -54,15 +63,25 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> & bo
                 sqrt(boundaryVector[j].slope_dzdx*boundaryVector[j].slope_dzdx + 1);   
 
         //    std::cout << "perp dist "<< boundaryVector[j].slope_dzdx<< " " << x << " "<< z << " " << perp_dist << std::endl; 
+            if (point1_dist > point2_dist)
+            {
+                max = point1_dist;
+                min = point2_dist;
+            }
+            else
+            {
+                max = point2_dist;
+                min = point1_dist;
+            }
             if (boundaryVector[j].length*boundaryVector[j].length + perp_dist*perp_dist >=
-                    std::max(point1_dist,point2_dist)*std::max(point1_dist,point2_dist))
+                    max*max)
             {
                 boundaryVector[j].distanceToParticle =fabs( perp_dist);
                 boundaryVector[j].pointLine = 1;
             }
             else
             {
-                boundaryVector[j].distanceToParticle = std::min(point1_dist,point2_dist);
+                boundaryVector[j].distanceToParticle = min;
                 if (boundaryVector[j].distanceToParticle == point1_dist)
                 {
                     boundaryVector[j].pointLine = 2;
@@ -84,8 +103,8 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> & bo
         {
             boundaryVector[j].distanceToParticle = tol;
         }
-        // std::cout << "getE distances to surface " << boundaryVector[0].distanceToParticle << " " << boundaryVector[1].distanceToParticle << " " <<
-                    //    boundaryVector[0].pointLine << " " << boundaryVector[1].pointLine << std::endl;
+        // std::cout << "getE distances to surface " << (*boundaryVector[0].distanceToParticle << " " << (*boundaryVector)[1].distanceToParticle << " " <<
+                    //    (*boundaryVector[0].pointLine << " " << (*boundaryVector)[1].pointLine << std::endl;
     if (direction_type == 1)
     {
         if (boundaryVector[minIndex].slope_dzdx == 0)
@@ -142,15 +161,16 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> & bo
 
 struct move_boris { 
 #ifdef __CUDACC__
-        const Boundary * boundaryVector;
+    Boundary *  boundaryVector;
 #else
         std::vector<Boundary> & boundaryVector;
 #endif
     const double span;
+    const int nLines;
 #ifdef __CUDACC__
-    move_boris(double _span, Boundary *  _boundaryVector) : span(_span), boundaryVector(_boundaryVector) {}
+    move_boris(double _span, Boundary *  _boundaryVector,int _nLines) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines) {}
 #else
-    move_boris(double _span, std::vector<Boundary> & _boundaryVector) : span(_span), boundaryVector(_boundaryVector) {}
+    move_boris(double _span, std::vector<Boundary> & _boundaryVector, int _nLines) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines) {}
 #endif    
 
 CUDA_CALLABLE_MEMBER    
@@ -173,12 +193,12 @@ void operator()(Particle &p) const {
 	        double Bmag = 2;
 	        double q_prime = p.Z*1.60217662e-19/(p.amu*1.6737236e-27)*dt*0.5;
             double coeff = 2*q_prime/(1+(q_prime*Bmag)*(q_prime*Bmag));
-  
+            //thrust::device_vector<Boundary> tmp = boundaryVector[0];
+            double ztest = boundaryVector[0].x1; 
             int nSteps = floor( span / dt + 0.5);
-
             for ( int s=0; s<nSteps; s++ ) 
             {
-	            getE(p.xprevious,p.yprevious,p.zprevious,E,boundaryVector);
+	          getE(p.xprevious,p.yprevious,p.zprevious,E,boundaryVector,nLines);
 	            surface_dz_dx = surfaceDirection[0];
                    
 	            v[0] = p.vx;

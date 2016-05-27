@@ -55,8 +55,8 @@ void operator()(Particle &p) const {
             double minDist = 1e12;
             int minDistInd = 0;
                 //std::cout << "particle slope " << particle_slope << " " << particle_intercept << std::endl;
-                            //std::cout << "r " << boundaryVector[0].x1 << " " << boundaryVector[1].x1 << " " << boundaryVector[0].slope_dzdx << std::endl;
-                          //  std::cout << "r0 " << p.xprevious << " " << p.yprevious << " " << p.zprevious<< std::endl;
+                            //std::cout << "r " << boundaryVector[0].x1 << " " << boundaryVector[0].x1 << " " << boundaryVector[0].slope_dzdx << std::endl;
+                            //std::cout << "r0 " << p.xprevious << " " << p.yprevious << " " << p.zprevious<< std::endl;
             for (int i=0; i<nLines; i++)
                 {   //std::cout << "vert geom " << i << "  " << fabs(boundaryVector[i].slope_dzdx) << " " << tol << std::endl;
                     if (fabs(boundaryVector[i].slope_dzdx) >= tol*0.75)
@@ -74,11 +74,25 @@ void operator()(Particle &p) const {
 
                     if (signPoint != signPoint0)
                     {
+                       if (isinf(particle_slope))
+                               {
+                                  // std::cout << " isinf catch " << std::endl;
+                                particle_slope = tol;
+                               } 
+                       if (fabs(particle_slope) >= tol*0.75)
+                       {
+                           signLine1 = sgn(boundaryVector[i].x1 - p.x);
+                           signLine2 = sgn(boundaryVector[i].x2 - p.x);
+                          // std::cout << "signlines3 " << signLine1 << " " << signLine2 << std::endl;
+                       }
+                       else
+                       {
                         signLine1 = sgn(boundaryVector[i].z1 - boundaryVector[i].x1*particle_slope - particle_intercept);
                         signLine2 = sgn(boundaryVector[i].z2 - boundaryVector[i].x2*particle_slope - particle_intercept);
+                       }
                         //std::cout << "signLines " << signLine1 << " " << signLine2 << std::endl;
                         //std::cout << "bound vec points " << boundaryVector[i].z1 << " " << boundaryVector[i].x1 << 
-                        //   " " << boundaryVector[i].z2 << " " << boundaryVector[i].x2 << std::endl; 
+                          // " " << boundaryVector[i].z2 << " " << boundaryVector[i].x2 << std::endl; 
                         if (signLine1 != signLine2)
                         {
                             nIntersections++;
@@ -93,9 +107,10 @@ void operator()(Particle &p) const {
                             }
                             else
                             {
-                              // std::cout << "not vertical line" << std::endl;
+                               //std::cout << "not vertical line" << std::endl;
                             //std::cout << 0.0*7.0 << " " << i << " " << nParam << " " << lines[i*nParam+4] << "  " <<tol << std::endl;
-                                if (boundaryVector[i].slope_dzdx >= tol*0.75)
+                               //std::cout << "boundaryVector slope " << boundaryVector[i].slope_dzdx << " " << tol*0.75 <<std::endl; 
+                               if (fabs(boundaryVector[i].slope_dzdx) >= tol*0.75)
                                 {
                                     intersectionx[nIntersections-1] = boundaryVector[i].x1;
                                 }
@@ -103,7 +118,7 @@ void operator()(Particle &p) const {
                                 {
                                     intersectionx[nIntersections-1] = (boundaryVector[i].intercept_z - particle_intercept)/
                                                 (particle_slope - boundaryVector[i].slope_dzdx);
-                                    //std::cout << "in this else "<< intersectionx[nIntersections -1] << std::endl;
+                                  //  std::cout << "in this else "<< intersectionx[nIntersections -1] << std::endl;
                                 }
                                 intersectiony[nIntersections-1] = intersectionx[nIntersections-1]*particle_slope
                                                                                + particle_intercept;
@@ -124,7 +139,14 @@ void operator()(Particle &p) const {
             else if (nIntersections ==1)
             {
                 p.hitWall = 1.0;
+                if (particle_slope >= tol*0.75)
+                {
+                    p.y = p.yprevious + (intersectiony[0] - p.zprevious)/(p.z - p.zprevious)*(p.y - p.yprevious);
+                }
+                else
+                {
                 p.y = p.yprevious + (intersectionx[0] - p.xprevious)/(p.x - p.xprevious)*(p.y - p.yprevious);//go back here and calculate p.y
+                }
                 p.x = intersectionx[0];
                 p.z = intersectiony[0];
                 //std::cout << "nInt = 1 position " << intersectionx[0] << " " << intersectiony[0]  << std::endl;
