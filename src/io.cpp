@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string>
 #include <cstring>
+#include <netcdf>
+#include "Boundary.h"
+#include "Particle.h"
 
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
@@ -18,12 +21,53 @@
 #endif
 
 using namespace std;
-
-#include "Boundary.h"
-#include "Particle.h"
-
+using namespace netCDF;
+using namespace exceptions;
 
 //IO
+
+int read_ar2Input( string fileName) {
+
+    cout << "Reading "<<fileName<<endl;
+
+    // Check input file exists
+
+    ifstream file(fileName.c_str());
+    if(!file.good()) {
+        cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
+        exit(1);
+    }
+
+    NcFile nc(fileName.c_str(), NcFile::read);
+
+    NcDim nc_nR(nc.getDim("nR"));
+    NcDim nc_nZ(nc.getDim("nZ"));
+    
+    int nR = nc_nR.getSize(); 
+    int nZ = nc_nZ.getSize(); 
+
+    NcVar nc_r(nc.getVar("r"));
+    NcVar nc_z(nc.getVar("z"));
+
+    vector<float> r;
+    r.resize(nR);
+    nc_r.getVar(&r[0]);
+
+    vector<float> z;
+    z.resize(nZ);
+    nc_z.getVar(&z[0]);
+
+    for(int i=0;i<nR;i++){
+        cout<<r[i]<<endl;
+    }
+
+    for(int j=0;j<nZ;j++){
+        cout<<z[j]<<endl;
+    }
+
+    return(0);
+
+}
 
 
 //OUTPUT

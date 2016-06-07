@@ -45,6 +45,9 @@ Config cfg,cfg_geom;
 cfg.readFile("gitrInput.cfg");
 cfg_geom.readFile("gitrGeometry.cfg");
 
+string fileName("ar2Input.nc");
+int a = read_ar2Input( string fileName) {
+
 char outname[] = "Deposition.m";
 char outnameCharge[] = "Charge.m";
 char outnameEnergy[] = "Energy.m";
