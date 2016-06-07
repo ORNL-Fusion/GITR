@@ -7,6 +7,7 @@
 #include <netcdf>
 #include "Boundary.h"
 #include "Particle.h"
+#include "boost/multi_array.hpp"
 
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
@@ -63,6 +64,28 @@ int read_ar2Input( string fileName) {
 
     for(int j=0;j<nZ;j++){
         cout<<z[j]<<endl;
+    }
+
+    // Allocate contiguous 2D array for netcdf to work
+    float **br = new float*[nR];
+    br[0] = new float[nR*nZ];
+    for(int i=0; i<nR; i++){
+        br[i] = &br[0][i*nZ];
+    }
+
+    cout << "nc.getVar"<<endl;
+
+    NcVar nc_br(nc.getVar("br"));
+    cout << "nc_br.getVar (actually getting data input var)"<<endl;
+
+    nc_br.getVar(br[0]);
+    cout << "Start loop to pring"<<endl;
+
+    for(int i=0; i<nZ; i++){
+        for(int j=0; j<nR; j++){
+            cout<<"i : "<<i<<" j : "<<j<<endl;
+            cout<<br[i][j]<<endl;
+        }
     }
 
     return(0);
