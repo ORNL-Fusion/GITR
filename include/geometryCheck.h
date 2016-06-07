@@ -173,14 +173,14 @@ void operator()(Particle &p) const {
    
             if (boundaryVector[nLines].periodic)
             {
-                /*if (p.y < boundaryVector[nLines].y1)
+                if (p.y < boundaryVector[nLines].y1)
                 {
                     p.y = boundaryVector[nLines].y2  - (boundaryVector[nLines].y1 - p.y);
                 }
                 else if (p.y > boundaryVector[nLines].y2)
                 {
                     p.y = boundaryVector[nLines].y1  + (p.y - boundaryVector[nLines].y2);
-                }*/
+                }
             }
             else
             {
