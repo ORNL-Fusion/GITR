@@ -24,9 +24,9 @@ int sgn(T val) {
 CUDA_CALLABLE_MEMBER
 
 #ifdef __CUDACC__
-void getE ( double x, double y, double z, double E[], Boundary *  boundaryVector, int nLines ) {
+void getE ( double x, double y, double z, double E[], Boundary *boundaryVector, int nLines ) {
 #else
-void getE ( double x, double y, double z, double E[], std::vector<Boundary> & boundaryVector, int nLines ) {
+void getE ( double x, double y, double z, double E[], std::vector<Boundary> &boundaryVector, int nLines ) {
 #endif
 	double Emag;
 	double surfaceDirection[3] = {1.7321, 0, -1.00};
@@ -36,7 +36,7 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> & bo
 	double lane = 3.64479e-04;
 	double dl = 1.05058e-05;
 	double pot = 60.0;
-    int minIndex;
+    int minIndex = 0;
     double minDistance = 1e12;
     int direction_type;
     double tol = 1e12;
@@ -161,16 +161,16 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> & bo
 
 struct move_boris { 
 #ifdef __CUDACC__
-    Boundary *  boundaryVector;
+    Boundary *boundaryVector;
 #else
-        std::vector<Boundary> & boundaryVector;
+    std::vector<Boundary> &boundaryVector;
 #endif
     const double span;
     const int nLines;
 #ifdef __CUDACC__
-    move_boris(double _span, Boundary *  _boundaryVector,int _nLines) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines) {}
+    move_boris(double _span, Boundary *_boundaryVector,int _nLines) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines) {}
 #else
-    move_boris(double _span, std::vector<Boundary> & _boundaryVector, int _nLines) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines) {}
+    move_boris(double _span, std::vector<Boundary> &_boundaryVector, int _nLines) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines) {}
 #endif    
 
 CUDA_CALLABLE_MEMBER    
