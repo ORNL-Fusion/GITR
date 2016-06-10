@@ -8,7 +8,7 @@
 #include "Boundary.h"
 #include "Particle.h"
 #include "boost/multi_array.hpp"
-
+#include "io.hpp"
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
 #endif
