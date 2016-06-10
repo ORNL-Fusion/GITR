@@ -347,7 +347,13 @@ cout << maxTemp_eV[i];
     {
 #ifdef __CUDACC__
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt,BoundaryDevicePointer, nLines) );
-        thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), geometry_check(nLines,BoundaryDevicePointer) );
+        try {
+            thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), geometry_check(nLines,BoundaryDevicePointer) );
+        }
+        catch (thrust::system_error &e) {
+            std::cerr << "Thrust system error: " << e.what() << std::endl;
+            exit(-1);
+        }
 #if USEIONIZATION > 0
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), ionize(dt) );
 #endif
