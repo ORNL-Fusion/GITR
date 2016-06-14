@@ -65,7 +65,6 @@ void operator()(Particle &p) const {
             double signLine2;
             double minDist = 1e12;
             int minDistInd = 0;
-            double tmp = p.y;
                 //std::cout << "particle slope " << particle_slope << " " << particle_intercept << std::endl;
                             //std::cout << "r " << boundaryVector[0].x1 << " " << boundaryVector[0].x1 << " " << boundaryVector[0].slope_dzdx << std::endl;
                             //std::cout << "r0 " << p.xprevious << " " << p.yprevious << " " << p.zprevious<< std::endl;
@@ -138,13 +137,8 @@ void operator()(Particle &p) const {
                         }
                     }
                 }
-            
-	        if (nIntersections == 0){
-                p.xprevious = p.x;
-                p.zprevious = p.z;
-                p.yprevious = p.y;
-            }
-/*            {
+           if (nIntersections ==0) 
+            {
                 p.xprevious = p.x;
                 p.yprevious = p.y;
                 p.zprevious = p.z;
@@ -205,7 +199,7 @@ void operator()(Particle &p) const {
                 p.x = intersectionx[minDistInd];
 #endif                
                 p.z = intersectiony[minDistInd];
-            }*/
+            }
 
 #if USECYLSYMM > 0 
 #else            

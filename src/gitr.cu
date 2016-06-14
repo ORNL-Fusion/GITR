@@ -14,6 +14,7 @@
 #include "coulombCollisions.h"
 #include "thermalForce.h"
 #include "surfaceModel.h"
+#include "interp2d.hpp"
 #include <algorithm>
 #include <random>
 #include "Particle.h"
@@ -48,7 +49,24 @@ cfg_geom.readFile("gitrGeometry.cfg");
 
 string fileName("ar2Input.nc");
 int a = read_ar2Input(fileName);
-
+string profileName("profiles.nc");
+int n_x;
+int n_z;
+int a1 = read_profileNs(profileName,n_x,n_z);
+std::cout << "nx for profiles.nc " << n_x << "  " << n_z << std::endl;
+std::vector<double> gridx(n_x), gridz(n_z);
+std::vector<double> data(n_x*n_z);
+int a2 = read_profiles(profileName,n_x,n_z, gridx, gridz, data);
+std::cout << "Exited read_profiles routine " << std::endl;
+for (int j=0; j< n_z ; j++)
+{
+    for (int i=0; i< n_x; i++)
+    {   std::cout << " indices: " << i << "  " << j << std::endl;
+        std::cout << " grid gridz data" << gridx[i] << " " << gridz[j] << " " << data[i + j*n_x] << std::endl;
+    }
+}
+double interp_val1 = interp2d(1.9231, 0.0, 0.3034, gridx, gridz, data);
+std::cout << " interpolated value: " << interp_val1 << std::endl;
 char outname[] = "Deposition.m";
 char outnameCharge[] = "Charge.m";
 char outnameEnergy[] = "Energy.m";
@@ -56,7 +74,7 @@ char outnameEnergy[] = "Energy.m";
 //Geometry Definition
 Setting& geom = cfg_geom.lookup("geom");
 int nLines = geom["x1"].getLength();
-std::cout << "geometric objects " << nLines << std::endl;
+std::cout << "Number of Geometric Objects Loaded: " << nLines << std::endl;
 #ifdef __CUDACC__
         thrust::host_vector<Boundary> hostBoundaryVector(nLines+1);
 #else
@@ -64,7 +82,6 @@ std::cout << "geometric objects " << nLines << std::endl;
 #endif
 for(int i=0 ; i<nLines ; i++)
     {
-  //      std::cout << " i " << i << std::endl;
      hostBoundaryVector[i].x1 = geom["x1"][i];
      hostBoundaryVector[i].z1 = geom["z1"][i];
      hostBoundaryVector[i].x2 = geom["x2"][i];
@@ -74,12 +91,10 @@ for(int i=0 ; i<nLines ; i++)
      hostBoundaryVector[i].intercept_z = geom["intercept"][i];
      hostBoundaryVector[i].length = geom["length"][i];
     }   
-//std::cout << " completed loop" << std::endl;
 hostBoundaryVector[nLines].Z = geom["Z"][nLines];
 hostBoundaryVector[nLines].y1 = geom["y1"];
 hostBoundaryVector[nLines].y2 = geom["y2"];
 hostBoundaryVector[nLines].periodic = geom["periodic"];
-  std::cout << "Bc line stuff: " << "  " << hostBoundaryVector[nLines].x1 << "  " << hostBoundaryVector[nLines].x2 << "  " << hostBoundaryVector[nLines].y1 << "  " << hostBoundaryVector[nLines].y2<< "  " << hostBoundaryVector[nLines].periodic << std::endl;
 #ifdef __CUDACC__
     thrust::device_vector<Boundary> deviceBoundaryVector = hostBoundaryVector;
     Boundary * BoundaryDevicePointer = thrust::raw_pointer_cast(deviceBoundaryVector.data());
@@ -93,7 +108,6 @@ hostBoundaryVector[nLines].periodic = geom["periodic"];
 
 double xMinV = cfg.lookup("volumeDefinition.xMinV");
 double xMaxV = cfg.lookup("volumeDefinition.xMaxV");
-cout << "xMaxV  " << xMaxV << endl;
     // grid
 int nXv = cfg.lookup("volumeDefinition.grid.nXv");
 int nYv = cfg.lookup("volumeDefinition.grid.nYv");
@@ -126,16 +140,10 @@ double connectionLength = cfg.lookup("bField.connectionLength");
 
 int ionization_nDtPerApply  = cfg.lookup("timeStep.ionization_nDtPerApply");
 int collision_nDtPerApply  = cfg.lookup("timeStep.collision_nDtPerApply");
-cout << "collision_nDtPerApply  " << collision_nDtPerApply << endl;
 // Perp DiffusionCoeff - only used when Diffusion interpolator is = 0
 double perDiffusionCoeff_in = cfg.lookup("perpDiffusion.perDiffusionCoeff_in");
 
-// Background profile values used Density, temperature interpolators are 0 or 2
-double densitySOLDecayLength;
-double tempSOLDecayLength;
-
 // Background species info
-int *densityChargeBins;
 int *background_Z;
 double *background_amu;
 double *background_flow;
@@ -151,14 +159,8 @@ double *maxTemp_eV;
 Setting& backgroundPlasma = cfg.lookup("backgroundPlasma");
 int nS = backgroundPlasma["Z"].getLength();
 
-cout << "nS  " << nS << endl;
-
 Setting& diagnostics = cfg.lookup("diagnostics");
-int nDensityChargeBins = diagnostics["densityChargeBins"].getLength();
 
-cout << "nDensityChargeBins  " << nDensityChargeBins << endl;
-
-densityChargeBins = new int[nDensityChargeBins];
 
 background_Z = new int[nS];
 background_amu = new double[nS];
@@ -173,9 +175,7 @@ background_amu[i] = backgroundPlasma["amu"][i];
 background_flow[i] = backgroundPlasma["flow"]["fractionOfThermalVelocity"][i];
 maxDensity[i] = backgroundPlasma["density"]["max"][i];
 maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
-
-cout << maxTemp_eV[i];
- }
+}
 
     double x = cfg.lookup("impurityParticleSource.initialConditions.x_start");
     double y = cfg.lookup("impurityParticleSource.initialConditions.y_start");
@@ -226,22 +226,24 @@ cout << maxTemp_eV[i];
     cout << "Number of particles: " << nP << endl;              
     long nParticles = nP;
     int nT = cfg.lookup("timeStep.nT");
-    cout << "Number of time steps: " << nT << endl; 
+    cout << "Number of time steps: " << nT << " With dt = " << dt << endl; 
     
     int surfaceIndexY;
     int surfaceIndexZ;
-
+#if PARTICLE_SOURCE == 0
     Particle p1(x,y,z,Ex,Ey,Ez,Z,amu);
+#endif
 
-    std::cout << "nParticles: " << nParticles << std::endl;
 #ifdef __CUDACC__
       thrust::host_vector<Particle> hostCudaParticleVector(nParticles,p1);
 #else
         std::vector<Particle> hostCudaParticleVector(nParticles,p1);
 #endif
+
+#if GEOM_TRACE > 0       
             std::uniform_real_distribution<float> dist2(0,1);
             std::random_device rd2;
-            std::cout << "rand for energies " << dist2(rd2) << " " << dist2(rd2) << std::endl;
+            std::cout << "Randomizing velocities to trace geometry. " << std::endl;
        
       for (int i=0 ; i<nParticles ; i++)
             {   double theta = dist2(rd2)*2*3.1415;
@@ -251,17 +253,14 @@ cout << maxTemp_eV[i];
                 hostCudaParticleVector[i].vy = mag*sin(theta)*sin(phi);
                 hostCudaParticleVector[i].vz = mag*cos(phi);
             }
+#endif
        
             cpu_timer timer;
 
-  std::cout << "Initial x position GPU: " << hostCudaParticleVector[0].x << "  " << hostCudaParticleVector[0].y << "  " << hostCudaParticleVector[0].z << "  " << hostCudaParticleVector[0].vx << "  " << hostCudaParticleVector[0].vy << "  " << hostCudaParticleVector[0].vz<< "  " << hostCudaParticleVector[0].Z << std::endl;
-  
-     
 #ifdef __CUDACC__
     thrust::device_vector<Particle> deviceCudaParticleVector = hostCudaParticleVector;
 #endif
 
-    //std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(),std::numeric_limits<float>::max());
     std::uniform_real_distribution<float> dist(0,1e6);
         std::random_device rd;
         std::default_random_engine generator(rd());
@@ -390,7 +389,7 @@ cout << maxTemp_eV[i];
 #endif
     }
     cpu_times ionizeTimeGPU = timer.elapsed();
-    std::cout << "ionizeTimeGPU: " << ionizeTimeGPU.wall*1e-9 << '\n';
+    std::cout << "Particle Moving Time: " << ionizeTimeGPU.wall*1e-9 << '\n';
 
 #ifdef __CUDACC__
     hostCudaParticleVector = deviceCudaParticleVector;
@@ -429,11 +428,6 @@ cout << maxTemp_eV[i];
     cpu_times copyToHostTime = timer.elapsed();
 
     cpu_times createParticlesTimeCPU = timer.elapsed();
-    std::cout << "createParticesTimeCPU: " << (createParticlesTimeCPU.wall-copyToHostTime.wall)*1e-9 << '\n';
-
-
-    cpu_times moveTimeCPU = timer.elapsed();
-    std::cout << "moveTimeCPU: " << (moveTimeCPU.wall-createParticlesTimeCPU.wall)*1e-9 << '\n';
-
+    std::cout << "Copy to host, bin and output time: " << (createParticlesTimeCPU.wall-copyToHostTime.wall)*1e-9 << '\n';
     return 0;
 }

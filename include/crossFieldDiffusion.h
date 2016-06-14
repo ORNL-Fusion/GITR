@@ -30,7 +30,6 @@ void operator()(Particle &p) const {
 		double step;
  
 #ifdef __CUDACC__
-        	curandState tmpState;
         	double r3 = curand_uniform(&p.streams[2]);
 #else
         	std::uniform_real_distribution<double> dist(0.0, 1.0);

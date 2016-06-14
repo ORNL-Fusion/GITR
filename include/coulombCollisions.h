@@ -23,8 +23,6 @@
 CUDA_CALLABLE_MEMBER
 void getSlowDownFrequencies ( double& nu_friction, double& nu_deflection, double& nu_parallel,
 			 	double& nu_energy, Particle& p ) {
-	double ME = 9.10938356e-31;
-        double MI = 1.6737236e-27;
         double Q = 1.60217662e-19;
         double EPS0 = 8.854187e-12;
 	double pi = 3.14159265;
@@ -144,7 +142,6 @@ void operator()(Particle &p) const {
         	relativeVelocity[2] = p.vz - flowVelocity[2];
         	velocityRelativeNorm = sqrt( relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2]);
 #ifdef __CUDACC__
-	        curandState tmpState;
         	int plus_minus1 = floor(curand_uniform(&p.streams[3]) + 0.5)*2 -1;
 		int plus_minus2 = floor(curand_uniform(&p.streams[4]) + 0.5)*2 -1;
 		int plus_minus3 = floor(curand_uniform(&p.streams[5]) + 0.5)*2 -1;
