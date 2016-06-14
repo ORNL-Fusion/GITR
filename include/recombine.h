@@ -43,7 +43,6 @@ struct recombine {
 	
 	
 	#ifdef __CUDACC__
-	curandState tmpState;
 	double r2 = curand_uniform(&p.streams[1]);
 	#else
 	std::uniform_real_distribution<double> dist(0.0, 1.0);

@@ -29,8 +29,6 @@ using namespace exceptions;
 
 int read_ar2Input( string fileName) {
 
-    cout << "Reading "<<fileName<<endl;
-
     // Check input file exists
 
     ifstream file(fileName.c_str());
@@ -58,13 +56,6 @@ int read_ar2Input( string fileName) {
     z.resize(nZ);
     nc_z.getVar(&z[0]);
 
-    for(int i=0;i<nR;i++){
-        cout<<r[i]<<endl;
-    }
-
-    for(int j=0;j<nZ;j++){
-        cout<<z[j]<<endl;
-    }
 
     // Allocate contiguous 2D array for netcdf to work
     float **br = new float*[nR];
@@ -73,27 +64,66 @@ int read_ar2Input( string fileName) {
         br[i] = &br[0][i*nZ];
     }
 
-    cout << "nc.getVar"<<endl;
 
     NcVar nc_br(nc.getVar("br"));
-    cout << "nc_br.getVar (actually getting data input var)"<<endl;
 
     nc_br.getVar(br[0]);
-    cout << "Start loop to pring"<<endl;
-
-    for(int i=0; i<nZ; i++){
-        for(int j=0; j<nR; j++){
-            cout<<"i : "<<i<<" j : "<<j<<endl;
-            cout<<br[i][j]<<endl;
-        }
-    }
 
     return(0);
 
 }
 
 
-//OUTPUT
+int read_profileNs( string fileName,int &n_x,int &n_z ) {
+
+    // Check input file exists
+
+    ifstream file(fileName.c_str());
+    if(!file.good()) {
+        cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
+        exit(1);
+    }
+
+    NcFile nc(fileName.c_str(), NcFile::read);
+
+    NcDim nc_nx(nc.getDim("n_x"));
+    NcDim nc_nz(nc.getDim("n_z"));
+    
+    n_x = nc_nx.getSize(); 
+    n_z = nc_nz.getSize(); 
+
+
+    return(0);
+
+}
+
+
+int read_profiles( string fileName, int &n_x, int &n_z,std::vector<double>& gridx, 
+                    std::vector<double>& gridz, std::vector<double>& data) {
+
+    // Check input file exists
+
+    ifstream file(fileName.c_str());
+    if(!file.good()) {
+        cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
+        exit(1);
+    }
+
+    NcFile nc(fileName.c_str(), NcFile::read);
+
+    NcVar nc_gridx(nc.getVar("gridx"));
+    NcVar nc_gridz(nc.getVar("gridz"));
+
+    nc_gridx.getVar(&gridx[0]);
+    nc_gridz.getVar(&gridz[0]);
+
+    NcVar nc_ne(nc.getVar("ne"));
+    std::cout << " about to read data from nc object" << std::endl;
+    nc_ne.getVar(&data[0]);
+
+    return(0);
+
+}
 void OUTPUT(char outname[],int nX, int nY, double **array2d)
 {
        ofstream outfile;

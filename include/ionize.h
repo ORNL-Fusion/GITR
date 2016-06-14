@@ -35,7 +35,6 @@ struct ionize {
 	P1 = 1-exp(-dt/tion);
 	
 	#ifdef __CUDACC__
-	curandState tmpState;
 	double r1 = curand_uniform(&p.streams[0]);
 	#else
 	std::uniform_real_distribution<double> dist(0.0, 1.0);

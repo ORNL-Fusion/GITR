@@ -29,9 +29,6 @@ void getE ( double x, double y, double z, double E[], Boundary *boundaryVector, 
 void getE ( double x, double y, double z, double E[], std::vector<Boundary> &boundaryVector, int nLines ) {
 #endif
 	double Emag;
-	double surfaceDirection[3] = {1.7321, 0, -1.00};
-	double surfaceDirection_unit[3] =  {0.866, 0, -0.50};
-	double perpDistanceToSurface = ( -surfaceDirection[0]*x + z )/2.0;
 	double fd = 0.8357;
 	double lane = 3.64479e-04;
 	double dl = 1.05058e-05;
@@ -45,12 +42,8 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> &bou
     double perp_dist;
     double directionUnitVector[3] = {0.0,0.0,0.0};
     double vectorMagnitude;
-    //thrust::device_reference<Boundary> tmp = *boundaryVector;
-    double ztest = boundaryVector[0].Z;
     double max = 0.0;
     double min = 0.0;
-    //std::cout << "getE line slopes " << boundaryVector[0].slope_dzdx << " " << boundaryVector[1].slope_dzdx << " " <<
-        //boundaryVector[0].Z << " " << boundaryVector.size() << std::endl;
     for (int j=0; j< nLines; j++)
     {
         if (boundaryVector[j].Z != 0.0)
@@ -62,7 +55,6 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> &bou
             perp_dist = (boundaryVector[j].slope_dzdx*x - z + boundaryVector[j].intercept_z)/
                 sqrt(boundaryVector[j].slope_dzdx*boundaryVector[j].slope_dzdx + 1);   
 
-        //    std::cout << "perp dist "<< boundaryVector[j].slope_dzdx<< " " << x << " "<< z << " " << perp_dist << std::endl; 
             if (point1_dist > point2_dist)
             {
                 max = point1_dist;
@@ -103,8 +95,6 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> &bou
         {
             boundaryVector[j].distanceToParticle = tol;
         }
-        // std::cout << "getE distances to surface " << (*boundaryVector[0].distanceToParticle << " " << (*boundaryVector)[1].distanceToParticle << " " <<
-                    //    (*boundaryVector[0].pointLine << " " << (*boundaryVector)[1].pointLine << std::endl;
     if (direction_type == 1)
     {
         if (boundaryVector[minIndex].slope_dzdx == 0)
@@ -146,15 +136,11 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> &bou
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
    
-    //std::cout << "directionUnitVector " << directionUnitVector[0] << " " << directionUnitVector[1] <<
-    //    " " << directionUnitVector[2] << " " << minDistance << std::endl;
         Emag = pot*(fd/(2.0*dl)*exp(-minDistance/(2.0*dl))+ (1.0 - fd)/(lane)*exp(-minDistance/lane) );
         E[0] = Emag*directionUnitVector[0];
         E[1] = Emag*directionUnitVector[1];
         E[2] = Emag*directionUnitVector[2];
 
-        //std::cout << "Emagnitude " << Emag << std::endl;
-    
     }
 
 }
@@ -181,33 +167,20 @@ void operator()(Particle &p) const {
 	        double v_minus[3]= {0, 0, 0};
 	        double v[3]= {0, 0, 0};
 	        double E[3] = {0, 0, 0};
-	        double r[3] = {0, 0, 0};
-	        double surfaceDirection[3] = {1.7321, 0, -1.00};
-	        double surfaceDirection_unit[3] = {0.866, 0, -0.50};
-	        double t;
-	        double surface_dz_dx;
-	        double * Emag;
 	        double B[3] = {0.0,0.0,-2.0};
-	        double perpDistanceToSurface = ( -surfaceDirection[0]*p.xprevious + p.zprevious )/2.0;	
 	        double dt = span;
 	        double Bmag = 2;
 	        double q_prime = p.Z*1.60217662e-19/(p.amu*1.6737236e-27)*dt*0.5;
             double coeff = 2*q_prime/(1+(q_prime*Bmag)*(q_prime*Bmag));
-            //thrust::device_vector<Boundary> tmp = boundaryVector[0];
-            double ztest = boundaryVector[0].x1; 
             int nSteps = floor( span / dt + 0.5);
             for ( int s=0; s<nSteps; s++ ) 
             {
 	          getE(p.xprevious,p.yprevious,p.zprevious,E,boundaryVector,nLines);
-	            surface_dz_dx = surfaceDirection[0];
                    
 	            v[0] = p.vx;
                 v[1] = p.vy;
 	            v[2] = p.vz;
                   
-	            r[0] = p.xprevious;
-                r[1] = p.yprevious;
-	            r[2] = p.zprevious;	
 	            	  
 	            v_minus[0] = v[0] + q_prime*E[0];
 	            v_minus[1] = v[1] + q_prime*E[1];
