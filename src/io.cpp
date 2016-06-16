@@ -118,7 +118,6 @@ int read_profiles( string fileName, int &n_x, int &n_z,std::vector<double>& grid
     nc_gridz.getVar(&gridz[0]);
 
     NcVar nc_ne(nc.getVar("ne"));
-    std::cout << " about to read data from nc object" << std::endl;
     nc_ne.getVar(&data[0]);
 
     return(0);

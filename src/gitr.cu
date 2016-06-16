@@ -22,6 +22,8 @@
 #include <boost/timer/timer.hpp>
 #include <vector>
 #include "io.hpp"
+#include "testRoutine.h"
+#include "testRoutineCuda.h"
 
 #ifdef __CUDACC__
 #include <thrust/copy.h>
@@ -53,20 +55,45 @@ string profileName("profiles.nc");
 int n_x;
 int n_z;
 int a1 = read_profileNs(profileName,n_x,n_z);
-std::cout << "nx for profiles.nc " << n_x << "  " << n_z << std::endl;
 std::vector<double> gridx(n_x), gridz(n_z);
 std::vector<double> data(n_x*n_z);
 int a2 = read_profiles(profileName,n_x,n_z, gridx, gridz, data);
-std::cout << "Exited read_profiles routine " << std::endl;
-for (int j=0; j< n_z ; j++)
+thrust::host_vector<double> host_gridx = gridx;
+thrust::device_vector<double> device_data = data;
+thrust::device_vector<double> device_gridx = host_gridx;
+thrust::device_vector<double> device_gridz = gridz;
+double interp_val1 = interp2d(2.25, 0.0, -1.3, &gridx, &gridz, &data);
+std::cout << "interpolated value " << interp_val1 << std::endl;
+std::vector<double> doubleVector(5,1.1);
+thrust::device_vector<double> dd = doubleVector;
+
+std::cout << "starting print loop" << std::endl;
+std::for_each(doubleVector.begin(), doubleVector.end(), test_routine(2.25, 0.0, -1.3, &gridx, &gridz, &data) );
+for (int i=0; i<5; i++)
 {
-    for (int i=0; i< n_x; i++)
-    {   std::cout << " indices: " << i << "  " << j << std::endl;
-        std::cout << " grid gridz data" << gridx[i] << " " << gridz[j] << " " << data[i + j*n_x] << std::endl;
-    }
+        std::cout << "gridx: " << gridx[i] << std::endl;
 }
-double interp_val1 = interp2d(1.9231, 0.0, 0.3034, gridx, gridz, data);
-std::cout << " interpolated value: " << interp_val1 << std::endl;
+
+for (int i=0; i<5; i++)
+{
+    std::cout << "doubleVector values: " << host_gridx[i] << std::endl;
+}
+
+thrust::device_ptr<double> gxptr = &device_gridx[0];
+thrust::device_ptr<double> gzptr = &device_gridz[0];
+thrust::device_ptr<double> dtptr = &device_data[0];
+double* gxptr2 = thrust::raw_pointer_cast(device_gridx.data());
+double* gzptr2 = thrust::raw_pointer_cast(device_gridz.data());
+double* dtptr2 = thrust::raw_pointer_cast(device_data.data());
+thrust::for_each(dd.begin(), dd.end(), test_routinecuda(2.25, 0.0, -1.3,n_x,n_z, gxptr2, gzptr2, dtptr2) );
+thrust::host_vector<double> doubleVector2 = dd;
+#ifdef __CUDACC__
+    cudaThreadSynchronize();
+#endif
+for (int i=0; i<5; i++)
+{
+        std::cout << "device doubleVector values: " << doubleVector2[i] << std::endl;
+}
 char outname[] = "Deposition.m";
 char outnameCharge[] = "Charge.m";
 char outnameEnergy[] = "Energy.m";
