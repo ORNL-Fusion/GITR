@@ -18,23 +18,16 @@ struct test_routinecuda {
    double z;
    int nx;
    int nz;
-   //thrust::device_ptr<double> gridxp;
-//   thrust::device_ptr<double> gridzp;
-//   thrust::device_ptr<double> datap; 
 
-    double* gridxp;
+   double* gridxp;
    double* gridzp;
    double* datap; 
-//#endif
+    
+   test_routinecuda(double _x, double _y, double _z,int _nx, int _nz,
+           double* _gridxp,double* _gridzp,double* _datap) : 
+       x(_x), y(_y), z(_z),nx(_nx), nz(_nz), gridxp(_gridxp),
+       gridzp(_gridzp), datap(_datap) {}
 
-//#ifdef __CUDACC__
-//    move_boris(thrust::) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines) {}
-//#else
-    test_routinecuda(double _x, double _y, double _z,int _nx, int _nz,double* _gridxp,double* _gridzp,
-                                double* _datap) : x(_x), y(_y), z(_z),nx(_nx), nz(_nz), gridxp(_gridxp), gridzp(_gridzp),
-
-                                datap(_datap) {}
-//#endif    
 
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(double &d) const { 

@@ -27,7 +27,7 @@ using namespace exceptions;
 
 //IO
 
-int read_ar2Input( string fileName) {
+int read_ar2Input( string fileName, double *Bfield[]) {
 
     // Check input file exists
 
@@ -69,12 +69,18 @@ int read_ar2Input( string fileName) {
 
     nc_br.getVar(br[0]);
 
+    for(int i=0; i<nR; i++){
+        for(int j=0; j<nZ; j++){
+           Bfield[i][j] = br[j][i]; 
+        }
+    }
+
     return(0);
 
 }
 
 
-int read_profileNs( string fileName,int &n_x,int &n_z ) {
+int read_profileNs( string fileName, string nxName, string nzName,int &n_x,int &n_z ) {
 
     // Check input file exists
 
@@ -86,8 +92,8 @@ int read_profileNs( string fileName,int &n_x,int &n_z ) {
 
     NcFile nc(fileName.c_str(), NcFile::read);
 
-    NcDim nc_nx(nc.getDim("n_x"));
-    NcDim nc_nz(nc.getDim("n_z"));
+    NcDim nc_nx(nc.getDim(nxName));
+    NcDim nc_nz(nc.getDim(nzName));
     
     n_x = nc_nx.getSize(); 
     n_z = nc_nz.getSize(); 
@@ -98,8 +104,8 @@ int read_profileNs( string fileName,int &n_x,int &n_z ) {
 }
 
 
-int read_profiles( string fileName, int &n_x, int &n_z,std::vector<double>& gridx, 
-                    std::vector<double>& gridz, std::vector<double>& data) {
+int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, std::vector<double>& gridx,string gridzName,
+          std::vector<double>& gridz,string dataName, std::vector<double>& data) {
 
     // Check input file exists
 
@@ -111,13 +117,13 @@ int read_profiles( string fileName, int &n_x, int &n_z,std::vector<double>& grid
 
     NcFile nc(fileName.c_str(), NcFile::read);
 
-    NcVar nc_gridx(nc.getVar("gridx"));
-    NcVar nc_gridz(nc.getVar("gridz"));
+    NcVar nc_gridx(nc.getVar(gridxName));
+    NcVar nc_gridz(nc.getVar(gridzName));
 
     nc_gridx.getVar(&gridx[0]);
     nc_gridz.getVar(&gridz[0]);
 
-    NcVar nc_ne(nc.getVar("ne"));
+    NcVar nc_ne(nc.getVar(dataName));
     nc_ne.getVar(&data[0]);
 
     return(0);
