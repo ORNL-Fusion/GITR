@@ -47,6 +47,9 @@ class Boundary {
     float distanceToParticle;
     int periodic;
     int pointLine;
+    float angle;
+    float fd;
+    float density;
     CUDA_CALLABLE_MEMBER
         Boundary() {
                    };
