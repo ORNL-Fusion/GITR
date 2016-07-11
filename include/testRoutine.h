@@ -19,23 +19,25 @@ struct test_routine {
    double x;
    double y;
    double z;
-   std::vector<double>* gridxp;
-   std::vector<double>* gridzp;
-   std::vector<double>* datap; 
+   int nx;
+   int nz;
+   double* gridxp;
+   double* gridzp;
+   double* datap; 
 //#endif
 
 //#ifdef __CUDACC__
 //    move_boris(thrust::) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines) {}
 //#else
-    test_routine(double _x, double _y, double _z, std::vector<double>* _gridxp,std::vector<double>* _gridzp,
-                                std::vector<double>* _datap) : x(_x), y(_y), z(_z), gridxp(_gridxp), gridzp(_gridzp),
+    test_routine(double _x, double _y, double _z,int _nx,int _nz, double* _gridxp,double* _gridzp,
+                                double* _datap) : x(_x), y(_y), z(_z),nx(_nx),nz(_nz), gridxp(_gridxp), gridzp(_gridzp),
                                 datap(_datap) {}
 //#endif    
 
 //CUDA_CALLABLE_MEMBER    
 void operator()(double &d) const { 
     std::cout << "testroutine xyz " << x << y << z << std::endl;
-    d = interp2d(x,y,z,gridxp,gridzp,datap);
+    d = interp2dCombined(x,y,z,nx,nz,gridxp,gridzp,datap);
     std::cout << "test routine interp value " << d << std::endl;
 }
 };
