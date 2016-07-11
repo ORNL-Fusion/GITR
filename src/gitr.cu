@@ -15,6 +15,7 @@
 #include "thermalForce.h"
 #include "surfaceModel.h"
 #include "interp2d.hpp"
+#include "interpRateCoeff.hpp"
 #include <algorithm>
 #include <random>
 #include "Particle.h"
@@ -50,70 +51,126 @@ Config cfg,cfg_geom;
 cfg.readFile("gitrInput.cfg");
 cfg_geom.readFile("gitrGeometry.cfg");
 
-int nBx = 200;
-int nBy = 200;
-    double **Bfield;
-    
-    Bfield = new double*[nBx];
+#if BFIELD_INTERP == 0
+int nR_Bfield = 1;
+int nZ_Bfield = 1;
+std::vector<double> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
+std::vector<double> br(nR_Bfield*nZ_Bfield), bz(nR_Bfield*nZ_Bfield),bt(nR_Bfield*nZ_Bfield);
+br[0] = cfg.lookup("backgroundPlasmaProfiles.Bfield.br");
+bz[0] = cfg.lookup("backgroundPlasmaProfiles.Bfield.bz");
+bt[0] = cfg.lookup("backgroundPlasmaProfiles.Bfield.bt");
+#else
+int nR_Bfield;
+int nZ_Bfield;
 
-    Bfield[0] = new double[nBx*nBy];
-            
-    for(int i=0 ; i<nBx ; i++)
-    {
-        Bfield[i] = &Bfield[0][i*nBy];
-        for(int j=0 ; j<nBy ; j++)
-        {
-            Bfield[i][j] = 0;
-        }
-    }
-string fileName("ar2Input.nc");
-int a = read_ar2Input(fileName, Bfield);
-std::cout << "Bfield array " <<Bfield[100][100] << Bfield[134][76]<<Bfield[76][134] << std::endl;
+int b1 = read_profileNs(cfg.lookup("backgroundPlasmaProfiles.Bfield.fileString"),
+            cfg.lookup("backgroundPlasmaProfiles.Bfield.gridNrString"),
+            cfg.lookup("backgroundPlasmaProfiles.Bfield.gridNzString"),nR_Bfield,nZ_Bfield);
 
-string BprofileName("ar2Input.nc");
-string bfieldNrString("nR");
-string bfieldNzString("nZ");
-string bfieldRString("br");
-string bfieldGridrName("r");
-string bfieldGridzName("z");
-int nR;
-int nZ;
-int b1 = read_profileNs(BprofileName,bfieldNrString,bfieldNzString,nR,nZ);
-std::vector<double> bfieldGridr(nR), bfieldGridz(nZ);
-std::vector<double> br(nR*nZ);
-int b2 = read_profiles(BprofileName,nR,nZ,bfieldGridrName, bfieldGridr,bfieldGridzName, bfieldGridz,bfieldRString, br);
-string bfieldZString("bz");
-std::vector<double> bz(nR*nZ);
-int b3 = read_profiles(BprofileName,nR,nZ,bfieldGridrName, bfieldGridr,bfieldGridzName, bfieldGridz,bfieldZString, bz);
-string bfieldTString("bt");
-std::vector<double> bt(nR*nZ);
-int b4 = read_profiles(BprofileName,nR,nZ,bfieldGridrName, bfieldGridr,bfieldGridzName, bfieldGridz,bfieldTString, bt);
+std::vector<double> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
+std::vector<double> br(nR_Bfield*nZ_Bfield), bz(nR_Bfield*nZ_Bfield),bt(nR_Bfield*nZ_Bfield);
 
-string profileName("profiles.nc");
-string densNxString("n_x");
-string densNzString("n_z");
-string densString("ne");
-string densGridxName("gridx");
-string densGridzName("gridz");
+int b2 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.Bfield.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Bfield.gridRString"), bfieldGridr);
+
+int b3 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.Bfield.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Bfield.gridZString"), bfieldGridz);
+
+int b4 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Bfield.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Bfield.radialComponentString"), br);
+
+int b5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Bfield.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Bfield.axialComponentString"), bz);
+
+int b6 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Bfield.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Bfield.toroidalComponentString"), bt);
+#endif
+
+
+#if TEMP_INTERP == 0
+int nR_Temp = 1;
+int nZ_Temp = 1;
+std::vector<double> TempGridr(nR_Temp), TempGridz(nZ_Temp);
+std::vector<double> ti(nR_Temp*nZ_Temp), te(nR_Temp*nZ_Temp);
+ti[0] = cfg.lookup("backgroundPlasmaProfiles.Temperature.ti");
+te[0] = cfg.lookup("backgroundPlasmaProfiles.Temperature.te");
+#else
+int nR_Temp;
+int nZ_Temp;
+
+int t1 = read_profileNs(cfg.lookup("backgroundPlasmaProfiles.Temperature.fileString"),
+            cfg.lookup("backgroundPlasmaProfiles.Temperature.gridNrString"),
+            cfg.lookup("backgroundPlasmaProfiles.Temperature.gridNzString"),nR_Temp,nZ_Temp);
+
+std::vector<double> TempGridr(nR_Temp), TempGridz(nZ_Temp);
+std::vector<double> ti(nR_Temp*nZ_Temp), te(nR_Temp*nZ_Temp);
+
+int t2 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.Temperature.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Temperature.gridRString"), TempGridr);
+
+int t3 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.Temperature.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Temperature.gridZString"), TempGridz);
+std::cout << "temperature import" << nZ_Temp << nR_Temp << std::endl;
+int t4 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Temperature.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Temperature.IonTempString"), ti);
+
+int t5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Temperature.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Temperature.ElectronTempString"), te);
+#endif
+
+#if DENSITY_INTERP == 0
+int nR_Dens = 1;
+int nZ_Dens = 1;
+std::vector<double> DensGridr(nR_Dens), DensGridz(nZ_Dens);
+std::vector<double> ni(nR_Dens*nZ_Dens), ne(nR_Dens*nZ_Dens);
+ni[0] = cfg.lookup("backgroundPlasmaProfiles.Temperature.ti");
+ne[0] = cfg.lookup("backgroundPlasmaProfiles.Temperature.te");
+#else
+int nR_Dens;
+int nZ_Dens;
+
+int n1 = read_profileNs(cfg.lookup("backgroundPlasmaProfiles.Density.fileString"),
+            cfg.lookup("backgroundPlasmaProfiles.Density.gridNrString"),
+            cfg.lookup("backgroundPlasmaProfiles.Density.gridNzString"),nR_Dens,nZ_Dens);
+
+std::vector<double> DensGridr(nR_Dens), DensGridz(nZ_Dens);
+std::vector<double> ni(nR_Dens*nZ_Dens), ne(nR_Dens*nZ_Dens);
+
+int n2 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.Density.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Density.gridRString"), DensGridr);
+
+int n3 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.Density.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Density.gridZString"), DensGridz);
+
+int n4 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Density.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Density.IonDensityString"), ni);
+
+int n5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Density.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.Density.ElectronDensityString"), ne);
+#endif
+
+string profilename("profiles.nc");
+string densnxstring("n_x");
+string densnzstring("n_z");
+string densstring("ne");
+string densgridxname("gridx");
+string densgridzname("gridz");
 int n_x;
 int n_z;
-int a1 = read_profileNs(profileName,densNxString,densNzString,n_x,n_z);
+int a1 = read_profileNs(profilename,densnxstring,densnzstring,n_x,n_z);
 std::vector<double> gridx(n_x), gridz(n_z);
 std::vector<double> dens(n_x*n_z);
-int a2 = read_profiles(profileName,n_x,n_z,densGridxName, gridx,densGridzName, gridz,densString, dens);
-
-
-
+int a2 = read_profiles(profilename,n_x,n_z,densgridxname, gridx,densgridzname, gridz,densstring, dens);
 thrust::device_vector<double> device_dens = dens;
 thrust::device_vector<double> device_gridx = gridx;
 thrust::device_vector<double> device_gridz = gridz;
-double interp_val1 = interp2d(2.25, 0.0, -1.3, &gridx, &gridz, &dens);
+double interp_val1 = interp2dCombined(2.25, 0.0, -1.3,n_x,n_z, &gridx.front(), &gridz.front(), &dens.front());
 std::cout << "interpolated value " << interp_val1 << std::endl;
 std::vector<double> doubleVector(5,1.1);
 thrust::device_vector<double> dd = doubleVector;
 
 std::cout << "starting print loop" << std::endl;
-std::for_each(doubleVector.begin(), doubleVector.end(), test_routine(2.25, 0.0, -1.3, &gridx, &gridz, &dens) );
+std::for_each(doubleVector.begin(), doubleVector.end(), test_routine(2.25, 0.0, -1.3,n_x,n_z,&gridx.front(), &gridz.front(), &dens.front()) );
 for (int i=0; i<5; i++)
 {
         std::cout << "gridx: " << gridx[i] << std::endl;
@@ -136,7 +193,7 @@ for (int i=0; i<5; i++)
 int nCS = 74;
 int nTemperaturesIonize = 24;
 int nDensitiesIonize = 24;
-std::vector<double> coeffArray(nCS*nTemperaturesIonize*nDensitiesIonize);
+std::vector<double> rateCoeff_Ionization(nCS*nTemperaturesIonize*nDensitiesIonize);
 string ADASName("ADAS_Rates_W.nc");
 string IonizCoeffString("IonizationRateCoeff");
 string gridTionizeName("gridTemperature_Ionization");
@@ -147,11 +204,13 @@ int    a3 = read_profiles(ADASName, nTemperaturesIonize,nDensitiesIonize,gridTio
         gridTemperature_Ionization,gridNionizeName,
         gridDensity_Ionization,
         IonizCoeffString,
-        coeffArray);
+        rateCoeff_Ionization);
         std::cout << "Coeff vector print " << 
-        coeffArray[0*nTemperaturesIonize*nDensitiesIonize+ 1*nTemperaturesIonize+ 0] << std::endl;
-
-
+        rateCoeff_Ionization[0*nTemperaturesIonize*nDensitiesIonize+ 1*nTemperaturesIonize+ 0] << std::endl;
+double RC1 = interpRateCoeff2d ( 0, 2.25, 0.0, -1.3,n_x,n_z, &TempGridr.front(),
+                      &TempGridz.front(),&te.front(),&DensGridr.front(),&DensGridz.front(), &ne.front(),nTemperaturesIonize,nDensitiesIonize,
+       &gridTemperature_Ionization.front(),&gridDensity_Ionization.front(),&rateCoeff_Ionization.front() );
+std::cout << "Interpolated RC " << RC1 << std::endl;
 
 
 char outname[] = "Deposition.m";
@@ -182,7 +241,7 @@ hostBoundaryVector[nLines].Z = geom["Z"][nLines];
 hostBoundaryVector[nLines].y1 = geom["y1"];
 hostBoundaryVector[nLines].y2 = geom["y2"];
 hostBoundaryVector[nLines].periodic = geom["periodic"];
-std::for_each(hostBoundaryVector.begin(), hostBoundaryVector.end()-1, boundary_init(&gridx,&gridz,&dens,&bfieldGridr,&bfieldGridz,&br,&bz, &bt) );
+std::for_each(hostBoundaryVector.begin(), hostBoundaryVector.end()-1, boundary_init(nR_Dens,nZ_Dens,&gridx.front(),&gridz.front(),&dens.front(),nR_Bfield,nZ_Bfield,&bfieldGridr.front(),&bfieldGridz.front(),&br.front(),&bz.front(), &bt.front()) );
 std::cout << "exited bound_init" << std::endl;
 
 #ifdef __CUDACC__

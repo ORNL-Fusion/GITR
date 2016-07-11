@@ -129,6 +129,46 @@ int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, std::ve
     return(0);
 
 }
+
+int read_profile2d( string fileName,string dataName, std::vector<double>& data) {
+
+    // Check input file exists
+
+    ifstream file(fileName.c_str());
+    if(!file.good()) {
+        cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
+        exit(1);
+    }
+
+    NcFile nc(fileName.c_str(), NcFile::read);
+
+
+    NcVar nc_ne(nc.getVar(dataName));
+    nc_ne.getVar(&data[0]);
+
+    return(0);
+
+}
+int read_profile1d( string fileName,string gridxName, std::vector<double>& gridx) {
+
+    // Check input file exists
+
+    ifstream file(fileName.c_str());
+    if(!file.good()) {
+        cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
+        exit(1);
+    }
+
+    NcFile nc(fileName.c_str(), NcFile::read);
+
+    NcVar nc_gridx(nc.getVar(gridxName));
+
+    nc_gridx.getVar(&gridx[0]);
+
+
+    return(0);
+
+}
 void OUTPUT(char outname[],int nX, int nY, double **array2d)
 {
        ofstream outfile;

@@ -11,6 +11,12 @@ USECOULOMBCOLLISIONS := 0
 USETHERMALFORCE :=0
 USESURFACEMODEL :=0
 
+#Interpolators 0=Constant 1=Analytic Equation 2=2dInterpolation 3=3dInterpolation
+BFIELD_INTERP :=0
+EFIELD_INTERP :=0
+DENSITY_INTERP :=0
+TEMP_INTERP :=0
+
 #Set all above operators to 0 to trace Geometry
 GEOM_TRACE :=1
 
