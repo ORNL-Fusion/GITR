@@ -13,7 +13,7 @@
 #include <algorithm>
 #include "Particle.h"
 #include "Boundary.h"
-const double B[3] = {0.0,0.0,-2.0};
+#include "interp2d.hpp"
 
 template <typename T>
 CUDA_CALLABLE_MEMBER
@@ -29,10 +29,8 @@ void getE ( double x, double y, double z, double E[], Boundary *boundaryVector, 
 void getE ( double x, double y, double z, double E[], std::vector<Boundary> &boundaryVector, int nLines ) {
 #endif
 	double Emag;
-	double fd = 0.8357;
-	double lane = 3.64479e-04;
-	double dl = 1.05058e-05;
-	double pot = 60.0;
+	double fd = 0.0;
+	double pot = 0.0;
     int minIndex = 0;
     double minDistance = 1e12;
     int direction_type;
@@ -44,6 +42,7 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> &bou
     double vectorMagnitude;
     double max = 0.0;
     double min = 0.0;
+    double angle = 0.0;
     for (int j=0; j< nLines; j++)
     {
         if (boundaryVector[j].Z != 0.0)
@@ -135,8 +134,16 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> &bou
     directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
-   
-        Emag = pot*(fd/(2.0*dl)*exp(-minDistance/(2.0*dl))+ (1.0 - fd)/(lane)*exp(-minDistance/lane) );
+    
+    angle = boundaryVector[minIndex].angle;    
+    fd  =  0.996480862464192 +8.78424468259523e-04  * angle     -
+           4.674013060191755e-4  * pow(angle,2) +
+           2.727826261148182e-5  * pow(angle,3) - 
+           7.141202673279612e-7  * pow(angle,4) +
+           8.56348440384227e-9   * pow(angle,5) -
+           3.91580557074662e-11  * pow(angle,6);
+    pot = 3.0*boundaryVector[minIndex].ti;
+        Emag = pot*(fd/(2.0*boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0*boundaryVector[minIndex].debyeLength))+ (1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
         E[0] = Emag*directionUnitVector[0];
         E[1] = Emag*directionUnitVector[1];
         E[2] = Emag*directionUnitVector[2];
@@ -151,12 +158,37 @@ struct move_boris {
 #else
     std::vector<Boundary> &boundaryVector;
 #endif
+int nR_Bfield;
+int nZ_Bfield;
+double * BfieldGridRDevicePointer;
+double * BfieldGridZDevicePointer;
+double * BfieldRDevicePointer;
+double * BfieldZDevicePointer;
+double * BfieldTDevicePointer;
+
     const double span;
     const int nLines;
 #ifdef __CUDACC__
-    move_boris(double _span, Boundary *_boundaryVector,int _nLines) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines) {}
+    move_boris(double _span, Boundary *_boundaryVector,int _nLines,
+            int _nR_Bfield, int _nZ_Bfield,
+            double * _BfieldGridRDevicePointer,
+            double * _BfieldGridZDevicePointer,
+            double * _BfieldRDevicePointer,
+            double * _BfieldZDevicePointer,
+            double * _BfieldTDevicePointer
+              ) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines), nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
+    BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer) {}
 #else
-    move_boris(double _span, std::vector<Boundary> &_boundaryVector, int _nLines) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines) {}
+    move_boris(double _span, std::vector<Boundary> &_boundaryVector, int _nLines,
+            int _nR_Bfield, int _nZ_Bfield,
+            double * _BfieldGridRDevicePointer,
+            double * _BfieldGridZDevicePointer,
+            double * _BfieldRDevicePointer,
+            double * _BfieldZDevicePointer,
+            double * _BfieldTDevicePointer
+            
+            ) : span(_span), boundaryVector(_boundaryVector), nLines(_nLines), nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
+    BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer) {}
 #endif    
 
 CUDA_CALLABLE_MEMBER    
@@ -167,17 +199,34 @@ void operator()(Particle &p) const {
 	        double v_minus[3]= {0, 0, 0};
 	        double v[3]= {0, 0, 0};
 	        double E[3] = {0, 0, 0};
-	        double B[3] = {0.0,0.0,-2.0};
+	        double B[3] = {0.0,0.0,0.0};
+            double br;
+            double bz;
+            double bt;
 	        double dt = span;
 	        double Bmag = 2;
-	        double q_prime = p.Z*1.60217662e-19/(p.amu*1.6737236e-27)*dt*0.5;
+	        double q_prime = p.charge*1.60217662e-19/(p.amu*1.6737236e-27)*dt*0.5;
             double coeff = 2*q_prime/(1+(q_prime*Bmag)*(q_prime*Bmag));
             int nSteps = floor( span / dt + 0.5);
             for ( int s=0; s<nSteps; s++ ) 
             {
 	          getE(p.xprevious,p.yprevious,p.zprevious,E,boundaryVector,nLines);
-                   
-	            v[0] = p.vx;
+           
+
+            br = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
+                BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer);
+            bz = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
+                BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldZDevicePointer);
+            bt = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
+                BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldTDevicePointer);
+	        B[0] = br;
+            B[1] = bz;
+            B[2] = bt;
+
+            Bmag = sqrt(br*br + bz*bz + bt*bt);
+            coeff = 2*q_prime/(1+(q_prime*Bmag)*(q_prime*Bmag));
+            
+                v[0] = p.vx;
                 v[1] = p.vy;
 	            v[2] = p.vz;
                   

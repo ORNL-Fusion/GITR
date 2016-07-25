@@ -14,7 +14,7 @@
 #include <math.h>
 using namespace std;
 
-//CUDA_CALLABLE_MEMBER
+CUDA_CALLABLE_MEMBER
 
 double interp2dCombined ( double x, double y, double z,int nx, int nz,
 //#ifdef __CUDACC__

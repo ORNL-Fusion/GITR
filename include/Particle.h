@@ -37,7 +37,8 @@ class Particle {
       	float vz;
       	float Z;
       	float amu;
-	#ifdef __CUDACC__
+        float charge;
+    #ifdef __CUDACC__
 	curandState streams[7];
 	#else
         std::mt19937 streams[7];
@@ -57,7 +58,7 @@ class Particle {
         };
 	
 	CUDA_CALLABLE_MEMBER
-        Particle(float x,float y, float z, float Ex, float Ey, float Ez, float Z, float amu)
+        Particle(float x,float y, float z, float Ex, float Ey, float Ez, float Z, float amu, float charge)
 		{
     
 		this->xprevious = x;
@@ -67,7 +68,8 @@ class Particle {
         this->y = y;
         this->z = z;
 		this->Z = Z;
-		this->amu = amu;
+	    this->charge = charge;
+        this->amu = amu;
 		this->hitWall = 0.0;
 
 		this->vx = Ex/fabs(Ex)*sqrt(2.0*fabs(Ex)*1.60217662e-19/(amu*1.6737236e-27));

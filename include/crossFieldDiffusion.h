@@ -14,8 +14,21 @@ struct crossFieldDiffusion {
 
     const double dt;
 	const double diffusionCoefficient;
+    int nR_Bfield;
+    int nZ_Bfield;
+    double * BfieldGridRDevicePointer;
+    double * BfieldGridZDevicePointer;
+    double * BfieldRDevicePointer;
+    double * BfieldZDevicePointer;
+    double * BfieldTDevicePointer;
 
-    crossFieldDiffusion(double _dt, double _diffusionCoefficient) : dt(_dt), diffusionCoefficient(_diffusionCoefficient) {} 
+    crossFieldDiffusion(double _dt, double _diffusionCoefficient,
+            int _nR_Bfield, int _nZ_Bfield,
+            double * _BfieldGridRDevicePointer,double * _BfieldGridZDevicePointer,
+            double * _BfieldRDevicePointer,double * _BfieldZDevicePointer,
+            double * _BfieldTDevicePointer)
+        : dt(_dt), diffusionCoefficient(_diffusionCoefficient),nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
+       BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer) {} 
 
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(Particle &p) const { 
@@ -23,12 +36,22 @@ void operator()(Particle &p) const {
 	    if(p.hitWall == 0.0)
         {
 	        double perpVector[3]= {0, 0, 0};
-	        double B[3] = {0.0,0.0,-2.0};
-		double B_unit[3] = {0.0, 0.0, -1.0};
+	        double B[3] = {0.0,0.0,0.0};
+            double Bmag = 0.0;
+		double B_unit[3] = {0.0, 0.0, 0.0};
 		double phi_random;
 		double norm;
 		double step;
- 
+        B[0] = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
+                                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer);
+        B[2] = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
+               BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldZDevicePointer);
+        B[1] = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
+               BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldTDevicePointer);
+        Bmag = sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
+        B_unit[0] = B[0]/Bmag;
+        B_unit[1] = B[1]/Bmag;
+        B_unit[2] = B[2]/Bmag;
 #ifdef __CUDACC__
         	double r3 = curand_uniform(&p.streams[2]);
 #else
@@ -66,9 +89,9 @@ void operator()(Particle &p) const {
 		
 		step = sqrt(6*diffusionCoefficient*dt);
 
-		p.x = p.x + step*perpVector[0];
-		p.y = p.y + step*perpVector[1];
-		p.z = p.z + step*perpVector[2];
+		p.xprevious = p.xprevious + step*perpVector[0];
+		p.yprevious = p.yprevious + step*perpVector[1];
+		p.zprevious = p.zprevious + step*perpVector[2];
     	}
     } 
 };

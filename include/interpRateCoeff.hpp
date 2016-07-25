@@ -39,9 +39,9 @@ double rateCoeffInterp(int charge, double te, double ne,int nT, int nD, double* 
     {
         indN = floor((logn - rateGrid_Densp[0])/d_n );
     }
-    std::cout << "Indices density, temp " << indN << " " <<indT<<std::endl;
-    std::cout << "charge " << charge << std::endl;
-    std::cout << "Lower value " << Ratesp[charge*nT*nD + indT*nD + indN] << std::endl;
+    //std::cout << "Indices density, temp " << indN << " " <<indT<<std::endl;
+    //std::cout << "charge " << charge << std::endl;
+    //std::cout << "Lower value " << Ratesp[charge*nT*nD + indT*nD + indN] << std::endl;
     double aT = pow(10.0,rateGrid_Tempp[indT+1]) - te;
     double bT = te - pow(10.0,rateGrid_Tempp[indT]);
     double abT = aT+bT;
@@ -58,7 +58,7 @@ double rateCoeffInterp(int charge, double te, double ne,int nT, int nD, double* 
     double fx_z2 = (aN*pow(10.0,Ratesp[charge*nT*nD            + (indT+1)*nD + indN]) 
             + bN*pow(10.0,Ratesp[charge*nT*nD            + (indT+1)*nD + indN+1]))/abN;
     double fxz = (aT*fx_z1+bT*fx_z2)/abT;
-    std::cout << "fxz1 and 2 " << fx_z1 << " " << fx_z2<< " "<< fxz << std::endl;
+    //std::cout << "fxz1 and 2 " << fx_z1 << " " << fx_z2<< " "<< fxz << std::endl;
     return fxz;    
 }
 
@@ -74,12 +74,14 @@ double interpRateCoeff2d ( int charge, double x, double y, double z,int nx, int 
     std::vector<double>& DensGridx = *densGridxp;
     std::vector<double>& DensGridz = *densGridzp;
 */
+    //std::cout << "at tlocal interp routine " <<x << y << z<< " " << nx << nz<< std::endl;
     double tlocal = interp2dCombined(x,y,z,nx,nz,tempGridxp,tempGridzp,Tempp);
     double nlocal = interp2dCombined(x,y,z,nx,nz,densGridxp,densGridzp,Densp);
-    std::cout << "tlocal" << tlocal << std::endl;
-    std::cout << "nlocal" << nlocal << std::endl;
+//    std::cout << "tlocal" << tlocal << std::endl;
+//    std::cout << "nlocal" << nlocal << std::endl;
     double RClocal = rateCoeffInterp(charge,tlocal,nlocal,nT_Rates,nD_Rates,rateGrid_Temp, rateGrid_Dens, Rates);
-    return RClocal;
+    double tion = 1/(RClocal*nlocal);
+    return tion;
 }
 
 #endif
