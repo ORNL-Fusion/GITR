@@ -51,6 +51,11 @@ Config cfg,cfg_geom;
 cfg.readFile("gitrInput.cfg");
 cfg_geom.readFile("gitrGeometry.cfg");
 
+
+// Background species info
+double background_Z = cfg.lookup("backgroundPlasmaProfiles.Z");
+double background_amu = cfg.lookup("backgroundPlasmaProfiles.amu");
+
 #if BFIELD_INTERP == 0
 int nR_Bfield = 1;
 int nZ_Bfield = 1;
@@ -85,8 +90,19 @@ int b5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Bfield.fileString")
 int b6 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Bfield.fileString"),
         cfg.lookup("backgroundPlasmaProfiles.Bfield.toroidalComponentString"), bt);
 #endif
+#ifdef __CUDACC__
+    thrust::device_vector<double> deviceBfieldGridRVector = bfieldGridr;
+    thrust::device_vector<double> deviceBfieldGridZVector = bfieldGridz;
+    thrust::device_vector<double> deviceBfieldRVector = br;
+    thrust::device_vector<double> deviceBfieldZVector = bz;
+    thrust::device_vector<double> deviceBfieldTVector = bt;
 
-
+    double * BfieldGridRDevicePointer = thrust::raw_pointer_cast(deviceBfieldGridRVector.data());
+    double * BfieldGridZDevicePointer = thrust::raw_pointer_cast(deviceBfieldGridZVector.data());
+    double * BfieldRDevicePointer = thrust::raw_pointer_cast(deviceBfieldRVector.data());
+    double * BfieldZDevicePointer = thrust::raw_pointer_cast(deviceBfieldZVector.data());
+    double * BfieldTDevicePointer = thrust::raw_pointer_cast(deviceBfieldTVector.data());
+#endif
 #if TEMP_INTERP == 0
 int nR_Temp = 1;
 int nZ_Temp = 1;
@@ -101,7 +117,7 @@ int nZ_Temp;
 int t1 = read_profileNs(cfg.lookup("backgroundPlasmaProfiles.Temperature.fileString"),
             cfg.lookup("backgroundPlasmaProfiles.Temperature.gridNrString"),
             cfg.lookup("backgroundPlasmaProfiles.Temperature.gridNzString"),nR_Temp,nZ_Temp);
-
+std::cout << "t1 " << nR_Temp << nZ_Temp << std::endl;
 std::vector<double> TempGridr(nR_Temp), TempGridz(nZ_Temp);
 std::vector<double> ti(nR_Temp*nZ_Temp), te(nR_Temp*nZ_Temp);
 
@@ -148,7 +164,64 @@ int n4 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Density.fileString"
 int n5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Density.fileString"),
         cfg.lookup("backgroundPlasmaProfiles.Density.ElectronDensityString"), ne);
 #endif
+int nR_flowV;
+int nZ_flowV;
 
+int f1 = read_profileNs(cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.fileString"),
+            cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.gridNrString"),
+            cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.gridNzString"),nR_flowV,nZ_flowV);
+
+std::vector<double> flowVGridr(nR_flowV), flowVGridz(nZ_flowV);
+std::vector<double> flowVr(nR_flowV*nZ_flowV), flowVz(nR_flowV*nZ_flowV),flowVt(nR_flowV*nZ_flowV);
+
+int f2 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.gridRString"), flowVGridr);
+
+int f3 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.gridZString"), flowVGridz);
+
+int f4 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.flowVrString"), flowVr);
+
+int f5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.flowVzString"), flowVz);
+
+int f6 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.flowVtString"), flowVt);
+
+int nR_gradT;
+int nZ_gradT;
+
+int g1 = read_profileNs(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
+            cfg.lookup("backgroundPlasmaProfiles.gradT.gridNrString"),
+            cfg.lookup("backgroundPlasmaProfiles.gradT.gridNzString"),nR_gradT,nZ_gradT);
+
+std::vector<double> gradTGridr(nR_gradT), gradTGridz(nZ_gradT);
+std::vector<double> gradTeR(nR_gradT*nZ_gradT), gradTeZ(nR_gradT*nZ_gradT),
+    gradTiR(nR_gradT*nZ_gradT), gradTiZ(nR_gradT*nZ_gradT);
+
+int g2 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.gradT.gridRString"), gradTGridr);
+
+int g3 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.gradT.gridZString"), gradTGridz);
+
+int g4 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.gradT.gradTiRString"), gradTiR);
+
+int g5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.gradT.gradTiZString"), gradTiZ);
+
+int g6 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.gradT.gradTeRString"), gradTeR);
+
+int g7 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.gradT.gradTeZString"), gradTeZ);
+        std::cout << "thermal force numbers " << nR_gradT << " " << nZ_gradT << std::endl; 
+     std::cout << "thermal grids r " << gradTGridr[0] << " " << gradTGridr[nR_gradT-1] << std::endl;
+    std::cout << "thermal grids z " << gradTGridz[0] << " " << gradTGridz[nZ_gradT-1] << std::endl;
+
+/*
 string profilename("profiles.nc");
 string densnxstring("n_x");
 string densnzstring("n_z");
@@ -189,29 +262,58 @@ for (int i=0; i<5; i++)
         std::cout << "device doubleVector values: " << doubleVector2[i] << std::endl;
 }
 
+*/
+int nCS_Ionize, nCS_Recombine;
+int i0 = read_profileNs(cfg.lookup("impurityParticleSource.ionization.fileString"),
+        cfg.lookup("impurityParticleSource.ionization.nChargeStateString"),
+        cfg.lookup("impurityParticleSource.recombination.nChargeStateString"),
+        nCS_Ionize, nCS_Recombine);
+int nTemperaturesIonize;
+int nDensitiesIonize;
+int i1 = read_profileNs(cfg.lookup("impurityParticleSource.ionization.fileString"),
+                    cfg.lookup("impurityParticleSource.ionization.DensGridString"),
+         cfg.lookup("impurityParticleSource.ionization.TempGridString"),
+         nDensitiesIonize,nTemperaturesIonize);
 
-int nCS = 74;
-int nTemperaturesIonize = 24;
-int nDensitiesIonize = 24;
-std::vector<double> rateCoeff_Ionization(nCS*nTemperaturesIonize*nDensitiesIonize);
-string ADASName("ADAS_Rates_W.nc");
-string IonizCoeffString("IonizationRateCoeff");
-string gridTionizeName("gridTemperature_Ionization");
-string gridNionizeName("gridDensity_Ionization");
-std::vector<double> gridTemperature_Ionization(nTemperaturesIonize), gridDensity_Ionization(nDensitiesIonize);
+std::vector<double> rateCoeff_Ionization(nCS_Ionize*nTemperaturesIonize*nDensitiesIonize);
+std::vector<double> gridTemperature_Ionization(nTemperaturesIonize),
+    gridDensity_Ionization(nDensitiesIonize);
 
-int    a3 = read_profiles(ADASName, nTemperaturesIonize,nDensitiesIonize,gridTionizeName, 
-        gridTemperature_Ionization,gridNionizeName,
+int    i2 = read_profiles(cfg.lookup("impurityParticleSource.ionization.fileString"),
+        nTemperaturesIonize,nDensitiesIonize,
+        cfg.lookup("impurityParticleSource.ionization.TempGridVarName"), 
+        gridTemperature_Ionization,cfg.lookup("impurityParticleSource.ionization.DensGridVarName"),
         gridDensity_Ionization,
-        IonizCoeffString,
+        cfg.lookup("impurityParticleSource.ionization.CoeffVarName"),
         rateCoeff_Ionization);
-        std::cout << "Coeff vector print " << 
+   
+
+int nTemperaturesRecombine;
+int nDensitiesRecombine;
+int i3 = read_profileNs(cfg.lookup("impurityParticleSource.recombination.fileString"),
+                    cfg.lookup("impurityParticleSource.recombination.DensGridString"),
+         cfg.lookup("impurityParticleSource.recombination.TempGridString"),
+         nDensitiesRecombine,nTemperaturesRecombine);
+
+std::vector<double> rateCoeff_Recombination(nCS_Recombine*nTemperaturesRecombine*nDensitiesRecombine);
+std::vector<double> gridTemperature_Recombination(nTemperaturesRecombine),
+    gridDensity_Recombination(nDensitiesRecombine);
+
+int    i4 = read_profiles(cfg.lookup("impurityParticleSource.recombination.fileString"),
+        nTemperaturesRecombine,nDensitiesRecombine,
+        cfg.lookup("impurityParticleSource.recombination.TempGridVarName"), 
+        gridTemperature_Recombination,cfg.lookup("impurityParticleSource.recombination.DensGridVarName"),
+        gridDensity_Recombination,
+        cfg.lookup("impurityParticleSource.recombination.CoeffVarName"),
+        rateCoeff_Recombination);
+
+/*        std::cout << "Coeff vector print " << 
         rateCoeff_Ionization[0*nTemperaturesIonize*nDensitiesIonize+ 1*nTemperaturesIonize+ 0] << std::endl;
-double RC1 = interpRateCoeff2d ( 0, 2.25, 0.0, -1.3,n_x,n_z, &TempGridr.front(),
+double RC1 = interpRateCoeff2d ( 0, 2.25, 0.0, -1.3,nR_Temp,nZ_Temp, &TempGridr.front(),
                       &TempGridz.front(),&te.front(),&DensGridr.front(),&DensGridz.front(), &ne.front(),nTemperaturesIonize,nDensitiesIonize,
        &gridTemperature_Ionization.front(),&gridDensity_Ionization.front(),&rateCoeff_Ionization.front() );
 std::cout << "Interpolated RC " << RC1 << std::endl;
-
+*/
 
 char outname[] = "Deposition.m";
 char outnameCharge[] = "Charge.m";
@@ -221,11 +323,9 @@ char outnameEnergy[] = "Energy.m";
 Setting& geom = cfg_geom.lookup("geom");
 int nLines = geom["x1"].getLength();
 std::cout << "Number of Geometric Objects Loaded: " << nLines << std::endl;
-#ifdef __CUDACC__
-        thrust::host_vector<Boundary> hostBoundaryVector(nLines+1);
-#else
-        std::vector<Boundary> hostBoundaryVector(nLines+1);
-#endif
+
+std::vector<Boundary> hostBoundaryVector(nLines+1);
+
 for(int i=0 ; i<nLines ; i++)
     {
      hostBoundaryVector[i].x1 = geom["x1"][i];
@@ -237,12 +337,14 @@ for(int i=0 ; i<nLines ; i++)
      hostBoundaryVector[i].intercept_z = geom["intercept"][i];
      hostBoundaryVector[i].length = geom["length"][i];
     }   
+
 hostBoundaryVector[nLines].Z = geom["Z"][nLines];
 hostBoundaryVector[nLines].y1 = geom["y1"];
 hostBoundaryVector[nLines].y2 = geom["y2"];
 hostBoundaryVector[nLines].periodic = geom["periodic"];
-std::for_each(hostBoundaryVector.begin(), hostBoundaryVector.end()-1, boundary_init(nR_Dens,nZ_Dens,&gridx.front(),&gridz.front(),&dens.front(),nR_Bfield,nZ_Bfield,&bfieldGridr.front(),&bfieldGridz.front(),&br.front(),&bz.front(), &bt.front()) );
-std::cout << "exited bound_init" << std::endl;
+
+std::for_each(hostBoundaryVector.begin(), hostBoundaryVector.end()-1, boundary_init(background_Z,background_amu,nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ni.front(),nR_Bfield,nZ_Bfield,&bfieldGridr.front(),&bfieldGridz.front(),&br.front(),&bz.front(), &bt.front(),
+       nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&ti.front() ));
 
 #ifdef __CUDACC__
     thrust::device_vector<Boundary> deviceBoundaryVector = hostBoundaryVector;
@@ -250,7 +352,7 @@ std::cout << "exited bound_init" << std::endl;
 #else
     std::vector<Boundary> * BoundaryHostPointer = &hostBoundaryVector;    
 #endif
-    // Volume definition
+/*    // Volume definition
 
 double xMinV = cfg.lookup("volumeDefinition.xMinV");
 double xMaxV = cfg.lookup("volumeDefinition.xMaxV");
@@ -278,17 +380,17 @@ double Bx_in = cfg.lookup("bField.Bx_in");
 double By_in = cfg.lookup("bField.By_in");
 double Bz_in = cfg.lookup("bField.Bz_in");
 double connectionLength = cfg.lookup("bField.connectionLength");
-
+*/
 // Particle time stepping control
 
 int ionization_nDtPerApply  = cfg.lookup("timeStep.ionization_nDtPerApply");
 int collision_nDtPerApply  = cfg.lookup("timeStep.collision_nDtPerApply");
 // Perp DiffusionCoeff - only used when Diffusion interpolator is = 0
-double perDiffusionCoeff_in = cfg.lookup("perpDiffusion.perDiffusionCoeff_in");
+double perpDiffusionCoeff = cfg.lookup("backgroundPlasmaProfiles.Diffusion.Dperp");
 
 // Background species info
-int *background_Z;
-double *background_amu;
+//double background_Z = cfg.lookup("backgroundPlasmaProfiles.Z");
+//double background_amu = cfg.lookup("backgroundPlasmaProfiles.amu");
 double *background_flow;
 double *maxDensity;
 double *maxTemp_eV;
@@ -299,7 +401,7 @@ double *maxTemp_eV;
     cout<<"Not using THRUST"<<endl;
 #endif
 
-Setting& backgroundPlasma = cfg.lookup("backgroundPlasma");
+/*Setting& backgroundPlasma = cfg.lookup("backgroundPlasma");
 int nS = backgroundPlasma["Z"].getLength();
 
 Setting& diagnostics = cfg.lookup("diagnostics");
@@ -319,7 +421,7 @@ background_flow[i] = backgroundPlasma["flow"]["fractionOfThermalVelocity"][i];
 maxDensity[i] = backgroundPlasma["density"]["max"][i];
 maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
 }
-
+*/
     double x = cfg.lookup("impurityParticleSource.initialConditions.x_start");
     double y = cfg.lookup("impurityParticleSource.initialConditions.y_start");
     double z = cfg.lookup("impurityParticleSource.initialConditions.z_start");
@@ -330,7 +432,8 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
     
     double amu = cfg.lookup("impurityParticleSource.initialConditions.impurity_amu");
     double Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
-/*
+    double charge = cfg.lookup("impurityParticleSource.initialConditions.charge");
+    /*
     double **SurfaceBins;
     double **SurfaceBinsCharge;
     double **SurfaceBinsEnergy;
@@ -374,14 +477,64 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
 //    int surfaceIndexY;
 //    int surfaceIndexZ;
 #if PARTICLE_SOURCE == 0
-    Particle p1(x,y,z,Ex,Ey,Ez,Z,amu);
-#endif
-
+    Particle p1(x,y,z,Ex,Ey,Ez,Z,amu,charge);
 #ifdef __CUDACC__
       thrust::host_vector<Particle> hostCudaParticleVector(nParticles,p1);
 #else
         std::vector<Particle> hostCudaParticleVector(nParticles,p1);
 #endif
+#elif PARTICLE_SOURCE == 1
+    double impurity_Z = cfg.lookup("impurityParticleSource.Z");
+    int nImpurityBoundaries = 0;
+    for (int i=0; i<nLines;i++)
+    {
+        if(hostBoundaryVector[i].Z == impurity_Z)
+        {
+            nImpurityBoundaries++;
+        }
+    }
+    std::cout << "n Impurity Boundaries to launch from " << nImpurityBoundaries << std::endl;
+    std::vector<int> boundaryIndex_ImpurityLaunch(nImpurityBoundaries);
+
+    int count = 0;
+    for (int i=0; i<nLines;i++)
+    {
+        if(hostBoundaryVector[i].Z == impurity_Z)
+        {
+            boundaryIndex_ImpurityLaunch[count] = i;
+            count++;
+            std::cout << "Boundary indices " << i << std::endl;
+        }
+    }
+    
+    int impuritiesPerBoundary = nP/nImpurityBoundaries;
+#ifdef __CUDACC__
+      thrust::host_vector<Particle> hostCudaParticleVector(nParticles);
+#else
+        std::vector<Particle> hostCudaParticleVector(nParticles);
+#endif
+   // Particle p1(0.0,0.0,0.0,0.0,0.0,0.0,0,0.0);
+    for (int i=0; i< nImpurityBoundaries;i++)
+    {
+        //Set boundary interval, properties, and random number gen
+        if (i==0)
+        {
+            x = 1.4290;
+            z = -1.2540+0.01;
+        }
+        else
+        {
+            x = 1.3450;
+            z = -1.3660+0.01;
+        }
+        for(int j=0; j<impuritiesPerBoundary; j++)
+        {
+            Particle p1(x,0.0,z,0.0,0.0,10,74,184.0,charge);
+            hostCudaParticleVector[i*impuritiesPerBoundary + j] = p1;
+        }
+    }
+#endif
+
 
 #if GEOM_TRACE > 0       
             std::uniform_real_distribution<float> dist2(0,1);
@@ -397,7 +550,44 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
                 hostCudaParticleVector[i].vz = mag*cos(phi);
             }
 #endif
-       
+#if PARTICLE_TRACKS > 0
+double **positionHistoryX;
+double **positionHistoryY;
+double **positionHistoryZ;
+double **velocityHistoryX;
+double **velocityHistoryY;
+double **velocityHistoryZ;
+positionHistoryX = new double* [nP];
+positionHistoryY = new double* [nP];
+positionHistoryZ = new double* [nP];
+velocityHistoryX = new double* [nP];
+velocityHistoryY = new double* [nP];
+velocityHistoryZ = new double* [nP];
+positionHistoryX[0] = new double [nT*nP];
+positionHistoryY[0] = new double [nT*nP];
+positionHistoryZ[0] = new double [nT*nP];
+velocityHistoryX[0] = new double [nT*nP];
+velocityHistoryY[0] = new double [nT*nP];
+velocityHistoryZ[0] = new double [nT*nP];
+    for(int i=0 ; i<nP ; i++)
+    {
+        positionHistoryX[i] = &positionHistoryX[0][i*nT];
+        positionHistoryY[i] = &positionHistoryY[0][i*nT];
+        positionHistoryZ[i] = &positionHistoryZ[0][i*nT];
+        velocityHistoryX[i] = &velocityHistoryX[0][i*nT];
+        velocityHistoryY[i] = &velocityHistoryY[0][i*nT];
+        velocityHistoryZ[i] = &velocityHistoryZ[0][i*nT];
+        for(int j=0 ; j<nT ; j++)
+        {
+            positionHistoryX[i][j] = 0;
+            positionHistoryY[i][j] = 0;
+            positionHistoryZ[i][j] = 0;
+            velocityHistoryX[i][j] = 0;
+            velocityHistoryY[i][j] = 0;
+            velocityHistoryZ[i][j] = 0;
+        }
+    }
+#endif   
             cpu_timer timer;
 
 #ifdef __CUDACC__
@@ -488,7 +678,8 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
     for(int tt=0; tt< nT; tt++)
     {
 #ifdef __CUDACC__
-        thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt,BoundaryDevicePointer, nLines) );
+        thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), move_boris(dt,BoundaryDevicePointer, nLines,nR_Bfield,nZ_Bfield, BfieldGridRDevicePointer,BfieldGridZDevicePointer,
+    BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer));
         try {
             thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), geometry_check(nLines,BoundaryDevicePointer) );
         }
@@ -503,7 +694,7 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
     thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), recombine(dt) );
 #endif
 #if USEPERPDIFFUSION > 0
-    thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), crossFieldDiffusion(dt,perDiffusionCoeff_in));
+    thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), crossFieldDiffusion(dt,perpDiffusionCoeff));
 #endif
 #if USECOULOMBCOLLISIONS > 0
     thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), coulombCollisions(dt) );
@@ -512,22 +703,46 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), thermalForce(dt) );
 #endif
 #else
-    std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), move_boris(dt,hostBoundaryVector,nLines) );
+    std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), move_boris(dt,hostBoundaryVector,nLines, nR_Bfield,nZ_Bfield, &bfieldGridr.front(),&bfieldGridz.front(),
+                &br.front(),&bz.front(),&bt.front()));
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), geometry_check(nLines,hostBoundaryVector) );
 #if USEIONIZATION > 0
-    std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), ionize(dt) );
+    std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), ionize(dt,
+                nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),
+                nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
+                nTemperaturesIonize, nDensitiesIonize, &gridTemperature_Ionization.front(),
+               &gridDensity_Ionization.front(), &rateCoeff_Ionization.front() ) );
 #endif
 #if USERECOMBINATION > 0
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), recombine(dt) );
 #endif
 #if USEPERPDIFFUSION > 0
-        std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), crossFieldDiffusion(dt,perDiffusionCoeff_in));
+    //std::cout<< "Perp diffusion loop " << perpDiffusionCoeff << std::endl;
+        std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), crossFieldDiffusion(dt,perpDiffusionCoeff,nR_Bfield,nZ_Bfield, &bfieldGridr.front(),&bfieldGridz.front(),
+                                    &br.front(),&bz.front(),&bt.front()));
 #endif
 #if USECOULOMBCOLLISIONS > 0
-        std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), coulombCollisions(dt) );
+        std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), coulombCollisions(dt,nR_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridz.front(),&flowVr.front(),&flowVz.front(),
+                    &flowVt.front(),
+                nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),
+                nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
+                background_Z,background_amu,nR_Bfield,nZ_Bfield, &bfieldGridr.front(),
+                &bfieldGridz.front(),&br.front(),&bz.front(),&bt.front()));
 #endif
 #if USETHERMALFORCE > 0
-        std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), thermalForce(dt) );
+        std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), thermalForce(dt,background_amu,nR_gradT,nZ_gradT,&gradTGridr.front(),&gradTGridz.front(),
+                    &gradTiR.front(),&gradTiZ.front(),&gradTeR.front(),&gradTeZ.front() ) );
+#endif
+#if PARTICLE_TRACKS >0
+        for(int i=0;i<nP;i++)
+        {
+            positionHistoryX[i][tt] = hostCudaParticleVector[i].xprevious;
+            positionHistoryY[i][tt] = hostCudaParticleVector[i].yprevious;
+            positionHistoryZ[i][tt] = hostCudaParticleVector[i].zprevious;
+            velocityHistoryX[i][tt] = hostCudaParticleVector[i].vx;
+            velocityHistoryY[i][tt] = hostCudaParticleVector[i].vy;
+            velocityHistoryZ[i][tt] = hostCudaParticleVector[i].vz;
+        }
 #endif
 #endif
     }
@@ -562,7 +777,20 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
         outfile2 << hostCudaParticleVector[i-1].x << " " << hostCudaParticleVector[i-1].y << " " << hostCudaParticleVector[i-1].z << " ];" << std::endl;
       }
        outfile2.close();
-
+#if PARTICLE_TRACKS > 0
+char outnameX[] = "positionHistoryX.m";
+OUTPUT( outnameX,nP, nT, positionHistoryX);
+char outnameY[] = "positionHistoryY.m";
+OUTPUT( outnameY,nP, nT, positionHistoryY);
+char outnameZ[] = "positionHistoryZ.m";
+OUTPUT( outnameZ,nP, nT, positionHistoryZ);
+char outnameVX[] = "velocityHistoryX.m";
+OUTPUT( outnameVX,nP, nT,velocityHistoryX);
+char outnameVY[] = "velocityHistoryY.m";
+OUTPUT( outnameVY,nP, nT, velocityHistoryY);
+char outnameVZ[] = "velocityHistoryZ.m";
+OUTPUT( outnameVZ,nP, nT, velocityHistoryZ);
+#endif
 
 #ifdef __CUDACC__
     cudaThreadSynchronize();

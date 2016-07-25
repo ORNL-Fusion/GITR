@@ -50,6 +50,9 @@ class Boundary {
     float angle;
     float fd;
     float density;
+    float ti;
+    float debyeLength;
+    float larmorRadius;
     CUDA_CALLABLE_MEMBER
         Boundary() {
                    };

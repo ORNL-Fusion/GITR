@@ -19,20 +19,39 @@
 #include <stdlib.h>
 #endif
 
+#include "interpRateCoeff.hpp"
+
 struct ionize { 
-	           const double dt;
-        ionize(double _dt) : dt(_dt) {}
+    int nR_Dens;
+    int nZ_Dens;
+    double* DensGridr;
+    double* DensGridz;
+    double* ne;
+    int nR_Temp;
+    int nZ_Temp;
+    double* TempGridr;
+    double* TempGridz;
+    double* te;
+    int nTemperaturesIonize;
+    int nDensitiesIonize;
+    double* gridDensity_Ionization;
+    double* gridTemperature_Ionization;
+    double* rateCoeff_Ionization;
+    const double dt;
+        ionize(double _dt,int _nR_Dens,int _nZ_Dens,double* _DensGridr,
+    double* _DensGridz,double* _ne,int _nR_Temp, int _nZ_Temp,
+    double* _TempGridr, double* _TempGridz,double* _te,int _nTemperaturesIonize,
+    int _nDensitiesIonize,double* _gridTemperature_Ionization,double* _gridDensity_Ionization,
+    double* _rateCoeff_Ionization
+              ) : dt(_dt), nR_Dens(_nR_Dens), nZ_Dens(_nZ_Dens), DensGridr(_DensGridr), DensGridz(_DensGridz),ne(_ne),
+        nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr), TempGridz(_TempGridz), te(_te),
+   nTemperaturesIonize(_nTemperaturesIonize), nDensitiesIonize(_nDensitiesIonize), gridTemperature_Ionization(_gridTemperature_Ionization), gridDensity_Ionization(_gridDensity_Ionization), rateCoeff_Ionization(_rateCoeff_Ionization) {}
+    
         CUDA_CALLABLE_MEMBER_DEVICE 
                 void operator()(Particle &p) const { 
 	if(p.hitWall == 0.0){        
-	double tion;
-	double P1;
-	double Coeffs[10] = {3.0875e-13, 9.6970e-14,3.8631e-14,2.0649e-14,3.5021e-15,1.6037e-15,7.0230e-17,1.7442e-17,6.1966e-18,1.8790e-18};
-	double density = 1e19;
-	double Temp_eV = 20;
-	tion = 1/(Coeffs[int(floor(p.Z+ 0.5f))]*density);
-	
-	P1 = 1-exp(-dt/tion);
+	double tion = interpRateCoeff2d ( p.charge, p.x, p.y, p.z,nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesIonize,nDensitiesIonize,gridTemperature_Ionization,gridDensity_Ionization,rateCoeff_Ionization );	
+    double P1 = 1-exp(-dt/tion);
 	
 	#ifdef __CUDACC__
 	double r1 = curand_uniform(&p.streams[0]);
@@ -43,7 +62,7 @@ struct ionize {
 
 	if(r1 <= P1)
 	{
-		p.Z = p.Z+1;
+		p.charge = p.charge+1;
 	} 
 	}	
 

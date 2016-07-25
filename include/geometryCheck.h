@@ -85,7 +85,7 @@ void operator()(Particle &p) const {
 
                     if (signPoint != signPoint0)
                     {
-                       if (isinf(particle_slope))
+                       if (fabs(particle_slope)>= tol*0.75)
                                {
                                   // std::cout << " isinf catch " << std::endl;
                                 particle_slope = tol;
