@@ -65,17 +65,17 @@ void operator()(Particle &p) const {
 	dv_ITG[0] = dt/(p.amu*MI)*(beta*(gradTi[0]));
 	dv_ITG[1] = dt/(p.amu*MI)*(beta*(gradTi[1]));
 	dv_ITG[2] = dt/(p.amu*MI)*(beta*(gradTi[2]));
-    std::cout << "mu " << mu << std::endl;
-    std::cout << "alpha beta " << alpha << " " << beta << std::endl;
-    std::cout << "ITG " << dv_ITG[0] << " " << dv_ITG[1] << " " << dv_ITG[2] << std::endl;
-    std::cout << "ETG " << dv_ETG[0] << " " << dv_ETG[1] << " " << dv_ETG[2] << std::endl;
-    std::cout << "v before thermal force " << p.vx << " " << p.vy << " " << p.vz << std::endl;
+   // std::cout << "mu " << mu << std::endl;
+   // std::cout << "alpha beta " << alpha << " " << beta << std::endl;
+   // std::cout << "ITG " << dv_ITG[0] << " " << dv_ITG[1] << " " << dv_ITG[2] << std::endl;
+   // std::cout << "ETG " << dv_ETG[0] << " " << dv_ETG[1] << " " << dv_ETG[2] << std::endl;
+   // std::cout << "v before thermal force " << p.vx << " " << p.vy << " " << p.vz << std::endl;
 	
         p.vx = p.vx + dt/(p.amu*MI)*(alpha*(gradTe[0]) + beta*(gradTi[0]));
 		p.vy = p.vy + dt/(p.amu*MI)*(alpha*(gradTe[1]) + beta*(gradTi[1]));
 		p.vz = p.vz + dt/(p.amu*MI)*(alpha*(gradTe[2]) + beta*(gradTi[2]));		
 	
-    std::cout << "v after thermal force " << p.vx << " " << p.vy << " " << p.vz << std::endl;
+   // std::cout << "v after thermal force " << p.vx << " " << p.vy << " " << p.vz << std::endl;
         }
     	}
      

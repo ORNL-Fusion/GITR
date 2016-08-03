@@ -24,9 +24,9 @@ int sgn(T val) {
 CUDA_CALLABLE_MEMBER
 
 #ifdef __CUDACC__
-void getE ( double x, double y, double z, double E[], Boundary *boundaryVector, int nLines ) {
+double getE ( double x, double y, double z, double E[], Boundary *boundaryVector, int nLines ) {
 #else
-void getE ( double x, double y, double z, double E[], std::vector<Boundary> &boundaryVector, int nLines ) {
+double getE ( double x, double y, double z, double E[], std::vector<Boundary> &boundaryVector, int nLines ) {
 #endif
 	double Emag;
 	double fd = 0.0;
@@ -149,7 +149,8 @@ void getE ( double x, double y, double z, double E[], std::vector<Boundary> &bou
         E[2] = Emag*directionUnitVector[2];
 
     }
-
+    std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
+    return minDistance;
 }
 
 struct move_boris { 
@@ -208,22 +209,46 @@ void operator()(Particle &p) const {
 	        double q_prime = p.charge*1.60217662e-19/(p.amu*1.6737236e-27)*dt*0.5;
             double coeff = 2*q_prime/(1+(q_prime*Bmag)*(q_prime*Bmag));
             int nSteps = floor( span / dt + 0.5);
+            double minDist = 0.0;
             for ( int s=0; s<nSteps; s++ ) 
             {
-	          getE(p.xprevious,p.yprevious,p.zprevious,E,boundaryVector,nLines);
-           
+	          minDist = getE(p.xprevious,p.yprevious,p.zprevious,E,boundaryVector,nLines);
+interp2dVector(&B[0],p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
+                BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);        
 
-            br = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
+        /*    br = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
                 BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer);
             bz = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
                 BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldZDevicePointer);
             bt = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
                 BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldTDevicePointer);
-	        B[0] = br;
-            B[1] = bz;
-            B[2] = bt;
-
-            Bmag = sqrt(br*br + bz*bz + bt*bt);
+	       
+#if USECYLSYMM > 0
+            //if cylindrical geometry
+            double theta = atan(p.yprevious/p.xprevious);
+            if(p.xprevious < 0.0)
+            {
+                if(p.yprevious > 0.0)
+                {
+                    theta = theta + 3.1415;
+                }
+                else
+                {
+                    theta = sqrt(theta*theta) + 3.1415;
+                }
+            }
+  
+            B[0] = cos(theta)*br - sin(theta)*bt;
+            B[2] = bz;
+            B[1] = sin(theta)*br + cos(theta)*bt;
+#else
+            B[0] = br;
+            B[2] = bz;
+            B[1] = bt;
+#endif*/
+           // std::cout << "Particle Position " << p.xprevious << " " << p.yprevious << std::endl;
+         //std::cout << "Bfield out " << B[0] << " " << B[1] <<" " << B[2] << std::endl;
+            Bmag = sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
             coeff = 2*q_prime/(1+(q_prime*Bmag)*(q_prime*Bmag));
             
                 v[0] = p.vx;
