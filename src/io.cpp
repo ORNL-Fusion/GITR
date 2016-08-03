@@ -8,6 +8,7 @@
 #include "Boundary.h"
 #include "Particle.h"
 #include "boost/multi_array.hpp"
+#include "boost/filesystem.hpp"
 #include "io.hpp"
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
@@ -187,6 +188,66 @@ void OUTPUT(char outname[],int nX, int nY, double **array2d)
 					}
 					outfile << "  ];" << std::endl;
 				}
+			outfile.close();	
+		
+		
+}
+
+void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, double *array2d)
+{
+       ofstream outfile;
+				//Output
+        boost::filesystem::path dir(folder);
+
+            if(!(boost::filesystem::exists(dir)))
+            {
+              std::cout<<"Doesn't Exists"<<std::endl;
+              if (boost::filesystem::create_directory(dir))
+              {
+              std::cout << " Successfully Created " << std::endl;
+              }
+            }
+            std::string full_path = folder + "/" + outname;
+			outfile.open (full_path );
+			
+				 for(int i=1 ; i<=nX ; i++)
+				{
+				outfile << "Dep( " << i<< ",:) = [ " ;
+					for(int j=0 ; j<nY ; j++)
+					{
+					outfile << array2d[(i-1)*nY + j] << "  " ;
+					//std::cout << r[i] << std::endl;
+					}
+					outfile << "  ];" << std::endl;
+				}
+			outfile.close();	
+		
+		
+}
+
+void OUTPUT1d(std::string folder,std::string outname,int nX, double *array2d)
+{
+       ofstream outfile;
+				//Output
+        boost::filesystem::path dir(folder);
+
+            if(!(boost::filesystem::exists(dir)))
+            {
+             // std::cout<<"Doesn't Exists"<<std::endl;
+              if (boost::filesystem::create_directory(dir))
+              {
+              //std::cout << " Successfully Created " << std::endl;
+              }
+            }
+            std::string full_path = folder + "/" + outname;
+			outfile.open (full_path );
+			
+				outfile << "nX " << "  = [ " ;
+				 for(int i=0 ; i<nX ; i++)
+				{
+					outfile << array2d[i] << "  " ;
+				}
+					outfile << "  ];" << std::endl;
 			outfile.close();	
 		
 		

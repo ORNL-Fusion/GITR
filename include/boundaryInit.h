@@ -44,7 +44,7 @@ struct boundary_init {
         double midpointz = 0.5*(b.z2 - b.z1) + b.z1;
         b.density = interp2dCombined(midpointx,0.0,midpointz,nx,nz,densityGridx,densityGridz,density);
         b.ti = interp2dCombined(midpointx,0.0,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
-//        std::cout << "b.density " << midpointx << " " << midpointz << " " << b.density << std::endl;
+        std::cout << "b.density " << midpointx << " " << midpointz << " " << b.density << std::endl;
         double br = interp2dCombined(midpointx,0.0,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldR);   
         double bz = interp2dCombined(midpointx,0.0,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldZ);
         double bt = interp2dCombined(midpointx,0.0,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldT); 

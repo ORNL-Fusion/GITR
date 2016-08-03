@@ -21,11 +21,13 @@
 #include "Particle.h"
 #include "Boundary.h"
 #include <boost/timer/timer.hpp>
+#include "boost/filesystem.hpp"
 #include <vector>
 #include "io.hpp"
 #include "testRoutine.h"
 #include "testRoutineCuda.h"
 #include "boundaryInit.h"
+#include <netcdf>
 
 #ifdef __CUDACC__
 #include <thrust/copy.h>
@@ -42,6 +44,8 @@
 using namespace std;
 using namespace libconfig;
 using namespace boost::timer;
+using namespace netCDF;
+using namespace exceptions;
 
 int main()
 {
@@ -56,6 +60,12 @@ cfg_geom.readFile("gitrGeometry.cfg");
 double background_Z = cfg.lookup("backgroundPlasmaProfiles.Z");
 double background_amu = cfg.lookup("backgroundPlasmaProfiles.amu");
 
+std::string outnameBfieldR = "BfieldR.m";
+std::string outnameBfieldZ = "BfieldZ.m";
+std::string outnameBfieldT = "BfieldT.m";
+std::string outnameGridR = "gridR.m";
+std::string outnameGridZ = "gridZ.m";
+std::string profiles_folder = "profiles";
 #if BFIELD_INTERP == 0
 int nR_Bfield = 1;
 int nZ_Bfield = 1;
@@ -89,6 +99,12 @@ int b5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Bfield.fileString")
 
 int b6 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Bfield.fileString"),
         cfg.lookup("backgroundPlasmaProfiles.Bfield.toroidalComponentString"), bt);
+
+OUTPUT1d(profiles_folder,outnameGridR, nR_Bfield, &bfieldGridr.front());
+OUTPUT1d(profiles_folder,outnameGridZ, nZ_Bfield, &bfieldGridz.front());
+OUTPUT2d(profiles_folder,outnameBfieldR, nR_Bfield, nZ_Bfield, &br.front());
+OUTPUT2d(profiles_folder,outnameBfieldZ, nR_Bfield, nZ_Bfield, &bz.front());
+OUTPUT2d(profiles_folder,outnameBfieldT, nR_Bfield, nZ_Bfield, &bt.front());
 #endif
 #ifdef __CUDACC__
     thrust::device_vector<double> deviceBfieldGridRVector = bfieldGridr;
@@ -132,15 +148,31 @@ int t4 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Temperature.fileStr
 
 int t5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Temperature.fileString"),
         cfg.lookup("backgroundPlasmaProfiles.Temperature.ElectronTempString"), te);
+std::string outnameTi = "ti.m";
+std::string outnameTe = "te.m";
+OUTPUT2d(profiles_folder,outnameTi, nR_Temp, nZ_Temp, &ti.front());
+OUTPUT2d(profiles_folder,outnameTe, nR_Temp, nZ_Temp, &te.front());
 #endif
+
+#ifdef __CUDACC__
+    thrust::device_vector<double> deviceTempGridRVector = TempGridr;
+    thrust::device_vector<double> deviceTempGridZVector = TempGridz;
+    thrust::device_vector<double> deviceTiVector = ti;
+    thrust::device_vector<double> deviceTeVector = te;
+    double * TempGridRDevicePointer = thrust::raw_pointer_cast(deviceTempGridRVector.data());
+    double * TempGridZDevicePointer = thrust::raw_pointer_cast(deviceTempGridZVector.data());
+    double * TiDevicePointer = thrust::raw_pointer_cast(deviceTiVector.data());
+    double * TeDevicePointer = thrust::raw_pointer_cast(deviceTeVector.data());
+#endif
+
 
 #if DENSITY_INTERP == 0
 int nR_Dens = 1;
 int nZ_Dens = 1;
 std::vector<double> DensGridr(nR_Dens), DensGridz(nZ_Dens);
 std::vector<double> ni(nR_Dens*nZ_Dens), ne(nR_Dens*nZ_Dens);
-ni[0] = cfg.lookup("backgroundPlasmaProfiles.Temperature.ti");
-ne[0] = cfg.lookup("backgroundPlasmaProfiles.Temperature.te");
+ni[0] = cfg.lookup("backgroundPlasmaProfiles.Density.ni");
+ne[0] = cfg.lookup("backgroundPlasmaProfiles.Density.ne");
 #else
 int nR_Dens;
 int nZ_Dens;
@@ -163,7 +195,31 @@ int n4 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Density.fileString"
 
 int n5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.Density.fileString"),
         cfg.lookup("backgroundPlasmaProfiles.Density.ElectronDensityString"), ne);
+std::string outnameNi = "ni.m";
+std::string outnameNe = "ne.m";
+OUTPUT2d(profiles_folder,outnameNi, nR_Dens, nZ_Dens, &ni.front());
+OUTPUT2d(profiles_folder,outnameNe, nR_Dens, nZ_Dens, &ne.front());
 #endif
+
+#ifdef __CUDACC__
+    thrust::device_vector<double> deviceDensGridRVector = DensGridr;
+    thrust::device_vector<double> deviceDensGridZVector = DensGridz;
+    thrust::device_vector<double> deviceNiVector = ni;
+    thrust::device_vector<double> deviceNeVector = ne;
+    double * DensGridRDevicePointer = thrust::raw_pointer_cast(deviceDensGridRVector.data());
+    double * DensGridZDevicePointer = thrust::raw_pointer_cast(deviceDensGridZVector.data());
+    double * NiDevicePointer = thrust::raw_pointer_cast(deviceNiVector.data());
+    double * NeDevicePointer = thrust::raw_pointer_cast(deviceNeVector.data());
+#endif
+
+#if FLOWV_INTERP == 0
+int nR_flowV = 1;
+int nZ_flowV = 1;
+std::vector<double> flowVGridr(nR_flowV), flowVGridz(nZ_flowV);
+std::vector<double> flowVr(nR_flowV*nZ_flowV), flowVz(nR_flowV*nZ_flowV),flowVt(nR_flowV*nZ_flowV);
+flowVr[0] = cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.flowVr");
+flowVz[0] = cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.flowVz");
+#else
 int nR_flowV;
 int nZ_flowV;
 
@@ -189,6 +245,38 @@ int f5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.fileSt
 int f6 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.fileString"),
         cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.flowVtString"), flowVt);
 
+std::string outnameFlowVr = "flowVr.m";
+std::string outnameFlowVz = "flowVz.m";
+std::string outnameFlowVt = "flowVt.m";
+OUTPUT2d(profiles_folder,outnameFlowVr, nR_flowV, nZ_flowV, &flowVr.front());
+OUTPUT2d(profiles_folder,outnameFlowVz, nR_flowV, nZ_flowV, &flowVz.front());
+OUTPUT2d(profiles_folder,outnameFlowVt, nR_flowV, nZ_flowV, &flowVt.front());
+#endif
+
+#ifdef __CUDACC__
+    thrust::device_vector<double> deviceFlowVGridRVector = flowVGridr;
+    thrust::device_vector<double> deviceFlowVGridZVector = flowVGridz;
+    thrust::device_vector<double> deviceFlowVrVector = flowVr;
+    thrust::device_vector<double> deviceFlowVzVector = flowVz;
+    thrust::device_vector<double> deviceFlowVtVector = flowVt;
+    double * FlowVGridRDevicePointer = thrust::raw_pointer_cast(deviceFlowVGridRVector.data());
+    double * FlowVGridZDevicePointer = thrust::raw_pointer_cast(deviceFlowVGridZVector.data());
+    double * FlowVrDevicePointer = thrust::raw_pointer_cast(deviceFlowVrVector.data());
+    double * FlowVzDevicePointer = thrust::raw_pointer_cast(deviceFlowVzVector.data());
+    double * FlowVtDevicePointer = thrust::raw_pointer_cast(deviceFlowVtVector.data());
+#endif
+
+#if GRADT_INTERP == 0
+int nR_gradT = 1;
+int nZ_gradT = 1;
+std::vector<double> gradTGridr(nR_gradT), gradTGridz(nZ_gradT);
+std::vector<double> gradTeR(nR_gradT*nZ_gradT), gradTeZ(nR_gradT*nZ_gradT),
+    gradTiR(nR_gradT*nZ_gradT), gradTiZ(nR_gradT*nZ_gradT);
+gradTeR[0] = cfg.lookup("backgroundPlasmaProfiles.gradT.gradTeR");
+gradTeZ[0] = cfg.lookup("backgroundPlasmaProfiles.gradT.gradTeZ");
+gradTiR[0] = cfg.lookup("backgroundPlasmaProfiles.gradT.gradTiR");
+gradTiZ[0] = cfg.lookup("backgroundPlasmaProfiles.gradT.gradTiZ");
+#else
 int nR_gradT;
 int nZ_gradT;
 
@@ -217,52 +305,31 @@ int g6 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
 
 int g7 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
         cfg.lookup("backgroundPlasmaProfiles.gradT.gradTeZString"), gradTeZ);
-        std::cout << "thermal force numbers " << nR_gradT << " " << nZ_gradT << std::endl; 
-     std::cout << "thermal grids r " << gradTGridr[0] << " " << gradTGridr[nR_gradT-1] << std::endl;
-    std::cout << "thermal grids z " << gradTGridz[0] << " " << gradTGridz[nZ_gradT-1] << std::endl;
-
-/*
-string profilename("profiles.nc");
-string densnxstring("n_x");
-string densnzstring("n_z");
-string densstring("ne");
-string densgridxname("gridx");
-string densgridzname("gridz");
-int n_x;
-int n_z;
-int a1 = read_profileNs(profilename,densnxstring,densnzstring,n_x,n_z);
-std::vector<double> gridx(n_x), gridz(n_z);
-std::vector<double> dens(n_x*n_z);
-int a2 = read_profiles(profilename,n_x,n_z,densgridxname, gridx,densgridzname, gridz,densstring, dens);
-thrust::device_vector<double> device_dens = dens;
-thrust::device_vector<double> device_gridx = gridx;
-thrust::device_vector<double> device_gridz = gridz;
-double interp_val1 = interp2dCombined(2.25, 0.0, -1.3,n_x,n_z, &gridx.front(), &gridz.front(), &dens.front());
-std::cout << "interpolated value " << interp_val1 << std::endl;
-std::vector<double> doubleVector(5,1.1);
-thrust::device_vector<double> dd = doubleVector;
-
-std::cout << "starting print loop" << std::endl;
-std::for_each(doubleVector.begin(), doubleVector.end(), test_routine(2.25, 0.0, -1.3,n_x,n_z,&gridx.front(), &gridz.front(), &dens.front()) );
-for (int i=0; i<5; i++)
-{
-        std::cout << "gridx: " << gridx[i] << std::endl;
-}
-
-double* gxptr2 = thrust::raw_pointer_cast(device_gridx.data());
-double* gzptr2 = thrust::raw_pointer_cast(device_gridz.data());
-double* dtptr2 = thrust::raw_pointer_cast(device_dens.data());
-thrust::for_each(dd.begin(), dd.end(), test_routinecuda(2.25, 0.0, -1.3,n_x,n_z, gxptr2, gzptr2, dtptr2) );
-thrust::host_vector<double> doubleVector2 = dd;
-#ifdef __CUDACC__
-    cudaThreadSynchronize();
+std::string outnameGradTiR = "gradTiR.m";
+std::string outnameGradTiZ = "gradTiZ.m";
+std::string outnameGradTeR = "gradTeR.m";
+std::string outnameGradTeZ = "gradTeZ.m";
+OUTPUT2d(profiles_folder,outnameGradTiR, nR_gradT, nZ_gradT, &gradTiR.front());
+OUTPUT2d(profiles_folder,outnameGradTiZ, nR_gradT, nZ_gradT, &gradTiZ.front());
+OUTPUT2d(profiles_folder,outnameGradTeR, nR_gradT, nZ_gradT, &gradTeR.front());
+OUTPUT2d(profiles_folder,outnameGradTeZ, nR_gradT, nZ_gradT, &gradTeZ.front());
 #endif
-for (int i=0; i<5; i++)
-{
-        std::cout << "device doubleVector values: " << doubleVector2[i] << std::endl;
-}
 
-*/
+#ifdef __CUDACC__
+    thrust::device_vector<double> deviceGradTGridRVector = gradTGridr;
+    thrust::device_vector<double> deviceGradTGridZVector = gradTGridz;
+    thrust::device_vector<double> deviceGradTiRVector = gradTiR;
+    thrust::device_vector<double> deviceGradTiZVector = gradTiZ;
+    thrust::device_vector<double> deviceGradTeRVector = gradTeR;
+    thrust::device_vector<double> deviceGradTeZVector = gradTeZ;
+    double * GradTGridRDevicePointer = thrust::raw_pointer_cast(deviceGradTGridRVector.data());
+    double * GradTGridZDevicePointer = thrust::raw_pointer_cast(deviceGradTGridZVector.data());
+    double * GradTiRDevicePointer = thrust::raw_pointer_cast(deviceGradTiRVector.data());
+    double * GradTiZDevicePointer = thrust::raw_pointer_cast(deviceGradTiZVector.data());
+    double * GradTeRDevicePointer = thrust::raw_pointer_cast(deviceGradTeRVector.data());
+    double * GradTeZDevicePointer = thrust::raw_pointer_cast(deviceGradTeZVector.data());
+#endif
+
 int nCS_Ionize, nCS_Recombine;
 int i0 = read_profileNs(cfg.lookup("impurityParticleSource.ionization.fileString"),
         cfg.lookup("impurityParticleSource.ionization.nChargeStateString"),
@@ -307,13 +374,20 @@ int    i4 = read_profiles(cfg.lookup("impurityParticleSource.recombination.fileS
         cfg.lookup("impurityParticleSource.recombination.CoeffVarName"),
         rateCoeff_Recombination);
 
-/*        std::cout << "Coeff vector print " << 
-        rateCoeff_Ionization[0*nTemperaturesIonize*nDensitiesIonize+ 1*nTemperaturesIonize+ 0] << std::endl;
-double RC1 = interpRateCoeff2d ( 0, 2.25, 0.0, -1.3,nR_Temp,nZ_Temp, &TempGridr.front(),
-                      &TempGridz.front(),&te.front(),&DensGridr.front(),&DensGridz.front(), &ne.front(),nTemperaturesIonize,nDensitiesIonize,
-       &gridTemperature_Ionization.front(),&gridDensity_Ionization.front(),&rateCoeff_Ionization.front() );
-std::cout << "Interpolated RC " << RC1 << std::endl;
-*/
+#ifdef __CUDACC__
+    thrust::device_vector<double> deviceTemperatureGridIonizationVector = gridTemperature_Ionization;
+    thrust::device_vector<double> deviceDensityGridIonizationVector = gridDensity_Ionization;
+    thrust::device_vector<double> deviceTemperatureGridRecombinationVector = gridTemperature_Recombination;
+    thrust::device_vector<double> deviceDensityGridRecombinationVector = gridDensity_Recombination;
+    thrust::device_vector<double> deviceRateCoeffIonizationVector = rateCoeff_Ionization;
+    thrust::device_vector<double> deviceRateCoeffRecombinationVector = rateCoeff_Recombination;
+    double * IonizationTemperatureGridDevicePointer = thrust::raw_pointer_cast(deviceTemperatureGridIonizationVector.data());
+    double * RecombinationTemperatureGridDevicePointer = thrust::raw_pointer_cast(deviceTemperatureGridRecombinationVector.data());
+    double * IonizationDensityGridDevicePointer = thrust::raw_pointer_cast(deviceDensityGridIonizationVector.data());
+    double * RecombinationDensityGridDevicePointer = thrust::raw_pointer_cast(deviceDensityGridRecombinationVector.data());
+    double * IonizationRateCoeffDevicePointer = thrust::raw_pointer_cast(deviceRateCoeffIonizationVector.data());
+    double * RecombinationRateCoeffDevicePointer = thrust::raw_pointer_cast(deviceRateCoeffRecombinationVector.data());
+#endif
 
 char outname[] = "Deposition.m";
 char outnameCharge[] = "Charge.m";
@@ -326,6 +400,23 @@ std::cout << "Number of Geometric Objects Loaded: " << nLines << std::endl;
 
 std::vector<Boundary> hostBoundaryVector(nLines+1);
 
+std::string geom_outname = "geom.m";
+std::string geom_folder = "geometry";
+       ofstream outfile;
+                       //Output
+        boost::filesystem::path dir(geom_folder);
+
+       if(!(boost::filesystem::exists(dir)))
+       {
+       // std::cout<<"Doesn't Exists"<<std::endl;
+        if (boost::filesystem::create_directory(dir))
+        {
+        //std::cout << " Successfully Created " << std::endl;
+        }
+       }
+       std::string full_path = geom_folder + "/" + geom_outname;
+      outfile.open (full_path );
+
 for(int i=0 ; i<nLines ; i++)
     {
      hostBoundaryVector[i].x1 = geom["x1"][i];
@@ -336,13 +427,20 @@ for(int i=0 ; i<nLines ; i++)
      hostBoundaryVector[i].slope_dzdx = geom["slope"][i];
      hostBoundaryVector[i].intercept_z = geom["intercept"][i];
      hostBoundaryVector[i].length = geom["length"][i];
+
+    outfile << "geom(" << i+1 << ",:) = ["<<hostBoundaryVector[i].x1 << ", " <<hostBoundaryVector[i].z1 << ", " <<
+        hostBoundaryVector[i].x2 << ", " << hostBoundaryVector[i].z2 << ", " <<
+        hostBoundaryVector[i].slope_dzdx << ", " << hostBoundaryVector[i].intercept_z << ", " <<
+        hostBoundaryVector[i].length << ", " << hostBoundaryVector[i].Z << "];" << std::endl;
     }   
+
+outfile.close();
 
 hostBoundaryVector[nLines].Z = geom["Z"][nLines];
 hostBoundaryVector[nLines].y1 = geom["y1"];
 hostBoundaryVector[nLines].y2 = geom["y2"];
 hostBoundaryVector[nLines].periodic = geom["periodic"];
-
+std::cout << "Starting Boundary Init..." << std::endl;
 std::for_each(hostBoundaryVector.begin(), hostBoundaryVector.end()-1, boundary_init(background_Z,background_amu,nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ni.front(),nR_Bfield,nZ_Bfield,&bfieldGridr.front(),&bfieldGridz.front(),&br.front(),&bz.front(), &bt.front(),
        nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&ti.front() ));
 
@@ -352,35 +450,38 @@ std::for_each(hostBoundaryVector.begin(), hostBoundaryVector.end()-1, boundary_i
 #else
     std::vector<Boundary> * BoundaryHostPointer = &hostBoundaryVector;    
 #endif
-/*    // Volume definition
+//Efield
+    
+std::vector<double> Efieldr(nR_Bfield*nZ_Bfield), Efieldz(nR_Bfield*nZ_Bfield),Efieldt(nR_Bfield*nZ_Bfield),minDist(nR_Bfield*nZ_Bfield);
+double thisE[3] = {0.0,0.0,0.0};
 
-double xMinV = cfg.lookup("volumeDefinition.xMinV");
-double xMaxV = cfg.lookup("volumeDefinition.xMaxV");
-    // grid
-int nXv = cfg.lookup("volumeDefinition.grid.nXv");
-int nYv = cfg.lookup("volumeDefinition.grid.nYv");
-int nZv = cfg.lookup("volumeDefinition.grid.nZv");
+for(int i=0;i<nR_Bfield;i++)
+{
+    for(int j=0;j<nZ_Bfield;j++)
+    {
+        minDist[(nR_Bfield - 1 -i)*nZ_Bfield+(nZ_Bfield -1-j)] = getE ( bfieldGridr[i], 0.0, bfieldGridz[j],  thisE, hostBoundaryVector,nLines );
+        //std::cout << "point " << bfieldGridr[i] << " " << bfieldGridz[j] << " dist" << minDist[(i)*nZ_Bfield+(j)] << std::endl;
+        Efieldr[i*nZ_Bfield+j] = thisE[0];
+        Efieldz[i*nZ_Bfield+j] = thisE[2];
+        Efieldt[i*nZ_Bfield+j] = thisE[1];
+    }
+}
+for(int i=0;i<nR_Bfield;i++)
+{
+    for(int j=0;j<nZ_Bfield;j++)
+    {
+        std::cout << "point " << bfieldGridr[i] << " " << bfieldGridz[j] << " dist" << minDist[(i)+(j)*nR_Bfield] << std::endl;
+    }
+}
+std::string outnameEfieldR = "EfieldR.m";
+std::string outnameEfieldZ = "EfieldZ.m";
+std::string outnameEfieldT = "EfieldT.m";
+std::string outnameMinDist = "DistToSurface.m";
+OUTPUT2d(profiles_folder,outnameEfieldR, nR_Bfield, nZ_Bfield, &Efieldr.front());
+OUTPUT2d(profiles_folder,outnameEfieldZ, nR_Bfield, nZ_Bfield, &Efieldz.front());
+OUTPUT2d(profiles_folder,outnameEfieldT, nR_Bfield, nZ_Bfield, &Efieldt.front());
+OUTPUT2d(profiles_folder,outnameMinDist, nR_Bfield, nZ_Bfield, &minDist.front());
 
-// Surface definition
-
-double yMin = cfg.lookup("surfaceDefinition.yMin");
-double yMax = cfg.lookup("surfaceDefinition.yMax");
-
-double zMin = cfg.lookup("surfaceDefinition.zMin");
-double zMax  = cfg.lookup("surfaceDefinition.zMax");
-
-
-// Surface parameterization z = dz/dx * x + b
-
-double surface_dz_dx  = cfg.lookup("surfaceDefinition.planeParameterization.surface_dz_dx");
-double surface_zIntercept = cfg.lookup("surfaceDefinition.planeParameterization.surface_zIntercept");
-
-// Constant B field value - only used when BfieldInterpolator_number = 0
-double Bx_in = cfg.lookup("bField.Bx_in");
-double By_in = cfg.lookup("bField.By_in");
-double Bz_in = cfg.lookup("bField.Bz_in");
-double connectionLength = cfg.lookup("bField.connectionLength");
-*/
 // Particle time stepping control
 
 int ionization_nDtPerApply  = cfg.lookup("timeStep.ionization_nDtPerApply");
@@ -513,23 +614,85 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
 #else
         std::vector<Particle> hostCudaParticleVector(nParticles);
 #endif
-   // Particle p1(0.0,0.0,0.0,0.0,0.0,0.0,0,0.0);
+    std::uniform_real_distribution<float> distributionForSeeds(0,1e6);
+        std::random_device randDevice;
+        std::default_random_engine generator0(randDevice());
+    
+    std::vector<float> boundarySeeds0(4*nImpurityBoundaries);
+    std::generate( boundarySeeds0.begin(), boundarySeeds0.end(), [&]() { return distributionForSeeds(generator0); } );
+    std::uniform_real_distribution<double> dist01(0.0, 1.0);
+    double rand0 = 0.0;
+    double rand1 = 0.0;
+    double rand2 = 0.0;
+    double rand3 = 0.0;
+
+    std::vector<std::mt19937> s0(4*nImpurityBoundaries);
+    
+    double E0 = 0.0;
+//Create Thompson Distribution
+    double surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
+    int nThompDistPoints = 200;
+    double max_Energy = 100.0;
+    std::vector<double> ThompsonDist(nThompDistPoints),CumulativeDFThompson(nThompDistPoints);
+    for(int i=0;i<nThompDistPoints;i++)
+        {
+            ThompsonDist[i] = (i*max_Energy/nThompDistPoints)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,3);
+            if(i==0)
+            {
+                CumulativeDFThompson[i] = ThompsonDist[i]; 
+            }
+            else
+            {
+                CumulativeDFThompson[i] = ThompsonDist[i-1]+ThompsonDist[i];
+            }
+        }
+    for(int i=0;i<nThompDistPoints;i++)
+        {
+            CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
+        }
+
+    for(int j=0; j<4*nImpurityBoundaries;j++)
+        {
+            std::mt19937  s(boundarySeeds0[j]);
+            s0[j] = s;
+        }
+    // Particle p1(0.0,0.0,0.0,0.0,0.0,0.0,0,0.0);
     for (int i=0; i< nImpurityBoundaries;i++)
     {
-        //Set boundary interval, properties, and random number gen
+        for(int j=0; j<impuritiesPerBoundary; j++)
+        {
+            //Set boundary interval, properties, and random number gen
         if (i==0)
         {
-            x = 1.4290;
-            z = -1.2540+0.01;
+            rand0 = dist01(s0[0]);
+            x = hostBoundaryVector[boundaryIndex_ImpurityLaunch[i]].x1 + hostBoundaryVector[boundaryIndex_ImpurityLaunch[i]].length*rand0;//1.4290;
+            std::cout << "start pos 1 " << x << std::endl;
+            z = -1.2540+0.0001;
+            rand1 = dist01(s0[1]);
+            rand2 = dist01(s0[2]);
+            rand3 = dist01(s0[3]);
+            E0 = interp1dUnstructured(rand2,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
+            Ex = E0*cos(3.1415*rand1)*sin(3.1415*rand3);
+            Ey = E0*cos(3.1415*rand3);
+            Ez = E0*sin(3.1415*rand1)*sin(3.1415*rand3);
         }
         else
         {
-            x = 1.3450;
-            z = -1.3660+0.01;
+            rand0 = dist01(s0[4]);
+            x = hostBoundaryVector[boundaryIndex_ImpurityLaunch[i]].x1 + hostBoundaryVector[boundaryIndex_ImpurityLaunch[i]].length*rand0;
+            //x = 1.3450;
+            std::cout << "start pos 2 " << x << std::endl;
+            z = -1.3660+0.0001;
+            rand1 = dist01(s0[5]);
+            rand2 = dist01(s0[6]);
+            rand3 = dist01(s0[7]);
+            E0 = interp1dUnstructured(rand2,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
+            Ex = E0*cos(3.1415*rand1)*sin(3.1415*rand3);
+            Ey = E0*cos(3.1415*rand3);
+            Ez = E0*sin(3.1415*rand1)*sin(3.1415*rand3);
         }
-        for(int j=0; j<impuritiesPerBoundary; j++)
-        {
-            Particle p1(x,0.0,z,0.0,0.0,10,74,184.0,charge);
+            
+        Particle p1(x,0.0,z,Ex,Ey,Ez,74,184.0,charge);
             hostCudaParticleVector[i*impuritiesPerBoundary + j] = p1;
         }
     }
@@ -551,6 +714,7 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
             }
 #endif
 #if PARTICLE_TRACKS > 0
+int subSampleFac = 10;
 double **positionHistoryX;
 double **positionHistoryY;
 double **positionHistoryZ;
@@ -563,21 +727,21 @@ positionHistoryZ = new double* [nP];
 velocityHistoryX = new double* [nP];
 velocityHistoryY = new double* [nP];
 velocityHistoryZ = new double* [nP];
-positionHistoryX[0] = new double [nT*nP];
-positionHistoryY[0] = new double [nT*nP];
-positionHistoryZ[0] = new double [nT*nP];
-velocityHistoryX[0] = new double [nT*nP];
-velocityHistoryY[0] = new double [nT*nP];
-velocityHistoryZ[0] = new double [nT*nP];
+positionHistoryX[0] = new double [nT*nP/subSampleFac];
+positionHistoryY[0] = new double [nT*nP/subSampleFac];
+positionHistoryZ[0] = new double [nT*nP/subSampleFac];
+velocityHistoryX[0] = new double [nT*nP/subSampleFac];
+velocityHistoryY[0] = new double [nT*nP/subSampleFac];
+velocityHistoryZ[0] = new double [nT*nP/subSampleFac];
     for(int i=0 ; i<nP ; i++)
     {
-        positionHistoryX[i] = &positionHistoryX[0][i*nT];
-        positionHistoryY[i] = &positionHistoryY[0][i*nT];
-        positionHistoryZ[i] = &positionHistoryZ[0][i*nT];
-        velocityHistoryX[i] = &velocityHistoryX[0][i*nT];
-        velocityHistoryY[i] = &velocityHistoryY[0][i*nT];
-        velocityHistoryZ[i] = &velocityHistoryZ[0][i*nT];
-        for(int j=0 ; j<nT ; j++)
+        positionHistoryX[i] = &positionHistoryX[0][i*nT/subSampleFac];
+        positionHistoryY[i] = &positionHistoryY[0][i*nT/subSampleFac];
+        positionHistoryZ[i] = &positionHistoryZ[0][i*nT/subSampleFac];
+        velocityHistoryX[i] = &velocityHistoryX[0][i*nT/subSampleFac];
+        velocityHistoryY[i] = &velocityHistoryY[0][i*nT/subSampleFac];
+        velocityHistoryZ[i] = &velocityHistoryZ[0][i*nT/subSampleFac];
+        for(int j=0 ; j<nT/subSampleFac ; j++)
         {
             positionHistoryX[i][j] = 0;
             positionHistoryY[i][j] = 0;
@@ -734,15 +898,18 @@ velocityHistoryZ[0] = new double [nT*nP];
                     &gradTiR.front(),&gradTiZ.front(),&gradTeR.front(),&gradTeZ.front() ) );
 #endif
 #if PARTICLE_TRACKS >0
+if (tt % subSampleFac == 0)  
+{    
         for(int i=0;i<nP;i++)
         {
-            positionHistoryX[i][tt] = hostCudaParticleVector[i].xprevious;
-            positionHistoryY[i][tt] = hostCudaParticleVector[i].yprevious;
-            positionHistoryZ[i][tt] = hostCudaParticleVector[i].zprevious;
-            velocityHistoryX[i][tt] = hostCudaParticleVector[i].vx;
-            velocityHistoryY[i][tt] = hostCudaParticleVector[i].vy;
-            velocityHistoryZ[i][tt] = hostCudaParticleVector[i].vz;
+            positionHistoryX[i][tt/subSampleFac] = hostCudaParticleVector[i].xprevious;
+            positionHistoryY[i][tt/subSampleFac] = hostCudaParticleVector[i].yprevious;
+            positionHistoryZ[i][tt/subSampleFac] = hostCudaParticleVector[i].zprevious;
+            velocityHistoryX[i][tt/subSampleFac] = hostCudaParticleVector[i].vx;
+            velocityHistoryY[i][tt/subSampleFac] = hostCudaParticleVector[i].vy;
+            velocityHistoryZ[i][tt/subSampleFac] = hostCudaParticleVector[i].vz;
         }
+}
 #endif
 #endif
     }
@@ -778,18 +945,44 @@ velocityHistoryZ[0] = new double [nT*nP];
       }
        outfile2.close();
 #if PARTICLE_TRACKS > 0
-char outnameX[] = "positionHistoryX.m";
-OUTPUT( outnameX,nP, nT, positionHistoryX);
+/*char outnameX[] = "positionHistoryX.m";
+OUTPUT( outnameX,nP, nT/subSampleFac, positionHistoryX);
 char outnameY[] = "positionHistoryY.m";
-OUTPUT( outnameY,nP, nT, positionHistoryY);
+OUTPUT( outnameY,nP, nT/subSampleFac, positionHistoryY);
 char outnameZ[] = "positionHistoryZ.m";
-OUTPUT( outnameZ,nP, nT, positionHistoryZ);
+OUTPUT( outnameZ,nP, nT/subSampleFac, positionHistoryZ);
 char outnameVX[] = "velocityHistoryX.m";
-OUTPUT( outnameVX,nP, nT,velocityHistoryX);
+OUTPUT( outnameVX,nP, nT/subSampleFac,velocityHistoryX);
 char outnameVY[] = "velocityHistoryY.m";
-OUTPUT( outnameVY,nP, nT, velocityHistoryY);
+OUTPUT( outnameVY,nP, nT/subSampleFac, velocityHistoryY);
 char outnameVZ[] = "velocityHistoryZ.m";
-OUTPUT( outnameVZ,nP, nT, velocityHistoryZ);
+OUTPUT( outnameVZ,nP, nT/subSampleFac, velocityHistoryZ);
+*/
+// Write netCDF output for histories
+
+NcFile ncFile("history.nc", NcFile::replace);
+NcDim nc_nT = ncFile.addDim("nT",nT/subSampleFac);
+NcDim nc_nP = ncFile.addDim("nP",nP);
+vector<NcDim> dims;
+dims.push_back(nc_nP);
+dims.push_back(nc_nT);
+
+NcVar nc_x = ncFile.addVar("x",ncDouble,dims);
+NcVar nc_y = ncFile.addVar("y",ncDouble,dims);
+NcVar nc_z = ncFile.addVar("z",ncDouble,dims);
+
+NcVar nc_vx = ncFile.addVar("vx",ncDouble,dims);
+NcVar nc_vy = ncFile.addVar("vy",ncDouble,dims);
+NcVar nc_vz = ncFile.addVar("vz",ncDouble,dims);
+
+nc_x.putVar(positionHistoryX[0]);
+nc_y.putVar(positionHistoryY[0]);
+nc_z.putVar(positionHistoryZ[0]);
+
+nc_vx.putVar(velocityHistoryX[0]);
+nc_vy.putVar(velocityHistoryY[0]);
+nc_vz.putVar(velocityHistoryZ[0]);
+
 #endif
 
 #ifdef __CUDACC__
