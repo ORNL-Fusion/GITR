@@ -470,7 +470,7 @@ for(int i=0;i<nR_Bfield;i++)
 {
     for(int j=0;j<nZ_Bfield;j++)
     {
-        std::cout << "point " << bfieldGridr[i] << " " << bfieldGridz[j] << " dist" << minDist[(i)+(j)*nR_Bfield] << std::endl;
+       // std::cout << "point " << bfieldGridr[i] << " " << bfieldGridz[j] << " dist" << minDist[(i)+(j)*nR_Bfield] << std::endl;
     }
 }
 std::string outnameEfieldR = "EfieldR.m";
@@ -615,8 +615,13 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
         std::vector<Particle> hostCudaParticleVector(nParticles);
 #endif
     std::uniform_real_distribution<float> distributionForSeeds(0,1e6);
-        std::random_device randDevice;
-        std::default_random_engine generator0(randDevice());
+#if FIXEDSEEDS ==0
+    std::random_device randDevice;
+    std::default_random_engine generator0(randDevice());
+#else
+    double randDevice = 6.5298E+5;
+    std::default_random_engine generator0(randDevice);
+#endif
     
     std::vector<float> boundarySeeds0(4*nImpurityBoundaries);
     std::generate( boundarySeeds0.begin(), boundarySeeds0.end(), [&]() { return distributionForSeeds(generator0); } );
@@ -631,6 +636,7 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
     double E0 = 0.0;
 //Create Thompson Distribution
     double surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
+    std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
     int nThompDistPoints = 200;
     double max_Energy = 100.0;
     std::vector<double> ThompsonDist(nThompDistPoints),CumulativeDFThompson(nThompDistPoints);
@@ -643,12 +649,13 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
             }
             else
             {
-                CumulativeDFThompson[i] = ThompsonDist[i-1]+ThompsonDist[i];
+                CumulativeDFThompson[i] = CumulativeDFThompson[i-1]+ThompsonDist[i];
             }
         }
     for(int i=0;i<nThompDistPoints;i++)
         {
             CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
+            //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
         }
 
     for(int j=0; j<4*nImpurityBoundaries;j++)
@@ -666,7 +673,7 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
         {
             rand0 = dist01(s0[0]);
             x = hostBoundaryVector[boundaryIndex_ImpurityLaunch[i]].x1 + hostBoundaryVector[boundaryIndex_ImpurityLaunch[i]].length*rand0;//1.4290;
-            std::cout << "start pos 1 " << x << std::endl;
+            //std::cout << "start pos 1 " << x << std::endl;
             z = -1.2540+0.0001;
             rand1 = dist01(s0[1]);
             rand2 = dist01(s0[2]);
@@ -681,7 +688,7 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
             rand0 = dist01(s0[4]);
             x = hostBoundaryVector[boundaryIndex_ImpurityLaunch[i]].x1 + hostBoundaryVector[boundaryIndex_ImpurityLaunch[i]].length*rand0;
             //x = 1.3450;
-            std::cout << "start pos 2 " << x << std::endl;
+            //std::cout << "start pos 2 " << x << std::endl;
             z = -1.3660+0.0001;
             rand1 = dist01(s0[5]);
             rand2 = dist01(s0[6]);
@@ -692,8 +699,12 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
             Ez = E0*sin(3.1415*rand1)*sin(3.1415*rand3);
         }
             
-        Particle p1(x,0.0,z,Ex,Ey,Ez,74,184.0,charge);
+        Particle p1(x,0.0,z,Ex,0.0,Ez,74,184.0,charge);
             hostCudaParticleVector[i*impuritiesPerBoundary + j] = p1;
+            //std::cout << " E0 " << E0 << std::endl;
+            //std::cout << "vy " << hostCudaParticleVector[i*impuritiesPerBoundary + j].vy << " " << Ey << std::endl;
+            //std::cout << "vx " << hostCudaParticleVector[i*impuritiesPerBoundary + j].vx << " " << Ex << std::endl;
+            //std::cout << "vz " << hostCudaParticleVector[i*impuritiesPerBoundary + j].vz << " " << Ez << std::endl;
         }
     }
 #endif
@@ -759,10 +770,16 @@ velocityHistoryZ[0] = new double [nT*nP/subSampleFac];
 #endif
 
     std::uniform_real_distribution<float> dist(0,1e6);
+#if FIXEDSEEDS == 0
         std::random_device rd;
         std::default_random_engine generator(rd());
-    
+#endif
+
 #if USEIONIZATION > 0
+#if FIXEDSEEDS ==1
+    double ionization_seeds = cfg.lookup("operators.ionization.seed");
+        std::default_random_engine generator(ionization_seeds);
+#endif
     std::vector<float> seeds0(nP);
     std::generate( seeds0.begin(), seeds0.end(), [&]() { return dist(generator); } );
 #ifdef __CUDACC__
@@ -836,7 +853,9 @@ velocityHistoryZ[0] = new double [nT*nP/subSampleFac];
                     seeds6.begin(), hostCudaParticleVector.begin(), randInit(6) );
 #endif
 #endif
-    
+    double moveTime = 0.0;
+    double geomCheckTime = 0.0;
+    double ionizTime = 0.0;
     cpu_times copyToDeviceTime = timer.elapsed();
     std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
     for(int tt=0; tt< nT; tt++)
@@ -867,15 +886,25 @@ velocityHistoryZ[0] = new double [nT*nP/subSampleFac];
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), thermalForce(dt) );
 #endif
 #else
-    std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), move_boris(dt,hostBoundaryVector,nLines, nR_Bfield,nZ_Bfield, &bfieldGridr.front(),&bfieldGridz.front(),
+cpu_times moveTime0 = timer.elapsed();
+        std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), move_boris(dt,hostBoundaryVector,nLines, nR_Bfield,nZ_Bfield, &bfieldGridr.front(),&bfieldGridz.front(),
                 &br.front(),&bz.front(),&bt.front()));
+cpu_times moveTime1 = timer.elapsed();
+moveTime = moveTime + (moveTime1.wall - moveTime0.wall);
+
+cpu_times geomTime0 = timer.elapsed();
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), geometry_check(nLines,hostBoundaryVector) );
+cpu_times geomTime1 = timer.elapsed();
+geomCheckTime = geomCheckTime + (geomTime1.wall - geomTime0.wall);
 #if USEIONIZATION > 0
+cpu_times ionizTime0 = timer.elapsed();
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), ionize(dt,
                 nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),
                 nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
                 nTemperaturesIonize, nDensitiesIonize, &gridTemperature_Ionization.front(),
                &gridDensity_Ionization.front(), &rateCoeff_Ionization.front() ) );
+cpu_times ionizTime1 = timer.elapsed();
+ionizTime = ionizTime + (ionizTime1.wall - ionizTime0.wall);
 #endif
 #if USERECOMBINATION > 0
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), recombine(dt) );
@@ -884,6 +913,7 @@ velocityHistoryZ[0] = new double [nT*nP/subSampleFac];
     //std::cout<< "Perp diffusion loop " << perpDiffusionCoeff << std::endl;
         std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), crossFieldDiffusion(dt,perpDiffusionCoeff,nR_Bfield,nZ_Bfield, &bfieldGridr.front(),&bfieldGridz.front(),
                                     &br.front(),&bz.front(),&bt.front()));
+        std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), geometry_check(nLines,hostBoundaryVector) );
 #endif
 #if USECOULOMBCOLLISIONS > 0
         std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), coulombCollisions(dt,nR_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridz.front(),&flowVr.front(),&flowVz.front(),
@@ -993,5 +1023,8 @@ nc_vz.putVar(velocityHistoryZ[0]);
 
     cpu_times createParticlesTimeCPU = timer.elapsed();
     std::cout << "Copy to host, bin and output time: " << (createParticlesTimeCPU.wall-copyToHostTime.wall)*1e-9 << '\n';
+    std::cout << "Total ODE integration time: " << moveTime*1e-9 << '\n';
+    std::cout << "Total geometry checking time: " << geomCheckTime*1e-9 << '\n';
+    std::cout << "Total ionization time: " << ionizTime*1e-9 << '\n';
     return 0;
 }

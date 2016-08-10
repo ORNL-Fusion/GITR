@@ -63,11 +63,11 @@ double* gridx,double* gridz,double* datar, double* dataz, double* datat ) {
             {
                 if(y > 0.0)
                 {
-                    theta = theta + 3.1415;
+                    theta = theta + 3.14159265358979;
                 }
                 else
                 {
-                    theta = sqrt(theta*theta) + 3.1415;
+                    theta = sqrt(theta*theta) + 3.14159265358979;
                 }
             }
   
@@ -110,15 +110,18 @@ double interp1dUnstructured(double samplePoint,int nx, double max_x, double* dat
     {
         if(done == 0)
         {
-            if(samplePoint > data[i])
+            if(samplePoint < data[i])
             {
                 done = 1;
-                low_index = i;
+                low_index = i-1;
             }   
         }
     }
-
-    interpolated_value = low_index*max_x/nx + max_x/nx*(samplePoint - data[low_index])/(data[low_index+1] - data[low_index]);
+//    std::cout << "Sample point and low index" << samplePoint << " " <<
+//        low_index << std::endl;
+    interpolated_value =
+        ((data[low_index+1] - samplePoint)*low_index*max_x/nx
+        + (samplePoint - data[low_index])*(low_index+1)*max_x/nx)/(data[low_index+1]- data[low_index]);
     return interpolated_value;
 }
 #endif
