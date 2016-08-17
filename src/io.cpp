@@ -28,7 +28,7 @@ using namespace exceptions;
 
 //IO
 
-int read_ar2Input( string fileName, double *Bfield[]) {
+int read_ar2Input( string fileName, float *Bfield[]) {
 
     // Check input file exists
 
@@ -105,8 +105,8 @@ int read_profileNs( string fileName, string nxName, string nzName,int &n_x,int &
 }
 
 
-int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, std::vector<double>& gridx,string gridzName,
-          std::vector<double>& gridz,string dataName, std::vector<double>& data) {
+int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, std::vector<float>& gridx,string gridzName,
+          std::vector<float>& gridz,string dataName, std::vector<float>& data) {
 
     // Check input file exists
 
@@ -131,7 +131,7 @@ int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, std::ve
 
 }
 
-int read_profile2d( string fileName,string dataName, std::vector<double>& data) {
+int read_profile2d( string fileName,string dataName, std::vector<float>& data) {
 
     // Check input file exists
 
@@ -150,7 +150,7 @@ int read_profile2d( string fileName,string dataName, std::vector<double>& data) 
     return(0);
 
 }
-int read_profile1d( string fileName,string gridxName, std::vector<double>& gridx) {
+int read_profile1d( string fileName,string gridxName, std::vector<float>& gridx) {
 
     // Check input file exists
 
@@ -170,7 +170,7 @@ int read_profile1d( string fileName,string gridxName, std::vector<double>& gridx
     return(0);
 
 }
-void OUTPUT(char outname[],int nX, int nY, double **array2d)
+void OUTPUT(char outname[],int nX, int nY, float **array2d)
 {
        ofstream outfile;
 				//Output
@@ -193,7 +193,7 @@ void OUTPUT(char outname[],int nX, int nY, double **array2d)
 		
 }
 
-void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, double *array2d)
+void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, float *array2d)
 {
        ofstream outfile;
 				//Output
@@ -225,7 +225,7 @@ void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, double *arr
 		
 }
 
-void OUTPUT1d(std::string folder,std::string outname,int nX, double *array2d)
+void OUTPUT1d(std::string folder,std::string outname,int nX, float *array2d)
 {
        ofstream outfile;
 				//Output

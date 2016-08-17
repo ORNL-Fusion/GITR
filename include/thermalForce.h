@@ -13,19 +13,19 @@
 
 struct thermalForce { 
 
-    const double dt;
-    double background_amu;
+    const float dt;
+    float background_amu;
     int nR_gradT;
     int nZ_gradT;
-    double* gradTGridr;
-    double* gradTGridz;
-    double* gradTiR;
-    double* gradTiZ;
-    double* gradTeR;
-    double* gradTeZ;
+    float* gradTGridr;
+    float* gradTGridz;
+    float* gradTiR;
+    float* gradTiZ;
+    float* gradTeR;
+    float* gradTeZ;
 
-    thermalForce(double _dt, double _background_amu,int _nR_gradT, int _nZ_gradT, double* _gradTGridr, double* _gradTGridz,
-            double* _gradTiR, double* _gradTiZ, double* _gradTeR, double* _gradTeZ)
+    thermalForce(float _dt, float _background_amu,int _nR_gradT, int _nZ_gradT, float* _gradTGridr, float* _gradTGridz,
+            float* _gradTiR, float* _gradTiZ, float* _gradTeR, float* _gradTeZ)
         : dt(_dt), background_amu(_background_amu),nR_gradT(_nR_gradT),nZ_gradT(_nZ_gradT),
         gradTGridr(_gradTGridr), gradTGridz(_gradTGridz),
         gradTiR(_gradTiR), gradTiZ(_gradTiZ), gradTeR(_gradTeR), gradTeZ(_gradTeZ) {} 
@@ -35,14 +35,14 @@ void operator()(Particle &p) const {
 
 	    if(p.hitWall == 0.0)
         {
-		double MI = 1.6737236e-27;
-		double alpha;
-		double beta;
-		double mu;
-		double gradTe[3] = {0.0,0.0,0.0};
-		double gradTi[3] = {0.0,0.0,0.0};
-        double dv_ITG[3] = {};
-        double dv_ETG[3] = {};
+		float MI = 1.6737236e-27;
+		float alpha;
+		float beta;
+		float mu;
+		float gradTe[3] = {0.0,0.0,0.0};
+		float gradTi[3] = {0.0,0.0,0.0};
+        float dv_ITG[3] = {};
+        float dv_ETG[3] = {};
         gradTi[0] = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_gradT,nZ_gradT,
                     gradTGridr ,gradTGridz ,gradTiR );
         gradTi[2] = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_gradT,nZ_gradT,

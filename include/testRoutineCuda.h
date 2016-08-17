@@ -13,25 +13,25 @@
 #include "Particle.h"
 #include "Boundary.h"
 struct test_routinecuda { 
-   double x;
-   double y;
-   double z;
+   float x;
+   float y;
+   float z;
    int nx;
    int nz;
 
-   double* gridxp;
-   double* gridzp;
-   double* datap; 
+   float* gridxp;
+   float* gridzp;
+   float* datap; 
     
-   test_routinecuda(double _x, double _y, double _z,int _nx, int _nz,
-           double* _gridxp,double* _gridzp,double* _datap) : 
+   test_routinecuda(float _x, float _y, float _z,int _nx, int _nz,
+           float* _gridxp,float* _gridzp,float* _datap) : 
        x(_x), y(_y), z(_z),nx(_nx), nz(_nz), gridxp(_gridxp),
        gridzp(_gridzp), datap(_datap) {}
 
 
 CUDA_CALLABLE_MEMBER_DEVICE    
-void operator()(double &d) const { 
-    //double tmp = gridzp[0];
+void operator()(float &d) const { 
+    //float tmp = gridzp[0];
     //d = tmp;
     d = interp2dcuda(x,y,z,nx,nz,gridxp,gridzp,datap);
 }
