@@ -21,45 +21,45 @@
 #endif
 
 CUDA_CALLABLE_MEMBER
-void getSlowDownFrequencies ( double& nu_friction, double& nu_deflection, double& nu_parallel,
-			 	double& nu_energy, Particle& p, 
+void getSlowDownFrequencies ( float& nu_friction, float& nu_deflection, float& nu_parallel,
+			 	float& nu_energy, Particle& p, 
                 
     int nR_flowV,
     int nZ_flowV,
-    double* flowVGridr,
-    double* flowVGridz,
-    double* flowVr,
-    double* flowVz,
-    double* flowVt,
+    float* flowVGridr,
+    float* flowVGridz,
+    float* flowVr,
+    float* flowVz,
+    float* flowVt,
     int nR_Dens,
     int nZ_Dens,
-    double* DensGridr,
-    double* DensGridz,
-    double* ni,
+    float* DensGridr,
+    float* DensGridz,
+    float* ni,
     int nR_Temp,
     int nZ_Temp,
-    double* TempGridr,
-    double* TempGridz,
-    double* ti, double background_Z, double background_amu
+    float* TempGridr,
+    float* TempGridz,
+    float* ti, float background_Z, float background_amu
                 ) {
-        double Q = 1.60217662e-19;
-        double EPS0 = 8.854187e-12;
-	double pi = 3.14159265;
+        float Q = 1.60217662e-19;
+        float EPS0 = 8.854187e-12;
+	float pi = 3.14159265;
 	
-        double Temp_eV = interp2dCombined(p.x,p.y,p.z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
-            double density = interp2dCombined(p.x,p.y,p.z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
-	double flowVelocity[3]= {0, 0, 0};
-	double relativeVelocity[3] = {0.0, 0.0, 0.0};
-	double velocityNorm;
-	double lam_d;
-	double lam;
-	double gam;
-	double a;
-	double x;
-	double psi_prime;
-	double psi_psiprime;
-	double psi;
-	double nu_0;
+        float Temp_eV = interp2dCombined(p.x,p.y,p.z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
+            float density = interp2dCombined(p.x,p.y,p.z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
+	float flowVelocity[3]= {0, 0, 0};
+	float relativeVelocity[3] = {0.0, 0.0, 0.0};
+	float velocityNorm;
+	float lam_d;
+	float lam;
+	float gam;
+	float a;
+	float x;
+	float psi_prime;
+	float psi_psiprime;
+	float psi;
+	float nu_0;
     flowVelocity[0] = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_flowV,nZ_flowV,
         flowVGridr,flowVGridz,flowVr);
     flowVelocity[2] = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_flowV,nZ_flowV,
@@ -91,28 +91,28 @@ void getSlowDownFrequencies ( double& nu_friction, double& nu_deflection, double
 }
 
 CUDA_CALLABLE_MEMBER
-void getSlowDownDirections (double parallel_direction[], double perp_direction1[], double perp_direction2[], Particle& p,
+void getSlowDownDirections (float parallel_direction[], float perp_direction1[], float perp_direction2[], Particle& p,
     int nR_flowV,
     int nZ_flowV,
-    double* flowVGridr,
-    double* flowVGridz,
-    double* flowVr,
-    double* flowVz,
-    double* flowVt,
+    float* flowVGridr,
+    float* flowVGridz,
+    float* flowVr,
+    float* flowVz,
+    float* flowVt,
     
                         int nR_Bfield, int nZ_Bfield,
-                        double* BfieldGridR ,double* BfieldGridZ ,
-                        double* BfieldR ,double* BfieldZ ,
-                 double* BfieldT 
+                        float* BfieldGridR ,float* BfieldGridZ ,
+                        float* BfieldR ,float* BfieldZ ,
+                 float* BfieldT 
     ) {
-	        double flowVelocity[3]= {0, 0, 0.0};
-                double relativeVelocity[3] = {0.0, 0.0, 0.0};
-                double B[3] = {};
-                double Bmag = 0.0;
-		double B_unit[3] = {0.0, 0.0, -1.0};
-		double velocityRelativeNorm;
-		double s1;
-		double s2;
+	        float flowVelocity[3]= {0, 0, 0.0};
+                float relativeVelocity[3] = {0.0, 0.0, 0.0};
+                float B[3] = {};
+                float Bmag = 0.0;
+		float B_unit[3] = {0.0, 0.0, -1.0};
+		float velocityRelativeNorm;
+		float s1;
+		float s2;
         B[0] = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
                                                      BfieldGridR ,BfieldGridZ ,BfieldR );
         B[2] = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
@@ -166,44 +166,44 @@ void getSlowDownDirections (double parallel_direction[], double perp_direction1[
 
 struct coulombCollisions { 
 
-    const double dt;
+    const float dt;
     int nR_flowV;
     int nZ_flowV;
-    double* flowVGridr;
-    double* flowVGridz;
-    double* flowVr;
-    double* flowVz;
-    double* flowVt;
+    float* flowVGridr;
+    float* flowVGridz;
+    float* flowVr;
+    float* flowVz;
+    float* flowVt;
     int nR_Dens;
     int nZ_Dens;
-    double* DensGridr;
-    double* DensGridz;
-    double* ni;
+    float* DensGridr;
+    float* DensGridz;
+    float* ni;
     int nR_Temp;
     int nZ_Temp;
-    double* TempGridr;
-    double* TempGridz;
-    double* ti;
-    double background_Z;
-    double background_amu;
+    float* TempGridr;
+    float* TempGridz;
+    float* ti;
+    float background_Z;
+    float background_amu;
     int nR_Bfield;
     int nZ_Bfield;
-    double * BfieldGridR;
-    double * BfieldGridZ;
-    double * BfieldR;
-    double * BfieldZ;
-    double * BfieldT;
-    coulombCollisions(double _dt, int _nR_flowV, int _nZ_flowV,    double* _flowVGridr,
-                double* _flowVGridz,double* _flowVr,
-                        double* _flowVz,double* _flowVt,
-                        int _nR_Dens,int _nZ_Dens,double* _DensGridr,
-                            double* _DensGridz,double* _ni,int _nR_Temp, int _nZ_Temp,
-                        double* _TempGridr, double* _TempGridz,double* _ti,
-                        double _background_Z, double _background_amu,
+    float * BfieldGridR;
+    float * BfieldGridZ;
+    float * BfieldR;
+    float * BfieldZ;
+    float * BfieldT;
+    coulombCollisions(float _dt, int _nR_flowV, int _nZ_flowV,    float* _flowVGridr,
+                float* _flowVGridz,float* _flowVr,
+                        float* _flowVz,float* _flowVt,
+                        int _nR_Dens,int _nZ_Dens,float* _DensGridr,
+                            float* _DensGridz,float* _ni,int _nR_Temp, int _nZ_Temp,
+                        float* _TempGridr, float* _TempGridz,float* _ti,
+                        float _background_Z, float _background_amu,
                         int _nR_Bfield, int _nZ_Bfield,
-                        double * _BfieldGridR ,double * _BfieldGridZ ,
-                        double * _BfieldR ,double * _BfieldZ ,
-                 double * _BfieldT )
+                        float * _BfieldGridR ,float * _BfieldGridZ ,
+                        float * _BfieldR ,float * _BfieldZ ,
+                 float * _BfieldT )
         : dt(_dt), nR_flowV(_nR_flowV), nZ_flowV(_nZ_flowV), flowVGridr(_flowVGridr),
    flowVGridz(_flowVGridz), flowVr(_flowVr),flowVz(_flowVz), flowVt(_flowVt),
    nR_Dens(_nR_Dens), nZ_Dens(_nZ_Dens), DensGridr(_DensGridr), DensGridz(_DensGridz),ni(_ni),
@@ -217,20 +217,20 @@ void operator()(Particle &p) const {
 
 	    if(p.hitWall == 0.0)
         {
-		double nu_friction = 0.0;
-		double nu_deflection = 0.0;
-		double nu_parallel = 0.0;
-		double nu_energy = 0.0;
-		double flowVelocity[3]= {0, 0, 0.0};
-		double relativeVelocity[3] = {0.0, 0.0, 0.0};
-		double velocityCollisions[3];	
-		double velocityRelativeNorm;	
-		double parallel_direction[3];
-		double perp_direction1[3];
-		double perp_direction2[3];
-		double parallel_contribution;
-		double dv_perp1[3];
-		double dv_perp2[3];
+		float nu_friction = 0.0;
+		float nu_deflection = 0.0;
+		float nu_parallel = 0.0;
+		float nu_energy = 0.0;
+		float flowVelocity[3]= {0, 0, 0.0};
+		float relativeVelocity[3] = {0.0, 0.0, 0.0};
+		float velocityCollisions[3];	
+		float velocityRelativeNorm;	
+		float parallel_direction[3];
+		float perp_direction1[3];
+		float perp_direction2[3];
+		float parallel_contribution;
+		float dv_perp1[3];
+		float dv_perp2[3];
 	
         flowVelocity[0] = interp2dCombined(p.xprevious,p.yprevious,p.zprevious,nR_flowV,nZ_flowV,
                      flowVGridr,flowVGridz,flowVr);
@@ -247,7 +247,7 @@ void operator()(Particle &p) const {
 		int plus_minus2 = floor(curand_uniform(&p.streams[4]) + 0.5)*2 -1;
 		int plus_minus3 = floor(curand_uniform(&p.streams[5]) + 0.5)*2 -1;
 #else
-	        std::uniform_real_distribution<double> dist(0.0, 1.0);
+	        std::uniform_real_distribution<float> dist(0.0, 1.0);
         	int plus_minus1 = floor(dist(p.streams[3]) + 0.5)*2 - 1;
 		int plus_minus2 = floor(dist(p.streams[4]) + 0.5)*2 - 1;
 		int plus_minus3 = floor(dist(p.streams[5]) + 0.5)*2 - 1;

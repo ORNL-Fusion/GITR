@@ -35,35 +35,38 @@ struct geometry_check {
 #endif
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(Particle &p) const { 
-
+    //std::cout << "geometry check particle x" << p.x << p.xprevious <<std::endl;
+    //std::cout << "geometry check particle y" << p.y << p.yprevious <<std::endl;
+    //std::cout << "geometry check particle z" << p.z << p.zprevious <<std::endl;
+    //std::cout << "geometry check particle hitwall" << p.hitWall <<std::endl;
 	    if(p.hitWall == 0.0)
         {  
 #if USECYLSYMM > 0
-           double pdim1 = sqrt(p.x*p.x + p.y*p.y);
-           double pdim1previous = sqrt(p.xprevious*p.xprevious + p.yprevious*p.yprevious); 
-           double theta0 = atan(p.yprevious/p.xprevious);
-           double theta1 = atan(p.y/p.x);
-           double thetaNew = 0;
+           float pdim1 = sqrt(p.x*p.x + p.y*p.y);
+           float pdim1previous = sqrt(p.xprevious*p.xprevious + p.yprevious*p.yprevious); 
+           float theta0 = atan(p.yprevious/p.xprevious);
+           float theta1 = atan(p.y/p.x);
+           float thetaNew = 0;
 #else      
-           double pdim1 = p.x;
-           double pdim1previous = p.xprevious;
+           float pdim1 = p.x;
+           float pdim1previous = p.xprevious;
 #endif            
-            double particle_slope = (p.z - p.zprevious)/(pdim1 - pdim1previous);
-            double particle_intercept = -particle_slope*pdim1 + p.z;
-            double intersectionx[2] = {};
-            //intersectionx = new double[nPoints];
-            double intersectiony[2] = {};
-            //intersectiony = new double[nPoints];
-            double distances[2] = {};
-            //distances = new double[nPoints];
-            double tol_small = 1e-12;       
-            double tol = 1e12;
+            float particle_slope = (p.z - p.zprevious)/(pdim1 - pdim1previous);
+            float particle_intercept = -particle_slope*pdim1 + p.z;
+            float intersectionx[2] = {};
+            //intersectionx = new float[nPoints];
+            float intersectiony[2] = {};
+            //intersectiony = new float[nPoints];
+            float distances[2] = {};
+            //distances = new float[nPoints];
+            float tol_small = 1e-12;       
+            float tol = 1e12;
 	        int nIntersections = 0;
-            double signPoint;
-            double signPoint0;
-            double signLine1;
-            double signLine2;
-            double minDist = 1e12;
+            float signPoint;
+            float signPoint0;
+            float signLine1;
+            float signLine2;
+            float minDist = 1e12;
             int minDistInd = 0;
                 //std::cout << "particle slope " << particle_slope << " " << particle_intercept << std::endl;
                             //std::cout << "r " << boundaryVector[0].x1 << " " << boundaryVector[0].x1 << " " << boundaryVector[0].slope_dzdx << std::endl;
@@ -227,6 +230,10 @@ void operator()(Particle &p) const {
             }
 #endif        
         }
+
+    //std::cout << "2geometry check particle x" << p.x << p.xprevious <<std::endl;
+    //std::cout << "2geometry check particle y" << p.y << p.yprevious <<std::endl;
+    //std::cout << "2geometry check particle z" << p.z << p.zprevious <<std::endl;
         }
 };
 
