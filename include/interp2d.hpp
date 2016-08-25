@@ -39,10 +39,14 @@ std::vector<float>* gridxp,std::vector<float>* gridzp,std::vector<float>* datap 
 #endif    
     float d_dim1 = gridx[1] - gridx[0];
     float dz = gridz[1] - gridz[0];
-    int i = floor((dim1 - gridx[0])/d_dim1 );//addition of 0.5 finds nearest gridpoint
+    int i = floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
     int j = floor((z - gridz[0])/dz);
-    float interp_value = data[i + j*nz];
-    //std::cout << "Interp point 1 " <<std::endl;
+
+    float interp_value = data[i + j*nx];
+    //std::cout << "interp r and z pos "<< dim1 << " " << z <<std::endl;
+    //std::cout << "interp i and j pos "<< i << " " << j <<std::endl;
+    //std::cout << "nearest value "<< interp_value <<std::endl;
+
     float fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
     //std::cout << "Interp point 2 " <<std::endl;
     float fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
@@ -59,7 +63,9 @@ float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {
    float Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar);
    float At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat);
    field[2] = interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz);
-
+   //std::cout << "r component " << Ar << std::endl;
+   //std::cout << "t component " << At << std::endl;
+   //std::cout << "z component " << field[2] << std::endl;
 #if USECYLSYMM > 0
             //if cylindrical geometry
             /*

@@ -285,8 +285,8 @@ int g1 = read_profileNs(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
             cfg.lookup("backgroundPlasmaProfiles.gradT.gridNzString"),nR_gradT,nZ_gradT);
 
 std::vector<float> gradTGridr(nR_gradT), gradTGridz(nZ_gradT);
-std::vector<float> gradTeR(nR_gradT*nZ_gradT), gradTeZ(nR_gradT*nZ_gradT),
-    gradTiR(nR_gradT*nZ_gradT), gradTiZ(nR_gradT*nZ_gradT);
+std::vector<float> gradTeR(nR_gradT*nZ_gradT), gradTeZ(nR_gradT*nZ_gradT),gradTeT(nR_gradT*nZ_gradT,0.0),
+    gradTiR(nR_gradT*nZ_gradT), gradTiZ(nR_gradT*nZ_gradT),gradTiT(nR_gradT*nZ_gradT,0.0);
 
 int g2 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
         cfg.lookup("backgroundPlasmaProfiles.gradT.gridRString"), gradTGridr);
@@ -305,6 +305,7 @@ int g6 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
 
 int g7 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.gradT.fileString"),
         cfg.lookup("backgroundPlasmaProfiles.gradT.gradTeZString"), gradTeZ);
+std::cout << "grad Ti values 82, 34 " << gradTiR[82 + 34*nR_gradT] << " " << gradTiR[34 + 82*nR_gradT] << gradTiR[82 + 34*nZ_gradT] << " " << gradTiR[34 + 82*nZ_gradT] << std::endl;// 82 is the r index
 std::string outnameGradTiR = "gradTiR.m";
 std::string outnameGradTiZ = "gradTiZ.m";
 std::string outnameGradTeR = "gradTeR.m";
@@ -725,7 +726,7 @@ maxTemp_eV[i] = backgroundPlasma["temp"]["max"][i];
             }
 #endif
 #if PARTICLE_TRACKS > 0
-int subSampleFac = 1;
+int subSampleFac = 10;
 float **positionHistoryX;
 float **positionHistoryY;
 float **positionHistoryZ;
@@ -933,7 +934,7 @@ ionizTime = ionizTime + (ionizTime1.wall - ionizTime0.wall);
 #endif
 #if USETHERMALFORCE > 0
         std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), thermalForce(dt,background_amu,nR_gradT,nZ_gradT,&gradTGridr.front(),&gradTGridz.front(),
-                    &gradTiR.front(),&gradTiZ.front(),&gradTeR.front(),&gradTeZ.front() ) );
+                    &gradTiR.front(),&gradTiZ.front(),&gradTiT.front(),&gradTeR.front(),&gradTeZ.front(),&gradTeT.front() ) );
 #endif
 #if PARTICLE_TRACKS >0
         //std::cout << "starting history record " << std::endl;
