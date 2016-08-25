@@ -8,19 +8,19 @@ USEIONIZATION := 1
 USERECOMBINATION := 0
 USEPERPDIFFUSION := 0
 USECOULOMBCOLLISIONS := 0
-USETHERMALFORCE := 0
+USETHERMALFORCE := 1
 USESURFACEMODEL :=0
-USESHEATHEFIELD := 1
+USESHEATHEFIELD := 0
 
 #Interpolators 0=Constant 1=Analytic Equation 2=2dInterpolation 3=3dInterpolation
 BFIELD_INTERP :=2
 EFIELD_INTERP :=1
 DENSITY_INTERP :=2
 TEMP_INTERP :=2
-FLOWV_INTERP :=2
+FLOWV_INTERP :=0
 GRADT_INTERP :=2
 #ode integrator 0=Boris 1=RK4
-ODEINT :=0
+ODEINT :=1
 #hold random number generator seeds the same across runs (defined in gitrInput.cfg)
 FIXEDSEEDS :=1
 
@@ -36,7 +36,7 @@ PARTICLE_SOURCE :=1
 #Set periodic = 0 in gitrGeometry.cfg to use cylindrical symmetry
 USECYLSYMM = 1
 
-NAME := bin/BE/GITR
+NAME := bin/BE_thermal/GITR
 
 INCLUDEFLAGS :=  
 LIBS :=  
