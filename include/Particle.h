@@ -45,7 +45,8 @@ class Particle {
         #endif
 	
 	float hitWall;
-	float perpDistanceToSurface;
+    int wallIndex;
+    float perpDistanceToSurface;
 	float seed0;
 	void BorisMove(double dt, double xMinV,double xMaxV,double yMin,double yMax,double zMin,double zMax);
 	void Ionization(double dt);
@@ -71,7 +72,7 @@ class Particle {
 	    this->charge = charge;
         this->amu = amu;
 		this->hitWall = 0.0;
-
+        this->wallIndex = 0;
 		this->vx = Ex/fabs(Ex)*sqrt(2.0*fabs(Ex)*1.60217662e-19/(amu*1.6737236e-27));
 		this->vy = Ey/fabs(Ey)*sqrt(2.0*fabs(Ey)*1.60217662e-19/(amu*1.6737236e-27));
 		this->vz = Ez/fabs(Ez)*sqrt(2.0*fabs(Ez)*1.60217662e-19/(amu*1.6737236e-27));

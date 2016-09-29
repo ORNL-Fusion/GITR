@@ -45,17 +45,17 @@ void getSlowDownFrequencies ( float& nu_friction, float& nu_deflection, float& n
         float Q = 1.60217662e-19;
         float EPS0 = 8.854187e-12;
 	float pi = 3.14159265;
-	
+float MI = 1.6737236e-27;	
         float Temp_eV = interp2dCombined(p.x,p.y,p.z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
             float density = interp2dCombined(p.x,p.y,p.z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
-            //std::cout << "ion t and n " << Temp_eV << "  " << density << std::endl;
+//            std::cout << "ion t and n " << Temp_eV << "  " << density << std::endl;
     float flowVelocity[3]= {0, 0, 0};
 	float relativeVelocity[3] = {0.0, 0.0, 0.0};
-	float velocityNorm;
+	float velocityNorm = 0.0;
 	float lam_d;
 	float lam;
 	float gam;
-	float a;
+	float a = 0.0;
 	float x;
 	float psi_prime;
 	float psi_psiprime;
@@ -67,17 +67,18 @@ void getSlowDownFrequencies ( float& nu_friction, float& nu_deflection, float& n
 	relativeVelocity[1] = p.vy - flowVelocity[1];
 	relativeVelocity[2] = p.vz - flowVelocity[2];
 	velocityNorm = sqrt( relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2]);                
-		//for(int i=1; i < nSpecies; i++)
+	    //std::cout << "velocity norm " << velocityNorm << std::endl;	
+    //for(int i=1; i < nSpecies; i++)
 		//{
 			lam_d = sqrt(EPS0*Temp_eV/(density*pow(background_Z,2)*Q));//only one q in order to convert to J
                 	lam = 4.0*pi*density*pow(lam_d,3);
                 	gam = 0.238762895*pow(p.charge,2)*pow(background_Z,2)*log(lam)/(p.amu*p.amu);//constant = Q^4/(MI^2*4*pi*EPS0^2)
-                    //std::cout << "gam components " <<gam << " " << pow(Q,4) << " " << pow(p.Z,2)<< " " << pow(background_Z,2) << " " << log(lam)<< std::endl; 
-                	a = background_amu/(2*Temp_eV*Q);// %q is just to convert units - no z needed
+          //          std::cout << "gam components " <<gam << " " << pow(Q,4) << " " << pow(p.Z,2)<< " " << pow(background_Z,2) << " " << log(lam)<< std::endl; 
+                	a = background_amu*MI/(2*Temp_eV*Q);// %q is just to convert units - no z needed
                 
                 	x = pow(velocityNorm,2)*a;
                 	psi_prime = 2*sqrt(x/pi)*exp(-x);
-                	psi_psiprime = erf(sqrt(x));
+                	psi_psiprime = erf(1.0*sqrt(x));
                 	psi = psi_psiprime - psi_prime;
                 	nu_0 = gam*density/pow(velocityNorm,3);
                 	nu_friction = (1+p.amu/background_amu)*psi*nu_0;
@@ -85,7 +86,7 @@ void getSlowDownFrequencies ( float& nu_friction, float& nu_deflection, float& n
                 	nu_parallel = psi/x*nu_0;
                 	nu_energy = 2*(p.amu/background_amu*psi - psi_prime)*nu_0;
 
-                    //std::cout << "lam_d lam gam a" << lam_d << " " << lam << " " << gam << " " << a << std::endl;
+                   // std::cout << "lam_d lam gam a" << lam_d << " " << lam << " " << gam << " " << a << std::endl;
                     //std::cout << "x psi_prime psi_psiprime psi" << x << " " << psi_prime << " " << psi_psiprime << " " << psi << " " << nu_0 << std::endl;
                     //std::cout << "nu friction, parallel perp energy " << nu_friction << " " << nu_parallel << " " <<nu_deflection << " " << nu_energy << std::endl;
 	//	}

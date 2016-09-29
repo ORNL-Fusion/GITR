@@ -57,7 +57,8 @@ void operator()(Particle &p) const {
 	double stopPower;
 	double q = 18.6006;
 	double lambda = 2.2697;
-	double mu = 3.1273;
+    float eps =0.0; 
+    double mu = 3.1273;
 	double Eth = 24.9885;
 	double Y0;
 	double Ztarget = 74.0;
@@ -77,51 +78,115 @@ void operator()(Particle &p) const {
 struct reflection {
 
     const double dt;
+    int nLines;
+    Boundary * boundaryVector;
 
-    reflection(double _dt) : dt(_dt) {}
+    reflection(double _dt, int _nLines,Boundary * _boundaryVector) : dt(_dt),nLines(_nLines), boundaryVector(_boundaryVector) {}
 
 CUDA_CALLABLE_MEMBER_DEVICE
 void operator()(Particle &p) const {
             if(p.hitWall == 1.0)
         	{
-			double reducedEnergyMultiplier = 5e-7;//for W on W
-        		double E0;
-			double reducedEnergy;
-			double a1 = -3.685;
-			double a2 = 0.0278;
-			double a3 = 7.825e-5;
-			double a4 = -1.109;
-			double Rn;
+			float reducedEnergyMultiplier = 5e-7;//for W on W
+            float E0 = 0.0;
+            float reducedEnergy = 0.0;
+			float a1 = -3.685;
+			float a2 = 0.0278;
+			float a3 = 7.825e-5;
+			float a4 = -1.109;
+			float Rn = 0.0;
+            float thetaImpact = 0.0;
+            float thetaAzimuthal = 0.0;
+            float particleTrackVector[3] = {0.0,0.0,0.0};
+            float surfaceNormalVector[3] = {0.0,0.0,0.0};
+            float surfaceNormalVectorRotated[3] = {0.0,0.0,0.0};
+            float surfaceNormalVectorIn[3] = {0.0,0.0,0.0};
+            float norm_part = 0.0;
+            float norm_normal = 0.0;
+            float partDotNormal = 0.0;
+            float signPartDotNormal = 0.0;
 		
 		        E0 = 0.5*p.amu*1.6737236e-27*(p.vx*p.vx + p.vy*p.vy+ p.vz*p.vz)/1.60217662e-19;
 			reducedEnergy = E0*reducedEnergyMultiplier;
+            particleTrackVector[0] = p.vx;
+            particleTrackVector[1] = p.vy;
+            particleTrackVector[2] = p.vz;
+            surfaceNormalVector[0] = -boundaryVector[p.wallIndex].slope_dzdx;
+            surfaceNormalVector[1] = 0.0;
+            surfaceNormalVector[2] = 1.0;
+            std::cout << "velocities " << p.vx << " " << p.vy << " " << p.vz << std::endl;
+            std::cout << "surface norm " << surfaceNormalVector[0] << " " << surfaceNormalVector[1] << " " << surfaceNormalVector[2] << std::endl;
+#if USECYLSYMM > 0
+            thetaAzimuthal = atan2(p.y,p.x);   
+            surfaceNormalVectorRotated[0] = cos(thetaAzimuthal)*surfaceNormalVector[0];
+            surfaceNormalVectorRotated[1] = sin(thetaAzimuthal)*surfaceNormalVector[0];
+#else
+            surfaceNormalVectorRotated[0] = surfaceNormalVector[0];
+            surfaceNormalVectorRotated[1] = surfaceNormalVector[1];
+#endif
+            surfaceNormalVectorRotated[2] = surfaceNormalVector[2];
 
-			Rn = exp(a1*pow(reducedEnergy,a2))/(1 + exp(a3*pow(reducedEnergy,a4)));
+            norm_part = sqrt(particleTrackVector[0]*particleTrackVector[0] + particleTrackVector[1]*particleTrackVector[1] + particleTrackVector[2]*particleTrackVector[2]);
+            norm_normal = sqrt(surfaceNormalVectorRotated[0]*surfaceNormalVectorRotated[0] + surfaceNormalVectorRotated[1]*surfaceNormalVectorRotated[1] + surfaceNormalVectorRotated[2]*surfaceNormalVectorRotated[2]);
+            std::cout << "norm of particle track " << norm_part << std::endl;
+            std::cout << "norm of surface normal " << norm_normal << std::endl;
 
+            surfaceNormalVectorRotated[0] = surfaceNormalVectorRotated[0]/norm_normal;
+            surfaceNormalVectorRotated[1] = surfaceNormalVectorRotated[1]/norm_normal;
+            surfaceNormalVectorRotated[2] = surfaceNormalVectorRotated[2]/norm_normal;
+            particleTrackVector[0] = particleTrackVector[0]/norm_part;
+            particleTrackVector[1] = particleTrackVector[1]/norm_part;
+            particleTrackVector[2] = particleTrackVector[2]/norm_part;
+
+            partDotNormal = particleTrackVector[0]*surfaceNormalVectorRotated[0] + particleTrackVector[1]*surfaceNormalVectorRotated[1] + particleTrackVector[2]*surfaceNormalVectorRotated[2];
+            thetaImpact = acos(partDotNormal);
+            signPartDotNormal = sgn(partDotNormal);
+            surfaceNormalVectorRotated[0] = -surfaceNormalVectorRotated[0]*signPartDotNormal;
+            surfaceNormalVectorRotated[1] = -surfaceNormalVectorRotated[1]*signPartDotNormal;
+            surfaceNormalVectorRotated[2] = -surfaceNormalVectorRotated[2]*signPartDotNormal;
+
+            Rn = exp(a1*pow(reducedEnergy,a2))/(1 + exp(a3*pow(reducedEnergy,a4)));
+            Rn = 0.25;
 #ifdef __CUDACC__
                 curandState tmpState;
-                double r7 = curand_uniform(&p.streams[6]);
+                float r7 = curand_uniform(&p.streams[6]);
 #else
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
-                double r7 = dist(p.streams[6]);
+                float r7 = dist(p.streams[6]);
 #endif
 
 #endif
 		        if(r7 <= Rn)
         		{
-				double a1_e = -7.168;
-                        	double a2_e = 0.01685;
-                        	double a3_e = 7.005e-5;
-                        	double a4_e = -1.343;
-				double Re = exp(a1_e*pow(reducedEnergy,a2_e))/(1 + exp(a3_e*pow(reducedEnergy,a4_e))); 
-				double launch_unitVector[3] = {-0.866, 0, 0.50};
-				double launchEnergy = E0*Re/Rn;
-                		p.Z = 0.0;
-				p.vx = launchEnergy*launch_unitVector[0];
-				p.vy = launchEnergy*launch_unitVector[1];
-				p.vz = launchEnergy*launch_unitVector[2];
+                    std::cout << "particle reflected " << std::endl;
+				    std::cout << "from surface " << p.wallIndex << " material " <<boundaryVector[p.wallIndex].Z << std::endl;
+                float a1_e = -7.168;
+                float a2_e = 0.01685;
+                float a3_e = 7.005e-5;
+                float a4_e = -1.343;
+				float Re = exp(a1_e*pow(reducedEnergy,a2_e))/(1 + exp(a3_e*pow(reducedEnergy,a4_e))); 
+				float launch_unitVector[3] = {0, 0, 1.0};
+				float launchEnergy = 10.0;//10.0;//10.0;//10.0;//10.0;//10.0;//10.0;//10.0;//10.0;//10.0;//E0*Re/Rn;
+                p.charge = 0.0;
+				p.vx = sqrt(2*launchEnergy*1.60217662e-19/(p.amu*1.6737236e-27))*surfaceNormalVectorRotated[0];//launchEnergy*launch_unitVector[0];
+				p.vy = sqrt(2*launchEnergy*1.60217662e-19/(p.amu*1.6737236e-27))*surfaceNormalVectorRotated[1];//launchEnergy*launch_unitVector[1];
+				p.vz = sqrt(2*launchEnergy*1.60217662e-19/(p.amu*1.6737236e-27))*surfaceNormalVectorRotated[2];
+                //p.x = 1.33;//p.xprevious;
+                //p.y = 0.0;
+                //p.z = 1.34;//boundaryVector[p.wallIndex].z1 + 0.01;
+                p.xprevious = p.xprevious + 0.0001*surfaceNormalVectorRotated[0];
+                p.yprevious = p.yprevious + 0.0001*surfaceNormalVectorRotated[1];
+                p.zprevious = p.zprevious + 0.0001*surfaceNormalVectorRotated[2];//boundaryVector[p.wallIndex].z1 + 0.01;
+                std::cout << "particle launched from " << p.xprevious << p.yprevious << p.zprevious << std::endl;
+                std::cout << "particle launched at velocity " << p.vx << p.vy << p.vz << std::endl;
+
 				p.hitWall = 0.0;
         		}
+                else
+                {
+                    std::cout << " no reflection" << std::endl;
+                    p.hitWall = 2.0;
+                }
 		}
 	}
 };
