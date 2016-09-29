@@ -57,6 +57,7 @@ std::vector<float>* gridxp,std::vector<float>* gridzp,std::vector<float>* datap 
     return fxz;
 }
 
+CUDA_CALLABLE_MEMBER
 void interp2dVector (float* field, float x, float y, float z,int nx, int nz,
 float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {
 

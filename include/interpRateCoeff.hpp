@@ -15,7 +15,7 @@
 #include <cmath>
 using namespace std;
 
-//CUDA_CALLABLE_MEMBER
+CUDA_CALLABLE_MEMBER
 
 
 float rateCoeffInterp(int charge, float te, float ne,int nT, int nD, float* rateGrid_Tempp,float* rateGrid_Densp,float* Ratesp){
@@ -62,6 +62,7 @@ float rateCoeffInterp(int charge, float te, float ne,int nT, int nD, float* rate
     return fxz;    
 }
 
+CUDA_CALLABLE_MEMBER
 float interpRateCoeff2d ( int charge, float x, float y, float z,int nx, int nz, float* tempGridxp,
        float* tempGridzp, float* Tempp,
        float* densGridxp,float* densGridzp,float* Densp,int nT_Rates, int nD_Rates,

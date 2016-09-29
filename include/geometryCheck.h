@@ -20,20 +20,11 @@ int sgn(T val) {
 struct geometry_check { 
 
     const int nLines;
-#ifdef __CUDACC__
-    const Boundary * boundaryVector;
-#else    
-    const std::vector<Boundary> & boundaryVector;
-//    const Boundary * boundaryVector;
-#endif
+    Boundary * boundaryVector;
 
-#ifdef __CUDACC__
-    geometry_check(int _nLines,Boundary *  _boundaryVector) : nLines(_nLines), boundaryVector(_boundaryVector) {}
-#else    
-    geometry_check(int _nLines,std::vector<Boundary> & _boundaryVector) : nLines(_nLines), boundaryVector(_boundaryVector) {} 
-//geometry_check(int _nLines,Boundary * _boundaryVector) : nLines(_nLines), boundaryVector(_boundaryVector) {}
-#endif
-CUDA_CALLABLE_MEMBER_DEVICE    
+    geometry_check(int _nLines,Boundary * _boundaryVector) : nLines(_nLines), boundaryVector(_boundaryVector) {}
+
+    CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(Particle &p) const { 
     //std::cout << "geometry check particle x" << p.x << p.xprevious <<std::endl;
     //std::cout << "geometry check particle y" << p.y << p.yprevious <<std::endl;
@@ -59,6 +50,7 @@ void operator()(Particle &p) const {
             //intersectiony = new float[nPoints];
             float distances[2] = {};
             //distances = new float[nPoints];
+            int intersectionIndices[2] = {};
             float tol_small = 1e-12;       
             float tol = 1e12;
 	        int nIntersections = 0;
@@ -109,7 +101,9 @@ void operator()(Particle &p) const {
                           // " " << boundaryVector[i].z2 << " " << boundaryVector[i].x2 << std::endl; 
                         if (signLine1 != signLine2)
                         {
+                            intersectionIndices[nIntersections] = i;
                             nIntersections++;
+
                             //std::cout << "nintersections " << nIntersections << std::endl;
                            // std::cout << fabs(p.x - p.xprevious) << tol_small << std::endl;        
                             if (fabs(pdim1 - pdim1previous) < tol_small)
@@ -152,6 +146,7 @@ void operator()(Particle &p) const {
             else if (nIntersections ==1)
             {
                 p.hitWall = 1.0;
+                p.wallIndex = intersectionIndices[0];
                 if (particle_slope >= tol*0.75)
                 {
 #if USECYLSYMM > 0
@@ -192,6 +187,7 @@ void operator()(Particle &p) const {
                     }
                 }
 
+                p.wallIndex = intersectionIndices[minDistInd];
                 p.hitWall = 1.0;
 #if USECYLSYMM > 0
        thetaNew = theta0 + (intersectionx[minDistInd] - pdim1previous)/(pdim1 - pdim1previous)*(theta1 - theta0);
