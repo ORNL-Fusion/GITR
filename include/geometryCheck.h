@@ -21,8 +21,10 @@ struct geometry_check {
 
     const int nLines;
     Boundary * boundaryVector;
+    float dt;
+    int tt;
 
-    geometry_check(int _nLines,Boundary * _boundaryVector) : nLines(_nLines), boundaryVector(_boundaryVector) {}
+    geometry_check(int _nLines,Boundary * _boundaryVector, float _dt, int _tt) : nLines(_nLines), boundaryVector(_boundaryVector), dt(_dt), tt(_tt) {}
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(Particle &p) const { 
@@ -225,12 +227,16 @@ void operator()(Particle &p) const {
                 }
             }
 #endif        
+            if (p.hitWall == 1)
+            {
+                p.transitTime = tt*dt;
+            }    
         }
 
     //std::cout << "2geometry check particle x" << p.x << p.xprevious <<std::endl;
     //std::cout << "2geometry check particle y" << p.y << p.yprevious <<std::endl;
     //std::cout << "2geometry check particle z" << p.z << p.zprevious <<std::endl;
-        }
+    }
 };
 
 #endif

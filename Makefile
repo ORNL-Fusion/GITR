@@ -1,7 +1,7 @@
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cu
 
-USECUDA := 0
+USECUDA := 1
 USEMPI := 0
 
 USEIONIZATION := 1
@@ -11,7 +11,7 @@ USECOULOMBCOLLISIONS := 0
 USETHERMALFORCE := 0
 USESURFACEMODEL :=0
 USESHEATHEFIELD := 0
-USEPRESHEATHEFIELD :=1
+USEPRESHEATHEFIELD :=0
 
 #Interpolators 0=Constant 1=Analytic Equation 2=2dInterpolation 3=3dInterpolation
 BFIELD_INTERP :=2
@@ -22,7 +22,7 @@ TEMP_INTERP :=0
 FLOWV_INTERP :=2
 GRADT_INTERP :=2
 #ode integrator 0=Boris 1=RK4
-ODEINT :=1
+ODEINT :=0
 #hold random number generator seeds the same across runs (defined in gitrInput.cfg)
 FIXEDSEEDS :=1
 
@@ -30,7 +30,7 @@ FIXEDSEEDS :=1
 GEOM_TRACE :=0
 
 #Set USECUDA = 0 to use PARTICLE_TRACKS
-PARTICLE_TRACKS :=1
+PARTICLE_TRACKS :=0
 
 #Particle Source 0 = puffing 1=Line Boundary segments
 PARTICLE_SOURCE :=1

@@ -398,6 +398,7 @@ int i4 = read_profiles(cfg.lookup("impurityParticleSource.recombination.fileStri
 //Geometry Definition
 Setting& geom = cfg_geom.lookup("geom");
 int nLines = geom["x1"].getLength();
+int nMaterials = geom["nMaterials"];
 std::cout << "Number of Geometric Objects Loaded: " << nLines << std::endl;
 
 std::vector<Boundary> hostBoundaryVector(nLines+1);
@@ -419,7 +420,9 @@ if(!(boost::filesystem::exists(dir)))
 }
 std::string full_path = geom_folder + "/" + geom_outname;
 outfile.open (full_path );
-
+for(int i=0; i<nMaterials; i++)
+{
+}
 for(int i=0 ; i<nLines ; i++)
 {
      hostBoundaryVector[i].x1 = geom["x1"][i];
@@ -536,7 +539,7 @@ for(int i=0;i<nR_Bfield;i++)
 {
     for(int j=0;j<nZ_Bfield;j++)
     {
-        minDist[(nR_Bfield - 1 -i)*nZ_Bfield+(nZ_Bfield -1-j)] = getE2 ( bfieldGridr[i], 0.0, bfieldGridz[j],
+        minDist[(nR_Bfield - 1 -i)*nZ_Bfield+(nZ_Bfield -1-j)] = getE ( bfieldGridr[i], 0.0, bfieldGridz[j],
                                                                   thisE, hostBoundaryVector,nLines );
         Efieldr[i*nZ_Bfield+j] = thisE[0];
         Efieldz[i*nZ_Bfield+j] = thisE[2];
@@ -615,7 +618,7 @@ float dt;
 float nPtsPerGyroOrbit = cfg.lookup("timeStep.nPtsPerGyroOrbit");
 dt = 2.4e-7/100.0;
 
-int nP = cfg.lookup("impurityParticleSource.nP");
+const int nP = cfg.lookup("impurityParticleSource.nP");
 cout << "Number of particles: " << nP << endl;              
 long nParticles = nP;
 int nT = cfg.lookup("timeStep.nT");
@@ -811,7 +814,13 @@ cout << "Number of time steps: " << nT << " With dt = " << dt << endl;
         }
     }
 #endif 
-
+float* finalPosX = new float[nP];
+float* finalPosY = new float[nP];
+float* finalPosZ = new float[nP];
+float* finalVx = new float[nP];
+float* finalVy = new float[nP];
+float* finalVz = new float[nP];
+float* transitTime = new float[nP];
 cpu_timer timer;
 
 #ifdef __CUDACC__
@@ -923,7 +932,7 @@ std::uniform_real_distribution<float> dist(0,1e6);
         
         try {
             thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),
-                    geometry_check(nLines,BoundaryDevicePointer) );
+                    geometry_check(nLines,BoundaryDevicePointer,dt,tt) );
         }
         catch (thrust::system_error &e) {
             std::cerr << "Thrust system error: " << e.what() << std::endl;
@@ -946,6 +955,9 @@ std::uniform_real_distribution<float> dist(0,1e6);
                 crossFieldDiffusion(dt,perpDiffusionCoeff,
                     nR_Bfield,nZ_Bfield, BfieldGridRDevicePointer,BfieldGridZDevicePointer,
                     BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer));
+            
+        thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(),
+                    geometry_check(nLines,BoundaryDevicePointer,dt,tt) );
 #endif
 #if USECOULOMBCOLLISIONS > 0
         thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), 
@@ -970,10 +982,15 @@ std::uniform_real_distribution<float> dist(0,1e6);
                     nR_Bfield,nZ_Bfield, BfieldGridRDevicePointer,BfieldGridZDevicePointer,
                     BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer));
 #endif
+
+#if USESURFACEMODEL > 0
+        thrust::for_each(deviceCudaParticleVector.begin(), deviceCudaParticleVector.end(), 
+                reflection(dt,nLines,BoundaryDevicePointer) );
+#endif        
 #else
 cpu_times moveTime0 = timer.elapsed();
         std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
-                move_boris(dt,hostBoundaryVector,nLines, 
+                move_boris(dt,hostBoundaryVector.data(),nLines, 
                     nR_Bfield,nZ_Bfield, &bfieldGridr.front(),&bfieldGridz.front(),
                     &br.front(),&bz.front(),&bt.front(),
                     nR_PreSheathEfield,nZ_PreSheathEfield, 
@@ -985,7 +1002,7 @@ moveTime = moveTime + (moveTime1.wall - moveTime0.wall);
 cpu_times geomTime0 = timer.elapsed();
 
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
-            geometry_check(nLines,hostBoundaryVector.data()) );
+            geometry_check(nLines,hostBoundaryVector.data(),dt,tt) );
 
 cpu_times geomTime1 = timer.elapsed();
 geomCheckTime = geomCheckTime + (geomTime1.wall - geomTime0.wall);
@@ -1014,7 +1031,7 @@ ionizTime = ionizTime + (ionizTime1.wall - ionizTime0.wall);
                     &br.front(),&bz.front(),&bt.front()));
         
         std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), 
-                geometry_check(nLines,hostBoundaryVector.data()) );
+                geometry_check(nLines,hostBoundaryVector.data(),dt,tt) );
 #endif
 #if USECOULOMBCOLLISIONS > 0
         std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), 
@@ -1088,6 +1105,37 @@ if (tt % subSampleFac == 0)
             << " " << hostCudaParticleVector[i-1].z << " ];" << std::endl;
       }
        outfile2.close();
+// Write netCDF output for positions
+for (int i=0; i<nP; i++)
+{
+    finalPosX[i] = hostCudaParticleVector[i].xprevious;
+    finalPosY[i] = hostCudaParticleVector[i].yprevious;
+    finalPosZ[i] = hostCudaParticleVector[i].zprevious;
+    finalVx[i] = hostCudaParticleVector[i].vx;
+    finalVy[i] = hostCudaParticleVector[i].vy;
+    finalVz[i] = hostCudaParticleVector[i].vz;
+    transitTime[i] = hostCudaParticleVector[i].transitTime;
+}
+NcFile ncFile0("positions.nc", NcFile::replace);
+NcDim nc_nP0 = ncFile0.addDim("nP",nP);
+vector<NcDim> dims0;
+dims0.push_back(nc_nP0);
+
+NcVar nc_x0 = ncFile0.addVar("x",ncDouble,dims0);
+NcVar nc_y0 = ncFile0.addVar("y",ncDouble,dims0);
+NcVar nc_z0 = ncFile0.addVar("z",ncDouble,dims0);
+NcVar nc_vx0 = ncFile0.addVar("vx",ncDouble,dims0);
+NcVar nc_vy0 = ncFile0.addVar("vy",ncDouble,dims0);
+NcVar nc_vz0 = ncFile0.addVar("vz",ncDouble,dims0);
+NcVar nc_trans0 = ncFile0.addVar("transitTime",ncDouble,dims0);
+
+nc_x0.putVar(finalPosX);
+nc_y0.putVar(finalPosY);
+nc_z0.putVar(finalPosZ);
+nc_vx0.putVar(finalVx);
+nc_vy0.putVar(finalVy);
+nc_vz0.putVar(finalVz);
+nc_trans0.putVar(transitTime);
 #if PARTICLE_TRACKS > 0
 /*char outnameX[] = "positionHistoryX.m";
 OUTPUT( outnameX,nP, nT/subSampleFac, positionHistoryX);

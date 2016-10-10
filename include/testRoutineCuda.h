@@ -33,7 +33,7 @@ CUDA_CALLABLE_MEMBER_DEVICE
 void operator()(float &d) const { 
     //float tmp = gridzp[0];
     //d = tmp;
-    d = interp2dcuda(x,y,z,nx,nz,gridxp,gridzp,datap);
+    d = interp2dCombined(x,y,z,nx,nz,gridxp,gridzp,datap);
 }
 };
 
