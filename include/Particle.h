@@ -45,6 +45,7 @@ class Particle {
         #endif
 	
 	float hitWall;
+    float transitTime;
     int wallIndex;
     float perpDistanceToSurface;
 	float seed0;
