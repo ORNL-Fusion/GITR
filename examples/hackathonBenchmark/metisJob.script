@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+#PBS -l walltime=1:00:00
+#PBS -l nodes=1
+#PBS -j oe
+#PBS -e log.error
+#PBS -o log.ouput
+#PBS -N gitrBenchmark
+cd $PBS_O_WORKDIR
+source ${HOME}/code/GITR/env.metis.sh
+${HOME}/code/GITR/bin/GITR > log.running

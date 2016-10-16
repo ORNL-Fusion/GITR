@@ -20,8 +20,10 @@
 #include <random>
 #include "Particle.h"
 #include "Boundary.h"
+#if USE_BOOST
 #include <boost/timer/timer.hpp>
 #include "boost/filesystem.hpp"
+#endif
 #include <vector>
 #include "io.hpp"
 #include "testRoutine.h"
@@ -43,7 +45,9 @@
 
 using namespace std;
 using namespace libconfig;
+#if USE_BOOST
 using namespace boost::timer;
+#endif
 using namespace netCDF;
 using namespace exceptions;
 
@@ -407,6 +411,7 @@ std::string geom_outname = "geom.m";
 std::string geom_folder = "geometry";
 ofstream outfile;
 
+#if USE_BOOST
 //Output
 boost::filesystem::path dir(geom_folder);
 
@@ -418,6 +423,7 @@ if(!(boost::filesystem::exists(dir)))
       //std::cout << " Successfully Created " << std::endl;
       }
 }
+#endif
 std::string full_path = geom_folder + "/" + geom_outname;
 outfile.open (full_path );
 for(int i=0; i<nMaterials; i++)
@@ -540,7 +546,7 @@ for(int i=0;i<nR_Bfield;i++)
     for(int j=0;j<nZ_Bfield;j++)
     {
         minDist[(nR_Bfield - 1 -i)*nZ_Bfield+(nZ_Bfield -1-j)] = getE ( bfieldGridr[i], 0.0, bfieldGridz[j],
-                                                                  thisE, hostBoundaryVector,nLines );
+                                                                  thisE, hostBoundaryVector.data(),nLines );
         Efieldr[i*nZ_Bfield+j] = thisE[0];
         Efieldz[i*nZ_Bfield+j] = thisE[2];
         Efieldt[i*nZ_Bfield+j] = thisE[1];
@@ -821,8 +827,9 @@ float* finalVx = new float[nP];
 float* finalVy = new float[nP];
 float* finalVz = new float[nP];
 float* transitTime = new float[nP];
+#if USE_BOOST
 cpu_timer timer;
-
+#endif
 #ifdef __CUDACC__
     thrust::device_vector<Particle> deviceCudaParticleVector = hostCudaParticleVector;
 #endif
@@ -915,8 +922,10 @@ std::uniform_real_distribution<float> dist(0,1e6);
     float moveTime = 0.0;
     float geomCheckTime = 0.0;
     float ionizTime = 0.0;
+#if USE_BOOST
     cpu_times copyToDeviceTime = timer.elapsed();
     std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
+#endif
 //Main time loop
     for(int tt=0; tt< nT; tt++)
     {
@@ -988,7 +997,9 @@ std::uniform_real_distribution<float> dist(0,1e6);
                 reflection(dt,nLines,BoundaryDevicePointer) );
 #endif        
 #else
+#if USE_BOOST
 cpu_times moveTime0 = timer.elapsed();
+#endif
         std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
                 move_boris(dt,hostBoundaryVector.data(),nLines, 
                     nR_Bfield,nZ_Bfield, &bfieldGridr.front(),&bfieldGridz.front(),
@@ -996,19 +1007,21 @@ cpu_times moveTime0 = timer.elapsed();
                     nR_PreSheathEfield,nZ_PreSheathEfield, 
                     &preSheathEGridr.front(),&preSheathEGridz.front(),
                     &PSEr.front(),&PSEz.front(),&PSEt.front()));
-
+#if USE_BOOST
 cpu_times moveTime1 = timer.elapsed();
 moveTime = moveTime + (moveTime1.wall - moveTime0.wall);
 cpu_times geomTime0 = timer.elapsed();
-
+#endif
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
             geometry_check(nLines,hostBoundaryVector.data(),dt,tt) );
-
+#if USE_BOOST
 cpu_times geomTime1 = timer.elapsed();
 geomCheckTime = geomCheckTime + (geomTime1.wall - geomTime0.wall);
+#endif
 #if USEIONIZATION > 0
+#if USE_BOOST
 cpu_times ionizTime0 = timer.elapsed();
-
+#endif
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(),
             ionize(dt,
                 nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),
@@ -1016,9 +1029,10 @@ cpu_times ionizTime0 = timer.elapsed();
                 nTemperaturesIonize, 
                 nDensitiesIonize, &gridTemperature_Ionization.front(),
                 &gridDensity_Ionization.front(), &rateCoeff_Ionization.front() ) );
-
+#if USE_BOOST
 cpu_times ionizTime1 = timer.elapsed();
 ionizTime = ionizTime + (ionizTime1.wall - ionizTime0.wall);
+#endif
 #endif
 #if USERECOMBINATION > 0
     std::for_each(hostCudaParticleVector.begin(), hostCudaParticleVector.end(), 
@@ -1073,14 +1087,44 @@ if (tt % subSampleFac == 0)
 #endif
 #endif
     }
+#if USE_BOOST
     cpu_times ionizeTimeGPU = timer.elapsed();
     std::cout << "Particle Moving Time: " << ionizeTimeGPU.wall*1e-9 << '\n';
-
+#endif
 #ifdef __CUDACC__
     hostCudaParticleVector = deviceCudaParticleVector;
 #endif
 
-    for(int i=0; i < hostCudaParticleVector.size(); i++){
+int ring1 = 0;
+int ring2 = 0;
+int noWall = 0;
+float meanTransitTime = 0.0;
+
+for(int i=0; i<nP ; i++)
+{
+	if(hostCudaParticleVector[i].wallIndex == boundaryIndex_ImpurityLaunch[0])
+	{
+		ring1++;
+	}
+	else if(hostCudaParticleVector[i].wallIndex == boundaryIndex_ImpurityLaunch[1])
+	{
+		ring2++;
+	}
+	
+	if(hostCudaParticleVector[i].wallIndex == 0)
+	{
+		noWall++;
+	}
+	
+	meanTransitTime = meanTransitTime + hostCudaParticleVector[i].transitTime;
+	
+} 
+meanTransitTime = meanTransitTime/(nP-noWall);
+std::cout << "Number of impurity particles deposited on ring 1 " << ring1 << std::endl;
+std::cout << "Number of impurity particles deposited on ring 2 " << ring2 << std::endl;
+std::cout << "Number of impurity particles not deposited " << noWall << std::endl;
+std::cout << "Mean transit time of deposited particles " << meanTransitTime << std::endl;
+   //for(int i=0; i < hostCudaParticleVector.size(); i++){
        //std::cout << " final pos" <<  i << " " <<hostCudaParticleVector[i].x << " " << hostCudaParticleVector[i].y << " " << hostCudaParticleVector[i].z << std::endl;
         /*if(hostCudaParticleVector[i].hitWall == 1){
         surfaceIndexY = int(floor((hostCudaParticleVector[i].y - yMin)/(yMax - yMin)*(nY) + 0.0f));
@@ -1090,7 +1134,7 @@ if (tt % subSampleFac == 0)
         SurfaceBinsCharge[surfaceIndexY][surfaceIndexZ] += hostCudaParticleVector[i].Z ;
         SurfaceBinsEnergy[surfaceIndexY][surfaceIndexZ] += 0.5*hostCudaParticleVector[i].amu*1.6737236e-27*(hostCudaParticleVector[i].vx*hostCudaParticleVector[i].vx +  hostCudaParticleVector[i].vy*hostCudaParticleVector[i].vy+ hostCudaParticleVector[i].vz*hostCudaParticleVector[i].vz)/1.60217662e-19;
         } */ 
-    }
+   // }
 
 //    OUTPUT( outname,nY, nZ, SurfaceBins);
 //    OUTPUT( outnameCharge,nY, nZ, SurfaceBinsCharge);
@@ -1180,7 +1224,7 @@ nc_vz.putVar(velocityHistoryZ[0]);
 #ifdef __CUDACC__
     cudaThreadSynchronize();
 #endif
-
+#if USE_BOOST
     cpu_times copyToHostTime = timer.elapsed();
 
     cpu_times createParticlesTimeCPU = timer.elapsed();
@@ -1188,5 +1232,6 @@ nc_vz.putVar(velocityHistoryZ[0]);
     std::cout << "Total ODE integration time: " << moveTime*1e-9 << '\n';
     std::cout << "Total geometry checking time: " << geomCheckTime*1e-9 << '\n';
     std::cout << "Total ionization time: " << ionizTime*1e-9 << '\n';
+#endif
     return 0;
 }
