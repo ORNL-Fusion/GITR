@@ -7,8 +7,10 @@
 #include <netcdf>
 #include "Boundary.h"
 #include "Particle.h"
-#include "boost/multi_array.hpp"
-#include "boost/filesystem.hpp"
+#if USE_BOOST
+	#include "boost/multi_array.hpp"
+	#include "boost/filesystem.hpp"
+#endif
 #include "io.hpp"
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
@@ -196,7 +198,8 @@ void OUTPUT(char outname[],int nX, int nY, float **array2d)
 void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, float *array2d)
 {
        ofstream outfile;
-				//Output
+#if USE_BOOST	
+			//Output
         boost::filesystem::path dir(folder);
 
             if(!(boost::filesystem::exists(dir)))
@@ -207,6 +210,7 @@ void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, float *arra
               std::cout << " Successfully Created " << std::endl;
               }
             }
+#endif
             std::string full_path = folder + "/" + outname;
 			outfile.open (full_path );
 			
@@ -228,6 +232,7 @@ void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, float *arra
 void OUTPUT1d(std::string folder,std::string outname,int nX, float *array2d)
 {
        ofstream outfile;
+#if USE_BOOST
 				//Output
         boost::filesystem::path dir(folder);
 
@@ -239,6 +244,7 @@ void OUTPUT1d(std::string folder,std::string outname,int nX, float *array2d)
               //std::cout << " Successfully Created " << std::endl;
               }
             }
+#endif
             std::string full_path = folder + "/" + outname;
 			outfile.open (full_path );
 			

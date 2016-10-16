@@ -1,17 +1,19 @@
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cu
 
-USECUDA := 1
+USECUDA := 0
 USEMPI := 0
+
+USE_BOOST := 0
 
 USEIONIZATION := 1
 USERECOMBINATION := 0
-USEPERPDIFFUSION := 0
-USECOULOMBCOLLISIONS := 0
-USETHERMALFORCE := 0
+USEPERPDIFFUSION := 1
+USECOULOMBCOLLISIONS := 1
+USETHERMALFORCE := 1
 USESURFACEMODEL :=0
-USESHEATHEFIELD := 0
-USEPRESHEATHEFIELD :=0
+USESHEATHEFIELD := 1
+USEPRESHEATHEFIELD :=1
 
 #Interpolators 0=Constant 1=Analytic Equation 2=2dInterpolation 3=3dInterpolation
 BFIELD_INTERP :=2
@@ -49,22 +51,14 @@ NVCC := nvcc
 
 MODULES := src include
 
-# Boost
-
-INCLUDEFLAGS+=
-LIBS+= -lboost_system -lboost_timer -lboost_filesystem
-
-# Libconfig
-
-INCLUDEFLAGS+= -I $(LIBCONFIGINCLUDE)
-LIBS+= -L $(LIBCONFIGDIR) -lconfig++
-
-INCLUDEFLAGS+= -I $(NETCDFCXX4INCLUDE) -I $(NETCDFINCLUDE)
-LIBS+= -L $(NETCDFCXX4DIR) -L $(NETCDFDIR) -lnetcdf_c++4 -lnetcdf
-
 #CFLAGS += $(INCLUDEFLAGS) -g
 #CXXFLAGS += $(INCLUDEFLAGS) -g
 #NVCCFLAGS += $(INCLUDEFLAGS) -g -G
+
+# Machine specific makefile settings
+
+ThisMachine := $(shell uname -n)
+include makefiles/Makefile.$(ThisMachine)
 
 CPPFLAGS:=
 CPPFLAGS+= -DUSEMPI=${USEMPI}
@@ -90,6 +84,8 @@ CPPFLAGS+= -DODEINT=${ODEINT}
 CPPFLAGS+= -DFIXEDSEEDS=${FIXEDSEEDS}
 CPPFLAGS+= -DPARTICLE_SOURCE=${PARTICLE_SOURCE}
 CPPFLAGS+= -std=c++11
+CPPFLAGS+= -DUSE_BOOST=${USE_BOOST}
+
 #CPPFLAGS+= -DTHRUST_DEBUG
 
 # You shouldn't have to go below here
