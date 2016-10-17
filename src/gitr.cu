@@ -217,6 +217,45 @@ OUTPUT2d(profiles_folder,outnameNe, nR_Dens, nZ_Dens, &ne.front());
     float * NeDevicePointer = thrust::raw_pointer_cast(deviceNeVector.data());
 #endif
 
+//Connection length initialization
+#if (FLOWV_INTERP == 1 || FLOWV_INTERP == 4)
+    int nR_Lc;
+    int nZ_Lc;
+    
+    int l1 = read_profileNs(cfg.lookup("backgroundPlasmaProfiles.ConnectionLength.fileString"),
+                cfg.lookup("backgroundPlasmaProfiles.ConnectionLength.gridNrString"),
+                cfg.lookup("backgroundPlasmaProfiles.ConnectionLength.gridNzString"),nR_Lc,nZ_Lc);
+    std::vector<float> LcGridr(nR_Lc), LcGridz(nZ_Lc);
+    std::vector<float> Lc(nR_Lc*nZ_Lc), s(nR_Lc*nZ_Lc);
+    
+    int l2 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.ConnectionLength.fileString"),
+            cfg.lookup("backgroundPlasmaProfiles.ConnectionLength.gridRString"), LcGridr);
+    
+    int l3 = read_profile1d(cfg.lookup("backgroundPlasmaProfiles.ConnectionLength.fileString"),
+            cfg.lookup("backgroundPlasmaProfiles.ConnectionLength.gridZString"), LcGridz);
+    
+    int l4 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.ConnectionLength.fileString"),
+            cfg.lookup("backgroundPlasmaProfiles.ConnectionLength.LcString"), Lc);
+    
+    //int l5 = read_profile2d(cfg.lookup("backgroundPlasmaProfiles.ConnectionLength.fileString"),
+            //cfg.lookup("backgroundPlasmaProfiles.ConnectionLength.SString"), s);
+#endif
+std::string outnameLc = "Lc.m";
+std::string outnameS = "s.m";
+OUTPUT2d(profiles_folder,outnameLc, nR_Lc, nZ_Lc, &Lc.front());
+OUTPUT2d(profiles_folder,outnameS, nR_Lc, nZ_Lc, &s.front());
+
+#ifdef __CUDACC__
+    thrust::device_vector<float> deviceLcGridRVector = LcGridr;
+    thrust::device_vector<float> deviceLcGridZVector = LcGridz;
+    thrust::device_vector<float> deviceLcVector = Lc;
+    thrust::device_vector<float> deviceSVector = s;
+    float * LcGridRDevicePointer = thrust::raw_pointer_cast(deviceLcGridRVector.data());
+    float * LcGridZDevicePointer = thrust::raw_pointer_cast(deviceLcGridZVector.data());
+    float * LcDevicePointer = thrust::raw_pointer_cast(deviceLcVector.data());
+    float * SDevicePointer = thrust::raw_pointer_cast(deviceSVector.data());
+#endif
+
 //Background Plasma flow velocity initialization    
 #if FLOWV_INTERP == 0
     int nR_flowV = 1;
@@ -225,7 +264,7 @@ OUTPUT2d(profiles_folder,outnameNe, nR_Dens, nZ_Dens, &ne.front());
     std::vector<float> flowVr(nR_flowV*nZ_flowV), flowVz(nR_flowV*nZ_flowV),flowVt(nR_flowV*nZ_flowV);
     flowVr[0] = cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.flowVr");
     flowVz[0] = cfg.lookup("backgroundPlasmaProfiles.FlowVelocity.flowVz");
-#elif FLOWV_INTERP == 2
+#elif (FLOWV_INTERP == 2 || FLOWV_INTERP == 4)
     int nR_flowV;
     int nZ_flowV;
     
