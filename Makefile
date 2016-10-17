@@ -1,28 +1,29 @@
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cu
 
-USECUDA := 0
+USECUDA := 1
 USEMPI := 0
 
 USE_BOOST := 0
 
 USEIONIZATION := 1
 USERECOMBINATION := 0
-USEPERPDIFFUSION := 1
-USECOULOMBCOLLISIONS := 1
-USETHERMALFORCE := 1
+USEPERPDIFFUSION := 0
+USECOULOMBCOLLISIONS := 0
+USETHERMALFORCE := 0
 USESURFACEMODEL :=0
 USESHEATHEFIELD := 1
-USEPRESHEATHEFIELD :=1
+USEPRESHEATHEFIELD :=0
 
-#Interpolators 0=Constant 1=Analytic Equation 2=2dInterpolation 3=3dInterpolation
+#Interpolators 0=Constant 1=Analytic Equation 2=2dInterpolation 3=3dInterpolation 
+# 4=Combination of 2d interpolation and analytic functions
 BFIELD_INTERP :=2
 EFIELD_INTERP :=1
 PRESHEATH_INTERP :=2
 DENSITY_INTERP :=0
 TEMP_INTERP :=0
-FLOWV_INTERP :=2
 GRADT_INTERP :=2
+FLOWV_INTERP :=4
 #ode integrator 0=Boris 1=RK4
 ODEINT :=0
 #hold random number generator seeds the same across runs (defined in gitrInput.cfg)
