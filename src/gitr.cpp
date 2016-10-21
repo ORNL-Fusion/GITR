@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <stdlib.h>
@@ -20,27 +21,33 @@
 #include <random>
 #include "Particle.h"
 #include "Boundary.h"
+
 #if USE_BOOST
 #include <boost/timer/timer.hpp>
 #include "boost/filesystem.hpp"
 #endif
+
 #include <vector>
 #include "io.hpp"
 #include "testRoutine.h"
 #include "testRoutineCuda.h"
 #include "boundaryInit.h"
 #include <netcdf>
+#include "array.h"
 
 #ifdef __CUDACC__
-    #include <thrust/copy.h>
-    #include <thrust/host_vector.h>
-    #include <thrust/device_vector.h>
     #include <curand.h>
     #include <curand_kernel.h>
+    
+    #include <thrust/copy.h>         //this block of thrust commands should be removed after consolidation
+    #include <thrust/host_vector.h>
+    #include <thrust/device_vector.h>
+    #include <thrust/device_ptr.h>
+    
+    #include <thrust/execution_policy.h>
     #include <thrust/sequence.h>
     #include <thrust/transform.h>
     #include <thrust/functional.h>
-    #include <thrust/device_ptr.h>
 #endif
 
 using namespace std;
@@ -926,6 +933,10 @@ std::uniform_real_distribution<float> dist(0,1e6);
     cpu_times copyToDeviceTime = timer.elapsed();
     std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
 #endif
+    typedef std::chrono::high_resolution_clock Time;
+    typedef std::chrono::duration<float> fsec;
+    auto start_clock = Time::now();
+
 //Main time loop
     for(int tt=0; tt< nT; tt++)
     {
@@ -1087,6 +1098,15 @@ if (tt % subSampleFac == 0)
 #endif
 #endif
     }
+// Ensure that all time step loop GPU kernels are complete before proceeding
+    #ifdef __CUDACC__
+        cudaDeviceSynchronize();
+    #endif
+
+    auto finish_clock = Time::now();
+    fsec fs = finish_clock - start_clock;
+    printf("Time taken          is %6.3f (secs) \n", fs.count());
+    printf("Time taken per step is %6.3f (secs) \n", fs.count() / (float) nT);
 #if USE_BOOST
     cpu_times ionizeTimeGPU = timer.elapsed();
     std::cout << "Particle Moving Time: " << ionizeTimeGPU.wall*1e-9 << '\n';
