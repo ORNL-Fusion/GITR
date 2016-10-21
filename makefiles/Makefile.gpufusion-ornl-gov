@@ -1,0 +1,14 @@
+## Boost
+#
+INCLUDEFLAGS+=
+LIBS+= -lboost_system -lboost_timer -lboost_filesystem
+#
+## Libconfig
+#
+INCLUDEFLAGS+= -I $(LIBCONFIGINCLUDE)
+LIBS+= -L $(LIBCONFIGDIR) -lconfig++
+#
+INCLUDEFLAGS+= -I $(NETCDFCXX4INCLUDE) -I $(NETCDFINCLUDE)
+LIBS+= -L $(NETCDFCXX4DIR) -L $(NETCDFDIR) -lnetcdf_c++4 -lnetcdf
+
+
