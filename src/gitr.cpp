@@ -19,7 +19,7 @@
 #include "interpRateCoeff.hpp"
 #include <algorithm>
 #include <random>
-#include "Particle.h"
+#include "Particles.h"
 #include "Boundary.h"
 #include "curandInitialize.h"
 
@@ -570,7 +570,8 @@ cout << "Number of time steps: " << nT << " With dt = " << dt << endl;
     
     int impuritiesPerBoundary = nP/nImpurityBoundaries;
       
-    sim::Array<Particle> particleArray(nParticles);  
+    //sim::Array<Particle> particleArray(nParticles);  
+auto particleArray = new Particles(nParticles);
 
       std::uniform_real_distribution<float> distributionForSeeds(0,1e6);
 #if FIXEDSEEDS ==0
@@ -657,10 +658,10 @@ cout << "Number of time steps: " << nT << " With dt = " << dt << endl;
             Ey = E0*cos(3.1415*rand3);
             Ez = E0*sin(3.1415*rand1)*sin(3.1415*rand3);
         }
-            
-        Particle p1(x,0.0,z,Ex,Ey,Ez,74,184.0,charge);
+particleArray->setParticle((i * impuritiesPerBoundary + j),x, 0.0, z, Ex, Ey, Ez, 74, 184.0, charge);            
+        //Particle p1(x,0.0,z,Ex,Ey,Ez,74,184.0,charge);
             //particleArray[i*impuritiesPerBoundary + j] = p1;
-            particleArray[i*impuritiesPerBoundary + j] = p1;
+          //  particleArray[i*impuritiesPerBoundary + j] = p1;
             //std::cout << " E0 " << E0 << std::endl;
             //std::cout << "vy " << particleArray[i*impuritiesPerBoundary + j].vy << " " << Ey << std::endl;
             //std::cout << "vx " << particleArray[i*impuritiesPerBoundary + j].vx << " " << Ex << std::endl;
@@ -758,6 +759,9 @@ std::uniform_real_distribution<float> dist(0,1e6);
 
     }
     */
+
+      thrust::counting_iterator<std::size_t> particleBegin(0);  
+        thrust::counting_iterator<std::size_t> particleEnd(nParticles);
 #if PARTICLESEEDS > 0
 #if USEIONIZATION > 0
 #if FIXEDSEEDS ==1
@@ -774,8 +778,8 @@ std::uniform_real_distribution<float> dist(0,1e6);
     sim::Array<float> seeds0(nP);
     std::generate( seeds0.begin(), seeds0.end(), [&]() { return dist(generator); } );
 //    thrust::device_vector<float> deviceSeeds0 = seeds0;
-    thrust::transform(thrust::device, particleArray.begin(), particleArray.end(),
-                    seeds0.begin(), particleArray.begin(), randInit(0) );
+    thrust::transform(thrust::device, particleArray->streams.begin(), particleArray->streams.end(),
+                    seeds0.begin(), particleArray->streams.begin(), randInit(0) );
 #else
     std::vector<float> seeds0(nP);
     std::generate( seeds0.begin(), seeds0.end(), [&]() { return dist(generator); } );
@@ -877,8 +881,8 @@ state1[0] = s;
     for(int tt=0; tt< nT; tt++)
     {
 //#ifdef __CUDACC__
-        thrust::for_each(thrust::device, particleArray.begin(), particleArray.end(), 
-                move_boris(dt,boundaries.data(), nLines,
+        thrust::for_each(thrust::device, particleBegin,particleEnd, 
+                move_boris(particleArray,dt,boundaries.data(), nLines,
                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
                     &br.front(),&bz.front(),&bt.front(),
                     nR_PreSheathEfield,nZ_PreSheathEfield,
@@ -887,8 +891,8 @@ state1[0] = s;
         
         
         //try {
-            thrust::for_each(thrust::device, particleArray.begin(), particleArray.end(),
-                    geometry_check(nLines,boundaries.data(),dt,tt) );
+            thrust::for_each(thrust::device, particleBegin,particleEnd,
+                    geometry_check(particleArray,nLines,boundaries.data(),dt,tt) );
        // }
        /*
             catch (thrust::system_error &e) {
@@ -897,8 +901,8 @@ state1[0] = s;
         }
         */
 #if USEIONIZATION > 0
-        thrust::for_each(thrust::device, particleArray.begin(), particleArray.end(),
-                ionize(dt,&state1.front(),
+        thrust::for_each(thrust::device, particleBegin,particleEnd,
+                ionize(particleArray, dt,&state1.front(),
                     nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),  
                     nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
                     nTemperaturesIonize, nDensitiesIonize,&gridTemperature_Ionization.front(),
@@ -1057,21 +1061,21 @@ float meanTransitTime = 0.0;
 
 for(int i=0; i<nP ; i++)
 {
-	if(particleArray[i].wallIndex == boundaryIndex_ImpurityLaunch[0])
+	if(particleArray->wallIndex[i] == boundaryIndex_ImpurityLaunch[0])
 	{
 		ring1++;
 	}
-	else if(particleArray[i].wallIndex == boundaryIndex_ImpurityLaunch[1])
+	else if(particleArray->wallIndex[i] == boundaryIndex_ImpurityLaunch[1])
 	{
 		ring2++;
 	}
 	
-	if(particleArray[i].wallIndex == 0)
+	if(particleArray->wallIndex[i] == 0)
 	{
 		noWall++;
 	}
 	
-	meanTransitTime = meanTransitTime + particleArray[i].transitTime;
+	meanTransitTime = meanTransitTime + particleArray->transitTime[i];
 	
 } 
 meanTransitTime = meanTransitTime/(nP-noWall);
@@ -1085,20 +1089,20 @@ std::cout << "Mean transit time of deposited particles " << meanTransitTime << s
     for(int i=1 ; i<=nP ; i++)
       {
         outfile2 << "Pos( " << i<< ",:) = [ " ;
-        outfile2 << particleArray[i-1].x << " " << particleArray[i-1].y 
-            << " " << particleArray[i-1].z << " ];" << std::endl;
+        outfile2 << particleArray->x[i-1] << " " << particleArray->y[i-1] 
+            << " " << particleArray->z[i-1] << " ];" << std::endl;
       }
        outfile2.close();
 // Write netCDF output for positions
 for (int i=0; i<nP; i++)
 {
-    finalPosX[i] = particleArray[i].xprevious;
-    finalPosY[i] = particleArray[i].yprevious;
-    finalPosZ[i] = particleArray[i].zprevious;
-    finalVx[i] =   particleArray[i].vx;
-    finalVy[i] =   particleArray[i].vy;
-    finalVz[i] =   particleArray[i].vz;
-    transitTime[i] = particleArray[i].transitTime;
+    finalPosX[i] = particleArray->xprevious[i];
+    finalPosY[i] = particleArray->yprevious[i];
+    finalPosZ[i] = particleArray->zprevious[i];
+    finalVx[i] =   particleArray->vx[i];
+    finalVy[i] =   particleArray->vy[i];
+    finalVz[i] =   particleArray->vz[i];
+    transitTime[i] = particleArray->transitTime[i];
 }
 NcFile ncFile0("positions.nc", NcFile::replace);
 NcDim nc_nP0 = ncFile0.addDim("nP",nP);
