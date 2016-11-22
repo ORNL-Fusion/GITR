@@ -54,7 +54,7 @@ public:
     void* data;
     auto err = cudaMallocManaged(&data, size);
     if(err != cudaSuccess) {
-      throw std::runtime_error("error allocating managed memory");
+      //throw std::runtime_error("error allocating managed memory");
     }
     return data;
 #else

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(gitr)
 
-set(OPENMP 1)
+set(CUDA 1)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 set(CMAKE_CXX_STANDARD 14) # Doesn't set NVCC C++ standard
@@ -21,7 +21,7 @@ include_directories(${NETCDF_INCLUDE_DIRS})
 include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 
 # Simulation defines
-add_definitions(-DUSE_CUDA=0
+add_definitions(-DUSE_CUDA=1
         -DUSEMPI=0
         -DUSE_BOOST=0
         -DUSEIONIZATION=1
@@ -41,6 +41,7 @@ add_definitions(-DUSE_CUDA=0
         -DGRADT_INTERP=2
         -DODEINT=0
         -DFIXEDSEEDS=1
+        -DPARTICLESEEDS=1
         -DGEOM_TRACE=0
         -DPARTICLE_TRACKS=0
         -DPARTICLE_SOURCE=1
@@ -52,7 +53,7 @@ if (${CUDA})
     find_package(CUDA REQUIRED)
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     set(CUDA_SEPARABLE_COMPILATION TRUE)
-    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA --expt-extended-lambda --expt-relaxed-constexpr --std=c++11)
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA  --std=c++11) # --expt-extended-lambda --expt-relaxed-constexpr
     set_source_files_properties(${SRC_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
     cuda_add_executable(GITR ${SRC_FILES})
 endif ()

@@ -232,6 +232,7 @@ void operator()(Particle &p) const {
         	relativeVelocity[1] = p.vy - flowVelocity[1];
         	relativeVelocity[2] = p.vz - flowVelocity[2];
         	velocityRelativeNorm = sqrt( relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2]);
+#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
         	int plus_minus1 = floor(curand_uniform(&p.streams[3]) + 0.5)*2 -1;
 		int plus_minus2 = floor(curand_uniform(&p.streams[4]) + 0.5)*2 -1;
@@ -242,6 +243,11 @@ void operator()(Particle &p) const {
 		int plus_minus2 = floor(dist(p.streams[4]) + 0.5)*2 - 1;
 		int plus_minus3 = floor(dist(p.streams[5]) + 0.5)*2 - 1;
 #endif
+#else
+ int plus_minus1 = 0.0;        
+ int plus_minus2 = 0.0;        
+ int plus_minus3 = 0.0;      
+#endif 
         
 //        std::cout << "flow velocity " << flowVelocity[0] << " " << flowVelocity[1] << " " <<flowVelocity[2] << std::endl;
         

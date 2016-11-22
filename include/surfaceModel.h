@@ -149,6 +149,7 @@ void operator()(Particle &p) const {
             Rn = exp(a1*pow(reducedEnergy,a2))/(1 + exp(a3*pow(reducedEnergy,a4)));
             //std::cout << "calculated Rn " << Rn << std::endl;
             Rn = 0.25;
+#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
                 curandState tmpState;
                 float r7 = curand_uniform(&p.streams[6]);
@@ -157,6 +158,8 @@ void operator()(Particle &p) const {
                 float r7 = dist(p.streams[6]);
 #endif
 
+#else
+                float r7 = 0.0;
 #endif
 		        if(r7 <= Rn)
         		{
@@ -194,3 +197,4 @@ void operator()(Particle &p) const {
 		}
 	}
 };
+#endif
