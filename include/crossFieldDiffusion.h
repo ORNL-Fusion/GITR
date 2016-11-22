@@ -51,12 +51,16 @@ void operator()(Particle &p) const {
         B_unit[0] = B[0]/Bmag;
         B_unit[1] = B[1]/Bmag;
         B_unit[2] = B[2]/Bmag;
+#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
         	float r3 = curand_uniform(&p.streams[2]);
 #else
         	std::uniform_real_distribution<float> dist(0.0, 1.0);
         	float r3=dist(p.streams[2]);
 #endif 
+#else
+float r3 = 0.0;
+#endif
 		phi_random = 2*3.14159265*r3;
 		perpVector[0] = cos(phi_random);
 		perpVector[1] = sin(phi_random);

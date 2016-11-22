@@ -41,10 +41,12 @@ public:
   sim::Array<float> Z;
   sim::Array<float> amu;
   sim::Array<float> charge;
+#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
   sim::Array<curandState> streams;
 #else
   sim::Array<std::mt19937> streams;
+#endif
 #endif
 
   sim::Array<float> hitWall;
