@@ -83,7 +83,11 @@ public:
   CUDA_CALLABLE_MEMBER
   Particles(std::size_t nP) :
    nParticles{nP}, x{nP}, y{nP}, z{nP}, xprevious{nP}, yprevious{nP}, zprevious{nP},
-   vx{nP}, vy{nP}, vz{nP}, Z{nP}, amu{nP}, charge{nP}, streams{nP}, hitWall{nP},
+   vx{nP}, vy{nP}, vz{nP}, Z{nP}, amu{nP}, charge{nP},
+#if PARTICLESEEDS > 0
+      streams{nP},
+#endif
+      hitWall{nP},
    transitTime{nP,0.0}, wallIndex{nP}, perpDistanceToSurface{nP} {};   
 
 };
