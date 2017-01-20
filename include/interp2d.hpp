@@ -54,9 +54,9 @@ float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {
    float At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat);
    field[2] = interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz);
 #if USECYLSYMM > 0
-            float theta = atan2(y,x);   
-            field[0] = cos(theta)*Ar - sin(theta)*At;
-            field[1] = sin(theta)*Ar + cos(theta)*At;
+            float theta = atan2f(y,x);   
+            field[0] = cosf(theta)*Ar - sinf(theta)*At;
+            field[1] = sinf(theta)*Ar + cosf(theta)*At;
 #else
             field[0] = Ar;
             field[1] = At;

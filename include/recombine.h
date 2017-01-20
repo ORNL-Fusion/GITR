@@ -41,13 +41,16 @@ struct recombine {
 	Prec = 0.0;
 	}
 	
-	
+#if PARTICLESEEDS > 0	
 	#ifdef __CUDACC__
 	double r2 = curand_uniform(&p.streams[1]);
 	#else
 	std::uniform_real_distribution<double> dist(0.0, 1.0);
 	double r2=dist(p.streams[1]);
 	#endif
+#else
+    double r2 = 0.0;
+#endif
 						
 	if(r2 <= Prec)
 	{

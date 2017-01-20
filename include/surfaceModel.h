@@ -25,7 +25,7 @@ double screeningLength ( double Zprojectile, double Ztarget ) {
 	double bohrRadius = 5.29177e-11;
 	double screenLength;
 
-	screenLength = 0.885341*bohrRadius*pow(pow(Zprojectile,(2/3)) + pow(Ztarget,(2/3)),(-1/2));
+	screenLength = 0.885341*bohrRadius*powf(powf(Zprojectile,(2/3)) + powf(Ztarget,(2/3)),(-1/2));
 
 	return screenLength;
 }
@@ -112,7 +112,7 @@ void operator()(Particle &p) const {
             particleTrackVector[0] = p.vx;
             particleTrackVector[1] = p.vy;
             particleTrackVector[2] = p.vz;
-            surfaceNormalVector[0] = -boundaryVector[p.wallIndex].slope_dzdx;
+            //surfaceNormalVector[0] = -boundaryVector[p.wallIndex].slope_dzdx;
             surfaceNormalVector[1] = 0.0;
             surfaceNormalVector[2] = 1.0;
             //std::cout << "velocities " << p.vx << " " << p.vy << " " << p.vz << std::endl;
@@ -149,6 +149,7 @@ void operator()(Particle &p) const {
             Rn = exp(a1*pow(reducedEnergy,a2))/(1 + exp(a3*pow(reducedEnergy,a4)));
             //std::cout << "calculated Rn " << Rn << std::endl;
             Rn = 0.25;
+#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
                 curandState tmpState;
                 float r7 = curand_uniform(&p.streams[6]);
@@ -157,6 +158,8 @@ void operator()(Particle &p) const {
                 float r7 = dist(p.streams[6]);
 #endif
 
+#else
+                float r7 = 0.0;
 #endif
 		        if(r7 <= Rn)
         		{
@@ -194,3 +197,4 @@ void operator()(Particle &p) const {
 		}
 	}
 };
+#endif

@@ -11,6 +11,8 @@
 #include <cmath>
 #include <stdio.h>
 #include <vector>
+#include "array.h"
+#include "managed_allocation.h"
 
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
@@ -24,7 +26,7 @@
 
 //CUDA_CALLABLE_MEMBER
 
-class Particle {
+class Particle  {
 	public:
 	    float x;
 	    float y;
@@ -38,12 +40,13 @@ class Particle {
       	float Z;
       	float amu;
         float charge;
+#if PARTICLESEEDS > 0
     #ifdef __CUDACC__
 	curandState streams[7];
 	#else
         std::mt19937 streams[7];
         #endif
-	
+#endif
 	float hitWall;
     float transitTime;
     int wallIndex;
