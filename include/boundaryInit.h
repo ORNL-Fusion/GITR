@@ -48,25 +48,45 @@ struct boundary_init {
         nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr), 
         TempGridz(_TempGridz), ti(_ti) {}
 
-    void operator()(Boundary &b) const { 
+    void operator()(Boundary &b) const {
+#if USE3DTETGEOM
+        float midpointx = b.x1 + 0.666666667*(b.x2 + 0.5*(b.x3-b.x2)-b.x1);
+        float midpointy = b.y1 + 0.666666667*(b.y2 + 0.5*(b.y3-b.y2)-b.y1);
+        float midpointz = b.z1 + 0.666666667*(b.z2 + 0.5*(b.z3-b.z2)-b.z1);
+#else
+
         float midpointx = 0.5*(b.x2 - b.x1)+ b.x1;
+        float midpointy = 0.0;
         float midpointz = 0.5*(b.z2 - b.z1) + b.z1;
-        b.density = interp2dCombined(midpointx,0.0,midpointz,nx,nz,densityGridx,densityGridz,density);
-        b.ti = interp2dCombined(midpointx,0.0,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
+#endif
+        b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density);
+        b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
         
-        float br = interp2dCombined(midpointx,0.0,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldR);        float bz = interp2dCombined(midpointx,0.0,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldZ);
-        float bt = interp2dCombined(midpointx,0.0,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldT); 
+        float br = interp2dCombined(midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldR);        
+        float bz = interp2dCombined(midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldZ);
+        float bt = interp2dCombined(midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldT); 
         float norm_B = sqrt(br*br+bz*bz+bt*bt);
+#if USE3DTETGEOM
+        float B[3] = {0.0,0.0,0.0};
+        float planeNormal[3] = {b.a,b.b,b.c};
+        vectorAssign(br,bt,bz,B);
+        float theta = acos(vectorDotProduct(B,planeNormal)/(vectorNorm(B)*vectorNorm(planeNormal)));
+        if (theta > 3.14159265359*0.5)
+        {
+          theta = theta - (3.14159265359*0.5);
+        }
+#else
         float theta = acos((-br*b.slope_dzdx + bz)/(sqrt(br*br+bz*bz+bt*bt)*sqrt(b.slope_dzdx*b.slope_dzdx + 1.0)));
  
         if (theta > 3.14159265359*0.5)
         {
             theta = acos((br*b.slope_dzdx - bz)/(sqrt(br*br+bz*bz+bt*bt)*sqrt(b.slope_dzdx*b.slope_dzdx + 1.0)));
         }
-        
+#endif        
         b.angle = theta*180.0/3.14159265359;
         b.debyeLength = sqrt(8.854187e-12*b.ti/(b.density*pow(background_Z,2)*1.60217662e-19));
         b.larmorRadius = 1.44e-4*sqrt(background_amu*b.ti/2)/(background_Z*norm_B);
+        b.impacts = 0.0;
     }	
 };
 

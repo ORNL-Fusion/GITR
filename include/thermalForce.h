@@ -74,7 +74,7 @@ void operator()(Particle &p) const {
                     gradTGridr ,gradTGridz ,gradTeR,gradTeZ, gradTeT );
 		mu = p.amu/(background_amu + p.amu);
 		alpha = p.charge*p.charge*0.71;
-		beta =  3*(mu + 5*sqrt(2.0)*p.charge*p.charge*(1.1*pow(mu,(5/2))- 0.35*pow(mu,(3/2))) - 1)/(2.6 - 2*mu+ 5.4*pow(mu,2));
+		beta =  3*(mu + 5*sqrtf(2.0)*p.charge*p.charge*(1.1*powf(mu,(5/2))- 0.35*powf(mu,(3/2))) - 1)/(2.6 - 2*mu+ 5.4*powf(mu,2));
 	dv_ETG[0] = dt/(p.amu*MI)*(alpha*(gradTe[0]));
 	dv_ETG[1] = dt/(p.amu*MI)*(alpha*(gradTe[1]));
 	dv_ETG[2] = dt/(p.amu*MI)*(alpha*(gradTe[2]));
@@ -98,7 +98,7 @@ void operator()(Particle &p) const {
     */
        interp2dVector(&B[0],p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
              BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);    
-        Bmag = sqrt(B[0]*B[0] + B[1]*B[1]+ B[2]*B[2]);
+        Bmag = sqrtf(B[0]*B[0] + B[1]*B[1]+ B[2]*B[2]);
         B_unit[0] = B[0]/Bmag;
         B_unit[1] = B[1]/Bmag;
         B_unit[2] = B[2]/Bmag;

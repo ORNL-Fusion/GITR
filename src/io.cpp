@@ -107,8 +107,8 @@ int read_profileNs( string fileName, string nxName, string nzName,int &n_x,int &
 }
 
 
-int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, std::vector<float>& gridx,string gridzName,
-          std::vector<float>& gridz,string dataName, std::vector<float>& data) {
+int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, sim::Array<float>& gridx,string gridzName,
+          sim::Array<float>& gridz,string dataName, sim::Array<float>& data) {
 
     // Check input file exists
 
@@ -133,7 +133,7 @@ int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, std::ve
 
 }
 
-int read_profile2d( string fileName,string dataName, std::vector<float>& data) {
+int read_profile2d( string fileName,string dataName, sim::Array<float>& data) {
 
     // Check input file exists
 
@@ -152,7 +152,26 @@ int read_profile2d( string fileName,string dataName, std::vector<float>& data) {
     return(0);
 
 }
-int read_profile1d( string fileName,string gridxName, std::vector<float>& gridx) {
+int read_profile3d( string fileName,string dataName, sim::Array<int>& data) {
+
+    // Check input file exists
+
+    ifstream file(fileName.c_str());
+    if(!file.good()) {
+        cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
+        exit(1);
+    }
+
+    NcFile nc(fileName.c_str(), NcFile::read);
+
+
+    NcVar nc_ne(nc.getVar(dataName));
+    nc_ne.getVar(&data[0]);
+
+    return(0);
+
+}
+int read_profile1d( string fileName,string gridxName, sim::Array<float>& gridx) {
 
     // Check input file exists
 

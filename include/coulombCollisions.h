@@ -51,7 +51,7 @@ float MI = 1.6737236e-27;
 //            std::cout << "ion t and n " << Temp_eV << "  " << density << std::endl;
     float flowVelocity[3]= {0, 0, 0};
 	float relativeVelocity[3] = {0.0, 0.0, 0.0};
-	float velocityNorm = 0.0;
+	float velocityNorm = 0.0f;
 	float lam_d;
 	float lam;
 	float gam;
@@ -70,17 +70,17 @@ float MI = 1.6737236e-27;
 	    //std::cout << "velocity norm " << velocityNorm << std::endl;	
     //for(int i=1; i < nSpecies; i++)
 		//{
-			lam_d = sqrt(EPS0*Temp_eV/(density*pow(background_Z,2)*Q));//only one q in order to convert to J
-                	lam = 4.0*pi*density*pow(lam_d,3);
-                	gam = 0.238762895*pow(p.charge,2)*pow(background_Z,2)*log(lam)/(p.amu*p.amu);//constant = Q^4/(MI^2*4*pi*EPS0^2)
+			lam_d = sqrtf(EPS0*Temp_eV/(density*powf(background_Z,2)*Q));//only one q in order to convert to J
+                	lam = 4.0*pi*density*powf(lam_d,3);
+                	gam = 0.238762895*powf(p.charge,2)*powf(background_Z,2)*logf(lam)/(p.amu*p.amu);//constant = Q^4/(MI^2*4*pi*EPS0^2)
           //          std::cout << "gam components " <<gam << " " << pow(Q,4) << " " << pow(p.Z,2)<< " " << pow(background_Z,2) << " " << log(lam)<< std::endl; 
                 	a = background_amu*MI/(2*Temp_eV*Q);// %q is just to convert units - no z needed
                 
-                	x = pow(velocityNorm,2)*a;
-                	psi_prime = 2*sqrt(x/pi)*exp(-x);
-                	psi_psiprime = erf(1.0*sqrt(x));
+                	x = powf(velocityNorm,2)*a;
+                	psi_prime = 2*sqrtf(x/pi)*expf(-x);
+                	psi_psiprime = erf(1.0*sqrtf(x));
                 	psi = psi_psiprime - psi_prime;
-                	nu_0 = gam*density/pow(velocityNorm,3);
+                	nu_0 = gam*density/powf(velocityNorm,3);
                 	nu_friction = (1+p.amu/background_amu)*psi*nu_0;
                 	nu_deflection = 2*(psi_psiprime - psi/(2*x))*nu_0;
                 	nu_parallel = psi/x*nu_0;
@@ -232,6 +232,7 @@ void operator()(Particle &p) const {
         	relativeVelocity[1] = p.vy - flowVelocity[1];
         	relativeVelocity[2] = p.vz - flowVelocity[2];
         	velocityRelativeNorm = sqrt( relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2]);
+#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
         	int plus_minus1 = floor(curand_uniform(&p.streams[3]) + 0.5)*2 -1;
 		int plus_minus2 = floor(curand_uniform(&p.streams[4]) + 0.5)*2 -1;
@@ -242,6 +243,11 @@ void operator()(Particle &p) const {
 		int plus_minus2 = floor(dist(p.streams[4]) + 0.5)*2 - 1;
 		int plus_minus3 = floor(dist(p.streams[5]) + 0.5)*2 - 1;
 #endif
+#else
+ int plus_minus1 = 0.0;        
+ int plus_minus2 = 0.0;        
+ int plus_minus3 = 0.0;      
+#endif 
         
 //        std::cout << "flow velocity " << flowVelocity[0] << " " << flowVelocity[1] << " " <<flowVelocity[2] << std::endl;
         

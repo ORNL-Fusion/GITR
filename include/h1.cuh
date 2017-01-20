@@ -36,19 +36,19 @@ struct randInit
 	const int streamIndex;
 
     randInit(int _streamIndex) : streamIndex(_streamIndex) {}
-    CUDA_CALLABLE_MEMBER_DEVICE
-    Particle operator()(Particle& p, float& seed)
-    {
-	#ifdef __CUDACC__
-        curandState s;
-        curand_init(seed, 0, 0, &s);
-	#else
-        std::mt19937 s(seed);
-	#endif
-        p.seed0 = seed;
-        p.streams[streamIndex] = s;
-
-        return p;
+  template <typename T>
+  CUDA_CALLABLE_MEMBER_DEVICE
+  T operator()(T &strm, float &seed) {
+    #ifdef __CUDACC__
+    curandState s;
+    curand_init(seed, 0, 0, &s);
+    #else
+    std::mt19937 s(seed);
+    #endif
+    //p.seed0 = seed;
+    //streams = s;
+    return s;
     }
 };
+
 #endif

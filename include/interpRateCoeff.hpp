@@ -42,21 +42,21 @@ float rateCoeffInterp(int charge, float te, float ne,int nT, int nD, float* rate
     //std::cout << "Indices density, temp " << indN << " " <<indT<<std::endl;
     //std::cout << "charge " << charge << std::endl;
     //std::cout << "Lower value " << Ratesp[charge*nT*nD + indT*nD + indN] << std::endl;
-    float aT = pow(10.0,rateGrid_Tempp[indT+1]) - te;
-    float bT = te - pow(10.0,rateGrid_Tempp[indT]);
+    float aT = powf(10.0f,rateGrid_Tempp[indT+1]) - te;
+    float bT = te - powf(10.0f,rateGrid_Tempp[indT]);
     float abT = aT+bT;
 
-    float aN = pow(10.0,rateGrid_Densp[indN+1]) - ne;
-    float bN = ne - pow(10.0, rateGrid_Densp[indN]);
+    float aN = powf(10.0f,rateGrid_Densp[indN+1]) - ne;
+    float bN = ne - powf(10.0f, rateGrid_Densp[indN]);
     float abN = aN + bN;
 
     //float interp_value = Rates[charge*rateGrid_Temp.size()*rateGrid_Dens.size()            + indT*rateGrid_Dens.size() + indN];
 
-    float fx_z1 = (aN*pow(10.0,Ratesp[charge*nT*nD + indT*nD + indN]) 
-            + bN*pow(10.0,Ratesp[charge*nT*nD            + indT*nD + indN + 1]))/abN;
+    float fx_z1 = (aN*powf(10.0f,Ratesp[charge*nT*nD + indT*nD + indN]) 
+            + bN*powf(10.0f,Ratesp[charge*nT*nD            + indT*nD + indN + 1]))/abN;
     
-    float fx_z2 = (aN*pow(10.0,Ratesp[charge*nT*nD            + (indT+1)*nD + indN]) 
-            + bN*pow(10.0,Ratesp[charge*nT*nD            + (indT+1)*nD + indN+1]))/abN;
+    float fx_z2 = (aN*powf(10.0f,Ratesp[charge*nT*nD            + (indT+1)*nD + indN]) 
+            + bN*powf(10.0f,Ratesp[charge*nT*nD            + (indT+1)*nD + indN+1]))/abN;
     float fxz = (aT*fx_z1+bT*fx_z2)/abT;
     //std::cout << "fxz1 and 2 " << fx_z1 << " " << fx_z2<< " "<< fxz << std::endl;
     return fxz;    
@@ -80,8 +80,8 @@ float interpRateCoeff2d ( int charge, float x, float y, float z,int nx, int nz, 
     float tlocal = interp2dCombined(x,y,z,nx,nz,tempGridxp,tempGridzp,Tempp);
     //std::cout << "Interpolating local dens " << std::endl;
     float nlocal = interp2dCombined(x,y,z,nx,nz,densGridxp,densGridzp,Densp);
-//    std::cout << "tlocal" << tlocal << std::endl;
-//    std::cout << "nlocal" << nlocal << std::endl;
+    //std::cout << "tlocal" << tlocal << std::endl;
+    //std::cout << "nlocal" << nlocal << std::endl;
     //std::cout << "Interpolating RC " << std::endl;
     float RClocal = rateCoeffInterp(charge,tlocal,nlocal,nT_Rates,nD_Rates,rateGrid_Temp, rateGrid_Dens, Rates);
     float tion = 1/(RClocal*nlocal);
