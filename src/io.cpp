@@ -152,6 +152,25 @@ int read_profile2d( string fileName,string dataName, sim::Array<float>& data) {
     return(0);
 
 }
+int read_profile3d( string fileName,string dataName, sim::Array<int>& data) {
+
+    // Check input file exists
+
+    ifstream file(fileName.c_str());
+    if(!file.good()) {
+        cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
+        exit(1);
+    }
+
+    NcFile nc(fileName.c_str(), NcFile::read);
+
+
+    NcVar nc_ne(nc.getVar(dataName));
+    nc_ne.getVar(&data[0]);
+
+    return(0);
+
+}
 int read_profile1d( string fileName,string gridxName, sim::Array<float>& gridx) {
 
     // Check input file exists

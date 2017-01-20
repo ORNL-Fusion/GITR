@@ -50,9 +50,11 @@ public:
 #endif
 
   sim::Array<float> hitWall;
+  sim::Array<int> wallHit;
   sim::Array<float> transitTime;
   sim::Array<int> wallIndex;
   sim::Array<float> perpDistanceToSurface;
+  sim::Array<float> test;
 
 //  void BorisMove(double dt, double xMinV, double xMaxV, double yMin, double yMax, double zMin, double zMax);
 
@@ -88,7 +90,7 @@ public:
       streams{nP},
 #endif
       hitWall{nP},
-   transitTime{nP,0.0}, wallIndex{nP}, perpDistanceToSurface{nP} {};   
+   transitTime{nP,0.0},wallHit{nP,0}, wallIndex{nP}, perpDistanceToSurface{nP}, test{nP} {};   
 
 };
 

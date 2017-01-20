@@ -33,6 +33,14 @@ void vectorAdd(float A[], float B[],float C[])
 }
 
 CUDA_CALLABLE_MEMBER
+void vectorSubtract(float A[], float B[],float C[])
+{
+    C[0] = A[0] - B[0];
+    C[1] = A[1] - B[1];
+    C[2] = A[2] - B[2];
+}
+
+CUDA_CALLABLE_MEMBER
 void vectorScalarMult(float a, float B[],float C[])
 {
     C[0] = a*B[0];
@@ -56,13 +64,22 @@ float vectorNorm(float A[])
 
         return norm;
 }
+CUDA_CALLABLE_MEMBER
+void vectorNormalize(float A[],float B[])
+{
+    float norm = 0.0f;
+    norm = sqrtf(A[0]*A[0] + A[1]*A[1] + A[2]*A[2]);
+    B[0] = A[0]/norm;
+    B[1] = A[1]/norm;
+    B[2] = A[2]/norm;
+
+}
 
 CUDA_CALLABLE_MEMBER
-void vectorDotProduct(float A[], float B[], float C[])
+float vectorDotProduct(float A[], float B[])
 {
-    C[0] = A[0]*B[0];
-    C[1] = A[1]*B[1];
-    C[2] = A[2]*B[2];
+    float c = A[0]*B[0] +  A[1]*B[1] + A[2]*B[2];
+    return c;
 }
 
 CUDA_CALLABLE_MEMBER
@@ -79,8 +96,358 @@ void vectorCrossProduct(float A[], float B[], float C[])
 }
 CUDA_CALLABLE_MEMBER
 
-float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, int nLines ) {
-	float Emag = 0.0f;
+float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, int nLines,
+       int nR_closeGeom, int nZ_closeGeom, int n_closeGeomElements, float *closeGeomGridr, float *closeGeomGridz, int *closeGeom ) {
+#if USE3DTETGEOM > 0
+    float Emag = 0.0f;
+    float Er = 0.0f;
+    float Et = 0.0f;
+      float p0[3] = {x0,y,z};
+    float angle = 0.0f;
+	float fd = 0.0f;
+	float pot = 0.0f;
+      float a = 0.0;
+      float b = 0.0;
+      float c = 0.0;
+      float d = 0.0;
+      float plane_norm = 0.0;
+      float pointToPlaneDistance0 = 0.0;
+      float pointToPlaneDistance1 = 0.0;
+      float signPoint0 = 0.0;
+      float signPoint1 = 0.0;
+      float t = 0.0;
+      float A[3] = {0.0,0.0,0.0};
+      float B[3] = {0.0,0.0,0.0};
+      float C[3] = {0.0,0.0,0.0};
+      float AB[3] = {0.0,0.0,0.0};
+      float AC[3] = {0.0,0.0,0.0};
+      float BC[3] = {0.0,0.0,0.0};
+      float CA[3] = {0.0,0.0,0.0};
+      float p[3] = {0.0,0.0,0.0};
+      float Ap[3] = {0.0,0.0,0.0};
+      float Bp[3] = {0.0,0.0,0.0};
+      float Cp[3] = {0.0,0.0,0.0};
+      float p0A[3] = {0.0,0.0,0.0};
+      float p0B[3] = {0.0,0.0,0.0};
+      float p0C[3] = {0.0,0.0,0.0};
+      float p0AB[3] = {0.0,0.0,0.0};
+      float p0BC[3] = {0.0,0.0,0.0};
+      float p0CA[3] = {0.0,0.0,0.0};
+      float p0Anorm = 0.0f;
+      float p0Bnorm = 0.0f;
+      float p0Cnorm = 0.0f;
+      float normalVector[3] = {0.0,0.0,0.0};
+      float crossABAp[3] = {0.0,0.0,0.0};
+      float crossBCBp[3] = {0.0,0.0,0.0};
+      float crossCACp[3] = {0.0,0.0,0.0};
+      float directionUnitVector[3] = {0.0f,0.0f,0.0f};
+      float dot0 = 0.0f;
+      float dot1 = 0.0f;
+      float dot2 = 0.0f;
+
+      float normAB = 0.0f;
+      float normBC = 0.0f;
+      float normCA = 0.0f;
+      float ABhat[3] = {0.0f,0.0f,0.0f};
+      float BChat[3] = {0.0f,0.0f,0.0f};
+      float CAhat[3] = {0.0f,0.0f,0.0f};
+      float tAB = 0.0f;
+      float tBC = 0.0f;
+      float tCA = 0.0f;
+      float projP0AB[3] = {0.0f,0.0f,0.0f};
+      float projP0BC[3] = {0.0f,0.0f,0.0f};
+      float projP0CA[3] = {0.0f,0.0f,0.0f};
+      float p0ABdist = 0.0f;
+      float p0BCdist = 0.0f;
+      float p0CAdist = 0.0f;
+      float perpDist = 0.0f;
+      float signDot0 = 0.0;
+      float signDot1 = 0.0;
+      float signDot2 = 0.0;
+      float totalSigns = 0.0;
+      float minDistance = 1e12f;
+      int nBoundariesCrossed = 0;
+      int boundariesCrossed[6] = {0,0,0,0,0,0};
+        int minIndex=0;
+      float distances[7] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+      float normals[21] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,
+                           0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,
+                           0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+      for (int i=0; i<nLines; i++)
+      {
+            //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
+        if (boundaryVector[i].Z != 0.0)
+        {
+            //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
+        a = boundaryVector[i].a;
+        b = boundaryVector[i].b;
+        c = boundaryVector[i].c;
+        d = boundaryVector[i].d;
+        plane_norm = boundaryVector[i].plane_norm;
+        pointToPlaneDistance0 = (a*p0[0] + b*p0[1] + c*p0[2] + d)/plane_norm;
+        //std::cout << "abcd plane_norm "<< a  << " " << b << " " << c << " " << d << " " << plane_norm << std::endl;
+        //std::cout << i << std::endl;// " point to plane dist "  << pointToPlaneDistance0 << std::endl;
+        //pointToPlaneDistance1 = (a*p1[0] + b*p1[1] + c*p1[2] + d)/plane_norm;    
+        //signPoint0 = sgn(pointToPlaneDistance0);
+        //signPoint1 = sgn(pointToPlaneDistance1);
+        vectorAssign(a/plane_norm,b/plane_norm,c/plane_norm,normalVector);
+                //vectorNormalize(normalVector,normalVector);
+                //std::cout << "normal " << normalVector[0] << " " << normalVector[1] << " " << normalVector[2] << std::endl;
+          vectorAssign(p0[0] - pointToPlaneDistance0*normalVector[0],
+                       p0[1] - pointToPlaneDistance0*normalVector[1],
+                       p0[2] - pointToPlaneDistance0*normalVector[2], p);
+        
+         vectorAssign(boundaryVector[i].x1, boundaryVector[i].y1,
+                     boundaryVector[i].z1, A);
+         vectorAssign(boundaryVector[i].x2, boundaryVector[i].y2,
+                      boundaryVector[i].z2, B);
+         vectorAssign(boundaryVector[i].x3, boundaryVector[i].y3,
+                     boundaryVector[i].z3, C);
+
+         vectorSubtract(B,A,AB);
+         vectorSubtract(C,A,AC);
+         vectorSubtract(C,B,BC);
+         vectorSubtract(A,C,CA);
+
+         vectorSubtract(p,A,Ap);
+         vectorSubtract(p,B,Bp);
+         vectorSubtract(p,C,Cp);
+         vectorCrossProduct(AB,AC,normalVector);
+         vectorCrossProduct(AB,Ap,crossABAp);
+         vectorCrossProduct(BC,Bp,crossBCBp);
+         vectorCrossProduct(CA,Cp,crossCACp);
+       /*  
+         dot0 = vectorDotProduct(crossABAp,normalVector);
+            dot1 = vectorDotProduct(crossBCBp,normalVector);
+            dot2 = vectorDotProduct(crossCACp,normalVector);
+         */
+            signDot0 = sgn(vectorDotProduct(crossABAp,normalVector));
+         signDot1 = sgn(vectorDotProduct(crossBCBp,normalVector));
+         signDot2 = sgn(vectorDotProduct(crossCACp,normalVector));
+        /*  
+         if(dot0 == 0.0) signDot0 = 1;
+         if(dot1 == 0.0) signDot1 = 1;
+         if(dot2 == 0.0) signDot2 = 1;
+         
+         if(vectorNorm(crossABAp) == 0.0) signDot0 = 1;
+         if(vectorNorm(crossBCBp) == 0.0) signDot1 = 1;
+         if(vectorNorm(crossCACp) == 0.0) signDot2 = 1;
+         */
+         totalSigns = abs(signDot0 + signDot1 + signDot2);
+         /*
+         if(vectorNorm(crossABAp) == 0.0) totalSigns = 3;
+         if(vectorNorm(crossBCBp) == 0.0) totalSigns = 3;
+         if(vectorNorm(crossCACp) == 0.0) totalSigns = 3;
+         */
+         //std::cout << dot0 << " signDot0 " << signDot0 << std::endl;
+         //std::cout << dot1 << " signDot1 " << signDot1 << std::endl;
+         //std::cout << dot2 << " signDot2 " << signDot2 << std::endl;
+         vectorSubtract(A,p0,p0A);
+         vectorSubtract(B,p0,p0B);
+         vectorSubtract(C,p0,p0C);
+         
+         p0Anorm = vectorNorm(p0A);   
+         p0Bnorm = vectorNorm(p0B);   
+         p0Cnorm = vectorNorm(p0C);
+         distances[1] = p0Anorm;   
+         distances[2] = p0Bnorm;   
+         distances[3] = p0Cnorm;   
+             normals[3] = p0A[0]/p0Anorm;
+             normals[4] = p0A[1]/p0Anorm;
+             normals[5] = p0A[2]/p0Anorm;
+             normals[6] = p0B[0]/p0Bnorm;
+             normals[7] = p0B[1]/p0Bnorm;
+             normals[8] = p0B[2]/p0Bnorm;
+             normals[9] = p0C[0]/p0Cnorm;
+             normals[10] = p0C[1]/p0Cnorm;
+             normals[11] = p0C[2]/p0Cnorm;
+         //std::cout << "point to plane " << pointToPlaneDistance0 << std::endl;
+         //std::cout << "point to ABC " << p0Anorm << " " << p0Bnorm << " " << p0Cnorm << std::endl;
+         //std::cout << "total Signs " << totalSigns << std::endl;
+         normAB = vectorNorm(AB);
+         normBC = vectorNorm(BC);
+         normCA = vectorNorm(CA);
+         vectorAssign(AB[0]/normAB,AB[1]/normAB,AB[2]/normAB,ABhat);
+         vectorAssign(BC[0]/normBC,BC[1]/normBC,BC[2]/normBC,BChat);
+         vectorAssign(CA[0]/normCA,CA[1]/normCA,CA[2]/normCA,CAhat);
+         
+         tAB = vectorDotProduct(p0A,ABhat);
+         tBC = vectorDotProduct(p0B,BChat);
+         tCA = vectorDotProduct(p0C,CAhat);
+         tAB = -1*tAB;
+         tBC = -1*tBC;
+         tCA = -1*tCA;
+         /*
+         std::cout << "A " << A[0] << " " << A[1] << " " << A[2] << std::endl;   
+         std::cout << "B " << B[0] << " " << B[1] << " " << B[2] << std::endl;   
+         std::cout << "C " << C[0] << " " << C[1] << " " << C[2] << std::endl;   
+         std::cout << "ABhat " << ABhat[0] << " " << ABhat[1] << " " << ABhat[2] << std::endl; 
+         std::cout << "CAhat " << CAhat[0] << " " << CAhat[1] << " " << CAhat[2] << std::endl; 
+         std::cout << "p0C " << p0C[0] << " " << p0C[1] << " " << p0C[2] << std::endl; 
+         std::cout << "tAB and norm AB " << tAB << " "<<  normAB << std::endl;  
+         std::cout << "tBC and norm BC " << tBC << " "<<  normBC << std::endl;  
+         std::cout << "tCA and norm CA " << tCA << " "<<  normCA << std::endl;  
+         */
+         if((tAB > 0.0) && (tAB < normAB))
+         {
+             vectorScalarMult(tAB,ABhat,projP0AB);
+             vectorAdd(A,projP0AB,projP0AB);
+             vectorSubtract(projP0AB,p0,p0AB);
+             p0ABdist = vectorNorm(p0AB);
+             distances[4] = p0ABdist;   
+             normals[12] = p0AB[0]/p0ABdist;
+             normals[13] = p0AB[1]/p0ABdist;
+             normals[14] = p0AB[2]/p0ABdist;
+
+         }
+         else
+         {
+             p0ABdist = 1e12f;
+             distances[4] = p0ABdist;   
+         } 
+         
+         
+         if((tBC > 0.0) && (tBC < normBC))
+         {
+             vectorScalarMult(tBC,ABhat,projP0BC);
+             vectorAdd(B,projP0BC,projP0BC);
+             vectorSubtract(projP0BC,p0,p0BC);
+             p0BCdist = vectorNorm(p0BC);
+             distances[5] = p0BCdist;   
+             normals[15] = p0BC[0]/p0BCdist;
+             normals[16] = p0BC[1]/p0BCdist;
+             normals[17] = p0BC[2]/p0BCdist;
+
+         }
+         else
+         {
+             p0BCdist = 1e12f;
+             distances[5] = p0BCdist;   
+
+         } 
+         
+         if((tCA > 0.0) && (tCA < normCA))
+         {
+             vectorScalarMult(tCA,CAhat,projP0CA);
+             vectorAdd(C,projP0CA,projP0CA);
+             //std::cout << "projP0CA " << projP0CA[0] << " " << projP0CA[1] << " " << projP0CA[2] << std::endl; 
+             vectorSubtract(projP0CA,p0,p0CA);
+             p0CAdist = vectorNorm(p0CA);
+             distances[6] = p0CAdist;   
+             normals[18] = p0CA[0]/p0CAdist;
+             normals[19] = p0CA[1]/p0CAdist;
+             normals[20] = p0CA[2]/p0CAdist;
+             //std::cout << "p0CA " << p0CA[0] << " " << p0CA[1] << " " << p0CA[2] << std::endl; 
+         }
+         else
+         {
+             p0CAdist = 1e12f;
+             distances[6] = p0CAdist;   
+         } 
+
+         if (totalSigns == 3.0)
+         {
+             //if (fabs(pointToPlaneDistance0) < minDistance)
+             //{
+                perpDist = fabs(pointToPlaneDistance0); 
+                //minDistance = fabs(pointToPlaneDistance0);
+                //std::cout << "p " << p[0] << " " << p[1] << " " << p[2] << std::endl;
+                //std::cout << "p0 " << p0[0] << " " << p0[1] << " " << p0[2] << std::endl;
+                vectorSubtract(p,p0 ,normalVector);
+                //std::cout << "unit vec " << directionUnitVector[0] << " " << directionUnitVector[1] << 
+                //    " " << directionUnitVector[2] << std::endl;
+                vectorNormalize(normalVector,normalVector);
+                //std::cout << "unit vec " << directionUnitVector[0] << " " << directionUnitVector[1] << 
+                //    " " << directionUnitVector[2] << std::endl;
+                //std::cout << "perp distance " << std::endl;
+             distances[0] = perpDist;   
+             normals[0] = normalVector[0];
+             normals[1] = normalVector[1];
+             normals[2] = normalVector[2];
+             //}
+         }
+         else
+         {
+             perpDist = 1e12f;
+             distances[0] = perpDist;   
+             /*
+             if (p0Anorm < p0Bnorm)
+             {
+                     if (p0Anorm < p0Cnorm)
+                     {
+                        if (p0Anorm < minDistance)
+                        {
+                         minDistance = p0Anorm;
+                         vectorAssign(p0A[0]/p0Anorm,p0A[1]/p0Anorm,p0A[2]/p0Anorm,
+                                      directionUnitVector);
+                         minIndex = i;
+                        std::cout << "p0A " << std::endl;
+                        }
+                     }
+                     else
+                     {
+                        if (p0Cnorm < minDistance)
+                        {
+                         minDistance = p0Cnorm;
+                         vectorAssign(p0C[0]/p0Cnorm,p0C[1]/p0Cnorm,p0C[2]/p0Cnorm,
+                                      directionUnitVector);
+                         minIndex = i;
+                        std::cout << "p0C " << p0Cnorm << std::endl;
+                        }
+                     }
+             }
+             else
+             {
+                     if (p0Bnorm < p0Cnorm)
+                     {
+                        if (p0Bnorm < minDistance)
+                        {
+                         minDistance = p0Bnorm;
+                         vectorAssign(p0B[0]/p0Bnorm,p0B[1]/p0Bnorm,p0B[2]/p0Bnorm,
+                                      directionUnitVector);
+                         minIndex = i;
+                        std::cout << "p0B " << std::endl;
+                        }
+                     }
+                     else
+                     {
+                        if (p0Cnorm < minDistance)
+                        {
+                         minDistance = p0Cnorm;
+                         vectorAssign(p0C[0]/p0Cnorm,p0C[1]/p0Cnorm,p0C[2]/p0Cnorm,
+                                      directionUnitVector);
+                         minIndex = i;
+                        std::cout << "p0C two " << std::endl;
+                        }
+                     }
+
+             }      
+             */
+         }
+         int index = 0;
+          for(int j = 0; j < 7; j++)
+            {
+            if(distances[j] < distances[index])
+            index = j;              
+            }
+
+             if (distances[index] < minDistance)
+             {
+                 minDistance = distances[index];
+                 vectorAssign(normals[index*3], normals[index*3+1],normals[index*3+2], directionUnitVector);
+                 //std::cout << "min dist " << minDistance << std::endl;
+                 //std::cout << "min normal " << normals[index*3] << " " 
+                 //   <<normals[index*3+1] << " " << normals[index*3+2] << std::endl;
+             }
+         //std::cout << "perp dist " << perpDist << std::endl;
+         //std::cout << "point to AB BC CA " << p0ABdist << " " << p0BCdist << " " << p0CAdist << std::endl;
+        }
+       }
+      //vectorScalarMult(-1.0,directionUnitVector,directionUnitVector);
+      //std::cout << "min dist " << minDistance << std::endl;
+#else      
+                
+    float Emag = 0.0f;
 	float fd = 0.0f;
 	float pot = 0.0f;
     int minIndex = 0;
@@ -97,13 +464,28 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     float angle = 0.0f;
     float Er = 0.0f;
     float Et = 0.0f;
+
+//#if EFIELD_INTERP ==1
 #if USECYLSYMM > 0
     float x = sqrtf(x0*x0 + y*y);
 #else
     float x = x0;
-#endif    
+#endif 
+
+#if GEOM_HASH_SHEATH > 0
+  float dr = closeGeomGridr[1] - closeGeomGridr[0];
+  float dz = closeGeomGridz[1] - closeGeomGridz[0];
+  int rInd = floor((x - closeGeomGridr[0])/dr + 0.5f);
+  int zInd = floor((z - closeGeomGridz[0])/dz + 0.5f);
+  int j;
+  for (int k=0; k< n_closeGeomElements; k++) //n_closeGeomElements
+    {
+       j = closeGeom[zInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + k];
+
+#else
     for (int j=0; j< nLines; j++)
     {
+#endif
         if (boundaryVector[j].Z != 0.0)
         {
             point1_dist = sqrtf((x - boundaryVector[j].x1)*(x - boundaryVector[j].x1) + 
@@ -199,6 +581,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
+#endif   
     
     angle = boundaryVector[minIndex].angle;    
     fd  =  0.996480862464192f +8.78424468259523e-04f  * angle     -
@@ -210,6 +593,9 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     pot = 3.0f*boundaryVector[minIndex].ti;
     //std::cout << "potential and debye length " << pot << " " << boundaryVector[minIndex].debyeLength << " " << pot/boundaryVector[minIndex].debyeLength << std::endl;
         Emag = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength))+ (1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius) );
+      //  std::cout << "Emag " << Emag << std::endl;
+        //std::cout << "fd " << fd << std::endl;
+       // std::cout << "minDistance " << minDistance << std::endl;
     if(minDistance == 0.0f)
     {
         Emag = 0.0f;
@@ -221,13 +607,11 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
         Er = Emag*directionUnitVector[0];
         Et = Emag*directionUnitVector[1];
         E[2] = Emag*directionUnitVector[2];
-    //    std::cout << "Emag " << Emag << std::endl;
+        //std::cout << "Emag " << Emag << std::endl;
     //    std::cout << "Min dist " << minDistance << std::endl;
        // std::cout << "r " << x << "z " << z << std::endl;
-       // std::cout << "E components " << Er << " " << Et << " " << E[2] << std::endl;
-/*        if((Emag == 0) && (minDistance == 0.0)){
-        std::cout << "direction Unit vec " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
-        }*/
+        //std::cout << "E components " << Er << " " << Et << " " << E[2] << std::endl;
+       //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     
     //std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
 #if USECYLSYMM > 0
@@ -240,8 +624,9 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
             E[0] = Er;
             E[1] = Et;
 #endif
-      //      std::cout << "Ex and Ey " << E[0] << " " << E[1] << std::endl;
-    return minDistance;
+            //std::cout << "Ex and Ey and Ez " << E[0] << " " << E[1] << " " << E[2] << std::endl;
+   
+      return minDistance;
 }
 
 struct move_boris { 
@@ -261,7 +646,12 @@ struct move_boris {
     float * EfieldRDevicePointer;
     float * EfieldZDevicePointer;
     float * EfieldTDevicePointer;
-
+    int nR_closeGeom_sheath;
+    int nZ_closeGeom_sheath;
+    int n_closeGeomElements_sheath;
+    float* closeGeomGridr_sheath;
+    float* closeGeomGridz_sheath;
+    int* closeGeom_sheath; 
     const float span;
     const int nLines;
    
@@ -277,7 +667,8 @@ struct move_boris {
             float * _EfieldGridZDevicePointer,
             float * _EfieldRDevicePointer,
             float * _EfieldZDevicePointer,
-            float * _EfieldTDevicePointer) 
+            float * _EfieldTDevicePointer,
+            int _nR_closeGeom, int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridz, int *_closeGeom)
         
         : particlesPointer(_particlesPointer), span(_span), boundaryVector(_boundaryVector), nLines(_nLines), nR_Bfield(_nR_Bfield), 
         nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), 
@@ -288,7 +679,8 @@ struct move_boris {
         EfieldGridRDevicePointer(_EfieldGridRDevicePointer), 
         EfieldGridZDevicePointer(_EfieldGridZDevicePointer),
         EfieldRDevicePointer(_EfieldRDevicePointer), EfieldZDevicePointer(_EfieldZDevicePointer),
-        EfieldTDevicePointer(_EfieldTDevicePointer) {}
+        EfieldTDevicePointer(_EfieldTDevicePointer),
+   nR_closeGeom_sheath(_nR_closeGeom), nZ_closeGeom_sheath(_nZ_closeGeom), n_closeGeomElements_sheath(_n_closeGeomElements), closeGeomGridr_sheath(_closeGeomGridr), closeGeomGridz_sheath(_closeGeomGridz), closeGeom_sheath(_closeGeom) {}
 
 CUDA_CALLABLE_MEMBER    
 void operator()(std::size_t indx) const { 
@@ -303,17 +695,15 @@ cpu_timer timer;
 cpu_times initTime0 = timer.elapsed();
 #endif
 #endif
-	    if(particlesPointer->hitWall[indx] == 0.0)
-        {
+	    //if(particlesPointer->hitWall[indx] == 0.0)
+        //{
             float v_minus[3]= {0.0f, 0.0f, 0.0f};
             float v_prime[3]= {0.0f, 0.0f, 0.0f};
+            float position[3]= {0.0f, 0.0f, 0.0f};
 	        float v[3]= {0.0f, 0.0f, 0.0f};
 	        float E[3] = {0.0f, 0.0f, 0.0f};
 	        float PSE[3] = {0.0f, 0.0f, 0.0f};
 	        float B[3] = {0.0f,0.0f,0.0f};
-            float br;
-            float bz;
-            float bt;
 	        float dt = span;
 	        float Bmag = 0.0f;
 	        float q_prime = 0.0f;
@@ -326,24 +716,31 @@ cpu_times initTime0 = timer.elapsed();
 	        float vpxB[3] = {0.0f,0.0f,0.0f};
 	        float qp_vmxB[3] = {0.0f,0.0f,0.0f};
 	        float c_vpxB[3] = {0.0f,0.0f,0.0f};
-
+            vectorAssign(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],position);
+            
             for ( int s=0; s<nSteps; s++ ) 
             {
 #if USESHEATHEFIELD > 0
-	          minDist = getE(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],E,boundaryVector,nLines);
+	          minDist = getE(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],E,boundaryVector,nLines,nR_closeGeom_sheath,
+                          nZ_closeGeom_sheath,
+                              n_closeGeomElements_sheath,closeGeomGridr_sheath,
+                                   closeGeomGridz_sheath,closeGeom_sheath);
+              //std::cout << "Efield in boris " << E[2] << std::endl;
+              //std::cout << "Charge and Hitwall " << particlesPointer->charge[indx] << " " <<
+               // particlesPointer->hitWall[indx]  << std::endl;
 #endif
 
 #if USEPRESHEATHEFIELD > 0
-                 interp2dVector(&PSE[0],particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],nR_Efield,nZ_Efield,
+                 interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer);
                  
                  vectorAdd(E,PSE,E);
 #endif              
-                interp2dVector(&B[0],particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],nR_Bfield,nZ_Bfield,
+                interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer);        
-            
+                //std::cout << "Bfield and mass" << B[2] << " " << particlesPointer->amu[indx] << std::endl;    
                 Bmag = vectorNorm(B);
 	            q_prime = particlesPointer->charge[indx]*1.60217662e-19f/(particlesPointer->amu[indx]*1.6737236e-27f)*dt*0.5f;
                 coeff = 2.0f*q_prime/(1.0f+(q_prime*Bmag)*(q_prime*Bmag));
@@ -366,12 +763,17 @@ cpu_times initTime0 = timer.elapsed();
                 
                 //v = v + q_prime*E
                 vectorAdd(v,qpE,v);
-	            particlesPointer->x[indx] = particlesPointer->xprevious[indx] + v[0] * dt;
-                particlesPointer->y[indx] = particlesPointer->yprevious[indx] + v[1] * dt;
-                particlesPointer->z[indx] = particlesPointer->zprevious[indx] + v[2] * dt;
+	       
+           if(particlesPointer->hitWall[indx] == 0.0)
+            {
+                //std::cout << "updating r and v " << std::endl;
+                particlesPointer->x[indx] = position[0] + v[0] * dt;
+                particlesPointer->y[indx] = position[1] + v[1] * dt;
+                particlesPointer->z[indx] = position[2] + v[2] * dt;
                 particlesPointer->vx[indx] = v[0];
                 particlesPointer->vy[indx] = v[1];
                 particlesPointer->vz[indx] = v[2];    
+              //std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
     	    }
 #endif
 

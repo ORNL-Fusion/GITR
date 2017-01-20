@@ -80,8 +80,8 @@ float interpRateCoeff2d ( int charge, float x, float y, float z,int nx, int nz, 
     float tlocal = interp2dCombined(x,y,z,nx,nz,tempGridxp,tempGridzp,Tempp);
     //std::cout << "Interpolating local dens " << std::endl;
     float nlocal = interp2dCombined(x,y,z,nx,nz,densGridxp,densGridzp,Densp);
-//    std::cout << "tlocal" << tlocal << std::endl;
-//    std::cout << "nlocal" << nlocal << std::endl;
+    //std::cout << "tlocal" << tlocal << std::endl;
+    //std::cout << "nlocal" << nlocal << std::endl;
     //std::cout << "Interpolating RC " << std::endl;
     float RClocal = rateCoeffInterp(charge,tlocal,nlocal,nT_Rates,nD_Rates,rateGrid_Temp, rateGrid_Dens, Rates);
     float tion = 1/(RClocal*nlocal);

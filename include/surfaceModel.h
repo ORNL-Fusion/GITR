@@ -25,7 +25,7 @@ double screeningLength ( double Zprojectile, double Ztarget ) {
 	double bohrRadius = 5.29177e-11;
 	double screenLength;
 
-	screenLength = 0.885341*bohrRadius*pow(pow(Zprojectile,(2/3)) + pow(Ztarget,(2/3)),(-1/2));
+	screenLength = 0.885341*bohrRadius*powf(powf(Zprojectile,(2/3)) + powf(Ztarget,(2/3)),(-1/2));
 
 	return screenLength;
 }
@@ -112,7 +112,7 @@ void operator()(Particle &p) const {
             particleTrackVector[0] = p.vx;
             particleTrackVector[1] = p.vy;
             particleTrackVector[2] = p.vz;
-            surfaceNormalVector[0] = -boundaryVector[p.wallIndex].slope_dzdx;
+            //surfaceNormalVector[0] = -boundaryVector[p.wallIndex].slope_dzdx;
             surfaceNormalVector[1] = 0.0;
             surfaceNormalVector[2] = 1.0;
             //std::cout << "velocities " << p.vx << " " << p.vy << " " << p.vz << std::endl;
