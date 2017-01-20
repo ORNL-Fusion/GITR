@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(gitr)
 
-set(CUDA 1)
+set(OPENMP 1)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 set(CMAKE_CXX_STANDARD 14) # Doesn't set NVCC C++ standard
@@ -21,7 +21,7 @@ include_directories(${NETCDF_INCLUDE_DIRS})
 include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 
 # Simulation defines
-add_definitions(-DUSE_CUDA=1
+add_definitions(-DUSE_CUDA=0
         -DUSEMPI=0
         -DUSE_BOOST=0
         -DUSEIONIZATION=1
@@ -32,20 +32,25 @@ add_definitions(-DUSE_CUDA=1
         -DUSESURFACEMODEL=0
         -DUSESHEATHEFIELD=1
         -DUSEPRESHEATHFIELD=0
-        -DBFIELD_INTERP=2
-        -DEFIELD_INTERP=1
-        -DPRESHEATH_INTERP=2
+        -DBFIELD_INTERP=0
+        -DEFIELD_INTERP=0
+        -DPRESHEATH_INTERP=0
         -DDENSITY_INTERP=0
         -DTEMP_INTERP=0
         -DFLOWV_INTERP=0
-        -DGRADT_INTERP=2
+        -DGRADT_INTERP=0
         -DODEINT=0
         -DFIXEDSEEDS=1
         -DPARTICLESEEDS=1
         -DGEOM_TRACE=0
-        -DPARTICLE_TRACKS=0
-        -DPARTICLE_SOURCE=1
-        -DUSECYLSYMM=1)
+        -DGEOM_HASH=1
+        -DGEOM_HASH_SHEATH=0
+        -DPARTICLE_TRACKS=1
+        -DPARTICLE_SOURCE=0
+        -DSPECTROSCOPY=1
+        -DUSE3DTETGEOM=1
+        -DUSECYLSYMM=1
+        -DCHECK_COMPATIBILITY=1)
 
 # Setup for CUDA backend
 if (${CUDA})
