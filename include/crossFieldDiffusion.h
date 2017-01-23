@@ -1,0 +1,102 @@
+#ifndef _CFDIFFUSION_
+#define _CFDIFFUSION_
+
+#ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER_DEVICE __device__
+#else
+#define CUDA_CALLABLE_MEMBER_DEVICE
+#endif
+
+#include "Particle.h"
+#include <cmath>
+
+struct crossFieldDiffusion { 
+
+    const float dt;
+	const float diffusionCoefficient;
+    int nR_Bfield;
+    int nZ_Bfield;
+    float * BfieldGridRDevicePointer;
+    float * BfieldGridZDevicePointer;
+    float * BfieldRDevicePointer;
+    float * BfieldZDevicePointer;
+    float * BfieldTDevicePointer;
+
+    crossFieldDiffusion(float _dt, float _diffusionCoefficient,
+            int _nR_Bfield, int _nZ_Bfield,
+            float * _BfieldGridRDevicePointer,float * _BfieldGridZDevicePointer,
+            float * _BfieldRDevicePointer,float * _BfieldZDevicePointer,
+            float * _BfieldTDevicePointer)
+        : dt(_dt), diffusionCoefficient(_diffusionCoefficient),nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
+       BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer) {} 
+
+CUDA_CALLABLE_MEMBER_DEVICE    
+void operator()(Particle &p) const { 
+
+	    if(p.hitWall == 0.0)
+        {
+           if(p.charge > 0.0)
+           { 
+       
+	        float perpVector[3]= {0, 0, 0};
+	        float B[3] = {0.0,0.0,0.0};
+            float Bmag = 0.0;
+		float B_unit[3] = {0.0, 0.0, 0.0};
+		float phi_random;
+		float norm;
+		float step;
+        interp2dVector(&B[0],p.xprevious,p.yprevious,p.zprevious,nR_Bfield,nZ_Bfield,
+                               BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
+        Bmag = sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
+        B_unit[0] = B[0]/Bmag;
+        B_unit[1] = B[1]/Bmag;
+        B_unit[2] = B[2]/Bmag;
+#if PARTICLESEEDS > 0
+#ifdef __CUDACC__
+        	float r3 = curand_uniform(&p.streams[2]);
+#else
+        	std::uniform_real_distribution<float> dist(0.0, 1.0);
+        	float r3=dist(p.streams[2]);
+#endif 
+#else
+float r3 = 0.0;
+#endif
+		phi_random = 2*3.14159265*r3;
+		perpVector[0] = cos(phi_random);
+		perpVector[1] = sin(phi_random);
+		perpVector[2] = (-perpVector[0]*B_unit[0] - perpVector[1]*B_unit[1])/B_unit[2];
+
+		if (B_unit[2] == 0){
+			perpVector[2] = perpVector[1];
+			perpVector[1] = (-perpVector[0]*B_unit[0] - perpVector[2]*B_unit[2])/B_unit[1];
+		}
+		
+		if ((B_unit[0] == 1.0 && B_unit[1] ==0.0 && B_unit[2] ==0.0) || (B_unit[0] == -1.0 && B_unit[1] ==0.0 && B_unit[2] ==0.0))
+		{
+			perpVector[2] = perpVector[0];
+			perpVector[0] = 0;
+		}
+		else if ((B_unit[0] == 0.0 && B_unit[1] ==1.0 && B_unit[2] ==0.0) || (B_unit[0] == 0.0 && B_unit[1] ==-1.0 && B_unit[2] ==0.0))
+		{
+			perpVector[1] = 0.0;
+		}
+		else if ((B_unit[0] == 0.0 && B_unit[1] ==0.0 && B_unit[2] ==1.0) || (B_unit[0] == 0.0 && B_unit[1] ==0.0 && B_unit[2] ==-1.0))
+		{
+			perpVector[2] = 0;
+		}
+		
+		norm = sqrt(perpVector[0]*perpVector[0] + perpVector[1]*perpVector[1] + perpVector[2]*perpVector[2]);
+		perpVector[0] = perpVector[0]/norm;
+		perpVector[1] = perpVector[1]/norm;
+		perpVector[2] = perpVector[2]/norm;
+		
+		step = sqrt(6*diffusionCoefficient*dt);
+
+		p.x = p.xprevious + step*perpVector[0];
+		p.y = p.yprevious + step*perpVector[1];
+		p.z = p.zprevious + step*perpVector[2];
+    	}
+    } }
+};
+
+#endif
