@@ -20,7 +20,8 @@ float interp2dCombined ( float x, float y, float z,int nx, int nz,
     float* gridx,float* gridz,float* data ) {
     
     float fxz = 0.0;
-    
+    float fx_z1 = 0.0;
+    float fx_z2 = 0.0; 
     if(nx*nz == 1)
     {
         fxz = data[0];
@@ -35,12 +36,30 @@ float interp2dCombined ( float x, float y, float z,int nx, int nz,
     float dz = gridz[1] - gridz[0];
     int i = floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
     int j = floor((z - gridz[0])/dz);
-
     float interp_value = data[i + j*nx];
-
-    float fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
-    float fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
-    fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+    if (i >=nx-1 && j>=nz-1)
+    {
+        fxz = data[nx-1+(nz-1)*nx];
+    }
+    else if (i >=nx-1)
+    {
+        fx_z1 = data[nx-1+j*nx];
+        fx_z2 = data[nx-1+(j+1)*nx];
+        fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+    }
+    else if (j >=nz-1)
+    {
+        fx_z1 = data[i+(nz-1)*nx];
+        fx_z2 = data[i+(nz-1)*nx];
+        fxz = ((gridx[i+1]-dim1)*fx_z1+(dim1 - gridx[i])*fx_z2)/d_dim1;
+        
+    }
+    else
+    {
+      fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
+      fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
+      fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+    }
     }
 
     return fxz;
@@ -85,6 +104,96 @@ float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data)
         ((data[low_index+1] - samplePoint)*low_index*max_x/nx
         + (samplePoint - data[low_index])*(low_index+1)*max_x/nx)/(data[low_index+1]- data[low_index]);
     return interpolated_value;
+}
+float interp1dUnstructured2(float samplePoint,int nx, float *xdata, float* data)
+{
+    int done = 0;
+    int low_index = 0;
+    float interpolated_value = 0.0;
+
+    for(int i=0;i<nx;i++)
+    {
+        if(done == 0)
+        {
+            if(samplePoint < data[i])
+            {
+                done = 1;
+                low_index = i-1;
+            }   
+        }
+    }
+    interpolated_value =    xdata[low_index]  
+        + (samplePoint - data[low_index])*(xdata[low_index + 1] - xdata[low_index])/(data[low_index+1]- data[low_index]);
+    return interpolated_value;
+}
+float interp2dUnstructured(float x,float y,int nx,int ny, float *xgrid,float *ygrid, float* data)
+{
+    int doneX = 0;
+    int doneY = 0;
+    int xInd = 0;
+    float xDiffUp = 0.0;
+    float xDiffDown = 0.0;
+    int yInd = 0;
+    float dx;
+    float yLowValue; 
+    float yHighValue;
+    float yDiffUp;
+    float yDiffDown; 
+    float dy;
+    float fxy;
+
+    if(x < xgrid[0])
+    {
+    }
+    else
+    {
+      for(int i=0;i<nx;i++)
+      {
+          if(!doneX)
+          {
+             if(x<xgrid[i])
+               {
+                  doneX = 1;
+                  xInd = i-1;
+               }
+          }
+      }
+    }
+    if(y < ygrid[0])
+    {
+    }
+    else
+    {
+      for(int i=0;i<ny;i++)
+      {
+          if(!doneY)
+          {
+             if(y<ygrid[i])
+               {
+                  doneY = 1;
+                  yInd = i-1;
+               }
+          }
+      }
+    }
+   
+    std::cout << "x vals " << xgrid[xInd] << " " << xgrid[xInd+1];
+    std::cout << "y vals " << ygrid[yInd] << " " << ygrid[yInd+1];
+    xDiffUp = xgrid[xInd+1] - x;
+    xDiffDown = x-xgrid[xInd];
+    dx = xgrid[xInd+1]-xgrid[xInd];
+    std::cout << "dx, data vals " << dx << " " << data[xInd + yInd*nx] << " " <<
+                 data[xInd+1 + yInd*nx] << " " << data[xInd + (yInd+1)*nx] << " " << 
+                 data[xInd+1 + (yInd+1)*nx] << std::endl;
+    yLowValue = (xDiffUp*data[xInd + yInd*nx] + xDiffDown*data[xInd+1 + yInd*nx])/dx;
+    yHighValue = (xDiffUp*data[xInd + (yInd+1)*nx] + xDiffDown*data[xInd+1 + (yInd+1)*nx])/dx;
+    yDiffUp = ygrid[yInd+1]-y;
+    yDiffDown = y - ygrid[yInd];
+    dy = ygrid[yInd+1] - ygrid[yInd];
+    fxy = (yDiffUp*yLowValue + yDiffDown*yHighValue)/dy;
+
+    return fxy;
+
 }
 #endif
 

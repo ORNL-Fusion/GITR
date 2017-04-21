@@ -47,8 +47,13 @@ void operator()(std::size_t indx) const {
           {
               dx = gridX[1] - gridX[0];
               dz = gridZ[1] - gridZ[0];
-              int indx_X = (floor((dim1-gridX[0])/dx));
+#if USECYLSYMM > 0
+              int indx_X = floor((dim1-gridX[0])/dx);
+              int indx_Z = floor((z-gridZ[0])/dz);
+#else
+              int indx_X = floor((dim1-gridX[0])/dx+0.5);
               int indx_Z = floor((z-gridZ[0])/dz + 0.5);
+#endif
               //std::cout << "gridx0 " << gridX[0] << std::endl;
               //std::cout << "gridz0 " << gridZ[0] << std::endl;
               

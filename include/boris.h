@@ -97,7 +97,8 @@ void vectorCrossProduct(float A[], float B[], float C[])
 CUDA_CALLABLE_MEMBER
 
 float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, int nLines,
-       int nR_closeGeom, int nZ_closeGeom, int n_closeGeomElements, float *closeGeomGridr, float *closeGeomGridz, int *closeGeom ) {
+       int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
+       float *closeGeomGridr,float *closeGeomGridy, float *closeGeomGridz, int *closeGeom ) {
 #if USE3DTETGEOM > 0
     float Emag = 0.0f;
     float Er = 0.0f;
@@ -173,8 +174,22 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
       float normals[21] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,
                            0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,
                            0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+#if GEOM_HASH_SHEATH > 0
+  float dr = closeGeomGridr[1] - closeGeomGridr[0];
+  float dy = closeGeomGridy[1] - closeGeomGridy[0];
+  float dz = closeGeomGridz[1] - closeGeomGridz[0];
+  int rInd = floor((x0 - closeGeomGridr[0])/dr + 0.5f);
+  int yInd = floor((y - closeGeomGridy[0])/dy + 0.5f);
+  int zInd = floor((z - closeGeomGridz[0])/dz + 0.5f);
+  int i;
+  for (int k=0; k< n_closeGeomElements; k++) //n_closeGeomElements
+    {
+       i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements + rInd*nR_closeGeom*n_closeGeomElements + k];
+
+#else
       for (int i=0; i<nLines; i++)
       {
+#endif
             //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
         if (boundaryVector[i].Z != 0.0)
         {
@@ -590,7 +605,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
            8.2917E-07f  * powf(angle,4.0f) +
            9.5856E-09f   * powf(angle,5.0f) -
            4.2682E-11f  * powf(angle,6.0f);
-    pot = 3.0f*boundaryVector[minIndex].ti;
+    pot = boundaryVector[minIndex].potential;
     //std::cout << "potential and debye length " << pot << " " << boundaryVector[minIndex].debyeLength << " " << pot/boundaryVector[minIndex].debyeLength << std::endl;
         Emag = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength))+ (1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius) );
       //  std::cout << "Emag " << Emag << std::endl;
@@ -647,9 +662,11 @@ struct move_boris {
     float * EfieldZDevicePointer;
     float * EfieldTDevicePointer;
     int nR_closeGeom_sheath;
+    int nY_closeGeom_sheath;
     int nZ_closeGeom_sheath;
     int n_closeGeomElements_sheath;
     float* closeGeomGridr_sheath;
+    float* closeGeomGridy_sheath;
     float* closeGeomGridz_sheath;
     int* closeGeom_sheath; 
     const float span;
@@ -668,7 +685,7 @@ struct move_boris {
             float * _EfieldRDevicePointer,
             float * _EfieldZDevicePointer,
             float * _EfieldTDevicePointer,
-            int _nR_closeGeom, int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridz, int *_closeGeom)
+            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr,float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom)
         
         : particlesPointer(_particlesPointer), span(_span), boundaryVector(_boundaryVector), nLines(_nLines), nR_Bfield(_nR_Bfield), 
         nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), 
@@ -680,7 +697,8 @@ struct move_boris {
         EfieldGridZDevicePointer(_EfieldGridZDevicePointer),
         EfieldRDevicePointer(_EfieldRDevicePointer), EfieldZDevicePointer(_EfieldZDevicePointer),
         EfieldTDevicePointer(_EfieldTDevicePointer),
-   nR_closeGeom_sheath(_nR_closeGeom), nZ_closeGeom_sheath(_nZ_closeGeom), n_closeGeomElements_sheath(_n_closeGeomElements), closeGeomGridr_sheath(_closeGeomGridr), closeGeomGridz_sheath(_closeGeomGridz), closeGeom_sheath(_closeGeom) {}
+   nR_closeGeom_sheath(_nR_closeGeom),nY_closeGeom_sheath(_nY_closeGeom), nZ_closeGeom_sheath(_nZ_closeGeom), n_closeGeomElements_sheath(_n_closeGeomElements), 
+   closeGeomGridr_sheath(_closeGeomGridr),closeGeomGridy_sheath(_closeGeomGridy), closeGeomGridz_sheath(_closeGeomGridz), closeGeom_sheath(_closeGeom) {}
 
 CUDA_CALLABLE_MEMBER    
 void operator()(std::size_t indx) const { 
@@ -722,8 +740,9 @@ cpu_times initTime0 = timer.elapsed();
             {
 #if USESHEATHEFIELD > 0
 	          minDist = getE(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],E,boundaryVector,nLines,nR_closeGeom_sheath,
-                          nZ_closeGeom_sheath,
+                          nY_closeGeom_sheath,nZ_closeGeom_sheath,
                               n_closeGeomElements_sheath,closeGeomGridr_sheath,
+                              closeGeomGridy_sheath,
                                    closeGeomGridz_sheath,closeGeom_sheath);
               //std::cout << "Efield in boris " << E[2] << std::endl;
               //std::cout << "Charge and Hitwall " << particlesPointer->charge[indx] << " " <<
@@ -746,7 +765,6 @@ cpu_times initTime0 = timer.elapsed();
                 coeff = 2.0f*q_prime/(1.0f+(q_prime*Bmag)*(q_prime*Bmag));
             
                 vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v);
-	            
                 //v_minus = v + q_prime*E;
                vectorScalarMult(q_prime,E,qpE);
                vectorAdd(v,qpE,v_minus);

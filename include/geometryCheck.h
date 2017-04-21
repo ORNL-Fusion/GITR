@@ -20,7 +20,6 @@ int sgn(T val) {
 
 struct geometry_check { 
     Particles *particlesPointer;
-    BoundaryModifiable *boundaryMod;
     const int nLines;
     Boundary  *boundaryVector;
     float dt;
@@ -34,8 +33,8 @@ struct geometry_check {
     float* closeGeomGridz;
     int* closeGeom;
 
-    geometry_check(Particles *_particlesPointer, BoundaryModifiable *_boundaryMod, int _nLines,Boundary * _boundaryVector, float _dt, int _tt, int _nR_closeGeom, int _nY_closeGeom, int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom) : 
-        particlesPointer(_particlesPointer), boundaryMod(_boundaryMod), nLines(_nLines), boundaryVector(_boundaryVector), dt(_dt), tt(_tt), nR_closeGeom(_nR_closeGeom), nY_closeGeom(_nY_closeGeom), nZ_closeGeom(_nZ_closeGeom), n_closeGeomElements(_n_closeGeomElements), closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy), closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom) {}
+    geometry_check(Particles *_particlesPointer, int _nLines,Boundary * _boundaryVector, float _dt, int _tt, int _nR_closeGeom, int _nY_closeGeom, int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom) : 
+        particlesPointer(_particlesPointer), nLines(_nLines), boundaryVector(_boundaryVector), dt(_dt), tt(_tt), nR_closeGeom(_nR_closeGeom), nY_closeGeom(_nY_closeGeom), nZ_closeGeom(_nZ_closeGeom), n_closeGeomElements(_n_closeGeomElements), closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy), closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom) {}
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const { 
@@ -104,15 +103,37 @@ void operator()(std::size_t indx) const {
             int yInd = floor((particlesPointer->yprevious[indx] - closeGeomGridy[0])/dy + 0.5f);
             if(rInd < 0 || yInd < 0 || zInd < 0)
             {
-            //std::cout << "indices " << rInd << " " << yInd << " " << zInd << std::endl;
-            //std::cout << "pos " << r_position << " " << particlesPointer->yprevious[indx]
-            //    << " " << particlesPointer->zprevious[indx]  << std::endl;
+            /*std::cout << "indices " << rInd << " " << yInd << " " << zInd << std::endl;
+            std::cout << "pos " << r_position << " " << particlesPointer->yprevious[indx]
+                << " " << particlesPointer->zprevious[indx]  << std::endl;
+            std::cout << "gridz " << closeGeomGridz[0] << " " << closeGeomGridz[1] << std::endl;
+            std::cout << "particle index " << indx << " " << particlesPointer->hitWall[indx] << std::endl;
               i = closeGeom[-1];
+              */
+                rInd = 0;
+                yInd = 0;
+                zInd = 0;
+#if USE_CUDA
+#else
+                //std::cout << "WARNING: particle outside of geometry hash range (low)" << std::endl;
+#endif
             }
+            else if(rInd > nR_closeGeom-1 || yInd > nY_closeGeom-1 || zInd > nZ_closeGeom-1)
+                    {
+                rInd = 0;
+                yInd = 0;
+                zInd = 0;
+#if USE_CUDA
+#else
+                //std::cout << "WARNING: particle outside of geometry hash range (high)" << std::endl;
+#endif
+
+                    }
             for (int j=0; j< n_closeGeomElements; j++)
             {
                 i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements
                             + yInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + j]; 
+                //std::cout << "i's " << i << std::endl;
 #else
             for (int i=0; i<nLines; i++)
                     {
@@ -124,7 +145,8 @@ void operator()(std::size_t indx) const {
                       plane_norm = boundaryVector[i].plane_norm;
                       pointToPlaneDistance0 = (a*p0[0] + b*p0[1] + c*p0[2] + d)/plane_norm;
                       pointToPlaneDistance1 = (a*p1[0] + b*p1[1] + c*p1[2] + d)/plane_norm;
-                    
+                      //std::cout << "plane coeffs "<< i << " " << a << " " << b << " " << c << " " << d << " " << plane_norm << std::endl;         
+                      //std::cout << "point to plane dists "<< i << " " << pointToPlaneDistance0 << " " << pointToPlaneDistance1 << std::endl;         
                       signPoint0 = sgn(pointToPlaneDistance0);
                       signPoint1 = sgn(pointToPlaneDistance1);
 
@@ -177,7 +199,6 @@ void operator()(std::size_t indx) const {
 #if USE_CUDA > 0
                             atomicAdd(&boundaryVector[i].impacts, 1.0);
 #else
-                            //boundaryMod->impacts[i] = boundaryMod->impacts[i] + 1.0;
                             boundaryVector[i].impacts = boundaryVector[i].impacts +  1.0;
 #endif
                         }   
@@ -193,8 +214,8 @@ void operator()(std::size_t indx) const {
 #if USECYLSYMM > 0
            float pdim1 = sqrt(particlesPointer->x[indx]*particlesPointer->x[indx] + particlesPointer->y[indx]*particlesPointer->y[indx]);
            float pdim1previous = sqrt(particlesPointer->xprevious[indx]*particlesPointer->xprevious[indx] + particlesPointer->yprevious[indx]*particlesPointer->yprevious[indx]); 
-           float theta0 = atanf(particlesPointer->yprevious[indx]/particlesPointer->xprevious[indx]);
-           float theta1 = atanf(particlesPointer->y[indx]/particlesPointer->x[indx]);
+           float theta0 = atan2f(particlesPointer->yprevious[indx],particlesPointer->xprevious[indx]);
+           float theta1 = atan2f(particlesPointer->y[indx],particlesPointer->x[indx]);
            float thetaNew = 0;
 #else      
            float pdim1 = particlesPointer->x[indx];
@@ -294,39 +315,39 @@ void operator()(std::size_t indx) const {
                                //std::cout << "not vertical line" << std::endl;
                             //std::cout << 0.0*7.0 << " " << i << " " << nParam << " " << lines[i*nParam+4] << "  " <<tol << std::endl;
                                //std::cout << "boundaryVector slope " << boundaryVector[i].slope_dzdx << " " << tol*0.75 <<std::endl; 
-                               if (fabsf(boundaryVector[i].slope_dzdx) >= tol*0.75f)
-                                {
-                                    intersectionx[nIntersections-1] = boundaryVector[i].x1;
+                                   if (fabsf(boundaryVector[i].slope_dzdx) >= tol*0.75f)
+                                    {
+                                        intersectionx[nIntersections-1] = boundaryVector[i].x1;
+                                    }
+                                    else
+                                    {
+                                        intersectionx[nIntersections-1] = (boundaryVector[i].intercept_z - particle_intercept)/
+                                                    (particle_slope - boundaryVector[i].slope_dzdx);
+                                      //  std::cout << "in this else "<< intersectionx[nIntersections -1] << std::endl;
+                                    }
+                                    intersectiony[nIntersections-1] = intersectionx[nIntersections-1]*particle_slope
+                                                                                   + particle_intercept;
                                 }
-                                else
-                                {
-                                    intersectionx[nIntersections-1] = (boundaryVector[i].intercept_z - particle_intercept)/
-                                                (particle_slope - boundaryVector[i].slope_dzdx);
-                                  //  std::cout << "in this else "<< intersectionx[nIntersections -1] << std::endl;
-                                }
-                                intersectiony[nIntersections-1] = intersectionx[nIntersections-1]*particle_slope
-                                                                               + particle_intercept;
                             }
                         }
                     }
-                }
-       //if(particlesPointer->hitWall[indx] == 0.0)
-         // {
-            if (nIntersections ==0) 
-            {
-                particlesPointer->xprevious[indx] = particlesPointer->x[indx];
-                particlesPointer->yprevious[indx] = particlesPointer->y[indx];
-                particlesPointer->zprevious[indx] = particlesPointer->z[indx];
-
-                //std::cout << "r " << particlesPointer->x[indx] << " " << particlesPointer->y[indx] << " " << particlesPointer->z[indx] << std::endl;
-                //std::cout << "r0 " << particlesPointer->x[indx]previous << " " << particlesPointer->y[indx]previous << " " << particlesPointer->z[indx]previous<< std::endl;
-            }
-            else if (nIntersections ==1)
-            {
-                particlesPointer->hitWall[indx] = 1.0f;
-                particlesPointer->wallIndex[indx] = intersectionIndices[0];
-                if (particle_slope >= tol*0.75f)
+           //if(particlesPointer->hitWall[indx] == 0.0)
+             // {
+                if (nIntersections ==0) 
                 {
+                    particlesPointer->xprevious[indx] = particlesPointer->x[indx];
+                    particlesPointer->yprevious[indx] = particlesPointer->y[indx];
+                    particlesPointer->zprevious[indx] = particlesPointer->z[indx];
+
+                    //std::cout << "r " << particlesPointer->x[indx] << " " << particlesPointer->y[indx] << " " << particlesPointer->z[indx] << std::endl;
+                    //std::cout << "r0 " << particlesPointer->x[indx]previous << " " << particlesPointer->y[indx]previous << " " << particlesPointer->z[indx]previous<< std::endl;
+                }
+                else if (nIntersections ==1)
+                {
+                    particlesPointer->hitWall[indx] = 1.0f;
+                    particlesPointer->wallIndex[indx] = intersectionIndices[0];
+                    if (particle_slope >= tol*0.75f)
+                    {
 #if USECYLSYMM > 0
                     thetaNew = theta0 + (intersectiony[0] - particlesPointer->zprevious[indx])/(particlesPointer->z[indx] - particlesPointer->zprevious[indx])*(theta1 - theta0);
                    particlesPointer->y[indx] = intersectionx[0]*sinf(thetaNew);
@@ -338,17 +359,17 @@ void operator()(std::size_t indx) const {
                 {
 #if USECYLSYMM > 0
                 thetaNew = theta0 + (intersectionx[0] - pdim1previous)/(pdim1 - pdim1previous)*(theta1 - theta0);    
-                particlesPointer->y[indx] = intersectionx[0]*sinf(thetaNew);
+                particlesPointer->yprevious[indx] = intersectionx[0]*sinf(thetaNew);
 #else                    
                 particlesPointer->y[indx] = particlesPointer->yprevious[indx] + (intersectionx[0] - particlesPointer->xprevious[indx])/(particlesPointer->x[indx] - particlesPointer->xprevious[indx])*(particlesPointer->y[indx] - particlesPointer->yprevious[indx]);
 #endif                
                 }
 #if USECYLSYMM > 0
-                particlesPointer->x[indx] = intersectionx[0]*cosf(thetaNew);
+                particlesPointer->xprevious[indx] = intersectionx[0]*cosf(thetaNew);
 #else                
                 particlesPointer->x[indx] = intersectionx[0];
 #endif     
-                particlesPointer->z[indx] = intersectiony[0];
+                particlesPointer->zprevious[indx] = intersectiony[0];
                 //std::cout << "nInt = 1 position " << intersectionx[0] << " " << intersectiony[0]  << std::endl;
             }
             else

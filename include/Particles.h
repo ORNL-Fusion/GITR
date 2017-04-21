@@ -44,8 +44,20 @@ public:
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
   sim::Array<curandState> streams;
+  sim::Array<curandState> streams_rec;
+  sim::Array<curandState> streams_collision1;
+  sim::Array<curandState> streams_collision2;
+  sim::Array<curandState> streams_collision3;
+  sim::Array<curandState> streams_diff;
+  sim::Array<curandState> streams_surf;
 #else
   sim::Array<std::mt19937> streams;
+  sim::Array<std::mt19937> streams_rec;
+  sim::Array<std::mt19937> streams_collision1;
+  sim::Array<std::mt19937> streams_collision2;
+  sim::Array<std::mt19937> streams_collision3;
+  sim::Array<std::mt19937> streams_diff;
+  sim::Array<std::mt19937> streams_surf;
 #endif
 #endif
 
@@ -55,6 +67,7 @@ public:
   sim::Array<int> wallIndex;
   sim::Array<float> perpDistanceToSurface;
   sim::Array<float> test;
+  sim::Array<float> distanceTraveled;
 
 //  void BorisMove(double dt, double xMinV, double xMaxV, double yMin, double yMax, double zMin, double zMax);
 
@@ -83,14 +96,35 @@ public:
       };    
 
   CUDA_CALLABLE_MEMBER
+  void  setParticleV(int indx, float x, float y, float z, float Vx, float Vy, float Vz, float Z, float amu, float charge) {
+
+        this->xprevious[indx] = x;
+        this->yprevious[indx] = y;
+        this->zprevious[indx] = z;
+        this->x[indx] = x;
+        this->y[indx] = y;
+        this->z[indx] = z;
+        this->Z[indx] = Z;
+        this->charge[indx]= charge;
+        this->amu[indx] = amu;
+        this->hitWall[indx] = 0.0;
+        this->wallIndex[indx] = 0;
+        this->vx[indx] = Vx;
+        this->vy[indx] = Vy;
+        this->vz[indx] = Vz;
+
+      };    
+  CUDA_CALLABLE_MEMBER
   Particles(std::size_t nP) :
    nParticles{nP}, x{nP}, y{nP}, z{nP}, xprevious{nP}, yprevious{nP}, zprevious{nP},
    vx{nP}, vy{nP}, vz{nP}, Z{nP}, amu{nP}, charge{nP},
 #if PARTICLESEEDS > 0
-      streams{nP},
+      streams{nP},streams_rec{nP},streams_collision1{nP},streams_collision2{nP},
+      streams_collision3{nP},streams_diff{nP},streams_surf{nP},
 #endif
-      hitWall{nP},
-   transitTime{nP,0.0},wallHit{nP,0}, wallIndex{nP}, perpDistanceToSurface{nP}, test{nP} {};   
+      hitWall{nP,0.0},
+   transitTime{nP,0.0},wallHit{nP,0}, wallIndex{nP}, perpDistanceToSurface{nP}, 
+      test{nP},distanceTraveled{nP} {};   
 
 };
 
