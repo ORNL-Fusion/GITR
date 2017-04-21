@@ -106,6 +106,30 @@ int read_profileNs( string fileName, string nxName, string nzName,int &n_x,int &
 
 }
 
+int read_profileNsChar(const char *fileName,const char *nxName,const char *nzName,int &n_x,int &n_z ) {
+
+    // Check input file exists
+
+    //ifstream file(fileName.c_str());
+    ifstream file(fileName);
+    if(!file.good()) {
+        cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
+        exit(1);
+    }
+
+    //NcFile nc(fileName.c_str(), NcFile::read);
+    NcFile nc(fileName, NcFile::read);
+
+    NcDim nc_nx(nc.getDim(nxName));
+    NcDim nc_nz(nc.getDim(nzName));
+    
+    n_x = nc_nx.getSize(); 
+    n_z = nc_nz.getSize(); 
+
+
+    return(0);
+
+}
 
 int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, sim::Array<float>& gridx,string gridzName,
           sim::Array<float>& gridz,string dataName, sim::Array<float>& data) {
@@ -233,12 +257,12 @@ void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, float *arra
             std::string full_path = folder + "/" + outname;
 			outfile.open (full_path );
 			
-				 for(int i=1 ; i<=nX ; i++)
+				 for(int i=1 ; i<=nY ; i++)
 				{
-				outfile << "Dep( " << i<< ",:) = [ " ;
-					for(int j=0 ; j<nY ; j++)
+				outfile << "val2d( :," << i<< ") = [ " ;
+					for(int j=0 ; j<nX ; j++)
 					{
-					outfile << array2d[(i-1)*nY + j] << "  " ;
+					outfile << array2d[(i-1)*nX + j] << "  " ;
 					//std::cout << r[i] << std::endl;
 					}
 					outfile << "  ];" << std::endl;
@@ -267,12 +291,48 @@ void OUTPUT1d(std::string folder,std::string outname,int nX, float *array2d)
             std::string full_path = folder + "/" + outname;
 			outfile.open (full_path );
 			
-				outfile << "nX " << "  = [ " ;
+				outfile << "val1d " << "  = [ " ;
 				 for(int i=0 ; i<nX ; i++)
 				{
 					outfile << array2d[i] << "  " ;
 				}
 					outfile << "  ];" << std::endl;
+			outfile.close();	
+		
+		
+}
+
+void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, float *array3d)
+{
+       ofstream outfile;
+#if USE_BOOST	
+			//Output
+        boost::filesystem::path dir(folder);
+
+            if(!(boost::filesystem::exists(dir)))
+            {
+              std::cout<<"Doesn't Exists"<<std::endl;
+              if (boost::filesystem::create_directory(dir))
+              {
+              std::cout << " Successfully Created " << std::endl;
+              }
+            }
+#endif
+            std::string full_path = folder + "/" + outname;
+			outfile.open (full_path );
+			for(int k=1; k<=nZ; k++)
+            {
+				 for(int i=1 ; i<=nY ; i++)
+				{
+				outfile << "val3d( :," << i<< "," << k << ") = [ " ;
+					for(int j=0 ; j<nX ; j++)
+					{
+					outfile << array3d[(k-1)*nX*nY + (i-1)*nX + j] << "  " ;
+					//std::cout << r[i] << std::endl;
+					}
+					outfile << "  ];" << std::endl;
+				}
+            }
 			outfile.close();	
 		
 		

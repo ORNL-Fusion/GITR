@@ -48,6 +48,7 @@ class Boundary {
 #endif     
         float Z;
       	float amu;
+        float potential;
 	#ifdef __CUDACC__
 	curandState streams[7];
 	#else

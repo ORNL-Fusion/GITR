@@ -9,7 +9,8 @@
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
 
-#include "Particle.h"
+#include "Particles.h"
+#include "Boundary.h"
 #include <cmath>
 #include <math.h>
 
@@ -31,28 +32,28 @@ double screeningLength ( double Zprojectile, double Ztarget ) {
 }
 
 CUDA_CALLABLE_MEMBER
-double stoppingPower (Particle p, double Mtarget, double Ztarget, double screenLength) {
+double stoppingPower (Particles * particles,int indx, double Mtarget, double Ztarget, double screenLength) {
 	        double E0;
                 double Q = 1.60217662e-19;
 		double ke2 = 14.4e-10;
 		double reducedEnergy;
 	double stoppingPower;
 
-	E0 = 0.5*p.amu*1.6737236e-27*(p.vx*p.vx + p.vy*p.vy+ p.vz*p.vz)/1.60217662e-19;
-	reducedEnergy = E0*(Mtarget/(p.amu+Mtarget))*(screenLength/(p.Z*Ztarget*ke2));
+	E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/1.60217662e-19;
+	reducedEnergy = E0*(Mtarget/(particles->amu[indx]+Mtarget))*(screenLength/(particles->Z[indx]*Ztarget*ke2));
 	stoppingPower = 0.5*log(1.0 + 1.2288*reducedEnergy)/(reducedEnergy + 0.1728*sqrt(reducedEnergy) + 0.008*pow(reducedEnergy, 0.1504));
 
 	return stoppingPower;	
 }
 
 struct erosion { 
-
+    Particles *particles;
     const double dt;
 
-    erosion(double _dt) : dt(_dt) {} 
+    erosion(Particles *_particles, double _dt) : particles(_particles), dt(_dt) {} 
 
 CUDA_CALLABLE_MEMBER_DEVICE    
-void operator()(Particle &p) const { 
+void operator()(std::size_t indx) const { 
 	double screenLength;
 	double stopPower;
 	double q = 18.6006;
@@ -66,9 +67,9 @@ void operator()(Particle &p) const {
 	double term;
 	double E0;
 
-	screenLength = screeningLength(p.Z, Ztarget);
-	stopPower = stoppingPower(p, Mtarget, Ztarget, screenLength); 
-	E0 = 0.5*p.amu*1.6737236e-27*(p.vx*p.vx + p.vy*p.vy+ p.vz*p.vz)/1.60217662e-19;
+	screenLength = screeningLength(particles->Z[indx], Ztarget);
+	stopPower = stoppingPower(particles,indx, Mtarget, Ztarget, screenLength); 
+	E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/1.60217662e-19;
 	term = pow((E0/Eth - 1),mu);
 	Y0 = q*stopPower*term/(lambda + term);
     	}
@@ -76,16 +77,25 @@ void operator()(Particle &p) const {
 };
 
 struct reflection {
-
+    Particles * particles;
     const double dt;
     int nLines;
     Boundary * boundaryVector;
+    int nAngle;
+    int nEnergy;
+    float* spYlGridAngle;
+    float* spYlGridE;
+    float* spYl;
 
-    reflection(double _dt, int _nLines,Boundary * _boundaryVector) : dt(_dt),nLines(_nLines), boundaryVector(_boundaryVector) {}
+    reflection(Particles* _particles, double _dt, int _nLines,Boundary * _boundaryVector,
+            int _nAngle, int _nEnergy, float* _spYlGridAngle, float* _spYlGridE, float* _spYl) : 
+        particles(_particles), dt(_dt),nLines(_nLines), boundaryVector(_boundaryVector),
+        nAngle(_nAngle),nEnergy(_nEnergy),spYlGridAngle(_spYlGridAngle),
+        spYlGridE(_spYlGridE), spYl(_spYl) {}
 
 CUDA_CALLABLE_MEMBER_DEVICE
-void operator()(Particle &p) const {
-            if(p.hitWall == 1.0)
+void operator()(std::size_t indx) const {
+            if(particles->hitWall[indx] == 1.0)
         	{
 			float reducedEnergyMultiplier = 5e-7;//for W on W
             float E0 = 0.0;
@@ -107,18 +117,18 @@ void operator()(Particle &p) const {
             float partDotNormal = 0.0;
             float signPartDotNormal = 0.0;
 		
-		        E0 = 0.5*p.amu*1.6737236e-27*(p.vx*p.vx + p.vy*p.vy+ p.vz*p.vz)/1.60217662e-19;
+		        E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/1.60217662e-19;
 			reducedEnergy = E0*reducedEnergyMultiplier;
-            particleTrackVector[0] = p.vx;
-            particleTrackVector[1] = p.vy;
-            particleTrackVector[2] = p.vz;
-            //surfaceNormalVector[0] = -boundaryVector[p.wallIndex].slope_dzdx;
+            particleTrackVector[0] = particles->vx[indx];
+            particleTrackVector[1] = particles->vy[indx];
+            particleTrackVector[2] = particles->vz[indx];
+            //surfaceNormalVector[0] = -boundaryVector[particles->wallIndex].slope_dzdx;
             surfaceNormalVector[1] = 0.0;
             surfaceNormalVector[2] = 1.0;
-            //std::cout << "velocities " << p.vx << " " << p.vy << " " << p.vz << std::endl;
+            //std::cout << "velocities " << particles->vx[indx] << " " << particles->vy[indx] << " " << particles->vz[indx] << std::endl;
             //std::cout << "surface norm " << surfaceNormalVector[0] << " " << surfaceNormalVector[1] << " " << surfaceNormalVector[2] << std::endl;
 #if USECYLSYMM > 0
-            thetaAzimuthal = atan2(p.y,p.x);   
+            thetaAzimuthal = atan2(particles->y[indx],particles->x[indx]);   
             surfaceNormalVectorRotated[0] = cos(thetaAzimuthal)*surfaceNormalVector[0];
             surfaceNormalVectorRotated[1] = sin(thetaAzimuthal)*surfaceNormalVector[0];
 #else
@@ -152,10 +162,10 @@ void operator()(Particle &p) const {
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
                 curandState tmpState;
-                float r7 = curand_uniform(&p.streams[6]);
+                float r7 = curand_uniform(&particles->streams[6]);
 #else
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
-                float r7 = dist(p.streams[6]);
+                float r7 = dist(particles->streams[6]);
 #endif
 
 #else
@@ -164,7 +174,7 @@ void operator()(Particle &p) const {
 		        if(r7 <= Rn)
         		{
       //              std::cout << "particle reflected " << std::endl;
-		//		    std::cout << "from surface " << p.wallIndex << " material " <<boundaryVector[p.wallIndex].Z << std::endl;
+		//		    std::cout << "from surface " << particles->wallIndex << " material " <<boundaryVector[particles->wallIndex].Z << std::endl;
                 float a1_e = -7.168;
                 float a2_e = 0.01685;
                 float a3_e = 7.005e-5;
@@ -174,25 +184,25 @@ void operator()(Particle &p) const {
 				float launchEnergy = E0*Re/Rn;
                 launchEnergy = 10.0;
               //  std::cout << "Re, E0 and launch energy" << Re << " " << E0 << " " << launchEnergy << std::endl;
-                p.charge = 0.0;
-				p.vx = sqrt(2*launchEnergy*1.60217662e-19/(p.amu*1.6737236e-27))*surfaceNormalVectorRotated[0];//launchEnergy*launch_unitVector[0];
-				p.vy = sqrt(2*launchEnergy*1.60217662e-19/(p.amu*1.6737236e-27))*surfaceNormalVectorRotated[1];//launchEnergy*launch_unitVector[1];
-				p.vz = sqrt(2*launchEnergy*1.60217662e-19/(p.amu*1.6737236e-27))*surfaceNormalVectorRotated[2];
-                //p.x = 1.33;//p.xprevious;
-                //p.y = 0.0;
-                //p.z = 1.34;//boundaryVector[p.wallIndex].z1 + 0.01;
-                p.xprevious = p.xprevious + 0.0001*surfaceNormalVectorRotated[0];
-                p.yprevious = p.yprevious + 0.0001*surfaceNormalVectorRotated[1];
-                p.zprevious = p.zprevious + 0.0001*surfaceNormalVectorRotated[2];//boundaryVector[p.wallIndex].z1 + 0.01;
-                //std::cout << "particle launched from " << p.xprevious << p.yprevious << p.zprevious << std::endl;
-                //std::cout << "particle launched at velocity " << p.vx << p.vy << p.vz << std::endl;
+                particles->charge[indx] = 0.0;
+				particles->vx[indx] = sqrt(2*launchEnergy*1.60217662e-19/(particles->amu[indx]*1.6737236e-27))*surfaceNormalVectorRotated[0];//launchEnergy*launch_unitVector[0];
+				particles->vy[indx] = sqrt(2*launchEnergy*1.60217662e-19/(particles->amu[indx]*1.6737236e-27))*surfaceNormalVectorRotated[1];//launchEnergy*launch_unitVector[1];
+				particles->vz[indx] = sqrt(2*launchEnergy*1.60217662e-19/(particles->amu[indx]*1.6737236e-27))*surfaceNormalVectorRotated[2];
+                //particles->x = 1.33;//particles->xprevious[indx];
+                //particles->y = 0.0;
+                //particles->z = 1.34;//boundaryVector[particles->wallIndex].z1 + 0.01;
+                particles->xprevious[indx] = particles->xprevious[indx] + 0.0001*surfaceNormalVectorRotated[0];
+                particles->yprevious[indx] = particles->yprevious[indx] + 0.0001*surfaceNormalVectorRotated[1];
+                particles->zprevious[indx] = particles->zprevious[indx] + 0.0001*surfaceNormalVectorRotated[2];//boundaryVector[particles->wallIndex].z1 + 0.01;
+                //std::cout << "particle launched from " << particles->xprevious[indx] << particles->yprevious[indx] << particles->zprevious[indx] << std::endl;
+                //std::cout << "particle launched at velocity " << particles->vx[indx] << particles->vy[indx] << particles->vz[indx] << std::endl;
 
-				p.hitWall = 0.0;
+				particles->hitWall[indx] = 0.0;
         		}
                 else
                 {
                     //std::cout << " no reflection" << std::endl;
-                    p.hitWall = 2.0;
+                    particles->hitWall[indx] = 2.0;
                 }
 		}
 	}

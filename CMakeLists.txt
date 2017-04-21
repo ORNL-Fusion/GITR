@@ -13,40 +13,48 @@ file(GLOB SRC_FILES src/*.cpp)
 find_package(Thrust REQUIRED)
 find_package(NetCDF COMPONENTS CXX REQUIRED)
 find_package(LibConfig)
+find_package (Boost COMPONENTS REQUIRED filesystem timer)
+find_package(Boost 1.61.0)
+IF (Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIR})
+    include_directories(${Boost_LIBRARY_DIR})
+endif()
 
 # Add includes
 include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
 include_directories(${THRUST_INCLUDE_DIRS})
 include_directories(${NETCDF_INCLUDE_DIRS})
 include_directories(${LIBCONFIGPP_INCLUDE_DIR})
-
 # Simulation defines
 add_definitions(-DUSE_CUDA=1
         -DUSEMPI=0
-        -DUSE_BOOST=0
-        -DUSEIONIZATION=1
+        -DUSE_BOOST=1
+        -DUSEIONIZATION=0
         -DUSERECOMBINATION=0
-        -DUSEPERPDIFFUSION=0
-        -DUSECOULOMBCOLLISIONS=0
-        -DUSETHERMALFORCE=0
+        -DUSEPERPDIFFUSION=1
+        -DUSECOULOMBCOLLISIONS=1
+        -DUSETHERMALFORCE=1
         -DUSESURFACEMODEL=0
         -DUSESHEATHEFIELD=1
-        -DUSEPRESHEATHFIELD=0
+        -DBIASED_SURFACE=1
+        -DUSEPRESHEATHEFIELD=1
         -DBFIELD_INTERP=0
+        -DLC_INTERP=3
+        -DGENERATE_LC=1
         -DEFIELD_INTERP=0
-        -DPRESHEATH_INTERP=0
-        -DDENSITY_INTERP=0
-        -DTEMP_INTERP=0
-        -DFLOWV_INTERP=0
-        -DGRADT_INTERP=0
+        -DPRESHEATH_INTERP=1
+        -DDENSITY_INTERP=2
+        -DTEMP_INTERP=2
+        -DFLOWV_INTERP=1
+        -DGRADT_INTERP=2
         -DODEINT=0
         -DFIXEDSEEDS=1
         -DPARTICLESEEDS=1
         -DGEOM_TRACE=0
         -DGEOM_HASH=1
-        -DGEOM_HASH_SHEATH=0
-        -DPARTICLE_TRACKS=1
-        -DPARTICLE_SOURCE=0
+        -DGEOM_HASH_SHEATH=1
+        -DPARTICLE_TRACKS=0
+        -DPARTICLE_SOURCE=2
         -DSPECTROSCOPY=1
         -DUSE3DTETGEOM=1
         -DUSECYLSYMM=1
@@ -90,6 +98,7 @@ endif ()
 # Add libraries
 target_link_libraries(GITR ${NETCDF_CXX_LIBRARIES})
 target_link_libraries(GITR ${LIBCONFIGPP_LIBRARIES})
-
+target_link_libraries(GITR Boost::system Boost::filesystem Boost::timer)
+    #libboost_system};${lboost_timer};${lboost_filesystem})
 # Install binaries
 install(TARGETS GITR DESTINATION bin)
