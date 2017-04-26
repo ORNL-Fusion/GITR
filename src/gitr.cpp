@@ -71,7 +71,7 @@ int main()
   }
   catch(const FileIOException &fioex)
   {
-    std::cerr << "I/O error while reading file." << std::endl;
+    std::cerr << "I/O error while reading file gitrInput.cfg" << std::endl;
     return(EXIT_FAILURE);
   }
   catch(const ParseException &pex)
@@ -91,7 +91,7 @@ int main()
     }
     catch(const FileIOException &fioex)
     {
-      std::cerr << "I/O error while reading file." << std::endl;
+      std::cerr << "I/O error while reading GITR geometry file" << std::endl;
       return(EXIT_FAILURE);
     }
     catch(const ParseException &pex)
@@ -126,7 +126,7 @@ int main()
               "flags.GEOM_HASH_SHEATH","flags.PARTICLE_TRACKS",
               "flags.PARTICLE_SOURCE",
               "flags.SPECTROSCOPY","flags.USE3DTETGEOM","flags.USECYLSYMM"};
-   int flagValues[] =  {USE_CUDA, USEMPI, USE_BOOST,USEIONIZATION,
+    int flagValues[] =  {USE_CUDA, USEMPI, USE_BOOST,USEIONIZATION,
            USERECOMBINATION,USEPERPDIFFUSION,USECOULOMBCOLLISIONS,
            USETHERMALFORCE,USESURFACEMODEL,USESHEATHEFIELD,
            USEPRESHEATHEFIELD,BFIELD_INTERP,LC_INTERP, GENERATE_LC,
@@ -174,9 +174,9 @@ int main()
   }  
 
   //Bfield initialization
-    int nR_Bfield;
-    int nY_Bfield;
-    int nZ_Bfield;
+  int nR_Bfield;
+  int nY_Bfield;
+  int nZ_Bfield;
   #if BFIELD_INTERP == 0
     nR_Bfield = 1;
     nY_Bfield = 0;
@@ -474,23 +474,78 @@ int main()
 
   #if GENERATE_LC == 1
 
-    //if ( !boost::filesystem::exists( "LcS.nc" ) )
-    //{
-    //    std::cout << "No pre-existing connection length file found" << std::endl;
-    int nTraceSteps = 5000;
-    float dr = 0.0001;
-    int nR_Lc = 80;
-    int nY_Lc = 0;
-    int nZ_Lc = 100;
-    float r0_Lc = -0.076;
-    float r1_Lc = 0.076;
-    float z0_Lc = -0.05;
-    float z1_Lc = 0.20;
+    int nR_Lc;
+    int nY_Lc;
+    int nZ_Lc;
+    //int nTracers;
+    const char *gitrLcFileString;
+    if(cfg.lookupValue("connectionLength.fileString", gitrLcFileString))
+    { std::cout << "Checking for GITR generated connection length file " << std::endl;}
+    else std::cout << "Error getting connectionLength filestring from input file " << std::endl;
+    float r0_Lc, r1_Lc, y0_Lc,y1_Lc,z0_Lc,z1_Lc, dr;
+    int nTraceSteps;
+    if(cfg.lookupValue("connectionLength.netx0", r0_Lc) && 
+       cfg.lookupValue("connectionLength.netx1", r1_Lc) && 
+       cfg.lookupValue("connectionLength.nety0", y0_Lc) && 
+       cfg.lookupValue("connectionLength.nety0", y1_Lc) && 
+       cfg.lookupValue("connectionLength.netz0", z0_Lc) && 
+       cfg.lookupValue("connectionLength.netz1", z1_Lc) && 
+       cfg.lookupValue("connectionLength.nX", nR_Lc) && 
+       cfg.lookupValue("connectionLength.nY", nY_Lc) && 
+       cfg.lookupValue("connectionLength.nZ", nZ_Lc) && 
+       cfg.lookupValue("connectionLength.nTraceSteps", nTraceSteps) &&
+       cfg.lookupValue("connectionLength.dr", dr))
+       {std::cout << "Lc grid imported" << std::endl;}
+    else
+    { std::cout << "ERROR: Could not get Lc numeric values from input file " << std::endl;}
+    
+    const char *LcFile,*LcNr,*LcNz,*LcNy,
+                 *LcNclosest,*LcGridR,*LcGridY,
+                 *LcGridZ,*LcChar,*SChar,*nIChar;
+    if(cfg.lookupValue("connectionLength.fileString", LcFile) &&
+       cfg.lookupValue("connectionLength.gridNrString",LcNr) &&
+       cfg.lookupValue("connectionLength.gridNyString",LcNy) &&
+       cfg.lookupValue("connectionLength.gridNzString",LcNz) &&
+       cfg.lookupValue("connectionLength.gridRString",LcGridR) &&
+       cfg.lookupValue("connectionLength.gridYString",LcGridY) &&
+       cfg.lookupValue("connectionLength.gridZString",LcGridZ) &&
+       cfg.lookupValue("connectionLength.LcString",LcChar) &&
+       cfg.lookupValue("connectionLength.SString",SChar) &&
+       cfg.lookupValue("connectionLength.noIntersectionString",nIChar))
+    { std::cout << "Geometry Lc file: " << LcFile << std::endl;}
+    else
+    { std::cout << "ERROR: Could not get Lc string info from input file " << std::endl;}
+    
+    std::cout << " beginning lc s init " <<std::endl; 
+    sim::Array<float> Lc(nR_Lc*nY_Lc*nZ_Lc),s(nR_Lc*nY_Lc*nZ_Lc);
+    std::cout << " beginning grid lc s init " <<std::endl; 
+    sim::Array<float> gridRLc(nR_Lc),gridYLc(nY_Lc),gridZLc(nZ_Lc);
+    std::cout << " noInter init " <<std::endl; 
+#if USE3DTETGEOM > 0
+    int nTracers = nR_Lc*nY_Lc*nZ_Lc;
+#else
+    int nTracers = nR_Lc*nZ_Lc;
+#endif
+    sim::Array<int> noIntersectionNodes(nTracers);
+    std::cout << " beginning if statement " <<std::endl; 
+    if ( !boost::filesystem::exists( gitrLcFileString ) )
+    {
+        std::cout << "No pre-existing connection length file found" << std::endl;
+      
+    //int nTraceSteps = 5000;
+    //float dr = 0.0001;
+    //int nR_Lc = 80;
+    //int nY_Lc = 0;
+    //int nZ_Lc = 100;
+    //float r0_Lc = -0.076;
+    //float r1_Lc = 0.076;
+    //float z0_Lc = -0.05;
+    //float z1_Lc = 0.20;
     sim::Array<float> gridRLc(nR_Lc),gridZLc(nZ_Lc);
 #if USE3DTETGEOM > 0
-    nY_Lc = 70;
-    float y0_Lc = -0.076;
-    float y1_Lc = 0.076;
+    //nY_Lc = 70;
+    //float y0_Lc = -0.076;
+    //float y1_Lc = 0.076;
     sim::Array<float> gridYLc(nY_Lc);
     sim::Array<float> Lc(nR_Lc*nY_Lc*nZ_Lc),s(nR_Lc*nY_Lc*nZ_Lc);
     float dy_Lc = (y1_Lc-y0_Lc)/(nY_Lc-1);
@@ -646,21 +701,25 @@ NcDim nc_nZLc = ncFileLC.addDim("nZ",nZ_Lc);
 
 NcVar nc_Lc = ncFileLC.addVar("Lc",ncDouble,nc_nTracers);
 NcVar nc_s = ncFileLC.addVar("s",ncDouble,nc_nTracers);
+NcVar nc_nI = ncFileLC.addVar("noIntersection",ncDouble,nc_nTracers);
 NcVar nc_gridRLc = ncFileLC.addVar("gridR",ncDouble,nc_nRLc);
 NcVar nc_gridYLc = ncFileLC.addVar("gridY",ncDouble,nc_nYLc);
 NcVar nc_gridZLc = ncFileLC.addVar("gridZ",ncDouble,nc_nZLc);
 
 nc_Lc.putVar(&Lc[0]);
 nc_s.putVar(&s[0]);
+nc_nI.putVar(&noIntersectionNodes[0]);
 nc_gridRLc.putVar(&gridRLc[0]);
 nc_gridYLc.putVar(&gridYLc[0]);
 nc_gridZLc.putVar(&gridZLc[0]);
 #if USE_CUDA 
        cudaDeviceSynchronize();
 #endif
-    //}
+    }
     //else
     //{
+      int lc1 = read_profileNs(LcFile,LcNr,LcNy,nR_Lc,nY_Lc);
+      int lc2 = read_profileNs(LcFile,LcNz,LcNy,nZ_Lc,nY_Lc);
         
   #elif GENERATE_LC == 2
         std::cout << "Importing pre-existing connection length file" << std::endl;
@@ -692,7 +751,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
     int l4 = read_profile2d(lcFile,lcChar, Lc);
     
     int l5 = read_profile2d(lcFile,sChar, s);
-  //  }
+    //}
 #else
    //import LC an
     int nR_Lc;
@@ -1358,6 +1417,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
     
       int nR_PreSheathEfield = 1;
       int nZ_PreSheathEfield = 1;
+      int closestBoundaryIndex;
       sim::Array<float> preSheathEGridr(nR_PreSheathEfield), preSheathEGridz(nZ_PreSheathEfield);
       sim::Array<float> PSEr(nR_PreSheathEfield*nZ_PreSheathEfield), 
           PSEz(nR_PreSheathEfield*nZ_PreSheathEfield),
@@ -1378,7 +1438,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
          {
              minDist[(nR_Bfield - 1 -i)*nZ_Bfield+(nZ_Bfield -1-j)] = 
                   getE ( bfieldGridr[i], 0.0, bfieldGridz[j],
-                  thisE, boundaries.data(),nLines );
+                  thisE, boundaries.data(),nLines,closestBoundaryIndex );
              Efieldr[i*nZ_Bfield+j] = thisE[0];
              Efieldz[i*nZ_Bfield+j] = thisE[2];
              Efieldt[i*nZ_Bfield+j] = thisE[1];
@@ -1768,6 +1828,9 @@ nc_gridZLc.putVar(&gridZLc[0]);
     int angleBinNum = 0;
     sim::Array<float> angleBins2(180);
     int angleBinNum2 = 0;
+    int closestBoundaryIndex0;
+    float minDist0;
+    float thisE0[3] = {0.0,0.0,0.0};
     for(int j=0; j<nParticles ; j++)
     {
       rand0 = dist01(s0[0]);
@@ -1796,6 +1859,15 @@ nc_gridZLc.putVar(&gridZLc[0]);
       angleBins2[angleBinNum2] = angleBins2[angleBinNum2]+1;
       //std::cout << "rsample " << rSample << " E0 " << E0 << " angleSample " << angleSample << std::endl;
     particleArray->setParticleV(j,x,y,z,Vx,Vy,Vz,74, 184.0, charge);
+       minDist0 = getE ( x,y,z,thisE0, boundaries.data(),nLines,
+
+                        nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
+                        &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
+                        &closeGeom_sheath.front(),
+                  closestBoundaryIndex0 );
+       std::cout << "closest Boundary " << x << " " << y << " " << z <<" " 
+                 << closestBoundaryIndex0 << std::endl;
+       boundaries[closestBoundaryIndex0].startingParticles = boundaries[closestBoundaryIndex0].startingParticles + 1.0;
     }
   #endif
 
@@ -2335,7 +2407,9 @@ for(int i=0; i<nP ; i++)
 */
     std::cout << "transit time counting "<< nP << std::endl;
     //float tmp202 =0.0;
+#if USE_CUDA
     cudaDeviceSynchronize();
+#endif
 //    tmp202 =  particleArray->vx[0];
     std::cout << "memory access hitwall " 
     << particleArray->xprevious[0] << std::endl;
@@ -2359,9 +2433,11 @@ std::cout << " mean transit time " << meanTransitTime0 << std::endl;
     int max_boundary1 = 0;
     float max_impacts1 = 0.0;
     float* impacts = new float[nLines];
+    float* startingParticles = new float[nLines];
     for (int i=0; i<nLines; i++)
     {
         impacts[i] = boundaries[i].impacts;
+        startingParticles[i] = boundaries[i].startingParticles;
         if (boundaries[i].impacts > max_impacts)
         {
             max_impacts = boundaries[i].impacts;
@@ -2387,9 +2463,11 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 */
 #else
     float* impacts = new float[nLines];
+    float* startingParticles = new float[nLines];
     for (int i=0; i<nLines; i++)
     {
         impacts[i] = boundaries[i].impacts;
+        startingParticles[i] = boundaries[i].startingParticles;
     }
 #endif
 #if PARTICLE_SOURCE == 1
@@ -2474,7 +2552,9 @@ vector<NcDim> dims1;
 dims1.push_back(nc_nLines);
 
 NcVar nc_surfImpacts = ncFile1.addVar("impacts",ncDouble,dims1);
+NcVar nc_surfStartingParticles = ncFile1.addVar("startingParticles",ncDouble,dims1);
 nc_surfImpacts.putVar(impacts);
+nc_surfStartingParticles.putVar(startingParticles);
 #if PARTICLE_TRACKS > 0
 
 // Write netCDF output for histories
