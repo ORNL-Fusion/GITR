@@ -98,7 +98,8 @@ CUDA_CALLABLE_MEMBER
 
 float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, int nLines,
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
-       float *closeGeomGridr,float *closeGeomGridy, float *closeGeomGridz, int *closeGeom ) {
+       float *closeGeomGridr,float *closeGeomGridy, float *closeGeomGridz, int *closeGeom, 
+         int&  closestBoundaryIndex) {
 #if USE3DTETGEOM > 0
     float Emag = 0.0f;
     float Er = 0.0f;
@@ -184,15 +185,18 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
   int i;
   for (int k=0; k< n_closeGeomElements; k++) //n_closeGeomElements
     {
-       i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements + rInd*nR_closeGeom*n_closeGeomElements + k];
-
+       i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements 
+                   + yInd*nR_closeGeom*n_closeGeomElements
+                   + rInd*n_closeGeomElements + k];
+       //closestBoundaryIndex = i;
+       //std::cout << "closest boundaries to check " << i << std::endl;
 #else
       for (int i=0; i<nLines; i++)
       {
 #endif
             //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
-        if (boundaryVector[i].Z != 0.0)
-        {
+        //if (boundaryVector[i].Z != 0.0)
+        //{
             //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
         a = boundaryVector[i].a;
         b = boundaryVector[i].b;
@@ -440,23 +444,25 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
              */
          }
          int index = 0;
-          for(int j = 0; j < 7; j++)
-            {
+         for(int j = 0; j < 7; j++)
+         {
             if(distances[j] < distances[index])
             index = j;              
-            }
+         }
 
-             if (distances[index] < minDistance)
-             {
+         if (distances[index] < minDistance)
+         {
                  minDistance = distances[index];
                  vectorAssign(normals[index*3], normals[index*3+1],normals[index*3+2], directionUnitVector);
                  //std::cout << "min dist " << minDistance << std::endl;
                  //std::cout << "min normal " << normals[index*3] << " " 
                  //   <<normals[index*3+1] << " " << normals[index*3+2] << std::endl;
-             }
+               //closestBoundaryIndex = i;
+          closestBoundaryIndex = i;
+         }
          //std::cout << "perp dist " << perpDist << std::endl;
          //std::cout << "point to AB BC CA " << p0ABdist << " " << p0BCdist << " " << p0CAdist << std::endl;
-        }
+        //}
        }
       //vectorScalarMult(-1.0,directionUnitVector,directionUnitVector);
       //std::cout << "min dist " << minDistance << std::endl;
@@ -728,6 +734,7 @@ cpu_times initTime0 = timer.elapsed();
             float coeff = 0.0f;
             int nSteps = floor( span / dt + 0.5f);
             float minDist = 0.0f;
+            int closestBoundaryIndex;
 #if ODEINT ==	0  
 	        float qpE[3] = {0.0f,0.0f,0.0f};
 	        float vmxB[3] = {0.0f,0.0f,0.0f};
@@ -743,7 +750,7 @@ cpu_times initTime0 = timer.elapsed();
                           nY_closeGeom_sheath,nZ_closeGeom_sheath,
                               n_closeGeomElements_sheath,closeGeomGridr_sheath,
                               closeGeomGridy_sheath,
-                                   closeGeomGridz_sheath,closeGeom_sheath);
+                                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex);
               //std::cout << "Efield in boris " << E[2] << std::endl;
               //std::cout << "Charge and Hitwall " << particlesPointer->charge[indx] << " " <<
                // particlesPointer->hitWall[indx]  << std::endl;

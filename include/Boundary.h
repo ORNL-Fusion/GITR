@@ -66,6 +66,7 @@ class Boundary {
     float ti;
     float debyeLength;
     float larmorRadius;
+    float startingParticles;
     float impacts;
     CUDA_CALLABLE_MEMBER
         Boundary() {
