@@ -183,6 +183,13 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
   int yInd = floor((y - closeGeomGridy[0])/dy + 0.5f);
   int zInd = floor((z - closeGeomGridz[0])/dz + 0.5f);
   int i;
+  if(rInd < 0 || rInd >= nR_closeGeom)
+    rInd =0;
+  if(yInd < 0 || yInd >= nY_closeGeom)
+    yInd =0;
+  if(zInd < 0 || zInd >= nZ_closeGeom)
+    zInd =0;
+
   for (int k=0; k< n_closeGeomElements; k++) //n_closeGeomElements
     {
        i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements 
@@ -459,6 +466,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
                  //   <<normals[index*3+1] << " " << normals[index*3+2] << std::endl;
                //closestBoundaryIndex = i;
           closestBoundaryIndex = i;
+          minIndex = i;
          }
          //std::cout << "perp dist " << perpDist << std::endl;
          //std::cout << "point to AB BC CA " << p0ABdist << " " << p0BCdist << " " << p0CAdist << std::endl;
