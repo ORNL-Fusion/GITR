@@ -82,7 +82,7 @@ float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {
 #endif
 
 }
-
+CUDA_CALLABLE_MEMBER
 float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data)
 {
     int done = 0;
@@ -105,6 +105,7 @@ float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data)
         + (samplePoint - data[low_index])*(low_index+1)*max_x/nx)/(data[low_index+1]- data[low_index]);
     return interpolated_value;
 }
+CUDA_CALLABLE_MEMBER
 float interp1dUnstructured2(float samplePoint,int nx, float *xdata, float* data)
 {
     int done = 0;
@@ -126,6 +127,7 @@ float interp1dUnstructured2(float samplePoint,int nx, float *xdata, float* data)
         + (samplePoint - data[low_index])*(xdata[low_index + 1] - xdata[low_index])/(data[low_index+1]- data[low_index]);
     return interpolated_value;
 }
+CUDA_CALLABLE_MEMBER
 float interp2dUnstructured(float x,float y,int nx,int ny, float *xgrid,float *ygrid, float* data)
 {
     int doneX = 0;
@@ -177,14 +179,14 @@ float interp2dUnstructured(float x,float y,int nx,int ny, float *xgrid,float *yg
       }
     }
    
-    std::cout << "x vals " << xgrid[xInd] << " " << xgrid[xInd+1];
-    std::cout << "y vals " << ygrid[yInd] << " " << ygrid[yInd+1];
+    //std::cout << "x vals " << xgrid[xInd] << " " << xgrid[xInd+1];
+    //std::cout << "y vals " << ygrid[yInd] << " " << ygrid[yInd+1];
     xDiffUp = xgrid[xInd+1] - x;
     xDiffDown = x-xgrid[xInd];
     dx = xgrid[xInd+1]-xgrid[xInd];
-    std::cout << "dx, data vals " << dx << " " << data[xInd + yInd*nx] << " " <<
-                 data[xInd+1 + yInd*nx] << " " << data[xInd + (yInd+1)*nx] << " " << 
-                 data[xInd+1 + (yInd+1)*nx] << std::endl;
+    //std::cout << "dx, data vals " << dx << " " << data[xInd + yInd*nx] << " " <<
+                 //data[xInd+1 + yInd*nx] << " " << data[xInd + (yInd+1)*nx] << " " << 
+                 //data[xInd+1 + (yInd+1)*nx] << std::endl;
     yLowValue = (xDiffUp*data[xInd + yInd*nx] + xDiffDown*data[xInd+1 + yInd*nx])/dx;
     yHighValue = (xDiffUp*data[xInd + (yInd+1)*nx] + xDiffDown*data[xInd+1 + (yInd+1)*nx])/dx;
     yDiffUp = ygrid[yInd+1]-y;

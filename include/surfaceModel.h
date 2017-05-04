@@ -77,7 +77,7 @@ void operator()(std::size_t indx) const {
 };
 
 struct reflection {
-    Particles * particles;
+    Particles * particlesArray;
     const double dt;
     int nLines;
     Boundary * boundaryVector;
@@ -86,125 +86,125 @@ struct reflection {
     float* spYlGridAngle;
     float* spYlGridE;
     float* spYl;
+    int nSegmentsAngle;
+    float* sourceAngleSegments;
+    float* angleCDF;
+    int nThompDistPoints;
+    float max_Energy;
+    float* CDFThompson;
 
-    reflection(Particles* _particles, double _dt, int _nLines,Boundary * _boundaryVector,
-            int _nAngle, int _nEnergy, float* _spYlGridAngle, float* _spYlGridE, float* _spYl) : 
-        particles(_particles), dt(_dt),nLines(_nLines), boundaryVector(_boundaryVector),
+    reflection(Particles* _particlesArray, double _dt, int _nLines,Boundary * _boundaryVector,
+            int _nAngle, int _nEnergy, float* _spYlGridAngle, float* _spYlGridE, float* _spYl,
+            int _nSegmentsAngle, float* _sourceAngleSegments, float* _angleCDF,
+            int _nThompDistPoints, float _max_Energy, float* _CDFThompson) : 
+        particlesArray(_particlesArray), dt(_dt),nLines(_nLines), boundaryVector(_boundaryVector),
         nAngle(_nAngle),nEnergy(_nEnergy),spYlGridAngle(_spYlGridAngle),
-        spYlGridE(_spYlGridE), spYl(_spYl) {}
+        spYlGridE(_spYlGridE), spYl(_spYl),
+      nSegmentsAngle(_nSegmentsAngle), sourceAngleSegments(_sourceAngleSegments),
+   angleCDF(_angleCDF), 
+   nThompDistPoints(_nThompDistPoints),max_Energy(_max_Energy), CDFThompson(_CDFThompson) {}
 
 CUDA_CALLABLE_MEMBER_DEVICE
 void operator()(std::size_t indx) const {
-            if(particles->hitWall[indx] == 1.0)
-        	{
-			float reducedEnergyMultiplier = 5e-7;//for W on W
+    
+            if(particlesArray->hitWall[indx] == 1.0)
+            {
+                particlesArray->hitWall[indx] = 0.0;
+            }
+            //if(particles->hitWall[indx] == 1.0)
+             //      if( boundaryVector[particles->wallHit[indx]].Z > 0.0)
+              //     {
+        	//{
+                
+	        /*
+                //float reducedEnergyMultiplier = 5e-7;//for W on W
             float E0 = 0.0;
-            float reducedEnergy = 0.0;
-			float a1 = -3.685;
-			float a2 = 0.0278;
-			float a3 = 7.825e-5;
-			float a4 = -1.109;
-			float Rn = 0.0;
-			float Re = 0.0;
             float thetaImpact = 0.0;
-            float thetaAzimuthal = 0.0;
+            //float thetaAzimuthal = 0.0;
             float particleTrackVector[3] = {0.0,0.0,0.0};
             float surfaceNormalVector[3] = {0.0,0.0,0.0};
-            float surfaceNormalVectorRotated[3] = {0.0,0.0,0.0};
-            float surfaceNormalVectorIn[3] = {0.0,0.0,0.0};
             float norm_part = 0.0;
             float norm_normal = 0.0;
+            
             float partDotNormal = 0.0;
             float signPartDotNormal = 0.0;
-		
+            float Enew = 0.0f;
+            float angleSample = 0.0f;
+            int wallIndex = 0;
+
 		        E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/1.60217662e-19;
-			reducedEnergy = E0*reducedEnergyMultiplier;
+		//	reducedEnergy = E0*reducedEnergyMultiplier;
             particleTrackVector[0] = particles->vx[indx];
             particleTrackVector[1] = particles->vy[indx];
             particleTrackVector[2] = particles->vz[indx];
             //surfaceNormalVector[0] = -boundaryVector[particles->wallIndex].slope_dzdx;
-            surfaceNormalVector[1] = 0.0;
-            surfaceNormalVector[2] = 1.0;
+            wallIndex = particles->wallIndex[indx];
+            norm_normal = boundaryVector[wallIndex].plane_norm; 
+            surfaceNormalVector[0] = boundaryVector[wallIndex].a/norm_normal;
+            surfaceNormalVector[1] = boundaryVector[wallIndex].b/norm_normal;
+            
+            surfaceNormalVector[2] = boundaryVector[wallIndex].c/norm_normal;
             //std::cout << "velocities " << particles->vx[indx] << " " << particles->vy[indx] << " " << particles->vz[indx] << std::endl;
             //std::cout << "surface norm " << surfaceNormalVector[0] << " " << surfaceNormalVector[1] << " " << surfaceNormalVector[2] << std::endl;
-#if USECYLSYMM > 0
-            thetaAzimuthal = atan2(particles->y[indx],particles->x[indx]);   
-            surfaceNormalVectorRotated[0] = cos(thetaAzimuthal)*surfaceNormalVector[0];
-            surfaceNormalVectorRotated[1] = sin(thetaAzimuthal)*surfaceNormalVector[0];
-#else
-            surfaceNormalVectorRotated[0] = surfaceNormalVector[0];
-            surfaceNormalVectorRotated[1] = surfaceNormalVector[1];
-#endif
-            surfaceNormalVectorRotated[2] = surfaceNormalVector[2];
-
             norm_part = sqrt(particleTrackVector[0]*particleTrackVector[0] + particleTrackVector[1]*particleTrackVector[1] + particleTrackVector[2]*particleTrackVector[2]);
-            norm_normal = sqrt(surfaceNormalVectorRotated[0]*surfaceNormalVectorRotated[0] + surfaceNormalVectorRotated[1]*surfaceNormalVectorRotated[1] + surfaceNormalVectorRotated[2]*surfaceNormalVectorRotated[2]);
+            //          norm_normal = sqrt(surfaceNormalVectorRotated[0]*surfaceNormalVectorRotated[0] + surfaceNormalVectorRotated[1]*surfaceNormalVectorRotated[1] + surfaceNormalVectorRotated[2]*surfaceNormalVectorRotated[2]);
     //        std::cout << "norm of particle track " << norm_part << std::endl;
     //        std::cout << "norm of surface normal " << norm_normal << std::endl;
-
-            surfaceNormalVectorRotated[0] = surfaceNormalVectorRotated[0]/norm_normal;
-            surfaceNormalVectorRotated[1] = surfaceNormalVectorRotated[1]/norm_normal;
-            surfaceNormalVectorRotated[2] = surfaceNormalVectorRotated[2]/norm_normal;
             particleTrackVector[0] = particleTrackVector[0]/norm_part;
             particleTrackVector[1] = particleTrackVector[1]/norm_part;
             particleTrackVector[2] = particleTrackVector[2]/norm_part;
 
-            partDotNormal = particleTrackVector[0]*surfaceNormalVectorRotated[0] + particleTrackVector[1]*surfaceNormalVectorRotated[1] + particleTrackVector[2]*surfaceNormalVectorRotated[2];
+            partDotNormal = vectorDotProduct(particleTrackVector,surfaceNormalVector);
             thetaImpact = acos(partDotNormal);
             signPartDotNormal = sgn(partDotNormal);
-            surfaceNormalVectorRotated[0] = -surfaceNormalVectorRotated[0]*signPartDotNormal;
-            surfaceNormalVectorRotated[1] = -surfaceNormalVectorRotated[1]*signPartDotNormal;
-            surfaceNormalVectorRotated[2] = -surfaceNormalVectorRotated[2]*signPartDotNormal;
-
-            Rn = exp(a1*pow(reducedEnergy,a2))/(1 + exp(a3*pow(reducedEnergy,a4)));
-            //std::cout << "calculated Rn " << Rn << std::endl;
-            Rn = 0.25;
+            float Y0 = interp2dUnstructured(thetaImpact*180.0/3.1415,E0,nAngle,nEnergy, 
+                    spYlGridAngle,spYlGridE, spYl);
+            
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
-                curandState tmpState;
-                float r7 = curand_uniform(&particles->streams[6]);
+                float r7 = curand_uniform(&particles->streams_surf[indx]);
+                float r8 = curand_uniform(&particles->streams_surf[indx]);
 #else
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
-                float r7 = dist(particles->streams[6]);
+                float r7 = dist(particles->streams_surf[indx]);
+                float r8 = dist(particles->streams_surf[indx]);
 #endif
 
 #else
-                float r7 = 0.0;
+#if __CUDACC__
+                    float r1 = curand_uniform(state);
+#else
+                            std::uniform_real_distribution<float> dist(0.0, 1.0);
+                                        float r1=dist(state[0]);
 #endif
-		        if(r7 <= Rn)
-        		{
-      //              std::cout << "particle reflected " << std::endl;
-		//		    std::cout << "from surface " << particles->wallIndex << " material " <<boundaryVector[particles->wallIndex].Z << std::endl;
-                float a1_e = -7.168;
-                float a2_e = 0.01685;
-                float a3_e = 7.005e-5;
-                float a4_e = -1.343;
-				float Re = exp(a1_e*pow(reducedEnergy,a2_e))/(1 + exp(a3_e*pow(reducedEnergy,a4_e))); 
-				float launch_unitVector[3] = {0, 0, 1.0};
-				float launchEnergy = E0*Re/Rn;
-                launchEnergy = 10.0;
-              //  std::cout << "Re, E0 and launch energy" << Re << " " << E0 << " " << launchEnergy << std::endl;
-                particles->charge[indx] = 0.0;
-				particles->vx[indx] = sqrt(2*launchEnergy*1.60217662e-19/(particles->amu[indx]*1.6737236e-27))*surfaceNormalVectorRotated[0];//launchEnergy*launch_unitVector[0];
-				particles->vy[indx] = sqrt(2*launchEnergy*1.60217662e-19/(particles->amu[indx]*1.6737236e-27))*surfaceNormalVectorRotated[1];//launchEnergy*launch_unitVector[1];
-				particles->vz[indx] = sqrt(2*launchEnergy*1.60217662e-19/(particles->amu[indx]*1.6737236e-27))*surfaceNormalVectorRotated[2];
-                //particles->x = 1.33;//particles->xprevious[indx];
-                //particles->y = 0.0;
-                //particles->z = 1.34;//boundaryVector[particles->wallIndex].z1 + 0.01;
-                particles->xprevious[indx] = particles->xprevious[indx] + 0.0001*surfaceNormalVectorRotated[0];
-                particles->yprevious[indx] = particles->yprevious[indx] + 0.0001*surfaceNormalVectorRotated[1];
-                particles->zprevious[indx] = particles->zprevious[indx] + 0.0001*surfaceNormalVectorRotated[2];//boundaryVector[particles->wallIndex].z1 + 0.01;
-                //std::cout << "particle launched from " << particles->xprevious[indx] << particles->yprevious[indx] << particles->zprevious[indx] << std::endl;
-                //std::cout << "particle launched at velocity " << particles->vx[indx] << particles->vy[indx] << particles->vz[indx] << std::endl;
+                //float r7 = 0.0;
+#endif
 
-				particles->hitWall[indx] = 0.0;
-        		}
-                else
-                {
-                    //std::cout << " no reflection" << std::endl;
-                    particles->hitWall[indx] = 2.0;
-                }
-		}
-	}
+                //deposit on surface
+                int wallHit = particles->wallHit[indx];
+#if USESURFACEMODEL == 0 
+#if USE_CUDA > 0
+                atomicAdd(&boundaryVector[wallHit].impacts, particles->weight[indx]);
+#else
+               boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particlesPointer->weight[indx];
+#endif
+#endif 
+
+                //reflect with weight and new initial conditions
+                particles->weight[indx] = particles->weight[indx]*Y0;
+*/
+               // particles->hitWall[indx] = 0.0;
+/*
+                Enew = interp1dUnstructured(r7,nThompDistPoints, max_Energy, CDFThompson);
+                
+                angleSample = interp1dUnstructured2(r8,nSegmentsAngle,sourceAngleSegments , angleCDF);
+                 float V0 = sqrt(2*E0*1.602e-19/(particles->amu[indx]*1.66e-27));
+    particles->vx[indx] = -signPartDotNormal*V0*surfaceNormalVector[0];
+    particles->vy[indx] = -signPartDotNormal*V0*surfaceNormalVector[1];
+    particles->vz[indx] = -signPartDotNormal*V0*surfaceNormalVector[2];
+*/
+            //}
+              //     }
+}
 };
 #endif

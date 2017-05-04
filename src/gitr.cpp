@@ -477,7 +477,7 @@ int main()
     int nR_Lc;
     int nY_Lc;
     int nZ_Lc;
-    //int nTracers;
+    int nTracers;
     const char *gitrLcFileString;
     if(cfg.lookupValue("connectionLength.fileString", gitrLcFileString))
     { std::cout << "Checking for GITR generated connection length file " << std::endl;}
@@ -515,17 +515,17 @@ int main()
     { std::cout << "Geometry Lc file: " << LcFile << std::endl;}
     else
     { std::cout << "ERROR: Could not get Lc string info from input file " << std::endl;}
+    #if USE3DTETGEOM > 0
+      nTracers = nR_Lc*nY_Lc*nZ_Lc;
+    #else
+      nTracers = nR_Lc*nZ_Lc;
+    #endif
     
     std::cout << " beginning lc s init " <<std::endl; 
-    sim::Array<float> Lc(nR_Lc*nY_Lc*nZ_Lc),s(nR_Lc*nY_Lc*nZ_Lc);
+    sim::Array<float> Lc(nTracers),s(nTracers);
     std::cout << " beginning grid lc s init " <<std::endl; 
     sim::Array<float> gridRLc(nR_Lc),gridYLc(nY_Lc),gridZLc(nZ_Lc);
     std::cout << " noInter init " <<std::endl; 
-#if USE3DTETGEOM > 0
-    int nTracers = nR_Lc*nY_Lc*nZ_Lc;
-#else
-    int nTracers = nR_Lc*nZ_Lc;
-#endif
     sim::Array<int> noIntersectionNodes(nTracers);
     std::cout << " beginning if statement " <<std::endl; 
     if ( !boost::filesystem::exists( gitrLcFileString ) )
@@ -541,24 +541,18 @@ int main()
     //float r1_Lc = 0.076;
     //float z0_Lc = -0.05;
     //float z1_Lc = 0.20;
-    sim::Array<float> gridRLc(nR_Lc),gridZLc(nZ_Lc);
-#if USE3DTETGEOM > 0
+    #if USE3DTETGEOM > 0
     //nY_Lc = 70;
     //float y0_Lc = -0.076;
     //float y1_Lc = 0.076;
-    sim::Array<float> gridYLc(nY_Lc);
-    sim::Array<float> Lc(nR_Lc*nY_Lc*nZ_Lc),s(nR_Lc*nY_Lc*nZ_Lc);
     float dy_Lc = (y1_Lc-y0_Lc)/(nY_Lc-1);
     for(int j=0;j<nY_Lc; j++)
     {
      gridYLc[j] = y0_Lc + j*dy_Lc;
      //std::cout << "gridzLc " << gridZLc[j] << std::endl;
     }
-    int nTracers = nR_Lc*nY_Lc*nZ_Lc;
-#else
-    sim::Array<float> Lc(nR_Lc*nZ_Lc),s(nR_Lc*nZ_Lc);
-    int nTracers = nR_Lc*nZ_Lc;
-#endif
+    #else
+    #endif
     float dr_Lc = (r1_Lc-r0_Lc)/(nR_Lc-1);
     for(int i=0;i<nR_Lc; i++)
     {
@@ -586,11 +580,11 @@ int main()
       {
           for (int k=0;k<nZ_Lc;k++)
           {
-#if USE3DTETGEOM > 0
+         #if USE3DTETGEOM > 0
              addIndex = i + j*nR_Lc + k*nR_Lc*nY_Lc;
-#else
+         #else
                  addIndex = i+k*nR_Lc;
-#endif
+         #endif
         forwardTracerParticles->setParticle(addIndex,gridRLc[i], gridYLc[j], gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0, 0.0);
         backwardTracerParticles->setParticle(addIndex,gridRLc[i], gridYLc[j], gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0, 0.0);
 
@@ -609,6 +603,7 @@ int main()
                             0*n_closeGeomElements + 9];
                             std::cout << "i44 " << i44 <<" " << i45 << std::endl;
                             
+    std::cout << "nTraceSteps"<< nTraceSteps << " dr "<< dr  << std::endl;
         for (int ii=0;ii<nTraceSteps; ii++)
         {
           thrust::for_each(thrust::device, lcBegin,lcEnd,
@@ -657,19 +652,23 @@ int main()
 #else
                  addIndex = i+k*nR_Lc;
 #endif
-
+                 std::cout << "starting count for foward and backward dist " << std::endl;
                  if(forwardTracerParticles->hitWall[addIndex] > 0)
                  {
+                     std::cout << "!!!HITWALL!!!" << std::endl;
                      forwardDist = forwardTracerParticles->distanceTraveled[addIndex];
                  }
-                 else forwardDist = 0.0;
+                 else
+                 { forwardDist = 0.0;
+                     std::cout << "!!!Did not HITWALL!!!" << forwardTracerParticles->distanceTraveled[addIndex] << std::endl;
+                 }
                  if(backwardTracerParticles->hitWall[addIndex] > 0)
                  {
                      backwardDist = backwardTracerParticles->distanceTraveled[addIndex];
                  }
                  else backwardDist = 0.0;
             Lc[addIndex] = forwardDist + backwardDist;
-     
+            //std::cout << "Lc " << Lc[addIndex] << std::endl; 
             if(forwardTracerParticles->distanceTraveled[addIndex] > 
                     backwardTracerParticles->distanceTraveled[addIndex])
             {
@@ -716,16 +715,13 @@ nc_gridZLc.putVar(&gridZLc[0]);
        cudaDeviceSynchronize();
 #endif
     }
-    //else
-    //{
-      int lc1 = read_profileNs(LcFile,LcNr,LcNy,nR_Lc,nY_Lc);
-      int lc2 = read_profileNs(LcFile,LcNz,LcNy,nZ_Lc,nY_Lc);
+    else
+    {
+     // int lc1 = read_profileNs(LcFile,LcNr,LcNy,nR_Lc,nY_Lc);
+     // int lc2 = read_profileNs(LcFile,LcNz,LcNy,nZ_Lc,nY_Lc);
         
-  #elif GENERATE_LC == 2
+  //#elif GENERATE_LC == 2
         std::cout << "Importing pre-existing connection length file" << std::endl;
-    int nR_Lc = 0;
-    int nY_Lc = 0;
-    int nZ_Lc = 0;
 
         std::string lcFile = "LcS.nc"; 
         std::string lcNr = "nR";   
@@ -740,10 +736,10 @@ nc_gridZLc.putVar(&gridZLc[0]);
     int l1 = read_profileNs(lcFile,lcNr,lcNz,nR_Lc,nZ_Lc);
     int l11 = read_profileNs(lcFile,lcNy,lcNz,nY_Lc,nZ_Lc);
     
-    sim::Array<float> gridRLc(nR_Lc),gridYLc(nY_Lc), gridZLc(nZ_Lc);
-    sim::Array<float> Lc(nR_Lc*nY_Lc*nZ_Lc), s(nR_Lc*nY_Lc*nZ_Lc);
     
     int l2 = read_profile1d(lcFile,lcGridR, gridRLc);
+
+    std::cout << " !!! gridRLc0 " << gridRLc[0] << std::endl;
     int l22 = read_profile1d(lcFile,lcGridY, gridYLc);
     
     int l3 = read_profile1d(lcFile,lcGridZ, gridZLc);
@@ -751,13 +747,13 @@ nc_gridZLc.putVar(&gridZLc[0]);
     int l4 = read_profile2d(lcFile,lcChar, Lc);
     
     int l5 = read_profile2d(lcFile,sChar, s);
-    //}
-#else
+    }
+  #else
    //import LC an
     int nR_Lc;
     int nZ_Lc;
     int nY_Lc;
-#if LC_INTERP > 0
+    #if LC_INTERP > 0
     const char *lcFile, *lcNr, *lcNz, *lcGridR, *lcGridZ, *lcChar, *sChar;
     if(cfg.lookupValue("backgroundPlasmaProfiles.Lc.fileString", lcFile) &&
        cfg.lookupValue("backgroundPlasmaProfiles.Lc.gridNrString", lcNr) &&
@@ -770,7 +766,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
     else
     { std::cout << "ERROR: Failed in acquiring connection length file data from input file " << std::endl;} 
     int l1 = read_profileNs(lcFile,lcNr,lcNz,nR_Lc,nZ_Lc);
-    
+    std::cout << "*** shouldnt be here " << std::endl; 
     sim::Array<float> gridRLc(nR_Lc), gridZLc(nZ_Lc);
     sim::Array<float> Lc(nR_Lc*nZ_Lc), s(nR_Lc*nZ_Lc);
     
@@ -781,11 +777,12 @@ nc_gridZLc.putVar(&gridZLc[0]);
     int l4 = read_profile2d(lcFile,lcChar, Lc);
     
     int l5 = read_profile2d(lcFile,sChar, s);
-#else
+    #else
 
     nR_Lc = 1;
     nZ_Lc = 1;
     nY_Lc = 1;
+    std::cout << "*** shouldnt be here " << std::endl; 
     sim::Array<float> gridRLc(nR_Lc), gridZLc(nZ_Lc);
     sim::Array<float> Lc(nR_Lc*nZ_Lc), s(nR_Lc*nZ_Lc);
     if(cfg.lookupValue("backgroundPlasmaProfiles.Lc.value", Lc[0]) && 
@@ -793,8 +790,9 @@ nc_gridZLc.putVar(&gridZLc[0]);
     {std::cout << "Lc and s = " << Lc[0] << " " << s[0]<< " " << std::endl;}
     else
     {std::cout << "ERROR: Failed importing constant connection length" << std:: endl;}
-#endif
+    #endif
   #endif
+    std::cout << " !!! gridRLc0 " << gridRLc[0] << std::endl;
   std::string outnameLc = "connectionLength.m";
   std::string outnameS = "distAlongLc.m";
 #if USE3DTETGEOM > 0
@@ -924,12 +922,26 @@ nc_gridZLc.putVar(&gridZLc[0]);
   #elif FLOWV_INTERP == 1
     int nR_flowV=nR_Lc;
     int nZ_flowV=nZ_Lc;
-    sim::Array<float> flowVGridr=gridRLc;
-    sim::Array<float> flowVGridz=gridZLc;
+    sim::Array<float> flowVGridr(nR_flowV);//=gridRLc;
+    sim::Array<float> flowVGridz(nZ_flowV);//=gridZLc;
+    std::cout << "nR_flowV " << nR_flowV << " " << nZ_flowV << std::endl;
+    std::cout << " !!! gridRLc " << gridRLc[0] << std::endl;
+    std::cout << " !!! gridZLc " << gridZLc[0] << std::endl;
+    for(int i=0;i<nR_flowV;i++)
+    {
+        flowVGridr[i] = gridRLc[i];
+    }
+    for(int i=0;i<nZ_flowV;i++)
+    {
+        flowVGridz[i] = gridZLc[i];
+    }
+    std::cout << " !!! flowvgridr0 " << flowVGridr[0] << std::endl;
     int nFlowVs = nR_Lc*nZ_Lc;
     #if LC_INTERP == 3
     int nY_flowV=nY_Lc;
-    sim::Array<float> flowVGridy=gridYLc;
+    sim::Array<float> flowVGridy(nY_flowV);//=gridYLc;
+    for(int i=0;i<nY_flowV;i++)
+        flowVGridy[i] = gridYLc[i];
     nFlowVs = nR_Lc*nY_Lc*nZ_Lc;
     #endif
     sim::Array<float> flowVr(nFlowVs), flowVz(nFlowVs),
@@ -954,6 +966,9 @@ nc_gridZLc.putVar(&gridZLc[0]);
 
          for(int j=0;j<nZ_Lc;j++)
       { 
+        //std::cout << "debug here 1 " << i << " " << j << std::endl;
+        //std::cout << "debug here 2 " << flowVGridr[i] << " " << thisY << " "  
+        //    << flowVGridz[j] << " " << nR_Temp << " "<<nZ_Temp << std::endl;
         teLocal = interp2dCombined(flowVGridr[i],thisY,flowVGridz[j],nR_Temp,nZ_Temp, 
                 &TempGridr.front(),&TempGridz.front(),&te.front());
         tiLocal = interp2dCombined(flowVGridr[i],thisY,flowVGridz[j],nR_Temp,nZ_Temp, 
@@ -971,6 +986,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
         //std::cout << "flowv calc index " << index << std::endl;
 #else
         index = i+j*nR_Lc;
+
 #endif
         absS = abs(s[index]);
         cs = cs0*(0.5*Lc[index]/absS - sqrt(0.25*Lc[index]*Lc[index]/absS/absS - 1.0));
@@ -1865,8 +1881,8 @@ nc_gridZLc.putVar(&gridZLc[0]);
                         &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
                         &closeGeom_sheath.front(),
                   closestBoundaryIndex0 );
-       std::cout << "closest Boundary " << x << " " << y << " " << z <<" " 
-                 << closestBoundaryIndex0 << std::endl;
+       //std::cout << "closest Boundary " << x << " " << y << " " << z <<" " 
+       //          << closestBoundaryIndex0 << std::endl;
        boundaries[closestBoundaryIndex0].startingParticles = boundaries[closestBoundaryIndex0].startingParticles + 1.0;
     }
   #endif
@@ -2356,7 +2372,8 @@ nc_gridZLc.putVar(&gridZLc[0]);
                 reflection(particleArray,dt,nLines,&boundaries[0],nAngle,nEnergy,
                       spYlGridAngle.data(),
                             spYlGridE.data(), 
-                                  spYl.data()) );
+                                  spYl.data(),nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front(),
+                   nThompDistPoints, max_Energy, &CumulativeDFThompson.front() ) );
 #endif        
 
 #if PARTICLE_TRACKS >0
@@ -2567,12 +2584,6 @@ vector<NcDim> dims_hist;
 NcDim nc_nPnT = ncFile_hist.addDim("nPnT",nP*nT/subSampleFac);
 dims_hist.push_back(nc_nPnT);
 #else
-dims_hist.push_back(nc_nP);
-dims_hist.push_back(nc_nT);
-#endif
-
-NcVar nc_x = ncFile_hist.addVar("x",ncDouble,dims_hist);
-NcVar nc_y = ncFile_hist.addVar("y",ncDouble,dims_hist);
 NcVar nc_z = ncFile_hist.addVar("z",ncDouble,dims_hist);
 
 NcVar nc_vx = ncFile_hist.addVar("vx",ncDouble,dims_hist);
@@ -2607,6 +2618,7 @@ nc_vy.putVar(velocityHistoryY[0]);
 nc_vz.putVar(velocityHistoryZ[0]);
 
 nc_charge.putVar(chargeHistory[0]);
+#endif
 #endif
 #endif
 #if SPECTROSCOPY > 0

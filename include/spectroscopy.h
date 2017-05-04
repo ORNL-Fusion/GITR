@@ -37,7 +37,8 @@ void operator()(std::size_t indx) const {
 #if USECYLSYMM > 0
     float x = particlesPointer->xprevious[indx];
     float y = particlesPointer->yprevious[indx];
-    float dim1 = sqrtf(x*x + y*y);
+    //float dim1 = sqrtf(x*x + y*y);
+    float dim1 = particlesPointer->xprevious[indx];
 #else
   float dim1 = particlesPointer->xprevious[indx];
 #endif

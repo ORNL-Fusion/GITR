@@ -195,11 +195,13 @@ void operator()(std::size_t indx) const {
                             particlesPointer->x[indx] = p[0];
                             particlesPointer->y[indx] = p[1];
                             particlesPointer->z[indx] = p[2];
-                            particlesPointer->wallHit[indx] = i; 
+                            particlesPointer->wallHit[indx] = i;
+#if USESURFACEMODEL == 0 
 #if USE_CUDA > 0
-                            atomicAdd(&boundaryVector[i].impacts, 1.0);
+                            atomicAdd(&boundaryVector[i].impacts, particlesPointer->weight[indx]);
 #else
-                            boundaryVector[i].impacts = boundaryVector[i].impacts +  1.0;
+                            boundaryVector[i].impacts = boundaryVector[i].impacts +  particlesPointer->weight[indx];
+#endif
 #endif
                         }   
                      }
