@@ -92,7 +92,7 @@ void operator()(std::size_t indx) const {
                 << " " << particlesPointer->zprevious[indx]  << std::endl;
             }
              */
-#if GEOM_HASH == 1
+#if GEOM_HASH > 0
             float r_position = particlesPointer->xprevious[indx];
             float dr = closeGeomGridr[1] - closeGeomGridr[0];
             float dz = closeGeomGridz[1] - closeGeomGridz[0];    
@@ -244,7 +244,7 @@ void operator()(std::size_t indx) const {
                 //std::cout << "particle slope " << particle_slope << " " << particle_intercept << std::endl;
                             //std::cout << "r " << boundaryVector[0].x1 << " " << boundaryVector[0].x1 << " " << boundaryVector[0].slope_dzdx << std::endl;
                             //std::cout << "r0 " << particlesPointer->x[indx]previous << " " << particlesPointer->y[indx]previous << " " << particlesPointer->z[indx]previous<< std::endl;
-#if GEOM_HASH == 1
+#if GEOM_HASH > 0
 #if USECYLSYMM > 0
             float r_position = sqrtf(particlesPointer->xprevious[indx]*particlesPointer->xprevious[indx] + particlesPointer->yprevious[indx]*particlesPointer->yprevious[indx]);
 #else   
@@ -254,6 +254,8 @@ void operator()(std::size_t indx) const {
             float dz = closeGeomGridz[1] - closeGeomGridz[0];    
             int rInd = floor((r_position - closeGeomGridr[0])/dr + 0.5f);
             int zInd = floor((particlesPointer->zprevious[indx] - closeGeomGridz[0])/dz + 0.5f);
+            if(rInd < 0 || rInd >= nR_closeGeom) rInd = 0;
+            if(zInd < 0 || zInd >= nZ_closeGeom) zInd = 0;
             int i;
             for (int j=0; j< n_closeGeomElements; j++)
             {

@@ -28,10 +28,12 @@
 #include "fieldLineTrace.h"
 #include "history.h"
 #include "io.hpp"
+#include "hashGeom.h"
 #include "testRoutine.h"
 #include "testRoutineCuda.h"
 #include "boundaryInit.h"
 #include "array.h"
+#include "ompPrint.h"
 
 #if USE_BOOST
     #include <boost/timer/timer.hpp>
@@ -350,6 +352,7 @@ int main()
   int n_closeGeomElements;
   int nY_closeGeom;
   #if GEOM_HASH > 0
+    #if GEOM_HASH == 1
     const char *hashFile,*hashNr,*hashNy,*hashNz,*hashNclosest,*hashGridR,
                *hashGridY,*hashGridZ,*hashGridT,*hashChar;
     if(cfg.lookupValue("geometry_hash.fileString", hashFile) &&
@@ -394,6 +397,48 @@ int main()
    
       int gi5 = read_profile3d(hashFile,hashChar, closeGeom);
     #endif
+    #else
+      float hashX0 =-0.08 ;
+      float hashX1 = 0.08;
+      float hashY0 = -0.08;
+      float hashY1 = 0.08;
+      float hashZ0 = -0.06;
+      float hashZ1 = 0.22;
+      nR_closeGeom = 300;
+      nY_closeGeom = 320;
+      nZ_closeGeom = 600;
+      n_closeGeomElements = 10;
+      sim::Array<float> closeGeomGridr(nR_closeGeom), closeGeomGridy(nY_closeGeom), closeGeomGridz(nZ_closeGeom);
+      sim::Array<int> closeGeom(nR_closeGeom*nY_closeGeom*nZ_closeGeom*n_closeGeomElements);
+      sim::Array<float> minDist1(nR_closeGeom*nY_closeGeom*nZ_closeGeom*n_closeGeomElements,100);
+    thrust::counting_iterator<std::size_t> lines0(0);  
+    thrust::countiug_iterator<std::size_t> lines1(nR_closeGeom*nY_closeGeom);
+    
+      for(int i=0; i<nR_closeGeom; i++)
+      {  closeGeomGridr[i] = (hashX1 - hashX0)*i/(nR_closeGeom - 1);}
+          for(int j=0; j<nY_closeGeom; j++)
+          {  closeGeomGridy[j] = (hashY1 - hashY0)*j/(nY_closeGeom - 1);}
+              for(int k=0; k<nZ_closeGeom; k++)
+              {  closeGeomGridz[k] = (hashZ1 - hashZ0)*k/(nZ_closeGeom - 1);}
+
+              
+      for(int i=0; i<nZ_closeGeom; i++)
+      {
+          std::cout << "zth " << i << std::endl; 
+     
+              thrust::for_each(thrust::device, lines0,lines1,
+                                             hashGeom(i,nLines, boundaries.data(), closeGeomGridr.data(), closeGeomGridy.data(),closeGeomGridz.data(),
+                                                 n_closeGeomElements, minDist1.data(), closeGeom.data(),nR_closeGeom,nY_closeGeom,nZ_closeGeom));
+              cudaDeviceSynchronize();
+      }
+              cudaDeviceSynchronize();
+              /*          }
+
+              }
+          }
+      }
+      */
+    #endif
   #else
     nR_closeGeom = 1;
     nZ_closeGeom = 1;
@@ -410,6 +455,7 @@ int main()
   int n_closeGeomElements_sheath;
   int nY_closeGeom_sheath;
   #if GEOM_HASH_SHEATH  
+   #if GEOM_HASH_SHEATH  ==1
     const char *hash_sheathFile,*hash_sheathNr,*hash_sheathNz,*hash_sheathNy,
                  *hash_sheathNclosest,*hash_sheathGridR,*hash_sheathGridY,
                  *hash_sheathGridZ,*hash_sheathChar;
@@ -461,7 +507,38 @@ int main()
       int gis4 = read_profile1d(hash_sheathFile,hash_sheathGridZ, closeGeomGridz_sheath);
    
       int gis5 = read_profile3d(hash_sheathFile,hash_sheathChar, closeGeom_sheath);
-    #endif
+#endif
+#else
+      hashX0 =-0.08 ;
+      hashX1 = 0.08;
+      hashY0 = -0.08;
+      hashY1 = 0.08;
+      hashZ0 = -0.06;
+      hashZ1 = 0.22;
+      nR_closeGeom_sheath = 300;
+      nY_closeGeom_sheath = 320;
+      nZ_closeGeom_sheath = 600;
+      n_closeGeomElements_sheath = 10;
+      sim::Array<float> closeGeomGridr_sheath(nR_closeGeom_sheath), closeGeomGridy_sheath(nY_closeGeom_sheath), closeGeomGridz_sheath(nZ_closeGeom_sheath);
+      sim::Array<int> closeGeom_sheath(nR_closeGeom_sheath*nY_closeGeom_sheath*nZ_closeGeom_sheath*n_closeGeomElements_sheath);
+      sim::Array<float> minDist1_sheath(nR_closeGeom_sheath*nY_closeGeom_sheath*nZ_closeGeom_sheath*n_closeGeomElements_sheath,100);
+      for(int i=0; i<nR_closeGeom_sheath; i++)
+      {  closeGeomGridr_sheath[i] = (hashX1 - hashX0)*i/(nR_closeGeom_sheath - 1);}
+          for(int j=0; j<nY_closeGeom_sheath; j++)
+          {  closeGeomGridy_sheath[j] = (hashY1 - hashY0)*j/(nY_closeGeom_sheath - 1);}
+              for(int k=0; k<nZ_closeGeom_sheath; k++)
+              {  closeGeomGridz_sheath[k] = (hashZ1 - hashZ0)*k/(nZ_closeGeom_sheath - 1);}
+      for(int i=0; i<nZ_closeGeom_sheath; i++)
+      {
+          std::cout << "zth " << i << std::endl; 
+     
+              thrust::for_each(thrust::device, lines0,lines1,
+                                             hashGeom(i,nLines, boundaries.data(), closeGeomGridr.data(), closeGeomGridy.data(),closeGeomGridz.data(),
+                                                 n_closeGeomElements, minDist1_sheath.data(), closeGeom_sheath.data(),nR_closeGeom,nY_closeGeom,nZ_closeGeom));
+              cudaDeviceSynchronize();
+      }
+              cudaDeviceSynchronize();
+     #endif
   #else
     nR_closeGeom_sheath = 1;
     nZ_closeGeom_sheath = 1;
@@ -487,7 +564,7 @@ int main()
     if(cfg.lookupValue("connectionLength.netx0", r0_Lc) && 
        cfg.lookupValue("connectionLength.netx1", r1_Lc) && 
        cfg.lookupValue("connectionLength.nety0", y0_Lc) && 
-       cfg.lookupValue("connectionLength.nety0", y1_Lc) && 
+       cfg.lookupValue("connectionLength.nety1", y1_Lc) && 
        cfg.lookupValue("connectionLength.netz0", z0_Lc) && 
        cfg.lookupValue("connectionLength.netz1", z1_Lc) && 
        cfg.lookupValue("connectionLength.nX", nR_Lc) && 
@@ -549,7 +626,6 @@ int main()
     for(int j=0;j<nY_Lc; j++)
     {
      gridYLc[j] = y0_Lc + j*dy_Lc;
-     //std::cout << "gridzLc " << gridZLc[j] << std::endl;
     }
     #else
     #endif
@@ -585,7 +661,7 @@ int main()
          #else
                  addIndex = i+k*nR_Lc;
          #endif
-        forwardTracerParticles->setParticle(addIndex,gridRLc[i], gridYLc[j], gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0, 0.0);
+                 forwardTracerParticles->setParticle(addIndex,gridRLc[i], gridYLc[j], gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0, 0.0);
         backwardTracerParticles->setParticle(addIndex,gridRLc[i], gridYLc[j], gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0, 0.0);
 
           }
@@ -652,15 +728,12 @@ int main()
 #else
                  addIndex = i+k*nR_Lc;
 #endif
-                 std::cout << "starting count for foward and backward dist " << std::endl;
                  if(forwardTracerParticles->hitWall[addIndex] > 0)
                  {
-                     std::cout << "!!!HITWALL!!!" << std::endl;
                      forwardDist = forwardTracerParticles->distanceTraveled[addIndex];
                  }
                  else
                  { forwardDist = 0.0;
-                     std::cout << "!!!Did not HITWALL!!!" << forwardTracerParticles->distanceTraveled[addIndex] << std::endl;
                  }
                  if(backwardTracerParticles->hitWall[addIndex] > 0)
                  {
@@ -1274,6 +1347,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
     sim::Array<float> preSheathEGridy=gridYLc;
     nPSEs = nR_Lc*nY_Lc*nZ_Lc;
     #endif
+    std::cout << "length of PSE vec " << nPSEs << std::endl;
     sim::Array<float> PSEr(nPSEs), PSEz(nPSEs),PSEt(nPSEs);
     float teLocal1 = 0.0;
     float BLocal1[3] = {0.0,0.0,0.0};
@@ -1432,9 +1506,10 @@ nc_gridZLc.putVar(&gridZLc[0]);
 #else
     
       int nR_PreSheathEfield = 1;
+      int nY_PreSheathEfield = 1;
       int nZ_PreSheathEfield = 1;
       int closestBoundaryIndex;
-      sim::Array<float> preSheathEGridr(nR_PreSheathEfield), preSheathEGridz(nZ_PreSheathEfield);
+      sim::Array<float> preSheathEGridr(nR_PreSheathEfield),preSheathEGridy(nR_PreSheathEfield), preSheathEGridz(nZ_PreSheathEfield);
       sim::Array<float> PSEr(nR_PreSheathEfield*nZ_PreSheathEfield), 
           PSEz(nR_PreSheathEfield*nZ_PreSheathEfield),
           PSEt(nR_PreSheathEfield*nZ_PreSheathEfield);
@@ -1537,9 +1612,13 @@ nc_gridZLc.putVar(&gridZLc[0]);
     else
     { std::cout << "ERROR: Could not get spectroscopy net string info from input file " << std::endl;}
     
-    #if USECYLSYMM > 0
+    #if SPECTROSCOPY < 3
 
       sim::Array<float> net_Bins((nBins+1)*net_nX*net_nZ);
+    #else
+      sim::Array<float> net_Bins((nBins+1)*net_nX*net_nY*net_nZ);
+    #endif
+
       /*
       for (int i=0; i<nBins*net_nX*net_nZ; i++)
           {
@@ -1549,18 +1628,21 @@ nc_gridZLc.putVar(&gridZLc[0]);
             
           }
       */
-      sim::Array<float> gridX_bins(net_nX), gridZ_bins(net_nZ);
+      sim::Array<float> gridX_bins(net_nX),gridY_bins(net_nY),gridZ_bins(net_nZ);
 
       for (int i=0; i< net_nX ; i++)
       {
          gridX_bins[i] = netX0 + 1.0/(net_nX-1)*i*(netX1-netX0);
+      }
+      for (int i=0; i< net_nY ; i++)
+      {
+         gridY_bins[i] = netY0 + 1.0/(net_nY-1)*i*(netY1-netY0);
       }
 
       for (int i=0; i< net_nZ ; i++)
       {
          gridZ_bins[i] = netZ0 + i*1.0/(net_nZ-1)*(netZ1-netZ0);
       }
-    #endif
   #endif    
 
   // Perp DiffusionCoeff initialization - only used when Diffusion interpolator is = 0
@@ -1578,6 +1660,24 @@ nc_gridZLc.putVar(&gridZLc[0]);
     cout<<"Using THRUST"<<endl;
   #else
     cout<<"Not using THRUST"<<endl;
+    int nthreads, tid;
+    #pragma omp parallel private(nthreads, tid)
+    {
+        nthreads = omp_get_num_threads();
+          tid = omp_get_thread_num();
+          if(tid == 0)
+          {
+              std::cout << "N Threads " << nthreads << std::endl;
+          }
+          std::cout << "Hello world" << tid << std::endl;
+    }
+        //nthreads = omp_get_num_threads();
+        nthreads = 24;
+        std::cout << "N threads " << nthreads << std::endl;
+    thrust::counting_iterator<std::size_t> ex0(0);  
+    thrust::counting_iterator<std::size_t> ex1(nthreads-1);
+                  thrust::for_each(thrust::device, ex0,ex1,
+                                   ompPrint());
   #endif
 
   float dt;
@@ -2286,12 +2386,13 @@ nc_gridZLc.putVar(&gridZLc[0]);
     #endif
     for(int tt=0; tt< nT; tt++)
     {
+        __syncthreads();
         thrust::for_each(thrust::device, particleBegin,particleEnd, 
                 move_boris(particleArray,dt,boundaries.data(), nLines,
                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
                     &br.front(),&bz.front(),&bt.front(),
-                    nR_PreSheathEfield,nZ_PreSheathEfield,
-                    &preSheathEGridr.front(),&preSheathEGridz.front(),
+                    nR_PreSheathEfield,nY_PreSheathEfield,nZ_PreSheathEfield,
+                    &preSheathEGridr.front(),&preSheathEGridy.front(),&preSheathEGridz.front(),
                     &PSEr.front(),&PSEz.front(),&PSEt.front(),
                         nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
                         &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
@@ -2313,7 +2414,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
         */
 #if SPECTROSCOPY > 0
             thrust::for_each(thrust::device, particleBegin,particleEnd,
-                    spec_bin(particleArray,nBins,net_nX, net_nZ, &gridX_bins.front(),
+                    spec_bin(particleArray,nBins,net_nX,net_nY, net_nZ, &gridX_bins.front(),&gridY_bins.front(),
                         &gridZ_bins.front(), &net_Bins.front(),dt) );
 #endif            
 #if USEIONIZATION > 0
@@ -2626,11 +2727,13 @@ nc_charge.putVar(chargeHistory[0]);
 NcFile ncFile("spec.nc", NcFile::replace);
 NcDim nc_nBins = ncFile.addDim("nBins",nBins+1);
 NcDim nc_nR = ncFile.addDim("nR",net_nX);
+NcDim nc_nY = ncFile.addDim("nY",net_nY);
 NcDim nc_nZ = ncFile.addDim("nZ",net_nZ);
 
 vector<NcDim> dims;
 dims.push_back(nc_nBins);
 dims.push_back(nc_nZ);
+dims.push_back(nc_nY);
 dims.push_back(nc_nR);
 
 NcVar nc_n = ncFile.addVar("n",ncDouble,dims);
