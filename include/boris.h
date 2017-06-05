@@ -669,8 +669,10 @@ struct move_boris {
     float * BfieldZDevicePointer;
     float * BfieldTDevicePointer;
     int nR_Efield;
+    int nY_Efield;
     int nZ_Efield;
     float * EfieldGridRDevicePointer;
+    float * EfieldGridYDevicePointer;
     float * EfieldGridZDevicePointer;
     float * EfieldRDevicePointer;
     float * EfieldZDevicePointer;
@@ -693,8 +695,9 @@ struct move_boris {
             float * _BfieldRDevicePointer,
             float * _BfieldZDevicePointer,
             float * _BfieldTDevicePointer,
-            int _nR_Efield, int _nZ_Efield,
+            int _nR_Efield,int _nY_Efield, int _nZ_Efield,
             float * _EfieldGridRDevicePointer,
+            float * _EfieldGridYDevicePointer,
             float * _EfieldGridZDevicePointer,
             float * _EfieldRDevicePointer,
             float * _EfieldZDevicePointer,
@@ -706,8 +709,9 @@ struct move_boris {
         BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
         BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), 
         BfieldTDevicePointer(_BfieldTDevicePointer),
-        nR_Efield(_nR_Efield), nZ_Efield(_nZ_Efield), 
+        nR_Efield(_nR_Efield),nY_Efield(_nY_Efield), nZ_Efield(_nZ_Efield), 
         EfieldGridRDevicePointer(_EfieldGridRDevicePointer), 
+        EfieldGridYDevicePointer(_EfieldGridYDevicePointer), 
         EfieldGridZDevicePointer(_EfieldGridZDevicePointer),
         EfieldRDevicePointer(_EfieldRDevicePointer), EfieldZDevicePointer(_EfieldZDevicePointer),
         EfieldTDevicePointer(_EfieldTDevicePointer),
@@ -765,11 +769,27 @@ cpu_times initTime0 = timer.elapsed();
 #endif
 
 #if USEPRESHEATHEFIELD > 0
+#if LC_INTERP==3
+              
+	        //float PSE2[3] = {0.0f, 0.0f, 0.0f};
+                 interp3dVector(PSE,position[0], position[1], position[2],nR_Efield,nY_Efield,nZ_Efield,
+                     EfieldGridRDevicePointer,EfieldGridYDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
+                     EfieldZDevicePointer,EfieldTDevicePointer);
+//E[0]= E[0] + PSE[0];
+//E[1]= E[1] + PSE[1];
+//E[2]= E[2] + PSE[2];
+                 vectorAdd(E,PSE,E);
+              //float a = interp3d(position[0], position[1], position[2],nR_Efield,nY_Efield,nZ_Efield,
+                //                EfieldGridRDevicePointer,EfieldGridYDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer);
+              //PSE[0] = 1.23;
+
+#else
                  interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer);
                  
                  vectorAdd(E,PSE,E);
+#endif
 #endif              
                 interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,

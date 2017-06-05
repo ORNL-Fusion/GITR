@@ -77,7 +77,7 @@ void operator()(std::size_t indx) const {
 };
 
 struct reflection {
-    Particles * particlesArray;
+    Particles * particles;
     const double dt;
     int nLines;
     Boundary * boundaryVector;
@@ -93,11 +93,11 @@ struct reflection {
     float max_Energy;
     float* CDFThompson;
 
-    reflection(Particles* _particlesArray, double _dt, int _nLines,Boundary * _boundaryVector,
+    reflection(Particles* _particles, double _dt, int _nLines,Boundary * _boundaryVector,
             int _nAngle, int _nEnergy, float* _spYlGridAngle, float* _spYlGridE, float* _spYl,
             int _nSegmentsAngle, float* _sourceAngleSegments, float* _angleCDF,
             int _nThompDistPoints, float _max_Energy, float* _CDFThompson) : 
-        particlesArray(_particlesArray), dt(_dt),nLines(_nLines), boundaryVector(_boundaryVector),
+        particles(_particles), dt(_dt),nLines(_nLines), boundaryVector(_boundaryVector),
         nAngle(_nAngle),nEnergy(_nEnergy),spYlGridAngle(_spYlGridAngle),
         spYlGridE(_spYlGridE), spYl(_spYl),
       nSegmentsAngle(_nSegmentsAngle), sourceAngleSegments(_sourceAngleSegments),
@@ -107,16 +107,12 @@ struct reflection {
 CUDA_CALLABLE_MEMBER_DEVICE
 void operator()(std::size_t indx) const {
     
-            if(particlesArray->hitWall[indx] == 1.0)
-            {
-                particlesArray->hitWall[indx] = 0.0;
-            }
-            //if(particles->hitWall[indx] == 1.0)
-             //      if( boundaryVector[particles->wallHit[indx]].Z > 0.0)
-              //     {
-        	//{
+            if(particles->hitWall[indx] == 1.0)
+            {   
+                if( boundaryVector[particles->wallHit[indx]].Z > 0.0)
+                {
                 
-	        /*
+	        
                 //float reducedEnergyMultiplier = 5e-7;//for W on W
             float E0 = 0.0;
             float thetaImpact = 0.0;
@@ -159,15 +155,17 @@ void operator()(std::size_t indx) const {
             signPartDotNormal = sgn(partDotNormal);
             float Y0 = interp2dUnstructured(thetaImpact*180.0/3.1415,E0,nAngle,nEnergy, 
                     spYlGridAngle,spYlGridE, spYl);
-            
+            //std::cout << "Energy angle yield " << E0 << " " << thetaImpact << " " << Y0 << std::endl; 
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
                 float r7 = curand_uniform(&particles->streams_surf[indx]);
                 float r8 = curand_uniform(&particles->streams_surf[indx]);
+                float r9 = curand_uniform(&particles->streams_surf[indx]);
 #else
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
                 float r7 = dist(particles->streams_surf[indx]);
                 float r8 = dist(particles->streams_surf[indx]);
+                float r9 = dist(particles->streams_surf[indx]);
 #endif
 
 #else
@@ -182,29 +180,30 @@ void operator()(std::size_t indx) const {
 
                 //deposit on surface
                 int wallHit = particles->wallHit[indx];
-#if USESURFACEMODEL == 0 
+#if USESURFACEMODEL == 1
 #if USE_CUDA > 0
                 atomicAdd(&boundaryVector[wallHit].impacts, particles->weight[indx]);
 #else
-               boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particlesPointer->weight[indx];
+               boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
 #endif
 #endif 
 
                 //reflect with weight and new initial conditions
                 particles->weight[indx] = particles->weight[indx]*Y0;
-*/
-               // particles->hitWall[indx] = 0.0;
-/*
+
+                particles->hitWall[indx] = 0.0;
+                particles->charge[indx] = 0.0;
+
                 Enew = interp1dUnstructured(r7,nThompDistPoints, max_Energy, CDFThompson);
                 
                 angleSample = interp1dUnstructured2(r8,nSegmentsAngle,sourceAngleSegments , angleCDF);
                  float V0 = sqrt(2*E0*1.602e-19/(particles->amu[indx]*1.66e-27));
-    particles->vx[indx] = -signPartDotNormal*V0*surfaceNormalVector[0];
-    particles->vy[indx] = -signPartDotNormal*V0*surfaceNormalVector[1];
-    particles->vz[indx] = -signPartDotNormal*V0*surfaceNormalVector[2];
-*/
-            //}
-              //     }
+    particles->vx[indx] = -signPartDotNormal*V0*surfaceNormalVector[0]*sin(angleSample)*cos(2.0*3.1415*r9);
+    particles->vy[indx] = -signPartDotNormal*V0*surfaceNormalVector[1]*sin(angleSample)*sin(2.0*3.1415*r9);
+    particles->vz[indx] = -signPartDotNormal*V0*surfaceNormalVector[2]*cos(angleSample);
+
+            }
+                  }
 }
 };
 #endif

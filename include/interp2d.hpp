@@ -36,7 +36,10 @@ float interp2dCombined ( float x, float y, float z,int nx, int nz,
     float dz = gridz[1] - gridz[0];
     int i = floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
     int j = floor((z - gridz[0])/dz);
-    float interp_value = data[i + j*nx];
+    
+    //float interp_value = data[i + j*nx];
+    if (i < 0) i =0;
+    if (j< 0 ) j=0;
     if (i >=nx-1 && j>=nz-1)
     {
         fxz = data[nx-1+(nz-1)*nx];
@@ -65,6 +68,47 @@ float interp2dCombined ( float x, float y, float z,int nx, int nz,
     return fxz;
 }
 
+CUDA_CALLABLE_MEMBER
+
+float interp3d ( float x, float y, float z,int nx,int ny, int nz,
+    float* gridx,float* gridy, float* gridz,float* data ) {
+    
+    float fxyz = 0.0;
+
+    float dx = gridx[1] - gridx[0];
+    float dy = gridy[1] - gridy[0];
+    float dz = gridz[1] - gridz[0];
+    
+    int i = floor((x - gridx[0])/dx);//addition of 0.5 finds nearest gridpoint
+    int j = floor((y - gridy[0])/dy);
+    int k = floor((z - gridz[0])/dz);
+
+    if(i <0 || i>=nx-1) i=0;
+    if(j <0 || j>=ny-1) j=0;
+    if(k <0 || k>=nz-1) k=0;
+    float fx_z0 = (data[i + j*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + k*nx*ny]*(x-gridx[i]))/dx;
+    float fx_z1 = (data[i + j*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
+
+
+    float fxy_z0 = (data[i + (j+1)*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + (j+1)*nx + k*nx*ny]*(x-gridx[i]))/dx;
+    float fxy_z1 = (data[i + (j+1)*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + (j+1)*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
+
+    float fxz0 = (fx_z0*(gridz[k+1] - z) + fx_z1*(z-gridz[k]))/dz;
+    float fxz1 = (fxy_z0*(gridz[k+1] - z) + fxy_z1*(z-gridz[k]))/dz;
+
+    fxyz = (fxz0*(gridy[j+1] - y) + fxz1*(y-gridy[j]))/dy;
+    //std::cout <<"fxyz " << fxyz << std::endl; 
+    return fxyz;
+}
+
+CUDA_CALLABLE_MEMBER
+void interp3dVector (float* field, float x, float y, float z,int nx,int ny, int nz,
+        float* gridx,float* gridy,float* gridz,float* datar, float* dataz, float* datat ) {
+
+    field[0] =  interp3d (x,y,z,nx,ny,nz,gridx, gridy,gridz,datar );
+    field[1] =  interp3d (x,y,z,nx,ny,nz,gridx, gridy,gridz,datat );
+    field[2] =  interp3d (x,y,z,nx,ny,nz,gridx, gridy,gridz,dataz );
+}
 CUDA_CALLABLE_MEMBER
 void interp2dVector (float* field, float x, float y, float z,int nx, int nz,
 float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {

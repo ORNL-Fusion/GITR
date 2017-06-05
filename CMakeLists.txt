@@ -29,11 +29,11 @@ include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 add_definitions(-DUSE_CUDA=1
         -DUSEMPI=0
         -DUSE_BOOST=1
-        -DUSEIONIZATION=0
+        -DUSEIONIZATION=1
         -DUSERECOMBINATION=0
-        -DUSEPERPDIFFUSION=1
-        -DUSECOULOMBCOLLISIONS=1
-        -DUSETHERMALFORCE=1
+        -DUSEPERPDIFFUSION=0
+        -DUSECOULOMBCOLLISIONS=0
+        -DUSETHERMALFORCE=0
         -DUSESURFACEMODEL=0
         -DUSESHEATHEFIELD=1
         -DBIASED_SURFACE=1
@@ -55,7 +55,7 @@ add_definitions(-DUSE_CUDA=1
         -DGEOM_HASH_SHEATH=1
         -DPARTICLE_TRACKS=0
         -DPARTICLE_SOURCE=2
-        -DSPECTROSCOPY=1
+        -DSPECTROSCOPY=0
         -DUSE3DTETGEOM=1
         -DUSECYLSYMM=1
         -DCHECK_COMPATIBILITY=1)
@@ -66,7 +66,7 @@ if (${CUDA})
     find_package(CUDA REQUIRED)
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     set(CUDA_SEPARABLE_COMPILATION TRUE)
-    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA  --std=c++11) # --expt-extended-lambda --expt-relaxed-constexpr
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA  --std=c++11 -g -G --cudart shared) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
     set_source_files_properties(${SRC_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
     cuda_add_executable(GITR ${SRC_FILES})
 endif ()
