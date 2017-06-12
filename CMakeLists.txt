@@ -31,9 +31,9 @@ add_definitions(-DUSE_CUDA=1
         -DUSE_BOOST=1
         -DUSEIONIZATION=1
         -DUSERECOMBINATION=0
-        -DUSEPERPDIFFUSION=0
-        -DUSECOULOMBCOLLISIONS=0
-        -DUSETHERMALFORCE=0
+        -DUSEPERPDIFFUSION=1
+        -DUSECOULOMBCOLLISIONS=1
+        -DUSETHERMALFORCE=1
         -DUSESURFACEMODEL=0
         -DUSESHEATHEFIELD=1
         -DBIASED_SURFACE=1
@@ -66,7 +66,7 @@ if (${CUDA})
     find_package(CUDA REQUIRED)
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     set(CUDA_SEPARABLE_COMPILATION TRUE)
-    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA  --std=c++11 -g -G --cudart shared) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA  --std=c++11 -O3) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
     set_source_files_properties(${SRC_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
     cuda_add_executable(GITR ${SRC_FILES})
 endif ()
