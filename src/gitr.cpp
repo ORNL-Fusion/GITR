@@ -2386,7 +2386,9 @@ nc_gridZLc.putVar(&gridZLc[0]);
     #endif
     for(int tt=0; tt< nT; tt++)
     {
-        __syncthreads();
+#ifdef __CUDACC__
+    cudaThreadSynchronize();
+#endif
         thrust::for_each(thrust::device, particleBegin,particleEnd, 
                 move_boris(particleArray,dt,boundaries.data(), nLines,
                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
