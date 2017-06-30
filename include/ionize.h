@@ -83,7 +83,7 @@ struct ionize {
     #endif
 #else
 #if __CUDACC__
-    float r1 = curand_uniform(state);
+    float r1 = curand_uniform(&state[0]);
 #else
         std::uniform_real_distribution<float> dist(0.0, 1.0);
             float r1=dist(state[0]);

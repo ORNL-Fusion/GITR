@@ -92,12 +92,22 @@ struct reflection {
     int nThompDistPoints;
     float max_Energy;
     float* CDFThompson;
-
-    reflection(Particles* _particles, double _dt, int _nLines,Boundary * _boundaryVector,
+#if __CUDACC__
+        curandState *state;
+#else
+        std::mt19937 *state;
+#endif
+    reflection(Particles* _particles, double _dt,
+#if __CUDACC__
+                            curandState *_state,
+#else
+                            std::mt19937 *_state,
+#endif
+            int _nLines,Boundary * _boundaryVector,
             int _nAngle, int _nEnergy, float* _spYlGridAngle, float* _spYlGridE, float* _spYl,
             int _nSegmentsAngle, float* _sourceAngleSegments, float* _angleCDF,
             int _nThompDistPoints, float _max_Energy, float* _CDFThompson) : 
-        particles(_particles), dt(_dt),nLines(_nLines), boundaryVector(_boundaryVector),
+        particles(_particles), dt(_dt),state(_state),nLines(_nLines), boundaryVector(_boundaryVector),
         nAngle(_nAngle),nEnergy(_nEnergy),spYlGridAngle(_spYlGridAngle),
         spYlGridE(_spYlGridE), spYl(_spYl),
       nSegmentsAngle(_nSegmentsAngle), sourceAngleSegments(_sourceAngleSegments),
@@ -170,10 +180,14 @@ void operator()(std::size_t indx) const {
 
 #else
 #if __CUDACC__
-                    float r1 = curand_uniform(state);
+                float r7 = curand_uniform(&state[6]);
+                float r8 = curand_uniform(&state[7]);
+                float r9 = curand_uniform(&state[8]);
 #else
-                            std::uniform_real_distribution<float> dist(0.0, 1.0);
-                                        float r1=dist(state[0]);
+                std::uniform_real_distribution<float> dist(0.0, 1.0);
+                float r7=dist(state[6]);
+                float r8=dist(state[7]);
+                float r9=dist(state[8]);
 #endif
                 //float r7 = 0.0;
 #endif
