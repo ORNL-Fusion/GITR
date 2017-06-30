@@ -1601,7 +1601,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
     if(cfg.lookupValue("diagnostics.netx0", netX0) && 
        cfg.lookupValue("diagnostics.netx1", netX1) && 
        cfg.lookupValue("diagnostics.nety0", netY0) && 
-       cfg.lookupValue("diagnostics.nety0", netY1) && 
+       cfg.lookupValue("diagnostics.nety1", netY1) && 
        cfg.lookupValue("diagnostics.netz0", netZ0) && 
        cfg.lookupValue("diagnostics.netz1", netZ1) && 
        cfg.lookupValue("diagnostics.nX", net_nX) && 
@@ -1611,7 +1611,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
        {std::cout << "Spectroscopy net imported" << std::endl;}
     else
     { std::cout << "ERROR: Could not get spectroscopy net string info from input file " << std::endl;}
-    
+    std::cout << "spec bin Ns " << net_nX << " " << net_nY << " " << net_nZ << std::endl; 
     #if SPECTROSCOPY < 3
 
       sim::Array<float> net_Bins((nBins+1)*net_nX*net_nZ);
@@ -2357,12 +2357,36 @@ nc_gridZLc.putVar(&gridZLc[0]);
   #else //ParticleSeeds == 0
 
     #if __CUDACC__
-      sim::Array<curandState> state1(7);
+      sim::Array<curandState> state1(9);
       curandInitialize<<<1,1>>>(&state1[0],19);
+      curandInitialize<<<1,1>>>(&state1[1],25);
+      curandInitialize<<<1,1>>>(&state1[2],32);
+      curandInitialize<<<1,1>>>(&state1[3],39);
+      curandInitialize<<<1,1>>>(&state1[4],43);
+      curandInitialize<<<1,1>>>(&state1[5],48);
+      curandInitialize<<<1,1>>>(&state1[6],51);
+      curandInitialize<<<1,1>>>(&state1[7],56);
+      curandInitialize<<<1,1>>>(&state1[8],60);
     #else
-      sim::Array<std::mt19937> state1(7);
-      std::mt19937 s(348763);
-      state1[0] = s;
+      sim::Array<std::mt19937> state1(9);
+      std::mt19937 s0(348763);
+      std::mt19937 s1(358763);
+      std::mt19937 s2(346763);
+      std::mt19937 s3(348263);
+      std::mt19937 s4(349763);
+      std::mt19937 s5(318763);
+      std::mt19937 s6(448763);
+      std::mt19937 s7(448963);
+      std::mt19937 s8(463763);
+      state1[0] = s0;
+      state1[1] = s1;
+      state1[2] = s2;
+      state1[3] = s3;
+      state1[4] = s4;
+      state1[5] = s5;
+      state1[6] = s6;
+      state1[7] = s7;
+      state1[8] = s8;
     #endif
   #endif
 
@@ -2438,7 +2462,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
 #endif
 #if USEPERPDIFFUSION > 0
         thrust::for_each(thrust::device,particleBegin, particleEnd,
-                crossFieldDiffusion(particleArray,dt,perpDiffusionCoeff,
+                crossFieldDiffusion(particleArray,dt,&state1.front(),perpDiffusionCoeff,
                     nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
                                         &br.front(),&bz.front(),&bt.front()));
             
@@ -2450,7 +2474,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
 #endif
 #if USECOULOMBCOLLISIONS > 0
         thrust::for_each(thrust::device, particleBegin, particleEnd, 
-                coulombCollisions(particleArray,dt,
+                coulombCollisions(particleArray,dt,&state1.front(),
                     nR_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridz.front(),
                     &flowVr.front(),&flowVz.front(),&flowVt.front(),
                     nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),    
@@ -2472,7 +2496,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
 
 #if USESURFACEMODEL > 0
         thrust::for_each(thrust::device,particleBegin, particleEnd, 
-                reflection(particleArray,dt,nLines,&boundaries[0],nAngle,nEnergy,
+                reflection(particleArray,dt,&state1.front(),nLines,&boundaries[0],nAngle,nEnergy,
                       spYlGridAngle.data(),
                             spYlGridE.data(), 
                                   spYl.data(),nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front(),

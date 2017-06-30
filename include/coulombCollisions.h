@@ -188,7 +188,19 @@ struct coulombCollisions {
     float * BfieldR;
     float * BfieldZ;
     float * BfieldT;
-    coulombCollisions(Particles *_particlesPointer,float _dt, int _nR_flowV, int _nZ_flowV,    float* _flowVGridr,
+#if __CUDACC__
+            curandState *state;
+#else
+            std::mt19937 *state;
+#endif
+
+    coulombCollisions(Particles *_particlesPointer,float _dt, 
+#if __CUDACC__
+                            curandState *_state,
+#else
+                            std::mt19937 *_state,
+#endif
+            int _nR_flowV, int _nZ_flowV,    float* _flowVGridr,
                 float* _flowVGridz,float* _flowVr,
                         float* _flowVz,float* _flowVt,
                         int _nR_Dens,int _nZ_Dens,float* _DensGridr,
@@ -199,7 +211,7 @@ struct coulombCollisions {
                         float * _BfieldGridR ,float * _BfieldGridZ ,
                         float * _BfieldR ,float * _BfieldZ ,
                  float * _BfieldT )
-        : particlesPointer(_particlesPointer), dt(_dt), nR_flowV(_nR_flowV), nZ_flowV(_nZ_flowV), flowVGridr(_flowVGridr),
+        : particlesPointer(_particlesPointer), dt(_dt),state(_state), nR_flowV(_nR_flowV), nZ_flowV(_nZ_flowV), flowVGridr(_flowVGridr),
    flowVGridz(_flowVGridz), flowVr(_flowVr),flowVz(_flowVz), flowVt(_flowVt),
    nR_Dens(_nR_Dens), nZ_Dens(_nZ_Dens), DensGridr(_DensGridr), DensGridz(_DensGridz),ni(_ni),
            nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr), TempGridz(_TempGridz),
@@ -245,9 +257,16 @@ void operator()(std::size_t indx) const {
 		int plus_minus3 = floor(dist(particlesPointer->streams_collision3[indx]) + 0.5)*2 - 1;
 #endif
 #else
- int plus_minus1 = 0.0;        
- int plus_minus2 = 0.0;        
- int plus_minus3 = 0.0;      
+#if __CUDACC__
+            float plus_minus1 = floor(curand_uniform(&state[3]) + 0.5)*2-1;
+            float plus_minus2 = floor(curand_uniform(&state[4]) + 0.5)*2-1;
+            float plus_minus3 = floor(curand_uniform(&state[5]) + 0.5)*2-1;
+#else
+            std::uniform_real_distribution<float> dist(0.0, 1.0);
+            float plus_minus1 = floor(dist(state[3]) + 0.5)*2 - 1;
+            float plus_minus2 = floor(dist(state[4]) + 0.5)*2 - 1;
+            float plus_minus3 = floor(dist(state[5]) + 0.5)*2 - 1;
+#endif
 #endif 
         
 //        std::cout << "flow velocity " << flowVelocity[0] << " " << flowVelocity[1] << " " <<flowVelocity[2] << std::endl;

@@ -21,13 +21,23 @@ struct crossFieldDiffusion {
     float * BfieldRDevicePointer;
     float * BfieldZDevicePointer;
     float * BfieldTDevicePointer;
-
-    crossFieldDiffusion(Particles *_particlesPointer, float _dt, float _diffusionCoefficient,
+#if __CUDACC__
+        curandState *state;
+#else
+        std::mt19937 *state;
+#endif
+    crossFieldDiffusion(Particles *_particlesPointer, float _dt,
+#if __CUDACC__
+                            curandState *_state,
+#else
+                                            std::mt19937 *_state,
+#endif
+            float _diffusionCoefficient,
             int _nR_Bfield, int _nZ_Bfield,
             float * _BfieldGridRDevicePointer,float * _BfieldGridZDevicePointer,
             float * _BfieldRDevicePointer,float * _BfieldZDevicePointer,
             float * _BfieldTDevicePointer)
-        : particlesPointer(_particlesPointer), dt(_dt), diffusionCoefficient(_diffusionCoefficient),nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
+        : particlesPointer(_particlesPointer), dt(_dt),state(_state), diffusionCoefficient(_diffusionCoefficient),nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
        BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer) {} 
 
 CUDA_CALLABLE_MEMBER_DEVICE    
@@ -59,7 +69,12 @@ void operator()(std::size_t indx) const {
         	float r3=dist(particlesPointer->streams[2]);
 #endif 
 #else
-float r3 = 0.0;
+#if __CUDACC__
+            float r3 = curand_uniform(&state[2]);
+#else
+            std::uniform_real_distribution<float> dist(0.0, 1.0);
+            float r3=dist(state[2]);
+#endif
 #endif
 		phi_random = 2*3.14159265*r3;
 		perpVector[0] = cos(phi_random);
