@@ -137,6 +137,9 @@ void operator()(std::size_t indx) const {
             float Enew = 0.0f;
             float angleSample = 0.0f;
             int wallIndex = 0;
+            float tol = 1e12;
+            float Sr = 0.0;
+            float St = 0.0;
 
 		        E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/1.60217662e-19;
 		//	reducedEnergy = E0*reducedEnergyMultiplier;
@@ -145,11 +148,43 @@ void operator()(std::size_t indx) const {
             particleTrackVector[2] = particles->vz[indx];
             //surfaceNormalVector[0] = -boundaryVector[particles->wallIndex].slope_dzdx;
             wallIndex = particles->wallIndex[indx];
+#if USE3DTETGEOM > 0
             norm_normal = boundaryVector[wallIndex].plane_norm; 
             surfaceNormalVector[0] = boundaryVector[wallIndex].a/norm_normal;
             surfaceNormalVector[1] = boundaryVector[wallIndex].b/norm_normal;
             
             surfaceNormalVector[2] = boundaryVector[wallIndex].c/norm_normal;
+#else
+            if (boundaryVector[wallIndex].slope_dzdx == 0.0)
+                {
+                 surfaceNormalVector[0] = 0.0f;
+                 surfaceNormalVector[1] = 0.0f;
+                 surfaceNormalVector[2] = 1.0f;
+                }
+            else if (fabsf(boundaryVector[wallIndex].slope_dzdx)>= 0.75f*tol)
+                {
+                    surfaceNormalVector[0] = 1.0f;
+                    surfaceNormalVector[1] = 0.0f;
+                    surfaceNormalVector[2] = 0.0f;
+                }
+            else
+                {
+                    surfaceNormalVector[0] = 1.0f;
+                    surfaceNormalVector[1] = 0.0f;
+                    surfaceNormalVector[2] = -1.0f / (boundaryVector[wallIndex].slope_dzdx);
+            norm_normal = sqrt(surfaceNormalVector[2]*surfaceNormalVector[2] + 1.0); 
+            surfaceNormalVector[0] = surfaceNormalVector[0]/norm_normal;
+            surfaceNormalVector[1] = surfaceNormalVector[1]/norm_normal;
+            
+            surfaceNormalVector[2] = surfaceNormalVector[2]/norm_normal;
+                }
+#if USECYLSYMM > 0 
+            float theta = atan2f(particles->yprevious[indx],particles->xprevious[indx]);
+            Sr = surfaceNormalVector[0];
+            surfaceNormalVector[0] = cosf(theta)*Sr;
+            surfaceNormalVector[1] = sinf(theta)*Sr;
+#endif            
+#endif
             //std::cout << "velocities " << particles->vx[indx] << " " << particles->vy[indx] << " " << particles->vz[indx] << std::endl;
             //std::cout << "surface norm " << surfaceNormalVector[0] << " " << surfaceNormalVector[1] << " " << surfaceNormalVector[2] << std::endl;
             norm_part = sqrt(particleTrackVector[0]*particleTrackVector[0] + particleTrackVector[1]*particleTrackVector[1] + particleTrackVector[2]*particleTrackVector[2]);

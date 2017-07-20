@@ -76,14 +76,18 @@ struct hashGeom {
                        float d2 =((x0 - boundary[l].x2)*(x0 - boundary[l].x2)
                                +  (y0 - boundary[l].y2)*(y0 - boundary[l].y2)
                                +  (z0 - boundary[l].z2)*(z0 - boundary[l].z2));
+#if USE3DTETGEOM > 0
                        float d3 =((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
                                +  (y0 - boundary[l].y3)*(y0 - boundary[l].y3)
                                +  (z0 - boundary[l].z3)*(z0 - boundary[l].z3));
+#endif
                           //is distance less than min
                 //       std::cout << "d123 " << d1 << " " << d2 << " " << d3 << std::endl;
                               float minOf3 = min(d1,d2);
+#if USE3DTETGEOM > 0
                               minOf3 = min(minOf3,d3);
-                          int minIndClose = n_closeGeomElements;
+#endif
+                              int minIndClose = n_closeGeomElements;
                   //            std::cout << "compare minDist1 to minOf3 " << minOf3 << minIndClose <<std::endl;
                           for(int m=0; m< n_closeGeomElements; m++)
                           {

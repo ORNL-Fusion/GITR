@@ -24,10 +24,16 @@
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
 
+//void handle_error(int status) {
+//    if (status != NC_NOERR) {
+//           fprintf(stderr, "%s\n", nc_strerror(status));
+//              exit(-1);
+//                 }
+//}
 using namespace std;
 using namespace netCDF;
 using namespace exceptions;
-
+using namespace netCDF::exceptions;
 //IO
 
 int read_ar2Input( string fileName, float *Bfield[]) {
@@ -158,7 +164,10 @@ int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, sim::Ar
 }
 
 int read_profile2d( string fileName,string dataName, sim::Array<float>& data) {
-
+    std::cout << "reading 2d profile" << std::endl;
+    //NcError err(2);
+    //NcError::Behavior bb= (NcError::Behavior) 0;
+    //NcError err(NcError::silent_nonfatal);
     // Check input file exists
 
     ifstream file(fileName.c_str());
@@ -170,7 +179,23 @@ int read_profile2d( string fileName,string dataName, sim::Array<float>& data) {
     NcFile nc(fileName.c_str(), NcFile::read);
 
 
-    NcVar nc_ne(nc.getVar(dataName));
+    //NcVar nc_ne(nc.getVar(dataName));
+    static const int NC_ERR = 2;
+    NcVar nc_ne;
+    try{
+        std::cout << "inside try " << std::endl;
+        nc_ne = nc.getVar(dataName);
+    if(nc_ne.isNull()){std::cout << "erororororo" << std::endl;}
+        std::cout << "finishing try " << std::endl;
+    }
+    catch(int an)//NcException& e
+    {
+        
+        std::cout << " problem in file: " << fileName << " variable: " << dataName << std::endl;
+        //e.what();
+        std::cout << " problem in file: " << fileName << " variable: " << dataName << std::endl;
+        //return NC_ERR;
+    }
     nc_ne.getVar(&data[0]);
 
     return(0);
