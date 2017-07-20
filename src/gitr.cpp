@@ -160,6 +160,26 @@ int main()
     }
   #endif
   
+  // show memory usage of GPU
+   
+  size_t free_byte ;
+  size_t total_byte ;
+  
+  cudaError_t    cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
+  
+  if(cudaSuccess != cuda_status )
+  {
+  
+     printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status) );
+     exit(1);
+  }
+  
+  double free_db = (double)free_byte ;
+  double total_db = (double)total_byte ;
+  double used_db = total_db - free_db ;
+  
+  printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
+    used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
     
   // Background species info
   float background_Z;
@@ -183,7 +203,9 @@ int main()
     nR_Bfield = 1;
     nY_Bfield = 0;
     nZ_Bfield = 1;
+    std::cout << " first sim array "<< nR_Bfield << " " << nZ_Bfield << std::endl;
     sim::Array<float> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
+    std::cout << " second sim array " << std::endl;
     sim::Array<float> br(nR_Bfield*nZ_Bfield), bz(nR_Bfield*nZ_Bfield),bt(nR_Bfield*nZ_Bfield);
     if(cfg.lookupValue("backgroundPlasmaProfiles.Bfield.br", br[0]) && 
        cfg.lookupValue("backgroundPlasmaProfiles.Bfield.bz", bz[0]) &&
@@ -215,17 +237,17 @@ int main()
       int b11 = read_profileNsChar(bfieldFile,bfieldNy,bfieldNz,nY_Bfield,nZ_Bfield);
       sim::Array<float> bfieldGridr(nR_Bfield),bfieldGridy(nY_Bfield), bfieldGridz(nZ_Bfield);
       int bFieldSize = nR_Bfield*nY_Bfield*nZ_Bfield;
+      int b22 = read_profile1d(bfieldFile,bfieldGridY, bfieldGridy);
     #else
       sim::Array<float> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
       int bFieldSize = nR_Bfield*nZ_Bfield;
-      int b22 = read_profile1d(bfieldFile,bfieldGridY, bfieldGridy);
     #endif
     
     sim::Array<float> br(bFieldSize), bz(bFieldSize),bt(bFieldSize);
     int b2 = read_profile1d(bfieldFile,bfieldGridR, bfieldGridr);
     
     int b3 = read_profile1d(bfieldFile,bfieldGridZ, bfieldGridz);
-    
+    std::cout << "br import" << std::endl; 
     int b4 = read_profile2d(bfieldFile,brChar, br);
     
     int b5 = read_profile2d(bfieldFile,bzChar, bz);
@@ -2063,7 +2085,21 @@ nc_gridZLc.putVar(&gridZLc[0]);
       for(int i=0;i<spylGridE.size();i++)
       {
           std::cout << "spylGridE " << spylGridE[i] << std::endl;
+          //std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
+          //std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
+          //std::cout << "spyl " << spyl[i] << std::endl;
+      }
+      for(int i=0;i<spylGridAngle.size();i++)
+      {
+          //std::cout << "spylGridE " << spylGridE[i] << std::endl;
           std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
+          //std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
+          //std::cout << "spyl " << spyl[i] << std::endl;
+      }
+      for(int i=0;i<spylGridRoughness.size();i++)
+      {
+          //std::cout << "spylGridE " << spylGridE[i] << std::endl;
+          //std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
           std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
           //std::cout << "spyl " << spyl[i] << std::endl;
       }
