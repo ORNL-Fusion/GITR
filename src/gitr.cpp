@@ -184,6 +184,8 @@ int main()
   // Background species info
   float background_Z;
   float background_amu;
+  getVar(cfg,"backgroundPlasmaProfiles.Z",background_Z);
+  printf("background Z %4.4f \n", background_Z);
   if(cfg.lookupValue("backgroundPlasmaProfiles.Z", background_Z) && 
      cfg.lookupValue("backgroundPlasmaProfiles.amu", background_amu))
   {
