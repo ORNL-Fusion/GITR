@@ -11,7 +11,7 @@
 #include <iostream>
 #include "Particle.h"
 #include "libconfig.h++"
-
+//#include <libconfig.h++>
 
 //void INPUT(int& nP, double& sourceStrength,double& x_start,double& y_start,double& z_start,double& energy_eV_x_start,double& energy_eV_y_start,
 //	double&	energy_eV_z_start,double& impurity_amu, double& impurity_Z,int& nDensityChargeBins	,double& xMinV,double& xMaxV,double& yMin,double& yMax,double& zMin,double& zMax,	int& nXv,
@@ -50,5 +50,22 @@ struct randInit
     return s;
     }
 };
+
+template <class T>
+T getVar (libconfig::Config &cfg,char s[], T &a)
+{
+  std::cout << "getVar char " << s << std::endl;
+  T tmp;
+  if(cfg.lookupValue(s, tmp))
+    {
+      std::cout << s << " = " << tmp << std::endl;
+    }
+  else
+    {
+      std::cout << "ERROR: Failed importing " << s << std:: endl;
+    }
+  a = tmp;
+  return a;
+}
 
 #endif
