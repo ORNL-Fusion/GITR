@@ -52,9 +52,8 @@ struct randInit
 };
 
 template <class T>
-T getVar (libconfig::Config &cfg,char s[], T &a)
+T getVar (libconfig::Config &cfg,std::string s, T &a)
 {
-  std::cout << "getVar char " << s << std::endl;
   T tmp;
   if(cfg.lookupValue(s, tmp))
     {
@@ -68,4 +67,12 @@ T getVar (libconfig::Config &cfg,char s[], T &a)
   return a;
 }
 
+template <class T>
+int getVarFromFile (libconfig::Config &cfg,std::string file,std::string section,std::string s, T &a)
+{
+  std::string str;
+  getVar(cfg,section+s,str);
+  int dim = readFileVar1d(file,section,str,a);
+  return dim;
+}
 #endif

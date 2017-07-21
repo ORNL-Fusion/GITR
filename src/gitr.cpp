@@ -182,104 +182,38 @@ int main()
     used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
     
   // Background species info
-  float background_Z;
-  float background_amu;
+  float background_Z,background_amu;
   getVar(cfg,"backgroundPlasmaProfiles.Z",background_Z);
-  printf("background Z %4.4f \n", background_Z);
-  if(cfg.lookupValue("backgroundPlasmaProfiles.Z", background_Z) && 
-     cfg.lookupValue("backgroundPlasmaProfiles.amu", background_amu))
-  {
-      std::cout << "Background plasma Z = " << background_Z << std::endl;
-      std::cout << "Background plasma amu = " << background_amu << std::endl;
-  }
-  else
-  {
-      std::cout << "ERROR: Failed importing background species info Z, amu" << std:: endl;
-  }  
+  getVar(cfg,"backgroundPlasmaProfiles.amu",background_amu);
 
   //Bfield initialization
-  int nR_Bfield;
-  int nY_Bfield;
-  int nZ_Bfield;
-  #if BFIELD_INTERP == 0
-    nR_Bfield = 1;
-    nY_Bfield = 0;
-    nZ_Bfield = 1;
-    std::cout << " first sim array "<< nR_Bfield << " " << nZ_Bfield << std::endl;
-    sim::Array<float> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
-    std::cout << " second sim array " << std::endl;
-    sim::Array<float> br(nR_Bfield*nZ_Bfield), bz(nR_Bfield*nZ_Bfield),bt(nR_Bfield*nZ_Bfield);
-    if(cfg.lookupValue("backgroundPlasmaProfiles.Bfield.br", br[0]) && 
-       cfg.lookupValue("backgroundPlasmaProfiles.Bfield.bz", bz[0]) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Bfield.bt", bt[0]))
-    {std::cout << "Bfield vector = " << br[0] << " " << bt[0]<< " " << bz[0] << std::endl;}
-    else
-    {std::cout << "ERROR: Failed importing constant Bfield" << std:: endl;}
-  #elif BFIELD_INTERP == 1
+  int nR_Bfield = 1;
+  int nY_Bfield = 1;
+  int nZ_Bfield = 1;
+  sim::Array<float> bfieldGridr(1),bfieldGridy(1),bfieldGridz(1);
+  sim::Array<float> br(1),by(1),bz(1);
+  std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
+  #if BFIELD_INTERP < 0
+    getVar(cfg,bfieldCfg+"r",br[0]);
+    getVar(cfg,bfieldCfg+"y",by[0]);
+    getVar(cfg,bfieldCfg+"z",bz[0]);
   #else
-    const char *bfieldFile,*bfieldNr,*bfieldNy,*bfieldNz,
-          *bfieldGridR,*bfieldGridY,*bfieldGridZ,*brChar,*bzChar,*btChar;
-    if(cfg.lookupValue("backgroundPlasmaProfiles.Bfield.fileString", bfieldFile) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Bfield.gridNrString",bfieldNr) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Bfield.gridNyString",bfieldNy) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Bfield.gridNzString",bfieldNz) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Bfield.gridRString",bfieldGridR) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Bfield.gridYString",bfieldGridY) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Bfield.gridZString",bfieldGridZ) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Bfield.radialComponentString",brChar) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Bfield.axialComponentString",bzChar) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Bfield.toroidalComponentString",btChar))
-    { std::cout << "bfield file: " << bfieldFile << std::endl;}
-    else
-    { std::cout << "ERROR: Could not get bfield file from input file " << std::endl;}
-
-    int b1 = read_profileNsChar(bfieldFile,bfieldNr,bfieldNz,nR_Bfield,nZ_Bfield);
-    
-    #if BFIELD_INTERP == 3
-      int b11 = read_profileNsChar(bfieldFile,bfieldNy,bfieldNz,nY_Bfield,nZ_Bfield);
-      sim::Array<float> bfieldGridr(nR_Bfield),bfieldGridy(nY_Bfield), bfieldGridz(nZ_Bfield);
-      int bFieldSize = nR_Bfield*nY_Bfield*nZ_Bfield;
-      int b22 = read_profile1d(bfieldFile,bfieldGridY, bfieldGridy);
-    #else
-      sim::Array<float> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
-      int bFieldSize = nR_Bfield*nZ_Bfield;
+    std::string bfieldFile;
+    getVar(cfg,bfieldCfg+"fileString",bfieldFile);
+    nR_Bfield = getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridRString",bfieldGridr);
+    #if BFIELD_INTERP > 1
+      nZ_Bfield = getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridZString",bfieldGridz);
     #endif
-    
-    sim::Array<float> br(bFieldSize), bz(bFieldSize),bt(bFieldSize);
-    int b2 = read_profile1d(bfieldFile,bfieldGridR, bfieldGridr);
-    
-    int b3 = read_profile1d(bfieldFile,bfieldGridZ, bfieldGridz);
-    std::cout << "br import" << std::endl; 
-    int b4 = read_profile2d(bfieldFile,brChar, br);
-    
-    int b5 = read_profile2d(bfieldFile,bzChar, bz);
-    
-    int b6 = read_profile2d(bfieldFile,btChar, bt);
-  #endif
-  
-  std::string profiles_folder = "profiles";
-  std::string outnameBfieldR = "BfieldR.m";
-  std::string outnameBfieldZ = "BfieldZ.m";
-  std::string outnameBfieldT = "BfieldT.m";
-  std::string outnameBGridR = "BfieldGridR.m";
-  std::string outnameBGridY = "BfieldGridY.m";
-  std::string outnameBGridZ = "BfieldGridZ.m";
-  OUTPUT1d(profiles_folder,outnameBGridR, nR_Bfield, &bfieldGridr.front());
-  OUTPUT1d(profiles_folder,outnameBGridZ, nZ_Bfield, &bfieldGridz.front());
-  #if BFIELD_INTERP < 3
-    OUTPUT2d(profiles_folder,outnameBfieldR, nR_Bfield, nZ_Bfield, &br.front());
-    OUTPUT2d(profiles_folder,outnameBfieldZ, nR_Bfield, nZ_Bfield, &bz.front());
-    OUTPUT2d(profiles_folder,outnameBfieldT, nR_Bfield, nZ_Bfield, &bt.front());
-  #else
-    std::string outnameBGridY = "BfieldGridY.m";
-    OUTPUT1d(profiles_folder,outnameBGridR, nR_Bfield, &bfieldGridr.front());
-    OUTPUT3d(profiles_folder,outnameBfieldR, nR_Bfield,nY_Bfield, nZ_Bfield, &br.front());
-    OUTPUT3d(profiles_folder,outnameBfieldZ, nR_Bfield,nY_Bfield, nZ_Bfield, &bz.front());
-    OUTPUT3d(profiles_folder,outnameBfieldT, nR_Bfield,nY_Bfield, nZ_Bfield, &bt.front());
-  #endif 
-  
+    #if BFIELD_INTERP > 2
+      nY_Bfield = getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridYString",bfieldGridy);
+    #endif
+
+    getVarFromFile(cfg,bfieldFile,bfieldCfg,"rString",br);
+    getVarFromFile(cfg,bfieldFile,bfieldCfg,"yString",by);
+    getVarFromFile(cfg,bfieldFile,bfieldCfg,"zString",bz);
+  #endif  
   std::cout << "Finished Bfield import" << std::endl; 
-  
+  std::string profiles_folder = "profiles";  
   //Geometry Definition
   Setting& geom = cfg_geom.lookup("geom");
   int nLines = geom["x1"].getLength();
@@ -710,13 +644,13 @@ int main()
                    field_line_trace(1.0,forwardTracerParticles,dr,boundaries.data(), nLines,nR_Lc,nZ_Lc,
                                     gridRLc.data(),gridZLc.data(),Lc.data(),
                                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                                    &br.front(),&bz.front(),&bt.front()));
+                                    &br.front(),&bz.front(),&by.front()));
           
           thrust::for_each(thrust::device, lcBegin,lcEnd,
                    field_line_trace(-1.0,backwardTracerParticles,dr,boundaries.data(), nLines,nR_Lc,nZ_Lc,
                                     gridRLc.data(),gridZLc.data(),Lc.data(),
                                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                                    &br.front(),&bz.front(),&bt.front()));
+                                    &br.front(),&bz.front(),&by.front()));
               
    //       std::cout << "moved particle position " << backwardTracerParticles->x[0] << " " << backwardTracerParticles->y[0]
      //                 << " " << backwardTracerParticles->z[0]<< std::endl;
@@ -1072,7 +1006,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
                 &TempGridr.front(),&TempGridz.front(),&ti.front());
         cs0 = sqrt((teLocal+tiLocal)*1.602e-19/(background_amu*1.66e-27));
         interp2dVector(&BLocal[0],flowVGridr[i],thisY,flowVGridz[j],nR_Bfield,
-                    nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),bt.data());
+                    nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),by.data());
         Bmag = sqrt(BLocal[0]*BLocal[0] + BLocal[1]*BLocal[1] + BLocal[2]*BLocal[2]);
         Bnorm[0] = BLocal[0]/Bmag;
         Bnorm[1] = BLocal[1]/Bmag;
@@ -1338,7 +1272,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
             boundary_init(background_Z,background_amu,
             nR_Dens,nZ_Dens,DensGridr.data(),DensGridz.data(),ni.data(),
             nR_Bfield,nZ_Bfield,bfieldGridr.data(),
-            bfieldGridz.data(),br.data(),bz.data(), bt.data(),
+            bfieldGridz.data(),br.data(),bz.data(), by.data(),
             nR_Temp,nZ_Temp,TempGridr.data(),
             TempGridz.data(),ti.data(), biasPotential ));
 
@@ -1391,7 +1325,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
         teLocal1 = interp2dCombined(gridRLc[i],0.0,gridZLc[j],nR_Temp,nZ_Temp, 
                 &TempGridr.front(),&TempGridz.front(),&te.front());
         interp2dVector(&BLocal1[0],gridRLc[i],0.0,gridZLc[j],nR_Bfield,
-                    nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),bt.data());
+                    nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),by.data());
         Bmag1 = sqrt(BLocal1[0]*BLocal1[0] + BLocal1[1]*BLocal1[1] + BLocal1[2]*BLocal1[2]);
         Bnorm1[0] = BLocal1[0]/Bmag1;
         Bnorm1[1] = BLocal1[1]/Bmag1;
@@ -2454,7 +2388,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
         thrust::for_each(thrust::device, particleBegin,particleEnd, 
                 move_boris(particleArray,dt,boundaries.data(), nLines,
                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                    &br.front(),&bz.front(),&bt.front(),
+                    &br.front(),&bz.front(),&by.front(),
                     nR_PreSheathEfield,nY_PreSheathEfield,nZ_PreSheathEfield,
                     &preSheathEGridr.front(),&preSheathEGridy.front(),&preSheathEGridz.front(),
                     &PSEr.front(),&PSEz.front(),&PSEt.front(),
@@ -2502,7 +2436,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
         thrust::for_each(thrust::device,particleBegin, particleEnd,
                 crossFieldDiffusion(particleArray,dt,&state1.front(),perpDiffusionCoeff,
                     nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
-                                        &br.front(),&bz.front(),&bt.front()));
+                                        &br.front(),&bz.front(),&by.front()));
             
             thrust::for_each(thrust::device, particleBegin,particleEnd,
                     geometry_check(particleArray,nLines,&boundaries[0],dt,tt,
@@ -2519,7 +2453,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
                     nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
                     background_Z,background_amu, 
                     nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
-                                        &br.front(),&bz.front(),&bt.front()));
+                                        &br.front(),&bz.front(),&by.front()));
 
 #endif
 #if USETHERMALFORCE > 0
@@ -2529,7 +2463,7 @@ nc_gridZLc.putVar(&gridZLc[0]);
                     gradTiR.data(),gradTiZ.data(), gradTiT.data(), 
                     gradTeR.data(), gradTeZ.data(), gradTeT.data(), 
                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                    &br.front(),&bz.front(),&bt.front()));
+                    &br.front(),&bz.front(),&by.front()));
 #endif
 
 #if USESURFACEMODEL > 0
