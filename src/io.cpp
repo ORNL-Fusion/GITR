@@ -362,3 +362,43 @@ void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, flo
 		
 		
 }
+//template <class T>
+//int readFileVar1d(const char *fileName,const char *varName,T &x ) {
+//
+//    // Check input file exists
+//
+//    ifstream file(fileName);
+//    if(!file.good()) {
+//        cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
+//        exit(1);
+//    }
+//
+//    NcFile nc(fileName, NcFile::read);
+//
+//    NcDim nc_xdim(nc.getDim(varName));
+//    NcVar nc_x;
+//
+//    int n_x=0;
+//   
+//    try{
+//         n_x = nc_xdim.getSize(); 
+//         if(n_x==0){
+//             printf("ERROR reading filename \n");
+//             }
+//         else
+//         {
+//            try{
+//                  nc_x = nc.getVar(varName);
+//                      if(nc_x.isNull()){std::cout << "ERROR:   stuff" << std::endl;}
+//               }
+//            catch(NcException& e)
+//                 {}
+//         }
+//    }
+//    catch(NcException& e){}
+//
+//    nc_x.getVar(&x[0]);
+//    return n_x;
+//
+//}
+

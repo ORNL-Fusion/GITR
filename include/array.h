@@ -136,7 +136,24 @@ namespace sim {
     T &front() {
       return data_[0];
     }
+    /*       
+    *  This function will %resize the %vector to the specified
+               *         *  number of elements.  If the number is smaller than the
+               *                *  %vector's current size the %vector is truncated, otherwise
+               *                       *  default constructed elements are appended.
+               *                              */
+    void resize(const T __new_size)
+    {
+      if (__new_size > size())
+      {
+          capacity_ = __new_size;
+          size_ = __new_size;
+      }      
+      else if (__new_size < size())
+      {
 
+      }
+    }
     /*! Add element to end of the array
      * Copies argument to the back of array and increased the size by one
      */
