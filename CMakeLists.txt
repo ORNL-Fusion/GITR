@@ -51,7 +51,7 @@ add_definitions(-DUSE_CUDA=1
         -DFIXEDSEEDS=1
         -DPARTICLESEEDS=1
         -DGEOM_TRACE=0
-        -DGEOM_HASH=0
+        -DGEOM_HASH=2
         -DGEOM_HASH_SHEATH=0
         -DPARTICLE_TRACKS=0
         -DPARTICLE_SOURCE=0
@@ -97,6 +97,8 @@ endif ()
 
 # Add libraries
 target_link_libraries(GITR ${NETCDF_CXX_LIBRARIES})
+target_link_libraries(GITR ${NETCDF_C_LIBRARIES})
+#target_link_libraries(GITR /home/tqd/code/netcdfBuild/lib/libnetcdf.so.11)
 target_link_libraries(GITR ${LIBCONFIGPP_LIBRARIES})
 target_link_libraries(GITR Boost::system Boost::filesystem Boost::timer)
     #libboost_system};${lboost_timer};${lboost_filesystem})

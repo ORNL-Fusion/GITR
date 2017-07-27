@@ -7,6 +7,7 @@
 #include <netcdf>
 #include "Boundary.h"
 #include "Particle.h"
+#include "libconfig.h++"
 #if USE_BOOST
 	#include "boost/multi_array.hpp"
 	#include "boost/filesystem.hpp"
@@ -34,8 +35,86 @@ using namespace std;
 using namespace netCDF;
 using namespace exceptions;
 using namespace netCDF::exceptions;
+using namespace libconfig;
 //IO
+int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries)
+{
+    Setting& geom = cfg_geom.lookup("geom");
+    std::cout << "Boundary import routine " << int(boundaries.size()) << std::endl;
+    int nLines = boundaries.size() - 1;
+  std::string geom_outname = "geom.m";
+  std::string geom_folder = "geometry";
+  ofstream outfile;
 
+  #if USE_BOOST
+    //Output
+    boost::filesystem::path dir(geom_folder);
+    
+    if(!(boost::filesystem::exists(dir)))
+    {
+       std::cout<<"Doesn't Exists"<<std::endl;
+
+       if (boost::filesystem::create_directory(dir))
+       {
+          std::cout << " Successfully Created " << std::endl;
+       }
+    }
+  #endif
+
+  std::string full_path = geom_folder + "/" + geom_outname;
+  outfile.open (full_path );
+  #if USE3DTETGEOM > 0
+    for(int i=0 ; i<nLines ; i++)
+    {
+       boundaries[i].x1 = geom["x1"][i];
+       boundaries[i].y1 = geom["y1"][i];
+       boundaries[i].z1 = geom["z1"][i];
+       boundaries[i].x2 = geom["x2"][i];
+       boundaries[i].y2 = geom["y2"][i];
+       boundaries[i].z2 = geom["z2"][i];
+       boundaries[i].x3 = geom["x3"][i];
+       boundaries[i].y3 = geom["y3"][i];
+       boundaries[i].z3 = geom["z3"][i];
+       boundaries[i].Z = geom["Z"][i];
+       boundaries[i].a = geom["a"][i];
+       boundaries[i].b = geom["b"][i];
+       boundaries[i].c = geom["c"][i];
+       boundaries[i].d = geom["d"][i];
+       boundaries[i].plane_norm = geom["plane_norm"][i];
+       boundaries[i].area = geom["area"][i];
+     }   
+
+    outfile.close();
+  #else
+
+    //int nMaterials = geom["nMaterials"];
+    //std::cout << "nmat " << nMaterials << std::endl;
+    for(int i=0 ; i<nLines ; i++)
+    {
+       boundaries[i].x1 = geom["x1"][i];
+       boundaries[i].z1 = geom["z1"][i];
+       boundaries[i].x2 = geom["x2"][i];
+       boundaries[i].z2 = geom["z2"][i];
+       boundaries[i].Z = geom["Z"][i];
+       boundaries[i].slope_dzdx = geom["slope"][i];
+       boundaries[i].intercept_z = geom["intercept"][i];
+       boundaries[i].length = geom["length"][i];
+
+       outfile << "geom(" << i+1 << ",:) = ["<<boundaries[i].x1 << ", " <<
+          boundaries[i].z1 << ", " <<
+          boundaries[i].x2 << ", " << boundaries[i].z2 << ", " <<
+          boundaries[i].slope_dzdx << ", " << boundaries[i].intercept_z << ", " <<
+          boundaries[i].length << ", " << boundaries[i].Z << "];" << std::endl;
+    }   
+
+    outfile.close();
+    boundaries[nLines].Z = geom["Z"][nLines];
+    boundaries[nLines].y1 = geom["y1"];
+    boundaries[nLines].y2 = geom["y2"];
+    boundaries[nLines].periodic = geom["periodic"];
+  #endif
+    return 0;
+}
 int read_ar2Input( string fileName, float *Bfield[]) {
 
     // Check input file exists
@@ -361,6 +440,118 @@ void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, flo
 			outfile.close();	
 		
 		
+}
+void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, int *array2d)
+{
+       ofstream outfile;
+#if USE_BOOST	
+			//Output
+        boost::filesystem::path dir(folder);
+
+            if(!(boost::filesystem::exists(dir)))
+            {
+              std::cout<<"Doesn't Exists"<<std::endl;
+              if (boost::filesystem::create_directory(dir))
+              {
+              std::cout << " Successfully Created " << std::endl;
+              }
+            }
+#endif
+            std::string full_path = folder + "/" + outname;
+			outfile.open (full_path );
+			
+				 for(int i=1 ; i<=nY ; i++)
+				{
+				outfile << "val2d( :," << i<< ") = [ " ;
+					for(int j=0 ; j<nX ; j++)
+					{
+					outfile << array2d[(i-1)*nX + j] << "  " ;
+					//std::cout << r[i] << std::endl;
+					}
+					outfile << "  ];" << std::endl;
+				}
+			outfile.close();	
+		
+		
+}
+
+void OUTPUT1d(std::string folder,std::string outname,int nX, int *array2d)
+{
+       ofstream outfile;
+#if USE_BOOST
+				//Output
+        boost::filesystem::path dir(folder);
+
+            if(!(boost::filesystem::exists(dir)))
+            {
+             // std::cout<<"Doesn't Exists"<<std::endl;
+              if (boost::filesystem::create_directory(dir))
+              {
+              //std::cout << " Successfully Created " << std::endl;
+              }
+            }
+#endif
+            std::string full_path = folder + "/" + outname;
+			outfile.open (full_path );
+			
+				outfile << "val1d " << "  = [ " ;
+				 for(int i=0 ; i<nX ; i++)
+				{
+					outfile << array2d[i] << "  " ;
+				}
+					outfile << "  ];" << std::endl;
+			outfile.close();	
+		
+		
+}
+
+void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, int *array3d)
+{
+       ofstream outfile;
+#if USE_BOOST	
+			//Output
+        boost::filesystem::path dir(folder);
+
+            if(!(boost::filesystem::exists(dir)))
+            {
+              std::cout<<"Doesn't Exists"<<std::endl;
+              if (boost::filesystem::create_directory(dir))
+              {
+              std::cout << " Successfully Created " << std::endl;
+              }
+            }
+#endif
+            std::string full_path = folder + "/" + outname;
+			outfile.open (full_path );
+			for(int k=1; k<=nZ; k++)
+            {
+				 for(int i=1 ; i<=nY ; i++)
+				{
+				outfile << "val3d( :," << i<< "," << k << ") = [ " ;
+					for(int j=0 ; j<nX ; j++)
+					{
+					outfile << array3d[(k-1)*nX*nY + (i-1)*nX + j] << "  " ;
+					//std::cout << r[i] << std::endl;
+					}
+					outfile << "  ];" << std::endl;
+				}
+            }
+			outfile.close();	
+		
+		
+}
+int readFileDim(const std::string& fileName,const std::string& varName)
+{
+           NcFile nc(fileName, NcFile::read);
+
+                  if(nc.isNull()){
+                             std::cout << "ERROR: Failed to open " << fileName << std::endl;
+                                    }
+                         NcDim nc_nx(nc.getDim(varName));
+
+                                int n_x = nc_nx.getSize();
+                                       return n_x;
+
 }
 //template <class T>
 //int readFileVar1d(const char *fileName,const char *varName,T &x ) {

@@ -9,7 +9,6 @@
 
 #include "Particles.h"
 #include "Boundary.h"
-#include "BoundaryModifiable.h"
 #include <math.h>
 
 /*template <typename T>
