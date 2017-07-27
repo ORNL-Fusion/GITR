@@ -11,6 +11,7 @@
 #include <iostream>
 #include "Particle.h"
 #include "libconfig.h++"
+#include "io.hpp"
 //#include <libconfig.h++>
 
 //void INPUT(int& nP, double& sourceStrength,double& x_start,double& y_start,double& z_start,double& energy_eV_x_start,double& energy_eV_y_start,
@@ -51,8 +52,8 @@ struct randInit
     }
 };
 
-template <class T>
-T getVar (libconfig::Config &cfg,std::string s, T &a)
+template <typename T>
+T getVariable (libconfig::Config &cfg,const std::string& s, T &a)
 {
   T tmp;
   if(cfg.lookupValue(s, tmp))
@@ -67,12 +68,21 @@ T getVar (libconfig::Config &cfg,std::string s, T &a)
   return a;
 }
 
-template <class T>
-int getVarFromFile (libconfig::Config &cfg,std::string file,std::string section,std::string s, T &a)
+template <typename T>
+int getVarFromFile (libconfig::Config &cfg,const std::string& file,const std::string& section,
+        const std::string& s, T &a)
 {
   std::string str;
-  getVar(cfg,section+s,str);
-  int dim = readFileVar1d(file,section,str,a);
+  getVariable(cfg,section+s,str);
+  int dim = readFileVar(file,section,str,a);
+  return dim;
+}
+int getDimFromFile (libconfig::Config &cfg,const std::string& file,const std::string& section,
+        const std::string& s)
+{
+  std::string str;
+  getVariable(cfg,section+s,str);
+  int dim = readFileDim(file,str);
   return dim;
 }
 #endif

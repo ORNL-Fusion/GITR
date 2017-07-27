@@ -59,6 +59,7 @@ using namespace libconfig;
 
 using namespace netCDF;
 using namespace exceptions;
+using namespace netCDF::exceptions;
 
 int main()
 {
@@ -162,9 +163,9 @@ int main()
   
   // show memory usage of GPU
    
+#if USE_CUDA 
   size_t free_byte ;
   size_t total_byte ;
-  
   cudaError_t    cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
   
   if(cudaSuccess != cuda_status )
@@ -180,32 +181,43 @@ int main()
   
   printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
     used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
-    
+#endif
   // Background species info
   float background_Z,background_amu;
-  getVar(cfg,"backgroundPlasmaProfiles.Z",background_Z);
-  getVar(cfg,"backgroundPlasmaProfiles.amu",background_amu);
+  getVariable(cfg,"backgroundPlasmaProfiles.Z",background_Z);
+  getVariable(cfg,"backgroundPlasmaProfiles.amu",background_amu);
 
   //Bfield initialization
   int nR_Bfield = 1;
   int nY_Bfield = 1;
   int nZ_Bfield = 1;
-  sim::Array<float> bfieldGridr(1),bfieldGridy(1),bfieldGridz(1);
-  sim::Array<float> br(1),by(1),bz(1);
+  int n_Bfield = 1;
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
-  #if BFIELD_INTERP < 0
-    getVar(cfg,bfieldCfg+"r",br[0]);
-    getVar(cfg,bfieldCfg+"y",by[0]);
-    getVar(cfg,bfieldCfg+"z",bz[0]);
-  #else
+  #if BFIELD_INTERP > 0
     std::string bfieldFile;
-    getVar(cfg,bfieldCfg+"fileString",bfieldFile);
-    nR_Bfield = getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridRString",bfieldGridr);
+    getVariable(cfg,bfieldCfg+"fileString",bfieldFile);
+    nR_Bfield = getDimFromFile(cfg,bfieldFile,bfieldCfg,"gridNrString");
+  #endif
+  #if BFIELD_INTERP > 1
+    nZ_Bfield = getDimFromFile(cfg,bfieldFile,bfieldCfg,"gridNzString");
+  #endif
+  #if BFIELD_INTERP > 2
+    nY_Bfield = getDimFromFile(cfg,bfieldFile,bfieldCfg,"gridNyString");
+  #endif
+  sim::Array<float> bfieldGridr(nR_Bfield),bfieldGridy(nY_Bfield),bfieldGridz(nZ_Bfield);
+  n_Bfield = nR_Bfield*nY_Bfield*nZ_Bfield;
+  sim::Array<float> br(n_Bfield),by(n_Bfield),bz(n_Bfield);
+  #if BFIELD_INTERP == 0
+    getVariable(cfg,bfieldCfg+"r",br[0]);
+    getVariable(cfg,bfieldCfg+"y",by[0]);
+    getVariable(cfg,bfieldCfg+"z",bz[0]);
+  #else
+    getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridRString",bfieldGridr);
     #if BFIELD_INTERP > 1
-      nZ_Bfield = getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridZString",bfieldGridz);
+      getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridZString",bfieldGridz);
     #endif
     #if BFIELD_INTERP > 2
-      nY_Bfield = getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridYString",bfieldGridy);
+      getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridYString",bfieldGridy);
     #endif
 
     getVarFromFile(cfg,bfieldFile,bfieldCfg,"rString",br);
@@ -213,87 +225,17 @@ int main()
     getVarFromFile(cfg,bfieldFile,bfieldCfg,"zString",bz);
   #endif  
   std::cout << "Finished Bfield import" << std::endl; 
+
   std::string profiles_folder = "profiles";  
+  
   //Geometry Definition
   Setting& geom = cfg_geom.lookup("geom");
   int nLines = geom["x1"].getLength();
   //int nMaterials = geom["nMaterials"];
-  std::cout << "Number of Geometric Objects Loaded: " << nLines << std::endl;
-
+  std::cout << "Number of Geometric Objects To Load: " << nLines << std::endl;
   sim::Array<Boundary> boundaries(nLines+1);
+  importGeometry(cfg_geom, boundaries);
 
-  std::string geom_outname = "geom.m";
-  std::string geom_folder = "geometry";
-  ofstream outfile;
-
-  #if USE_BOOST
-    //Output
-    boost::filesystem::path dir(geom_folder);
-    
-    if(!(boost::filesystem::exists(dir)))
-    {
-       std::cout<<"Doesn't Exists"<<std::endl;
-
-       if (boost::filesystem::create_directory(dir))
-       {
-          std::cout << " Successfully Created " << std::endl;
-       }
-    }
-  #endif
-
-  std::string full_path = geom_folder + "/" + geom_outname;
-  outfile.open (full_path );
-  #if USE3DTETGEOM > 0
-    for(int i=0 ; i<nLines ; i++)
-    {
-       boundaries[i].x1 = geom["x1"][i];
-       boundaries[i].y1 = geom["y1"][i];
-       boundaries[i].z1 = geom["z1"][i];
-       boundaries[i].x2 = geom["x2"][i];
-       boundaries[i].y2 = geom["y2"][i];
-       boundaries[i].z2 = geom["z2"][i];
-       boundaries[i].x3 = geom["x3"][i];
-       boundaries[i].y3 = geom["y3"][i];
-       boundaries[i].z3 = geom["z3"][i];
-       boundaries[i].Z = geom["Z"][i];
-       boundaries[i].a = geom["a"][i];
-       boundaries[i].b = geom["b"][i];
-       boundaries[i].c = geom["c"][i];
-       boundaries[i].d = geom["d"][i];
-       boundaries[i].plane_norm = geom["plane_norm"][i];
-       boundaries[i].area = geom["area"][i];
-     }   
-
-    outfile.close();
-  #else
-
-    //int nMaterials = geom["nMaterials"];
-    //std::cout << "nmat " << nMaterials << std::endl;
-    for(int i=0 ; i<nLines ; i++)
-    {
-       boundaries[i].x1 = geom["x1"][i];
-       boundaries[i].z1 = geom["z1"][i];
-       boundaries[i].x2 = geom["x2"][i];
-       boundaries[i].z2 = geom["z2"][i];
-       boundaries[i].Z = geom["Z"][i];
-       boundaries[i].slope_dzdx = geom["slope"][i];
-       boundaries[i].intercept_z = geom["intercept"][i];
-       boundaries[i].length = geom["length"][i];
-
-       outfile << "geom(" << i+1 << ",:) = ["<<boundaries[i].x1 << ", " <<
-          boundaries[i].z1 << ", " <<
-          boundaries[i].x2 << ", " << boundaries[i].z2 << ", " <<
-          boundaries[i].slope_dzdx << ", " << boundaries[i].intercept_z << ", " <<
-          boundaries[i].length << ", " << boundaries[i].Z << "];" << std::endl;
-    }   
-
-    outfile.close();
-    boundaries[nLines].Z = geom["Z"][nLines];
-    boundaries[nLines].y1 = geom["y1"];
-    boundaries[nLines].y2 = geom["y2"];
-    boundaries[nLines].periodic = geom["periodic"];
-  #endif
-  
   std::cout << "Starting Boundary Init..." << std::endl;
   float biasPotential = 0.0;
   
@@ -305,105 +247,145 @@ int main()
     else std::cout << "ERROR: Failed importing bias potential" << std:: endl;
   #endif
   
-  int nR_closeGeom;
-  int nZ_closeGeom;
-  int n_closeGeomElements;
-  int nY_closeGeom;
-  #if GEOM_HASH > 0
-    #if GEOM_HASH == 1
-    const char *hashFile,*hashNr,*hashNy,*hashNz,*hashNclosest,*hashGridR,
-               *hashGridY,*hashGridZ,*hashGridT,*hashChar;
-    if(cfg.lookupValue("geometry_hash.fileString", hashFile) &&
-       cfg.lookupValue("geometry_hash.gridNrString",hashNr) &&
-       cfg.lookupValue("geometry_hash.gridNyString",hashNy) &&
-       cfg.lookupValue("geometry_hash.gridNzString",hashNz) &&
-       cfg.lookupValue("geometry_hash.gridRString",hashGridR) &&
-       cfg.lookupValue("geometry_hash.gridYString",hashGridY) &&
-       cfg.lookupValue("geometry_hash.gridZString",hashGridZ) &&
-       cfg.lookupValue("geometry_hash.nearestNelementsString",hashNclosest) &&
-       cfg.lookupValue("geometry_hash.closeGeomString",hashChar))
-    { std::cout << "Geometry hash file: " << hashFile << std::endl;}
-    else
-    { std::cout << "ERROR: Could not get geometry hash string info from input file " << std::endl;}
-    #if USE3DTETGEOM >0
-      int gi1 = read_profileNs(hashFile,hashNr,hashNy,nR_closeGeom,nY_closeGeom);
-    
-      int gi2 = read_profileNs(hashFile,hashNz,hashNclosest,nZ_closeGeom,n_closeGeomElements);
-      std::cout << "3d tet geom hash " << nR_closeGeom << " " << nY_closeGeom << " " 
-        << nZ_closeGeom << " " <<n_closeGeomElements << std::endl;
-      sim::Array<float> closeGeomGridr(nR_closeGeom), closeGeomGridy(nY_closeGeom), closeGeomGridz(nZ_closeGeom);
-      sim::Array<int> closeGeom(nR_closeGeom*nY_closeGeom*nZ_closeGeom*n_closeGeomElements);
-    
-      int gi3 = read_profile1d(hashFile,hashGridR, closeGeomGridr);
-    
-      int gi4 = read_profile1d(hashFile,hashGridY, closeGeomGridy);
-      int gi5 = read_profile1d(hashFile,hashGridZ, closeGeomGridz);
-   
-      int gi6 = read_profile3d(hashFile,hashChar, closeGeom);
-    #else
-      int gi1 = read_profileNs(hashFile,hasNr,hashNz,nR_closeGeom,nZ_closeGeom);
-    
-      int gi2 = read_profileNs(hashFile,hashNr,hashNclosest,nR_closeGeom,n_closeGeomElements);
-    
-      sim::Array<float> closeGeomGridr(nR_closeGeom),closeGeomGridy(1),
-                         closeGeomGridz(nZ_closeGeom);
-      sim::Array<int> closeGeom(nR_closeGeom*nZ_closeGeom*n_closeGeomElements);
-    
-      int gi3 = read_profile1d(hashFile,hashGridR, closeGeomGridr);
-    
-      int gi4 = read_profile1d(hashFile,hashGridZ, closeGeomGridz);
-   
-      int gi5 = read_profile3d(hashFile,hashChar, closeGeom);
+  int nR_closeGeom = 1;
+  int nY_closeGeom = 1;
+  int nZ_closeGeom = 1;
+  int n_closeGeomElements = 1;
+  int nGeomHash = 1;
+  std::string geomHashCfg = "geometry_hash.";
+  #if GEOM_HASH == 1
+    getVariable(cfg,geomHashCfg+"nR_closeGeom",nR_closeGeom);
+    getVariable(cfg,geomHashCfg+"nZ_closeGeom",nZ_closeGeom);
+    getVariable(cfg,geomHashCfg+"n_closeGeomElements",n_closeGeomElements);
+    nGeomHash = nR_closeGeom*nZ_closeGeom*n_closeGeomElements;
+    #if USE3DTETGEOM > 0
+      getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom);
+      nGeomHash = nY_closeGeom*nGeomHash;
     #endif
+  #endif
+
+  #if GEOM_HASH > 1
+    std::string hashFile;
+    getVariable(cfg,geomHashCfg+"fileString",hashFile);
+    nR_closeGeom = getDimFromFile(cfg,hashFile,geomHashCfg,"gridNrString");
+    nZ_closeGeom = getDimFromFile(cfg,hashFile,geomHashCfg,"gridNzString");
+    n_closeGeomElements = getDimFromFile(cfg,hashFile,geomHashCfg,"nearestNelementsString");
+    nGeomHash = nR_closeGeom*nZ_closeGeom*n_closeGeomElements;
+    #if USE3DTETGEOM > 0
+      nY_closeGeom = getDimFromFile(cfg,hashFile,geomHashCfg,"gridNyString");
+      nGeomHash = nY_closeGeom*nGeomHash;
     #else
-      float hashX0 =-0.08 ;
-      float hashX1 = 0.08;
-      float hashY0 = -0.08;
-      float hashY1 = 0.08;
-      float hashZ0 = -0.06;
-      float hashZ1 = 0.22;
-      nR_closeGeom = 300;
-      nY_closeGeom = 320;
-      nZ_closeGeom = 600;
-      n_closeGeomElements = 10;
-      sim::Array<float> closeGeomGridr(nR_closeGeom), closeGeomGridy(nY_closeGeom), closeGeomGridz(nZ_closeGeom);
-      sim::Array<int> closeGeom(nR_closeGeom*nY_closeGeom*nZ_closeGeom*n_closeGeomElements);
-      sim::Array<float> minDist1(nR_closeGeom*nY_closeGeom*nZ_closeGeom*n_closeGeomElements,100);
+    #endif
+  #endif
+  sim::Array<float> closeGeomGridr(nR_closeGeom), closeGeomGridy(nY_closeGeom),
+      closeGeomGridz(nZ_closeGeom);
+  nGeomHash = nR_closeGeom*nY_closeGeom*nZ_closeGeom*n_closeGeomElements;
+  std::cout << "creating closeGeom array with size " << nGeomHash << std::endl;
+  sim::Array<int> closeGeom(nGeomHash);
+  #if GEOM_HASH == 1
+    float hashX0,hashX1,hashY0,hashY1,hashZ0,hashZ1;
+    getVariable(cfg,geomHashCfg+"hashX0",hashX0);
+    getVariable(cfg,geomHashCfg+"hashX1",hashX1);
+    getVariable(cfg,geomHashCfg+"hashZ0",hashZ0);
+    getVariable(cfg,geomHashCfg+"hashZ1",hashZ1);
+    #if USE3DTETGEOM > 0
+      getVariable(cfg,geomHashCfg+"hashY0",hashY0);
+      getVariable(cfg,geomHashCfg+"hashY1",hashY1);
+    #endif
+    
+    for(int i=0; i<nR_closeGeom; i++)
+    {  closeGeomGridr[i] = (hashX1 - hashX0)*i/(nR_closeGeom - 1)+ hashX0;}
+    for(int j=0; j<nY_closeGeom; j++)
+    {  closeGeomGridy[j] = (hashY1 - hashY0)*j/(nY_closeGeom - 1)+ hashY0;}
+    for(int k=0; k<nZ_closeGeom; k++)
+    {  closeGeomGridz[k] = (hashZ1 - hashZ0)*k/(nZ_closeGeom - 1)+ hashZ0;}
+  
     thrust::counting_iterator<std::size_t> lines0(0);  
-    thrust::countiug_iterator<std::size_t> lines1(nR_closeGeom*nY_closeGeom);
-    
-      for(int i=0; i<nR_closeGeom; i++)
-      {  closeGeomGridr[i] = (hashX1 - hashX0)*i/(nR_closeGeom - 1);}
-          for(int j=0; j<nY_closeGeom; j++)
-          {  closeGeomGridy[j] = (hashY1 - hashY0)*j/(nY_closeGeom - 1);}
-              for(int k=0; k<nZ_closeGeom; k++)
-              {  closeGeomGridz[k] = (hashZ1 - hashZ0)*k/(nZ_closeGeom - 1);}
+    thrust::counting_iterator<std::size_t> lines1(nR_closeGeom*nY_closeGeom);
+    sim::Array<float> minDist1(nGeomHash,1e6);
 
-              
-      for(int i=0; i<nZ_closeGeom; i++)
-      {
-          std::cout << "zth " << i << std::endl; 
-     
-              thrust::for_each(thrust::device, lines0,lines1,
-                                             hashGeom(i,nLines, boundaries.data(), closeGeomGridr.data(), closeGeomGridy.data(),closeGeomGridz.data(),
-                                                 n_closeGeomElements, minDist1.data(), closeGeom.data(),nR_closeGeom,nY_closeGeom,nZ_closeGeom));
-              cudaDeviceSynchronize();
-      }
-              cudaDeviceSynchronize();
-              /*          }
-
-              }
-          }
-      }
-      */
+    for(int i=0; i<nZ_closeGeom; i++)
+    {
+       std::cout << "zth " << i << std::endl; 
+   
+       thrust::for_each(thrust::device, lines0,lines1,
+                        hashGeom(i,nLines, boundaries.data(), 
+                        closeGeomGridr.data(), closeGeomGridy.data(),
+                        closeGeomGridz.data(),
+                        n_closeGeomElements, minDist1.data(), closeGeom.data(),
+                        nR_closeGeom,nY_closeGeom,nZ_closeGeom));
+       #if USE_CUDA
+         cudaDeviceSynchronize();
+       #endif
+    }
+    #if USE_CUDA
+      cudaDeviceSynchronize();
     #endif
-  #else
-    nR_closeGeom = 1;
-    nZ_closeGeom = 1;
-    nY_closeGeom = 1;
-    n_closeGeomElements = 1;
-    sim::Array<float> closeGeomGridr(nR_closeGeom),closeGeomGridy(nY_closeGeom), closeGeomGridz(nZ_closeGeom);
-    sim::Array<int> closeGeom(nR_closeGeom*nZ_closeGeom*n_closeGeomElements);
+    std::vector<int> geomHashDims(4);
+    geomHashDims[0] = nR_closeGeom;
+    geomHashDims[1] = nY_closeGeom;
+    geomHashDims[2] = nZ_closeGeom;
+    geomHashDims[3] = n_closeGeomElements;
+    std::vector<std::string> geomHashVarNames(5);
+    std::string hashOutfile= "GITRgeomHash";
+    std::cout << "about to try open has outfile " << std::endl;
+    NcFile ncHash;
+    try{
+          ncHash.open(hashOutfile+".nc",NcFile::newFile);
+                if(ncHash.isNull()){
+                          std::cout << "ERROR: Failed to open " << hashOutfile << std::endl;
+                                } 
+                else{
+                          std::cout << "successfully opened " << hashOutfile << std::endl;
+                }
+    }
+    catch(NcException& e)
+    {
+        std::cout << " caught exists exception " << ncHash.isNull() << std::endl;
+          //NcFile ncHash("GITRgeomHash.nc",NcFile::write); 
+          int fileInt = 0;
+          while (ncHash.isNull())
+          {
+             std::cout << "filename " << hashOutfile << " is taken " <<std::endl;
+             try{
+             ncHash.open(hashOutfile+std::to_string(fileInt)+".nc",NcFile::newFile);
+              }
+             catch(NcException& e){
+                 std::cout << "Filename " << hashOutfile+std::to_string(fileInt)+".nc" <<
+                     " is taken " << std::endl;
+             }
+             fileInt++;
+          }
+    }
+    
+    NcDim nc_nRhash = ncHash.addDim("nR",nR_closeGeom);
+    NcDim nc_nZhash = ncHash.addDim("nZ",nZ_closeGeom);
+    NcDim nc_nHash = ncHash.addDim("nElements",n_closeGeomElements);
+    vector<NcDim> hashDims;
+    hashDims.push_back(nc_nRhash);
+    #if USE3DTETGEOM > 0
+      NcDim nc_nYhash = ncHash.addDim("nY",nY_closeGeom);
+      hashDims.push_back(nc_nYhash);
+    #endif
+    hashDims.push_back(nc_nZhash);
+    hashDims.push_back(nc_nHash);
+    NcVar nc_hashGridR = ncHash.addVar("gridR",ncDouble,nc_nRhash);
+    NcVar nc_hashGridZ = ncHash.addVar("gridZ",ncDouble,nc_nZhash);
+    NcVar nc_hash = ncHash.addVar("hash",NC_INT,hashDims);
+    NcVar nc_hashMin = ncHash.addVar("hashMin",ncDouble,hashDims);
+    nc_hashGridR.putVar(&closeGeomGridr[0]);
+    nc_hashGridZ.putVar(&closeGeomGridz[0]);
+    int *hashPointer = &closeGeom[0];
+    nc_hash.putVar(&closeGeom[0]);
+    nc_hashMin.putVar(&minDist1[0]);
+    ncHash.close();
+  #elif GEOM_HASH > 1
+    getVarFromFile(cfg,hashFile,geomHashCfg,"gridRString",closeGeomGridr);
+    getVarFromFile(cfg,hashFile,geomHashCfg,"gridZString",closeGeomGridz);
+    #if USE3DTETGEOM >0
+      getVarFromFile(cfg,hashFile,geomHashCfg,"gridYString",closeGeomGridy);
+    #endif
+      getVarFromFile(cfg,hashFile,geomHashCfg,"closeGeomString",closeGeom);
   #endif
   std::cout << "3d tet geom hash " << nR_closeGeom << " " << nY_closeGeom << " "
           << nZ_closeGeom << " " <<n_closeGeomElements << std::endl;
