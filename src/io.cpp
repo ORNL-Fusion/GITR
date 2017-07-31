@@ -553,6 +553,68 @@ int readFileDim(const std::string& fileName,const std::string& varName)
                                        return n_x;
 
 }
+int ncdfIO(int rwCode,const std::string& fileName,vector< std::string> dimNames,vector<int> dims,
+        vector< std::string> gridNames,vector<int> gridMapToDims,
+        vector<vector<float>> grids, vector<float*> pointers)
+{
+    std::cout << "readWritecode " << rwCode << std::endl;//0 is read, 1 is write
+    if(rwCode == 1)
+    {
+       NcFile thisFile;
+       try{
+             thisFile.open(fileName+".nc",NcFile::newFile);
+             if(thisFile.isNull())
+             {
+                std::cout << "ERROR: Failed to open " << fileName << std::endl;
+             }
+             else
+             {   
+                std::cout << "successfully opened " << fileName << std::endl;
+             }
+          }
+       catch(NcException& e)
+       {
+          std::cout << " caught exists exception " << thisFile.isNull() << std::endl;
+          int fileInt = 0;
+          while (thisFile.isNull())
+          {
+            std::cout << "filename " << fileName << " is taken " <<std::endl;
+            try{
+                  thisFile.open(fileName+std::to_string(fileInt)+".nc",NcFile::newFile);
+               }
+            catch(NcException& e){
+            std::cout << "Filename " << fileName+std::to_string(fileInt)+".nc" <<
+                                 " is taken " << std::endl;
+            }
+                         fileInt++;
+          }
+       }
+
+       vector<NcDim> theseDims(dims.size());
+       for(int i=0;i<theseDims.size();i++)
+       {
+           theseDims[i] = thisFile.addDim(dimNames[i],dims[i]);
+       }
+
+       vector<NcVar> theseVars(dims.size());
+       for(int i=0;i<grids.size();i++)
+       {
+           theseVars[i] = thisFile.addVar(gridNames[i],ncDouble,theseDims[gridMapToDims[i]]);
+           theseVars[i].putVar(pointers[i]);
+       }
+      thisFile.close();
+    }
+    std::cout << "filename " << fileName << std::endl;
+
+    for(int i=0; i<dimNames.size();i++)
+    {
+       std::cout << "dimname " <<i << " " <<  dimNames[i] << std::endl;
+    }
+    for(int i=0; i<dims.size();i++)
+    {
+       std::cout << "dimension " <<i << " " <<  dims[i] << std::endl;
+    }
+}
 //template <class T>
 //int readFileVar1d(const char *fileName,const char *varName,T &x ) {
 //
