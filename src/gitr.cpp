@@ -342,63 +342,18 @@ int main()
     std::vector<float*> hashGridPointers(2);
     hashGridPointers[0] = &closeGeomGridr[0];
     hashGridPointers[1] = &closeGeomGridz[0];
-    std::cout << "push back " << hashGrids[0].size() << " " << hashGrids[1].size() << std::endl;
-    std::cout << "gridr " << hashGrids[0][0] << " " << hashGrids[0][nR_closeGeom-1] << std::endl;
-    std::cout << "gridz " << hashGrids[1][0] << " " << hashGrids[1][nZ_closeGeom-1] << std::endl;
+    std::vector<std::string> intVarNames(1);
+    intVarNames[0] = "hash";
+    std::vector<vector<int>> intVarDimMap(1);
+    intVarDimMap[0].push_back(0);
+    intVarDimMap[0].push_back(2);
+    intVarDimMap[0].push_back(3);
+    std::vector<int*> intVarPointers(1);
+    intVarPointers[0] = &closeGeom[0];
     std::string hashOutfile= "GITRgeomHash";
-    ncdfIO(1,"ncdfwritetest",geomHashDimNames,geomHashDims,hashGridNames,hashGridMapDim,hashGrids,hashGridPointers);
-    std::string hashOutfile= "GITRgeomHash";
-    std::cout << "about to try open has outfile " << std::endl;
-    NcFile ncHash;
-    try{
-          ncHash.open(hashOutfile+".nc",NcFile::newFile);
-                if(ncHash.isNull()){
-                          std::cout << "ERROR: Failed to open " << hashOutfile << std::endl;
-                                } 
-                else{
-                          std::cout << "successfully opened " << hashOutfile << std::endl;
-                }
-    }
-    catch(NcException& e)
-    {
-        std::cout << " caught exists exception " << ncHash.isNull() << std::endl;
-          //NcFile ncHash("GITRgeomHash.nc",NcFile::write); 
-          int fileInt = 0;
-          while (ncHash.isNull())
-          {
-             std::cout << "filename " << hashOutfile << " is taken " <<std::endl;
-             try{
-             ncHash.open(hashOutfile+std::to_string(fileInt)+".nc",NcFile::newFile);
-              }
-             catch(NcException& e){
-                 std::cout << "Filename " << hashOutfile+std::to_string(fileInt)+".nc" <<
-                     " is taken " << std::endl;
-             }
-             fileInt++;
-          }
-    }
-    
-    NcDim nc_nRhash = ncHash.addDim("nR",nR_closeGeom);
-    NcDim nc_nZhash = ncHash.addDim("nZ",nZ_closeGeom);
-    NcDim nc_nHash = ncHash.addDim("nElements",n_closeGeomElements);
-    vector<NcDim> hashDims;
-    hashDims.push_back(nc_nRhash);
-    #if USE3DTETGEOM > 0
-      NcDim nc_nYhash = ncHash.addDim("nY",nY_closeGeom);
-      hashDims.push_back(nc_nYhash);
-    #endif
-    hashDims.push_back(nc_nZhash);
-    hashDims.push_back(nc_nHash);
-    NcVar nc_hashGridR = ncHash.addVar("gridR",ncDouble,nc_nRhash);
-    NcVar nc_hashGridZ = ncHash.addVar("gridZ",ncDouble,nc_nZhash);
-    NcVar nc_hash = ncHash.addVar("hash",NC_INT,hashDims);
-    NcVar nc_hashMin = ncHash.addVar("hashMin",ncDouble,hashDims);
-    nc_hashGridR.putVar(&closeGeomGridr[0]);
-    nc_hashGridZ.putVar(&closeGeomGridz[0]);
-    int *hashPointer = &closeGeom[0];
-    nc_hash.putVar(&closeGeom[0]);
-    nc_hashMin.putVar(&minDist1[0]);
-    ncHash.close();
+    ncdfIO(1,hashOutfile,geomHashDimNames,geomHashDims,
+            hashGridNames,hashGridMapDim,hashGridPointers,
+            intVarNames,intVarDimMap,intVarPointers);
   #elif GEOM_HASH > 1
     getVarFromFile(cfg,hashFile,geomHashCfg,"gridRString",closeGeomGridr);
     getVarFromFile(cfg,hashFile,geomHashCfg,"gridZString",closeGeomGridz);
@@ -476,7 +431,46 @@ int main()
               cudaDeviceSynchronize();
       }
               cudaDeviceSynchronize();
-     #endif
+
+    std::vector<int> geomHashDims_s(4);
+    geomHashDims_s[0] = nR_closeGeom_sheath;
+    geomHashDims_s[1] = nY_closeGeom_sheath;
+    geomHashDims_s[2] = nZ_closeGeom_sheath;
+    geomHashDims_s[3] = n_closeGeomElements_sheath;
+    std::vector<std::string> geomHashDimNames_s(4);
+    geomHashDimNames_s[0] = "nR";
+    geomHashDimNames_s[1] = "nY";
+    geomHashDimNames_s[2] = "nZ";
+    geomHashDimNames_s[3] = "n_";
+    std::vector<std::string> hashGridNames_s(2);
+    hashGridNames_s[0] = "gridR";
+    hashGridNames_s[1] = "gridZ";
+    std::vector<int> hashGridMapDim_s(2);
+    hashGridMapDim_s[0] = 0;
+    hashGridMapDim_s[1] = 2;
+    std::vector<float*> hashGridPointers_s(2);
+    hashGridPointers_s[0] = &closeGeomGridr_sheath[0];
+    hashGridPointers_s[1] = &closeGeomGridz_sheath[0];
+    std::vector<std::string> intVarNames_s(1);
+    intVarNames_s[0] = "hash_sheath";
+    std::vector<vector<int>> intVarDimMap_s(1);
+    intVarDimMap_s[0].push_back(0);
+    intVarDimMap_s[0].push_back(2);
+    intVarDimMap_s[0].push_back(3);
+    std::vector<int*> intVarPointers_s(1);
+    intVarPointers_s[0] = &closeGeom_sheath[0];
+    std::string hashOutfile_s= "GITRgeomHash_sheath";
+    ncdfIO(1,hashOutfile_s,geomHashDimNames_s,geomHashDims_s,
+            hashGridNames_s,hashGridMapDim_s,hashGridPointers_s,
+            intVarNames_s,intVarDimMap_s,intVarPointers_s);
+  #elif GEOM_HASH_SHEATH > 1
+    getVarFromFile(cfg,hashFile,geomHashCfg,"gridRString",closeGeomGridr);
+    getVarFromFile(cfg,hashFile,geomHashCfg,"gridZString",closeGeomGridz);
+    #if USE3DTETGEOM >0
+      getVarFromFile(cfg,hashFile,geomHashCfg,"gridYString",closeGeomGridy);
+    #endif
+      getVarFromFile(cfg,hashFile,geomHashCfg,"closeGeomString",closeGeom);
+  #endif
 
   #if GENERATE_LC == 1
 

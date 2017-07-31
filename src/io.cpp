@@ -555,7 +555,7 @@ int readFileDim(const std::string& fileName,const std::string& varName)
 }
 int ncdfIO(int rwCode,const std::string& fileName,vector< std::string> dimNames,vector<int> dims,
         vector< std::string> gridNames,vector<int> gridMapToDims,
-        vector<vector<float>> grids, vector<float*> pointers)
+         vector<float*> pointers,vector< std::string> intVarNames,vector<vector<int>> intVarDimMap, vector<int*> intVarPointers)
 {
     std::cout << "readWritecode " << rwCode << std::endl;//0 is read, 1 is write
     if(rwCode == 1)
@@ -597,10 +597,21 @@ int ncdfIO(int rwCode,const std::string& fileName,vector< std::string> dimNames,
        }
 
        vector<NcVar> theseVars(dims.size());
-       for(int i=0;i<grids.size();i++)
+       for(int i=0;i<pointers.size();i++)
        {
            theseVars[i] = thisFile.addVar(gridNames[i],ncDouble,theseDims[gridMapToDims[i]]);
            theseVars[i].putVar(pointers[i]);
+       }
+       vector<NcVar> intVars(intVarNames.size());
+       vector<vector<NcDim>> intVarDims(intVarNames.size());
+       for(int i=0;i<intVarNames.size();i++)
+       {
+           for(int j=0;j<intVarDimMap[i].size();j++)
+           {
+               intVarDims[i].push_back(theseDims[intVarDimMap[i][j]]);
+           }
+           intVars[i] = thisFile.addVar(intVarNames[i],NC_INT,intVarDims[i]);
+           intVars[i].putVar(intVarPointers[i]);
        }
       thisFile.close();
     }
