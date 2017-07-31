@@ -99,8 +99,8 @@ int readFileVar(const std::string& fileName,const std::string& section,const std
 
 int readFileDim(const std::string& fileName,const std::string& varName);
 int ncdfIO(int rwCode,const std::string& fileName,vector< std::string> dimNames,vector<int> dims,
-        vector< std::string> gridNames,vector<int> gridMapToDims,
-        vector<vector<float>> grids,vector<float*> pointers);
+        vector< std::string> gridNames,vector<int> gridMapToDims,vector<float*> pointers,
+        vector< std::string> intVarNames,vector<vector<int>> intVarDimMap, vector<int*> intVarPointers);
 #endif
 
 
