@@ -163,26 +163,26 @@ int main()
   #endif
   
   // show memory usage of GPU
-   
-#if USE_CUDA 
-  size_t free_byte ;
-  size_t total_byte ;
-  cudaError_t    cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
+  #if USE_CUDA 
+    size_t free_byte ;
+    size_t total_byte ;
+    cudaError_t    cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
   
-  if(cudaSuccess != cuda_status )
-  {
+    if(cudaSuccess != cuda_status )
+    {
   
-     printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status) );
-     exit(1);
-  }
+       printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status) );
+       exit(1);
+    }
   
-  double free_db = (double)free_byte ;
-  double total_db = (double)total_byte ;
-  double used_db = total_db - free_db ;
+    double free_db = (double)free_byte ;
+    double total_db = (double)total_byte ;
+    double used_db = total_db - free_db ;
+    
+    printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
+      used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
+  #endif
   
-  printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
-    used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
-#endif
   // Background species info
   float background_Z,background_amu;
   getVariable(cfg,"backgroundPlasmaProfiles.Z",background_Z);
@@ -241,11 +241,7 @@ int main()
   float biasPotential = 0.0;
   
   #if BIASED_SURFACE > 0
-    if(cfg.lookupValue("backgroundPlasmaProfiles.biasPotential", biasPotential))
-      {
-        std::cout << "Surface Bias = " << biasPotential << std::endl;
-      }
-    else std::cout << "ERROR: Failed importing bias potential" << std:: endl;
+    getVariable(cfg,"backgroundPlasmaProfiles.biasPotential",biasPotential);
   #endif
   
   int nR_closeGeom = 1;
@@ -305,8 +301,6 @@ int main()
 
     for(int i=0; i<nZ_closeGeom; i++)
     {
-       std::cout << "zth " << i << std::endl; 
-   
        thrust::for_each(thrust::device, lines0,lines1,
                         hashGeom(i,nLines, boundaries.data(), 
                         closeGeomGridr.data(), closeGeomGridy.data(),
@@ -362,8 +356,6 @@ int main()
     #endif
       getVarFromFile(cfg,hashFile,geomHashCfg,"closeGeomString",closeGeom);
   #endif
-  std::cout << "3d tet geom hash " << nR_closeGeom << " " << nY_closeGeom << " "
-          << nZ_closeGeom << " " <<n_closeGeomElements << std::endl;
               
   int nR_closeGeom_sheath = 1;
   int nY_closeGeom_sheath = 1;
@@ -423,11 +415,11 @@ int main()
     
     for(int i=0; i<nZ_closeGeom_sheath; i++)
       {
-          std::cout << "zth " << i << std::endl; 
-     
               thrust::for_each(thrust::device, lines0_s,lines1_s,
-                                             hashGeom_sheath(i,nLines, boundaries.data(), closeGeomGridr_sheath.data(), closeGeomGridy_sheath.data(),closeGeomGridz_sheath.data(),
-                                                 n_closeGeomElements_sheath, minDist1_s.data(), closeGeom_sheath.data(),nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath));
+                               hashGeom_sheath(i,nLines, boundaries.data(), closeGeomGridr_sheath.data(),
+                               closeGeomGridy_sheath.data(),closeGeomGridz_sheath.data(),
+                               n_closeGeomElements_sheath, minDist1_s.data(), closeGeom_sheath.data(),
+                               nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath));
               cudaDeviceSynchronize();
       }
               cudaDeviceSynchronize();
@@ -464,340 +456,224 @@ int main()
             hashGridNames_s,hashGridMapDim_s,hashGridPointers_s,
             intVarNames_s,intVarDimMap_s,intVarPointers_s);
   #elif GEOM_HASH_SHEATH > 1
-    getVarFromFile(cfg,hashFile,geomHashCfg,"gridRString",closeGeomGridr);
-    getVarFromFile(cfg,hashFile,geomHashCfg,"gridZString",closeGeomGridz);
+    getVarFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"gridRString",closeGeomGridr_sheath);
+    getVarFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"gridZString",closeGeomGridz_sheath);
     #if USE3DTETGEOM >0
-      getVarFromFile(cfg,hashFile,geomHashCfg,"gridYString",closeGeomGridy);
+      getVarFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"gridYString",closeGeomGridy_sheath);
     #endif
-      getVarFromFile(cfg,hashFile,geomHashCfg,"closeGeomString",closeGeom);
+      getVarFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"closeGeomString",closeGeom_sheath);
   #endif
 
+  int nR_Lc = 1;
+  int nY_Lc = 1;
+  int nZ_Lc = 1;
+  int nTracers = 1;
+  std::string connLengthCfg= "connectionLength.";  
+  std::string lcFile;
+  getVariable(cfg,connLengthCfg+"fileString",lcFile);
   #if GENERATE_LC == 1
-
-    int nR_Lc;
-    int nY_Lc;
-    int nZ_Lc;
-    int nTracers;
-    const char *gitrLcFileString;
-    if(cfg.lookupValue("connectionLength.fileString", gitrLcFileString))
-    { std::cout << "Checking for GITR generated connection length file " << std::endl;}
-    else std::cout << "Error getting connectionLength filestring from input file " << std::endl;
+    getVariable(cfg,connLengthCfg+"nX",nR_Lc);
+    getVariable(cfg,connLengthCfg+"nY",nY_Lc);
+    getVariable(cfg,connLengthCfg+"nZ",nZ_Lc);
     float r0_Lc, r1_Lc, y0_Lc,y1_Lc,z0_Lc,z1_Lc, dr;
     int nTraceSteps;
-    if(cfg.lookupValue("connectionLength.netx0", r0_Lc) && 
-       cfg.lookupValue("connectionLength.netx1", r1_Lc) && 
-       cfg.lookupValue("connectionLength.nety0", y0_Lc) && 
-       cfg.lookupValue("connectionLength.nety1", y1_Lc) && 
-       cfg.lookupValue("connectionLength.netz0", z0_Lc) && 
-       cfg.lookupValue("connectionLength.netz1", z1_Lc) && 
-       cfg.lookupValue("connectionLength.nX", nR_Lc) && 
-       cfg.lookupValue("connectionLength.nY", nY_Lc) && 
-       cfg.lookupValue("connectionLength.nZ", nZ_Lc) && 
-       cfg.lookupValue("connectionLength.nTraceSteps", nTraceSteps) &&
-       cfg.lookupValue("connectionLength.dr", dr))
-       {std::cout << "Lc grid imported" << std::endl;}
-    else
-    { std::cout << "ERROR: Could not get Lc numeric values from input file " << std::endl;}
-    
-    const char *LcFile,*LcNr,*LcNz,*LcNy,
-                 *LcNclosest,*LcGridR,*LcGridY,
-                 *LcGridZ,*LcChar,*SChar,*nIChar;
-    if(cfg.lookupValue("connectionLength.fileString", LcFile) &&
-       cfg.lookupValue("connectionLength.gridNrString",LcNr) &&
-       cfg.lookupValue("connectionLength.gridNyString",LcNy) &&
-       cfg.lookupValue("connectionLength.gridNzString",LcNz) &&
-       cfg.lookupValue("connectionLength.gridRString",LcGridR) &&
-       cfg.lookupValue("connectionLength.gridYString",LcGridY) &&
-       cfg.lookupValue("connectionLength.gridZString",LcGridZ) &&
-       cfg.lookupValue("connectionLength.LcString",LcChar) &&
-       cfg.lookupValue("connectionLength.SString",SChar) &&
-       cfg.lookupValue("connectionLength.noIntersectionString",nIChar))
-    { std::cout << "Geometry Lc file: " << LcFile << std::endl;}
-    else
-    { std::cout << "ERROR: Could not get Lc string info from input file " << std::endl;}
-    #if USE3DTETGEOM > 0
-      nTracers = nR_Lc*nY_Lc*nZ_Lc;
-    #else
-      nTracers = nR_Lc*nZ_Lc;
-    #endif
-    
-    std::cout << " beginning lc s init " <<std::endl; 
-    sim::Array<float> Lc(nTracers),s(nTracers);
-    std::cout << " beginning grid lc s init " <<std::endl; 
-    sim::Array<float> gridRLc(nR_Lc),gridYLc(nY_Lc),gridZLc(nZ_Lc);
-    std::cout << " noInter init " <<std::endl; 
-    sim::Array<int> noIntersectionNodes(nTracers);
-    std::cout << " beginning if statement " <<std::endl; 
-    if ( !boost::filesystem::exists( gitrLcFileString ) )
+    getVariable(cfg,connLengthCfg+"netx0",r0_Lc);
+    getVariable(cfg,connLengthCfg+"netx1",r1_Lc);
+    getVariable(cfg,connLengthCfg+"nety0",y0_Lc);
+    getVariable(cfg,connLengthCfg+"nety1",y1_Lc);
+    getVariable(cfg,connLengthCfg+"netz0",z0_Lc);
+    getVariable(cfg,connLengthCfg+"netz1",z1_Lc);
+    getVariable(cfg,connLengthCfg+"nTraceSteps",nTraceSteps);
+    getVariable(cfg,connLengthCfg+"dr",dr);
+  #endif 
+  #if GENERATE_LC > 1
+    nR_Lc = getDimFromFile(cfg,lcFile,connLengthCfg,"gridNrString");
+    nY_Lc = getDimFromFile(cfg,lcFile,connLengthCfg,"gridNyString");
+    nZ_Lc = getDimFromFile(cfg,lcFile,connLengthCfg,"gridNzString");
+  #endif
+  
+  #if USE3DTETGEOM > 0
+    nTracers = nR_Lc*nY_Lc*nZ_Lc;
+  #else
+    nTracers = nR_Lc*nZ_Lc;
+  #endif
+  
+  sim::Array<float> Lc(nTracers),s(nTracers);
+  sim::Array<float> gridRLc(nR_Lc),gridYLc(nY_Lc),gridZLc(nZ_Lc);
+  sim::Array<int> noIntersectionNodes(nTracers);
+  #if GENERATE_LC ==1
+    if( !boost::filesystem::exists( lcFile ) )
     {
-        std::cout << "No pre-existing connection length file found" << std::endl;
-      
-    //int nTraceSteps = 5000;
-    //float dr = 0.0001;
-    //int nR_Lc = 80;
-    //int nY_Lc = 0;
-    //int nZ_Lc = 100;
-    //float r0_Lc = -0.076;
-    //float r1_Lc = 0.076;
-    //float z0_Lc = -0.05;
-    //float z1_Lc = 0.20;
-    #if USE3DTETGEOM > 0
-    //nY_Lc = 70;
-    //float y0_Lc = -0.076;
-    //float y1_Lc = 0.076;
-    float dy_Lc = (y1_Lc-y0_Lc)/(nY_Lc-1);
-    for(int j=0;j<nY_Lc; j++)
-    {
-     gridYLc[j] = y0_Lc + j*dy_Lc;
-    }
-    #else
-    #endif
-    float dr_Lc = (r1_Lc-r0_Lc)/(nR_Lc-1);
-    for(int i=0;i<nR_Lc; i++)
-    {
-     gridRLc[i] = r0_Lc + i*dr_Lc;
-     //std::cout << "gridrLc " << gridRLc[i] << std::endl;
-    }
-
-    float dz_Lc = (z1_Lc-z0_Lc)/(nZ_Lc-1);
-    for(int j=0;j<nZ_Lc; j++)
-    {
-     gridZLc[j] = z0_Lc + j*dz_Lc;
-     //std::cout << "gridzLc " << gridZLc[j] << std::endl;
-    }
-    std::cout << "Creating tracer particles" << std::endl;
-    thrust::counting_iterator<std::size_t> lcBegin(0);  
-    thrust::counting_iterator<std::size_t> lcEnd(nTracers);
-    auto forwardTracerParticles = new Particles(nTracers);
-    auto backwardTracerParticles = new Particles(nTracers);
-    int addIndex = 0;
-    std::cout << "Initializing tracer particles" << std::endl;
-   
-    for(int i=0;i<nR_Lc; i++)
-    {
-      for(int j=0;j<nY_Lc;j++)
-      {
-          for (int k=0;k<nZ_Lc;k++)
-          {
-         #if USE3DTETGEOM > 0
-             addIndex = i + j*nR_Lc + k*nR_Lc*nY_Lc;
-         #else
-                 addIndex = i+k*nR_Lc;
-         #endif
-                 forwardTracerParticles->setParticle(addIndex,gridRLc[i], gridYLc[j], gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0, 0.0);
-        backwardTracerParticles->setParticle(addIndex,gridRLc[i], gridYLc[j], gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0, 0.0);
-
-          }
-
-      }
-    }
-    
-    //    backwardTracerParticles->setParticle(addIndex,gridRLc[41], gridYLc[45], gridZLc[97], 0.0, 0.0, 0.0, 0, 0.0, 0.0);
-        std::cout << "Beginning Lc computation " << std::endl;
-        int i44 = closeGeom[10*nY_closeGeom*nR_closeGeom*n_closeGeomElements
-                          + 0*nR_closeGeom*n_closeGeomElements + 
-                            0*n_closeGeomElements + 0];
-        int i45 = closeGeom[10*nY_closeGeom*nR_closeGeom*n_closeGeomElements
-                          + 0*nR_closeGeom*n_closeGeomElements + 
-                            0*n_closeGeomElements + 9];
-                            std::cout << "i44 " << i44 <<" " << i45 << std::endl;
-                            
-    std::cout << "nTraceSteps"<< nTraceSteps << " dr "<< dr  << std::endl;
-        for (int ii=0;ii<nTraceSteps; ii++)
+       std::cout << "No pre-existing connection length file found" << std::endl;    
+      #if USE3DTETGEOM > 0
+        float dy_Lc = (y1_Lc-y0_Lc)/(nY_Lc-1);
+        for(int j=0;j<nY_Lc; j++)
         {
-          thrust::for_each(thrust::device, lcBegin,lcEnd,
-                   field_line_trace(1.0,forwardTracerParticles,dr,boundaries.data(), nLines,nR_Lc,nZ_Lc,
-                                    gridRLc.data(),gridZLc.data(),Lc.data(),
-                                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                                    &br.front(),&bz.front(),&by.front()));
-          
-          thrust::for_each(thrust::device, lcBegin,lcEnd,
-                   field_line_trace(-1.0,backwardTracerParticles,dr,boundaries.data(), nLines,nR_Lc,nZ_Lc,
-                                    gridRLc.data(),gridZLc.data(),Lc.data(),
-                                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                                    &br.front(),&bz.front(),&by.front()));
-              
-   //       std::cout << "moved particle position " << backwardTracerParticles->x[0] << " " << backwardTracerParticles->y[0]
-     //                 << " " << backwardTracerParticles->z[0]<< std::endl;
-          
-          thrust::for_each(thrust::device, lcBegin,lcEnd,
-                    geometry_check(forwardTracerParticles,nLines,&boundaries[0],dr,ii,
-                        nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
-                        &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
-                        &closeGeom.front()) );
-          
-          thrust::for_each(thrust::device, lcBegin,lcEnd,
-                    geometry_check(backwardTracerParticles,nLines,&boundaries[0],dr,ii,
-                        nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
-                        &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
-                        &closeGeom.front()) );
+         gridYLc[j] = y0_Lc + j*dy_Lc;
         }
-#if USE_CUDA 
-       cudaDeviceSynchronize();
-#endif
-        addIndex = 0;
-        float forwardDist = 0.0;
-        float backwardDist = 0.0;
-        sim::Array<int> noIntersectionNodes(nTracers);
-        for(int i=0;i<nR_Lc; i++)
+      #endif
+      float dr_Lc = (r1_Lc-r0_Lc)/(nR_Lc-1);
+      for(int i=0;i<nR_Lc; i++)
+      {
+       gridRLc[i] = r0_Lc + i*dr_Lc;
+      }
+
+      float dz_Lc = (z1_Lc-z0_Lc)/(nZ_Lc-1);
+      for(int j=0;j<nZ_Lc; j++)
+      {
+       gridZLc[j] = z0_Lc + j*dz_Lc;
+      }
+      std::cout << "Creating tracer particles" << std::endl;
+      thrust::counting_iterator<std::size_t> lcBegin(0);  
+      thrust::counting_iterator<std::size_t> lcEnd(nTracers);
+      auto forwardTracerParticles = new Particles(nTracers);
+      auto backwardTracerParticles = new Particles(nTracers);
+      int addIndex = 0;
+      std::cout << "Initializing tracer particles" << std::endl;
+   
+      for(int i=0;i<nR_Lc; i++)
+      {
+        for(int j=0;j<nY_Lc;j++)
         {
-          for(int j=0;j<nY_Lc;j++)
-          {
+           for (int k=0;k<nZ_Lc;k++)
+           {
+              #if USE3DTETGEOM > 0
+                addIndex = i + j*nR_Lc + k*nR_Lc*nY_Lc;
+              #else
+                addIndex = i+k*nR_Lc;
+              #endif
+              forwardTracerParticles->setParticle(addIndex,gridRLc[i], gridYLc[j], gridZLc[k], 
+                                                  0.0, 0.0, 0.0, 0, 0.0, 0.0);
+              backwardTracerParticles->setParticle(addIndex,gridRLc[i], gridYLc[j], gridZLc[k], 
+                                                   0.0, 0.0, 0.0, 0, 0.0, 0.0);
+           }
+        }
+      }
+      
+                              
+      typedef std::chrono::high_resolution_clock Time_trace;
+      typedef std::chrono::duration<float> fsec_trace;
+      auto start_clock_trace = Time_trace::now();
+      std::cout << "Starting trace loop" << std::endl;
+      std::cout << "nTraceSteps"<< nTraceSteps << " dr "<< dr  << std::endl;
+      for (int ii=0;ii<nTraceSteps; ii++)
+      {
+        #if USE_CUDA 
+          cudaDeviceSynchronize();
+        #endif
+        thrust::for_each(thrust::device, lcBegin,lcEnd,
+                 field_line_trace(1.0,forwardTracerParticles,dr,boundaries.data(), nLines,
+                     nR_Lc,nZ_Lc,gridRLc.data(),gridZLc.data(),Lc.data(),
+                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
+                     &br.front(),&bz.front(),&by.front()));
+        
+        thrust::for_each(thrust::device, lcBegin,lcEnd,
+                 field_line_trace(-1.0,backwardTracerParticles,dr,boundaries.data(), nLines,
+                     nR_Lc,nZ_Lc,gridRLc.data(),gridZLc.data(),Lc.data(),
+                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
+                     &br.front(),&bz.front(),&by.front()));
+            
+        thrust::for_each(thrust::device, lcBegin,lcEnd,
+                  geometry_check(forwardTracerParticles,nLines,&boundaries[0],dr,ii,
+                      nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
+                      &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
+                      &closeGeom.front()) );
+        
+        thrust::for_each(thrust::device, lcBegin,lcEnd,
+                  geometry_check(backwardTracerParticles,nLines,&boundaries[0],dr,ii,
+                      nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
+                      &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
+                      &closeGeom.front()) );
+      }
+      auto finish_clock_trace = Time_trace::now();
+      fsec_trace fstrace = finish_clock_trace - start_clock_trace;
+      printf("Time taken          is %6.3f (secs) \n", fstrace.count());
+      printf("Time taken per step is %6.3f (secs) \n", fstrace.count() / (float) nTraceSteps);
+      #if USE_CUDA 
+         cudaDeviceSynchronize();
+      #endif
+      addIndex = 0;
+      float forwardDist = 0.0;
+      float backwardDist = 0.0;
+      for(int i=0;i<nR_Lc; i++)
+      {
+        for(int j=0;j<nY_Lc;j++)
+        {
           for(int k=0;k<nZ_Lc;k++)
           {
-              
-#if USE3DTETGEOM > 0
-             addIndex = i + j*nR_Lc + k*nR_Lc*nY_Lc;
-#else
-                 addIndex = i+k*nR_Lc;
-#endif
-                 if(forwardTracerParticles->hitWall[addIndex] > 0)
-                 {
-                     forwardDist = forwardTracerParticles->distanceTraveled[addIndex];
-                 }
-                 else
-                 { forwardDist = 0.0;
-                 }
-                 if(backwardTracerParticles->hitWall[addIndex] > 0)
-                 {
-                     backwardDist = backwardTracerParticles->distanceTraveled[addIndex];
-                 }
-                 else backwardDist = 0.0;
-            Lc[addIndex] = forwardDist + backwardDist;
-            //std::cout << "Lc " << Lc[addIndex] << std::endl; 
-            if(forwardTracerParticles->distanceTraveled[addIndex] > 
-                    backwardTracerParticles->distanceTraveled[addIndex])
-            {
-              s[addIndex] = -(0.5*Lc[addIndex]-backwardTracerParticles->distanceTraveled[addIndex]);
-            }
-            else
-            {
-              s[addIndex] = (0.5*Lc[addIndex]-forwardTracerParticles->distanceTraveled[addIndex]);
-            }
-            if(forwardTracerParticles->hitWall[addIndex] + backwardTracerParticles->hitWall[addIndex]<4.0)
-            {
-              noIntersectionNodes[addIndex] = 1;    
-            }
-            if(addIndex ==282839)
-            {
-                std::cout<< " hitwalls " << forwardTracerParticles->hitWall[addIndex] 
-                    << " " << backwardTracerParticles->hitWall[addIndex]
-                    << " " << noIntersectionNodes[addIndex] << std::endl;
-            }
+            
+             #if USE3DTETGEOM > 0
+               addIndex = i + j*nR_Lc + k*nR_Lc*nY_Lc;
+             #else
+                   addIndex = i+k*nR_Lc;
+             #endif
+             if(forwardTracerParticles->hitWall[addIndex] > 0)
+             {
+                forwardDist = forwardTracerParticles->distanceTraveled[addIndex];
+             }
+             else
+             { forwardDist = 0.0;}
+
+             if(backwardTracerParticles->hitWall[addIndex] > 0)
+             {
+                backwardDist = backwardTracerParticles->distanceTraveled[addIndex];
+             }
+             else backwardDist = 0.0;
+             
+             Lc[addIndex] = forwardDist + backwardDist;
+             
+             if(forwardTracerParticles->distanceTraveled[addIndex] > 
+                     backwardTracerParticles->distanceTraveled[addIndex])
+             {
+               s[addIndex] = -(0.5*Lc[addIndex]-backwardTracerParticles->distanceTraveled[addIndex]);
+             }
+             else
+             {
+               s[addIndex] = (0.5*Lc[addIndex]-forwardTracerParticles->distanceTraveled[addIndex]);
+             }
+             if(forwardTracerParticles->hitWall[addIndex] + backwardTracerParticles->hitWall[addIndex]<4.0)
+             {
+               noIntersectionNodes[addIndex] = 1;    
+             }
           }
         }
-        }
+      }
 
-NcFile ncFileLC("LcS.nc", NcFile::replace);
-NcDim nc_nTracers = ncFileLC.addDim("nTracers",nTracers);
-NcDim nc_nRLc = ncFileLC.addDim("nR",nR_Lc);
-NcDim nc_nYLc = ncFileLC.addDim("nY",nY_Lc);
-NcDim nc_nZLc = ncFileLC.addDim("nZ",nZ_Lc);
+      NcFile ncFileLC("LcS.nc", NcFile::replace);
+      NcDim nc_nTracers = ncFileLC.addDim("nTracers",nTracers);
+      NcDim nc_nRLc = ncFileLC.addDim("nR",nR_Lc);
+      NcDim nc_nYLc = ncFileLC.addDim("nY",nY_Lc);
+      NcDim nc_nZLc = ncFileLC.addDim("nZ",nZ_Lc);
+      
+      NcVar nc_Lc = ncFileLC.addVar("Lc",ncDouble,nc_nTracers);
+      NcVar nc_s = ncFileLC.addVar("s",ncDouble,nc_nTracers);
+      NcVar nc_nI = ncFileLC.addVar("noIntersection",ncDouble,nc_nTracers);
+      NcVar nc_gridRLc = ncFileLC.addVar("gridR",ncDouble,nc_nRLc);
+      NcVar nc_gridYLc = ncFileLC.addVar("gridY",ncDouble,nc_nYLc);
+      NcVar nc_gridZLc = ncFileLC.addVar("gridZ",ncDouble,nc_nZLc);
+      
+      nc_Lc.putVar(&Lc[0]);
+      nc_s.putVar(&s[0]);
+      nc_nI.putVar(&noIntersectionNodes[0]);
+      nc_gridRLc.putVar(&gridRLc[0]);
+      nc_gridYLc.putVar(&gridYLc[0]);
+      nc_gridZLc.putVar(&gridZLc[0]);
+      #if USE_CUDA 
+             cudaDeviceSynchronize();
+      #endif
+   }         
+  #endif    
 
-NcVar nc_Lc = ncFileLC.addVar("Lc",ncDouble,nc_nTracers);
-NcVar nc_s = ncFileLC.addVar("s",ncDouble,nc_nTracers);
-NcVar nc_nI = ncFileLC.addVar("noIntersection",ncDouble,nc_nTracers);
-NcVar nc_gridRLc = ncFileLC.addVar("gridR",ncDouble,nc_nRLc);
-NcVar nc_gridYLc = ncFileLC.addVar("gridY",ncDouble,nc_nYLc);
-NcVar nc_gridZLc = ncFileLC.addVar("gridZ",ncDouble,nc_nZLc);
-
-nc_Lc.putVar(&Lc[0]);
-nc_s.putVar(&s[0]);
-nc_nI.putVar(&noIntersectionNodes[0]);
-nc_gridRLc.putVar(&gridRLc[0]);
-nc_gridYLc.putVar(&gridYLc[0]);
-nc_gridZLc.putVar(&gridZLc[0]);
-#if USE_CUDA 
-       cudaDeviceSynchronize();
-#endif
-    }
-    else
-    {
-     // int lc1 = read_profileNs(LcFile,LcNr,LcNy,nR_Lc,nY_Lc);
-     // int lc2 = read_profileNs(LcFile,LcNz,LcNy,nZ_Lc,nY_Lc);
-        
-  //#elif GENERATE_LC == 2
-        std::cout << "Importing pre-existing connection length file" << std::endl;
-
-        std::string lcFile = "LcS.nc"; 
-        std::string lcNr = "nR";   
-        std::string lcNy = "nY";   
-        std::string lcNz = "nZ";
-        std::string lcGridR = "gridR";   
-        std::string lcGridY = "gridY";   
-        std::string lcGridZ = "gridZ";   
-        std::string lcChar = "Lc";   
-        std::string sChar = "s";   
-
-    int l1 = read_profileNs(lcFile,lcNr,lcNz,nR_Lc,nZ_Lc);
-    int l11 = read_profileNs(lcFile,lcNy,lcNz,nY_Lc,nZ_Lc);
-    
-    
-    int l2 = read_profile1d(lcFile,lcGridR, gridRLc);
-
-    std::cout << " !!! gridRLc0 " << gridRLc[0] << std::endl;
-    int l22 = read_profile1d(lcFile,lcGridY, gridYLc);
-    
-    int l3 = read_profile1d(lcFile,lcGridZ, gridZLc);
-    
-    int l4 = read_profile2d(lcFile,lcChar, Lc);
-    
-    int l5 = read_profile2d(lcFile,sChar, s);
-    }
-  #else
-   //import LC an
-    int nR_Lc;
-    int nZ_Lc;
-    int nY_Lc;
-    #if LC_INTERP > 0
-    const char *lcFile, *lcNr, *lcNz, *lcGridR, *lcGridZ, *lcChar, *sChar;
-    if(cfg.lookupValue("backgroundPlasmaProfiles.Lc.fileString", lcFile) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Lc.gridNrString", lcNr) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Lc.gridNzString", lcNz) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Lc.gridRString",lcGridR) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Lc.gridZString",lcGridZ) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Lc.variableString", lcChar) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.s.variableString", sChar))
-    { std::cout << "Connection Length file: " << lcFile << std::endl;}
-    else
-    { std::cout << "ERROR: Failed in acquiring connection length file data from input file " << std::endl;} 
-    int l1 = read_profileNs(lcFile,lcNr,lcNz,nR_Lc,nZ_Lc);
-    std::cout << "*** shouldnt be here " << std::endl; 
-    sim::Array<float> gridRLc(nR_Lc), gridZLc(nZ_Lc);
-    sim::Array<float> Lc(nR_Lc*nZ_Lc), s(nR_Lc*nZ_Lc);
-    
-    int l2 = read_profile1d(lcFile, lcGridR,gridRLc);
-    
-    int l3 = read_profile1d(lcFile, lcGridZ,gridZLc);
-    
-    int l4 = read_profile2d(lcFile,lcChar, Lc);
-    
-    int l5 = read_profile2d(lcFile,sChar, s);
-    #else
-
-    nR_Lc = 1;
-    nZ_Lc = 1;
-    nY_Lc = 1;
-    std::cout << "*** shouldnt be here " << std::endl; 
-    sim::Array<float> gridRLc(nR_Lc), gridZLc(nZ_Lc);
-    sim::Array<float> Lc(nR_Lc*nZ_Lc), s(nR_Lc*nZ_Lc);
-    if(cfg.lookupValue("backgroundPlasmaProfiles.Lc.value", Lc[0]) && 
-       cfg.lookupValue("backgroundPlasmaProfiles.s.value", s[0]))
-    {std::cout << "Lc and s = " << Lc[0] << " " << s[0]<< " " << std::endl;}
-    else
-    {std::cout << "ERROR: Failed importing constant connection length" << std:: endl;}
-    #endif
+  #if GENERATE_LC > 1
+    std::cout << "Importing pre-existing connection length file" << std::endl;
+    getVariable(cfg,connLengthCfg+"fileString",r0_Lc);
+    getVarFromFile(cfg,lcFile,connLengthCfg,"gridRString",gridRLc);
+    getVarFromFile(cfg,lcFile,connLengthCfg,"gridYString",gridYLc);
+    getVarFromFile(cfg,lcFile,connLengthCfg,"gridZString",gridZLc);
+    getVarFromFile(cfg,lcFile,connLengthCfg,"LcString",Lc);
+    getVarFromFile(cfg,lcFile,connLengthCfg,"SString",s);
   #endif
-    std::cout << " !!! gridRLc0 " << gridRLc[0] << std::endl;
-  std::string outnameLc = "connectionLength.m";
-  std::string outnameS = "distAlongLc.m";
-#if USE3DTETGEOM > 0
-  OUTPUT3d(profiles_folder,outnameLc, nR_Lc,nY_Lc, nZ_Lc, &Lc.front());
-  OUTPUT3d(profiles_folder,outnameS, nR_Lc,nY_Lc, nZ_Lc, &s.front());
-#else
-  OUTPUT2d(profiles_folder,outnameLc, nR_Lc, nZ_Lc, &Lc.front());
-  OUTPUT2d(profiles_folder,outnameS, nR_Lc, nZ_Lc, &s.front());
-#endif
+  
   //Background Plasma Temperature Initialization    
   #if TEMP_INTERP == 0
     int nR_Temp = 1;
