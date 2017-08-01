@@ -51,19 +51,64 @@ void operator()(std::size_t indx) const {
     float Bnorm[3] = {0.0f,0.0f,0.0f};
     float Bmag = 0.0f;
     float particleDistance = 0.0f;
+    float k1[3] = {0.0,0.0,0.0};
+    float k2[3] = {0.0,0.0,0.0};
+    float k3[3] = {0.0,0.0,0.0};
+    float k4[3] = {0.0,0.0,0.0};
+    float x0 = 0.0f;
+    float y0 = 0.0f;
+    float z0 = 0.0f;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+
+    float dr_fac = BfieldFactor*dr;
+
 if(particles->hitWall[indx] == 0.0)
 {
-    interp2dVector(&B[0],particles->x[indx], particles->y[indx], particles->z[indx],nR_Bfield,nZ_Bfield,
-                                BfieldGridR,BfieldGridZ,BfieldR,
-                                                    BfieldZ,BfieldT);
-    Bmag = sqrtf(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
-    Bnorm[0] = B[0]/Bmag;
-    Bnorm[1] = B[1]/Bmag;
-    Bnorm[2] = B[2]/Bmag;
+    x0 = particles->x[indx];
+    y0 = particles->y[indx];
+    z0 = particles->z[indx];
 
-    particles->x[indx] = particles->xprevious[indx] + BfieldFactor*dr*Bnorm[0];
-    particles->y[indx] = particles->yprevious[indx] + BfieldFactor*dr*Bnorm[1];
-    particles->z[indx] = particles->zprevious[indx] + BfieldFactor*dr*Bnorm[2];
+    interp2dVector(&B[0],x0, y0,z0,
+            nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
+            BfieldR,BfieldZ,BfieldT);
+    vectorNormalize(B,B);
+    //Bmag = sqrtf(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
+    //Bnorm[0] = B[0]/Bmag;
+    //Bnorm[1] = B[1]/Bmag;
+    //Bnorm[2] = B[2]/Bmag;
+
+    vectorScalarMult(dr_fac,B,k1);
+
+    interp2dVector(&B[0],x0+0.5*k1[0],y0+0.5*k1[1],z0+0.5*k1[2],
+            nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
+            BfieldR,BfieldZ,BfieldT);
+    vectorNormalize(B,B);
+
+    vectorScalarMult(dr_fac,B,k2);
+    interp2dVector(&B[0],x0+0.5*k2[0],y0+0.5*k2[1],z0+0.5*k2[2],
+            nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
+            BfieldR,BfieldZ,BfieldT);
+    vectorNormalize(B,B);
+
+    vectorScalarMult(dr_fac,B,k3);
+
+    interp2dVector(&B[0],x0+k3[0],y0+k3[1],z0+k3[2],
+            nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
+            BfieldR,BfieldZ,BfieldT);
+    vectorNormalize(B,B);
+
+    vectorScalarMult(dr_fac,B,k4);
+    x = x0+k1[0]/6.0+k2[0]/3.0+k3[0]/3.0+k4[0]/6.0;
+    y = y0+k1[1]/6.0+k2[1]/3.0+k3[1]/3.0+k4[1]/6.0;
+    z = z0+k1[2]/6.0+k2[2]/3.0+k3[2]/3.0+k4[2]/6.0;
+    particles->x[indx] = x; 
+    particles->y[indx] = y;
+    particles->z[indx] = z;
+    //particles->x[indx] = particles->xprevious[indx] + BfieldFactor*dr*Bnorm[0];
+    //particles->y[indx] = particles->yprevious[indx] + BfieldFactor*dr*Bnorm[1];
+    //particles->z[indx] = particles->zprevious[indx] + BfieldFactor*dr*Bnorm[2];
     particles->distanceTraveled[indx] = particles->distanceTraveled[indx] + dr; 
 }
 else if(particles->hitWall[indx] == 1.0)
