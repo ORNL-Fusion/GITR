@@ -731,8 +731,8 @@ cpu_timer timer;
 cpu_times initTime0 = timer.elapsed();
 #endif
 #endif
-	    //if(particlesPointer->hitWall[indx] == 0.0)
-        //{
+	    if(std::isnan(particlesPointer->x[indx]))
+        { exit(0);}
             float v_minus[3]= {0.0f, 0.0f, 0.0f};
             float v_prime[3]= {0.0f, 0.0f, 0.0f};
             float position[3]= {0.0f, 0.0f, 0.0f};
@@ -828,6 +828,8 @@ cpu_times initTime0 = timer.elapsed();
                 particlesPointer->vz[indx] = v[2];    
               //std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
     	    }
+	    if(std::isnan(particlesPointer->x[indx]))
+        { exit(0);}
 #endif
 
 #if ODEINT == 1
