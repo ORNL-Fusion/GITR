@@ -66,12 +66,12 @@ int main()
 {
   //Prepare config files for import
   Config cfg,cfg_geom;
-
+  std::string input_path = "input/";
   //Parse and read input file
   std::cout << "Open configuration file gitrInput.cfg " << std::endl;
   try
   {
-    cfg.readFile("gitrInput.cfg");
+    cfg.readFile("input/gitrInput.cfg");
   }
   catch(const FileIOException &fioex)
   {
@@ -84,14 +84,19 @@ int main()
               << " - " << pex.getError() << std::endl;
     return(EXIT_FAILURE);
   }
-  
+  std::cout << "Open geometry file " << std::endl; 
   // Parse and read geometry file
-  const char *geomFile; 
+  std::string geomFile; 
   if(cfg.lookupValue("geometry.fileString", geomFile))
   {
+      //std::cout << "geomFile " << geomFile << std::endl;
+      //strcpy(geomPath,input_path.c_str());
+      //std::cout << "geom path " << geomPath << std::endl;
+      //strcat(geomPath,geomFile);
+      //std::cout << "geom file " << geomPath << std::endl;
     try
     {
-      cfg_geom.readFile(geomFile);
+      cfg_geom.readFile((input_path+geomFile).c_str());
     }
     catch(const FileIOException &fioex)
     {
@@ -106,6 +111,10 @@ int main()
     }
 
   }
+  else
+  {
+      std::cout << "ERROR: could not get geometry file name" << std::endl;
+  }
   
   std::cout << "Successfully staged input and geometry file " << std::endl;
   
@@ -119,7 +128,7 @@ int main()
               "flags.USERECOMBINATION","flags.USEPERPDIFFUSION",
               "flags.USECOULOMBCOLLISIONS",
               "flags.USETHERMALFORCE","flags.USESURFACEMODEL",
-              "flags.USESHEATHEFIELD",
+              "flags.USESHEATHEFIELD","flags.BIASED_SURFACE",
               "flags.USEPRESHEATHEFIELD","flags.BFIELD_INTERP",
               "flags.LC_INTERP","flags.GENERATE_LC", "flags.EFIELD_INTERP",
               "flags.PRESHEATH_INTERP","flags.DENSITY_INTERP",
@@ -132,7 +141,7 @@ int main()
               "flags.SPECTROSCOPY","flags.USE3DTETGEOM","flags.USECYLSYMM"};
     int flagValues[] =  {USE_CUDA, USEMPI, USE_BOOST,USEIONIZATION,
            USERECOMBINATION,USEPERPDIFFUSION,USECOULOMBCOLLISIONS,
-           USETHERMALFORCE,USESURFACEMODEL,USESHEATHEFIELD,
+           USETHERMALFORCE,USESURFACEMODEL,USESHEATHEFIELD,BIASED_SURFACE,
            USEPRESHEATHEFIELD,BFIELD_INTERP,LC_INTERP, GENERATE_LC,
            EFIELD_INTERP,
            PRESHEATH_INTERP,DENSITY_INTERP,TEMP_INTERP,
@@ -197,13 +206,13 @@ int main()
   #if BFIELD_INTERP > 0
     std::string bfieldFile;
     getVariable(cfg,bfieldCfg+"fileString",bfieldFile);
-    nR_Bfield = getDimFromFile(cfg,bfieldFile,bfieldCfg,"gridNrString");
+    nR_Bfield = getDimFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridNrString");
   #endif
   #if BFIELD_INTERP > 1
-    nZ_Bfield = getDimFromFile(cfg,bfieldFile,bfieldCfg,"gridNzString");
+    nZ_Bfield = getDimFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridNzString");
   #endif
   #if BFIELD_INTERP > 2
-    nY_Bfield = getDimFromFile(cfg,bfieldFile,bfieldCfg,"gridNyString");
+    nY_Bfield = getDimFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridNyString");
   #endif
   sim::Array<float> bfieldGridr(nR_Bfield),bfieldGridy(nY_Bfield),bfieldGridz(nZ_Bfield);
   n_Bfield = nR_Bfield*nY_Bfield*nZ_Bfield;
@@ -213,17 +222,17 @@ int main()
     getVariable(cfg,bfieldCfg+"y",by[0]);
     getVariable(cfg,bfieldCfg+"z",bz[0]);
   #else
-    getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridRString",bfieldGridr);
+    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridRString",bfieldGridr);
     #if BFIELD_INTERP > 1
-      getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridZString",bfieldGridz);
+      getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridZString",bfieldGridz);
     #endif
     #if BFIELD_INTERP > 2
-      getVarFromFile(cfg,bfieldFile,bfieldCfg,"gridYString",bfieldGridy);
+      getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridYString",bfieldGridy);
     #endif
 
-    getVarFromFile(cfg,bfieldFile,bfieldCfg,"rString",br);
-    getVarFromFile(cfg,bfieldFile,bfieldCfg,"yString",by);
-    getVarFromFile(cfg,bfieldFile,bfieldCfg,"zString",bz);
+    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"rString",br);
+    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"yString",by);
+    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"zString",bz);
   #endif  
   std::cout << "Finished Bfield import" << std::endl; 
 
@@ -264,12 +273,12 @@ int main()
   #if GEOM_HASH > 1
     std::string hashFile;
     getVariable(cfg,geomHashCfg+"fileString",hashFile);
-    nR_closeGeom = getDimFromFile(cfg,hashFile,geomHashCfg,"gridNrString");
-    nZ_closeGeom = getDimFromFile(cfg,hashFile,geomHashCfg,"gridNzString");
-    n_closeGeomElements = getDimFromFile(cfg,hashFile,geomHashCfg,"nearestNelementsString");
+    nR_closeGeom = getDimFromFile(cfg,input_path+hashFile,geomHashCfg,"gridNrString");
+    nZ_closeGeom = getDimFromFile(cfg,input_path+hashFile,geomHashCfg,"gridNzString");
+    n_closeGeomElements = getDimFromFile(cfg,input_path+hashFile,geomHashCfg,"nearestNelementsString");
     nGeomHash = nR_closeGeom*nZ_closeGeom*n_closeGeomElements;
     #if USE3DTETGEOM > 0
-      nY_closeGeom = getDimFromFile(cfg,hashFile,geomHashCfg,"gridNyString");
+      nY_closeGeom = getDimFromFile(cfg,input_path+hashFile,geomHashCfg,"gridNyString");
       nGeomHash = nY_closeGeom*nGeomHash;
     #else
     #endif
@@ -349,12 +358,15 @@ int main()
             hashGridNames,hashGridMapDim,hashGridPointers,
             intVarNames,intVarDimMap,intVarPointers);
   #elif GEOM_HASH > 1
-    getVarFromFile(cfg,hashFile,geomHashCfg,"gridRString",closeGeomGridr);
-    getVarFromFile(cfg,hashFile,geomHashCfg,"gridZString",closeGeomGridz);
+    getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridRString",closeGeomGridr);
+    getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridZString",closeGeomGridz);
     #if USE3DTETGEOM >0
-      getVarFromFile(cfg,hashFile,geomHashCfg,"gridYString",closeGeomGridy);
+      getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridYString",closeGeomGridy);
     #endif
-      getVarFromFile(cfg,hashFile,geomHashCfg,"closeGeomString",closeGeom);
+    std::cout << "geom hash numbers " << nR_closeGeom << " " << nY_closeGeom
+              << " " << nZ_closeGeom << " " << n_closeGeomElements << std::endl;
+    getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"closeGeomString",closeGeom);
+    std::cout << "geom hash indices " << closeGeom[0] << " " << closeGeom[1] << " " << closeGeom[2] << std::endl;
   #endif
               
   int nR_closeGeom_sheath = 1;
@@ -377,12 +389,12 @@ int main()
   #if GEOM_HASH_SHEATH > 1
     std::string hashFile_sheath;
     getVariable(cfg,geomHashSheathCfg+"fileString",hashFile_sheath);
-    nR_closeGeom_sheath = getDimFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"gridNrString");
-    nZ_closeGeom_sheath = getDimFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"gridNzString");
-    n_closeGeomElements_sheath = getDimFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"nearestNelementsString");
+    nR_closeGeom_sheath = getDimFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridNrString");
+    nZ_closeGeom_sheath = getDimFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridNzString");
+    n_closeGeomElements_sheath = getDimFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"nearestNelementsString");
     nGeomHash_sheath = nR_closeGeom_sheath*nZ_closeGeom_sheath*n_closeGeomElements_sheath;
     #if USE3DTETGEOM > 0
-      nY_closeGeom_sheath = getDimFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"gridNyString");
+      nY_closeGeom_sheath = getDimFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridNyString");
       nGeomHash_sheath = nY_closeGeom_sheath*nGeomHash_sheath;
     #else
     #endif
@@ -456,12 +468,12 @@ int main()
             hashGridNames_s,hashGridMapDim_s,hashGridPointers_s,
             intVarNames_s,intVarDimMap_s,intVarPointers_s);
   #elif GEOM_HASH_SHEATH > 1
-    getVarFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"gridRString",closeGeomGridr_sheath);
-    getVarFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"gridZString",closeGeomGridz_sheath);
+    getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridRString",closeGeomGridr_sheath);
+    getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridZString",closeGeomGridz_sheath);
     #if USE3DTETGEOM >0
-      getVarFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"gridYString",closeGeomGridy_sheath);
+      getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridYString",closeGeomGridy_sheath);
     #endif
-      getVarFromFile(cfg,hashFile_sheath,geomHashSheathCfg,"closeGeomString",closeGeom_sheath);
+      getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"closeGeomString",closeGeom_sheath);
   #endif
 
   int nR_Lc = 1;
@@ -601,7 +613,7 @@ int main()
         {
           for(int k=0;k<nZ_Lc;k++)
           {
-            
+              //std::cout << "hitwall of tracers " << forwardTracerParticles->hitWall[addIndex] << std::endl; 
              #if USE3DTETGEOM > 0
                addIndex = i + j*nR_Lc + k*nR_Lc*nY_Lc;
              #else
@@ -675,129 +687,128 @@ int main()
   #endif
   
   //Background Plasma Temperature Initialization    
-  #if TEMP_INTERP == 0
-    int nR_Temp = 1;
-    int nZ_Temp = 1;
-    sim::Array<float> TempGridr(nR_Temp), TempGridz(nZ_Temp);
-    sim::Array<float> ti(nR_Temp*nZ_Temp), te(nR_Temp*nZ_Temp);
-    if(cfg.lookupValue("backgroundPlasmaProfiles.Temperature.ti", ti[0]) && 
-       cfg.lookupValue("backgroundPlasmaProfiles.Temperature.te", te[0]))
-    {std::cout << "Ti and Te = " << ti[0] << " " << te[0] << std::endl;}
-    else
-    {std::cout << "ERROR: Failed importing constant temperatures" << std:: endl;}
-  #elif TEMP_INTERP == 2
-    int nR_Temp;
-    int nZ_Temp;
-    const char *tempFile, *tempNr, *tempNz, *tempGridR, *tempGridZ, *teChar, *tiChar;
-    if(cfg.lookupValue("backgroundPlasmaProfiles.Temperature.fileString", tempFile) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Temperature.gridNrString", tempNr) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Temperature.gridNzString", tempNz) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Temperature.gridRString",tempGridR) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Temperature.gridZString",tempGridZ) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Temperature.IonTempString", tiChar) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Temperature.ElectronTempString", teChar))
-    { std::cout << "Temperature file: " << tempFile << std::endl;}
-    else
-    { std::cout << "ERROR: Failed in acquiring Temperature file data from input file " << std::endl;} 
-    std::cout << "read netcdf file" << std::endl;
-    int t1 = read_profileNsChar(tempFile,tempNr,tempNz,nR_Temp,nZ_Temp);
-    std::cout << tempNr << nR_Temp << std::endl; 
-    sim::Array<float> TempGridr(nR_Temp), TempGridz(nZ_Temp);
-    sim::Array<float> ti(nR_Temp*nZ_Temp), te(nR_Temp*nZ_Temp);
-    
-    int t2 = read_profile1d(tempFile,tempGridR, TempGridr);
-    
-    int t3 = read_profile1d(tempFile,tempGridZ, TempGridz);
-    
-    int t4 = read_profile2d(tempFile,tiChar, ti);
-    
-    int t5 = read_profile2d(tempFile,teChar, te);
+  int nR_Temp = 1;
+  int nY_Temp = 1;
+  int nZ_Temp = 1;
+  int n_Temp = 1;
+  std::string tempCfg = "backgroundPlasmaProfiles.Temperature.";
+  #if TEMP_INTERP > 0
+    std::string tempFile;
+    getVariable(cfg,tempCfg+"fileString",tempFile);
+    nR_Temp = getDimFromFile(cfg,input_path+tempFile,tempCfg,"gridNrString");
   #endif
-  std::string outnameTgridR = "tGridR.m";
-  std::string outnameTgridZ = "tGridZ.m";
-  std::string outnameTi = "ti.m";
-  std::string outnameTe = "te.m";
-  OUTPUT1d(profiles_folder,outnameTgridR, nR_Temp, &TempGridr.front());
-  OUTPUT1d(profiles_folder,outnameTgridZ, nZ_Temp, &TempGridz.front());
-  OUTPUT2d(profiles_folder,outnameTi, nR_Temp, nZ_Temp, &ti.front());
-  OUTPUT2d(profiles_folder,outnameTe, nR_Temp, nZ_Temp, &te.front());
+  #if TEMP_INTERP > 1
+    nZ_Temp = getDimFromFile(cfg,input_path+tempFile,tempCfg,"gridNzString");
+  #endif
+  #if TEMP_INTERP > 2
+    nY_Temp = getDimFromFile(cfg,input_path+tempFile,tempCfg,"gridNyString");
+  #endif
+  
+  sim::Array<float> TempGridr(nR_Temp), TempGridz(nZ_Temp), TempGridy(nY_Temp);
+  n_Temp = nR_Temp*nY_Temp*nZ_Temp;
+  sim::Array<float> ti(n_Temp), te(n_Temp);
+
+  #if TEMP_INTERP == 0
+    getVariable(cfg,tempCfg+"ti",ti[0]);
+    getVariable(cfg,tempCfg+"te",te[0]);
+  #else
+    getVarFromFile(cfg,input_path+tempFile,tempCfg,"gridRString",TempGridr);
+    #if TEMP_INTERP > 1
+      getVarFromFile(cfg,input_path+tempFile,tempCfg,"gridZString",TempGridz);
+    #endif
+    #if TEMP_INTERP > 2
+      getVarFromFile(cfg,input_path+tempFile,tempCfg,"gridYString",TempGridy);
+    #endif
+    getVarFromFile(cfg,input_path+tempFile,tempCfg,"IonTempString",ti);
+    getVarFromFile(cfg,input_path+tempFile,tempCfg,"ElectronTempString",te);
+  #endif
 
   float testVec = 0.0;
   testVec = interp2dCombined(0.07,0.0,0.0,nR_Temp,
                     nZ_Temp,TempGridr.data(),TempGridz.data(),ti.data());
   std::cout << "Finished Temperature import "<< testVec << std::endl; 
   
-  //Background Plasma Density Initialization
-  #if DENSITY_INTERP == 0
-    int nR_Dens = 1;
-    int nZ_Dens = 1;
-    sim::Array<float> DensGridr(nR_Dens), DensGridz(nZ_Dens);
-    sim::Array<float> ni(nR_Dens*nZ_Dens), ne(nR_Dens*nZ_Dens);
-    if(cfg.lookupValue("backgroundPlasmaProfiles.Density.ni", ni[0]) && 
-       cfg.lookupValue("backgroundPlasmaProfiles.Density.ne", ne[0]))
-    {std::cout << "Ni and Ne = " << ni[0] << " " << ne[0] << std::endl;}
-    else
-    {std::cout << "ERROR: Failed importing constant densities" << std:: endl;}
-  #elif DENSITY_INTERP == 2
-    int nR_Dens;
-    int nZ_Dens;
-    
-    const char *densFile, *densNr, *densNz, *densGridR, *densGridZ, *neChar, *niChar;
-    if(cfg.lookupValue("backgroundPlasmaProfiles.Density.fileString", densFile) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Density.gridNrString", densNr) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Density.gridNzString", densNz) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Density.gridRString",densGridR) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Density.gridZString",densGridZ) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Density.IonDensityString", niChar) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.Density.ElectronDensityString", neChar))
-    { std::cout << "Density file: " << densFile << std::endl;}
-    else
-    { std::cout << "ERROR: Failed in acquiring density file data from input file " << std::endl;} 
-    int n1 = read_profileNs(densFile,densNr,densNz,nR_Dens,nZ_Dens);
-    
-    sim::Array<float> DensGridr(nR_Dens), DensGridz(nZ_Dens);
-    sim::Array<float> ni(nR_Dens*nZ_Dens), ne(nR_Dens*nZ_Dens);
-    
-    int n2 = read_profile1d(densFile,densGridR, DensGridr);
-    
-    int n3 = read_profile1d(densFile,densGridZ, DensGridz);
-    
-    int n4 = read_profile2d(densFile,niChar, ni);
-    
-    int n5 = read_profile2d(densFile,neChar, ne);
+  //Background Plasma Density Initialization    
+  int nR_Dens = 1;
+  int nY_Dens = 1;
+  int nZ_Dens = 1;
+  int n_Dens = 1;
+  std::string densCfg = "backgroundPlasmaProfiles.Density.";
+  #if DENSITY_INTERP > 0
+    std::string densFile;
+    getVariable(cfg,densCfg+"fileString",densFile);
+    nR_Dens = getDimFromFile(cfg,input_path+densFile,densCfg,"gridNrString");
+  #endif
+  #if DENSITY_INTERP > 1
+    nZ_Dens = getDimFromFile(cfg,input_path+densFile,densCfg,"gridNzString");
+  #endif
+  #if DENSITY_INTERP > 2
+    nY_Dens = getDimFromFile(cfg,input_path+densFile,densCfg,"gridNyString");
   #endif
   
-  std::string outnameNgridR = "nGridR.m";
-  std::string outnameNgridZ = "nGridZ.m";
-  std::string outnameNi = "ni.m";
-  std::string outnameNe = "ne.m";
-  OUTPUT1d(profiles_folder,outnameNgridR, nR_Dens, &DensGridr.front());
-  OUTPUT1d(profiles_folder,outnameNgridZ, nZ_Dens, &DensGridz.front());
-  OUTPUT2d(profiles_folder,outnameNi, nR_Dens, nZ_Dens, &ni.front());
-  OUTPUT2d(profiles_folder,outnameNe, nR_Dens, nZ_Dens, &ne.front());
+  sim::Array<float> DensGridr(nR_Dens), DensGridz(nZ_Dens), DensGridy(nY_Dens);
+  n_Dens = nR_Dens*nY_Dens*nZ_Dens;
+  sim::Array<float> ni(n_Dens), ne(n_Dens);
+
+  #if DENSITY_INTERP == 0
+    getVariable(cfg,densCfg+"ni",ni[0]);
+    getVariable(cfg,densCfg+"ne",ne[0]);
+  #else
+    getVarFromFile(cfg,input_path+densFile,densCfg,"gridRString",DensGridr);
+    #if DENSITY_INTERP > 1
+      getVarFromFile(cfg,input_path+densFile,densCfg,"gridZString",DensGridz);
+    #endif
+    #if DENSITY_INTERP > 2
+      getVarFromFile(cfg,input_path+densFile,densCfg,"gridYString",DensGridy);
+    #endif
+    getVarFromFile(cfg,input_path+densFile,densCfg,"IonDensityString",ni);
+    getVarFromFile(cfg,input_path+densFile,densCfg,"ElectronDensityString",ne);
+  #endif
 
   std::cout << "Finished density import "<< ne[0] << std::endl; 
   //Background Plasma flow velocity initialization    
+  int nR_flowV = 1;
+  int nY_flowV = 1;
+  int nZ_flowV = 1;
+  int n_flowV = 1;
+  std::string flowVCfg = "backgroundPlasmaProfiles.FlowVelocity.";
+  #if FLOWV_INTERP == 1
+    nR_flowV=nR_Lc;
+    nY_flowV=nY_Lc;
+    nZ_flowV=nZ_Lc;
+  #endif
+  #if FLOWV_INTERP > 1
+    std::string flowVFile;
+    getVariable(cfg,flowVCfg+"fileString",flowVFile);
+    nR_flowV = getDimFromFile(cfg,flowVFile,flowVCfg,"gridNrString");
+    nZ_flowV = getDimFromFile(cfg,flowVFile,flowVCfg,"gridNzString");
+  #endif
+  #if FLOWV_INTERP > 2
+    nY_flowV = getDimFromFile(cfg,flowVFile,flowVCfg,"gridNyString");
+  #endif
+
+  sim::Array<float> flowVGridr(nR_flowV),flowVGridy(nY_flowV), flowVGridz(nZ_flowV);
+  n_flowV = nR_flowV*nY_flowV*nZ_flowV;
+  sim::Array<float> flowVr(n_flowV), flowVz(n_flowV),flowVt(n_flowV);
+
   #if FLOWV_INTERP == 0
-    int nR_flowV = 1;
-    int nZ_flowV = 1;
-    sim::Array<float> flowVGridr(nR_flowV), flowVGridz(nZ_flowV);
-    sim::Array<float> flowVr(nR_flowV*nZ_flowV), flowVz(nR_flowV*nZ_flowV),
-                        flowVt(nR_flowV*nZ_flowV);
-    if(cfg.lookupValue("backgroundPlasmaProfiles.FlowVelocity.flowVr", flowVr[0]) && 
-       cfg.lookupValue("backgroundPlasmaProfiles.FlowVelocity.flowVz", flowVz[0]) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.FlowVelocity.flowVt", flowVt[0]))
-    {std::cout << "Flow velocity vector = " << flowVr[0] << " " << 
-                  flowVt[0]<< " " << flowVz[0] << std::endl;}
-    else
-    {std::cout << "ERROR: Failed importing constant flow velocity" << std:: endl;}
-  #elif FLOWV_INTERP == 1
-    int nR_flowV=nR_Lc;
-    int nZ_flowV=nZ_Lc;
-    sim::Array<float> flowVGridr(nR_flowV);//=gridRLc;
-    sim::Array<float> flowVGridz(nZ_flowV);//=gridZLc;
-    std::cout << "nR_flowV " << nR_flowV << " " << nZ_flowV << std::endl;
-    std::cout << " !!! gridRLc " << gridRLc[0] << std::endl;
+    getVariable(cfg,flowVCfg+"flowVr",flowVr);
+    getVariable(cfg,flowVCfg+"flowVy",flowVt);
+    getVariable(cfg,flowVCfg+"flowVz",flowVz);
+  #else
+    #if FLOWV_INTERP > 1
+      getVarFromFile(cfg,flowVFile,flowVCfg,"flowVrString",flowVr);
+      getVarFromFile(cfg,flowVFile,flowVCfg,"flowVtString",flowVt);
+    #endif
+    #if FLOWV_INTERP > 2  
+      getVarFromFile(cfg,flowVFile,flowVCfg,"flowVzString",flowVz);
+    #endif
+  #endif
+  #if FLOWV_INTERP == 1
+    for(int i=0;i<nR_flowV;i++)
+    {
+      std::cout << " !!! gridRLc " << gridRLc[i] << std::endl;
+    }
     std::cout << " !!! gridZLc " << gridZLc[0] << std::endl;
     for(int i=0;i<nR_flowV;i++)
     {
@@ -810,14 +821,10 @@ int main()
     std::cout << " !!! flowvgridr0 " << flowVGridr[0] << std::endl;
     int nFlowVs = nR_Lc*nZ_Lc;
     #if LC_INTERP == 3
-    int nY_flowV=nY_Lc;
-    sim::Array<float> flowVGridy(nY_flowV);//=gridYLc;
-    for(int i=0;i<nY_flowV;i++)
+      for(int i=0;i<nY_flowV;i++)
         flowVGridy[i] = gridYLc[i];
-    nFlowVs = nR_Lc*nY_Lc*nZ_Lc;
+      nFlowVs = nR_Lc*nY_Lc*nZ_Lc;
     #endif
-    sim::Array<float> flowVr(nFlowVs), flowVz(nFlowVs),
-                        flowVt(nFlowVs);
     float thisY = 0.0;
     float cs0=0.0;
     float teLocal = 0.0;
@@ -856,10 +863,9 @@ int main()
      #if LC_INTERP == 3
         index = i+k*nR_Lc + j*nR_Lc*nY_Lc;
         //std::cout << "flowv calc index " << index << std::endl;
-#else
+     #else
         index = i+j*nR_Lc;
-
-#endif
+     #endif
         absS = abs(s[index]);
         cs = cs0*(0.5*Lc[index]/absS - sqrt(0.25*Lc[index]*Lc[index]/absS/absS - 1.0));
         if(std::isnan(cs)) cs = 0.0;
@@ -942,125 +948,75 @@ int main()
                }
 
     }
-
-        std::cout << "Finished analytic flowV calculation "<< std::endl; 
-  #elif FLOWV_INTERP == 2
-    int nR_flowV;
-    int nZ_flowV;
-    
-    const char *flowVFile,*flowVNr,*flowVNz,*flowVGridR,
-               *flowVGridZ,*flowVrChar,*flowVzChar,*flowVtChar;
-    if(cfg.lookupValue("backgroundPlasmaProfiles.FlowVelocity.fileString", flowVFile) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.FlowVelocity.gridNrString",flowVNr) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.FlowVelocity.gridNzString",flowVNz) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.FlowVelocity.gridRString",flowVGridR) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.FlowVelocity.gridZString",flowVGridZ) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.FlowVelocity.flowVrString",flowVrChar) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.FlowVelocity.flowVzString",flowVzChar) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.FlowVelocity.flowVtString",flowVtChar))
-    { std::cout << "flowV file: " << flowVFile << std::endl;}
-    else
-    { std::cout << "ERROR: Could not get flowV string info from input file " << std::endl;}
-    int f1 = read_profileNs(flowVFile,flowVNr,flowVNz,nR_flowV,nZ_flowV);
-    
-    sim::Array<float> flowVGridr(nR_flowV), flowVGridz(nZ_flowV);
-    sim::Array<float> flowVr(nR_flowV*nZ_flowV), flowVz(nR_flowV*nZ_flowV),
-                        flowVt(nR_flowV*nZ_flowV);
-    
-    int f2 = read_profile1d(flowVFile,flowVGridR, flowVGridr);
-    
-    int f3 = read_profile1d(flowVFile,flowVGridZ, flowVGridz);
-    
-    int f4 = read_profile2d(flowVFile,flowVrChar, flowVr);
-    
-    int f5 = read_profile2d(flowVFile,flowVzChar, flowVz);
-    
-    int f6 = read_profile2d(flowVFile,flowVtChar, flowVt);
+    std::string outnameFlowVr = "flowVr.m";
+    std::string outnameFlowVz = "flowVz.m";
+    std::string outnameFlowVt = "flowVt.m";
+    #if LC_INTERP == 3
+      OUTPUT3d(profiles_folder,outnameFlowVr, nR_flowV,nY_flowV, nZ_flowV, &flowVr.front());
+      OUTPUT3d(profiles_folder,outnameFlowVz, nR_flowV,nY_flowV, nZ_flowV, &flowVz.front());
+      OUTPUT3d(profiles_folder,outnameFlowVt, nR_flowV,nY_flowV, nZ_flowV, &flowVt.front());
+    #else
+      OUTPUT2d(profiles_folder,outnameFlowVr, nR_flowV, nZ_flowV, &flowVr.front());
+      OUTPUT2d(profiles_folder,outnameFlowVz, nR_flowV, nZ_flowV, &flowVz.front());
+      OUTPUT2d(profiles_folder,outnameFlowVt, nR_flowV, nZ_flowV, &flowVt.front());
+    #endif
   #endif
 
-  std::string outnameFlowVr = "flowVr.m";
-  std::string outnameFlowVz = "flowVz.m";
-  std::string outnameFlowVt = "flowVt.m";
- #if LC_INTERP == 3
-  OUTPUT3d(profiles_folder,outnameFlowVr, nR_flowV,nY_flowV, nZ_flowV, &flowVr.front());
-  OUTPUT3d(profiles_folder,outnameFlowVz, nR_flowV,nY_flowV, nZ_flowV, &flowVz.front());
-  OUTPUT3d(profiles_folder,outnameFlowVt, nR_flowV,nY_flowV, nZ_flowV, &flowVt.front());
-#else
-  OUTPUT2d(profiles_folder,outnameFlowVr, nR_flowV, nZ_flowV, &flowVr.front());
-  OUTPUT2d(profiles_folder,outnameFlowVz, nR_flowV, nZ_flowV, &flowVz.front());
-  OUTPUT2d(profiles_folder,outnameFlowVt, nR_flowV, nZ_flowV, &flowVt.front());
-#endif
   //Background plasma temperature gradient field intitialization    
-  #if GRADT_INTERP == 0
-    int nR_gradT = 1;
-    int nZ_gradT = 1;
-    sim::Array<float> gradTGridr(nR_gradT), gradTGridz(nZ_gradT);
-    sim::Array<float> gradTeR(nR_gradT*nZ_gradT), gradTeZ(nR_gradT*nZ_gradT),
-        gradTeT(nR_gradT*nZ_gradT,0.0),gradTiR(nR_gradT*nZ_gradT), 
-        gradTiZ(nR_gradT*nZ_gradT),gradTiT(nR_gradT*nZ_gradT,0.0);    
-    if(cfg.lookupValue("backgroundPlasmaProfiles.gradT.gradTeR", gradTeR[0]) && 
-       cfg.lookupValue("backgroundPlasmaProfiles.gradT.gradTeZ", gradTeZ[0]) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.gradT.gradTiR", gradTiR[0]) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.gradT.gradTiZ", gradTiZ[0]))
-    {std::cout << "Temperature gradients TeR and TeZ = " << gradTeR[0] << " " << 
-                  gradTeZ[0] << "\nTemperature gradients TiR and TiZ = " << 
-                  gradTiR[0] << " " << gradTiZ[0] << std::endl;}
-    else
-    {std::cout << "ERROR: Failed importing constant temperature gradients" << std:: endl;}
-  #elif GRADT_INTERP == 2
-    int nR_gradT;
-    int nZ_gradT;
-    
-    const char *gradTFile,*gradTNr,*gradTNz,*gradTGridR,
-               *gradTGridZ,*gradTiRChar,*gradTiZChar,*gradTeRChar,*gradTeZChar;
-    if(cfg.lookupValue("backgroundPlasmaProfiles.gradT.fileString", gradTFile) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.gradT.gridNrString",gradTNr) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.gradT.gridNzString",gradTNz) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.gradT.gridRString",gradTGridR) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.gradT.gridZString",gradTGridZ) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.gradT.gradTiRString",gradTiRChar) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.gradT.gradTiZString",gradTiZChar) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.gradT.gradTeRString",gradTeRChar) &&
-       cfg.lookupValue("backgroundPlasmaProfiles.gradT.gradTeZString",gradTeZChar))
-    { std::cout << "gradT file: " << gradTFile << std::endl;}
-    else
-    { std::cout << "ERROR: Could not get gradT string info from input file " << std::endl;}
-    int g1 = read_profileNs(gradTFile,gradTNr,gradTNz,nR_gradT,nZ_gradT);
-    
-    sim::Array<float> gradTGridr(nR_gradT), gradTGridz(nZ_gradT);
-    sim::Array<float> gradTeR(nR_gradT*nZ_gradT), gradTeZ(nR_gradT*nZ_gradT),
-        gradTeT(nR_gradT*nZ_gradT,0.0),gradTiR(nR_gradT*nZ_gradT), 
-        gradTiZ(nR_gradT*nZ_gradT),gradTiT(nR_gradT*nZ_gradT,0.0);
-    
-    int g2 = read_profile1d(gradTFile,gradTGridR, gradTGridr);
-    
-    int g3 = read_profile1d(gradTFile,gradTGridZ, gradTGridz);
-    
-    int g4 = read_profile2d(gradTFile,gradTiRChar, gradTiR);
-    
-    int g5 = read_profile2d(gradTFile,gradTiZChar, gradTiZ);
-    
-    int g6 = read_profile2d(gradTFile,gradTeRChar, gradTeR);
-    
-    int g7 = read_profile2d(gradTFile,gradTeZChar, gradTeZ);
+  int nR_gradT = 1;
+  int nY_gradT = 1;
+  int nZ_gradT = 1;
+  int n_gradT = 1;
+  std::string gradTCfg = "backgroundPlasmaProfiles.gradT.";
+  #if GRADT_INTERP > 0
+    std::string gradTFile;
+    getVariable(cfg,gradTCfg+"fileString",gradTFile);
+    nR_gradT = getDimFromFile(cfg,input_path+gradTFile,gradTCfg,"gridNrString");
   #endif
+  #if GRADT_INTERP > 1
+    nZ_gradT = getDimFromFile(cfg,input_path+gradTFile,gradTCfg,"gridNzString");
+  #endif
+  #if GRADT_INTERP > 2
+    nY_gradT = getDimFromFile(cfg,input_path+gradTFile,gradTCfg,"gridNyString");
+  #endif
+  sim::Array<float> gradTGridr(nR_gradT),gradTGridy(nY_gradT), gradTGridz(nZ_gradT);
+  n_gradT = nR_gradT*nY_gradT*nZ_gradT;
+  sim::Array<float> gradTeR(n_gradT), gradTeZ(n_gradT),
+                    gradTeY(n_gradT), gradTiR(n_gradT), 
+                    gradTiZ(n_gradT), gradTiY(n_gradT);    
 
-  std::string outnameGradTiR = "gradTiR.m";
-  std::string outnameGradTiZ = "gradTiZ.m";
-  std::string outnameGradTeR = "gradTeR.m";
-  std::string outnameGradTeZ = "gradTeZ.m";
-  OUTPUT2d(profiles_folder,outnameGradTiR, nR_gradT, nZ_gradT, &gradTiR.front());
-  OUTPUT2d(profiles_folder,outnameGradTiZ, nR_gradT, nZ_gradT, &gradTiZ.front());
-  OUTPUT2d(profiles_folder,outnameGradTeR, nR_gradT, nZ_gradT, &gradTeR.front());
-  OUTPUT2d(profiles_folder,outnameGradTeZ, nR_gradT, nZ_gradT, &gradTeZ.front());
+  #if GRADT_INTERP == 0
+    getVariable(cfg,gradTCfg+"gradTeR",gradTeR[0]);  
+    getVariable(cfg,gradTCfg+"gradTeY",gradTeY[0]);  
+    getVariable(cfg,gradTCfg+"gradTeZ",gradTeZ[0]);  
+    getVariable(cfg,gradTCfg+"gradTiR",gradTiR[0]);  
+    getVariable(cfg,gradTCfg+"gradTiY",gradTiY[0]);  
+    getVariable(cfg,gradTCfg+"gradTiZ",gradTiZ[0]);  
+  #else
+    getVarFromFile(cfg,input_path+gradTFile,gradTCfg,"gridRString",gradTGridr);
+    #if GRADT_INTERP > 1
+      getVarFromFile(cfg,input_path+gradTFile,gradTCfg,"gridZString",gradTGridz);
+    #endif
+    #if GRADT_INTERP > 2
+      getVarFromFile(cfg,input_path+gradTFile,gradTCfg,"gridYString",gradTGridy);
+      getVarFromFile(cfg,input_path+gradTFile, gradTCfg,"gradTeYString",gradTeY); 
+      getVarFromFile(cfg,input_path+gradTFile, gradTCfg,"gradTiYString",gradTiY); 
+    #endif
+
+    getVarFromFile(cfg,input_path+gradTFile, gradTCfg,"gradTiRString",gradTiR); 
+    getVarFromFile(cfg,input_path+gradTFile, gradTCfg,"gradTiZString",gradTiZ); 
+    getVarFromFile(cfg,input_path+gradTFile, gradTCfg,"gradTeRString",gradTeR); 
+    getVarFromFile(cfg,input_path+gradTFile, gradTCfg,"gradTeZString",gradTeZ);
+  #endif 
 
 
   //Initialization of ionization and recombination coefficients    
   int nCS_Ionize, nCS_Recombine;
-  const char *ionizeFile,*ionizeNcs,*ionizeNDens,*ionizeNTemp,
+  const char *ionizeNcs,*ionizeNDens,*ionizeNTemp,
              *ionizeDensGrid,*ionizeTempGrid,*ionizeRCvarChar,
-             *recombFile,*recombNcs,*recombNDens,*recombNTemp,
+             *recombNcs,*recombNDens,*recombNTemp,
              *recombDensGrid,*recombTempGrid,*recombRCvarChar;
+  std::string ionizeFile,recombFile;
   if(cfg.lookupValue("impurityParticleSource.ionization.fileString", ionizeFile) &&
      cfg.lookupValue("impurityParticleSource.ionization.nChargeStateString",ionizeNcs) &&
      cfg.lookupValue("impurityParticleSource.ionization.DensGridString",ionizeNDens) &&
@@ -1081,28 +1037,28 @@ int main()
   { std::cout << "Recombination rate coefficient file: " << recombFile << std::endl;}
   else
   { std::cout << "ERROR: Could not get ionization string info from input file " << std::endl;}
-  int i0 = read_profileNs(ionizeFile,ionizeNcs,recombNcs,nCS_Ionize, nCS_Recombine);
+  int i0 = read_profileNs(input_path+ionizeFile,ionizeNcs,recombNcs,nCS_Ionize, nCS_Recombine);
 
   int nTemperaturesIonize, nDensitiesIonize;
-  int i1 = read_profileNs(ionizeFile,ionizeNDens,ionizeNTemp,nDensitiesIonize,nTemperaturesIonize);
+  int i1 = read_profileNs(input_path+ionizeFile,ionizeNDens,ionizeNTemp,nDensitiesIonize,nTemperaturesIonize);
 
   sim::Array<float> rateCoeff_Ionization(nCS_Ionize*nTemperaturesIonize*nDensitiesIonize);
   sim::Array<float> gridTemperature_Ionization(nTemperaturesIonize),
                         gridDensity_Ionization(nDensitiesIonize);
 
-  int i2 = read_profiles(ionizeFile,nTemperaturesIonize,nDensitiesIonize,ionizeTempGrid, 
+  int i2 = read_profiles(input_path+ionizeFile,nTemperaturesIonize,nDensitiesIonize,ionizeTempGrid, 
                          gridTemperature_Ionization,ionizeDensGrid,gridDensity_Ionization,
                          ionizeRCvarChar,rateCoeff_Ionization);
    
   int nTemperaturesRecombine, nDensitiesRecombine;
-  int i3 = read_profileNs(recombFile,recombNDens,recombNTemp,
+  int i3 = read_profileNs(input_path+recombFile,recombNDens,recombNTemp,
                           nDensitiesRecombine,nTemperaturesRecombine);
 
   sim::Array<float> rateCoeff_Recombination(nCS_Recombine*nTemperaturesRecombine*nDensitiesRecombine);
   sim::Array<float> gridTemperature_Recombination(nTemperaturesRecombine),
                     gridDensity_Recombination(nDensitiesRecombine);
 
-  int i4 = read_profiles(recombFile,nTemperaturesRecombine,nDensitiesRecombine,
+  int i4 = read_profiles(input_path+recombFile,nTemperaturesRecombine,nDensitiesRecombine,
              recombTempGrid,gridTemperature_Recombination,recombDensGrid,
              gridDensity_Recombination,
              recombRCvarChar,rateCoeff_Recombination);
@@ -1120,6 +1076,8 @@ int main()
    std::cout << "Completed Boundary Init " << std::endl;
   
   //Efield
+  //int nY_PreSheathEfield=1;
+  //sim::Array<float> preSheathEGridy(1);
   #if USEPRESHEATHEFIELD > 0    
 
    std::cout << "Using presheath Efield " << std::endl;
@@ -1142,7 +1100,7 @@ int main()
     sim::Array<float> preSheathEGridz=gridZLc;
     int nPSEs = nR_Lc*nZ_Lc;
     #if LC_INTERP == 3
-    int nY_PreSheathEfield=nY_Lc;
+    nY_PreSheathEfield=nY_Lc;
     sim::Array<float> preSheathEGridy=gridYLc;
     nPSEs = nR_Lc*nY_Lc*nZ_Lc;
     #endif
@@ -1643,7 +1601,7 @@ int main()
   #elif PARTICLE_SOURCE == 2
     std::cout << "Read particle source " << std::endl;
     Config cfg_particles;
-    cfg_particles.readFile("particleSource.cfg");
+    cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
     Setting& particleSource = cfg_particles.lookup("particleSource");
     std::cout << "found setting particleSource " << std::endl;
     float rSample;
@@ -2216,7 +2174,7 @@ int main()
     typedef std::chrono::duration<float> fsec;
     auto start_clock = Time::now();
     std::cout << "Starting main loop" << std::endl;
-    //std:: cout << "particle value " << particleArray->hitWall[0] << std::endl;
+    std:: cout << "particle value " << particleArray->x[0] << std::endl;
 //Main time loop
     #if __CUDACC__
       cudaDeviceSynchronize();
@@ -2236,8 +2194,10 @@ int main()
                         nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
                         &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
                         &closeGeom_sheath.front()) );
-        
-        
+        //std::cout << "pos " << particleArray->x[0] << "  " << particleArray->xprevious[0] << std::endl;   
+       //if(std::isnan(particleArray->x[0]))
+         // exit(0);
+       //particleArray->x[0] = 0.0;
         //try {
             thrust::for_each(thrust::device, particleBegin,particleEnd,
                     geometry_check(particleArray,nLines,&boundaries[0],dt,tt,
@@ -2301,8 +2261,8 @@ int main()
         thrust::for_each(thrust::device,particleBegin, particleEnd,
                 thermalForce(particleArray,dt,background_amu,
                     nR_gradT,nZ_gradT,gradTGridr.data(),gradTGridz.data(),
-                    gradTiR.data(),gradTiZ.data(), gradTiT.data(), 
-                    gradTeR.data(), gradTeZ.data(), gradTeT.data(), 
+                    gradTiR.data(),gradTiZ.data(), gradTiY.data(), 
+                    gradTeR.data(), gradTeZ.data(), gradTeY.data(), 
                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
                     &br.front(),&bz.front(),&by.front()));
 #endif
