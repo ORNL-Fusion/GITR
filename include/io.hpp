@@ -31,7 +31,7 @@ void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, int
 
 template <typename T>
 int readFileVar(const std::string& fileName,const std::string& section,const std::string& varName,T &x ) {
-       std::string profiles_folder = "profiles";
+       std::string profiles_folder = "output/profiles";
         // Check input file exists
        ifstream file(fileName);
        if(!file.good()) {

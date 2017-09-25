@@ -36,10 +36,10 @@ void operator()(std::size_t indx) const {
     float dx = 0.0f;
     float dy = 0.0f;
     float dz = 0.0f;
-    float z = particlesPointer->zprevious[indx];
-#if USECYLSYMM > 0
     float x = particlesPointer->xprevious[indx];
     float y = particlesPointer->yprevious[indx];
+    float z = particlesPointer->zprevious[indx];
+#if USECYLSYMM > 0
     //float dim1 = sqrtf(x*x + y*y);
     float dim1 = particlesPointer->xprevious[indx];
 #else

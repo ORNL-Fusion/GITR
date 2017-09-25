@@ -20,7 +20,46 @@
 #include <random>
 #include <stdlib.h>
 #endif
-
+CUDA_CALLABLE_MEMBER
+void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNormalVector[]){
+  #if USE3DTETGEOM > 0
+           float norm_normal = boundaryVector[wallIndex].plane_norm; 
+            surfaceNormalVector[0] = boundaryVector[wallIndex].a/norm_normal;
+            surfaceNormalVector[1] = boundaryVector[wallIndex].b/norm_normal;
+            
+            surfaceNormalVector[2] = boundaryVector[wallIndex].c/norm_normal;
+  #else
+            if (boundaryVector[wallIndex].slope_dzdx == 0.0)
+                {
+                 surfaceNormalVector[0] = 0.0f;
+                 surfaceNormalVector[1] = 0.0f;
+                 surfaceNormalVector[2] = 1.0f;
+                }
+            else if (fabsf(boundaryVector[wallIndex].slope_dzdx)>= 0.75f*tol)
+                {
+                    surfaceNormalVector[0] = 1.0f;
+                    surfaceNormalVector[1] = 0.0f;
+                    surfaceNormalVector[2] = 0.0f;
+                }
+            else
+                {
+                    surfaceNormalVector[0] = 1.0f;
+                    surfaceNormalVector[1] = 0.0f;
+                    surfaceNormalVector[2] = -1.0f / (boundaryVector[wallIndex].slope_dzdx);
+            norm_normal = sqrt(surfaceNormalVector[2]*surfaceNormalVector[2] + 1.0); 
+            surfaceNormalVector[0] = surfaceNormalVector[0]/norm_normal;
+            surfaceNormalVector[1] = surfaceNormalVector[1]/norm_normal;
+            
+            surfaceNormalVector[2] = surfaceNormalVector[2]/norm_normal;
+                }
+#if USECYLSYMM > 0 
+            float theta = atan2f(particles->yprevious[indx],particles->xprevious[indx]);
+            Sr = surfaceNormalVector[0];
+            surfaceNormalVector[0] = cosf(theta)*Sr;
+            surfaceNormalVector[1] = sinf(theta)*Sr;
+#endif            
+#endif
+}
 CUDA_CALLABLE_MEMBER
 double screeningLength ( double Zprojectile, double Ztarget ) {
 	double bohrRadius = 5.29177e-11;
@@ -237,6 +276,12 @@ void operator()(std::size_t indx) const {
 #endif
 #endif 
 
+               float deposited = particles->weight[indx]*(1.0-Y0);
+#if USE_CUDA > 0
+                atomicAdd(&boundaryVector[wallHit].redeposit, deposited);
+#else
+               boundaryVector[wallHit].redeposit = boundaryVector[wallHit].redeposit +deposited;
+#endif
                 //reflect with weight and new initial conditions
                 particles->weight[indx] = particles->weight[indx]*Y0;
 
@@ -251,6 +296,9 @@ void operator()(std::size_t indx) const {
     particles->vy[indx] = -signPartDotNormal*V0*surfaceNormalVector[1]*sin(angleSample)*sin(2.0*3.1415*r9);
     particles->vz[indx] = -signPartDotNormal*V0*surfaceNormalVector[2]*cos(angleSample);
 
+    particles->xprevious[indx] = particles->x[indx] + -signPartDotNormal*surfaceNormalVector[0]*1e-6;
+    particles->yprevious[indx] = particles->y[indx] + -signPartDotNormal*surfaceNormalVector[1]*1e-6;
+    particles->zprevious[indx] = particles->z[indx] + -signPartDotNormal*surfaceNormalVector[2]*1e-6;
             }
                   }
 }

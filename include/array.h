@@ -33,7 +33,8 @@ THE SOFTWARE.
 #include "device.h"
 #include <cstddef>
 #include <stdexcept>
-
+#include "Boundary.h"
+#include <boost/type_index.hpp>
 
 namespace sim {
 
@@ -77,10 +78,26 @@ namespace sim {
     /*! Construct an array of fixed capacity and initialize values
      */
     Array(const std::size_t capacity, T initial_value) : capacity_{capacity}, size_{capacity}, data_{alloc_data()} {
-      for (std::size_t i = 0; i < size_; i++) {
+        std::cout << "Type of T: " 
+                  << boost::typeindex::type_id<T>().pretty_name() 
+                  << std::endl;
+         std::cout << "size of T " << sizeof(T) << std::endl;
+        for (std::size_t i = 0; i < size_; i++) {
         data_[i] = initial_value;
       }
     }
+
+    //Array(const std::size_t capacity, T initial_value, int on) : capacity_{capacity}, size_{capacity}, data_{alloc_data()} {
+ 
+    //    std::cout << "capacity " << capacity << std::endl;
+    //    std::cout << "size_ " << size_ << std::endl;
+    //    std::cout << "inside array creation int " << on << std::endl;
+    //    std::size_t major_size = size_;
+    //    for (std::size_t i = 0; i < major_size; i++) {
+    //    std::cout << "inside array loop int "<< i << std::endl;
+    //    data_[i] = initial_value;
+    //  }
+    //}
 
     /*! Destruct array memory
      */
@@ -102,8 +119,14 @@ namespace sim {
       }
     }
 
-    Array &operator=(const Array &source) = delete;
-
+    Array &operator=(const Array &source)// = delete;
+    {
+        for(int i=0;i<source.size();i++)
+        {
+            data_[i] = source[i];
+        }
+        return *this;
+    }
     Array(Array &&) noexcept = delete;
 
     Array &operator=(Array &&)      = delete;
