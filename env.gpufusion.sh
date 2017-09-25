@@ -16,4 +16,13 @@ export  NETCDFCXX4DIR=/home/tqd/code/netcdfcxx/lib
 export  NETCDFINCLUDE=/home/tqd/code/netcdfBuild/include 
 export  NETCDFCXX4INCLUDE=/home/tqd/code/netcdfcxx/include 
 export  NETCDFLIB=netcdf 
-export  NETCDFLIB_CPP=netcdf_c++ 
+export  NETCDFLIB_CPP=netcdf_c++
+
+#boost vars
+export Boost_INCLUDE_DIRS=~/code/boost/include
+export Boost_LIBRARY_DIRS=~/code/boost/lib
+export BOOST_ROOT=~/code/boost
+export BOOST_INCLUDEDIR=~/code/boost/include
+export BOOST_LIBRARYDIR=~/code/boost/lib
+
+export PYTHONPATH=/home/tqd/code/netcdf4-python/build

@@ -91,6 +91,10 @@ struct boundary_init {
         b.impacts = 0.0;
 #if BIASED_SURFACE
         b.potential = potential;
+        float cs = sqrt(2*b.ti*1.602e-19/(1.66e-27*background_amu));
+        float jsat_ion = 1.602e-19*b.density*cs;
+        b.ChildLangmuirDist = 2.0/3.0*pow(2*1.602e-19/(background_amu*1.66e-27),0.25)*pow(potential,0.75)
+                              /(2.0*sqrt(3.1415*jsat_ion))*1.055e-5;
 #else
         b.potential = 3.0*b.ti;    
 #endif        

@@ -611,7 +611,10 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
 #endif   
-    
+#if BIASED_SURFACE > 0
+    pot = boundaryVector[minIndex].potential;
+    Emag = pot/(2.0f*boundaryVector[minIndex].ChildLangmuirDist)*expf(-minDistance/(2.0f*boundaryVector[minIndex].ChildLangmuirDist));
+#else 
     angle = boundaryVector[minIndex].angle;    
     fd  =  0.98992f + 5.1220E-03f * angle  -
            7.0040E-04f  * powf(angle,2.0f) +
@@ -625,6 +628,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
       //  std::cout << "Emag " << Emag << std::endl;
         //std::cout << "fd " << fd << std::endl;
        // std::cout << "minDistance " << minDistance << std::endl;
+#endif
     if(minDistance == 0.0f)
     {
         Emag = 0.0f;
@@ -731,8 +735,6 @@ cpu_timer timer;
 cpu_times initTime0 = timer.elapsed();
 #endif
 #endif
-	    if(std::isnan(particlesPointer->x[indx]))
-        { exit(0);}
             float v_minus[3]= {0.0f, 0.0f, 0.0f};
             float v_prime[3]= {0.0f, 0.0f, 0.0f};
             float position[3]= {0.0f, 0.0f, 0.0f};
@@ -828,8 +830,6 @@ cpu_times initTime0 = timer.elapsed();
                 particlesPointer->vz[indx] = v[2];    
               //std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
     	    }
-	    if(std::isnan(particlesPointer->x[indx]))
-        { exit(0);}
 #endif
 
 #if ODEINT == 1

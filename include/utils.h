@@ -63,6 +63,7 @@ T getVariable (libconfig::Config &cfg,const std::string& s, T &a)
   else
     {
       std::cout << "ERROR: Failed importing " << s << std:: endl;
+      exit(0);
     }
   a = tmp;
   return a;

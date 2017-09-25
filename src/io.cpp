@@ -43,10 +43,21 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
     std::cout << "Boundary import routine " << int(boundaries.size()) << std::endl;
     int nLines = boundaries.size() - 1;
   std::string geom_outname = "geom.m";
-  std::string geom_folder = "geometry";
+  std::string geom_folder = "output/geometry";
   ofstream outfile;
 
   #if USE_BOOST
+    boost::filesystem::path dirOut("output");
+    
+    if(!(boost::filesystem::exists(dirOut)))
+    {
+       std::cout<<"Doesn't Exists"<<std::endl;
+
+       if (boost::filesystem::create_directory(dirOut))
+       {
+          std::cout << " Successfully Created " << std::endl;
+       }
+    }
     //Output
     boost::filesystem::path dir(geom_folder);
     

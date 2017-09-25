@@ -82,12 +82,12 @@ struct ionize {
         //std::cout << " r1 " << r1 << std::endl;
     #endif
 #else
-#if __CUDACC__
+  #if __CUDACC__
     float r1 = curand_uniform(&state[0]);
-#else
-        std::uniform_real_distribution<float> dist(0.0, 1.0);
-            float r1=dist(state[0]);
-#endif
+  #else
+    std::uniform_real_distribution<float> dist(0.0, 1.0);
+    float r1=dist(state[0]);
+  #endif
 #endif
     //if(tt == 722)
     //{
@@ -96,7 +96,7 @@ struct ionize {
         
 	    if(r1 <= P1)
 	    {
-		particlesPointer->charge[indx] = particlesPointer->charge[indx]+1;
+		  particlesPointer->charge[indx] = particlesPointer->charge[indx]+1;
         //std::cout << "Particle " << indx << " ionized at step " << tt << std::endl;
 	    }
         

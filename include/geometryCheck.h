@@ -9,6 +9,8 @@
 
 #include "Particles.h"
 #include "Boundary.h"
+#include "Surfaces.h"
+#include "surfaceModel.h"
 #include <math.h>
 
 /*template <typename T>
@@ -21,6 +23,7 @@ struct geometry_check {
     Particles *particlesPointer;
     const int nLines;
     Boundary  *boundaryVector;
+    Surfaces *surfaces;
     float dt;
     int tt;
     int nR_closeGeom;
@@ -32,8 +35,8 @@ struct geometry_check {
     float* closeGeomGridz;
     int* closeGeom;
 
-    geometry_check(Particles *_particlesPointer, int _nLines,Boundary * _boundaryVector, float _dt, int _tt, int _nR_closeGeom, int _nY_closeGeom, int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom) : 
-        particlesPointer(_particlesPointer), nLines(_nLines), boundaryVector(_boundaryVector), dt(_dt), tt(_tt), nR_closeGeom(_nR_closeGeom), nY_closeGeom(_nY_closeGeom), nZ_closeGeom(_nZ_closeGeom), n_closeGeomElements(_n_closeGeomElements), closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy), closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom) {}
+    geometry_check(Particles *_particlesPointer, int _nLines,Boundary * _boundaryVector,Surfaces * _surfaces, float _dt, int _tt, int _nR_closeGeom, int _nY_closeGeom, int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom) : 
+        particlesPointer(_particlesPointer), nLines(_nLines), boundaryVector(_boundaryVector), surfaces(_surfaces), dt(_dt), tt(_tt), nR_closeGeom(_nR_closeGeom), nY_closeGeom(_nY_closeGeom), nZ_closeGeom(_nZ_closeGeom), n_closeGeomElements(_n_closeGeomElements), closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy), closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom) {}
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const { 
@@ -201,6 +204,47 @@ void operator()(std::size_t indx) const {
 #else
                             boundaryVector[i].impacts = boundaryVector[i].impacts +  particlesPointer->weight[indx];
 #endif
+#endif
+                            float E0 = 0.5*particlesPointer->amu[indx]*1.66e-27
+                                *(particlesPointer->vx[indx]*particlesPointer->vx[indx] + 
+                                  particlesPointer->vy[indx]*particlesPointer->vy[indx] + 
+                                  particlesPointer->vz[indx]*particlesPointer->vz[indx])/1.602e-19;
+                            //std::cout << "Energy of particle that hit surface " << E0 << std::endl;
+#if USE_CUDA > 0
+                            float surfNormal[3] = {0.0f};
+                            float partNormal[3] = {0.0f};
+                            float partDotNormal = 0.0f;
+                            partNormal[0] = particlesPointer->vx[indx];
+                            partNormal[1] = particlesPointer->vy[indx];
+                            partNormal[2] = particlesPointer->vz[indx];
+                            getBoundaryNormal(boundaryVector,i,surfNormal);
+                            vectorNormalize(partNormal,partNormal);
+                            partDotNormal = vectorDotProduct(partNormal,surfNormal);
+                            float thetaImpact = acos(partDotNormal)*180.0/3.1415;
+                            if(E0 < 1000.0)
+                            {
+                                int tally_index = floor(E0);
+                                if(thetaImpact > 0.0 && thetaImpact <90.0)
+                                {
+                                    int aTally = floor(thetaImpact);
+                                    atomicAdd(&boundaryVector[i].array3[aTally*1000 + tally_index], particlesPointer->weight[indx]);
+                                }
+                            }
+                            if(E0 < surfaces->E && E0> surfaces->E0)
+                            {
+                                int tally_index = floor((E0-surfaces->E0)/surfaces->dE);
+                                if(thetaImpact > surfaces->A0 && thetaImpact < surfaces->A)
+                                {
+                                    int aTally = floor((thetaImpact-surfaces->A0)/surfaces->dA);
+                                    atomicAdd(&surfaces->energyDistribution[i*surfaces->nE*surfaces->nA+ aTally*surfaces->nE + tally_index], particlesPointer->weight[indx]);
+                                }
+                            }
+#else
+                            if(E0 < 1000.0)
+                            {
+                                int tally_index = floor(E0);
+                                boundaryVector[i].array3[tally_index] = boundaryVector[i].array3[tally_index] + particlesPointer->weight[indx];
+                            }
 #endif
                         }   
                      }
