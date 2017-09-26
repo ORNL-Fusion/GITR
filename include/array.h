@@ -78,10 +78,6 @@ namespace sim {
     /*! Construct an array of fixed capacity and initialize values
      */
     Array(const std::size_t capacity, T initial_value) : capacity_{capacity}, size_{capacity}, data_{alloc_data()} {
-        std::cout << "Type of T: " 
-                  << boost::typeindex::type_id<T>().pretty_name() 
-                  << std::endl;
-         std::cout << "size of T " << sizeof(T) << std::endl;
         for (std::size_t i = 0; i < size_; i++) {
         data_[i] = initial_value;
       }

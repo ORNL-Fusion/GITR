@@ -221,15 +221,6 @@ void operator()(std::size_t indx) const {
                             vectorNormalize(partNormal,partNormal);
                             partDotNormal = vectorDotProduct(partNormal,surfNormal);
                             float thetaImpact = acos(partDotNormal)*180.0/3.1415;
-                            if(E0 < 1000.0)
-                            {
-                                int tally_index = floor(E0);
-                                if(thetaImpact > 0.0 && thetaImpact <90.0)
-                                {
-                                    int aTally = floor(thetaImpact);
-                                    atomicAdd(&boundaryVector[i].array3[aTally*1000 + tally_index], particlesPointer->weight[indx]);
-                                }
-                            }
                             if(E0 < surfaces->E && E0> surfaces->E0)
                             {
                                 int tally_index = floor((E0-surfaces->E0)/surfaces->dE);
@@ -240,11 +231,6 @@ void operator()(std::size_t indx) const {
                                 }
                             }
 #else
-                            if(E0 < 1000.0)
-                            {
-                                int tally_index = floor(E0);
-                                boundaryVector[i].array3[tally_index] = boundaryVector[i].array3[tally_index] + particlesPointer->weight[indx];
-                            }
 #endif
                         }   
                      }

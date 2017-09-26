@@ -5,11 +5,13 @@
 #include "Boundary.h"
 #include <vector>
 #include "libconfig.h++"
+#include <fstream>
 using namespace std;
 using namespace netCDF;
 using namespace exceptions;
 using namespace netCDF::exceptions;
 
+int importLibConfig(libconfig::Config &cfg,std::string filepath);
 int importGeometry(libconfig::Config &cfg,sim::Array<Boundary> &boundaries);
 int read_ar2Input( std::string fileName, float *Bfield[]);
 

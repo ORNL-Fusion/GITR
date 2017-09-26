@@ -69,61 +69,22 @@ int main()
   Config cfg,cfg_geom;
   std::string input_path = "input/";
   //Parse and read input file
-  std::cout << "Open configuration file gitrInput.cfg " << std::endl;
-  try
-  {
-    cfg.readFile("input/gitrInput.cfg");
-  }
-  catch(const FileIOException &fioex)
-  {
-    std::cerr << "I/O error while reading file gitrInput.cfg" << std::endl;
-    return(EXIT_FAILURE);
-  }
-  catch(const ParseException &pex)
-  {
-    std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
-              << " - " << pex.getError() << std::endl;
-    return(EXIT_FAILURE);
-  }
+  std::cout << "Open configuration file input/gitrInput.cfg " << std::endl;
+  importLibConfig(cfg,input_path+"gitrInput.cfg");
+  
   std::cout << "Open geometry file " << std::endl; 
   // Parse and read geometry file
   std::string geomFile; 
-  if(cfg.lookupValue("geometry.fileString", geomFile))
-  {
-      //std::cout << "geomFile " << geomFile << std::endl;
-      //strcpy(geomPath,input_path.c_str());
-      //std::cout << "geom path " << geomPath << std::endl;
-      //strcat(geomPath,geomFile);
-      //std::cout << "geom file " << geomPath << std::endl;
-    try
-    {
-      cfg_geom.readFile((input_path+geomFile).c_str());
-    }
-    catch(const FileIOException &fioex)
-    {
-      std::cerr << "I/O error while reading GITR geometry file" << std::endl;
-      return(EXIT_FAILURE);
-    }
-    catch(const ParseException &pex)
-    {
-      std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
-                << " - " << pex.getError() << std::endl;
-      return(EXIT_FAILURE);
-    }
+  getVariable(cfg,"geometry.fileString",geomFile);
+  importLibConfig(cfg_geom,input_path+geomFile);
 
-  }
-  else
-  {
-      std::cout << "ERROR: could not get geometry file name" << std::endl;
-  }
-  
   std::cout << "Successfully staged input and geometry file " << std::endl;
   
   //check binary compatibility with input file
   #if CHECK_COMPATIBILITY>0
     std::cout << "Checking compatibility of compile flags with input file " 
               << std::endl;
-   
+    checkFlags(cfg); 
     const char *flags0[] = {"flags.USE_CUDA","flags.USEMPI", 
               "flags.USE_BOOST","flags.USEIONIZATION",
               "flags.USERECOMBINATION","flags.USEPERPDIFFUSION",
@@ -244,40 +205,9 @@ int main()
   int nLines = geom["x1"].getLength();
   //int nMaterials = geom["nMaterials"];
   std::cout << "Number of Geometric Objects To Load: " << nLines << std::endl;
-//  sim::Array<Boundary> boundaries(nLines+1);
-//  boundaries[0].array1.reserve(20);
-//  for(int i=0;i<20;i++){boundaries[0].array1.push_back(1.0*i);}
-//  std::cout << "Size array1 " << boundaries[0].array1.size() << " " <<boundaries[0].array1.capacity() << boundaries[0].array1[0] << boundaries[0].array1[1] << std::endl;
-    Boundary blank_boundary;
-    std::cout << "blank_boundary array1" << blank_boundary.array1.size() <<  blank_boundary.array1.capacity() <<  blank_boundary.array1[0] << std::endl;
-//  std::cout << "Size array2 " << boundaries[0].array2.size() << " " <<boundaries[0].array2.capacity() << "boundaries[0].array2[0] << boundaries[0].array2[1]" << std::endl;
-//  //boundaries[0].array2(boundaries[0].array1);
-  
-  std::vector<Boundary> boundariesVec(nLines+1,Boundary());
-  //boundariesVec.reserve(nLines+1);
-  //boundariesVec.push_back(Boundary());
-  //fill_n(boundariesVec.begin()+1,nLines,Boundary());
-  std::cout << "Size array1 in vector " << boundariesVec[0].array1.size() << " " <<boundariesVec[0].array1.capacity() << boundariesVec[0].array1[0] << boundariesVec[0].array1[1] << std::endl;
   
   sim::Array<Boundary> boundaries(nLines+1,Boundary());
-  //boundaries[0].array2.resize(25);
-  //boundaries[0] = Boundary();
-  //fill(boundaries[0].array2.begin(),boundaries[0].array2.end(),0.0);
-  //for(int i=0;i<25;i++){boundaries[0].array2[i] = 0.0;}
-  std::cout << "Size array1 in sim array " << boundaries[0].array1.size() << " " <<boundaries[0].array1.capacity() << boundaries[0].array1[0] << boundaries[0].array1[1] << std::endl;
-  sim::Array<float> thisArray1(10,1.0);
-  sim::Array<float> thisArray2(10);
-  for(int i=0;i<10;i++)
-  {std::cout << "array 1 and 2 " << thisArray1[i] << " " << thisArray2[i] <<std::endl;}
-  thisArray2 = thisArray1;
-
-  for(int i=0;i<10;i++)
-  {std::cout << "array 1 and 2 " << thisArray1[i] << " " << thisArray2[i] <<std::endl;}
   importGeometry(cfg_geom, boundaries);
-  std::cout << "Size array1 " << boundaries[0].array1.size() << " " <<"boundaries[0].array1[0]" << std::endl;
-  int integer = 10;
-  //boundaries[0].Boundary(integer);
-  std::cout << "boudary array size " << boundaries[0].array1.size() << std::endl;
   std::cout << "Starting Boundary Init..." << std::endl;
   float biasPotential = 0.0;
   
@@ -292,15 +222,19 @@ int main()
   float A0dist = 0.0;
   float Adist = 90.0;
   
+  getVariable(cfg,"surfaces.flux.nE",nEdist);
+  getVariable(cfg,"surfaces.flux.E0",E0dist);
+  getVariable(cfg,"surfaces.flux.E",Edist);
+
+  getVariable(cfg,"surfaces.flux.nA",nAdist);
+  getVariable(cfg,"surfaces.flux.A0",A0dist);
+  getVariable(cfg,"surfaces.flux.A",Adist);
   auto surfaces = new Surfaces(nLines,nEdist,nAdist);
   surfaces->setSurface(nEdist, E0dist,Edist,nAdist ,A0dist ,Adist);
 
-  for(int i=0;i<nEdist;i++)
-  {
-      std::cout << " e dist " << surfaces->gridE[i] << std::endl;
-  }
   std::cout << "surface stuff " << surfaces->nE << " " << surfaces->E0 << " " << surfaces->E << " " << surfaces->dE <<  std::endl;
   std::cout << "surface stuff " << surfaces->nA << " " << surfaces->A0 << " " << surfaces->A << " " << surfaces->dA <<  std::endl;
+  
   int nR_closeGeom = 1;
   int nY_closeGeom = 1;
   int nZ_closeGeom = 1;
@@ -1799,7 +1733,7 @@ int main()
       {
         while ( getline (myfile,line) )
         {
-          cout << line << '\n';
+          //cout << line << '\n';
           counter = 0;
           if(header == 0)
           {
@@ -1814,7 +1748,7 @@ int main()
                   else
                   {    
                       counter++;
-                      std::cout <<counter << " " << token << std::endl;
+                      //std::cout <<counter << " " << token << std::endl;
                       if(header == 1)
                       {
                         spylGridE.push_back(atof(token.c_str()));
@@ -1850,34 +1784,34 @@ int main()
             }
             header++;
           }
-          std::cout << line << std::endl;
+          //std::cout << line << std::endl;
         }
         myfile.close();
       }
 
       else cout << "Unable to open file";
 
-      for(int i=0;i<spylGridE.size();i++)
-      {
-          std::cout << "spylGridE " << spylGridE[i] << std::endl;
-          //std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
-          //std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
-          //std::cout << "spyl " << spyl[i] << std::endl;
-      }
-      for(int i=0;i<spylGridAngle.size();i++)
-      {
-          //std::cout << "spylGridE " << spylGridE[i] << std::endl;
-          std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
-          //std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
-          //std::cout << "spyl " << spyl[i] << std::endl;
-      }
-      for(int i=0;i<spylGridRoughness.size();i++)
-      {
-          //std::cout << "spylGridE " << spylGridE[i] << std::endl;
-          //std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
-          std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
-          //std::cout << "spyl " << spyl[i] << std::endl;
-      }
+      //for(int i=0;i<spylGridE.size();i++)
+      //{
+      //    std::cout << "spylGridE " << spylGridE[i] << std::endl;
+      //    //std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
+      //    //std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
+      //    //std::cout << "spyl " << spyl[i] << std::endl;
+      //}
+      //for(int i=0;i<spylGridAngle.size();i++)
+      //{
+      //    //std::cout << "spylGridE " << spylGridE[i] << std::endl;
+      //    std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
+      //    //std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
+      //    //std::cout << "spyl " << spyl[i] << std::endl;
+      //}
+      //for(int i=0;i<spylGridRoughness.size();i++)
+      //{
+      //    //std::cout << "spylGridE " << spylGridE[i] << std::endl;
+      //    //std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
+      //    std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
+      //    //std::cout << "spyl " << spyl[i] << std::endl;
+      //}
       int nAngle = spylGridAngle.size();
       int nEnergy = spylGridE.size();
       //std::cout << "interp spyl " << spyl[2+1*nAngle] << " " << spyl[1] << std::endl;
@@ -2166,7 +2100,6 @@ int main()
 
     std::cout << "finished empty defns" << std::endl;
   #else //ParticleSeeds == 0
-    std:: cout << "particle value " << particleArray->x[0] << std::endl;
 
     #if __CUDACC__
       sim::Array<curandState> state1(9);
@@ -2201,10 +2134,8 @@ int main()
       state1[7] = s7;
       state1[8] = s8;
     #endif
-    std:: cout << "particle value " << particleArray->x[0] << std::endl;
   #endif
 
-    std::cout << "at movetime" << std::endl;
     float moveTime = 0.0;
     float geomCheckTime = 0.0;
     float ionizTime = 0.0;
@@ -2217,7 +2148,6 @@ int main()
     typedef std::chrono::duration<float> fsec;
     auto start_clock = Time::now();
     std::cout << "Starting main loop" << std::endl;
-    std:: cout << "particle value " << particleArray->x[0] << std::endl;
 //Main time loop
     #if __CUDACC__
       cudaDeviceSynchronize();
@@ -2410,17 +2340,6 @@ std::cout << " mean transit time " << meanTransitTime0 << std::endl;
             max_boundary = i;
         }
         surfZ[i] = boundaries[i].Z;
-        for(int j=0;j<nA;j++)
-        {
-            for(int k=0;k<nE;k++)
-            {
-              impactEnergy[i*nE*nA + j*nE + k] = boundaries[i].array3[j*nE+k];
-            //if(impactEnergy[i*1000 + j] > 0)
-            //{
-            //    std::cout << "energy tally " << i << j << boundaries[i].array3[j] << std::endl;
-            //}
-            }
-        }
     }
 
 
@@ -2449,14 +2368,6 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
         impacts[i] = boundaries[i].impacts;
         startingParticles[i] = boundaries[i].startingParticles;
         surfZ[i] = boundaries[i].Z;
-        for(int j=0;j<1000;j++)
-        {
-            impactEnergy[i*1000 + j] = boundaries[i].array1[j];
-            if(impactEnergy[i*1000 + j] > 0)
-            {
-                std::cout << "energy tally " << i << j << boundaries[i].array1[j] << std::endl;
-            }
-        }
     }
 #endif
 #if PARTICLE_SOURCE == 1
