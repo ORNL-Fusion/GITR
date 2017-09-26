@@ -37,6 +37,24 @@ using namespace exceptions;
 using namespace netCDF::exceptions;
 using namespace libconfig;
 //IO
+int importLibConfig(libconfig::Config &cfg, std::string filepath)
+{
+    try
+    {
+         cfg.readFile(filepath.c_str());
+    }
+    catch(const FileIOException &fioex)
+    {
+         std::cerr << "I/O error while reading file "<< filepath << std::endl;
+         return(EXIT_FAILURE);
+    }
+    catch(const ParseException &pex)
+    {
+         std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+                   << " - " << pex.getError() << std::endl;
+         return(EXIT_FAILURE);
+    }
+}
 int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries)
 {
     Setting& geom = cfg_geom.lookup("geom");

@@ -12,7 +12,7 @@
 #include "Particle.h"
 #include "libconfig.h++"
 #include "io.hpp"
-//#include <libconfig.h++>
+#include <libconfig.h++>
 
 //void INPUT(int& nP, double& sourceStrength,double& x_start,double& y_start,double& z_start,double& energy_eV_x_start,double& energy_eV_y_start,
 //	double&	energy_eV_z_start,double& impurity_amu, double& impurity_Z,int& nDensityChargeBins	,double& xMinV,double& xMaxV,double& yMin,double& yMax,double& zMin,double& zMax,	int& nXv,
@@ -30,7 +30,7 @@
 //void RECV_2doutput_MPI(int nWRs, int nX, int nY,double **local, double **global);
 //
 //void Efield(double E[], double perpDistanceToSurface);
-
+void checkFlags(libconfig::Config &cfg);
 
 struct randInit
 {
@@ -79,11 +79,5 @@ int getVarFromFile (libconfig::Config &cfg,const std::string& file,const std::st
   return dim;
 }
 int getDimFromFile (libconfig::Config &cfg,const std::string& file,const std::string& section,
-        const std::string& s)
-{
-  std::string str;
-  getVariable(cfg,section+s,str);
-  int dim = readFileDim(file,str);
-  return dim;
-}
+        const std::string& s);
 #endif
