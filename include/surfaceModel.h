@@ -29,6 +29,8 @@ void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNorma
             
             surfaceNormalVector[2] = boundaryVector[wallIndex].c/norm_normal;
   #else
+            float tol = 1e12;
+            float norm_normal = 0.0f;
             if (boundaryVector[wallIndex].slope_dzdx == 0.0)
                 {
                  surfaceNormalVector[0] = 0.0f;
