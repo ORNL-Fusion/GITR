@@ -209,6 +209,7 @@ int main()
   sim::Array<Boundary> boundaries(nLines+1,Boundary());
   importGeometry(cfg_geom, boundaries);
   std::cout << "Starting Boundary Init..." << std::endl;
+  std::cout << " y1 and y2 " << boundaries[nLines].y1 << " " << boundaries[nLines].y2 << std::endl;
   float biasPotential = 0.0;
   
   #if BIASED_SURFACE > 0
@@ -1844,12 +1845,12 @@ int main()
     //std::random_device rd2;
     //std::default_random_engine generator2(rd2());
     float randDevice02 = 6.52E+5;
-    std::default_random_engine generator2(randDevice02);
+    std::default_random_engine generatorTrace(randDevice02);
     std::cout << "Randomizing velocities to trace geometry. " << std::endl;
 
     for (int i=0 ; i<nParticles ; i++)
-    {   float theta = dist2(generator2)*2*3.1415;
-        float phi = dist2(generator2)*3.1415;
+    {   float theta = dist2(generatorTrace)*2*3.1415;
+        float phi = dist2(generatorTrace)*3.1415;
         float mag = 2e3;
         particleArray->vx[i] = mag*cos(theta)*sin(phi);
         particleArray->vy[i] = mag*sin(theta)*sin(phi);
@@ -2465,7 +2466,9 @@ NcVar nc_surfStartingParticles = ncFile1.addVar("startingParticles",ncDouble,dim
 NcVar nc_surfZ = ncFile1.addVar("Z",ncDouble,dims1);
 NcVar nc_surfEDist = ncFile1.addVar("surfEDist",ncDouble,dimsSurfE);
 nc_surfImpacts.putVar(impacts);
+#if USE3DTETGEOM > 0
 nc_surfRedeposit.putVar(redeposit);
+#endif
 nc_surfStartingParticles.putVar(startingParticles);
 nc_surfZ.putVar(surfZ);
 std::cout << "writing energy distribution file " << std::endl;
@@ -2477,7 +2480,7 @@ nc_surfADistGrid.putVar(&surfaces->gridA[0]);
 #if PARTICLE_TRACKS > 0
 
 // Write netCDF output for histories
-NcFile ncFile_hist("history.nc", NcFile::replace);
+NcFile ncFile_hist("output/history.nc", NcFile::replace);
 NcDim nc_nT = ncFile_hist.addDim("nT",nT/subSampleFac);
 NcDim nc_nP = ncFile_hist.addDim("nP",nP);
 vector<NcDim> dims_hist;
