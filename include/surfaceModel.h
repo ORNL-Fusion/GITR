@@ -289,8 +289,8 @@ void operator()(std::size_t indx) const {
 
                 particles->hitWall[indx] = 0.0;
                 particles->charge[indx] = 0.0;
-
-                Enew = interp1dUnstructured(r7,nThompDistPoints, max_Energy, CDFThompson);
+                int lowInd = 0;
+                Enew = interp1dUnstructured(r7,nThompDistPoints, max_Energy, CDFThompson, lowInd);
                 
                 angleSample = interp1dUnstructured2(r8,nSegmentsAngle,sourceAngleSegments , angleCDF);
                  float V0 = sqrt(2*E0*1.602e-19/(particles->amu[indx]*1.66e-27));

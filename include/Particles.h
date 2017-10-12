@@ -74,7 +74,7 @@ public:
 
 //  void Ionization(double dt);
   CUDA_CALLABLE_MEMBER
-  void  setParticle(int indx, float x, float y, float z, float Ex, float Ey, float Ez, float Z, float amu, float charge) {
+  void  setParticle(int indx, float x, float y, float z, float E, float phi, float theta, float Z, float amu, float charge) {
 
         this->xprevious[indx] = x;
         this->yprevious[indx] = y;
@@ -87,6 +87,10 @@ public:
         this->amu[indx] = amu;
         this->hitWall[indx] = 0.0;
         this->wallIndex[indx] = 0;
+        float Ex,Ey,Ez;
+        Ex = E*cos(theta)*sin(phi);
+        Ey = E*sin(theta)*sin(phi);
+        Ez = E*cos(phi);
         this->vx[indx] = Ex / fabs(Ex) * sqrt(2.0 * fabs(Ex) * 1.60217662e-19 / (amu * 1.6737236e-27));
         this->vy[indx] = Ey / fabs(Ey) * sqrt(2.0 * fabs(Ey) * 1.60217662e-19 / (amu * 1.6737236e-27));
         this->vz[indx] = Ez / fabs(Ez) * sqrt(2.0 * fabs(Ez) * 1.60217662e-19 / (amu * 1.6737236e-27));

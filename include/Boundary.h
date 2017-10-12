@@ -69,6 +69,7 @@ class Boundary {
     float ti;
     float debyeLength;
     float larmorRadius;
+    float flux;
     float startingParticles;
     float impacts;
     float redeposit;
@@ -78,7 +79,28 @@ class Boundary {
     float E1 = 1000.0;
     float A0 = 0.0;
     float A1 = 90.0;
-  //CUDA_CALLABLE_MEMBER
+
+    CUDA_CALLABLE_MEMBER
+    void getSurfaceParallel(float A[])
+    {
+        float norm = sqrt((x2-x1)*(x2-x1) + (z2-z1)*(z2-z1));
+        std::cout << "surf par calc " << x2 << " " << x1 << " " << norm << std::endl;
+        A[0] = (x1-x2)/norm;
+        A[1] = 0.0;
+        A[2] = (z1-z2)/norm;
+
+    }
+    
+    CUDA_CALLABLE_MEMBER
+    void getSurfaceNormal(float B[])
+    {
+        float perpSlope = -1.0/slope_dzdx;
+        B[0] = 1.0/sqrt(perpSlope*perpSlope+1.0);
+        B[1] = 0.0;
+        B[2] = sqrt(1-B[0]*B[0]);
+        std::cout << "perp x and z comp " << B[0] << " " << B[2] << std::endl;
+    }
+    //CUDA_CALLABLE_MEMBER
 //        Boundary(float x1,float y1, float z1, float x2, float y2, float z2,float slope, float intercept, float Z, float amu)
 //		{
 //    

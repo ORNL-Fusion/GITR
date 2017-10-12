@@ -127,7 +127,7 @@ float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {
 
 }
 CUDA_CALLABLE_MEMBER
-float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data)
+float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data,int &lowInd)
 {
     int done = 0;
     int low_index = 0;
@@ -147,6 +147,7 @@ float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data)
     interpolated_value =
         ((data[low_index+1] - samplePoint)*low_index*max_x/nx
         + (samplePoint - data[low_index])*(low_index+1)*max_x/nx)/(data[low_index+1]- data[low_index]);
+    lowInd = low_index;
     return interpolated_value;
 }
 CUDA_CALLABLE_MEMBER
