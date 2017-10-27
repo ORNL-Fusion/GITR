@@ -290,9 +290,10 @@ int main()
     thrust::counting_iterator<std::size_t> lines0(0);  
     thrust::counting_iterator<std::size_t> lines1(nR_closeGeom*nY_closeGeom);
     sim::Array<float> minDist1(nGeomHash,1e6);
-
+    std::cout << "Generating geometry hash" << std::endl;
     for(int i=0; i<nZ_closeGeom; i++)
     {
+        std::cout << "percenent done " << i*1.0/nZ_closeGeom << std::endl;
        thrust::for_each(thrust::device, lines0,lines1,
                         hashGeom(i,nLines, boundaries.data(), 
                         closeGeomGridr.data(), closeGeomGridy.data(),
@@ -306,6 +307,24 @@ int main()
     #if USE_CUDA
       cudaDeviceSynchronize();
     #endif
+    NcFile ncFile_hash("output/geomHash.nc", NcFile::replace);
+    NcDim hashNR = ncFile_hash.addDim("nR",nR_closeGeom);
+    NcDim hashNY = ncFile_hash.addDim("nY",nY_closeGeom);
+    NcDim hashNZ = ncFile_hash.addDim("nZ",nZ_closeGeom);
+    NcDim hashN = ncFile_hash.addDim("n",n_closeGeomElements);
+    vector<NcDim> geomHashDim;
+    geomHashDim.push_back(hashNR);
+    geomHashDim.push_back(hashNY);
+    geomHashDim.push_back(hashNZ);
+    geomHashDim.push_back(hashN);
+    NcVar hash_gridR = ncFile_hash.addVar("gridR",ncDouble,hashNR);
+    NcVar hash_gridY = ncFile_hash.addVar("gridY",ncDouble,hashNY);
+    NcVar hash_gridZ = ncFile_hash.addVar("gridZ",ncDouble,hashNZ);
+    NcVar hash = ncFile_hash.addVar("hash",ncDouble,geomHashDim);
+    hash_gridR.putVar(&closeGeomGridr[0]);
+    hash_gridY.putVar(&closeGeomGridy[0]);
+    hash_gridZ.putVar(&closeGeomGridz[0]);
+    hash.putVar(&closeGeom[0]);
     std::vector<int> geomHashDims(4);
     geomHashDims[0] = nR_closeGeom;
     geomHashDims[1] = nY_closeGeom;
@@ -410,6 +429,7 @@ int main()
     
     for(int i=0; i<nZ_closeGeom_sheath; i++)
       {
+        std::cout << "percenent done " << i*1.0/nZ_closeGeom_sheath << std::endl;
               thrust::for_each(thrust::device, lines0_s,lines1_s,
                                hashGeom_sheath(i,nLines, boundaries.data(), closeGeomGridr_sheath.data(),
                                closeGeomGridy_sheath.data(),closeGeomGridz_sheath.data(),
@@ -418,6 +438,24 @@ int main()
               cudaDeviceSynchronize();
       }
               cudaDeviceSynchronize();
+    NcFile ncFile_hash_sheath("output/geomHash_sheath.nc", NcFile::replace);
+    NcDim hashNR_sheath = ncFile_hash_sheath.addDim("nR",nR_closeGeom_sheath);
+    NcDim hashNY_sheath = ncFile_hash_sheath.addDim("nY",nY_closeGeom_sheath);
+    NcDim hashNZ_sheath = ncFile_hash_sheath.addDim("nZ",nZ_closeGeom_sheath);
+    NcDim hashN_sheath = ncFile_hash_sheath.addDim("n",n_closeGeomElements_sheath);
+    vector<NcDim> geomHashDim_sheath;
+    geomHashDim_sheath.push_back(hashNR_sheath);
+    geomHashDim_sheath.push_back(hashNY_sheath);
+    geomHashDim_sheath.push_back(hashNZ_sheath);
+    geomHashDim_sheath.push_back(hashN_sheath);
+    NcVar hash_gridR_sheath = ncFile_hash_sheath.addVar("gridR",ncDouble,hashNR_sheath);
+    NcVar hash_gridY_sheath = ncFile_hash_sheath.addVar("gridY",ncDouble,hashNY_sheath);
+    NcVar hash_gridZ_sheath = ncFile_hash_sheath.addVar("gridZ",ncDouble,hashNZ_sheath);
+    NcVar hash_sheath = ncFile_hash_sheath.addVar("hash",ncDouble,geomHashDim_sheath);
+    hash_gridR_sheath.putVar(&closeGeomGridr_sheath[0]);
+    hash_gridY_sheath.putVar(&closeGeomGridy_sheath[0]);
+    hash_gridZ_sheath.putVar(&closeGeomGridz_sheath[0]);
+    hash_sheath.putVar(&closeGeom_sheath[0]);
 
     std::vector<int> geomHashDims_s(4);
     geomHashDims_s[0] = nR_closeGeom_sheath;
@@ -481,10 +519,10 @@ int main()
     getVariable(cfg,connLengthCfg+"nTraceSteps",nTraceSteps);
     getVariable(cfg,connLengthCfg+"dr",dr);
   #endif 
-  #if GENERATE_LC > 1
-    nR_Lc = getDimFromFile(cfg,lcFile,connLengthCfg,"gridNrString");
-    nY_Lc = getDimFromFile(cfg,lcFile,connLengthCfg,"gridNyString");
-    nZ_Lc = getDimFromFile(cfg,lcFile,connLengthCfg,"gridNzString");
+  #if LC_INTERP > 1
+    nR_Lc = getDimFromFile(cfg,input_path+lcFile,connLengthCfg,"gridNrString");
+    nY_Lc = getDimFromFile(cfg,input_path+lcFile,connLengthCfg,"gridNyString");
+    nZ_Lc = getDimFromFile(cfg,input_path+lcFile,connLengthCfg,"gridNzString");
   #endif
   
   #if USE3DTETGEOM > 0
@@ -497,6 +535,7 @@ int main()
   sim::Array<float> gridRLc(nR_Lc),gridYLc(nY_Lc),gridZLc(nZ_Lc);
   sim::Array<int> noIntersectionNodes(nTracers);
   #if GENERATE_LC ==1
+  float lcBuffer = 0.75;
    // if( !boost::filesystem::exists( lcFile ) )
    // {
     //   std::cout << "No pre-existing connection length file found" << std::endl;    
@@ -545,6 +584,9 @@ int main()
         }
       }
       
+      //dummy surfaces for Lcs calculation (geometry_check)
+      auto dummy_surfaces = new Surfaces(1,1,1);
+      dummy_surfaces->setSurface(1, 1,1,1 ,1 ,1);
                               
       typedef std::chrono::high_resolution_clock Time_trace;
       typedef std::chrono::duration<float> fsec_trace;
@@ -569,13 +611,13 @@ int main()
                      &br.front(),&bz.front(),&by.front()));
             
         thrust::for_each(thrust::device, lcBegin,lcEnd,
-                  geometry_check(forwardTracerParticles,nLines,&boundaries[0],dr,ii,
+                  geometry_check(forwardTracerParticles,nLines,&boundaries[0], dummy_surfaces,dr,ii,
                       nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
                       &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
                       &closeGeom.front()) );
         
         thrust::for_each(thrust::device, lcBegin,lcEnd,
-                  geometry_check(backwardTracerParticles,nLines,&boundaries[0],dr,ii,
+                  geometry_check(backwardTracerParticles,nLines,&boundaries[0],dummy_surfaces,dr,ii,
                       nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
                       &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
                       &closeGeom.front()) );
@@ -616,9 +658,14 @@ int main()
              else backwardDist = 0.0;
              
              Lc[addIndex] = forwardDist + backwardDist;
-             
+             if(Lc[addIndex] > 0.0)
+             {
+                Lc[addIndex] = Lc[addIndex] + lcBuffer;
+             } 
+      //       if(forwardTracerParticles->distanceTraveled[addIndex] > 
+      //               backwardTracerParticles->distanceTraveled[addIndex])
              if(forwardTracerParticles->distanceTraveled[addIndex] > 
-                     backwardTracerParticles->distanceTraveled[addIndex])
+                     0.5*Lc[addIndex])
              {
                s[addIndex] = -(0.5*Lc[addIndex]-backwardTracerParticles->distanceTraveled[addIndex]);
              }
@@ -659,14 +706,14 @@ int main()
    //}         
   #endif    
 
-  #if GENERATE_LC > 1
+  #if LC_INTERP > 1
     std::cout << "Importing pre-existing connection length file" << std::endl;
-    getVariable(cfg,connLengthCfg+"fileString",r0_Lc);
-    getVarFromFile(cfg,lcFile,connLengthCfg,"gridRString",gridRLc);
-    getVarFromFile(cfg,lcFile,connLengthCfg,"gridYString",gridYLc);
-    getVarFromFile(cfg,lcFile,connLengthCfg,"gridZString",gridZLc);
-    getVarFromFile(cfg,lcFile,connLengthCfg,"LcString",Lc);
-    getVarFromFile(cfg,lcFile,connLengthCfg,"SString",s);
+    getVariable(cfg,connLengthCfg+"fileString",lcFile);
+    getVarFromFile(cfg,input_path+lcFile,connLengthCfg,"gridRString",gridRLc);
+    getVarFromFile(cfg,input_path+lcFile,connLengthCfg,"gridYString",gridYLc);
+    getVarFromFile(cfg,input_path+lcFile,connLengthCfg,"gridZString",gridZLc);
+    getVarFromFile(cfg,input_path+lcFile,connLengthCfg,"LcString",Lc);
+    getVarFromFile(cfg,input_path+lcFile,connLengthCfg,"SString",s);
   #endif
   
   //Background Plasma Temperature Initialization    
@@ -711,6 +758,13 @@ int main()
                     nZ_Temp,TempGridr.data(),TempGridz.data(),ti.data());
   std::cout << "Finished Temperature import "<< testVec << std::endl; 
   
+//fudge factor for temperature
+float tempFac = 0.8;
+for(int i=0;i<n_Temp;i++)
+{
+    te[i] = te[i]*tempFac;
+    ti[i] =ti[i]*tempFac;
+}
   //Background Plasma Density Initialization    
   int nR_Dens = 1;
   int nY_Dens = 1;
@@ -747,8 +801,13 @@ int main()
     getVarFromFile(cfg,input_path+densFile,densCfg,"IonDensityString",ni);
     getVarFromFile(cfg,input_path+densFile,densCfg,"ElectronDensityString",ne);
   #endif
-
   std::cout << "Finished density import "<< ne[0] << std::endl; 
+float densFac = 1.0;
+for(int i=0;i<n_Dens;i++)
+{
+    ne[i] = ne[i]*densFac;
+    ni[i] =ni[i]*densFac;
+}
   //Background Plasma flow velocity initialization    
   int nR_flowV = 1;
   int nY_flowV = 1;
@@ -931,9 +990,18 @@ int main()
                }
 
     }
-    NcVar nc_flowVr = ncFileLC.addVar("flowVr",ncDouble,nc_nTracers);
-    NcVar nc_flowVt = ncFileLC.addVar("flowVt",ncDouble,nc_nTracers);
-    NcVar nc_flowVz = ncFileLC.addVar("flowVz",ncDouble,nc_nTracers);
+    NcFile ncFileFlow("flowV.nc", NcFile::replace);
+    NcDim nFlowV = ncFileFlow.addDim("n_flowV",n_flowV);
+    NcDim nc_nRflow = ncFileFlow.addDim("nR",nR_flowV);
+    NcDim nc_nYflow = ncFileFlow.addDim("nY",nY_flowV);
+    NcDim nc_nZflow = ncFileFlow.addDim("nZ",nZ_flowV);
+    vector<NcDim> dimsFlowV;
+    dimsFlowV.push_back(nc_nZflow);
+    dimsFlowV.push_back(nc_nYflow);
+    dimsFlowV.push_back(nc_nRflow);
+    NcVar nc_flowVr = ncFileFlow.addVar("flowVr",ncDouble,dimsFlowV);
+    NcVar nc_flowVt = ncFileFlow.addVar("flowVt",ncDouble,dimsFlowV);
+    NcVar nc_flowVz = ncFileFlow.addVar("flowVz",ncDouble,dimsFlowV);
     nc_flowVr.putVar(&flowVr[0]);
     nc_flowVt.putVar(&flowVt[0]);
     nc_flowVz.putVar(&flowVz[0]);
@@ -1427,7 +1495,9 @@ int main()
   {std::cout << "ERROR: could not get nT, dt, or nP from input file" << std::endl;}
 
   auto particleArray = new Particles(nParticles);
-  
+  std::cout <<"PionizationPrevious " <<  particleArray->PionizationPrevious[0] << std::endl;
+  float tion = interpRateCoeff2d ( 0.0, 0.0, 0.0, 0.0,nR_Temp,nZ_Temp, TempGridr.data(),TempGridz.data(),te.data(),DensGridr.data(),DensGridz.data(), ne.data(),nTemperaturesIonize,nDensitiesIonize,gridTemperature_Ionization.data(),gridDensity_Ionization.data(),rateCoeff_Ionization.data() );
+  std::cout <<"tion " <<  tion << std::endl;
   #if PARTICLE_SOURCE == 0
     float x,y,z,Ex,Ey,Ez,amu,Z,charge;
     if (cfg.lookupValue("impurityParticleSource.initialConditions.x_start",x) &&
@@ -1531,8 +1601,8 @@ int main()
 
     for(int j=0; j<4*nImpurityBoundaries;j++)
         {
-            std::mt19937  s(boundarySeeds0[j]);
-            s0[j] = s;
+            std::mt19937  s(boundarySeeds00[j]);
+            s00[j] = s;
         }
     // Particle p1(0.0,0.0,0.0,0.0,0.0,0.0,0,0.0);
     for (int i=0; i< nImpurityBoundaries;i++)
@@ -1542,14 +1612,14 @@ int main()
             //Set boundary interval, properties, and random number gen
         if (i==0)
         {
-            rand0 = dist01(s0[0]);
+            rand0 = dist01(s00[0]);
             x = boundaries[boundaryIndex_ImpurityLaunch[i]].x1 + 
                 boundaries[boundaryIndex_ImpurityLaunch[i]].length*rand0;//1.4290;
             //std::cout << "start pos 1 " << x << std::endl;
             z = -1.2540+0.00001;
-            rand1 = dist01(s0[1]);
-            rand2 = dist01(s0[2]);
-            rand3 = dist01(s0[3]);
+            rand1 = dist01(s00[1]);
+            rand2 = dist01(s00[2]);
+            rand3 = dist01(s00[3]);
             E0 = interp1dUnstructured(rand2,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
             Ex = E0*cos(3.1415*rand1)*sin(3.1415*rand3);
             Ey = E0*cos(3.1415*rand3);
@@ -1557,14 +1627,14 @@ int main()
         }
         else
         {
-            rand0 = dist01(s0[4]);
+            rand0 = dist01(s00[4]);
             x = boundaries[boundaryIndex_ImpurityLaunch[i]].x1 + boundaries[boundaryIndex_ImpurityLaunch[i]].length*rand0;
             //x = 1.3450;
             //std::cout << "start pos 2 " << x << std::endl;
             z = -1.3660+0.00001;
-            rand1 = dist01(s0[5]);
-            rand2 = dist01(s0[6]);
-            rand3 = dist01(s0[7]);
+            rand1 = dist01(s00[5]);
+            rand2 = dist01(s00[6]);
+            rand3 = dist01(s00[7]);
             E0 = interp1dUnstructured(rand2,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
             Ex = E0*cos(3.1415*rand1)*sin(3.1415*rand3);
             Ey = E0*cos(3.1415*rand3);
@@ -1697,6 +1767,10 @@ int main()
       //std::cout << angleSample << std::endl;
       //Ey = //E0*cos(angleSample)*sin(2.0*3.1415*rand3);
       Vz = V0*cos(angleSample);
+      if(Vz < 0.0)
+      {
+         std::cout << "Vz is less than 0 " << Vz  << std::endl; 
+      }
       Vr = V0*sin(angleSample);//cos(2.0*3.1415*rand3)
       //std::cout << "Ez " << Ez << " Er " << Er << std::endl; 
       rand3 = dist01(s0[3]);
@@ -1859,7 +1933,7 @@ int main()
   #endif
 
   #if PARTICLE_TRACKS > 0
-    int subSampleFac = 1;
+    int subSampleFac = 10;
     #if USE_CUDA > 0
       sim::Array<float> positionHistoryX(nP*nT/subSampleFac);
       sim::Array<float> positionHistoryY(nP*nT/subSampleFac);
@@ -2116,7 +2190,7 @@ int main()
       cudaDeviceSynchronize();
     #else
       sim::Array<std::mt19937> state1(9);
-      std::mt19937 s0(348763);
+      std::mt19937 s000(348763);
       std::mt19937 s1(358763);
       std::mt19937 s2(346763);
       std::mt19937 s3(348263);
@@ -2125,7 +2199,7 @@ int main()
       std::mt19937 s6(448763);
       std::mt19937 s7(448963);
       std::mt19937 s8(463763);
-      state1[0] = s0;
+      state1[0] = s000;
       state1[1] = s1;
       state1[2] = s2;
       state1[3] = s3;
@@ -2222,7 +2296,7 @@ int main()
 #if USECOULOMBCOLLISIONS > 0
         thrust::for_each(thrust::device, particleBegin, particleEnd, 
                 coulombCollisions(particleArray,dt,&state1.front(),
-                    nR_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridz.front(),
+                    nR_flowV,nY_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridy.front(),&flowVGridz.front(),
                     &flowVr.front(),&flowVz.front(),&flowVt.front(),
                     nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),    
                     nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
@@ -2323,13 +2397,16 @@ std::cout << " mean transit time " << meanTransitTime0 << std::endl;
     float max_impacts = 0.0;
     int max_boundary1 = 0;
     float max_impacts1 = 0.0;
+    std::cout << " new pointers with nLines " << nLines << std::endl;
     float* impacts = new float[nLines];
+    std::cout << " first one worked "  << std::endl;
     float* redeposit = new float[nLines];
     float* startingParticles = new float[nLines];
     float* surfZ = new float[nLines];
-    int nA = 90;
-    int nE = 1000;
-    float* impactEnergy = new float[nLines*nA*nE];
+    //int nA = 90;
+    //int nE = 1000;
+    //float* impactEnergy = new float[nLines*nA*nE];
+std::cout << " starting loop "  << std::endl;
     for (int i=0; i<nLines; i++)
     {
         impacts[i] = boundaries[i].impacts;
@@ -2363,7 +2440,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     float* impacts = new float[nLines];
     float* startingParticles = new float[nLines];
     float* surfZ = new float[nLines];
-    float* impactEnergy = new float[nLines*1000];
+    //float* impactEnergy = new float[nLines*1000];
     for (int i=0; i<nLines; i++)
     {
         impacts[i] = boundaries[i].impacts;
@@ -2472,11 +2549,11 @@ nc_surfRedeposit.putVar(redeposit);
 nc_surfStartingParticles.putVar(startingParticles);
 nc_surfZ.putVar(surfZ);
 std::cout << "writing energy distribution file " << std::endl;
-nc_surfEDist.putVar(&surfaces->energyDistribution[0]);
-NcVar nc_surfEDistGrid = ncFile1.addVar("gridE",ncDouble,nc_nEnergies);
-nc_surfEDistGrid.putVar(&surfaces->gridE[0]);
-NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
-nc_surfADistGrid.putVar(&surfaces->gridA[0]);
+//nc_surfEDist.putVar(&surfaces->energyDistribution[0]);
+//NcVar nc_surfEDistGrid = ncFile1.addVar("gridE",ncDouble,nc_nEnergies);
+//nc_surfEDistGrid.putVar(&surfaces->gridE[0]);
+//NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
+//nc_surfADistGrid.putVar(&surfaces->gridA[0]);
 #if PARTICLE_TRACKS > 0
 
 // Write netCDF output for histories
@@ -2489,6 +2566,9 @@ vector<NcDim> dims_hist;
 NcDim nc_nPnT = ncFile_hist.addDim("nPnT",nP*nT/subSampleFac);
 dims_hist.push_back(nc_nPnT);
 #else
+#endif
+NcVar nc_x = ncFile_hist.addVar("x",ncDouble,dims_hist);
+NcVar nc_y = ncFile_hist.addVar("y",ncDouble,dims_hist);
 NcVar nc_z = ncFile_hist.addVar("z",ncDouble,dims_hist);
 
 NcVar nc_vx = ncFile_hist.addVar("vx",ncDouble,dims_hist);
@@ -2523,7 +2603,6 @@ nc_vy.putVar(velocityHistoryY[0]);
 nc_vz.putVar(velocityHistoryZ[0]);
 
 nc_charge.putVar(chargeHistory[0]);
-#endif
 #endif
 #endif
 #if SPECTROSCOPY > 0

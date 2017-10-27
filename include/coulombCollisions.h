@@ -48,7 +48,7 @@ void getSlowDownFrequencies ( float& nu_friction, float& nu_deflection, float& n
 float MI = 1.6737236e-27;	
         float Temp_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
             float density = interp2dCombined(x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
-//            std::cout << "ion t and n " << Temp_eV << "  " << density << std::endl;
+            std::cout << "ion t and n " << Temp_eV << "  " << density << std::endl;
     float flowVelocity[3]= {0, 0, 0};
 	float relativeVelocity[3] = {0.0, 0.0, 0.0};
 	float velocityNorm = 0.0f;
@@ -67,13 +67,13 @@ float MI = 1.6737236e-27;
 	relativeVelocity[1] = vy - flowVelocity[1];
 	relativeVelocity[2] = vz - flowVelocity[2];
 	velocityNorm = sqrt( relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2]);                
-	    //std::cout << "velocity norm " << velocityNorm << std::endl;	
+	    std::cout << "velocity norm " << velocityNorm << std::endl;	
     //for(int i=1; i < nSpecies; i++)
 		//{
 			lam_d = sqrtf(EPS0*Temp_eV/(density*powf(background_Z,2)*Q));//only one q in order to convert to J
                 	lam = 4.0*pi*density*powf(lam_d,3);
                 	gam = 0.238762895*powf(charge,2)*powf(background_Z,2)*logf(lam)/(amu*amu);//constant = Q^4/(MI^2*4*pi*EPS0^2)
-          //          std::cout << "gam components " <<gam << " " << pow(Q,4) << " " << pow(particlesPointer->Z,2)<< " " << pow(background_Z,2) << " " << log(lam)<< std::endl; 
+                    std::cout << "gam components " <<gam << " " << pow(Q,4) << " " << " " << pow(background_Z,2) << " " << log(lam)<< std::endl; 
                 	a = background_amu*MI/(2*Temp_eV*Q);// %q is just to convert units - no z needed
                 
                 	xx = powf(velocityNorm,2)*a;
@@ -86,9 +86,9 @@ float MI = 1.6737236e-27;
                 	nu_parallel = psi/xx*nu_0;
                 	nu_energy = 2*(amu/background_amu*psi - psi_prime)*nu_0;
 
-                   // std::cout << "lam_d lam gam a" << lam_d << " " << lam << " " << gam << " " << a << std::endl;
-                    //std::cout << "x psi_prime psi_psiprime psi" << x << " " << psi_prime << " " << psi_psiprime << " " << psi << " " << nu_0 << std::endl;
-                    //std::cout << "nu friction, parallel perp energy " << nu_friction << " " << nu_parallel << " " <<nu_deflection << " " << nu_energy << std::endl;
+                    std::cout << "lam_d lam gam a" << lam_d << " " << lam << " " << gam << " " << a << std::endl;
+                    std::cout << "x psi_prime psi_psiprime psi" << x << " " << psi_prime << " " << psi_psiprime << " " << psi << " " << nu_0 << std::endl;
+                    std::cout << "nu friction, parallel perp energy " << nu_friction << " " << nu_parallel << " " <<nu_deflection << " " << nu_energy << std::endl;
 	//	}
 }
 
@@ -96,8 +96,10 @@ CUDA_CALLABLE_MEMBER
 void getSlowDownDirections (float parallel_direction[], float perp_direction1[], float perp_direction2[],
         float xprevious, float yprevious, float zprevious,float vx, float vy, float vz,
     int nR_flowV,
+    int nY_flowV,
     int nZ_flowV,
     float* flowVGridr,
+    float* flowVGridy,
     float* flowVGridz,
     float* flowVr,
     float* flowVz,
@@ -123,9 +125,14 @@ void getSlowDownDirections (float parallel_direction[], float perp_direction1[],
         B_unit[1] = B[1]/Bmag;
         B_unit[2] = B[2]/Bmag;
 
+#if USE3DTETGEOM
+        interp3dVector (&flowVelocity[0], xprevious,yprevious,zprevious,nR_flowV,nY_flowV,nZ_flowV,
+                flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
+#else    
                 interp2dVector(&flowVelocity[0],xprevious,yprevious,zprevious,nR_flowV,nZ_flowV,
                                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
-		relativeVelocity[0] = vx - flowVelocity[0];
+#endif
+                relativeVelocity[0] = vx - flowVelocity[0];
                 relativeVelocity[1] = vy - flowVelocity[1];
                 relativeVelocity[2] = vz - flowVelocity[2];
                 velocityRelativeNorm = sqrt( relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2]);
@@ -163,8 +170,10 @@ struct coulombCollisions {
     Particles *particlesPointer;
     const float dt;
     int nR_flowV;
+    int nY_flowV;
     int nZ_flowV;
     float* flowVGridr;
+    float* flowVGridy;
     float* flowVGridz;
     float* flowVr;
     float* flowVz;
@@ -200,7 +209,7 @@ struct coulombCollisions {
 #else
                             std::mt19937 *_state,
 #endif
-            int _nR_flowV, int _nZ_flowV,    float* _flowVGridr,
+            int _nR_flowV,int _nY_flowV, int _nZ_flowV,    float* _flowVGridr,float* _flowVGridy,
                 float* _flowVGridz,float* _flowVr,
                         float* _flowVz,float* _flowVt,
                         int _nR_Dens,int _nZ_Dens,float* _DensGridr,
@@ -211,7 +220,7 @@ struct coulombCollisions {
                         float * _BfieldGridR ,float * _BfieldGridZ ,
                         float * _BfieldR ,float * _BfieldZ ,
                  float * _BfieldT )
-        : particlesPointer(_particlesPointer), dt(_dt),state(_state), nR_flowV(_nR_flowV), nZ_flowV(_nZ_flowV), flowVGridr(_flowVGridr),
+        : particlesPointer(_particlesPointer), dt(_dt),state(_state), nR_flowV(_nR_flowV),nY_flowV(_nY_flowV), nZ_flowV(_nZ_flowV), flowVGridr(_flowVGridr),flowVGridy(_flowVGridy),
    flowVGridz(_flowVGridz), flowVr(_flowVr),flowVz(_flowVz), flowVt(_flowVt),
    nR_Dens(_nR_Dens), nZ_Dens(_nZ_Dens), DensGridr(_DensGridr), DensGridz(_DensGridz),ni(_ni),
            nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr), TempGridz(_TempGridz),
@@ -236,11 +245,15 @@ void operator()(std::size_t indx) const {
 		float perp_direction1[3];
 		float perp_direction2[3];
 		float parallel_contribution;
-		float dv_perp1[3];
-		float dv_perp2[3];
-	
+		float dv_perp1[3] = {0.0};
+		float dv_perp2[3] = {0.0};
+#if USE3DTETGEOM
+        interp3dVector (&flowVelocity[0], particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_flowV,nY_flowV,nZ_flowV,
+                flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
+#else    
                 interp2dVector(&flowVelocity[0],particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_flowV,nZ_flowV,
                                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
+#endif
             relativeVelocity[0] = particlesPointer->vx[indx] - flowVelocity[0];
         	relativeVelocity[1] = particlesPointer->vy[indx] - flowVelocity[1];
         	relativeVelocity[2] = particlesPointer->vz[indx] - flowVelocity[2];
@@ -289,7 +302,7 @@ void operator()(std::size_t indx) const {
 		getSlowDownDirections(parallel_direction, perp_direction1,perp_direction2,
         particlesPointer->x[indx],particlesPointer->y[indx],particlesPointer->z[indx],
         particlesPointer->vx[indx],particlesPointer->vy[indx],particlesPointer->vz[indx],
-                  nR_flowV,  nZ_flowV, flowVGridr,
+                  nR_flowV,nY_flowV,  nZ_flowV, flowVGridr,flowVGridy,
         flowVGridz,flowVr,
         flowVz,flowVt,
                 
@@ -301,14 +314,14 @@ void operator()(std::size_t indx) const {
     BfieldZ,
     BfieldT
                 );
-		
-		parallel_contribution = (1.0+nu_friction*dt + plus_minus1*sqrt(nu_parallel*dt));
+		parallel_contribution = (1.0-nu_friction*dt + plus_minus1*sqrt(nu_parallel*dt));
 		dv_perp1[0] = perp_direction1[0]*plus_minus2*sqrt(nu_deflection/2*dt);
 		dv_perp1[1] = perp_direction1[1]*plus_minus2*sqrt(nu_deflection/2*dt);
 		dv_perp1[2] = perp_direction1[2]*plus_minus2*sqrt(nu_deflection/2*dt);
                 dv_perp2[0] = perp_direction2[0]*plus_minus3*sqrt(nu_deflection/2*dt);
                 dv_perp2[1] = perp_direction2[1]*plus_minus3*sqrt(nu_deflection/2*dt);
                 dv_perp2[2] = perp_direction2[2]*plus_minus3*sqrt(nu_deflection/2*dt);
+  //      std::cout << "parallel direction " << parallel_direction[0] << " " << parallel_direction[1] << " " <<parallel_direction[2] << std::endl;
 
 		velocityCollisions[0] = velocityRelativeNorm*(1-nu_energy*dt)*(parallel_direction[0]*parallel_contribution
  					+ dv_perp1[0] + dv_perp2[0]);
@@ -324,9 +337,17 @@ void operator()(std::size_t indx) const {
     std::cout << "relative speed then dv "<< velocityRelativeNorm << " " << velocityCollisions[0] + flowVelocity[0] - particlesPointer->vx[indx] << " " << velocityCollisions[1] + flowVelocity[1] - particlesPointer->vy[indx]  << " " <<velocityCollisions[2] + flowVelocity[2] - particlesPointer->vz[indx]  << std::endl;
 }
 */
-        particlesPointer->vx[indx] = velocityCollisions[0] + flowVelocity[0]; 
+/*        
+    std::cout << "particle velocity "<< particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " << particlesPointer->vz[indx]    << std::endl;
+    std::cout << "flow velocity "<< flowVelocity[0] << " " << flowVelocity[1] << " " << flowVelocity[2]    << std::endl;
+    std::cout << "relative velocity "<< relativeVelocity[0] << " " << relativeVelocity[1] << " " << relativeVelocity[2]    << std::endl;
+    std::cout << "dv collisions "<< velocityCollisions[0] << " " << velocityCollisions[1] << " " << velocityCollisions[2]    << std::endl;
+    std::cout << "relative speed then dv "<< velocityRelativeNorm << " " << velocityCollisions[0] - flowVelocity[0] - particlesPointer->vx[indx] << " " << velocityCollisions[1] - flowVelocity[1] - particlesPointer->vy[indx]  << " " <<velocityCollisions[2] + flowVelocity[2] - particlesPointer->vz[indx]  << std::endl;
+*/   
+    particlesPointer->vx[indx] = velocityCollisions[0] + flowVelocity[0]; 
 		particlesPointer->vy[indx] = velocityCollisions[1] + flowVelocity[1];
 		particlesPointer->vz[indx] = velocityCollisions[2] + flowVelocity[2];   	
+    //std::cout << "particle velocity "<< particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " << particlesPointer->vz[indx]    << std::endl;
     
 	}
     	}

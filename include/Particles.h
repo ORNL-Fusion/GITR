@@ -69,6 +69,7 @@ public:
   sim::Array<float> test;
   sim::Array<float> distanceTraveled;
   sim::Array<float> weight;
+  sim::Array<float> PionizationPrevious;
 
 //  void BorisMove(double dt, double xMinV, double xMaxV, double yMin, double yMax, double zMin, double zMax);
 
@@ -125,7 +126,7 @@ public:
 #endif
       hitWall{nP,0.0},
    transitTime{nP,0.0},wallHit{nP,0}, wallIndex{nP}, perpDistanceToSurface{nP}, 
-      test{nP},distanceTraveled{nP},weight{nP,1.0} {};   
+      test{nP},distanceTraveled{nP},weight{nP,1.0}, PionizationPrevious{nP,1.0} {};   
 
 };
 

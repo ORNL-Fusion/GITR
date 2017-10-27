@@ -186,12 +186,10 @@ float interp2dUnstructured(float x,float y,int nx,int ny, float *xgrid,float *yg
     float yDiffUp;
     float yDiffDown; 
     float dy;
-    float fxy;
+    float fxy=0.0;
+    float factor = 1.0;
 
-    if(x < xgrid[0])
-    {
-    }
-    else
+    if(x >= xgrid[0] && x<= xgrid[nx-1])
     {
       for(int i=0;i<nx;i++)
       {
@@ -205,10 +203,11 @@ float interp2dUnstructured(float x,float y,int nx,int ny, float *xgrid,float *yg
           }
       }
     }
-    if(y < ygrid[0])
-    {
-    }
     else
+    {
+        factor = 0.0;
+    }
+    if(y >= ygrid[0] && y<= ygrid[ny-1])
     {
       for(int i=0;i<ny;i++)
       {
@@ -221,6 +220,10 @@ float interp2dUnstructured(float x,float y,int nx,int ny, float *xgrid,float *yg
                }
           }
       }
+    }
+    else
+    {
+        factor = 0.0;
     }
    
     //std::cout << "x vals " << xgrid[xInd] << " " << xgrid[xInd+1];
@@ -236,7 +239,7 @@ float interp2dUnstructured(float x,float y,int nx,int ny, float *xgrid,float *yg
     yDiffUp = ygrid[yInd+1]-y;
     yDiffDown = y - ygrid[yInd];
     dy = ygrid[yInd+1] - ygrid[yInd];
-    fxy = (yDiffUp*yLowValue + yDiffDown*yHighValue)/dy;
+    fxy = factor*(yDiffUp*yLowValue + yDiffDown*yHighValue)/dy;
 
     return fxy;
 

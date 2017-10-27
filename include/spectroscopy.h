@@ -81,11 +81,12 @@ void operator()(std::size_t indx) const {
                 atomicAdd(&bins[charge*nX*nZ + indx_Z*nX + indx_X], 1.0);//0*nX*nZ + indx_Z*nZ + indx_X
               }
               */
+                  float specWeight = particlesPointer->weight[indx];
                //for 3d
-              atomicAdd(&bins[nBins*nX*nY*nZ + indx_Z*nX*nY +indx_Y*nX+ indx_X], 1.0);//0*nX*nZ + indx_Z*nZ + indx_X
+              atomicAdd(&bins[nBins*nX*nY*nZ + indx_Z*nX*nY +indx_Y*nX+ indx_X], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
               if(charge < nBins)
               {
-                atomicAdd(&bins[charge*nX*nY*nZ + indx_Z*nX*nY + indx_Y*nX+ indx_X], 1.0);//0*nX*nZ + indx_Z*nZ + indx_X
+                atomicAdd(&bins[charge*nX*nY*nZ + indx_Z*nX*nY + indx_Y*nX+ indx_X], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
               }
 
 #else
