@@ -67,10 +67,13 @@ struct ionize {
 	//if(particlesPointer->hitWall[indx] == 0.0){        
         //std::cout << "interpolating rate coeff at "<< particlesPointer->x[indx] << " " << particlesPointer->y[indx] << " " << particlesPointer->z[indx] << std::endl;
         float tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesIonize,nDensitiesIonize,gridTemperature_Ionization,gridDensity_Ionization,rateCoeff_Ionization );	
-    float P1 = 1-expf(-dt/tion);
-    //std::cout << "tion " << tion << std::endl;
+    float PiP = particlesPointer->PionizationPrevious[indx];
+    float P = expf(-dt/tion);
+    particlesPointer->PionizationPrevious[indx] = PiP*P;
+    float P1 = 1.0-PiP*P;
+    //std::cout << "tion P P1 " << tion << " " << P << " " << P1 << " " << PiP<< std::endl;
     if(particlesPointer->hitWall[indx] == 0.0)
-                        {
+    {
         //std::cout << "calculating r1 " << std::endl;i
 #if PARTICLESEEDS > 0
 	#ifdef __CUDACC__
@@ -91,12 +94,13 @@ struct ionize {
 #endif
     //if(tt == 722)
     //{
-      //  std::cout << "ionization is being debugged at time step " << tt << std::endl;
+      //std::cout << "r1 " << r1 << " " << P1 << std::endl;
 		//particlesPointer->charge[indx] = particlesPointer->charge[indx]+1;
         
 	    if(r1 <= P1)
 	    {
 		  particlesPointer->charge[indx] = particlesPointer->charge[indx]+1;
+          particlesPointer->PionizationPrevious[indx] = 1.0;
         //std::cout << "Particle " << indx << " ionized at step " << tt << std::endl;
 	    }
         

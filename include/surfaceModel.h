@@ -160,10 +160,6 @@ void operator()(std::size_t indx) const {
     
             if(particles->hitWall[indx] == 1.0)
             {   
-                if( boundaryVector[particles->wallHit[indx]].Z > 0.0)
-                {
-                
-	        
                 //float reducedEnergyMultiplier = 5e-7;//for W on W
             float E0 = 0.0;
             float thetaImpact = 0.0;
@@ -239,8 +235,17 @@ void operator()(std::size_t indx) const {
             partDotNormal = vectorDotProduct(particleTrackVector,surfaceNormalVector);
             thetaImpact = acos(partDotNormal);
             signPartDotNormal = sgn(partDotNormal);
-            float Y0 = interp2dUnstructured(thetaImpact*180.0/3.1415,E0,nAngle,nEnergy, 
+            float Y0 = 0.0;
+            if( boundaryVector[particles->wallHit[indx]].Z > 0.0)
+            {
+                Y0 = interp2dUnstructured(thetaImpact*180.0/3.1415,E0,nAngle,nEnergy, 
                     spYlGridAngle,spYlGridE, spYl);
+            }
+            else
+            {
+                Y0 = 0.0;
+            }
+
             //std::cout << "Energy angle yield " << E0 << " " << thetaImpact << " " << Y0 << std::endl; 
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
@@ -276,17 +281,24 @@ void operator()(std::size_t indx) const {
 #else
                boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
 #endif
-#endif 
-
-               float deposited = particles->weight[indx]*(1.0-Y0);
+#endif
+             float deposited = 0.0; 
+               if(Y0 <= 1.0)
+               {
+                 deposited = particles->weight[indx]*(1.0-Y0);
+               }
 #if USE_CUDA > 0
                 atomicAdd(&boundaryVector[wallHit].redeposit, deposited);
 #else
                boundaryVector[wallHit].redeposit = boundaryVector[wallHit].redeposit +deposited;
 #endif
                 //reflect with weight and new initial conditions
+                if( boundaryVector[particles->wallHit[indx]].Z > 0.0)
+                {
+               if(Y0 <= 1.0)
+               {
                 particles->weight[indx] = particles->weight[indx]*Y0;
-
+               }
                 particles->hitWall[indx] = 0.0;
                 particles->charge[indx] = 0.0;
 
@@ -302,6 +314,10 @@ void operator()(std::size_t indx) const {
     particles->yprevious[indx] = particles->y[indx] + -signPartDotNormal*surfaceNormalVector[1]*1e-6;
     particles->zprevious[indx] = particles->z[indx] + -signPartDotNormal*surfaceNormalVector[2]*1e-6;
             }
+                else
+                {
+                    particles->hitWall[indx] = 2.0;
+                }
                   }
 }
 };
