@@ -88,6 +88,10 @@ public:
         this->amu[indx] = amu;
         this->hitWall[indx] = 0.0;
         this->wallIndex[indx] = 0;
+//        float Ex,Ey,Ez;
+//        Ex = E*cos(theta)*sin(phi);
+//        Ey = E*sin(theta)*sin(phi);
+//        Ez = E*cos(phi);
         this->vx[indx] = Ex / fabs(Ex) * sqrt(2.0 * fabs(Ex) * 1.60217662e-19 / (amu * 1.6737236e-27));
         this->vy[indx] = Ey / fabs(Ey) * sqrt(2.0 * fabs(Ey) * 1.60217662e-19 / (amu * 1.6737236e-27));
         this->vz[indx] = Ez / fabs(Ez) * sqrt(2.0 * fabs(Ez) * 1.60217662e-19 / (amu * 1.6737236e-27));
@@ -95,7 +99,8 @@ public:
         if (Ex == 0.0) this->vx[indx] = 0.0;
         if (Ey == 0.0) this->vy[indx] = 0.0;
         if (Ez == 0.0) this->vz[indx] = 0.0;
-      };    
+        std::cout << " velocity " << this->vx[indx] << " " << this->vy[indx] << " " << this->vz[indx] << std::endl;
+     };    
 
   CUDA_CALLABLE_MEMBER
   void  setParticleV(int indx, float x, float y, float z, float Vx, float Vy, float Vz, float Z, float amu, float charge) {
