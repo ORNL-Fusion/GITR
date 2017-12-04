@@ -230,7 +230,9 @@ int main()
   getVariable(cfg,"surfaces.flux.nA",nAdist);
   getVariable(cfg,"surfaces.flux.A0",A0dist);
   getVariable(cfg,"surfaces.flux.A",Adist);
+  std::cout << "nLines before surfaces " << nLines << std::endl;
   auto surfaces = new Surfaces(nLines,nEdist,nAdist);
+  std::cout << "nLines after surfaces " << nLines << std::endl;
   surfaces->setSurface(nEdist, E0dist,Edist,nAdist ,A0dist ,Adist);
 
   std::cout << "surface stuff " << surfaces->nE << " " << surfaces->E0 << " " << surfaces->E << " " << surfaces->dE <<  std::endl;
@@ -1495,86 +1497,68 @@ for(int i=0;i<n_Dens;i++)
   {std::cout << "ERROR: could not get nT, dt, or nP from input file" << std::endl;}
 
   auto particleArray = new Particles(nParticles);
-  std::cout <<"PionizationPrevious " <<  particleArray->PionizationPrevious[0] << std::endl;
-  float tion = interpRateCoeff2d ( 0.0, 0.0, 0.0, 0.0,nR_Temp,nZ_Temp, TempGridr.data(),TempGridz.data(),te.data(),DensGridr.data(),DensGridz.data(), ne.data(),nTemperaturesIonize,nDensitiesIonize,gridTemperature_Ionization.data(),gridDensity_Ionization.data(),rateCoeff_Ionization.data() );
-  std::cout <<"tion " <<  tion << std::endl;
-  #if PARTICLE_SOURCE == 0
-    float x,y,z,Ex,Ey,Ez,amu,Z,charge;
+  
+  float x,y,z,E,Ex,Ey,Ez,amu,Z,charge,phi,theta,Ex_prime,Ez_prime,theta_transform;      
+  if(cfg.lookupValue("impurityParticleSource.initialConditions.impurity_amu",amu) && 
+     cfg.lookupValue("impurityParticleSource.initialConditions.impurity_Z",Z) &&
+     cfg.lookupValue("impurityParticleSource.initialConditions.charge",charge))
+    { std::cout << "Impurity amu Z charge: " << amu << " " << Z << " " << charge << std::endl;
+    }
+    else
+    { std::cout << "ERROR: Could not get point source impurity initial conditions" << std::endl;}
+  #if PARTICLE_SOURCE_SPACE == 0 // Point Source
     if (cfg.lookupValue("impurityParticleSource.initialConditions.x_start",x) &&
         cfg.lookupValue("impurityParticleSource.initialConditions.y_start",y) &&
-        cfg.lookupValue("impurityParticleSource.initialConditions.z_start",z) &&
-        cfg.lookupValue("impurityParticleSource.initialConditions.energy_eV_x_start",Ex) &&
-        cfg.lookupValue("impurityParticleSource.initialConditions.energy_eV_y_start",Ey) &&
-        cfg.lookupValue("impurityParticleSource.initialConditions.energy_eV_z_start",Ez) &&  
-        cfg.lookupValue("impurityParticleSource.initialConditions.impurity_amu",amu) && 
-        cfg.lookupValue("impurityParticleSource.initialConditions.impurity_Z",Z) &&
-        cfg.lookupValue("impurityParticleSource.initialConditions.charge",charge))
+        cfg.lookupValue("impurityParticleSource.initialConditions.z_start",z))
     { std::cout << "Impurity point source: " << x << " " << y << " " << z << std::endl;
     }
     else
     { std::cout << "ERROR: Could not get point source impurity initial conditions" << std::endl;}
-    
-    for (int i=0; i< nP ; i++)
-    {
-      particleArray->setParticle(i,x, y, z, Ex, Ey, Ez, Z, amu, charge);
-    }
-  #elif PARTICLE_SOURCE == 1
-    float x;
-    float y;
-    float z;
-    
-    float Ex;
-    float Ey;
-    float Ez;
-    
-    float amu;
-    float Z;
-    float charge;
-    float impurity_Z = cfg.lookup("impurityParticleSource.Z");
-    int nImpurityBoundaries = 0;
-    for (int i=0; i<nLines;i++)
-    {
-        if(boundaries[i].Z == impurity_Z)
-        {
-            nImpurityBoundaries++;
-        }
-    }
-    std::cout << "n Impurity Boundaries to launch from " << nImpurityBoundaries << std::endl;
-    sim::Array<int> boundaryIndex_ImpurityLaunch(nImpurityBoundaries);
-    
-    int count = 0;
-    for (int i=0; i<nLines;i++)
-    {
-        if(boundaries[i].Z == impurity_Z)
-        {
-            boundaryIndex_ImpurityLaunch[count] = i;
-            count++;
-            std::cout << "Boundary indices " << i << std::endl;
-        }
-    }
-    
-    int impuritiesPerBoundary = nP/nImpurityBoundaries;
-      
-    std::uniform_real_distribution<float> distributionForSeeds(0,1e6);
-    #if FIXEDSEEDS ==0
-        std::random_device randDevice;
-        std::default_random_engine generator0(randDevice());
+  #elif PARTICLE_SOURCE_SPACE == 2 //Material Surfaces - flux weighted source
+    #if USE3DTETGEOM > 0
     #else
-        float randDevice = 6.5298E+5;
-        std::default_random_engine generator0(randDevice);
+      int nMaterialSurfaces = 0;
+      std::cout << "nLines " << nLines << std::endl;
+      for(int i=0;i<nLines;i++)
+      {
+          if(boundaries[i].Z > 0)
+          {
+              nMaterialSurfaces++;
+          }
+      } 
+      std::cout << "n material surfaces " << nMaterialSurfaces << std::endl;
+      sim::Array<int> materialIndices(nMaterialSurfaces);
+      int currentInd = 0;
+      for(int i=0;i<nLines;i++)
+      {
+          if(boundaries[i].Z > 0)
+          {
+              materialIndices[currentInd] = i;
+              currentInd++;
+          }
+          std::cout << "i currentInd " << i << " " << currentInd << std::endl;
+      } 
+      std::vector<float> xPosGrid(nMaterialSurfaces,0.0),xPosCDF(nMaterialSurfaces,0.0);
+      xPosGrid[0] = boundaries[materialIndices[0]].length;
+      for(int i=1;i<nMaterialSurfaces;i++)
+      {
+          xPosGrid[i] = xPosGrid[i-1]+boundaries[materialIndices[i]].length;
+          std::cout << "cumsum length grid " << xPosGrid[i] << std::endl;
+      }
+      for(int i=0;i<nMaterialSurfaces;i++)
+      {
+          xPosGrid[i] = xPosGrid[i]/xPosGrid[nMaterialSurfaces-1];
+          std::cout << "cumsum length grid " << xPosGrid[i] << std::endl;
+      }
     #endif
-    
-    sim::Array<float> boundarySeeds0(4*nImpurityBoundaries);
-    std::generate( boundarySeeds0.begin(), boundarySeeds0.end(), [&]() { return distributionForSeeds(generator0); } );
-    std::uniform_real_distribution<float> dist01(0.0, 1.0);
-    float rand0 = 0.0;
-    float rand1 = 0.0;
-    float rand2 = 0.0;
-    float rand3 = 0.0;
-
-    sim::Array<std::mt19937> s0(4*nImpurityBoundaries);
-    
-    float E0 = 0.0;
+  #endif
+  #if PARTICLE_SOURCE_ENERGY == 0
+    if( cfg.lookupValue("impurityParticleSource.initialConditions.energy_eV",E))
+    { std::cout << "Impurity point source E: " << E << std::endl;
+    }
+    else
+    { std::cout << "ERROR: Could not get point source impurity initial conditions" << std::endl;}
+  #elif PARTICLE_SOURCE_ENERGY == 1
 //Create Thompson Distribution
     float surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
     std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
@@ -1598,6 +1582,11 @@ for(int i=0;i<n_Dens;i++)
             CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
             //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
         }
+        std::random_device randDevice_particleE;
+        std::mt19937 sE(randDevice_particleE());
+        std::uniform_real_distribution<float> dist01E(0.0, 1.0);
+        float randE = 0.0;
+        int lowIndE = 0;
 
     for(int j=0; j<4*nImpurityBoundaries;j++)
         {
@@ -1642,114 +1631,40 @@ for(int i=0;i<n_Dens;i++)
         }
         particleArray->setParticle((i * impuritiesPerBoundary + j),x, 0.0, z, Ex, Ey, Ez, 74, 18400.0, charge);            
         }
+  #endif
+  #if PARTICLE_SOURCE_ANGLE == 0
+    if (cfg.lookupValue("impurityParticleSource.initialConditions.phi",phi) &&
+        cfg.lookupValue("impurityParticleSource.initialConditions.theta",theta))
+    { std::cout << "Impurity point source angles phi theta: " << phi << " " << theta << std::endl;
     }
-  #elif PARTICLE_SOURCE == 2
+#elif PARTICLE_SOURCE_ANGLE == 2
+
     std::cout << "Read particle source " << std::endl;
     Config cfg_particles;
     cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
     Setting& particleSource = cfg_particles.lookup("particleSource");
-    std::cout << "found setting particleSource " << std::endl;
-    float rSample;
-    float angleSample;
-    float x;
-    float y;
-    float z;
-    
-    float Vr;
-    float Vx;
-    float Vy;
-    float Vz;
-    float V0;
-    float E0;
-    float amu;
-    float Z;
-    float charge= cfg.lookup("impurityParticleSource.initialConditions.charge");
-    float impurity_Z = cfg.lookup("impurityParticleSource.Z");
-    int nSources = particleSource["nSources"];
-    int nSegments = particleSource["nSegments"];
     int nSegmentsAngle = particleSource["nSegmentsAngle"];
-    int cylSymm = particleSource["cylSymm"];
-    
-    sim::Array<float> sourceR(2*nSources);
-    sim::Array<float> sourceZ(2*nSources);
-    sim::Array<float> sourceRsegments(nSegments);
-    sim::Array<float> sourceZsegments(nSegments);
-    sim::Array<float> spaceCDF(nSegments);
+    float angleSample;
     sim::Array<float> sourceAngleSegments(nSegmentsAngle);
     sim::Array<float> angleCDF(nSegmentsAngle);
-    
-    for (int i=0; i<(nSources*2); i++)
-    {
-        sourceR[i] = particleSource["r0"][i];
-        sourceZ[i] = particleSource["z0"][i];
-    }
-    
-    for (int i=0; i<(nSegments); i++)
-    {
-        sourceRsegments[i] = particleSource["r"][i];
-        sourceZsegments[i] = particleSource["z"][i];
-        spaceCDF[i] = particleSource["spaceCDF"][i];
-    }
-    
     for (int i=0; i<(nSegmentsAngle); i++)
     {
         sourceAngleSegments[i] = particleSource["angles"][i];
         angleCDF[i] = particleSource["angleCDF"][i];
     }
-    std::uniform_real_distribution<float> dist01(0.0, 1.0);
-    float rand0 = 0.0;
-    float rand1 = 0.0;
-    float rand2 = 0.0;
-    float rand3 = 0.0;
-    float rand4 = 0.0;
-
-    sim::Array<std::mt19937> s0(5);
-    std::mt19937 ss0(123314.234);
-     s0[0] =  ss0;
-    std::mt19937 ss1(389362.735);
-     s0[1] =  ss1;
-    std::mt19937 ss2(523563.108);
-     s0[2] =  ss2;
-    std::mt19937 ss3(752081.751);
-     s0[3] =  ss3;
-    std::mt19937 ss4(952381.034);
-     s0[4] =  ss4;
-
-    float surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
-    std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
-    int nThompDistPoints = 200;
-    float max_Energy = 100.0;
-    sim::Array<float> ThompsonDist(nThompDistPoints),CumulativeDFThompson(nThompDistPoints);
-    for(int i=0;i<nThompDistPoints;i++)
-    {
-       ThompsonDist[i] = (i*max_Energy/nThompDistPoints)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,3);
-       if(i==0)
-       {
-           CumulativeDFThompson[i] = ThompsonDist[i]; 
-       }
-       else
-       {
-           CumulativeDFThompson[i] = CumulativeDFThompson[i-1]+ThompsonDist[i];
-       }
-    }
-    for(int i=0;i<nThompDistPoints;i++)
-    {
-       CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
-       //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
-    }
-
-    //rand0 = dist01(s0[0]);
-    //rand1 = dist01(s0[1]);
-    //rand2 = dist01(s0[2]);
-    //rand3 = dist01(s0[3]);
-    sim::Array<float> angleBins(180);
-    int angleBinNum = 0;
-    sim::Array<float> angleBins2(180);
-    int angleBinNum2 = 0;
-    int closestBoundaryIndex0;
-    float minDist0;
-    float thisE0[3] = {0.0,0.0,0.0};
-    for(int j=0; j<nParticles ; j++)
+        std::random_device randDevice_particleA;
+        std::mt19937 sA(randDevice_particleA());
+        std::uniform_real_distribution<float> dist01A(0.0, 1.0);
+        float randA = 0.0;
+        int lowIndA = 0;
+  #endif
+        std::random_device randDevice;
+        std::mt19937 s0(randDevice());
+        std::uniform_real_distribution<float> dist001(0.0, 1.0);
+        float rand0 = 0.0;
+        int lowInd = 0;
+        float lengthAlongElement = 0.0;
+    for (int i=0; i< nP ; i++)
     {
       rand0 = dist01(s0[0]);
       rSample = interp1dUnstructured2(rand0,nSegments,&sourceRsegments.front() , &spaceCDF.front());
@@ -1782,16 +1697,329 @@ for(int i=0;i<n_Dens;i++)
       //std::cout << "rsample " << rSample << " E0 " << E0 << " angleSample " << angleSample << std::endl;
     particleArray->setParticleV(j,x,y,z,Vx,Vy,Vz,74, 184.0, charge);
        minDist0 = getE ( x,y,z,thisE0, boundaries.data(),nLines,
+    #if PARTICLE_SOURCE_SPACE == 2 //Material Surfaces - flux weighted source
+      #if USE3DTETGEOM > 0
+      #else
+        //x = sampled
+        rand0 = dist001(s0);
+        x= interp1dUnstructured(rand0,nMaterialSurfaces, 1.0,&xPosGrid[0], lowInd);
+        lengthAlongElement = (rand0 - xPosGrid[lowInd])*boundaries[materialIndices[lowInd]].length/(xPosGrid[lowInd+1]-xPosGrid[lowInd]);
+        std::cout << "interpd x " <<rand0 << " " << x  << " " << lowInd << " "
+            << xPosGrid[lowInd] << " " << lengthAlongElement << " " << boundaries[materialIndices[lowInd]].length
+           << " " << lengthAlongElement/boundaries[materialIndices[lowInd]].length << std::endl;    
+        float parVec[3] = {0.0};
+        boundaries[materialIndices[lowInd]].getSurfaceParallel(parVec);
+        std::cout << "surface par " << parVec[0] << " " << parVec[2] << std::endl;
+        x = boundaries[materialIndices[lowInd]].x1 + parVec[0]*lengthAlongElement;
+        y=0.0;
+        z = boundaries[materialIndices[lowInd]].z1 + parVec[2]*lengthAlongElement;
+        //shift particles off surface
+        float perpVec[3] = {0.0};
+        float buffer = 5e-9;//0.0;//2e-6;
+        boundaries[materialIndices[lowInd]].getSurfaceNormal(perpVec);
+        x = x + perpVec[0]*buffer;
+        z = z + perpVec[2]*buffer;
+        #endif
+      #endif
+        #if PARTICLE_SOURCE_ENERGY == 1
 
-                        nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
-                        &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
-                        &closeGeom_sheath.front(),
-                  closestBoundaryIndex0 );
-       //std::cout << "closest Boundary " << x << " " << y << " " << z <<" " 
-       //          << closestBoundaryIndex0 << std::endl;
-       boundaries[closestBoundaryIndex0].startingParticles = boundaries[closestBoundaryIndex0].startingParticles + 1.0;
-    }
+            randE = dist01E(sE);
+            E = interp1dUnstructured(randE,nThompDistPoints, max_Energy, &CumulativeDFThompson.front(),lowIndE);
+        #endif
+  #if PARTICLE_SOURCE_ANGLE > 0
+      randA = dist01A(sA);
+      angleSample = interp1dUnstructured2(randA,nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front());
+      phi = angleSample;
+      std::cout << " angle sample and phi " << angleSample << " " << phi << std::endl;
+      randA = dist01A(sA);
+      theta = 3.141592653589793*floor(randA+0.5);
   #endif
+        Ex = E*sin(phi)*cos(theta);
+        Ey = E*sin(phi)*sin(theta);
+        Ez = E*cos(phi);
+        std::cout << "E of particle " << Ex << " " << Ey << " " << Ez << " " << std::endl;
+        //positive slope equals negative upward normal
+        theta_transform = -sgn(boundaries[materialIndices[lowInd]].slope_dzdx)*acos(perpVec[2]);
+        std::cout << "theta transform " << theta_transform << std::endl;
+
+        Ex_prime = Ex*cos(theta_transform) - Ez*sin(theta_transform);
+        Ez_prime = Ex*sin(theta_transform) + Ez*cos(theta_transform);
+        Ex = Ex_prime;
+        Ez = Ez_prime;
+        std::cout << "Transformed E " << Ex << " " << Ey << " " << Ez << " " << std::endl;
+    
+      particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
+    }
+//  #elif PARTICLE_SOURCE == 1
+//    float x;
+//    float y;
+//    float z;
+//    
+//    float Ex;
+//    float Ey;
+//    float Ez;
+//    
+//    float amu;
+//    float Z;
+//    float charge;
+//    float impurity_Z = cfg.lookup("impurityParticleSource.Z");
+//    int nImpurityBoundaries = 0;
+//    for (int i=0; i<nLines;i++)
+//    {
+//        if(boundaries[i].Z == impurity_Z)
+//        {
+//            nImpurityBoundaries++;
+//        }
+//    }
+//    std::cout << "n Impurity Boundaries to launch from " << nImpurityBoundaries << std::endl;
+//    sim::Array<int> boundaryIndex_ImpurityLaunch(nImpurityBoundaries);
+//    
+//    int count = 0;
+//    for (int i=0; i<nLines;i++)
+//    {
+//        if(boundaries[i].Z == impurity_Z)
+//        {
+//            boundaryIndex_ImpurityLaunch[count] = i;
+//            count++;
+//            std::cout << "Boundary indices " << i << std::endl;
+//        }
+//    }
+//    
+//    int impuritiesPerBoundary = nP/nImpurityBoundaries;
+//      
+//    std::uniform_real_distribution<float> distributionForSeeds(0,1e6);
+//    #if FIXEDSEEDS ==0
+//        std::random_device randDevice;
+//        std::default_random_engine generator0(randDevice());
+//    #else
+//        float randDevice = 6.5298E+5;
+//        std::default_random_engine generator0(randDevice);
+//    #endif
+//    
+//    sim::Array<float> boundarySeeds0(4*nImpurityBoundaries);
+//    std::generate( boundarySeeds0.begin(), boundarySeeds0.end(), [&]() { return distributionForSeeds(generator0); } );
+//    std::uniform_real_distribution<float> dist01(0.0, 1.0);
+//    float rand0 = 0.0;
+//    float rand1 = 0.0;
+//    float rand2 = 0.0;
+//    float rand3 = 0.0;
+//
+//    sim::Array<std::mt19937> s0(4*nImpurityBoundaries);
+//    
+//    float E0 = 0.0;
+////Create Thompson Distribution
+//    float surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
+//    std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
+//    int nThompDistPoints = 200;
+//    float max_Energy = 100.0;
+//    sim::Array<float> ThompsonDist(nThompDistPoints),CumulativeDFThompson(nThompDistPoints);
+//    for(int i=0;i<nThompDistPoints;i++)
+//        {
+//            ThompsonDist[i] = (i*max_Energy/nThompDistPoints)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,3);
+//            if(i==0)
+//            {
+//                CumulativeDFThompson[i] = ThompsonDist[i]; 
+//            }
+//            else
+//            {
+//                CumulativeDFThompson[i] = CumulativeDFThompson[i-1]+ThompsonDist[i];
+//            }
+//        }
+//    for(int i=0;i<nThompDistPoints;i++)
+//        {
+//            CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
+//            //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
+//        }
+//
+//    for(int j=0; j<4*nImpurityBoundaries;j++)
+//        {
+//            std::mt19937  s(boundarySeeds0[j]);
+//            s0[j] = s;
+//        }
+//    // Particle p1(0.0,0.0,0.0,0.0,0.0,0.0,0,0.0);
+//    for (int i=0; i< nImpurityBoundaries;i++)
+//    {
+//        for(int j=0; j<impuritiesPerBoundary; j++)
+//        {
+//            //Set boundary interval, properties, and random number gen
+//        if (i==0)
+//        {
+//            rand0 = dist01(s0[0]);
+//            x = boundaries[boundaryIndex_ImpurityLaunch[i]].x1 + 
+//                boundaries[boundaryIndex_ImpurityLaunch[i]].length*rand0;//1.4290;
+//            //std::cout << "start pos 1 " << x << std::endl;
+//            z = -1.2540+0.00001;
+//            rand1 = dist01(s0[1]);
+//            rand2 = dist01(s0[2]);
+//            rand3 = dist01(s0[3]);
+//            E0 = interp1dUnstructured(rand2,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
+//            Ex = E0*cos(3.1415*rand1)*sin(3.1415*rand3);
+//            Ey = E0*cos(3.1415*rand3);
+//            Ez = E0*sin(3.1415*rand1)*sin(3.1415*rand3);
+//        }
+//        else
+//        {
+//            rand0 = dist01(s0[4]);
+//            x = boundaries[boundaryIndex_ImpurityLaunch[i]].x1 + boundaries[boundaryIndex_ImpurityLaunch[i]].length*rand0;
+//            //x = 1.3450;
+//            //std::cout << "start pos 2 " << x << std::endl;
+//            z = -1.3660+0.00001;
+//            rand1 = dist01(s0[5]);
+//            rand2 = dist01(s0[6]);
+//            rand3 = dist01(s0[7]);
+//            E0 = interp1dUnstructured(rand2,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
+//            Ex = E0*cos(3.1415*rand1)*sin(3.1415*rand3);
+//            Ey = E0*cos(3.1415*rand3);
+//            Ez = E0*sin(3.1415*rand1)*sin(3.1415*rand3);
+//        }
+//        particleArray->setParticle((i * impuritiesPerBoundary + j),x, 0.0, z, Ex, Ey, Ez, 74, 18400.0, charge);            
+//        }
+//    }
+//  #elif PARTICLE_SOURCE == 2
+//    std::cout << "Read particle source " << std::endl;
+//    Config cfg_particles;
+//    cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
+//    Setting& particleSource = cfg_particles.lookup("particleSource");
+//    std::cout << "found setting particleSource " << std::endl;
+//    float rSample;
+//    float angleSample;
+//    float x;
+//    float y;
+//    float z;
+//    
+//    float Vr;
+//    float Vx;
+//    float Vy;
+//    float Vz;
+//    float V0;
+//    float E0;
+//    float amu;
+//    float Z;
+//    float charge= cfg.lookup("impurityParticleSource.initialConditions.charge");
+//    float impurity_Z = cfg.lookup("impurityParticleSource.Z");
+//    int nSources = particleSource["nSources"];
+//    int nSegments = particleSource["nSegments"];
+//    int nSegmentsAngle = particleSource["nSegmentsAngle"];
+//    int cylSymm = particleSource["cylSymm"];
+//    
+//    sim::Array<float> sourceR(2*nSources);
+//    sim::Array<float> sourceZ(2*nSources);
+//    sim::Array<float> sourceRsegments(nSegments);
+//    sim::Array<float> sourceZsegments(nSegments);
+//    sim::Array<float> spaceCDF(nSegments);
+//    sim::Array<float> sourceAngleSegments(nSegmentsAngle);
+//    sim::Array<float> angleCDF(nSegmentsAngle);
+//    
+//    for (int i=0; i<(nSources*2); i++)
+//    {
+//        sourceR[i] = particleSource["r0"][i];
+//        sourceZ[i] = particleSource["z0"][i];
+//    }
+//    
+//    for (int i=0; i<(nSegments); i++)
+//    {
+//        sourceRsegments[i] = particleSource["r"][i];
+//        sourceZsegments[i] = particleSource["z"][i];
+//        spaceCDF[i] = particleSource["spaceCDF"][i];
+//    }
+//    
+//    for (int i=0; i<(nSegmentsAngle); i++)
+//    {
+//        sourceAngleSegments[i] = particleSource["angles"][i];
+//        angleCDF[i] = particleSource["angleCDF"][i];
+//    }
+//    std::uniform_real_distribution<float> dist01(0.0, 1.0);
+//    float rand0 = 0.0;
+//    float rand1 = 0.0;
+//    float rand2 = 0.0;
+//    float rand3 = 0.0;
+//    float rand4 = 0.0;
+//
+//    sim::Array<std::mt19937> s0(5);
+//    std::mt19937 ss0(123314.234);
+//     s0[0] =  ss0;
+//    std::mt19937 ss1(389362.735);
+//     s0[1] =  ss1;
+//    std::mt19937 ss2(523563.108);
+//     s0[2] =  ss2;
+//    std::mt19937 ss3(752081.751);
+//     s0[3] =  ss3;
+//    std::mt19937 ss4(952381.034);
+//     s0[4] =  ss4;
+//
+//    float surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
+//    std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
+//    int nThompDistPoints = 200;
+//    float max_Energy = 100.0;
+//    sim::Array<float> ThompsonDist(nThompDistPoints),CumulativeDFThompson(nThompDistPoints);
+//    for(int i=0;i<nThompDistPoints;i++)
+//    {
+//       ThompsonDist[i] = (i*max_Energy/nThompDistPoints)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,3);
+//       if(i==0)
+//       {
+//           CumulativeDFThompson[i] = ThompsonDist[i]; 
+//       }
+//       else
+//       {
+//           CumulativeDFThompson[i] = CumulativeDFThompson[i-1]+ThompsonDist[i];
+//       }
+//    }
+//    for(int i=0;i<nThompDistPoints;i++)
+//    {
+//       CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
+//       //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
+//    }
+//
+//    //rand0 = dist01(s0[0]);
+//    //rand1 = dist01(s0[1]);
+//    //rand2 = dist01(s0[2]);
+//    //rand3 = dist01(s0[3]);
+//    sim::Array<float> angleBins(180);
+//    int angleBinNum = 0;
+//    sim::Array<float> angleBins2(180);
+//    int angleBinNum2 = 0;
+//    int closestBoundaryIndex0;
+//    float minDist0;
+//    float thisE0[3] = {0.0,0.0,0.0};
+//    for(int j=0; j<nParticles ; j++)
+//    {
+//      rand0 = dist01(s0[0]);
+//      rSample = interp1dUnstructured2(rand0,nSegments,&sourceRsegments.front() , &spaceCDF.front());
+//      rand4 = dist01(s0[4]);
+//      x = rSample*cos(rand4*2.0*3.1415);
+//      y = rSample*sin(rand4*2.0*3.1415);
+//      z = sourceZ[0];
+//      rand1 = dist01(s0[1]);
+//      E0 = interp1dUnstructured(rand1,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
+//      V0 = sqrt(2*E0*1.602e-19/(184.0*1.66e-27));
+//      rand2 = dist01(s0[2]);
+//      angleSample = interp1dUnstructured2(rand2,nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front());
+//      angleBinNum=floor(angleSample*180/3.1415);
+//      angleBins[angleBinNum] = angleBins[angleBinNum]+1;
+//      //std::cout << angleSample << std::endl;
+//      //Ey = //E0*cos(angleSample)*sin(2.0*3.1415*rand3);
+//      Vz = V0*cos(angleSample);
+//      Vr = V0*sin(angleSample);//cos(2.0*3.1415*rand3)
+//      //std::cout << "Ez " << Ez << " Er " << Er << std::endl; 
+//      rand3 = dist01(s0[3]);
+//      //rand3 = j*1.0/nParticles;
+//      Vx = Vr*cos(2.0*3.1415*rand3);
+//      Vy = Vr*sin(2.0*3.1415*rand3);//E0*cos(angleSample)*sin(2.0*3.1415*rand3);
+//      angleBinNum2=floor(rand3*180.0);
+//      angleBins2[angleBinNum2] = angleBins2[angleBinNum2]+1;
+//      //std::cout << "rsample " << rSample << " E0 " << E0 << " angleSample " << angleSample << std::endl;
+//    particleArray->setParticleV(j,x,y,z,Vx,Vy,Vz,74, 184.0, charge);
+//       minDist0 = getE ( x,y,z,thisE0, boundaries.data(),nLines,
+//
+//                        nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
+//                        &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
+//                        &closeGeom_sheath.front(),
+//                  closestBoundaryIndex0 );
+//       //std::cout << "closest Boundary " << x << " " << y << " " << z <<" " 
+//       //          << closestBoundaryIndex0 << std::endl;
+//       boundaries[closestBoundaryIndex0].startingParticles = boundaries[closestBoundaryIndex0].startingParticles + 1.0;
+//    }
+//  #endif
 
   std::cout << "finished loading particle source" << std::endl;
   #if USESURFACEMODEL > 0
@@ -2496,6 +2724,10 @@ for (int i=0; i<nP; i++)
     finalPosX[i] = particleArray->xprevious[i];
     finalPosY[i] = particleArray->yprevious[i];
     finalPosZ[i] = particleArray->zprevious[i];
+    if(finalPosZ[i] < -0.01)
+    {
+        std::cout << "out of bounds value " << finalPosZ[i] << std::endl;
+    }
     finalVx[i] =   particleArray->vx[i];
     finalVy[i] =   particleArray->vy[i];
     finalVz[i] =   particleArray->vz[i];
@@ -2561,12 +2793,10 @@ NcFile ncFile_hist("output/history.nc", NcFile::replace);
 NcDim nc_nT = ncFile_hist.addDim("nT",nT/subSampleFac);
 NcDim nc_nP = ncFile_hist.addDim("nP",nP);
 vector<NcDim> dims_hist;
-
-#if USE_CUDA
-NcDim nc_nPnT = ncFile_hist.addDim("nPnT",nP*nT/subSampleFac);
-dims_hist.push_back(nc_nPnT);
-#else
-#endif
+dims_hist.push_back(nc_nP);
+dims_hist.push_back(nc_nT);
+//NcDim nc_nPnT = ncFile_hist.addDim("nPnT",nP*nT/subSampleFac);
+//dims_hist.push_back(nc_nPnT);
 NcVar nc_x = ncFile_hist.addVar("x",ncDouble,dims_hist);
 NcVar nc_y = ncFile_hist.addVar("y",ncDouble,dims_hist);
 NcVar nc_z = ncFile_hist.addVar("z",ncDouble,dims_hist);
@@ -2584,7 +2814,7 @@ float *vxPointer = &velocityHistoryX[0];
 float *vyPointer = &velocityHistoryY[0];
 float *vzPointer = &velocityHistoryZ[0];
 float *chargePointer = &chargeHistory[0];
-nc_x.putVar(xPointer);
+nc_x.putVar(&positionHistoryX[0]);
 nc_y.putVar(yPointer);
 nc_z.putVar(zPointer);
 
