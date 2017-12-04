@@ -1430,7 +1430,7 @@ int main()
 
   auto particleArray = new Particles(nParticles);
   
-  float x,y,z,E,Ex,Ey,Ez,amu,Z,charge,phi,theta;      
+  float x,y,z,E,Ex,Ey,Ez,amu,Z,charge,phi,theta,Ex_prime,Ez_prime,theta_transform;      
   if(cfg.lookupValue("impurityParticleSource.initialConditions.impurity_amu",amu) && 
      cfg.lookupValue("impurityParticleSource.initialConditions.impurity_Z",Z) &&
      cfg.lookupValue("impurityParticleSource.initialConditions.charge",charge))
@@ -1490,12 +1490,62 @@ int main()
     }
     else
     { std::cout << "ERROR: Could not get point source impurity initial conditions" << std::endl;}
+  #elif PARTICLE_SOURCE_ENERGY == 1
+//Create Thompson Distribution
+    float surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
+    std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
+    int nThompDistPoints = 200;
+    float max_Energy = 100.0;
+    sim::Array<float> ThompsonDist(nThompDistPoints),CumulativeDFThompson(nThompDistPoints);
+    for(int i=0;i<nThompDistPoints;i++)
+        {
+            ThompsonDist[i] = (i*max_Energy/nThompDistPoints)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,3);
+            if(i==0)
+            {
+                CumulativeDFThompson[i] = ThompsonDist[i]; 
+            }
+            else
+            {
+                CumulativeDFThompson[i] = CumulativeDFThompson[i-1]+ThompsonDist[i];
+            }
+        }
+    for(int i=0;i<nThompDistPoints;i++)
+        {
+            CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
+            //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
+        }
+        std::random_device randDevice_particleE;
+        std::mt19937 sE(randDevice_particleE());
+        std::uniform_real_distribution<float> dist01E(0.0, 1.0);
+        float randE = 0.0;
+        int lowIndE = 0;
+
   #endif
   #if PARTICLE_SOURCE_ANGLE == 0
     if (cfg.lookupValue("impurityParticleSource.initialConditions.phi",phi) &&
         cfg.lookupValue("impurityParticleSource.initialConditions.theta",theta))
     { std::cout << "Impurity point source angles phi theta: " << phi << " " << theta << std::endl;
     }
+#elif PARTICLE_SOURCE_ANGLE == 2
+
+    std::cout << "Read particle source " << std::endl;
+    Config cfg_particles;
+    cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
+    Setting& particleSource = cfg_particles.lookup("particleSource");
+    int nSegmentsAngle = particleSource["nSegmentsAngle"];
+    float angleSample;
+    sim::Array<float> sourceAngleSegments(nSegmentsAngle);
+    sim::Array<float> angleCDF(nSegmentsAngle);
+    for (int i=0; i<(nSegmentsAngle); i++)
+    {
+        sourceAngleSegments[i] = particleSource["angles"][i];
+        angleCDF[i] = particleSource["angleCDF"][i];
+    }
+        std::random_device randDevice_particleA;
+        std::mt19937 sA(randDevice_particleA());
+        std::uniform_real_distribution<float> dist01A(0.0, 1.0);
+        float randA = 0.0;
+        int lowIndA = 0;
   #endif
         std::random_device randDevice;
         std::mt19937 s0(randDevice());
@@ -1523,15 +1573,40 @@ int main()
         z = boundaries[materialIndices[lowInd]].z1 + parVec[2]*lengthAlongElement;
         //shift particles off surface
         float perpVec[3] = {0.0};
-        float buffer = 2e-6;
+        float buffer = 5e-9;//0.0;//2e-6;
         boundaries[materialIndices[lowInd]].getSurfaceNormal(perpVec);
-        x = boundaries[materialIndices[lowInd]].x1 + perpVec[0]*buffer;
-        z = boundaries[materialIndices[lowInd]].z1 + perpVec[2]*buffer;
-        
+        x = x + perpVec[0]*buffer;
+        z = z + perpVec[2]*buffer;
+        #endif
+      #endif
+        #if PARTICLE_SOURCE_ENERGY == 1
 
-     #endif
-    #endif
-      particleArray->setParticle(i,x, y, z, E, phi, theta, Z, amu, charge);
+            randE = dist01E(sE);
+            E = interp1dUnstructured(randE,nThompDistPoints, max_Energy, &CumulativeDFThompson.front(),lowIndE);
+        #endif
+  #if PARTICLE_SOURCE_ANGLE > 0
+      randA = dist01A(sA);
+      angleSample = interp1dUnstructured2(randA,nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front());
+      phi = angleSample;
+      std::cout << " angle sample and phi " << angleSample << " " << phi << std::endl;
+      randA = dist01A(sA);
+      theta = 3.141592653589793*floor(randA+0.5);
+  #endif
+        Ex = E*sin(phi)*cos(theta);
+        Ey = E*sin(phi)*sin(theta);
+        Ez = E*cos(phi);
+        std::cout << "E of particle " << Ex << " " << Ey << " " << Ez << " " << std::endl;
+        //positive slope equals negative upward normal
+        theta_transform = -sgn(boundaries[materialIndices[lowInd]].slope_dzdx)*acos(perpVec[2]);
+        std::cout << "theta transform " << theta_transform << std::endl;
+
+        Ex_prime = Ex*cos(theta_transform) - Ez*sin(theta_transform);
+        Ez_prime = Ex*sin(theta_transform) + Ez*cos(theta_transform);
+        Ex = Ex_prime;
+        Ez = Ez_prime;
+        std::cout << "Transformed E " << Ex << " " << Ey << " " << Ez << " " << std::endl;
+    
+      particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
     }
 //  #elif PARTICLE_SOURCE == 1
 //    float x;
@@ -2573,11 +2648,12 @@ NcFile ncFile_hist("output/history.nc", NcFile::replace);
 NcDim nc_nT = ncFile_hist.addDim("nT",nT/subSampleFac);
 NcDim nc_nP = ncFile_hist.addDim("nP",nP);
 vector<NcDim> dims_hist;
-
-#if USE_CUDA
-NcDim nc_nPnT = ncFile_hist.addDim("nPnT",nP*nT/subSampleFac);
-dims_hist.push_back(nc_nPnT);
-#else
+dims_hist.push_back(nc_nP);
+dims_hist.push_back(nc_nT);
+//NcDim nc_nPnT = ncFile_hist.addDim("nPnT",nP*nT/subSampleFac);
+//dims_hist.push_back(nc_nPnT);
+NcVar nc_x = ncFile_hist.addVar("x",ncDouble,dims_hist);
+NcVar nc_y = ncFile_hist.addVar("y",ncDouble,dims_hist);
 NcVar nc_z = ncFile_hist.addVar("z",ncDouble,dims_hist);
 
 NcVar nc_vx = ncFile_hist.addVar("vx",ncDouble,dims_hist);
@@ -2593,7 +2669,7 @@ float *vxPointer = &velocityHistoryX[0];
 float *vyPointer = &velocityHistoryY[0];
 float *vzPointer = &velocityHistoryZ[0];
 float *chargePointer = &chargeHistory[0];
-nc_x.putVar(xPointer);
+nc_x.putVar(&positionHistoryX[0]);
 nc_y.putVar(yPointer);
 nc_z.putVar(zPointer);
 
@@ -2612,7 +2688,6 @@ nc_vy.putVar(velocityHistoryY[0]);
 nc_vz.putVar(velocityHistoryZ[0]);
 
 nc_charge.putVar(chargeHistory[0]);
-#endif
 #endif
 #endif
 #if SPECTROSCOPY > 0

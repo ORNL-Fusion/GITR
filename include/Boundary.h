@@ -85,9 +85,9 @@ class Boundary {
     {
         float norm = sqrt((x2-x1)*(x2-x1) + (z2-z1)*(z2-z1));
         std::cout << "surf par calc " << x2 << " " << x1 << " " << norm << std::endl;
-        A[0] = (x1-x2)/norm;
+        A[0] = (x2-x1)/norm;
         A[1] = 0.0;
-        A[2] = (z1-z2)/norm;
+        A[2] = (z2-z1)/norm;
 
     }
     
