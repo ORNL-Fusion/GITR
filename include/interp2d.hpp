@@ -148,6 +148,13 @@ float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data,in
         ((data[low_index+1] - samplePoint)*low_index*max_x/nx
         + (samplePoint - data[low_index])*(low_index+1)*max_x/nx)/(data[low_index+1]- data[low_index]);
     lowInd = low_index;
+    if(low_index < 0)
+    {
+        std::cout << "WARNING: interpolated value is outside range of CDF " << std::endl;
+        lowInd = 0;
+        interpolated_value = samplePoint*data[0];
+
+    }
     return interpolated_value;
 }
 CUDA_CALLABLE_MEMBER
