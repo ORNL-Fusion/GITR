@@ -70,6 +70,12 @@ struct hashGeom_sheath {
                   {
                       if(boundary[l].Z > 0)
                       {
+                       float a = boundary[l].a;
+                       float b = boundary[l].b;
+                       float c = boundary[l].c;
+                       float d = boundary[l].d;
+                       float plane_norm = boundary[l].plane_norm;
+                       float pointToPlaneDistance0 = abs(a*x0 + b*y0 + c*z0 + d)/plane_norm;
                        float d1 =((x0 - boundary[l].x1)*(x0 - boundary[l].x1)
                                +  (y0 - boundary[l].y1)*(y0 - boundary[l].y1)
                                +  (z0 - boundary[l].z1)*(z0 - boundary[l].z1));
@@ -82,6 +88,7 @@ struct hashGeom_sheath {
                                +  (z0 - boundary[l].z3)*(z0 - boundary[l].z3));
                      #endif
                               float minOf3 = min(d1,d2);
+                              minOf3 = min(minOf3,pointToPlaneDistance0);
                      #if USE3DTETGEOM > 0
                               minOf3 = min(minOf3,d3);
                      #endif

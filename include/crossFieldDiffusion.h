@@ -63,7 +63,7 @@ void operator()(std::size_t indx) const {
         B_unit[2] = B[2]/Bmag;
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
-        	float r3 = curand_uniform(&particlesPointer->streams[2]);
+        	float r3 = 0.5;//;curand_uniform(&particlesPointer->streams[2]);
 #else
         	std::uniform_real_distribution<float> dist(0.0, 1.0);
         	float r3=dist(particlesPointer->streams[2]);

@@ -84,7 +84,7 @@ class Boundary {
     void getSurfaceParallel(float A[])
     {
         float norm = sqrt((x2-x1)*(x2-x1) + (z2-z1)*(z2-z1));
-        std::cout << "surf par calc " << x2 << " " << x1 << " " << norm << std::endl;
+        //std::cout << "surf par calc " << x2 << " " << x1 << " " << norm << std::endl;
         A[0] = (x2-x1)/norm;
         A[1] = 0.0;
         A[2] = (z2-z1)/norm;
@@ -94,11 +94,14 @@ class Boundary {
     CUDA_CALLABLE_MEMBER
     void getSurfaceNormal(float B[])
     {
+#if USE3DTETGEOM > 0
+#else
         float perpSlope = -1.0/slope_dzdx;
         B[0] = 1.0/sqrt(perpSlope*perpSlope+1.0);
         B[1] = 0.0;
         B[2] = sqrt(1-B[0]*B[0]);
-        std::cout << "perp x and z comp " << B[0] << " " << B[2] << std::endl;
+        //std::cout << "perp x and z comp " << B[0] << " " << B[2] << std::endl;
+#endif
     }
     //CUDA_CALLABLE_MEMBER
 //        Boundary(float x1,float y1, float z1, float x2, float y2, float z2,float slope, float intercept, float Z, float amu)

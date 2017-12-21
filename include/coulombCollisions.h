@@ -260,9 +260,9 @@ void operator()(std::size_t indx) const {
         	velocityRelativeNorm = sqrt( relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2]);
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
-        int plus_minus1 = floor(curand_uniform(&particlesPointer->streams_collision1[indx]) + 0.5)*2 -1;
-		int plus_minus2 = floor(curand_uniform(&particlesPointer->streams_collision2[indx]) + 0.5)*2 -1;
-		int plus_minus3 = floor(curand_uniform(&particlesPointer->streams_collision3[indx]) + 0.5)*2 -1;
+        int plus_minus1 = 1;//floor(curand_uniform(&particlesPointer->streams_collision1[indx]) + 0.5)*2 -1;
+		int plus_minus2 = 1;//floor(curand_uniform(&particlesPointer->streams_collision2[indx]) + 0.5)*2 -1;
+		int plus_minus3 = 1;//floor(curand_uniform(&particlesPointer->streams_collision3[indx]) + 0.5)*2 -1;
 #else
 	    std::uniform_real_distribution<float> dist(0.0, 1.0);
         int plus_minus1 = floor(dist(particlesPointer->streams_collision1[indx]) + 0.5)*2 - 1;

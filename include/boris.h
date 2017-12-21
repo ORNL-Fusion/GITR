@@ -740,15 +740,19 @@ cpu_times initTime0 = timer.elapsed();
             float position[3]= {0.0f, 0.0f, 0.0f};
 	        float v[3]= {0.0f, 0.0f, 0.0f};
 	        float E[3] = {0.0f, 0.0f, 0.0f};
-	        float PSE[3] = {0.0f, 0.0f, 0.0f};
+#if USEPRESHEATHEFIELD > 0
+            float PSE[3] = {0.0f, 0.0f, 0.0f};
+#endif
 	        float B[3] = {0.0f,0.0f,0.0f};
 	        float dt = span;
 	        float Bmag = 0.0f;
 	        float q_prime = 0.0f;
             float coeff = 0.0f;
             int nSteps = floor( span / dt + 0.5f);
+#if USESHEATHEFIELD > 0
             float minDist = 0.0f;
             int closestBoundaryIndex;
+#endif
 #if ODEINT ==	0  
 	        float qpE[3] = {0.0f,0.0f,0.0f};
 	        float vmxB[3] = {0.0f,0.0f,0.0f};

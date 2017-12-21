@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #endif
 CUDA_CALLABLE_MEMBER
-void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNormalVector[]){
+void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNormalVector[],float x,float y){
   #if USE3DTETGEOM > 0
            float norm_normal = boundaryVector[wallIndex].plane_norm; 
             surfaceNormalVector[0] = boundaryVector[wallIndex].a/norm_normal;
@@ -55,8 +55,8 @@ void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNorma
             surfaceNormalVector[2] = surfaceNormalVector[2]/norm_normal;
                 }
 #if USECYLSYMM > 0 
-            float theta = atan2f(particles->yprevious[indx],particles->xprevious[indx]);
-            Sr = surfaceNormalVector[0];
+            float theta = atan2f(y,x);
+            float Sr = surfaceNormalVector[0];
             surfaceNormalVector[0] = cosf(theta)*Sr;
             surfaceNormalVector[1] = sinf(theta)*Sr;
 #endif            
@@ -75,12 +75,12 @@ double screeningLength ( double Zprojectile, double Ztarget ) {
 CUDA_CALLABLE_MEMBER
 double stoppingPower (Particles * particles,int indx, double Mtarget, double Ztarget, double screenLength) {
 	        double E0;
-                double Q = 1.60217662e-19;
+            double Q = 1.60217662e-19;
 		double ke2 = 14.4e-10;
 		double reducedEnergy;
 	double stoppingPower;
 
-	E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/1.60217662e-19;
+	E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/Q;
 	reducedEnergy = E0*(Mtarget/(particles->amu[indx]+Mtarget))*(screenLength/(particles->Z[indx]*Ztarget*ke2));
 	stoppingPower = 0.5*log(1.0 + 1.2288*reducedEnergy)/(reducedEnergy + 0.1728*sqrt(reducedEnergy) + 0.008*pow(reducedEnergy, 0.1504));
 
@@ -99,7 +99,6 @@ void operator()(std::size_t indx) const {
 	double stopPower;
 	double q = 18.6006;
 	double lambda = 2.2697;
-    float eps =0.0; 
     double mu = 3.1273;
 	double Eth = 24.9885;
 	double Y0;
@@ -249,9 +248,9 @@ void operator()(std::size_t indx) const {
             //std::cout << "Energy angle yield " << E0 << " " << thetaImpact << " " << Y0 << std::endl; 
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
-                float r7 = curand_uniform(&particles->streams_surf[indx]);
-                float r8 = curand_uniform(&particles->streams_surf[indx]);
-                float r9 = curand_uniform(&particles->streams_surf[indx]);
+                float r7 = 0.5;//curand_uniform(&particles->streams_surf[indx]);
+                float r8 = 0.5;//curand_uniform(&particles->streams_surf[indx]);
+                float r9 = 0.5;//curand_uniform(&particles->streams_surf[indx]);
 #else
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
                 float r7 = dist(particles->streams_surf[indx]);
