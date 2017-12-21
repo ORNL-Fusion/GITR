@@ -112,7 +112,11 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[i].plane_norm = geom["plane_norm"][i];
        boundaries[i].area = geom["area"][i];
      }   
-
+     #if USECYLSYMM
+       boundaries[nLines].y1 = geom["theta0"];
+       boundaries[nLines].y2 = geom["theta1"];
+       boundaries[nLines].periodic = geom["periodic"];
+     #endif
     outfile.close();
   #else
 

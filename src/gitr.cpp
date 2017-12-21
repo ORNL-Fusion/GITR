@@ -40,6 +40,7 @@
 #if USE_BOOST
     #include <boost/timer/timer.hpp>
     #include "boost/filesystem.hpp"
+    #include <boost/random.hpp>
 #endif
 
 #ifdef __CUDACC__
@@ -82,55 +83,7 @@ int main()
   
   //check binary compatibility with input file
   #if CHECK_COMPATIBILITY>0
-    std::cout << "Checking compatibility of compile flags with input file " 
-              << std::endl;
     checkFlags(cfg); 
-    const char *flags0[] = {"flags.USE_CUDA","flags.USEMPI", 
-              "flags.USE_BOOST","flags.USEIONIZATION",
-              "flags.USERECOMBINATION","flags.USEPERPDIFFUSION",
-              "flags.USECOULOMBCOLLISIONS",
-              "flags.USETHERMALFORCE","flags.USESURFACEMODEL",
-              "flags.USESHEATHEFIELD","flags.BIASED_SURFACE",
-              "flags.USEPRESHEATHEFIELD","flags.BFIELD_INTERP",
-              "flags.LC_INTERP","flags.GENERATE_LC", "flags.EFIELD_INTERP",
-              "flags.PRESHEATH_INTERP","flags.DENSITY_INTERP",
-              "flags.TEMP_INTERP",
-              "flags.FLOWV_INTERP","flags.GRADT_INTERP",
-              "flags.ODEINT","flags.FIXEDSEEDS",
-              "flags.PARTICLESEEDS","flags.GEOM_TRACE","flags.GEOM_HASH",
-              "flags.GEOM_HASH_SHEATH","flags.PARTICLE_TRACKS",
-              "flags.PARTICLE_SOURCE",
-              "flags.SPECTROSCOPY","flags.USE3DTETGEOM","flags.USECYLSYMM"};
-    int flagValues[] =  {USE_CUDA, USEMPI, USE_BOOST,USEIONIZATION,
-           USERECOMBINATION,USEPERPDIFFUSION,USECOULOMBCOLLISIONS,
-           USETHERMALFORCE,USESURFACEMODEL,USESHEATHEFIELD,BIASED_SURFACE,
-           USEPRESHEATHEFIELD,BFIELD_INTERP,LC_INTERP, GENERATE_LC,
-           EFIELD_INTERP,
-           PRESHEATH_INTERP,DENSITY_INTERP,TEMP_INTERP,
-           FLOWV_INTERP,GRADT_INTERP,ODEINT,FIXEDSEEDS,
-           PARTICLESEEDS,GEOM_TRACE,GEOM_HASH,
-           GEOM_HASH_SHEATH,PARTICLE_TRACKS,PARTICLE_SOURCE,
-           SPECTROSCOPY,USE3DTETGEOM,USECYLSYMM};
-    int check1;
-    for (int i=0; i<sizeof(flagValues)/sizeof(int); i++)
-    {
-      if(cfg.lookupValue(flags0[i], check1))
-      {  
-        if (flagValues[i] != check1)
-        { std::cout << "incompatibility in " << flags0[i]
-                  << " between input file and binary" << std::endl;
-          exit(0);
-        }
-        else
-        {
-          std::cout << flags0[i] <<" = " << check1<< std::endl;
-        }
-      }
-      else
-      {
-        std::cout << flags0[i] <<" was not found" << std::endl;
-      }
-    }
   #endif
   
   // show memory usage of GPU
@@ -153,6 +106,23 @@ int main()
     printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
       used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
   #endif
+  int nDevices;
+  int nThreads;
+  cudaGetDeviceCount(&nDevices);
+  for (int i = 0; i < nDevices; i++) {
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, i);
+    printf("Device Number: %d\n", i);
+    printf("  Device name: %s\n", prop.name);
+    printf("  Memory Clock Rate (KHz): %d\n",
+                       prop.memoryClockRate);
+    printf("  Memory Bus Width (bits): %d\n",
+                       prop.memoryBusWidth);
+    printf("  Peak Memory Bandwidth (GB/s): %f\n\n",
+                       2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
+    printf("  Total number of threads: %d\n", prop.maxThreadsPerMultiProcessor);
+    nThreads = prop.maxThreadsPerMultiProcessor;
+    }
   
   // Background species info
   float background_Z,background_amu;
@@ -216,21 +186,22 @@ int main()
     getVariable(cfg,"backgroundPlasmaProfiles.biasPotential",biasPotential);
   #endif
   //create Surface data structures
-  int nEdist = 200;
+  int nEdist = 1;
   float E0dist = 0.0;
-  float Edist = 1000.0;
-  int nAdist = 30;
+  float Edist = 0.0;
+  int nAdist = 1;
   float A0dist = 0.0;
-  float Adist = 90.0;
-  
-  getVariable(cfg,"surfaces.flux.nE",nEdist);
-  getVariable(cfg,"surfaces.flux.E0",E0dist);
-  getVariable(cfg,"surfaces.flux.E",Edist);
+  float Adist = 0.0;
+  #if FLUX_EA > 0
+    getVariable(cfg,"surfaces.flux.nE",nEdist);
+    getVariable(cfg,"surfaces.flux.E0",E0dist);
+    getVariable(cfg,"surfaces.flux.E",Edist);
 
-  getVariable(cfg,"surfaces.flux.nA",nAdist);
-  getVariable(cfg,"surfaces.flux.A0",A0dist);
-  getVariable(cfg,"surfaces.flux.A",Adist);
-  std::cout << "nLines before surfaces " << nLines << std::endl;
+    getVariable(cfg,"surfaces.flux.nA",nAdist);
+    getVariable(cfg,"surfaces.flux.A0",A0dist);
+    getVariable(cfg,"surfaces.flux.A",Adist);
+    std::cout << "nLines before surfaces " << nLines << std::endl;
+  #endif
   auto surfaces = new Surfaces(nLines,nEdist,nAdist);
   std::cout << "nLines after surfaces " << nLines << std::endl;
   surfaces->setSurface(nEdist, E0dist,Edist,nAdist ,A0dist ,Adist);
@@ -270,7 +241,7 @@ int main()
   #endif
   sim::Array<float> closeGeomGridr(nR_closeGeom), closeGeomGridy(nY_closeGeom),
       closeGeomGridz(nZ_closeGeom);
-  sim::Array<int> closeGeom(nGeomHash);
+  sim::Array<int> closeGeom(nGeomHash,0);
   #if GEOM_HASH == 1
     float hashX0,hashX1,hashY0,hashY1,hashZ0,hashZ1;
     getVariable(cfg,geomHashCfg+"hashX0",hashX0);
@@ -288,27 +259,60 @@ int main()
     {  closeGeomGridy[j] = (hashY1 - hashY0)*j/(nY_closeGeom - 1)+ hashY0;}
     for(int k=0; k<nZ_closeGeom; k++)
     {  closeGeomGridz[k] = (hashZ1 - hashZ0)*k/(nZ_closeGeom - 1)+ hashZ0;}
-  
+   std::cout << "about to create iterator1 " << std::endl; 
     thrust::counting_iterator<std::size_t> lines0(0);  
-    thrust::counting_iterator<std::size_t> lines1(nR_closeGeom*nY_closeGeom);
-    sim::Array<float> minDist1(nGeomHash,1e6);
-    std::cout << "Generating geometry hash" << std::endl;
-    for(int i=0; i<nZ_closeGeom; i++)
+   std::cout << "iterator2 " << std::endl; 
+    thrust::counting_iterator<std::size_t> lines1(nR_closeGeom*nY_closeGeom*nZ_closeGeom);
+   std::cout << "minDist1 "<< nGeomHash << std::endl; 
+    sim::Array<float> minDist1(n_closeGeomElements,1e6);
+    std::cout << "Generating geometry hash" << sizeof(int) << " bytes per int, " 
+        << nGeomHash << " for the entire hash " <<  std::endl;
+
+
+     cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
+  
+    if(cudaSuccess != cuda_status )
     {
-        std::cout << "percenent done " << i*1.0/nZ_closeGeom << std::endl;
-       thrust::for_each(thrust::device, lines0,lines1,
-                        hashGeom(i,nLines, boundaries.data(), 
+  
+       printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status) );
+       exit(1);
+    }
+  
+    free_db = (double)free_byte ;
+    total_db = (double)total_byte ;
+    used_db = total_db - free_db ;
+    
+    printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
+      used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
+    //for(int i=0; i<nZ_closeGeom; i++)
+    //{
+      //  std::cout << "percenent done " << i*1.0/nZ_closeGeom << std::endl;
+    typedef std::chrono::high_resolution_clock Time0;
+    typedef std::chrono::duration<float> fsec0;
+    auto start_clock0 = Time0::now();
+       hashGeom geo1(nLines, boundaries.data(), 
                         closeGeomGridr.data(), closeGeomGridy.data(),
                         closeGeomGridz.data(),
-                        n_closeGeomElements, minDist1.data(), closeGeom.data(),
-                        nR_closeGeom,nY_closeGeom,nZ_closeGeom));
+                        n_closeGeomElements, closeGeom.data(),
+                        nR_closeGeom,nY_closeGeom,nZ_closeGeom);
+       thrust::for_each(thrust::device, lines0,lines1,geo1);
+       //for(int i=0;i<nR_closeGeom*nY_closeGeom*nZ_closeGeom;i++)
+       //{
+       // geo1(i);
+       //}
        #if USE_CUDA
          cudaDeviceSynchronize();
        #endif
-    }
+    //}
     #if USE_CUDA
       cudaDeviceSynchronize();
     #endif
+   for(int i=0;i<n_closeGeomElements;i++)
+   {std::cout << "indices just calculated " << closeGeom[10+i] << std::endl;
+   }
+      auto finish_clock0 = Time0::now();
+      fsec0 fs0 = finish_clock0 - start_clock0;
+      printf("Time taken          is %6.3f (secs) \n", fs0.count());
     NcFile ncFile_hash("output/geomHash.nc", NcFile::replace);
     NcDim hashNR = ncFile_hash.addDim("nR",nR_closeGeom);
     NcDim hashNY = ncFile_hash.addDim("nY",nY_closeGeom);
@@ -319,10 +323,10 @@ int main()
     geomHashDim.push_back(hashNY);
     geomHashDim.push_back(hashNZ);
     geomHashDim.push_back(hashN);
-    NcVar hash_gridR = ncFile_hash.addVar("gridR",ncDouble,hashNR);
-    NcVar hash_gridY = ncFile_hash.addVar("gridY",ncDouble,hashNY);
-    NcVar hash_gridZ = ncFile_hash.addVar("gridZ",ncDouble,hashNZ);
-    NcVar hash = ncFile_hash.addVar("hash",ncDouble,geomHashDim);
+    NcVar hash_gridR = ncFile_hash.addVar("gridR",ncFloat,hashNR);
+    NcVar hash_gridY = ncFile_hash.addVar("gridY",ncFloat,hashNY);
+    NcVar hash_gridZ = ncFile_hash.addVar("gridZ",ncFloat,hashNZ);
+    NcVar hash = ncFile_hash.addVar("hash",ncInt,geomHashDim);
     hash_gridR.putVar(&closeGeomGridr[0]);
     hash_gridY.putVar(&closeGeomGridy[0]);
     hash_gridZ.putVar(&closeGeomGridz[0]);
@@ -1506,6 +1510,8 @@ for(int i=0;i<n_Dens;i++)
     }
     else
     { std::cout << "ERROR: Could not get point source impurity initial conditions" << std::endl;}
+  
+  int nMaterialSurfaces = 0;
   #if PARTICLE_SOURCE_SPACE == 0 // Point Source
     if (cfg.lookupValue("impurityParticleSource.initialConditions.x_start",x) &&
         cfg.lookupValue("impurityParticleSource.initialConditions.y_start",y) &&
@@ -1516,8 +1522,17 @@ for(int i=0;i<n_Dens;i++)
     { std::cout << "ERROR: Could not get point source impurity initial conditions" << std::endl;}
   #elif PARTICLE_SOURCE_SPACE == 2 //Material Surfaces - flux weighted source
     #if USE3DTETGEOM > 0
+      Config cfg_particles;
+      importLibConfig(cfg_particles,input_path+"particleSource.cfg");
+      //cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
+      Setting& particleSource = cfg_particles.lookup("particleSource");
+      int nSources = particleSource["nSources"];
+      sim::Array<int> sourceElements(nSources);
+      for (int i=0; i<(nSources); i++)
+      {
+        sourceElements[i] = particleSource["surfaceIndices"][i];
+      }
     #else
-      int nMaterialSurfaces = 0;
       std::cout << "nLines " << nLines << std::endl;
       for(int i=0;i<nLines;i++)
       {
@@ -1551,6 +1566,78 @@ for(int i=0;i<n_Dens;i++)
           std::cout << "cumsum length grid " << xPosGrid[i] << std::endl;
       }
     #endif
+    #if PARTICLE_SOURCE_SPACE == 1 //Material Surfaces - flux weighted source
+        std::random_device randDevice;
+        //std::array<mt19937> s0(5);
+        //std::mt19937 s0(randDevice());
+        boost::random::mt19937 s0;
+        boost::random::uniform_01<> dist01;
+        //mt19937::result_type seed = time(0);
+        //auto s0 = std::bind(std::uniform_real_distribution<double>(0,1),
+        //                                   mt19937(seed));
+        //std::uniform_real_distribution<float> dist001(0.0, 1.0);
+        float rand0 = 0.0;
+        int lowInd = 0;
+        float lengthAlongElement = 0.0;
+        float rSample = 0.0;
+    for (int i=0; i< nP ; i++)
+    {
+      rand0 = dist01(s0);
+      rSample = interp1dUnstructured2(rand0,nSegments,&sourceRsegments.front() , &spaceCDF.front());
+      rand4 = dist01(s0);
+      x = rSample*cos(rand4*2.0*3.1415);
+      y = rSample*sin(rand4*2.0*3.1415);
+      z = sourceZ[0];
+      rand1 = dist01(s0);
+      E0 = interp1dUnstructured(rand1,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
+      V0 = sqrt(2*E0*1.602e-19/(184.0*1.66e-27));
+      rand2 = dist01(s0);
+      angleSample = interp1dUnstructured2(rand2,nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front());
+      angleBinNum=floor(angleSample*180/3.1415);
+      angleBins[angleBinNum] = angleBins[angleBinNum]+1;
+      //std::cout << angleSample << std::endl;
+      //Ey = //E0*cos(angleSample)*sin(2.0*3.1415*rand3);
+      Vz = V0*cos(angleSample);
+      if(Vz < 0.0)
+      {
+         std::cout << "Vz is less than 0 " << Vz  << std::endl; 
+      }
+      Vr = V0*sin(angleSample);//cos(2.0*3.1415*rand3)
+      //std::cout << "Ez " << Ez << " Er " << Er << std::endl; 
+      rand3 = dist01(s0);
+      //rand3 = j*1.0/nParticles;
+      Vx = Vr*cos(2.0*3.1415*rand3);
+      Vy = Vr*sin(2.0*3.1415*rand3);//E0*cos(angleSample)*sin(2.0*3.1415*rand3);
+      angleBinNum2=floor(rand3*180.0);
+      angleBins2[angleBinNum2] = angleBins2[angleBinNum2]+1;
+      //std::cout << "rsample " << rSample << " E0 " << E0 << " angleSample " << angleSample << std::endl;
+    particleArray->setParticleV(j,x,y,z,Vx,Vy,Vz,74, 184.0, charge);
+    #endif
+       //minDist0 = getE ( x,y,z,thisE0, boundaries.data(),nLines,
+    #if PARTICLE_SOURCE_SPACE == 2 //Material Surfaces - flux weighted source
+      #if USE3DTETGEOM > 0
+      #else
+        //x = sampled
+        rand0 = dist001(s0);
+        x= interp1dUnstructured(rand0,nMaterialSurfaces, 1.0,&xPosGrid[0], lowInd);
+        lengthAlongElement = (rand0 - xPosGrid[lowInd])*boundaries[materialIndices[lowInd]].length/(xPosGrid[lowInd+1]-xPosGrid[lowInd]);
+        std::cout << "interpd x " <<rand0 << " " << x  << " " << lowInd << " "
+            << xPosGrid[lowInd] << " " << lengthAlongElement << " " << boundaries[materialIndices[lowInd]].length
+           << " " << lengthAlongElement/boundaries[materialIndices[lowInd]].length << std::endl;    
+        float parVec[3] = {0.0};
+        boundaries[materialIndices[lowInd]].getSurfaceParallel(parVec);
+        std::cout << "surface par " << parVec[0] << " " << parVec[2] << std::endl;
+        x = boundaries[materialIndices[lowInd]].x1 + parVec[0]*lengthAlongElement;
+        y=0.0;
+        z = boundaries[materialIndices[lowInd]].z1 + parVec[2]*lengthAlongElement;
+        //shift particles off surface
+        float perpVec[3] = {0.0};
+        float buffer = 5e-9;//0.0;//2e-6;
+        boundaries[materialIndices[lowInd]].getSurfaceNormal(perpVec);
+        x = x + perpVec[0]*buffer;
+        z = z + perpVec[2]*buffer;
+        #endif
+      #endif
   #endif
   #if PARTICLE_SOURCE_ENERGY == 0
     if( cfg.lookupValue("impurityParticleSource.initialConditions.energy_eV",E))
@@ -1582,11 +1669,14 @@ for(int i=0;i<n_Dens;i++)
             CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
             //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
         }
-        std::random_device randDevice_particleE;
-        std::mt19937 sE(randDevice_particleE());
-        std::uniform_real_distribution<float> dist01E(0.0, 1.0);
+        //std::random_device randDevice_particleE;
+        //std::mt19937 sE(randDevice_particleE());
+        //std::uniform_real_distribution<float> dist01E(0.0, 1.0);
+        boost::random::mt19937 sE;
+        boost::random::uniform_01<> dist01E;
         float randE = 0.0;
         int lowIndE = 0;
+        randE = dist01E(sE);
 
     for(int j=0; j<4*nImpurityBoundaries;j++)
         {
@@ -1637,7 +1727,14 @@ for(int i=0;i<n_Dens;i++)
         cfg.lookupValue("impurityParticleSource.initialConditions.theta",theta))
     { std::cout << "Impurity point source angles phi theta: " << phi << " " << theta << std::endl;
     }
-#elif PARTICLE_SOURCE_ANGLE == 2
+    else
+    { std::cout << "ERROR: Could not get point source angular initial conditions" << std::endl;}
+    phi = phi*3.1415/180.0;
+    theta = theta*3.1415/180.0;
+    Ex = E*sin(phi)*cos(theta);
+    Ey = E*sin(phi)*sin(theta);
+    Ez = E*cos(phi);
+  #elif PARTICLE_SOURCE_ANGLE == 2
 
     std::cout << "Read particle source " << std::endl;
     Config cfg_particles;
@@ -1658,82 +1755,32 @@ for(int i=0;i<n_Dens;i++)
         float randA = 0.0;
         int lowIndA = 0;
   #endif
-        std::random_device randDevice;
-        std::mt19937 s0(randDevice());
-        std::uniform_real_distribution<float> dist001(0.0, 1.0);
-        float rand0 = 0.0;
-        int lowInd = 0;
-        float lengthAlongElement = 0.0;
-    for (int i=0; i< nP ; i++)
-    {
-      rand0 = dist01(s0[0]);
-      rSample = interp1dUnstructured2(rand0,nSegments,&sourceRsegments.front() , &spaceCDF.front());
-      rand4 = dist01(s0[4]);
-      x = rSample*cos(rand4*2.0*3.1415);
-      y = rSample*sin(rand4*2.0*3.1415);
-      z = sourceZ[0];
-      rand1 = dist01(s0[1]);
-      E0 = interp1dUnstructured(rand1,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
-      V0 = sqrt(2*E0*1.602e-19/(184.0*1.66e-27));
-      rand2 = dist01(s0[2]);
-      angleSample = interp1dUnstructured2(rand2,nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front());
-      angleBinNum=floor(angleSample*180/3.1415);
-      angleBins[angleBinNum] = angleBins[angleBinNum]+1;
-      //std::cout << angleSample << std::endl;
-      //Ey = //E0*cos(angleSample)*sin(2.0*3.1415*rand3);
-      Vz = V0*cos(angleSample);
-      if(Vz < 0.0)
-      {
-         std::cout << "Vz is less than 0 " << Vz  << std::endl; 
-      }
-      Vr = V0*sin(angleSample);//cos(2.0*3.1415*rand3)
-      //std::cout << "Ez " << Ez << " Er " << Er << std::endl; 
-      rand3 = dist01(s0[3]);
-      //rand3 = j*1.0/nParticles;
-      Vx = Vr*cos(2.0*3.1415*rand3);
-      Vy = Vr*sin(2.0*3.1415*rand3);//E0*cos(angleSample)*sin(2.0*3.1415*rand3);
-      angleBinNum2=floor(rand3*180.0);
-      angleBins2[angleBinNum2] = angleBins2[angleBinNum2]+1;
-      //std::cout << "rsample " << rSample << " E0 " << E0 << " angleSample " << angleSample << std::endl;
-    particleArray->setParticleV(j,x,y,z,Vx,Vy,Vz,74, 184.0, charge);
-       minDist0 = getE ( x,y,z,thisE0, boundaries.data(),nLines,
-    #if PARTICLE_SOURCE_SPACE == 2 //Material Surfaces - flux weighted source
-      #if USE3DTETGEOM > 0
-      #else
-        //x = sampled
-        rand0 = dist001(s0);
-        x= interp1dUnstructured(rand0,nMaterialSurfaces, 1.0,&xPosGrid[0], lowInd);
-        lengthAlongElement = (rand0 - xPosGrid[lowInd])*boundaries[materialIndices[lowInd]].length/(xPosGrid[lowInd+1]-xPosGrid[lowInd]);
-        std::cout << "interpd x " <<rand0 << " " << x  << " " << lowInd << " "
-            << xPosGrid[lowInd] << " " << lengthAlongElement << " " << boundaries[materialIndices[lowInd]].length
-           << " " << lengthAlongElement/boundaries[materialIndices[lowInd]].length << std::endl;    
-        float parVec[3] = {0.0};
-        boundaries[materialIndices[lowInd]].getSurfaceParallel(parVec);
-        std::cout << "surface par " << parVec[0] << " " << parVec[2] << std::endl;
-        x = boundaries[materialIndices[lowInd]].x1 + parVec[0]*lengthAlongElement;
-        y=0.0;
-        z = boundaries[materialIndices[lowInd]].z1 + parVec[2]*lengthAlongElement;
-        //shift particles off surface
-        float perpVec[3] = {0.0};
-        float buffer = 5e-9;//0.0;//2e-6;
-        boundaries[materialIndices[lowInd]].getSurfaceNormal(perpVec);
-        x = x + perpVec[0]*buffer;
-        z = z + perpVec[2]*buffer;
-        #endif
+  
+  int surfIndexMod = 0;
+  for (int i=0; i< nP ; i++)
+  {
+    #if PARTICLE_SOURCE_SPACE == 2 // File source
+      surfIndexMod = i%nSources;
+      float xCentroid = (boundaries[sourceElements[surfIndexMod]].x1 + boundaries[sourceElements[surfIndexMod]].x2 + boundaries[sourceElements[surfIndexMod]].x3)/3.0;
+      float yCentroid = (boundaries[sourceElements[surfIndexMod]].y1 + boundaries[sourceElements[surfIndexMod]].y2 + boundaries[sourceElements[surfIndexMod]].y3)/3.0;
+      float zCentroid = (boundaries[sourceElements[surfIndexMod]].z1 + boundaries[sourceElements[surfIndexMod]].z2 + boundaries[sourceElements[surfIndexMod]].z3)/3.0;
+      float bufferLaunch = 1.0e-4;
+      x = xCentroid - bufferLaunch*boundaries[sourceElements[surfIndexMod]].a/boundaries[sourceElements[surfIndexMod]].plane_norm;//boundaries[sourceElements[surfIndexMod]].x1;
+      y = yCentroid - bufferLaunch*boundaries[sourceElements[surfIndexMod]].b/boundaries[sourceElements[surfIndexMod]].plane_norm;//boundaries[sourceElements[surfIndexMod]].y1;
+      z = zCentroid - bufferLaunch*boundaries[sourceElements[surfIndexMod]].c/boundaries[sourceElements[surfIndexMod]].plane_norm;//boundaries[sourceElements[surfIndexMod]].z1; 
+      #if PARTICLE_SOURCE_ANGLE == 1 // Analytic normal incidence
+        Ex = -E*boundaries[sourceElements[surfIndexMod]].a/boundaries[sourceElements[surfIndexMod]].plane_norm;
+        Ey = -E*boundaries[sourceElements[surfIndexMod]].b/boundaries[sourceElements[surfIndexMod]].plane_norm;
+        Ez = -E*boundaries[sourceElements[surfIndexMod]].c/boundaries[sourceElements[surfIndexMod]].plane_norm;
       #endif
-        #if PARTICLE_SOURCE_ENERGY == 1
-
-            randE = dist01E(sE);
-            E = interp1dUnstructured(randE,nThompDistPoints, max_Energy, &CumulativeDFThompson.front(),lowIndE);
-        #endif
-  #if PARTICLE_SOURCE_ANGLE > 0
-      randA = dist01A(sA);
-      angleSample = interp1dUnstructured2(randA,nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front());
-      phi = angleSample;
-      std::cout << " angle sample and phi " << angleSample << " " << phi << std::endl;
-      randA = dist01A(sA);
-      theta = 3.141592653589793*floor(randA+0.5);
-  #endif
+    #else
+      #if PARTICLE_SOURCE_ANGLE > 0
+        randA = dist01A(sA);
+        angleSample = interp1dUnstructured2(randA,nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front());
+        phi = angleSample;
+        std::cout << " angle sample and phi " << angleSample << " " << phi << std::endl;
+        randA = dist01A(sA);
+        theta = 3.141592653589793*floor(randA+0.5);
         Ex = E*sin(phi)*cos(theta);
         Ey = E*sin(phi)*sin(theta);
         Ez = E*cos(phi);
@@ -1747,9 +1794,12 @@ for(int i=0;i<n_Dens;i++)
         Ex = Ex_prime;
         Ez = Ez_prime;
         std::cout << "Transformed E " << Ex << " " << Ey << " " << Ez << " " << std::endl;
-    
-      particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
-    }
+        //particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
+      #endif
+    #endif
+    particleArray->setParticle(i,x,y, z, Ex, Ey, Ez, Z, amu, charge);   
+  }         
+   
 //  #elif PARTICLE_SOURCE == 1
 //    float x;
 //    float y;
@@ -2244,17 +2294,21 @@ for(int i=0;i<n_Dens;i++)
   thrust::counting_iterator<std::size_t> particleEnd(nParticles);
     
   #if PARTICLESEEDS > 0
+      sim::Array<curandState> state1(nParticles);
     #if USEIONIZATION > 0
       #if FIXEDSEEDS ==1
         std::cout << "ionization fixed seeds" << std::endl;
         float ionization_seeds = cfg.lookup("operators.ionization.seed");
         std::default_random_engine generator(ionization_seeds);
       #endif
-      sim::Array<float> seeds0(nP);
-      std::generate( seeds0.begin(), seeds0.end(), [&]() { return dist(generator); } );
-      thrust::transform(thrust::device, particleArray->streams.begin(),  
-                        particleArray->streams.end(),seeds0.begin(), 
-                        particleArray->streams.begin(), randInit(0) );
+      //sim::Array<float> seeds0(nP);
+      //std::generate( seeds0.begin(), seeds0.end(), [&]() { return dist(generator); } );
+      //thrust::transform(thrust::device, particleArray->streams.begin(),  
+      //                  particleArray->streams.end(),seeds0.begin(), 
+      //                  particleArray->streams.begin(), randInit(0) );
+      thrust::for_each(thrust::device, particleBegin,particleEnd,
+                           curandInitialize(&state1[0],0));
+        cudaDeviceSynchronize();
     #endif
 
     #if USERECOMBINATION > 0
@@ -2308,68 +2362,68 @@ for(int i=0;i<n_Dens;i++)
         float collision_seeds2 = cfg.lookup("operators.coulombCollisions.seed2");
         float collision_seeds3 = cfg.lookup("operators.coulombCollisions.seed3");
         std::cout << "debug 1" << std::endl;
-#if USE_CUDA  
-        cudaDeviceSynchronize();
-#endif
+        #if USE_CUDA  
+          cudaDeviceSynchronize();
+        #endif
         std::default_random_engine generator3(collision_seeds1);
         std::cout << "debug 2" << std::endl;
-#if USE_CUDA  
-        cudaDeviceSynchronize();
-#endif
+        #if USE_CUDA  
+          cudaDeviceSynchronize();
+        #endif
         std::default_random_engine generator4(collision_seeds2);
-#if USE_CUDA  
-        cudaDeviceSynchronize();
-#endif
+        #if USE_CUDA  
+          cudaDeviceSynchronize();
+        #endif
         std::cout << "debug 3" << std::endl;
         std::default_random_engine generator5(collision_seeds3);
       #endif
-#if USE_CUDA  
+      #if USE_CUDA  
         cudaDeviceSynchronize();
-#endif
+      #endif
         std::cout << "debug 4" << std::endl;
       sim::Array<float> seeds3(nP),seeds4(nP),seeds5(nP);
-#if USE_CUDA  
+      #if USE_CUDA  
         cudaDeviceSynchronize();
-#endif
+      #endif
         std::generate( seeds3.begin(), seeds3.end(), [&]() { return dist(generator3); } );
-#if USE_CUDA  
+      #if USE_CUDA  
         cudaDeviceSynchronize();
-#endif
+      #endif
         std::generate( seeds4.begin(), seeds4.end(), [&]() { return dist(generator4); } );
-#if USE_CUDA  
+      #if USE_CUDA  
         cudaDeviceSynchronize();
-#endif
+      #endif
         std::generate( seeds5.begin(), seeds5.end(), [&]() { return dist(generator5); } );
-#if USE_CUDA  
-      cudaDeviceSynchronize();
-#endif
+      #if USE_CUDA  
+        cudaDeviceSynchronize();
+      #endif
       std::cout << "debug 5" << std::endl;
       thrust::transform(thrust::device,particleArray->streams_collision1.begin(), 
                                        particleArray->streams_collision1.end(),
                                        seeds3.begin(), 
                                        particleArray->streams_collision1.begin(), randInit(3) );
         std::cout << "debug 6" << std::endl;
-#if USE_CUDA  
+      #if USE_CUDA  
         cudaDeviceSynchronize();
-#endif
+      #endif
         thrust::transform(thrust::device,particleArray->streams_collision2.begin(), 
                                        particleArray->streams_collision2.end(),
                                        seeds4.begin(),
                                        particleArray->streams_collision2.begin(), randInit(4) );
-#if USE_CUDA  
+      #if USE_CUDA  
         cudaDeviceSynchronize();
-#endif
+      #endif
         std::cout << "debug 7" << std::endl;
-#if USE_CUDA  
-      cudaDeviceSynchronize();
-#endif
+      #if USE_CUDA  
+        cudaDeviceSynchronize();
+      #endif
       thrust::transform(thrust::device,particleArray->streams_collision3.begin(),
                                        particleArray->streams_collision3.end(),
                                        seeds5.begin(), 
                                        particleArray->streams_collision3.begin(), randInit(5) );
-#if USE_CUDA  
+      #if USE_CUDA  
         cudaDeviceSynchronize();
-#endif
+      #endif
         std::cout << "debug 8" << std::endl;
     #endif
    std::cout<< "finished collision seeds" << std::endl;
@@ -2380,23 +2434,23 @@ for(int i=0;i<n_Dens;i++)
         std::default_random_engine generator6(surface_seeds);
       #endif
       sim::Array<float> seeds6(nP);
-#if USE_CUDA  
+      #if USE_CUDA  
       cudaDeviceSynchronize();
-#endif
+      #endif
       std::generate( seeds6.begin(), seeds6.end(), [&]() { return dist(generator6); } );
-#if USE_CUDA  
-      cudaDeviceSynchronize();
-#endif
+      #if USE_CUDA  
+        cudaDeviceSynchronize();
+      #endif
       thrust::transform(thrust::device,particleArray->streams_surf.begin(), particleArray->streams_surf.end(),
                     seeds6.begin(), particleArray->streams_surf.begin(), randInit(6) );
-#if USE_CUDA  
-      cudaDeviceSynchronize();
-#endif
-#endif
+      #if USE_CUDA  
+        cudaDeviceSynchronize();
+      #endif
+    #endif
 
     std::cout << "at empty defns" << std::endl;
     #if __CUDACC__
-      sim::Array<curandState> state1(7);//Definition empty for passing to module
+    //  sim::Array<curandState> state1(7);//Definition empty for passing to module
     #else
       sim::Array<std::mt19937> state1(7);//Empty definition
     #endif
@@ -2405,16 +2459,20 @@ for(int i=0;i<n_Dens;i++)
   #else //ParticleSeeds == 0
 
     #if __CUDACC__
-      sim::Array<curandState> state1(9);
-      curandInitialize<<<1,1>>>(&state1[0],19);
-      curandInitialize<<<1,1>>>(&state1[1],25);
-      curandInitialize<<<1,1>>>(&state1[2],32);
-      curandInitialize<<<1,1>>>(&state1[3],39);
-      curandInitialize<<<1,1>>>(&state1[4],43);
-      curandInitialize<<<1,1>>>(&state1[5],48);
-      curandInitialize<<<1,1>>>(&state1[6],51);
-      curandInitialize<<<1,1>>>(&state1[7],56);
-      curandInitialize<<<1,1>>>(&state1[8],60);
+      sim::Array<curandState> state1(9*nThreads*nDevices);
+      thrust::counting_iterator<std::size_t> threads0(0);  
+      thrust::counting_iterator<std::size_t> threads1(nThreads-1);
+                  thrust::for_each(thrust::device, threads0,threads1,
+                                   curandInitialize(&state1[0],0));
+      //curandInitialize<<<1,1>>>(&state1[0],19);
+      //curandInitialize<<<1,1>>>(&state1[1],25);
+      //curandInitialize<<<1,1>>>(&state1[2],32);
+      //curandInitialize<<<1,1>>>(&state1[3],39);
+      //curandInitialize<<<1,1>>>(&state1[4],43);
+      //curandInitialize<<<1,1>>>(&state1[5],48);
+      //curandInitialize<<<1,1>>>(&state1[6],51);
+      //curandInitialize<<<1,1>>>(&state1[7],56);
+      //curandInitialize<<<1,1>>>(&state1[8],60);
       cudaDeviceSynchronize();
     #else
       sim::Array<std::mt19937> state1(9);
@@ -2450,7 +2508,8 @@ for(int i=0;i<n_Dens;i++)
     typedef std::chrono::high_resolution_clock Time;
     typedef std::chrono::duration<float> fsec;
     auto start_clock = Time::now();
-    std::cout << "Starting main loop" << std::endl;
+    std::cout << "Starting main loop"  << std::endl;
+    std::cout << "Starting main loop" << particleArray->xprevious[0] << std::endl;
 //Main time loop
     #if __CUDACC__
       cudaDeviceSynchronize();
@@ -2589,6 +2648,11 @@ if (tt % subSampleFac == 0)
     //cpu_times ionizeTimeGPU = timer.elapsed();
     //std::cout << "Particle Moving Time: " << ionizeTimeGPU.wall*1e-9 << '\n';
 #endif
+//for(int i=0; i<nP;i++)
+//{
+//    std::cout << "Particle test value r1: " << i << " " << particleArray->test[i] << std::endl;
+//}
+
     /*
 for(int i=0; i<nP ; i++)
 {
@@ -2604,9 +2668,9 @@ for(int i=0; i<nP ; i++)
     cudaDeviceSynchronize();
 #endif
 //    tmp202 =  particleArray->vx[0];
-    std::cout << "memory access hitwall " 
-    << particleArray->xprevious[0] << std::endl;
-    std::cout << "transit time counting " << std::endl;
+    //std::cout << "memory access hitwall " 
+    //<< particleArray->xprevious[0] << std::endl;
+    //std::cout << "transit time counting " << std::endl;
 #if USE3DTETGEOM > 0
     float meanTransitTime0 = 0.0;
     /*
@@ -2634,6 +2698,7 @@ std::cout << " mean transit time " << meanTransitTime0 << std::endl;
     //int nA = 90;
     //int nE = 1000;
     //float* impactEnergy = new float[nLines*nA*nE];
+std::cout << "before starting loop "<< particleArray->xprevious[0]  << std::endl;
 std::cout << " starting loop "  << std::endl;
     for (int i=0; i<nLines; i++)
     {
@@ -2676,37 +2741,37 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
         surfZ[i] = boundaries[i].Z;
     }
 #endif
-#if PARTICLE_SOURCE == 1
-int ring1 = 0;
-int ring2 = 0;
-int noWall = 0;
-float meanTransitTime = 0.0;
-
-for(int i=0; i<nP ; i++)
-{
-	if(particleArray->wallIndex[i] == boundaryIndex_ImpurityLaunch[0])
-	{
-		ring1++;
-	}
-	else if(particleArray->wallIndex[i] == boundaryIndex_ImpurityLaunch[1])
-	{
-		ring2++;
-	}
-	
-	if(particleArray->wallIndex[i] == 0)
-	{
-		noWall++;
-	}
-	
-	meanTransitTime = meanTransitTime + particleArray->transitTime[i];
-	
-} 
-meanTransitTime = meanTransitTime/(nP-noWall);
-std::cout << "Number of impurity particles deposited on ring 1 " << ring1 << std::endl;
-std::cout << "Number of impurity particles deposited on ring 2 " << ring2 << std::endl;
-std::cout << "Number of impurity particles not deposited " << noWall << std::endl;
-std::cout << "Mean transit time of deposited particles " << meanTransitTime << std::endl;
-#endif
+//#if PARTICLE_SOURCE == 1
+//int ring1 = 0;
+//int ring2 = 0;
+//int noWall = 0;
+//float meanTransitTime = 0.0;
+//
+//for(int i=0; i<nP ; i++)
+//{
+//	if(particleArray->wallIndex[i] == boundaryIndex_ImpurityLaunch[0])
+//	{
+//		ring1++;
+//	}
+//	else if(particleArray->wallIndex[i] == boundaryIndex_ImpurityLaunch[1])
+//	{
+//		ring2++;
+//	}
+//	
+//	if(particleArray->wallIndex[i] == 0)
+//	{
+//		noWall++;
+//	}
+//	
+//	meanTransitTime = meanTransitTime + particleArray->transitTime[i];
+//	
+//} 
+//meanTransitTime = meanTransitTime/(nP-noWall);
+//std::cout << "Number of impurity particles deposited on ring 1 " << ring1 << std::endl;
+//std::cout << "Number of impurity particles deposited on ring 2 " << ring2 << std::endl;
+//std::cout << "Number of impurity particles not deposited " << noWall << std::endl;
+//std::cout << "Mean transit time of deposited particles " << meanTransitTime << std::endl;
+//#endif
     std::cout << "positions.m writing " << std::endl;
     ofstream outfile2;
     outfile2.open ("output/positions.m");
@@ -2724,10 +2789,6 @@ for (int i=0; i<nP; i++)
     finalPosX[i] = particleArray->xprevious[i];
     finalPosY[i] = particleArray->yprevious[i];
     finalPosZ[i] = particleArray->zprevious[i];
-    if(finalPosZ[i] < -0.01)
-    {
-        std::cout << "out of bounds value " << finalPosZ[i] << std::endl;
-    }
     finalVx[i] =   particleArray->vx[i];
     finalVy[i] =   particleArray->vy[i];
     finalVz[i] =   particleArray->vz[i];

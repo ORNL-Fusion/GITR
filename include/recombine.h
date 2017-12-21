@@ -80,7 +80,7 @@ struct recombine {
 	{        
 #if PARTICLESEEDS > 0
         #ifdef __CUDACC__
-        float r1 = curand_uniform(&particlesPointer->streams_rec[indx]);
+        float r1 = 0.5;//curand_uniform(&particlesPointer->streams_rec[indx]);
         #else
         std::uniform_real_distribution<float> dist(0.0, 1.0);
         float r1=dist(particlesPointer->streams_rec[indx]);

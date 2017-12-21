@@ -43,13 +43,13 @@ public:
   sim::Array<float> charge;
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
-  sim::Array<curandState> streams;
-  sim::Array<curandState> streams_rec;
-  sim::Array<curandState> streams_collision1;
-  sim::Array<curandState> streams_collision2;
-  sim::Array<curandState> streams_collision3;
-  sim::Array<curandState> streams_diff;
-  sim::Array<curandState> streams_surf;
+  //sim::Array<curandState> streams;
+  //sim::Array<curandState> streams_rec;
+  //sim::Array<curandState> streams_collision1;
+  //sim::Array<curandState> streams_collision2;
+  //sim::Array<curandState> streams_collision3;
+  //sim::Array<curandState> streams_diff;
+  //sim::Array<curandState> streams_surf;
 #else
   sim::Array<std::mt19937> streams;
   sim::Array<std::mt19937> streams_rec;
@@ -99,7 +99,7 @@ public:
         if (Ex == 0.0) this->vx[indx] = 0.0;
         if (Ey == 0.0) this->vy[indx] = 0.0;
         if (Ez == 0.0) this->vz[indx] = 0.0;
-        std::cout << " velocity " << this->vx[indx] << " " << this->vy[indx] << " " << this->vz[indx] << std::endl;
+        //std::cout << " velocity " << this->vx[indx] << " " << this->vy[indx] << " " << this->vz[indx] << std::endl;
      };    
 
   CUDA_CALLABLE_MEMBER
@@ -126,8 +126,8 @@ public:
    nParticles{nP}, x{nP}, y{nP}, z{nP}, xprevious{nP}, yprevious{nP}, zprevious{nP},
    vx{nP}, vy{nP}, vz{nP}, Z{nP}, amu{nP}, charge{nP},
 #if PARTICLESEEDS > 0
-      streams{nP},streams_rec{nP},streams_collision1{nP},streams_collision2{nP},
-      streams_collision3{nP},streams_diff{nP},streams_surf{nP},
+  //    streams{nP},streams_rec{nP},streams_collision1{nP},streams_collision2{nP},
+  //    streams_collision3{nP},streams_diff{nP},streams_surf{nP},
 #endif
       hitWall{nP,0.0},
    transitTime{nP,0.0},wallHit{nP,0}, wallIndex{nP}, perpDistanceToSurface{nP}, 

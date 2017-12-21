@@ -20,8 +20,11 @@ void checkFlags(libconfig::Config &cfg)
                             "flags.ODEINT","flags.FIXEDSEEDS",
                             "flags.PARTICLESEEDS","flags.GEOM_TRACE","flags.GEOM_HASH",
                             "flags.GEOM_HASH_SHEATH","flags.PARTICLE_TRACKS",
-                            "flags.PARTICLE_SOURCE",
-                            "flags.SPECTROSCOPY","flags.USE3DTETGEOM","flags.USECYLSYMM"};
+                            "flags.PARTICLE_SOURCE_SPACE",
+                            "flags.PARTICLE_SOURCE_ENERGY",
+                            "flags.PARTICLE_SOURCE_ANGLE",
+                            "flags.SPECTROSCOPY","flags.USE3DTETGEOM","flags.USECYLSYMM",
+                            "flags.FLUX_EA"};
         int flagValues[] =  {USE_CUDA, USEMPI, USE_BOOST,USEIONIZATION,
                              USERECOMBINATION,USEPERPDIFFUSION,USECOULOMBCOLLISIONS,
                              USETHERMALFORCE,USESURFACEMODEL,USESHEATHEFIELD,BIASED_SURFACE,
@@ -30,8 +33,9 @@ void checkFlags(libconfig::Config &cfg)
                              PRESHEATH_INTERP,DENSITY_INTERP,TEMP_INTERP,
                              FLOWV_INTERP,GRADT_INTERP,ODEINT,FIXEDSEEDS,
                              PARTICLESEEDS,GEOM_TRACE,GEOM_HASH,
-                             GEOM_HASH_SHEATH,PARTICLE_TRACKS,PARTICLE_SOURCE,
-                             SPECTROSCOPY,USE3DTETGEOM,USECYLSYMM};
+                             GEOM_HASH_SHEATH,PARTICLE_TRACKS,PARTICLE_SOURCE_SPACE,
+                             PARTICLE_SOURCE_ENERGY,PARTICLE_SOURCE_ANGLE,
+                             SPECTROSCOPY,USE3DTETGEOM,USECYLSYMM,FLUX_EA};
             int check1;
             for (int i=0; i<sizeof(flagValues)/sizeof(int); i++)
                {
