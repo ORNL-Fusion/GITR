@@ -51,13 +51,13 @@ public:
   //sim::Array<curandState> streams_diff;
   //sim::Array<curandState> streams_surf;
 #else
-  sim::Array<std::mt19937> streams;
-  sim::Array<std::mt19937> streams_rec;
-  sim::Array<std::mt19937> streams_collision1;
-  sim::Array<std::mt19937> streams_collision2;
-  sim::Array<std::mt19937> streams_collision3;
-  sim::Array<std::mt19937> streams_diff;
-  sim::Array<std::mt19937> streams_surf;
+  //sim::Array<std::mt19937> streams;
+  //sim::Array<std::mt19937> streams_rec;
+  //sim::Array<std::mt19937> streams_collision1;
+  //sim::Array<std::mt19937> streams_collision2;
+  //sim::Array<std::mt19937> streams_collision3;
+  //sim::Array<std::mt19937> streams_diff;
+  //sim::Array<std::mt19937> streams_surf;
 #endif
 #endif
 

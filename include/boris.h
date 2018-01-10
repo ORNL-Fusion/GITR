@@ -800,12 +800,15 @@ cpu_times initTime0 = timer.elapsed();
                 interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer);        
-                //std::cout << "Bfield and mass" << B[2] << " " << particlesPointer->amu[indx] << std::endl;    
+                //std::cout << "Bfield and mass" << B[1] << " " << particlesPointer->amu[indx] << std::endl;    
                 Bmag = vectorNorm(B);
 	            q_prime = particlesPointer->charge[indx]*1.60217662e-19f/(particlesPointer->amu[indx]*1.6737236e-27f)*dt*0.5f;
+                //std::cout << "charge, amu , dt " << particlesPointer->charge[indx] << " " << particlesPointer->amu[indx]<< " " << dt << std::endl;
                 coeff = 2.0f*q_prime/(1.0f+(q_prime*Bmag)*(q_prime*Bmag));
-            
+                //std::cout << " Bmag " << Bmag << std::endl;
+                //std::cout << " qprime coeff " << q_prime << " " << coeff << std::endl;
                 vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v);
+                //std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
                 //v_minus = v + q_prime*E;
                vectorScalarMult(q_prime,E,qpE);
                vectorAdd(v,qpE,v_minus);

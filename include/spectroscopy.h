@@ -40,8 +40,8 @@ void operator()(std::size_t indx) const {
     float y = particlesPointer->yprevious[indx];
     float z = particlesPointer->zprevious[indx];
 #if USECYLSYMM > 0
-    //float dim1 = sqrtf(x*x + y*y);
-    float dim1 = particlesPointer->xprevious[indx];
+    float dim1 = sqrtf(x*x + y*y);
+    //float dim1 = particlesPointer->xprevious[indx];
 #else
   float dim1 = particlesPointer->xprevious[indx];
 #endif
@@ -50,18 +50,19 @@ void operator()(std::size_t indx) const {
           if((dim1 > gridX[0]) && (dim1 < gridX[nX-1]))
           {
               dx = gridX[1] - gridX[0];
-              dy = gridY[1] - gridY[0];
               dz = gridZ[1] - gridZ[0];
 #if USECYLSYMM > 0
               int indx_X = floor((dim1-gridX[0])/dx);
               int indx_Z = floor((z-gridZ[0])/dz);
+              int indx_Y = 1;
 #else
               int indx_X = floor((dim1-gridX[0])/dx+0.5);
               int indx_Z = floor((z-gridZ[0])/dz + 0.5);
-#endif
+              dy = gridY[1] - gridY[0];
               int indx_Y = floor((y-gridY[0])/dy);
-              if (indx_X < 0 || indx_X >= nX) indx_X = 0;
               if (indx_Y < 0 || indx_Y >= nY) indx_Y = 0;
+#endif
+              if (indx_X < 0 || indx_X >= nX) indx_X = 0;
               if (indx_Z < 0 || indx_Z >= nZ) indx_Z = 0;
               //std::cout << "gridx0 " << gridX[0] << std::endl;
               //std::cout << "gridz0 " << gridZ[0] << std::endl;

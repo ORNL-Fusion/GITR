@@ -66,7 +66,7 @@ void operator()(std::size_t indx) const {
         	float r3 = 0.5;//;curand_uniform(&particlesPointer->streams[2]);
 #else
         	std::uniform_real_distribution<float> dist(0.0, 1.0);
-        	float r3=dist(particlesPointer->streams[2]);
+        	float r3=dist(state[indx]);
 #endif 
 #else
 #if __CUDACC__

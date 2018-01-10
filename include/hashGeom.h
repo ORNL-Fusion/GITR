@@ -77,10 +77,13 @@ struct hashGeom {
       //std::cout << "point "  <<  x0 << " " <<  y0 << " "
       //     <<  z0 << std::endl;
      #else
-       float x0 = x[indx];
+       float kk = indx/(nR);
+       int k = floor(kk);
+       int i = indx - k*(nR);
+       float x0 = x[i];
        float y0 = 0.0;
        float z0 = z[k];
-       int xyzIndx = k*nR + indx;
+       int xyzIndx = indx;
      #endif
        //float minDist[n_closeGeomElements] = {0.0};
        //for(int i1=0;i1<n_closeGeomElements; i1++)
@@ -124,31 +127,35 @@ struct hashGeom {
       //     <<  boundary[l].z2 << std::endl;
       //std::cout << "xyz 3 "  <<  boundary[l].x3 << " " <<  boundary[l].y3 << " "
       //     <<  boundary[l].z3 << std::endl;
-       float a = boundary[l].a;
+      float a = boundary[l].a;
       float b = boundary[l].b;
       float c = boundary[l].c;
       float d = boundary[l].d;
       //std::cout << "abcd "  << a << " " <<b << " "
        //    <<  c << " " <<d << std::endl;
+    #if USE3DTETGEOM > 0
       float plane_norm = boundary[l].plane_norm;
       float t = -(a*x0 + b*y0 + c*z0 + d)/(a*a + b*b + c*c);
       p[0] = a*t + x0;
       p[1] = b*t + y0;
       p[2] = c*t + z0;
       float perpDist = sqrt((x0-p[0])*(x0-p[0]) + (y0-p[1])*(y0-p[1]) + (z0-p[2])*(z0-p[2]));
+    #endif
 
       vectorAssign(boundary[l].x1, boundary[l].y1, 
           boundary[l].z1, A);    
       vectorAssign(boundary[l].x2, boundary[l].y2, 
           boundary[l].z2, B);    
+    #if USE3DTETGEOM > 0
       vectorAssign(boundary[l].x3, boundary[l].y3, 
           boundary[l].z3, C); 
-
+    #endif
       vectorSubtract(B,A,AB);
+    #if USE3DTETGEOM > 0
       vectorSubtract(C,A,AC);
       vectorSubtract(C,B,BC);
       vectorSubtract(A,C,CA);
-      
+
       vectorSubtract(p,A,Ap);
       vectorSubtract(p,B,Bp);
       vectorSubtract(p,C,Cp);
@@ -167,6 +174,7 @@ struct hashGeom {
       {
       }
       else perpDist = 1.0e6;
+    #endif
       //std::cout << "perpDist " << perpDist << std::endl;
    //Edge checking
    p[0] = x0;
@@ -187,6 +195,7 @@ struct hashGeom {
    //std::cout << "edge1 comp " << pA[0] << " " << pA[1] << " " << pA[2] <<
     //   " " << cEdge1mag << " " << cEdge1[0] << " " << cEdge1[1] << " " << cEdge1[2] << " "
     //   << dEdge1[0] << " " <<dEdge1[1] << " " << dEdge1[2] << std::endl;
+ #if USE3DTETGEOM > 0
    float pB[3] = {0.0};
    float cEdge2[3] = {0.0};
    float dEdge2[3] = {0.0};
@@ -213,7 +222,10 @@ struct hashGeom {
    }
           float minEdge = min(distE1,distE2);
           minEdge = min(distE3,minEdge);
-   //
+#else
+          //
+          float minEdge = distE1;
+#endif
       //std::cout << "edgeDistances " << distE1 << " " << distE2 << " " << distE3 << std::endl;
         float d1 =sqrt((x0 - boundary[l].x1)*(x0 - boundary[l].x1)
                 +  (y0 - boundary[l].y1)*(y0 - boundary[l].y1)
@@ -228,10 +240,10 @@ struct hashGeom {
           #endif
       //std::cout << " point Distances " << d3 << " " << d2 << " " << d1 << std::endl;
           float minOf3 = min(d1,d2);
-          minOf3 = min(minOf3,perpDist);
           minOf3 = min(minOf3,minEdge);
         //std::cout << "min of two " << minOf3 << std::endl;
           #if USE3DTETGEOM > 0
+          minOf3 = min(minOf3,perpDist);
             minOf3 = min(minOf3,d3);
           #endif
       //std::cout << "mindist "  << minOf3 << " " <<  std::endl;
@@ -283,7 +295,9 @@ struct hashGeom {
        }
        */
      }
+#if USE_CUDA
      delete[] minDist;
+#endif
      //if(indx == 1){
      //for(int i=0;i<n_closeGeomElements;i++)
      //{

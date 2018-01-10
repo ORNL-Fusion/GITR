@@ -2,7 +2,7 @@
 
 from distutils.dir_util import copy_tree
 import sys
-sys.path.append('/home/tqd/code/netcdf4-python')
+#sys.path.append('/home/tqd/code/netcdf4-python')
 import netCDF4
 import numpy as np
 #import Tkinter
@@ -143,6 +143,61 @@ def plot3dGeom(filename="gitrGeometry.cfg"):
     ax.set_zlim3d(-0.5,1.5)
     ax.add_collection3d(Poly3DCollection(verts))
     plt.savefig('geomPlot.png') 
+def nc_plotHist(filename='history.nc'):
+    ncFile = netCDF4.Dataset(filename,"r")
+    nT = ncFile.dimensions['nT'].size
+    nP = ncFile.dimensions['nP'].size
+    x = np.reshape(np.array(ncFile.variables['x']),(nT,nP))
+    y = np.reshape(np.array(ncFile.variables['y']),(nT,nP))
+    z = np.reshape(np.array(ncFile.variables['z']),(nT,nP))
+    r = np.sqrt(np.multiply(x,x) + np.multiply(y,y))
+#    print('z ', z[:,0])
+    print('x ', x.shape)
+    print('x ', x[:,0])
+#    print('r ', r.shape)
+#    print('z ', z[0][:].shape)
+#    #for i in range(nT):
+#    #    print('r,z ',i, x[i][0],z[i][0]) 
+#    single = x[0][:];
+    plt.figure(1,figsize=(10, 6), dpi=1000)
+    for i in range(nP):
+      print('i', i)  
+#      print('size', r[:,i].size)  
+#      print('r ', r[:,i])  
+      plt.plot(r[:,i],z[:,i],linewidth=0.5)
+#      #plt.plot(r[i,:],z[i,:],linewidth=1.0)
+#      #plt.setp(linewidth=0.2)
+    #plt.ylim((-5.0,5.0))
+    #plt.xlim((3.8,8.5))
+    plt.savefig('tracks.png')
+def nc_plotSpec(filename='spec.nc'):
+    ncFile = netCDF4.Dataset(filename,"r")
+    nBins = ncFile.dimensions['nBins'].size
+    nR = ncFile.dimensions['nR'].size
+    nZ = ncFile.dimensions['nZ'].size
+    n = np.array(ncFile.variables['n'])
+    print('n ', n.shape)
+    dens = n[nBins-1,:,:]
+    print('dens ', dens.shape)
+    plt.close()
+    plt.figure(1,figsize=(10, 6), dpi=2000)
+    plt.imshow(dens,origin='lower')
+    plt.colorbar(orientation='vertical')
+    plt.savefig('image1.png')
+def nc_plotPositions(filename='positions.nc'):
+    ncFile = netCDF4.Dataset(filename,"r")
+    nP = ncFile.dimensions['nP'].size
+    x = np.array(ncFile.variables['x'])
+    y = np.array(ncFile.variables['y'])
+    z = np.array(ncFile.variables['z'])
+    plt.close()
+    fig = plt.figure()
+    ax = fig.add_subplot(111,projection='3d')
+    ax.scatter(x, y, z)
+    fig.savefig('positions.png')
 if __name__ == "__main__":
-    nc_show("surface.nc")
-    depositedEdist()
+    #nc_show("surface.nc")
+    #depositedEdist()
+    nc_plotHist()
+    #nc_plotSpec()
+    nc_plotPositions()
