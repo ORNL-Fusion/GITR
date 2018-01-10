@@ -147,13 +147,20 @@ float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data,in
     interpolated_value =
         ((data[low_index+1] - samplePoint)*low_index*max_x/nx
         + (samplePoint - data[low_index])*(low_index+1)*max_x/nx)/(data[low_index+1]- data[low_index]);
+      //(low_index+1)*max_x/nx
     lowInd = low_index;
     if(low_index < 0)
     {
         //std::cout << "WARNING: interpolated value is outside range of CDF " << std::endl;
         lowInd = 0;
-        interpolated_value = samplePoint*data[0];
-
+        //interpolated_value = samplePoint*data[0];
+        if(samplePoint > 0.0)
+        {
+          interpolated_value = samplePoint;
+        }
+        else{
+          interpolated_value = 0.0;
+        }
     }
     return interpolated_value;
 }

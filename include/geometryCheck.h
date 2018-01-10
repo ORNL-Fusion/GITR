@@ -88,6 +88,8 @@ void operator()(std::size_t indx) const {
           << " " << particlesPointer->zprevious[indx]  << std::endl;
       }
        */
+
+      
       if(boundaryVector[nLines].periodic) //if periodic
       {  float pi =3.14159265; 
          float theta = atan2f(particlesPointer->y[indx],particlesPointer->x[indx]);   
@@ -351,7 +353,7 @@ void operator()(std::size_t indx) const {
              {
                signLine1 = sgn(boundaryVector[i].x1 - pdim1);
                signLine2 = sgn(boundaryVector[i].x2 - pdim1);
-                // std::cout << "signlines3 " << signLine1 << " " << signLine2 << std::endl;
+                 //std::cout << "signlines3 " << signLine1 << " " << signLine2 << std::endl;
              }
              else
              {
@@ -367,7 +369,7 @@ void operator()(std::size_t indx) const {
                  nIntersections++;
 
                  //std::cout << "nintersections " << nIntersections << std::endl;
-                // std::cout << fabs(particlesPointer->x[indx] - particlesPointer->x[indx]previous) << tol_small << std::endl;        
+                 //std::cout << fabs(particlesPointer->x[indx] - particlesPointer->xprevious[indx]) << tol_small << std::endl;        
                 if (fabsf(pdim1 - pdim1previous) < tol_small)
                 {
                     //  std::cout << "vertical line" << std::cout;
@@ -377,7 +379,7 @@ void operator()(std::size_t indx) const {
                 }
                 else
                 {
-                     //std::cout << "not vertical line" << std::endl;
+                    // std::cout << "not vertical line" << std::endl;
                   //std::cout << 0.0*7.0 << " " << i << " " << nParam << " " << lines[i*nParam+4] << "  " <<tol << std::endl;
                      //std::cout << "boundaryVector slope " << boundaryVector[i].slope_dzdx << " " << tol*0.75 <<std::endl; 
                    if (fabsf(boundaryVector[i].slope_dzdx) >= tol*0.75f)
@@ -405,7 +407,7 @@ void operator()(std::size_t indx) const {
                     particlesPointer->zprevious[indx] = particlesPointer->z[indx];
 
                     //std::cout << "r " << particlesPointer->x[indx] << " " << particlesPointer->y[indx] << " " << particlesPointer->z[indx] << std::endl;
-                    //std::cout << "r0 " << particlesPointer->x[indx]previous << " " << particlesPointer->y[indx]previous << " " << particlesPointer->z[indx]previous<< std::endl;
+                    //std::cout << "r0 " << particlesPointer->xprevious[indx] << " " << particlesPointer->yprevious[indx] << " " << particlesPointer->zprevious[indx] << std::endl;
                 }
                 else if (nIntersections ==1)
                 {
@@ -464,33 +466,6 @@ void operator()(std::size_t indx) const {
                  particlesPointer->z[indx] = intersectiony[minDistInd];
                }
 
-  #if USECYLSYMM > 0 
-    float theta = atan2f(particlesPointer->y[indx],particlesPointer->x[indx]);   
-    float r = sqrt(particlesPointer->xprevious[indx]*particlesPointer->xprevious[indx] + 
-                   particlesPointer->yprevious[indx]*particlesPointer->yprevious[indx]);   
-   float vx0 = 0.0;
-  float vy0 = 0.0; 
-    if(theta < 0.0)
-    {
-        particlesPointer->xprevious[indx] = r*cos(2*3.1415/54);
-        particlesPointer->yprevious[indx] = r*sin(2*3.1415/54);
-
-        vx0 = particlesPointer->vx[indx]*cos(2*3.1415/54) - particlesPointer->vy[indx]*sin(2*3.1415/54);
-        vy0 = particlesPointer->vy[indx]*sin(2*3.1415/54) + particlesPointer->vy[indx]*cos(2*3.1415/54);
-        particlesPointer->vx[indx] = vx0;
-        particlesPointer->vy[indx] = vy0;
-    }        
-    else if(theta > 2*3.1415/54)
-    {
-        particlesPointer->xprevious[indx] = r*cos(-2*3.1415/54);
-        particlesPointer->yprevious[indx] = r*sin(-2*3.1415/54);
-
-        vx0 = particlesPointer->vx[indx]*cos(-2*3.1415/54) - particlesPointer->vy[indx]*sin(-2*3.1415/54);
-        vy0 = particlesPointer->vy[indx]*sin(-2*3.1415/54) + particlesPointer->vy[indx]*cos(-2*3.1415/54);
-        particlesPointer->vx[indx] = vx0;
-        particlesPointer->vy[indx] = vy0;
-    }        
-  #else            
             if (boundaryVector[nLines].periodic)
             {
                 if (particlesPointer->y[indx] < boundaryVector[nLines].y1)
@@ -517,18 +492,17 @@ void operator()(std::size_t indx) const {
                     }
                 }
             }
-            else
-            {
-                if (particlesPointer->y[indx] < boundaryVector[nLines].y1)
-                {
-                    particlesPointer->hitWall[indx] = 1.0f;
-                }
-                else if (particlesPointer->y[indx] > boundaryVector[nLines].y2)
-                {
-                    particlesPointer->hitWall[indx] = 1.0f;
-                }
-            }
-  #endif
+            //else
+            //{
+            //    if (particlesPointer->y[indx] < boundaryVector[nLines].y1)
+            //    {
+            //        particlesPointer->hitWall[indx] = 1.0f;
+            //    }
+            //    else if (particlesPointer->y[indx] > boundaryVector[nLines].y2)
+            //    {
+            //        particlesPointer->hitWall[indx] = 1.0f;
+            //    }
+            //}
 #endif        
             if (particlesPointer->hitWall[indx] == 1.0)
             {

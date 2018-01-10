@@ -125,14 +125,20 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
     for(int i=0 ; i<nLines ; i++)
     {
        boundaries[i].x1 = geom["x1"][i];
+       boundaries[i].y1 = 0.0;
        boundaries[i].z1 = geom["z1"][i];
        boundaries[i].x2 = geom["x2"][i];
+       boundaries[i].y2 = 0.0;
        boundaries[i].z2 = geom["z2"][i];
        boundaries[i].Z = geom["Z"][i];
        boundaries[i].slope_dzdx = geom["slope"][i];
        boundaries[i].intercept_z = geom["intercept"][i];
        boundaries[i].length = geom["length"][i];
 
+    boundaries[i].a = boundaries[i].z2 - boundaries[i].z1;
+    boundaries[i].b = 0.0;
+    boundaries[i].c = boundaries[i].x1 - boundaries[i].x2;
+    boundaries[i].plane_norm = sqrt(boundaries[i].a*boundaries[i].a + boundaries[i].c*boundaries[i].c);
        outfile << "geom(" << i+1 << ",:) = ["<<boundaries[i].x1 << ", " <<
           boundaries[i].z1 << ", " <<
           boundaries[i].x2 << ", " << boundaries[i].z2 << ", " <<

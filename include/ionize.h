@@ -72,9 +72,6 @@ struct ionize {
     particlesPointer->PionizationPrevious[indx] = PiP*P;
     float P1 = 1.0-PiP*P;
     //std::cout << "tion P P1 " << tion << " " << P << " " << P1 << " " << PiP<< std::endl;
-       int block_id=blockIdx.y*gridDim.x+blockIdx.x;
-       int blockSize=blockDim.z*blockDim.y*blockDim.x;
-       int thread_id=threadIdx.z*blockDim.y+threadIdx.y*blockDim.x+threadIdx.x;
     if(particlesPointer->hitWall[indx] == 0.0)
     {
         //std::cout << "calculating r1 " << std::endl;i
@@ -84,7 +81,7 @@ struct ionize {
       float r1 = curand_uniform(&state[indx]);
 	#else
 	std::uniform_real_distribution<float> dist(0.0, 1.0);
-	float r1=dist(particlesPointer->streams[indx]);
+	float r1=dist(state[indx]);
 	//particlesPointer->test[indx] = r1;
         //std::cout << " r1 " << r1 << std::endl;
     #endif

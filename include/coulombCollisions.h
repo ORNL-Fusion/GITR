@@ -265,9 +265,9 @@ void operator()(std::size_t indx) const {
 		int plus_minus3 = 1;//floor(curand_uniform(&particlesPointer->streams_collision3[indx]) + 0.5)*2 -1;
 #else
 	    std::uniform_real_distribution<float> dist(0.0, 1.0);
-        int plus_minus1 = floor(dist(particlesPointer->streams_collision1[indx]) + 0.5)*2 - 1;
-		int plus_minus2 = floor(dist(particlesPointer->streams_collision2[indx]) + 0.5)*2 - 1;
-		int plus_minus3 = floor(dist(particlesPointer->streams_collision3[indx]) + 0.5)*2 - 1;
+        int plus_minus1 = floor(dist(state[indx]) + 0.5)*2 - 1;
+		int plus_minus2 = floor(dist(state[indx]) + 0.5)*2 - 1;
+		int plus_minus3 = floor(dist(state[indx]) + 0.5)*2 - 1;
 #endif
 #else
 #if __CUDACC__

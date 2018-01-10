@@ -253,9 +253,9 @@ void operator()(std::size_t indx) const {
                 float r9 = 0.5;//curand_uniform(&particles->streams_surf[indx]);
 #else
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
-                float r7 = dist(particles->streams_surf[indx]);
-                float r8 = dist(particles->streams_surf[indx]);
-                float r9 = dist(particles->streams_surf[indx]);
+                float r7 = dist(state[indx]);
+                float r8 = dist(state[indx]);
+                float r9 = dist(state[indx]);
 #endif
 
 #else
