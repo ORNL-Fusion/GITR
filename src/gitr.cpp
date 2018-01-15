@@ -447,37 +447,6 @@ int main()
     hash_gridZ_sheath.putVar(&closeGeomGridz_sheath[0]);
     hash_sheath.putVar(&closeGeom_sheath[0]);
 
-    //std::vector<int> geomHashDims_s(4);
-    //geomHashDims_s[0] = nR_closeGeom_sheath;
-    //geomHashDims_s[1] = nY_closeGeom_sheath;
-    //geomHashDims_s[2] = nZ_closeGeom_sheath;
-    //geomHashDims_s[3] = n_closeGeomElements_sheath;
-    //std::vector<std::string> geomHashDimNames_s(4);
-    //geomHashDimNames_s[0] = "nR";
-    //geomHashDimNames_s[1] = "nY";
-    //geomHashDimNames_s[2] = "nZ";
-    //geomHashDimNames_s[3] = "n_";
-    //std::vector<std::string> hashGridNames_s(2);
-    //hashGridNames_s[0] = "gridR";
-    //hashGridNames_s[1] = "gridZ";
-    //std::vector<int> hashGridMapDim_s(2);
-    //hashGridMapDim_s[0] = 0;
-    //hashGridMapDim_s[1] = 2;
-    //std::vector<float*> hashGridPointers_s(2);
-    //hashGridPointers_s[0] = &closeGeomGridr_sheath[0];
-    //hashGridPointers_s[1] = &closeGeomGridz_sheath[0];
-    //std::vector<std::string> intVarNames_s(1);
-    //intVarNames_s[0] = "hash_sheath";
-    //std::vector<vector<int>> intVarDimMap_s(1);
-    //intVarDimMap_s[0].push_back(0);
-    //intVarDimMap_s[0].push_back(2);
-    //intVarDimMap_s[0].push_back(3);
-    //std::vector<int*> intVarPointers_s(1);
-    //intVarPointers_s[0] = &closeGeom_sheath[0];
-    //std::string hashOutfile_s= "GITRgeomHash_sheath";
-    //ncdfIO(1,hashOutfile_s,geomHashDimNames_s,geomHashDims_s,
-    //        hashGridNames_s,hashGridMapDim_s,hashGridPointers_s,
-    //        intVarNames_s,intVarDimMap_s,intVarPointers_s);
   #elif GEOM_HASH_SHEATH > 1
     getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridRString",closeGeomGridr_sheath);
     getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridZString",closeGeomGridz_sheath);
@@ -748,13 +717,6 @@ int main()
                     nZ_Temp,TempGridr.data(),TempGridz.data(),ti.data());
   std::cout << "Finished Temperature import "<< testVec << std::endl; 
   
-//fudge factor for temperature
-float tempFac = 0.8;
-for(int i=0;i<n_Temp;i++)
-{
-    te[i] = te[i]*tempFac;
-    ti[i] =ti[i]*tempFac;
-}
   //Background Plasma Density Initialization    
   int nR_Dens = 1;
   int nY_Dens = 1;
@@ -792,12 +754,6 @@ for(int i=0;i<n_Temp;i++)
     getVarFromFile(cfg,input_path+densFile,densCfg,"ElectronDensityString",ne);
   #endif
   std::cout << "Finished density import "<< ne[0] << std::endl; 
-float densFac = 1.0;
-for(int i=0;i<n_Dens;i++)
-{
-    ne[i] = ne[i]*densFac;
-    ni[i] =ni[i]*densFac;
-}
   //Background Plasma flow velocity initialization    
   int nR_flowV = 1;
   int nY_flowV = 1;
@@ -1444,24 +1400,66 @@ for(int i=0;i<n_Dens;i++)
   //Surface model import
   int nE_surfaceModel = 1;
   int nA_surfaceModel = 1;
-  int nBins_surfaceModel = 1;
-  int n_surfaceModel = 1;
+  int nDistE_surfaceModel = 1, nDistA_surfaceModel = 1;
+  int nAdistBins_surfaceModel = 1,nEdistBins_surfaceModel = 1;
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
   getVariable(cfg,surfaceModelCfg+"fileString",surfaceModelFile);
   nE_surfaceModel = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridNEString");
   nA_surfaceModel = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridNAString");
-  nBins_surfaceModel = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridNBinsString");
-  n_surfaceModel = nE_surfaceModel*nA_surfaceModel*nBins_surfaceModel;
+  nEdistBins_surfaceModel = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridNEBinsString");
+  nAdistBins_surfaceModel = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridNABinsString");
+  nDistE_surfaceModel = nE_surfaceModel*nA_surfaceModel*nEdistBins_surfaceModel;
+  nDistA_surfaceModel = nE_surfaceModel*nA_surfaceModel*nAdistBins_surfaceModel;
   sim::Array<float> E_surfaceModel(nE_surfaceModel), A_surfaceModel(nA_surfaceModel),
+                    Elog_surfaceModel(nE_surfaceModel),
+                    energyDistGrid(nEdistBins_surfaceModel), cosDistGrid(nAdistBins_surfaceModel),
+                    energyDistGrid01(nEdistBins_surfaceModel),
                     spyl_surfaceModel(nE_surfaceModel*nA_surfaceModel),
-                    cosDist_surfaceModel(n_surfaceModel),energyDist_surfaceModel(n_surfaceModel);
+                    rfyl_surfaceModel(nE_surfaceModel*nA_surfaceModel),
+                    cosDist_surfaceModel(nDistA_surfaceModel),energyDist_surfaceModel(nDistE_surfaceModel),
+                    cosDist_surfaceModelReflection(nDistA_surfaceModel),
+                    energyDist_surfaceModelReflection(nDistE_surfaceModel),
+                    cosDist_CDF(nDistA_surfaceModel),energyDist_CDF(nDistE_surfaceModel),
+                    cosDist_CDFReflection(nDistA_surfaceModel),energyDist_CDFReflection(nDistE_surfaceModel),
+                    cosDist_CDFregrid(nDistA_surfaceModel),energyDist_CDFregrid(nDistE_surfaceModel),
+                    cosDist_CDFregridReflection(nDistA_surfaceModel),
+                    energyDist_CDFregridReflection(nDistE_surfaceModel);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridEString",E_surfaceModel);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridAString",A_surfaceModel);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridDistEString",energyDistGrid);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridDistAString",cosDistGrid);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"sputtYldString",spyl_surfaceModel);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"reflYldString",rfyl_surfaceModel);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"cosDistString",cosDist_surfaceModel);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"cosDistStringRef",cosDist_surfaceModelReflection);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"energyDistString",energyDist_surfaceModel);
-  std::cout << "Finished surface model import" << std::endl; 
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"energyDistStringRef",energyDist_surfaceModelReflection);
+  for(int i=0;i<nE_surfaceModel;i++)
+  {
+      Elog_surfaceModel[i] = log10(E_surfaceModel[i]);
+  }
+  for(int i=0;i<nEdistBins_surfaceModel;i++)
+  {
+      energyDistGrid01[i] = i*1.0/nEdistBins_surfaceModel;
+  }
+  make2dCDF(nE_surfaceModel,nA_surfaceModel,nEdistBins_surfaceModel,energyDist_surfaceModel.data(),energyDist_CDF.data());
+  make2dCDF(nE_surfaceModel,nA_surfaceModel,nAdistBins_surfaceModel,cosDist_surfaceModel.data(),cosDist_CDF.data());
+  for(int k=0;k<nEdistBins_surfaceModel;k++)
+{
+        std::cout << "cosDist_CDF " << energyDist_CDF[39*nA_surfaceModel*nEdistBins_surfaceModel + 0*nEdistBins_surfaceModel+k] << std::endl;
+}
+  regrid2dCDF(nE_surfaceModel,nA_surfaceModel,nAdistBins_surfaceModel,cosDistGrid.data(),nAdistBins_surfaceModel,1.0,cosDist_CDF.data(),cosDist_CDFregrid.data());
+  regrid2dCDF(nE_surfaceModel,nA_surfaceModel,nEdistBins_surfaceModel,energyDistGrid01.data(),nEdistBins_surfaceModel,100.0,energyDist_CDF.data(),energyDist_CDFregrid.data());
+  for(int k=0;k<nEdistBins_surfaceModel;k++)
+{
+        std::cout << "cosDist_CDFregrid " << energyDist_CDFregrid[39*nA_surfaceModel*nEdistBins_surfaceModel + 0*nEdistBins_surfaceModel+k] << std::endl;
+}
+  float spylInterpVal = interp3d ( 0.5,0.0,log10(244.2),nAdistBins_surfaceModel,nA_surfaceModel,nE_surfaceModel,
+              cosDistGrid.data(),A_surfaceModel.data(),Elog_surfaceModel.data() ,cosDist_CDFregrid.data() );
+  float sputEInterpVal = interp3d ( 0.5,0.0,log10(244.2),nEdistBins_surfaceModel,nA_surfaceModel,nE_surfaceModel,
+              energyDistGrid01.data(),A_surfaceModel.data(),Elog_surfaceModel.data() ,energyDist_CDFregrid.data() );
+  std::cout << "Finished surface model import " <<spylInterpVal << " " << sputEInterpVal<< std::endl; 
 
   // Particle time stepping control
   int ionization_nDtPerApply  = cfg.lookup("timeStep.ionization_nDtPerApply");
@@ -1582,270 +1580,77 @@ for(int i=0;i<n_Dens;i++)
       particleSourceSpaceGrid(nSourceElements,0.0);
     sim::Array<int> particleSourceIndices(nSourceElements,0),
       particleSourceBoundaryIndices(nSourceBoundaries,0);
-  #if PARTICLE_SOURCE_SPACE == 1
-    for(int i=0;i<nSourceBoundaries;i++)
-    {
-        particleSourceBoundaryIndices[i] = particleSourceSetting["surfaceIndices"][i];
-    }
-    int currentSegmentIndex=0,currentBoundaryIndex=0;
-    float currentAccumulatedLengthArea=0.0,lengthAlongBoundary=0.0,bDotSurfaceNorm=0.0;
-    float parVec[3] = {0.0};
-    float perpVec[3] = {0.0};
-    currentBoundaryIndex=particleSourceBoundaryIndices[currentSegmentIndex];
-    currentAccumulatedLengthArea=currentAccumulatedLengthArea+boundaries[currentBoundaryIndex].length;
-    for(int i=0;i<nSourceElements;i++)
-    { 
-      if(i*sourceSampleResolution > currentAccumulatedLengthArea)
+    #if PARTICLE_SOURCE_SPACE == 1
+      for(int i=0;i<nSourceBoundaries;i++)
       {
-        currentSegmentIndex++;  
-        currentBoundaryIndex = particleSourceBoundaryIndices[currentSegmentIndex];
-        currentAccumulatedLengthArea=currentAccumulatedLengthArea+boundaries[currentBoundaryIndex].length;  
+          particleSourceBoundaryIndices[i] = particleSourceSetting["surfaceIndices"][i];
       }
-      particleSourceIndices[i] = currentBoundaryIndex;
-      particleSourceBoundaryIndices[currentSegmentIndex] = particleSourceSetting["surfaceIndices"][currentSegmentIndex];
-      boundaries[currentBoundaryIndex].getSurfaceParallel(parVec);
-      lengthAlongBoundary = i*sourceSampleResolution - (currentAccumulatedLengthArea-boundaries[currentBoundaryIndex].length);
-      particleSourceX[i]=boundaries[currentBoundaryIndex].x1 + parVec[0]*lengthAlongBoundary;
-      particleSourceZ[i]=boundaries[currentBoundaryIndex].z1 + parVec[2]*lengthAlongBoundary;
-      float localN = interp2dCombined(particleSourceX[i],0.0,particleSourceZ[i],nR_Dens,
-                    nZ_Dens,DensGridr.data(),DensGridz.data(),ni.data());
-      float localT = interp2dCombined(particleSourceX[i],0.0,particleSourceZ[i],nR_Temp,
-                    nZ_Temp,TempGridr.data(),TempGridz.data(),ti.data());
-      float localCs = sqrt(2*localT*1.602e-19/(1.66e-27*background_amu));
-      float localBnorm[3] = {0.0}; 
-        interp2dVector(&localBnorm[0],particleSourceX[i],0.0,particleSourceZ[i],nR_Bfield,
-                    nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),by.data());
-      vectorNormalize(localBnorm,localBnorm);
-      boundaries[currentBoundaryIndex].getSurfaceNormal(perpVec);
-      bDotSurfaceNorm = abs(vectorDotProduct(localBnorm,perpVec));
-      float localY = interp2dCombined(3.0*localT,0.0,acos(bDotSurfaceNorm)*180/3.1415,nE_surfaceModel,
-                    nA_surfaceModel,E_surfaceModel.data(),A_surfaceModel.data(),spyl_surfaceModel.data());
-      float localFlux=localCs*localN*bDotSurfaceNorm;//dotB*surf
-      std::cout << "segment boundary pos x z n t cs flux " << i << " " << currentBoundaryIndex
-          << " " <<particleSourceX[i] << " " << particleSourceZ[i] << " " << localN << " " << 
-          localT << " " << localCs << " " <<localFlux<<std::endl;
-      std::cout << "bfield perpvec bDotSurf " << localBnorm[0] << " " << localBnorm[1]
-          << " " << localBnorm[2] << " " << perpVec[0] << " " << perpVec[1] << " " << 
-          perpVec[2] << " " << bDotSurfaceNorm << " " << acos(bDotSurfaceNorm)*180/3.1415<<
-         " "<< localY <<std::endl;
-      if(i==0)
-      {
-        particleSourceSpaceCDF[i] = localFlux*localY; 
-      }
-      else
-      {
-        particleSourceSpaceCDF[i] = particleSourceSpaceCDF[i-1]+localFlux*localY; 
-      }
-        std::cout << "particleSourceSpaceCDF " << i << " " << particleSourceSpaceCDF[i] << std::endl;
-    }
-    for(int i=0;i<nSourceElements;i++)
-    {
-        particleSourceSpaceCDF[i] = particleSourceSpaceCDF[i]/particleSourceSpaceCDF[nSourceElements-1];
-        std::cout << "particleSourceSpaceCDF " << i << " " << particleSourceIndices[i] << " " << 
-           particleSourceX[i] << " " << particleSourceZ[i] << particleSourceSpaceCDF[i] << std::endl;
-    }
-    std::random_device randDevice;
-    boost::random::mt19937 s0;
-    boost::random::uniform_01<> dist01;
-    float rand0 = 0.0;
-    int lowInd = 0;
-    int currentSegment = 0;
-  #else
-    int nSources=0;
-    #if USE3DTETGEOM > 0
-      //cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
-      nSources = particleSource["nSources"];
-      sim::Array<int> sourceElements(nSources);
-      for (int i=0; i<(nSources); i++)
-      {
-        sourceElements[i] = particleSource["surfaceIndices"][i];
-      }
-    #else
-        std::random_device randDevice;
-        boost::random::mt19937 s0;
-        boost::random::uniform_01<> dist01;
-        float rand0 = 0.0;
-        int lowInd = 0;
-        float lengthAlongElement = 0.0;
-        float rSample = 0.0;
-      if (cfg_particles.lookupValue("particleSource.nSources",nSourceSurfaces)){}
-      sim::Array<int> sourceElements(nSourceSurfaces);
-      if(cfg_particles.exists("particleSource.surfaceIndices")){
-          for(int jj=0; jj<nSourceSurfaces; jj++)
-          { sourceElements[jj] = particleSourceSetting["surfaceIndices"][jj];
-          }
+      int currentSegmentIndex=0,currentBoundaryIndex=0;
+      float currentAccumulatedLengthArea=0.0,lengthAlongBoundary=0.0,bDotSurfaceNorm=0.0;
+      float parVec[3] = {0.0};
+      float perpVec[3] = {0.0};
+      currentBoundaryIndex=particleSourceBoundaryIndices[currentSegmentIndex];
+      currentAccumulatedLengthArea=currentAccumulatedLengthArea+boundaries[currentBoundaryIndex].length;
+      for(int i=0;i<nSourceElements;i++)
+      { 
+        if(i*sourceSampleResolution > currentAccumulatedLengthArea)
+        {
+          currentSegmentIndex++;  
+          currentBoundaryIndex = particleSourceBoundaryIndices[currentSegmentIndex];
+          currentAccumulatedLengthArea=currentAccumulatedLengthArea+boundaries[currentBoundaryIndex].length;  
         }
-      else{    
-      std::cout << "nLines " << nLines << std::endl;
-      for(int i=0;i<nLines;i++)
+        particleSourceIndices[i] = currentBoundaryIndex;
+        particleSourceBoundaryIndices[currentSegmentIndex] = particleSourceSetting["surfaceIndices"][currentSegmentIndex];
+        boundaries[currentBoundaryIndex].getSurfaceParallel(parVec);
+        lengthAlongBoundary = i*sourceSampleResolution - (currentAccumulatedLengthArea-boundaries[currentBoundaryIndex].length);
+        particleSourceX[i]=boundaries[currentBoundaryIndex].x1 + parVec[0]*lengthAlongBoundary;
+        particleSourceZ[i]=boundaries[currentBoundaryIndex].z1 + parVec[2]*lengthAlongBoundary;
+        float localN = interp2dCombined(particleSourceX[i],0.0,particleSourceZ[i],nR_Dens,
+                      nZ_Dens,DensGridr.data(),DensGridz.data(),ni.data());
+        float localT = interp2dCombined(particleSourceX[i],0.0,particleSourceZ[i],nR_Temp,
+                      nZ_Temp,TempGridr.data(),TempGridz.data(),ti.data());
+        float localCs = sqrt(2*localT*1.602e-19/(1.66e-27*background_amu));
+        float localBnorm[3] = {0.0}; 
+          interp2dVector(&localBnorm[0],particleSourceX[i],0.0,particleSourceZ[i],nR_Bfield,
+                      nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),by.data());
+        vectorNormalize(localBnorm,localBnorm);
+        boundaries[currentBoundaryIndex].getSurfaceNormal(perpVec);
+        bDotSurfaceNorm = abs(vectorDotProduct(localBnorm,perpVec));
+        float localY = interp2dCombined(3.0*localT,0.0,acos(bDotSurfaceNorm)*180/3.1415,nE_surfaceModel,
+                      nA_surfaceModel,E_surfaceModel.data(),A_surfaceModel.data(),spyl_surfaceModel.data());
+        float localFlux=localCs*localN*bDotSurfaceNorm;//dotB*surf
+        std::cout << "segment boundary pos x z n t cs flux " << i << " " << currentBoundaryIndex
+            << " " <<particleSourceX[i] << " " << particleSourceZ[i] << " " << localN << " " << 
+            localT << " " << localCs << " " <<localFlux<<std::endl;
+        std::cout << "bfield perpvec bDotSurf " << localBnorm[0] << " " << localBnorm[1]
+            << " " << localBnorm[2] << " " << perpVec[0] << " " << perpVec[1] << " " << 
+            perpVec[2] << " " << bDotSurfaceNorm << " " << acos(bDotSurfaceNorm)*180/3.1415<<
+           " "<< localY <<std::endl;
+        if(i==0)
+        {
+          particleSourceSpaceCDF[i] = localFlux*localY; 
+        }
+        else
+        {
+          particleSourceSpaceCDF[i] = particleSourceSpaceCDF[i-1]+localFlux*localY; 
+        }
+          std::cout << "particleSourceSpaceCDF " << i << " " << particleSourceSpaceCDF[i] << std::endl;
+      }
+      for(int i=0;i<nSourceElements;i++)
       {
-          if(boundaries[i].Z > 0)
-          {
-              nSourceSurfaces++;
-          }
-      } 
-      std::cout << "n material surfaces " << nSourceSurfaces << std::endl;
+          particleSourceSpaceCDF[i] = particleSourceSpaceCDF[i]/particleSourceSpaceCDF[nSourceElements-1];
+          std::cout << "particleSourceSpaceCDF " << i << " " << particleSourceIndices[i] << " " << 
+             particleSourceX[i] << " " << particleSourceZ[i] << particleSourceSpaceCDF[i] << std::endl;
       }
-      sim::Array<int> materialIndices(nSourceSurfaces);
-      if(cfg_particles.exists("particleSource.surfaceIndices")){
-        for(int i=0;i<nSourceSurfaces;i++)
-          {
-            materialIndices[i] = sourceElements[i];
-          }
-      }
-      else{
-      int currentInd = 0;
-      for(int i=0;i<nLines;i++)
-      {
-          if(boundaries[i].Z > 0)
-          {
-              materialIndices[currentInd] = i;
-              currentInd++;
-          }
-          std::cout << "i currentInd " << i << " " << currentInd << std::endl;
-      }
-      }
-       
-      std::vector<float> xPosGrid(nSourceSurfaces,0.0),xPosCDF(nSourceSurfaces,0.0);
-      xPosGrid[0] = boundaries[materialIndices[0]].length;
-      std::cout << "source element and length " << materialIndices[0] << " " <<
-      boundaries[materialIndices[0]].length << std::endl;
-      float accumulatedLength = 0.0;
-      float sourceResolution = 0.01;
-      float sourceTotalLength = 0.0;
-      for(int i=0;i<nSourceSurfaces;i++)
-      {
-          accumulatedLength = accumulatedLength+boundaries[materialIndices[i]].length;
-      }
-       int nSourceSegments = floor(accumulatedLength / sourceResolution);
-      std::vector<float> sourceGrid(nSourceSegments,0.0),sourceCDF(nSourceSegments,0.0),
-                         sourceX(nSourceSegments,0.0), sourceZ(nSourceSegments,0.0);
-      std::vector<int> sourceIndices(nSourceSegments,0);
-      float lengthNow = 0.0;
+      std::random_device randDevice;
+      boost::random::mt19937 s0;
+      boost::random::uniform_01<> dist01;
+      float rand0 = 0.0;
+      int lowInd = 0;
       int currentSegment = 0;
-      int segmentNumber = 0;
-      accumulatedLength = 0.0;
-      float sourceTotal = 0.0;
-      for(int i=0;i<nSourceSegments;i++)
-      {
-        lengthNow = i*sourceResolution + sourceResolution*0.5;
-        while(accumulatedLength < lengthNow)
-        {
-          currentSegment = materialIndices[segmentNumber];
-          accumulatedLength = accumulatedLength+boundaries[currentSegment].length;
-          segmentNumber++;
-        }
-        if(lengthNow <= accumulatedLength)
-        {
-          lengthAlongElement = lengthNow - (accumulatedLength - boundaries[currentSegment].length);
-        }
-        float parVec[3] = {0.0};
-        boundaries[currentSegment].getSurfaceParallel(parVec);
-        float thisX = boundaries[currentSegment].x1 + parVec[0]*lengthAlongElement;
-        float thisY=0.0;
-        float thisZ = boundaries[currentSegment].z1 + parVec[2]*lengthAlongElement;
-        float localN = interp2dCombined(thisX,thisY,thisZ,nR_Dens,
-                    nZ_Dens,DensGridr.data(),DensGridz.data(),ni.data());
-        sourceGrid[i] = localN;
-        sourceIndices[i] = currentSegment;   
-        sourceX[i] = thisX;
-        sourceZ[i] = thisZ;
-        sourceTotal = sourceTotal + sourceGrid[i]; 
-      }
-      sourceCDF[0] = sourceGrid[0]/sourceTotal;
-      std::cout << "source total and first sourceCDF " << sourceTotal << " " << sourceCDF[0] << std::endl;
-      for(int i=1;i<nSourceSegments;i++)
-      {
-        sourceCDF[i] = sourceCDF[i-1]+(sourceGrid[i]/sourceTotal);
-      }
-      for(int i=1;i<nSourceSurfaces;i++)
-      {
-          xPosGrid[i] = xPosGrid[i-1]+boundaries[materialIndices[i]].length;
-          //std::cout << "cumsum length grid " << materialIndices[i] << " " 
-          //   << boundaries[materialIndices[i]].length << " "<< xPosGrid[i] << std::endl;
-      }
-      sourceTotalLength = xPosGrid[nSourceSurfaces-1];
-      for(int i=0;i<nSourceSurfaces;i++)
-      {
-          xPosGrid[i] = xPosGrid[i]/xPosGrid[nSourceSurfaces-1];
-          //std::cout << "cumsum length grid " << xPosGrid[i] << std::endl;
-      }
-     
+    #else
     #endif
-    //#if PARTICLE_SOURCE_SPACE == 1 //Material Surfaces - flux weighted source
-    //    std::random_device randDevice;
-    //    //std::array<mt19937> s0(5);
-    //    //std::mt19937 s0(randDevice());
-    //    boost::random::mt19937 s0;
-    //    boost::random::uniform_01<> dist01;
-    //    //mt19937::result_type seed = time(0);
-    //    //auto s0 = std::bind(std::uniform_real_distribution<double>(0,1),
-    //    //                                   mt19937(seed));
-    //    //std::uniform_real_distribution<float> dist001(0.0, 1.0);
-    //    float rand0 = 0.0;
-    //    int lowInd = 0;
-    //    float lengthAlongElement = 0.0;
-    //    float rSample = 0.0;
-    //for (int i=0; i< nP ; i++)
-    //{
-    //  rand0 = dist01(s0);
-    //  rSample = interp1dUnstructured2(rand0,nSegments,&sourceRsegments.front() , &spaceCDF.front());
-    //  rand4 = dist01(s0);
-    //  x = rSample*cos(rand4*2.0*3.1415);
-    //  y = rSample*sin(rand4*2.0*3.1415);
-    //  z = sourceZ[0];
-    //  rand1 = dist01(s0);
-    //  E0 = interp1dUnstructured(rand1,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
-    //  V0 = sqrt(2*E0*1.602e-19/(184.0*1.66e-27));
-    //  rand2 = dist01(s0);
-    //  angleSample = interp1dUnstructured2(rand2,nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front());
-    //  angleBinNum=floor(angleSample*180/3.1415);
-    //  angleBins[angleBinNum] = angleBins[angleBinNum]+1;
-    //  //std::cout << angleSample << std::endl;
-    //  //Ey = //E0*cos(angleSample)*sin(2.0*3.1415*rand3);
-    //  Vz = V0*cos(angleSample);
-    //  if(Vz < 0.0)
-    //  {
-    //     std::cout << "Vz is less than 0 " << Vz  << std::endl; 
-    //  }
-    //  Vr = V0*sin(angleSample);//cos(2.0*3.1415*rand3)
-    //  //std::cout << "Ez " << Ez << " Er " << Er << std::endl; 
-    //  rand3 = dist01(s0);
-    //  //rand3 = j*1.0/nParticles;
-    //  Vx = Vr*cos(2.0*3.1415*rand3);
-    //  Vy = Vr*sin(2.0*3.1415*rand3);//E0*cos(angleSample)*sin(2.0*3.1415*rand3);
-    //  angleBinNum2=floor(rand3*180.0);
-    //  angleBins2[angleBinNum2] = angleBins2[angleBinNum2]+1;
-    //  //std::cout << "rsample " << rSample << " E0 " << E0 << " angleSample " << angleSample << std::endl;
-    //particleArray->setParticleV(j,x,y,z,Vx,Vy,Vz,74, 184.0, charge);
-    //#endif
-       //minDist0 = getE ( x,y,z,thisE0, boundaries.data(),nLines,
-    #if PARTICLE_SOURCE_SPACE == 2 //Material Surfaces - flux weighted source
-      #if USE3DTETGEOM > 0
-      #else
-        //x = sampled
-        //rand0 = dist001(s0);
-        //x= interp1dUnstructured(rand0,nMaterialSurfaces, 1.0,&xPosGrid[0], lowInd);
-        //lengthAlongElement = (rand0 - xPosGrid[lowInd])*boundaries[materialIndices[lowInd]].length/(xPosGrid[lowInd+1]-xPosGrid[lowInd]);
-        //std::cout << "interpd x " <<rand0 << " " << x  << " " << lowInd << " "
-        //    << xPosGrid[lowInd] << " " << lengthAlongElement << " " << boundaries[materialIndices[lowInd]].length
-        //   << " " << lengthAlongElement/boundaries[materialIndices[lowInd]].length << std::endl;    
-        //float parVec[3] = {0.0};
-        //boundaries[materialIndices[lowInd]].getSurfaceParallel(parVec);
-        //std::cout << "surface par " << parVec[0] << " " << parVec[2] << std::endl;
-        //x = boundaries[materialIndices[lowInd]].x1 + parVec[0]*lengthAlongElement;
-        //y=0.0;
-        //z = boundaries[materialIndices[lowInd]].z1 + parVec[2]*lengthAlongElement;
-        ////shift particles off surface
-        //float perpVec[3] = {0.0};
-        //float buffer = 5e-9;//0.0;//2e-6;
-        //boundaries[materialIndices[lowInd]].getSurfaceNormal(perpVec);
-        //x = x + perpVec[0]*buffer;
-        //z = z + perpVec[2]*buffer;
-          #endif
-        #endif
-      #endif
-  #endif
+  #endif    
   #if PARTICLE_SOURCE_ENERGY == 0
     if( cfg.lookupValue("impurityParticleSource.initialConditions.energy_eV",E))
     { std::cout << "Impurity point source E: " << E << std::endl;
@@ -1855,13 +1660,21 @@ for(int i=0;i<n_Dens;i++)
   #elif PARTICLE_SOURCE_ENERGY == 1
 //Create Thompson Distribution
     float surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
+    float surfaceAlpha = cfg.lookup("impurityParticleSource.source_materialAlpha");
     std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
     int nThompDistPoints = 200;
     float max_Energy = 100.0;
     sim::Array<float> ThompsonDist(nThompDistPoints),CumulativeDFThompson(nThompDistPoints);
     for(int i=0;i<nThompDistPoints;i++)
-        {
-            ThompsonDist[i] = (i*max_Energy/nThompDistPoints)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,3);
+    {
+      if(surfaceAlpha > 0.0)
+      {
+        ThompsonDist[i] = surfaceAlpha*(surfaceAlpha-1.0)*(i*max_Energy/nThompDistPoints)*pow(surfaceBindingEnergy,surfaceAlpha-1.0)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,(surfaceAlpha+1.0));
+      }
+      else
+      {  
+        ThompsonDist[i] = (i*max_Energy/nThompDistPoints)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,3);
+      }
             if(i==0)
             {
                 CumulativeDFThompson[i] = ThompsonDist[i]; 
@@ -1870,64 +1683,16 @@ for(int i=0;i<n_Dens;i++)
             {
                 CumulativeDFThompson[i] = CumulativeDFThompson[i-1]+ThompsonDist[i];
             }
-        }
+    }
     for(int i=0;i<nThompDistPoints;i++)
-        {
+    {
             CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
             //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
-        }
-        //std::random_device randDevice_particleE;
-        //std::mt19937 sE(randDevice_particleE());
-        //std::uniform_real_distribution<float> dist01E(0.0, 1.0);
+    }
         boost::random::mt19937 sE;
         boost::random::uniform_01<> dist01E;
         float randE = 0.0;
         int lowIndE = 0;
-        randE = dist01E(sE);
-
-    for(int j=0; j<4*nImpurityBoundaries;j++)
-        {
-            std::mt19937  s(boundarySeeds00[j]);
-            s00[j] = s;
-        }
-    // Particle p1(0.0,0.0,0.0,0.0,0.0,0.0,0,0.0);
-    for (int i=0; i< nImpurityBoundaries;i++)
-    {
-        for(int j=0; j<impuritiesPerBoundary; j++)
-        {
-            //Set boundary interval, properties, and random number gen
-        if (i==0)
-        {
-            rand0 = dist01(s00[0]);
-            x = boundaries[boundaryIndex_ImpurityLaunch[i]].x1 + 
-                boundaries[boundaryIndex_ImpurityLaunch[i]].length*rand0;//1.4290;
-            //std::cout << "start pos 1 " << x << std::endl;
-            z = -1.2540+0.00001;
-            rand1 = dist01(s00[1]);
-            rand2 = dist01(s00[2]);
-            rand3 = dist01(s00[3]);
-            E0 = interp1dUnstructured(rand2,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
-            Ex = E0*cos(3.1415*rand1)*sin(3.1415*rand3);
-            Ey = E0*cos(3.1415*rand3);
-            Ez = E0*sin(3.1415*rand1)*sin(3.1415*rand3);
-        }
-        else
-        {
-            rand0 = dist01(s00[4]);
-            x = boundaries[boundaryIndex_ImpurityLaunch[i]].x1 + boundaries[boundaryIndex_ImpurityLaunch[i]].length*rand0;
-            //x = 1.3450;
-            //std::cout << "start pos 2 " << x << std::endl;
-            z = -1.3660+0.00001;
-            rand1 = dist01(s00[5]);
-            rand2 = dist01(s00[6]);
-            rand3 = dist01(s00[7]);
-            E0 = interp1dUnstructured(rand2,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
-            Ex = E0*cos(3.1415*rand1)*sin(3.1415*rand3);
-            Ey = E0*cos(3.1415*rand3);
-            Ez = E0*sin(3.1415*rand1)*sin(3.1415*rand3);
-        }
-        particleArray->setParticle((i * impuritiesPerBoundary + j),x, 0.0, z, Ex, Ey, Ez, 74, 18400.0, charge);            
-        }
   #endif
   #if PARTICLE_SOURCE_ANGLE == 0
     if (cfg.lookupValue("impurityParticleSource.initialConditions.phi",phi) &&
@@ -1962,7 +1727,8 @@ for(int i=0;i<n_Dens;i++)
         float randA = 0.0;
         int lowIndA = 0;
   #endif
-  
+  sim::Array<float> pSurfNormX(nP),pSurfNormY(nP),pSurfNormZ(nP), 
+                    px(nP),py(nP),pz(nP),pEx(nP),pEy(nP),pEz(nP);
   int surfIndexMod = 0;
   for (int i=0; i< nP ; i++)
   {
@@ -1987,70 +1753,15 @@ for(int i=0;i<n_Dens;i++)
         x = particleSourceX[lowInd]+(rand0-particleSourceSpaceCDF[lowInd])/(particleSourceSpaceCDF[lowInd+1]-particleSourceSpaceCDF[lowInd])*sourceSampleResolution*parVec[0];
         y = 0.0;
         z = particleSourceZ[lowInd]+(rand0-particleSourceSpaceCDF[lowInd])/(particleSourceSpaceCDF[lowInd+1]-particleSourceSpaceCDF[lowInd])*sourceSampleResolution*parVec[2];
-        //std::cout << "rand sourceCDF " << rand0 << " " << sourceCDF[lowInd] << " " << lowInd << std::endl;
-        //lengthNow = lowInd*sourceResolution;
-        //segmentNumber = 0;
-        //accumulatedLength = 0.0;
-      ////for(int i=0;i<lowInd;i++)
-      ////{
-        //while(accumulatedLength < lengthNow)
-        //{
-        //  currentSegment = materialIndices[segmentNumber];
-        //  accumulatedLength = accumulatedLength+boundaries[currentSegment].length;
-        //  segmentNumber++;
-        //}
-        ////if(distAlongSegs <= accumulatedLength)
-        ////{
-        //  lengthAlongElement = distAlongSegs - (accumulatedLength - boundaries[currentSegment].length);
-        //}
-      //}
-      //if(lengthAlongElement > boundaries[currentSegment].length)
-      //{ std::cout << "LOOK HERE currentSegment segmentNumber length "<< currentSegment << " "
-      //   << segmentNumber << " " << boundaries[currentSegment].length << std::endl;
-      //  std::cout << "lengthNow accumulatedLength disAlongSegs lengthAlongElements " << lengthNow << 
-      //      " " << accumulatedLength << " " << distAlongSegs 
-      //      << " " << (accumulatedLength - boundaries[currentSegment].length)<< " " << lengthAlongElement << std::endl;
-      //}
-      //  float parVec[3] = {0.0};
-      //  boundaries[currentSegment].getSurfaceParallel(parVec);
-      //  std::cout << "currentSegment x1 z1 parVec " << currentSegment << " " << 
-      //      boundaries[currentSegment].x1 << " " << boundaries[currentSegment].z1 << " " <<
-      //      parVec[0] << " " << parVec[2] << std::endl;
-      //  float thisX = boundaries[currentSegment].x1 + parVec[0]*lengthAlongElement;
-      //  float thisY=0.0;
-      //  float thisZ = boundaries[currentSegment].z1 + parVec[2]*lengthAlongElement;
-      //  x = thisX;//boundaries[sourceIndices[lowInd]].x1;
-      //  y = thisY;
-      //  z = thisZ;
-        //x= interp1dUnstructured(rand0,nSourceSurfaces, 1.0,&xPosGrid[0], lowInd);
-        //if((lowInd == 0) && (xPosGrid[lowInd] > rand0))
-        //{
-        //  lengthAlongElement = rand0/xPosGrid[0]*boundaries[materialIndices[0]].length;
-        //}
-        //else{
-        //lengthAlongElement = (rand0 - xPosGrid[lowInd])*boundaries[materialIndices[lowInd]].length/(xPosGrid[lowInd+1]-xPosGrid[lowInd]);
-        //}
-        ////std::cout << "interpd x " <<rand0 << " " << x  << " " << lowInd << " "
-        ////    << xPosGrid[lowInd] << " " << lengthAlongElement << " " << boundaries[materialIndices[lowInd]].length
-        ////   << " " << lengthAlongElement/boundaries[materialIndices[lowInd]].length << std::endl;    
-        //float parVec[3] = {0.0};
-        //boundaries[materialIndices[lowInd]].getSurfaceParallel(parVec);
-        ////std::cout << "surface par " << parVec[0] << " " << parVec[2] << std::endl;
-        //x = boundaries[materialIndices[lowInd]].x1 + parVec[0]*lengthAlongElement;
-        //y=0.0;
-        //z = boundaries[materialIndices[lowInd]].z1 + parVec[2]*lengthAlongElement;
-        ////shift particles off surface
-        //float perpVec[3] = {0.0};
         float buffer = 1e-6;//0.0;//2e-6;
-        //boundaries[materialIndices[lowInd]].getSurfaceNormal(perpVec);
-        ////x = x + perpVec[0]*buffer;
-        ////z = z + perpVec[2]*buffer;
-        ////std::cout << "a c plane norm " <<materialIndices[lowInd] << " " << boundaries[materialIndices[lowInd]].a << " " << boundaries[materialIndices[lowInd]].c <<" " << boundaries[materialIndices[lowInd]].plane_norm << std::endl;
-        ////std::cout << "perp vec " << boundaries[materialIndices[lowInd]].a/boundaries[materialIndices[lowInd]].plane_norm << " " << boundaries[materialIndices[lowInd]].c/boundaries[materialIndices[lowInd]].plane_norm << std::endl;
         x = x - buffer*boundaries[currentSegment].a/boundaries[currentSegment].plane_norm;//boundaries[sourceElements[surfIndexMod]].x1;
         z = z - buffer*boundaries[currentSegment].c/boundaries[currentSegment].plane_norm;//boundaries[sourceElements[surfIndexMod]].z1; 
       #endif
     #endif
+    #if PARTICLE_SOURCE_ENERGY > 0
+        randE = dist01E(sE);
+        E = interp1dUnstructured(randE,nThompDistPoints, max_Energy, &CumulativeDFThompson.front(), lowIndE);
+    #endif    
     #if PARTICLE_SOURCE_ANGLE == 1 // Analytic normal incidence
       Ex = -E*boundaries[currentSegment].a/boundaries[currentSegment].plane_norm;
       Ey = -E*boundaries[currentSegment].b/boundaries[currentSegment].plane_norm+10.0*(floor(rand0+ 0.5)*2 -1);
@@ -2082,8 +1793,38 @@ for(int i=0;i<n_Dens;i++)
     std::cout << "particle xyz Exyz Z amu charge " << x << " " << y << " " << z << " "
        << Ex << " " << Ey << " " << Ez << " " << Z << " " << amu << " " << charge << " "  << std::endl;
     particleArray->setParticle(i,x,y, z, Ex, Ey, Ez, Z, amu, charge);   
+    pSurfNormX[i] = -boundaries[currentSegment].a/boundaries[currentSegment].plane_norm;
+    pSurfNormY[i] = -boundaries[currentSegment].b/boundaries[currentSegment].plane_norm;
+    pSurfNormZ[i] = -boundaries[currentSegment].c/boundaries[currentSegment].plane_norm;
+    px[i] = x;
+    py[i] = y;
+    pz[i] = z;
+    pEx[i] = Ex;
+    pEy[i] = Ey;
+    pEz[i] = Ez;
   }         
    
+    NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
+    NcDim pNP = ncFile_particles.addDim("nP",nP);
+    NcVar p_surfNormx = ncFile_particles.addVar("surfNormX",ncFloat,pNP);
+    NcVar p_surfNormy = ncFile_particles.addVar("surfNormY",ncFloat,pNP);
+    NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ",ncFloat,pNP);
+    NcVar p_Ex = ncFile_particles.addVar("Ex",ncFloat,pNP);
+    NcVar p_Ey = ncFile_particles.addVar("Ey",ncFloat,pNP);
+    NcVar p_Ez = ncFile_particles.addVar("Ez",ncFloat,pNP);
+    NcVar p_x = ncFile_particles.addVar("x",ncFloat,pNP);
+    NcVar p_y = ncFile_particles.addVar("y",ncFloat,pNP);
+    NcVar p_z = ncFile_particles.addVar("z",ncFloat,pNP);
+    p_surfNormx.putVar(&pSurfNormX[0]);
+    p_surfNormy.putVar(&pSurfNormY[0]);
+    p_surfNormz.putVar(&pSurfNormZ[0]);
+    p_Ex.putVar(&pEx[0]);
+    p_Ey.putVar(&pEy[0]);
+    p_Ez.putVar(&pEz[0]);
+    p_x.putVar(&px[0]);
+    p_y.putVar(&py[0]);
+    p_z.putVar(&pz[0]);
+
 //  #elif PARTICLE_SOURCE == 1
 //    float x;
 //    float y;

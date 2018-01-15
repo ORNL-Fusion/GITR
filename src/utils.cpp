@@ -1,6 +1,6 @@
 #include "utils.h"
 #include "libconfig.h++"
-
+//#include "interp2d.hpp"
 using namespace std;
 void checkFlags(libconfig::Config &cfg)
 {
@@ -65,4 +65,67 @@ int getDimFromFile (libconfig::Config &cfg,const std::string& file,const std::st
   getVariable(cfg,section+s,str);
   int dim = readFileDim(file,str);
   return dim;
+}
+int make2dCDF(int nX, int nY, int nZ, float* distribution, float* cdf)
+{
+    int index=0;
+    for(int i=0;i<nX;i++)
+    {
+      for(int j=0;j<nY;j++)
+      {
+        for(int k=0;k<nZ;k++)
+        {
+          index = i*nY*nZ + j*nZ + k;
+          if(k==0)
+          {
+            cdf[index] = distribution[index];
+          }
+          else
+          {
+            cdf[index] = cdf[index-1] + distribution[index];
+          }
+        }  
+      }  
+    }
+    for(int i=0;i<nX;i++)
+    {
+      for(int j=0;j<nY;j++)
+      {
+        if(cdf[i*nY*nZ + (j+1)*nZ - 1]>0.0)
+        {
+          for(int k=0;k<nZ;k++)
+          {  
+            index = i*nY*nZ + j*nZ + k;
+            cdf[index] = cdf[index]/
+                       cdf[index-k+nZ-1];
+          }
+        }
+      }
+    }
+  return 0;
+}
+int regrid2dCDF(int nX, int nY, int nZ,float* xGrid,int nNew,float maxNew, float*cdf, float* cdf_regrid)
+{
+  //std::cout << " inside regrid function "<<nX << " " << nY << " " << nZ << std::endl;
+  int lowInd=0;
+  int index=0;
+  float spline = 0.0;
+  for(int i=0;i<nX;i++)
+  {
+    for(int j=0;j<nY;j++)
+    {
+      for(int k=0;k<nZ;k++)
+      {
+        index = i*nY*nZ + j*nZ + k;
+        spline = interp1dUnstructured(xGrid[k],nNew,maxNew,&cdf[index-k],lowInd);
+        cdf_regrid[index] = spline;  
+        if(i==39 && j==0)
+        {
+          std::cout << "index xGrid[k] " << index << " " << xGrid[k] << " " << nNew << " " <<
+              maxNew << " " << spline << std::endl;
+        }
+      }  
+    }
+  }
+  return 0;  
 }
