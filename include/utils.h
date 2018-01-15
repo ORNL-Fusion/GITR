@@ -13,6 +13,7 @@
 #include "libconfig.h++"
 #include "io.hpp"
 #include <libconfig.h++>
+#include "interp2d.hpp"
 
 //void INPUT(int& nP, double& sourceStrength,double& x_start,double& y_start,double& z_start,double& energy_eV_x_start,double& energy_eV_y_start,
 //	double&	energy_eV_z_start,double& impurity_amu, double& impurity_Z,int& nDensityChargeBins	,double& xMinV,double& xMaxV,double& yMin,double& yMax,double& zMin,double& zMax,	int& nXv,
@@ -80,4 +81,6 @@ int getVarFromFile (libconfig::Config &cfg,const std::string& file,const std::st
 }
 int getDimFromFile (libconfig::Config &cfg,const std::string& file,const std::string& section,
         const std::string& s);
+int make2dCDF(int nX, int nY, int nZ, float* distribution, float* cdf);
+int regrid2dCDF(int nX, int nY, int nZ,float* xGrid,int nNew,float maxNew, float* cdf, float* cdf_regrid);
 #endif
