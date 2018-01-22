@@ -1010,9 +1010,26 @@ int main()
     getVarFromFile(cfg,input_path+gradTFile, gradTCfg,"gradTiZString",gradTiZ); 
     getVarFromFile(cfg,input_path+gradTFile, gradTCfg,"gradTeRString",gradTeR); 
     getVarFromFile(cfg,input_path+gradTFile, gradTCfg,"gradTeZString",gradTeZ);
+    getVarFromFile(cfg,input_path+gradTFile, gradTCfg,"gradTeYString",gradTeY); 
+    getVarFromFile(cfg,input_path+gradTFile, gradTCfg,"gradTiYString",gradTiY); 
   #endif 
+  float gradTi[3] = {0.0};
+  interp2dVector(&gradTi[0],1.45,0.0,-1.2,nR_gradT,nZ_gradT,
+                            gradTGridr.data() ,gradTGridz.data() ,gradTiR.data(),
+                            gradTiZ.data(), gradTiY.data() ); 
+  std::cout << "thermal gradient interpolation gradTi " << gradTi[0] << " " << 
+     gradTi[1] << " " << gradTi[2] << " " << std::endl; 
 
-
+  auto particleExample = new Particles(1);
+  particleExample->setParticle(0,1.5,0.0, 0.0, 4.4, 0.0,0.0, 74.0, 184.0, 1.0);   
+  thermalForce tf(particleExample,1.0e-7,background_amu,
+                    nR_gradT,nZ_gradT,gradTGridr.data(),gradTGridz.data(),
+                    gradTiR.data(),gradTiZ.data(), gradTiY.data(), 
+                    gradTeR.data(), gradTeZ.data(), gradTeY.data(), 
+                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
+                    &br.front(),&bz.front(),&by.front());
+  tf(0);
+  std::cout << "thermal force values " <<tf.nR_gradT <<" " <<  tf.dv_ITG[0] << std::endl;  
   //Initialization of ionization and recombination coefficients    
   int nCS_Ionize, nCS_Recombine;
   const char *ionizeNcs,*ionizeNDens,*ionizeNTemp,
@@ -1415,6 +1432,7 @@ int main()
                     Elog_surfaceModel(nE_surfaceModel),
                     energyDistGrid(nEdistBins_surfaceModel), cosDistGrid(nAdistBins_surfaceModel),
                     energyDistGrid01(nEdistBins_surfaceModel),
+                    cosDistGrid01(nEdistBins_surfaceModel),
                     spyl_surfaceModel(nE_surfaceModel*nA_surfaceModel),
                     rfyl_surfaceModel(nE_surfaceModel*nA_surfaceModel),
                     cosDist_surfaceModel(nDistA_surfaceModel),energyDist_surfaceModel(nDistE_surfaceModel),
@@ -1443,20 +1461,24 @@ int main()
   {
       energyDistGrid01[i] = i*1.0/nEdistBins_surfaceModel;
   }
+  for(int i=0;i<nAdistBins_surfaceModel;i++)
+  {
+     cosDistGrid01[i] = i*1.0/nAdistBins_surfaceModel;
+  }
   make2dCDF(nE_surfaceModel,nA_surfaceModel,nEdistBins_surfaceModel,energyDist_surfaceModel.data(),energyDist_CDF.data());
   make2dCDF(nE_surfaceModel,nA_surfaceModel,nAdistBins_surfaceModel,cosDist_surfaceModel.data(),cosDist_CDF.data());
   for(int k=0;k<nEdistBins_surfaceModel;k++)
 {
-        std::cout << "cosDist_CDF " << energyDist_CDF[39*nA_surfaceModel*nEdistBins_surfaceModel + 0*nEdistBins_surfaceModel+k] << std::endl;
+        std::cout << "cosDist_CDF " << energyDist_CDF[0*nA_surfaceModel*nEdistBins_surfaceModel + 0*nEdistBins_surfaceModel+k] << std::endl;
 }
-  regrid2dCDF(nE_surfaceModel,nA_surfaceModel,nAdistBins_surfaceModel,cosDistGrid.data(),nAdistBins_surfaceModel,1.0,cosDist_CDF.data(),cosDist_CDFregrid.data());
+  regrid2dCDF(nE_surfaceModel,nA_surfaceModel,nAdistBins_surfaceModel,cosDistGrid01.data(),nAdistBins_surfaceModel,90.0,cosDist_CDF.data(),cosDist_CDFregrid.data());
   regrid2dCDF(nE_surfaceModel,nA_surfaceModel,nEdistBins_surfaceModel,energyDistGrid01.data(),nEdistBins_surfaceModel,100.0,energyDist_CDF.data(),energyDist_CDFregrid.data());
   for(int k=0;k<nEdistBins_surfaceModel;k++)
 {
-        std::cout << "cosDist_CDFregrid " << energyDist_CDFregrid[39*nA_surfaceModel*nEdistBins_surfaceModel + 0*nEdistBins_surfaceModel+k] << std::endl;
+        std::cout << "cosDist_CDFregrid " << energyDist_CDFregrid[0*nA_surfaceModel*nEdistBins_surfaceModel + 0*nEdistBins_surfaceModel+k] << std::endl;
 }
-  float spylInterpVal = interp3d ( 0.5,0.0,log10(244.2),nAdistBins_surfaceModel,nA_surfaceModel,nE_surfaceModel,
-              cosDistGrid.data(),A_surfaceModel.data(),Elog_surfaceModel.data() ,cosDist_CDFregrid.data() );
+  float spylInterpVal = interp3d ( 0.003,87.33,log10(60),nAdistBins_surfaceModel,nA_surfaceModel,nE_surfaceModel,
+              cosDistGrid01.data(),A_surfaceModel.data(),Elog_surfaceModel.data() ,cosDist_CDFregrid.data() );
   float sputEInterpVal = interp3d ( 0.5,0.0,log10(244.2),nEdistBins_surfaceModel,nA_surfaceModel,nE_surfaceModel,
               energyDistGrid01.data(),A_surfaceModel.data(),Elog_surfaceModel.data() ,energyDist_CDFregrid.data() );
   std::cout << "Finished surface model import " <<spylInterpVal << " " << sputEInterpVal<< std::endl; 
@@ -1616,8 +1638,11 @@ int main()
         vectorNormalize(localBnorm,localBnorm);
         boundaries[currentBoundaryIndex].getSurfaceNormal(perpVec);
         bDotSurfaceNorm = abs(vectorDotProduct(localBnorm,perpVec));
-        float localY = interp2dCombined(3.0*localT,0.0,acos(bDotSurfaceNorm)*180/3.1415,nE_surfaceModel,
-                      nA_surfaceModel,E_surfaceModel.data(),A_surfaceModel.data(),spyl_surfaceModel.data());
+        float localY = interp2dCombined(log10(3.0*localT),0.0,acos(bDotSurfaceNorm)*180/3.14159,nE_surfaceModel,
+                      nA_surfaceModel,Elog_surfaceModel.data(),A_surfaceModel.data(),spyl_surfaceModel.data());
+        localY = interp2dCombined(acos(bDotSurfaceNorm)*180/3.14159,0.0,log10(3.0*localT),nA_surfaceModel,
+                      nE_surfaceModel,A_surfaceModel.data(),Elog_surfaceModel.data(),spyl_surfaceModel.data());
+        std::cout << "LocalPotential localAngle localY " << 3.0*localT << " " <<acos(bDotSurfaceNorm)*180/3.1415 << " " << localY << std::endl;
         float localFlux=localCs*localN*bDotSurfaceNorm;//dotB*surf
         std::cout << "segment boundary pos x z n t cs flux " << i << " " << currentBoundaryIndex
             << " " <<particleSourceX[i] << " " << particleSourceZ[i] << " " << localN << " " << 
@@ -1644,6 +1669,7 @@ int main()
       }
       std::random_device randDevice;
       boost::random::mt19937 s0;
+      s0.seed(123456);
       boost::random::uniform_01<> dist01;
       float rand0 = 0.0;
       int lowInd = 0;
@@ -1657,38 +1683,41 @@ int main()
     }
     else
     { std::cout << "ERROR: Could not get point source impurity initial conditions" << std::endl;}
-  #elif PARTICLE_SOURCE_ENERGY == 1
-//Create Thompson Distribution
-    float surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
-    float surfaceAlpha = cfg.lookup("impurityParticleSource.source_materialAlpha");
-    std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
-    int nThompDistPoints = 200;
-    float max_Energy = 100.0;
-    sim::Array<float> ThompsonDist(nThompDistPoints),CumulativeDFThompson(nThompDistPoints);
-    for(int i=0;i<nThompDistPoints;i++)
-    {
-      if(surfaceAlpha > 0.0)
+  #elif PARTICLE_SOURCE_ENERGY > 0
+    #if PARTICLE_SOURCE_ENERGY == 1
+    //Create Thompson Distribution
+      float surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
+      float surfaceAlpha = cfg.lookup("impurityParticleSource.source_materialAlpha");
+      std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
+      int nThompDistPoints = 200;
+      float max_Energy = 100.0;
+      sim::Array<float> ThompsonDist(nThompDistPoints),CumulativeDFThompson(nThompDistPoints);
+      for(int i=0;i<nThompDistPoints;i++)
       {
-        ThompsonDist[i] = surfaceAlpha*(surfaceAlpha-1.0)*(i*max_Energy/nThompDistPoints)*pow(surfaceBindingEnergy,surfaceAlpha-1.0)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,(surfaceAlpha+1.0));
+        if(surfaceAlpha > 0.0)
+        {
+          ThompsonDist[i] = surfaceAlpha*(surfaceAlpha-1.0)*(i*max_Energy/nThompDistPoints)*pow(surfaceBindingEnergy,surfaceAlpha-1.0)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,(surfaceAlpha+1.0));
+        }
+        else
+        {  
+          ThompsonDist[i] = (i*max_Energy/nThompDistPoints)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,3);
+        }
+              if(i==0)
+              {
+                  CumulativeDFThompson[i] = ThompsonDist[i]; 
+              }
+              else
+              {
+                  CumulativeDFThompson[i] = CumulativeDFThompson[i-1]+ThompsonDist[i];
+              }
       }
-      else
-      {  
-        ThompsonDist[i] = (i*max_Energy/nThompDistPoints)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,3);
+      for(int i=0;i<nThompDistPoints;i++)
+      {
+              CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
+              //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
       }
-            if(i==0)
-            {
-                CumulativeDFThompson[i] = ThompsonDist[i]; 
-            }
-            else
-            {
-                CumulativeDFThompson[i] = CumulativeDFThompson[i-1]+ThompsonDist[i];
-            }
-    }
-    for(int i=0;i<nThompDistPoints;i++)
-    {
-            CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
-            //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
-    }
+      #elif PARTICLE_SOURCE_ENERGY == 2
+      #endif
         boost::random::mt19937 sE;
         boost::random::uniform_01<> dist01E;
         float randE = 0.0;
@@ -1706,30 +1735,34 @@ int main()
     Ex = E*sin(phi)*cos(theta);
     Ey = E*sin(phi)*sin(theta);
     Ez = E*cos(phi);
-  #elif PARTICLE_SOURCE_ANGLE == 2
+  #elif PARTICLE_SOURCE_ANGLE > 0
 
     std::cout << "Read particle source " << std::endl;
-    Config cfg_particles;
-    cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
-    Setting& particleSource = cfg_particles.lookup("particleSource");
-    int nSegmentsAngle = particleSource["nSegmentsAngle"];
-    float angleSample;
-    sim::Array<float> sourceAngleSegments(nSegmentsAngle);
-    sim::Array<float> angleCDF(nSegmentsAngle);
-    for (int i=0; i<(nSegmentsAngle); i++)
-    {
-        sourceAngleSegments[i] = particleSource["angles"][i];
-        angleCDF[i] = particleSource["angleCDF"][i];
-    }
-        std::random_device randDevice_particleA;
-        std::mt19937 sA(randDevice_particleA());
-        std::uniform_real_distribution<float> dist01A(0.0, 1.0);
-        float randA = 0.0;
-        int lowIndA = 0;
+    #if PARTICLE_SOURCE_ENERGY < 2
+      Config cfg_particles;
+    #endif
+    //cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
+    //Setting& particleSource = cfg_particles.lookup("particleSource");
+    //int nSegmentsAngle = particleSource["nSegmentsAngle"];
+    //float angleSample;
+    //sim::Array<float> sourceAngleSegments(nSegmentsAngle);
+    //sim::Array<float> angleCDF(nSegmentsAngle);
+    //for (int i=0; i<(nSegmentsAngle); i++)
+    //{
+    //    sourceAngleSegments[i] = particleSource["angles"][i];
+    //    angleCDF[i] = particleSource["angleCDF"][i];
+    //}
+    std::random_device randDevice_particleA;
+    std::mt19937 sA(randDevice_particleA());
+    std::uniform_real_distribution<float> dist01A(0.0, 1.0);
+    float randA = 0.0;
+    int lowIndA = 0;
   #endif
+
   sim::Array<float> pSurfNormX(nP),pSurfNormY(nP),pSurfNormZ(nP), 
                     px(nP),py(nP),pz(nP),pEx(nP),pEy(nP),pEz(nP);
   int surfIndexMod = 0;
+  float eVec[3] = {0.0};
   for (int i=0; i< nP ; i++)
   {
     #if PARTICLE_SOURCE_SPACE > 0 // File source
@@ -1760,32 +1793,81 @@ int main()
     #endif
     #if PARTICLE_SOURCE_ENERGY > 0
         randE = dist01E(sE);
+      #if PARTICLE_SOURCE_ENERGY == 1
         E = interp1dUnstructured(randE,nThompDistPoints, max_Energy, &CumulativeDFThompson.front(), lowIndE);
+      #elif PARTICLE_SOURCE_ENERGY == 2
+        float localT = interp2dCombined(x,y,z,nR_Temp,
+                      nZ_Temp,TempGridr.data(),TempGridz.data(),ti.data());
+        float localBnorm[3] = {0.0}; 
+          interp2dVector(&localBnorm[0],x,y,z,nR_Bfield,
+                      nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),by.data());
+        vectorNormalize(localBnorm,localBnorm);
+        boundaries[currentSegment].getSurfaceNormal(perpVec);
+        bDotSurfaceNorm = abs(vectorDotProduct(localBnorm,perpVec));
+        float localAngle = acos(bDotSurfaceNorm)*180/3.1415;
+        float sputtE = interp3d ( randE,localAngle,log10(3.0*localT),nEdistBins_surfaceModel,nA_surfaceModel,nE_surfaceModel,
+              energyDistGrid01.data(),A_surfaceModel.data(),Elog_surfaceModel.data() ,energyDist_CDFregrid.data() );
+        E = sputtE;
+        std::cout << "randE of " << randE << " with localAngle " << localAngle << " and local potential " <<
+           3.0*localT << " puts the particle energy to " << E  << std::endl;
+      #endif  
     #endif    
     #if PARTICLE_SOURCE_ANGLE == 1 // Analytic normal incidence
       Ex = -E*boundaries[currentSegment].a/boundaries[currentSegment].plane_norm;
-      Ey = -E*boundaries[currentSegment].b/boundaries[currentSegment].plane_norm+10.0*(floor(rand0+ 0.5)*2 -1);
+      Ey = -E*boundaries[currentSegment].b/boundaries[currentSegment].plane_norm;
       Ez = -E*boundaries[currentSegment].c/boundaries[currentSegment].plane_norm;
     
     #elif PARTICLE_SOURCE_ANGLE > 1
       randA = dist01A(sA);
-      angleSample = interp1dUnstructured2(randA,nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front());
-      phi = angleSample;
-      std::cout << " angle sample and phi " << angleSample << " " << phi << std::endl;
+      float sputtA = interp3d ( randA,localAngle,log10(3.0*localT),nAdistBins_surfaceModel,nA_surfaceModel,nE_surfaceModel,
+              cosDistGrid01.data(),A_surfaceModel.data(),Elog_surfaceModel.data() ,cosDist_CDFregrid.data() );
+      phi = sputtA*3.141592653589793/180.0;
+      std::cout << "sputtA and phi " << sputtA << " " << phi << std::endl;
       randA = dist01A(sA);
-      theta = 3.141592653589793*floor(randA+0.5);
+      theta = 2.0*3.141592653589793*randA;
+      std::cout << "randA and theta " << randA << " " << theta << std::endl;
       Ex = E*sin(phi)*cos(theta);
       Ey = E*sin(phi)*sin(theta);
       Ez = E*cos(phi);
+      std::cout << "randA of " << randA << " puts the particle angle phi to " << phi  << std::endl;
       std::cout << "E of particle " << Ex << " " << Ey << " " << Ez << " " << std::endl;
+      std::cout << "current segment and perpVec " << currentSegment << " " << perpVec[0] << " " << perpVec[1] << " " << perpVec[2] << std::endl;
+      float Ezx = sqrt(Ez*Ez + Ex*Ex);
+      float thetaEzx = atan2(Ez,Ex);
+      std::cout << "Ezx thetaEzx " << Ezx << " " << thetaEzx << std::endl;
       //positive slope equals negative upward normal
-      theta_transform = -sgn(boundaries[materialIndices[lowInd]].slope_dzdx)*acos(perpVec[2]);
+      theta_transform = acos(perpVec[2]);//-sgn(boundaries[currentSegment].slope_dzdx)*
+      //if(perpVec[2]==0.0)
+      //{
+      //    if(perpVec[0] > 0.0)
+      //    {
+      //      theta_transform = 0.5*3.141592653589793;
+      //      std::cout << "Vertical line element perpVec " << perpVec[0] << " " << perpVec[1] << " " << perpVec[2] << " " << theta_transform << std::endl;
+      //    }
+      //    else if(perpVec[0] < 0.0)
+      //    {
+      //      theta_transform = 1.5*3.141592653589793;
+      //      std::cout << "Vertical line element perpVec " << perpVec[0] << " " << perpVec[1] << " " << perpVec[2] << " " << theta_transform << std::endl;
+      //    }
+      //}
+      Ex = Ezx*cos(thetaEzx - theta_transform);
+      //Ey = E*sin(phi+theta_transform)*sin(theta);
+      Ez = Ezx*sin(thetaEzx - theta_transform);
       std::cout << "theta transform " << theta_transform << std::endl;
-
-      Ex_prime = Ex*cos(theta_transform) - Ez*sin(theta_transform);
-      Ez_prime = Ex*sin(theta_transform) + Ez*cos(theta_transform);
-      Ex = Ex_prime;
-      Ez = Ez_prime;
+      eVec[0] = Ex;
+      eVec[1] = Ey;
+      eVec[2] = Ez;
+      float EdotP = vectorDotProduct(perpVec,eVec);
+      if(EdotP < 0.0)
+      {
+          std::cout << "This dot product negative " << std::endl;
+          Ex = -Ex;
+          Ez = -Ez;
+      }
+      //Ex_prime = Ex*cos(theta_transform) - Ez*sin(theta_transform);
+      //Ez_prime = Ex*sin(theta_transform) + Ez*cos(theta_transform);
+      //Ex = Ex_prime;
+      //Ez = Ez_prime;
       std::cout << "Transformed E " << Ex << " " << Ey << " " << Ez << " " << std::endl;
       //particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
     #endif
@@ -2343,49 +2425,53 @@ int main()
 #endif
     #endif
 
-    #if USERECOMBINATION > 0
-      #if FIXEDSEEDS ==1
-        std::cout << "recombination fixed seeds" << std::endl;
-        float recombination_seeds = cfg.lookup("operators.recombination.seed");
-        std::cout << "recombination fixed seeds middle" << std::endl;
-        std::default_random_engine generator1(recombination_seeds);
-        std::cout << "recombination fixed seeds end" << std::endl;
-      #endif
-      sim::Array<float> seeds1(nP);
-      std::cout << "generate" << std::endl;
-      #if __CUDACC__
-        cudaDeviceSynchronize();
-      #endif
-      std::generate( seeds1.begin(), seeds1.end(), [&]() { return dist(generator1); } );
-      std::cout << "transform" << std::endl;
-      #if __CUDACC__
-        cudaDeviceSynchronize();
-      #endif
-      thrust::transform(thrust::device,particleArray->streams_rec.begin(), particleArray->streams_rec.end(),
-                    seeds1.begin(), particleArray->streams_rec.begin(), randInit(1) );
-      std::cout << "finished transform" << std::endl;
-    #endif
+    //#if USERECOMBINATION > 0
+    //  #if FIXEDSEEDS ==1
+    //    std::cout << "recombination fixed seeds" << std::endl;
+    //    float recombination_seeds = cfg.lookup("operators.recombination.seed");
+    //    std::cout << "recombination fixed seeds middle" << std::endl;
+    //    std::default_random_engine generator1(recombination_seeds);
+    //    std::cout << "recombination fixed seeds end" << std::endl;
+    //  #endif
+    //  sim::Array<float> seeds1(nP);
+    //  std::cout << "generate" << std::endl;
+    //  #if __CUDACC__
+    //    cudaDeviceSynchronize();
+    //  #endif
+    //  //std::generate( seeds1.begin(), seeds1.end(), [&]() { return dist(generator1); } );
+    //  std::cout << "transform" << std::endl;
+    //  #if __CUDACC__
+    //    cudaDeviceSynchronize();
+    //  #endif
+    //  //thrust::transform(thrust::device,particleArray->streams_rec.begin(), particleArray->streams_rec.end(),
+    //  //              seeds1.begin(), particleArray->streams_rec.begin(), randInit(1) );
+    //  thrust::for_each(thrust::device,particleBegin,particleEnd,curandInitialize());
+    //  #if __CUDACC__
+    //    cudaDeviceSynchronize();
+    //  #endif
+    //  std::cout << "finished transform" << std::endl;
+    //#endif
 
-    #if USEPERPDIFFUSION > 0
-      #if FIXEDSEEDS ==1
-        std::cout << "diffusion fixed seeds" << std::endl;
-        float diffusion_seeds = cfg.lookup("operators.perpDiffusion.seed");
-        std::default_random_engine generator2(diffusion_seeds);
-      #endif
-      sim::Array<float> seeds2(nP);
-#if USE_CUDA  
-      cudaDeviceSynchronize();
-#endif
-      std::generate( seeds2.begin(), seeds2.end(), [&]() { return dist(generator2); } );
-      #if __CUDACC__
-        cudaDeviceSynchronize();
-      #endif
-      thrust::transform(thrust::device,particleArray->streams_diff.begin(), particleArray->streams_diff.end(),
-                    seeds2.begin(), particleArray->streams_diff.begin(), randInit(2) );
-#if USE_CUDA  
-        cudaDeviceSynchronize();
-#endif
-#endif
+    //#if USEPERPDIFFUSION > 0
+    //  #if FIXEDSEEDS ==1
+    //    std::cout << "diffusion fixed seeds" << std::endl;
+    //    float diffusion_seeds = cfg.lookup("operators.perpDiffusion.seed");
+    //    std::default_random_engine generator2(diffusion_seeds);
+    //  #endif
+    //  sim::Array<float> seeds2(nP);
+    //  #if USE_CUDA  
+    //  cudaDeviceSynchronize();
+    //  #endif
+    //  std::generate( seeds2.begin(), seeds2.end(), [&]() { return dist(generator2); } );
+    //  #if __CUDACC__
+    //    cudaDeviceSynchronize();
+    //  #endif
+    //  thrust::transform(thrust::device,particleArray->streams_diff.begin(), particleArray->streams_diff.end(),
+    //                seeds2.begin(), particleArray->streams_diff.begin(), randInit(2) );
+    //  #if USE_CUDA  
+    //    cudaDeviceSynchronize();
+    //  #endif
+    //#endif
 
     #if USECOULOMBCOLLISIONS > 0
       #if FIXEDSEEDS ==1
@@ -2703,6 +2789,13 @@ for(int i=0; i<nP ; i++)
     //std::cout << "memory access hitwall " 
     //<< particleArray->xprevious[0] << std::endl;
     //std::cout << "transit time counting " << std::endl;
+int totalHitWall=0;
+for(int i=0;i<nP;i++)
+{
+  if(particleArray->hitWall[i] == 1.0) totalHitWall++;
+}
+std::cout << "Number and percent of particles that hit wall " << 
+           totalHitWall << " " << totalHitWall*1.0/(nP*1.0) << std::endl;
 #if USE3DTETGEOM > 0
     float meanTransitTime0 = 0.0;
     /*
@@ -2748,6 +2841,12 @@ std::cout << " starting loop "  << std::endl;
 
 std::cout << "maximum boundary " << max_boundary << std::endl;
 std::cout << "number of counts " << max_impacts << std::endl;
+int totalHitWall=0;
+for(int i=0;i<nP;i++)
+{
+  if(particleArray->hitWall[i] = 1.0) totalHitWall++;
+}
+std::cout << "Percent of particles that hit wall " << totalHitWall*1.0/nP << std::endl;
 /*
 sim::Array<float> tally00(nLines,0);
 for (int j=0; j<nP; j++)

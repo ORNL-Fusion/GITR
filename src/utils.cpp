@@ -118,8 +118,9 @@ int regrid2dCDF(int nX, int nY, int nZ,float* xGrid,int nNew,float maxNew, float
       {
         index = i*nY*nZ + j*nZ + k;
         spline = interp1dUnstructured(xGrid[k],nNew,maxNew,&cdf[index-k],lowInd);
+        if(std::isnan(spline) || std::isinf(spline)) spline = 0.0;
         cdf_regrid[index] = spline;  
-        if(i==39 && j==0)
+        if(i==0 && j==0)
         {
           std::cout << "index xGrid[k] " << index << " " << xGrid[k] << " " << nNew << " " <<
               maxNew << " " << spline << std::endl;

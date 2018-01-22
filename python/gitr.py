@@ -16,6 +16,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import pylab as pl
 import scipy as sp
+import math
 
 def copy_folder(from_folder, to_folder):
     copy_tree(from_folder, to_folder)
@@ -181,8 +182,12 @@ def nc_plotSpec(filename='spec.nc'):
     print('dens ', dens.shape)
     plt.close()
     plt.figure(1,figsize=(10, 6), dpi=2000)
-    plt.imshow(dens,origin='lower')
-    plt.colorbar(orientation='vertical')
+    plotsize = math.ceil(nBins**(0.5))
+    for i in range(nBins):
+        dens = n[i,:,:]
+        plt.subplot(plotsize,plotsize,i+1)
+        plt.imshow(dens,origin='lower')
+        plt.colorbar(orientation='vertical')
     plt.savefig('image1.png')
 def nc_plotPositions(filename='positions.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
@@ -199,5 +204,5 @@ if __name__ == "__main__":
     #nc_show("surface.nc")
     #depositedEdist()
     nc_plotHist()
-    #nc_plotSpec()
+    nc_plotSpec()
     nc_plotPositions()

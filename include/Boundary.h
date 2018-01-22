@@ -96,10 +96,13 @@ class Boundary {
     {
 #if USE3DTETGEOM > 0
 #else
-        float perpSlope = -1.0/slope_dzdx;
-        B[0] = 1.0/sqrt(perpSlope*perpSlope+1.0);
-        B[1] = 0.0;
-        B[2] = sqrt(1-B[0]*B[0]);
+        //float perpSlope = -1.0/slope_dzdx;
+        //B[0] = 1.0/sqrt(perpSlope*perpSlope+1.0);
+        //B[1] = 0.0;
+        //B[2] = sqrt(1-B[0]*B[0]);
+        B[0] = -a/plane_norm;
+        B[1] = -b/plane_norm;
+        B[2] = -c/plane_norm;
         //std::cout << "perp x and z comp " << B[0] << " " << B[2] << std::endl;
 #endif
     }

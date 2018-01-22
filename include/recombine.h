@@ -73,14 +73,17 @@ struct recombine {
       if(particlesPointer->charge[indx] > 0)
     {
        float tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
-     P1 = 1-expf(-dt/tion);
+       float PrP = particlesPointer->PrecombinationPrevious[indx];
+       float P = expf(-dt/tion);
+       particlesPointer->PrecombinationPrevious[indx] = PrP*P;
+       P1 = 1-PrP*P;
     }
 
   if(particlesPointer->hitWall[indx] == 0.0)
 	{        
 #if PARTICLESEEDS > 0
         #ifdef __CUDACC__
-        float r1 = 0.5;//curand_uniform(&particlesPointer->streams_rec[indx]);
+        float r1 = curand_uniform(&state[indx]);
         #else
         std::uniform_real_distribution<float> dist(0.0, 1.0);
         float r1=dist(state[indx]);
@@ -97,6 +100,7 @@ struct recombine {
 	if(r1 <= P1)
 	{
         particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;
+        particlesPointer->PrecombinationPrevious[indx] = 1.0;
 	}         
    }	
 
