@@ -83,9 +83,14 @@ float interp3d ( float x, float y, float z,int nx,int ny, int nz,
     int k = floor((z - gridz[0])/dz);
     std::cout << "dxyz ijk " << dx << " "<<dy << " " << dz<< " " << i
         << " " << j << " " << k << std::endl;
-    if(i <0 || i>=nx-1) i=0;
-    if(j <0 || j>=ny-1) j=0;
-    if(k <0 || k>=nz-1) k=0;
+    if(i <0 ) i=0;
+    else if(i >=nx-1) i=nx-2;
+    if(j <0 ) j=0;
+    else if(j >=ny-1) j=ny-2;
+    if(k <0 ) k=0;
+    else if(k >=nz-1) k=nz-2;
+    //if(j <0 || j>ny-1) j=0;
+    //if(k <0 || k>nz-1) k=0;
     float fx_z0 = (data[i + j*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + k*nx*ny]*(x-gridx[i]))/dx;
     float fx_z1 = (data[i + j*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
 
