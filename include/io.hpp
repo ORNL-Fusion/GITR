@@ -94,6 +94,7 @@ int readFileVar(const std::string& fileName,const std::string& section,const std
        xx.getVar(&x[0]);
        std::string fullName = section+varName;
        OUTPUT1d(profiles_folder,fullName+".m", xlength, &x.front());
+       nc.close();
        return xlength;
        } 
 }
