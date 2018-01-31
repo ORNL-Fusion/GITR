@@ -589,6 +589,7 @@ int readFileDim(const std::string& fileName,const std::string& varName)
                          NcDim nc_nx(nc.getDim(varName));
 
                                 int n_x = nc_nx.getSize();
+                                nc.close();
                                        return n_x;
 
 }

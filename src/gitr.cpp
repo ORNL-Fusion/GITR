@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdio.h>
 #include <chrono>
 #include <cmath>
 #include <fstream>
@@ -48,6 +49,14 @@
     #include <curand_kernel.h>
 #endif
 
+#if USE_MPI 
+#include <mpi.h>
+#endif
+
+#if USE_OPENMP
+#include <omp.h>
+#endif
+
 #include <thrust/execution_policy.h>
 #include <thrust/sequence.h>
 #include <thrust/transform.h>
@@ -66,6 +75,32 @@ using namespace netCDF::exceptions;
 
 int main()
 {
+
+ #if USE_MPI > 0
+    // Initialize the MPI environment
+    MPI_Init(NULL, NULL);
+    
+    // Get the number of processes
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    
+    // Get the rank of the process
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    
+    // Get the name of the processor
+    char processor_name[MPI_MAX_PROCESSOR_NAME];
+    int name_len;
+    MPI_Get_processor_name(processor_name, &name_len);
+    
+    // Print off a hello world message
+    printf("Hello world from processor %s, rank %d"
+           " out of %d processors\n",
+                      processor_name, world_rank, world_size);
+    
+    // Finalize the MPI environment.
+    //MPI_Finalize();
+  #endif
   //Prepare config files for import
   Config cfg,cfg_geom;
   std::string input_path = "input/";
@@ -176,9 +211,23 @@ int main()
     getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"rString",br);
     getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"yString",by);
     getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"zString",bz);
-  #endif  
-  std::cout << "Finished Bfield import" << std::endl; 
-
+  #endif 
+  float Btest[3] = {0.0f}; 
+  interp2dVector(&Btest[0],0.0,0.0,0.0,nR_Bfield,
+                    nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),by.data());
+  std::cout << "Bfield at 000 "<< Btest[0] << " " << Btest[1] << " " << Btest[2] << std::endl; 
+  interp2dVector(&Btest[0],0.0,0.0,0.2,nR_Bfield,
+                    nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),by.data());
+  std::cout << "Bfield at 000.2 "<< Btest[0] << " " << Btest[1] << " " << Btest[2] << std::endl; 
+  std::cout << "Finished Bfield import" << std::endl;
+#if USE_MPI > 0 
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Bcast(br.data(), nR_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+  MPI_Bcast(bz.data(), nZ_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+  printf("Hello world from processor %s, rank %d"
+                     " out of %d processors bfield value %f \n",
+                                           processor_name, world_rank, world_size,br[0]);
+#endif
   std::string profiles_folder = "output/profiles";  
   
   //Geometry Definition
@@ -349,6 +398,7 @@ int main()
 
     hash_gridZ.putVar(&closeGeomGridz[0]);
     hash.putVar(&closeGeom[0]);
+    ncFile_hash.close();
   #elif GEOM_HASH > 1
     getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridRString",closeGeomGridr);
     getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridZString",closeGeomGridz);
@@ -446,7 +496,7 @@ int main()
     hash_gridY_sheath.putVar(&closeGeomGridy_sheath[0]);
     hash_gridZ_sheath.putVar(&closeGeomGridz_sheath[0]);
     hash_sheath.putVar(&closeGeom_sheath[0]);
-
+    ncFile_hash_sheath.close();
   #elif GEOM_HASH_SHEATH > 1
     getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridRString",closeGeomGridr_sheath);
     getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridZString",closeGeomGridz_sheath);
@@ -659,7 +709,8 @@ int main()
       nc_gridRLc.putVar(&gridRLc[0]);
       nc_gridYLc.putVar(&gridYLc[0]);
       nc_gridZLc.putVar(&gridZLc[0]);
-      #if USE_CUDA 
+      ncFileLC.close();
+  #if USE_CUDA 
              cudaDeviceSynchronize();
       #endif
    //}         
@@ -951,6 +1002,7 @@ int main()
     nc_flowVr.putVar(&flowVr[0]);
     nc_flowVt.putVar(&flowVt[0]);
     nc_flowVz.putVar(&flowVz[0]);
+    ncFileFlow.close();
     std::string outnameFlowVr = "flowVr.m";
     std::string outnameFlowVz = "flowVz.m";
     std::string outnameFlowVt = "flowVt.m";
@@ -1526,6 +1578,7 @@ int main()
   {std::cout << "ERROR: could not get nT, dt, or nP from input file" << std::endl;}
 
   auto particleArray = new Particles(nParticles);
+  auto particleArray2 = new Particles(nParticles);
   
   float x,y,z,E,Ex,Ey,Ez,amu,Z,charge,phi,theta,Ex_prime,Ez_prime,theta_transform;      
   if(cfg.lookupValue("impurityParticleSource.initialConditions.impurity_amu",amu) && 
@@ -1730,8 +1783,8 @@ int main()
     }
     else
     { std::cout << "ERROR: Could not get point source angular initial conditions" << std::endl;}
-    phi = phi*3.1415/180.0;
-    theta = theta*3.1415/180.0;
+    phi = phi*3.141592653589793/180.0;
+    theta = theta*3.141592653589793/180.0;
     Ex = E*sin(phi)*cos(theta);
     Ey = E*sin(phi)*sin(theta);
     Ez = E*cos(phi);
@@ -1758,7 +1811,38 @@ int main()
     float randA = 0.0;
     int lowIndA = 0;
   #endif
+  #if PARTICLE_SOURCE_FILE > 0 // File source
+    Config cfg_particles;
+    std::string ncParticleSourceFile; 
+    getVariable(cfg,"particleSource.ncFileString",ncParticleSourceFile);
+    NcFile ncp("input/"+ncParticleSourceFile, NcFile::read);
 
+    NcDim ps_nP(ncp.getDim("nP"));
+
+    int nPfile = ps_nP.getSize();
+
+    NcVar ncp_x(ncp.getVar("x"));
+    NcVar ncp_y(ncp.getVar("y"));
+    NcVar ncp_z(ncp.getVar("z"));
+    NcVar ncp_Ex(ncp.getVar("Ex"));
+    NcVar ncp_Ey(ncp.getVar("Ey"));
+    NcVar ncp_Ez(ncp.getVar("Ez"));
+
+    vector<float> xpfile(nPfile),ypfile(nPfile),zpfile(nPfile),
+    Expfile(nPfile),Eypfile(nPfile),Ezpfile(nPfile);
+    ncp_x.getVar(&xpfile[0]);  
+    ncp_y.getVar(&ypfile[0]);  
+    ncp_z.getVar(&zpfile[0]);  
+    ncp_Ex.getVar(&Expfile[0]);  
+    ncp_Ey.getVar(&Eypfile[0]);  
+    ncp_Ez.getVar(&Ezpfile[0]);
+  ncp.close();  
+    //for(int i=0;i<nPfile;i++)
+    //{
+    //    std::cout << " xyz from file " << xpfile[i] << " " << ypfile[i] << " " << zpfile[i] << std::endl;  
+    //    std::cout << " Exyz from file " << Expfile[i] << " " << Eypfile[i] << " " << Ezpfile[i] << std::endl;  
+    //}
+  #endif
   sim::Array<float> pSurfNormX(nP),pSurfNormY(nP),pSurfNormZ(nP), 
                     px(nP),py(nP),pz(nP),pEx(nP),pEy(nP),pEz(nP);
   int surfIndexMod = 0;
@@ -1872,20 +1956,33 @@ int main()
       //particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
     #endif
 
-    std::cout << "particle xyz Exyz Z amu charge " << x << " " << y << " " << z << " "
-       << Ex << " " << Ey << " " << Ez << " " << Z << " " << amu << " " << charge << " "  << std::endl;
+    #if PARTICLE_SOURCE_FILE > 0 // File source
+      x = xpfile[i];
+      y = ypfile[i];
+      z = zpfile[i];
+      Ex = Expfile[i];
+      Ey = Eypfile[i];
+      Ez = Ezpfile[i];
+    #endif  
+//    std::cout << "particle xyz Exyz Z amu charge " << x << " " << y << " " << z << " "
+//       << Ex << " " << Ey << " " << Ez << " " << Z << " " << amu << " " << charge << " "  << std::endl;
     particleArray->setParticle(i,x,y, z, Ex, Ey, Ez, Z, amu, charge);   
+    #if PARTICLE_SOURCE_SPACE > 0
     pSurfNormX[i] = -boundaries[currentSegment].a/boundaries[currentSegment].plane_norm;
     pSurfNormY[i] = -boundaries[currentSegment].b/boundaries[currentSegment].plane_norm;
     pSurfNormZ[i] = -boundaries[currentSegment].c/boundaries[currentSegment].plane_norm;
+    #endif
     px[i] = x;
     py[i] = y;
     pz[i] = z;
     pEx[i] = Ex;
     pEy[i] = Ey;
     pEz[i] = Ez;
-  }         
-   
+  } 
+#if USE_MPI > 0
+  if(world_rank==0)
+{ 
+#endif
     NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
     NcDim pNP = ncFile_particles.addDim("nP",nP);
     NcVar p_surfNormx = ncFile_particles.addVar("surfNormX",ncFloat,pNP);
@@ -1906,7 +2003,10 @@ int main()
     p_x.putVar(&px[0]);
     p_y.putVar(&py[0]);
     p_z.putVar(&pz[0]);
-
+    ncFile_particles.close();
+#if USE_MPI > 0
+}
+#endif
 //  #elif PARTICLE_SOURCE == 1
 //    float x;
 //    float y;
@@ -2318,7 +2418,7 @@ int main()
   #endif
 
   #if PARTICLE_TRACKS > 0
-    int subSampleFac = 100;
+    int subSampleFac = 1;
     std::cout << "history array length " << (nT/subSampleFac)*nP << std::endl;
     #if USE_CUDA > 0
       sim::Array<float> positionHistoryX(nP*nT/subSampleFac);
@@ -2480,69 +2580,71 @@ int main()
         float collision_seeds2 = cfg.lookup("operators.coulombCollisions.seed2");
         float collision_seeds3 = cfg.lookup("operators.coulombCollisions.seed3");
         std::cout << "debug 1" << std::endl;
-        #if USE_CUDA  
-          cudaDeviceSynchronize();
-        #endif
-        std::default_random_engine generator3(collision_seeds1);
-        std::cout << "debug 2" << std::endl;
-        #if USE_CUDA  
-          cudaDeviceSynchronize();
-        #endif
-        std::default_random_engine generator4(collision_seeds2);
-        #if USE_CUDA  
-          cudaDeviceSynchronize();
-        #endif
-        std::cout << "debug 3" << std::endl;
-        std::default_random_engine generator5(collision_seeds3);
+        //#if USE_CUDA  
+        //  cudaDeviceSynchronize();
+        //#endif
+        //std::default_random_engine generator3(collision_seeds1);
+        //std::cout << "debug 2" << std::endl;
+        //#if USE_CUDA  
+        //  cudaDeviceSynchronize();
+        //#endif
+        //std::default_random_engine generator4(collision_seeds2);
+        //#if USE_CUDA  
+        //  cudaDeviceSynchronize();
+        //#endif
+        //std::cout << "debug 3" << std::endl;
+        //std::default_random_engine generator5(collision_seeds3);
       #endif
+      thrust::for_each(thrust::device, particleBegin,particleEnd,
+                           curandInitialize(&state1[0],0));
       #if USE_CUDA  
         cudaDeviceSynchronize();
       #endif
-        std::cout << "debug 4" << std::endl;
-      sim::Array<float> seeds3(nP),seeds4(nP),seeds5(nP);
-      #if USE_CUDA  
-        cudaDeviceSynchronize();
-      #endif
-        std::generate( seeds3.begin(), seeds3.end(), [&]() { return dist(generator3); } );
-      #if USE_CUDA  
-        cudaDeviceSynchronize();
-      #endif
-        std::generate( seeds4.begin(), seeds4.end(), [&]() { return dist(generator4); } );
-      #if USE_CUDA  
-        cudaDeviceSynchronize();
-      #endif
-        std::generate( seeds5.begin(), seeds5.end(), [&]() { return dist(generator5); } );
-      #if USE_CUDA  
-        cudaDeviceSynchronize();
-      #endif
-      std::cout << "debug 5" << std::endl;
-      thrust::transform(thrust::device,particleArray->streams_collision1.begin(), 
-                                       particleArray->streams_collision1.end(),
-                                       seeds3.begin(), 
-                                       particleArray->streams_collision1.begin(), randInit(3) );
-        std::cout << "debug 6" << std::endl;
-      #if USE_CUDA  
-        cudaDeviceSynchronize();
-      #endif
-        thrust::transform(thrust::device,particleArray->streams_collision2.begin(), 
-                                       particleArray->streams_collision2.end(),
-                                       seeds4.begin(),
-                                       particleArray->streams_collision2.begin(), randInit(4) );
-      #if USE_CUDA  
-        cudaDeviceSynchronize();
-      #endif
-        std::cout << "debug 7" << std::endl;
-      #if USE_CUDA  
-        cudaDeviceSynchronize();
-      #endif
-      thrust::transform(thrust::device,particleArray->streams_collision3.begin(),
-                                       particleArray->streams_collision3.end(),
-                                       seeds5.begin(), 
-                                       particleArray->streams_collision3.begin(), randInit(5) );
-      #if USE_CUDA  
-        cudaDeviceSynchronize();
-      #endif
-        std::cout << "debug 8" << std::endl;
+      //std::cout << "debug 4" << std::endl;
+      //sim::Array<float> seeds3(nP),seeds4(nP),seeds5(nP);
+      //#if USE_CUDA  
+      //  cudaDeviceSynchronize();
+      //#endif
+      //  std::generate( seeds3.begin(), seeds3.end(), [&]() { return dist(generator3); } );
+      //#if USE_CUDA  
+      //  cudaDeviceSynchronize();
+      //#endif
+      //  std::generate( seeds4.begin(), seeds4.end(), [&]() { return dist(generator4); } );
+      //#if USE_CUDA  
+      //  cudaDeviceSynchronize();
+      //#endif
+      //  std::generate( seeds5.begin(), seeds5.end(), [&]() { return dist(generator5); } );
+      //#if USE_CUDA  
+      //  cudaDeviceSynchronize();
+      //#endif
+      //std::cout << "debug 5" << std::endl;
+      //thrust::transform(thrust::device,particleArray->streams_collision1.begin(), 
+      //                                 particleArray->streams_collision1.end(),
+      //                                 seeds3.begin(), 
+      //                                 particleArray->streams_collision1.begin(), randInit(3) );
+      //  std::cout << "debug 6" << std::endl;
+      //#if USE_CUDA  
+      //  cudaDeviceSynchronize();
+      //#endif
+      //  thrust::transform(thrust::device,particleArray->streams_collision2.begin(), 
+      //                                 particleArray->streams_collision2.end(),
+      //                                 seeds4.begin(),
+      //                                 particleArray->streams_collision2.begin(), randInit(4) );
+      //#if USE_CUDA  
+      //  cudaDeviceSynchronize();
+      //#endif
+      //  std::cout << "debug 7" << std::endl;
+      //#if USE_CUDA  
+      //  cudaDeviceSynchronize();
+      //#endif
+      //thrust::transform(thrust::device,particleArray->streams_collision3.begin(),
+      //                                 particleArray->streams_collision3.end(),
+      //                                 seeds5.begin(), 
+      //                                 particleArray->streams_collision3.begin(), randInit(5) );
+      //#if USE_CUDA  
+      //  cudaDeviceSynchronize();
+      //#endif
+      //  std::cout << "debug 8" << std::endl;
     #endif
    std::cout<< "finished collision seeds" << std::endl;
     #if USESURFACEMODEL > 0
@@ -2632,12 +2734,40 @@ int main()
     #if __CUDACC__
       cudaDeviceSynchronize();
     #endif
+    #if USE_OPENMP
+    //for(int device=0;device <1;device++)
+//{ cudaSetDevice(device); 
+nDevices = 2;
+    std::cout << "nDevices " << nDevices << std::endl;
+     omp_set_num_threads(nDevices);  // create as many CPU threads as there are CUDA devices
+     #pragma omp parallel
+     {
+        nDevices = omp_get_num_threads();
+        //tid = omp_get_thread_num();
+         unsigned int cpu_thread_id = omp_get_thread_num();
+         unsigned int num_cpu_threads = omp_get_num_threads();
+         int gpu_id = -1;
+             //cudaSetDevice(cpu_thread_id);
+        //cudaSetDevice(cpu_thread_id % nDevices);        // "% num_gpus" allows more CPU threads than GPU devices
+        if(cpu_thread_id ==0 ) cudaSetDevice(0); 
+        if(cpu_thread_id ==1 ) cudaSetDevice(3); 
+        cudaGetDevice(&gpu_id);
+         printf("CPU thread %d (of %d) uses CUDA device %d\n", cpu_thread_id, num_cpu_threads, gpu_id);
+#if USE_MPI > 0 
+    printf("Hello world from processor %s, rank %d"
+           " out of %d processors and cpu_thread_id %i \n",
+                      processor_name, world_rank, world_size,cpu_thread_id);
+#endif
+    std::cout << "nDevices " << nDevices  << "  " << cpu_thread_id << " " << num_cpu_threads<< " particle index " << cpu_thread_id*nP/nDevices << " " << (cpu_thread_id+1)*nP/nDevices - 1 << std::endl;
+//int cpu_thread_id = 0;
+//nDevices = 2;
+#endif
     for(int tt=0; tt< nT; tt++)
     {
 #ifdef __CUDACC__
     cudaThreadSynchronize();
 #endif
-        thrust::for_each(thrust::device, particleBegin,particleEnd, 
+        thrust::for_each(thrust::device,particleBegin,particleEnd, 
                 move_boris(particleArray,dt,boundaries.data(), nLines,
                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
                     &br.front(),&bz.front(),&by.front(),
@@ -2652,7 +2782,7 @@ int main()
          // exit(0);
        //particleArray->x[0] = 0.0;
         //try {
-            thrust::for_each(thrust::device, particleBegin,particleEnd,
+            thrust::for_each(thrust::device,particleBegin, particleEnd,
                     geometry_check(particleArray,nLines,&boundaries[0],surfaces,dt,tt,
                         nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
                         &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
@@ -2704,7 +2834,7 @@ int main()
                     nR_flowV,nY_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridy.front(),&flowVGridz.front(),
                     &flowVr.front(),&flowVz.front(),&flowVt.front(),
                     nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),    
-                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
+                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),ti.data(),&te.front(),
                     background_Z,background_amu, 
                     nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
                                         &br.front(),&bz.front(),&by.front()));
@@ -2753,6 +2883,9 @@ if (tt % subSampleFac == 0)
 #endif
 #endif
     }
+#if USE_OPENMP
+}
+#endif
 // Ensure that all time step loop GPU kernels are complete before proceeding
     #ifdef __CUDACC__
         cudaDeviceSynchronize();
@@ -2780,7 +2913,7 @@ for(int i=0; i<nP ; i++)
          " trans " << particleArray->transitTime[i] << std::endl;
 }
 */
-    std::cout << "transit time counting "<< nP << std::endl;
+    std::cout << "transit time counting "<< nP << " " << particleArray->x[0] <<  std::endl;
     //float tmp202 =0.0;
 #if USE_CUDA
     cudaDeviceSynchronize();
@@ -2949,7 +3082,7 @@ nc_vy0.putVar(finalVy);
 nc_vz0.putVar(finalVz);
 nc_trans0.putVar(transitTime);
 nc_impact0.putVar(hitWall);
-
+ncFile0.close();
 NcFile ncFile1("output/surface.nc", NcFile::replace);
 NcDim nc_nLines = ncFile1.addDim("nLines",nLines);
 vector<NcDim> dims1;
@@ -2972,6 +3105,7 @@ nc_surfRedeposit.putVar(redeposit);
 #endif
 nc_surfStartingParticles.putVar(startingParticles);
 nc_surfZ.putVar(surfZ);
+ncFile1.close();
 std::cout << "writing energy distribution file " << std::endl;
 //nc_surfEDist.putVar(&surfaces->energyDistribution[0]);
 //NcVar nc_surfEDistGrid = ncFile1.addVar("gridE",ncDouble,nc_nEnergies);
@@ -3019,6 +3153,7 @@ nc_vz.putVar(velocityHistoryZ[0]);
 
 nc_charge.putVar(chargeHistory[0]);
 #endif
+ncFile_hist.close();
 #endif
 #if SPECTROSCOPY > 0
 // Write netCDF output for density data
@@ -3044,6 +3179,7 @@ float *binPointer = &net_Bins[0];
 nc_gridR.putVar(&gridX_bins[0]);
 nc_gridZ.putVar(&gridZ_bins[0]);
 nc_n.putVar(binPointer);
+ncFile.close();
 #endif
 #ifdef __CUDACC__
     cudaThreadSynchronize();
@@ -3063,6 +3199,10 @@ nc_n.putVar(binPointer);
 #ifdef __CUDACC__
     cudaError_t err = cudaDeviceReset();
 //cudaProfilerStop();
+#endif
+#if USE_MPI > 0
+    // Finalize the MPI environment.
+    MPI_Finalize();
 #endif
     return 0;
     }

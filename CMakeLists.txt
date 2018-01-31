@@ -21,6 +21,11 @@ IF (Boost_FOUND)
     message( STATUS "Boost lib: " ${Boost_LIBRARY_DIR} )
 endif()
 message( STATUS "Boost lib: " ${Boost_LIBRARY_DIR} )
+find_package(MPI)
+IF (MPI_FOUND)
+    include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+endif()
+find_package(OpenMP REQUIRED)
 # Add includes
 include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
 include_directories(${THRUST_INCLUDE_DIRS})
@@ -29,6 +34,8 @@ include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 # Simulation defines
 add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DUSEMPI=${USEMPI}
+        -DUSE_MPI=${USE_MPI}
+        -DUSE_OPENMP=${USE_OPENMP}
         -DUSE_BOOST=${USE_BOOST}
         -DUSEIONIZATION=${USEIONIZATION}
         -DUSERECOMBINATION=${USERECOMBINATION}
@@ -59,6 +66,7 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DPARTICLE_SOURCE_SPACE=${PARTICLE_SOURCE_SPACE}
         -DPARTICLE_SOURCE_ENERGY=${PARTICLE_SOURCE_ENERGY}
         -DPARTICLE_SOURCE_ANGLE=${PARTICLE_SOURCE_ANGLE}
+        -DPARTICLE_SOURCE_FILE=${PARTICLE_SOURCE_FILE}
         -DSPECTROSCOPY=${SPECTROSCOPY}
         -DUSE3DTETGEOM=${USE3DTETGEOM}
         -DUSECYLSYMM=${USECYLSYMM}
@@ -69,9 +77,14 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
 if (${CUDA})
     Message("Enabling CUDA backend")
     find_package(CUDA REQUIRED)
+    #added next tthree lines to try to get OPENMP to work
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set_source_files_properties(${SRC_FILES} PROPERTIES LANGUAGE CXX)
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     set(CUDA_SEPARABLE_COMPILATION TRUE)
-    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA  --std=c++11 -O3) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA -Xcompiler -fopenmp -DTHRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_OMP -lgomp --std=c++11 -O3) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
+
     set_source_files_properties(${SRC_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
     cuda_add_executable(GITR ${SRC_FILES})
 endif ()
@@ -106,6 +119,7 @@ target_link_libraries(GITR ${NETCDF_C_LIBRARIES})
 #target_link_libraries(GITR /home/tqd/code/netcdfBuild/lib/libnetcdf.so.11)
 target_link_libraries(GITR ${LIBCONFIGPP_LIBRARIES})
 target_link_libraries(GITR Boost::system Boost::filesystem Boost::timer)
+target_link_libraries(GITR ${MPI_C_LIBRARIES})
     #libboost_system};${lboost_timer};${lboost_filesystem})
 # Install binaries
 install(TARGETS GITR DESTINATION bin)

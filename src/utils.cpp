@@ -7,6 +7,7 @@ void checkFlags(libconfig::Config &cfg)
     std::cout << "Checking compatibility of compile flags with input file "
                       << std::endl;
     const char *flags0[] = {"flags.USE_CUDA","flags.USEMPI",
+                            "flags.USE_MPI","flags.USE_OPENMP",
                             "flags.USE_BOOST","flags.USEIONIZATION",
                             "flags.USERECOMBINATION","flags.USEPERPDIFFUSION",
                             "flags.USECOULOMBCOLLISIONS",
@@ -23,9 +24,10 @@ void checkFlags(libconfig::Config &cfg)
                             "flags.PARTICLE_SOURCE_SPACE",
                             "flags.PARTICLE_SOURCE_ENERGY",
                             "flags.PARTICLE_SOURCE_ANGLE",
+                            "flags.PARTICLE_SOURCE_FILE",
                             "flags.SPECTROSCOPY","flags.USE3DTETGEOM","flags.USECYLSYMM",
                             "flags.FLUX_EA"};
-        int flagValues[] =  {USE_CUDA, USEMPI, USE_BOOST,USEIONIZATION,
+        int flagValues[] =  {USE_CUDA, USEMPI,USE_MPI,USE_OPENMP, USE_BOOST,USEIONIZATION,
                              USERECOMBINATION,USEPERPDIFFUSION,USECOULOMBCOLLISIONS,
                              USETHERMALFORCE,USESURFACEMODEL,USESHEATHEFIELD,BIASED_SURFACE,
                              USEPRESHEATHEFIELD,BFIELD_INTERP,LC_INTERP, GENERATE_LC,
@@ -35,6 +37,7 @@ void checkFlags(libconfig::Config &cfg)
                              PARTICLESEEDS,GEOM_TRACE,GEOM_HASH,
                              GEOM_HASH_SHEATH,PARTICLE_TRACKS,PARTICLE_SOURCE_SPACE,
                              PARTICLE_SOURCE_ENERGY,PARTICLE_SOURCE_ANGLE,
+                             PARTICLE_SOURCE_FILE,
                              SPECTROSCOPY,USE3DTETGEOM,USECYLSYMM,FLUX_EA};
             int check1;
             for (int i=0; i<sizeof(flagValues)/sizeof(int); i++)
