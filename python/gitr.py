@@ -162,20 +162,24 @@ def nc_plotHist(filename='history.nc'):
 #    single = x[0][:];
     plt.figure(1,figsize=(10, 6), dpi=100)
     for i in range(nP):
-      print('i', i)  
+      #print('i', i)  
 #      print('size', r[:,i].size)  
 #      print('r ', r[:,i])  
       plt.plot(r[:,i],z[:,i],linewidth=0.5)
 #      #plt.plot(r[i,:],z[i,:],linewidth=1.0)
 #      #plt.setp(linewidth=0.2)
+    plt.axis('equal')
+    print('saving tracksRZ')
     plt.savefig('tracksRZ.png')
     plt.close()
     plt.figure(1,figsize=(10, 6), dpi=100)
     for i in range(nP):
-      print('i', i)  
+      #print('i', i)  
       plt.plot(x[:,i],y[:,i],linewidth=0.5)
     #plt.ylim((-5.0,5.0))
     #plt.xlim((3.8,8.5))
+    plt.axis('equal')
+    print('saving tracksRZ')
     plt.savefig('tracksXY.png')
 def nc_plotSpec(filename='spec.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
@@ -190,7 +194,7 @@ def nc_plotSpec(filename='spec.nc'):
     plt.figure(1,figsize=(10, 6), dpi=2000)
     plotsize = math.ceil(nBins**(0.5))
     for i in range(nBins):
-        dens = n[i,:,:]
+        dens = np.log10(n[i,:,:])
         plt.subplot(plotsize,plotsize,i+1)
         plt.imshow(dens,origin='lower')
         plt.colorbar(orientation='vertical')
@@ -272,13 +276,13 @@ def plotPitch(filename='positions.nc'):
     plt.subplot(3,1,2)
     plt.hist(vy,bins=30)
     plt.subplot(3,1,3)
-    plt.hist(vz,bins=30)
+    plt.hidast(vz,bins=30)
     plt.savefig('vs.png')
 if __name__ == "__main__":
-    #nc_show("surface.nc")
+    #asdfanc_show("surface.nc")
     #depositedEdist()
     #nc_plotHist()
-    #nc_plotSpec()
+    nc_plotSpec()
     #nc_plotPositions()
     #nc_plotVz()
-    plotPitch()
+    #plotPitch()

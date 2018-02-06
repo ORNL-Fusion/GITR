@@ -77,6 +77,8 @@ int main()
 {
 
  #if USE_MPI > 0
+        int ppn = 4;
+        int np = 2;
     // Initialize the MPI environment
     MPI_Init(NULL, NULL);
     
@@ -97,7 +99,7 @@ int main()
     printf("Hello world from processor %s, rank %d"
            " out of %d processors\n",
                       processor_name, world_rank, world_size);
-    
+  cudaSetDevice(world_rank%ppn);  
     // Finalize the MPI environment.
     //MPI_Finalize();
   #endif
@@ -221,12 +223,12 @@ int main()
   std::cout << "Bfield at 000.2 "<< Btest[0] << " " << Btest[1] << " " << Btest[2] << std::endl; 
   std::cout << "Finished Bfield import" << std::endl;
 #if USE_MPI > 0 
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Bcast(br.data(), nR_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-  MPI_Bcast(bz.data(), nZ_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-  printf("Hello world from processor %s, rank %d"
-                     " out of %d processors bfield value %f \n",
-                                           processor_name, world_rank, world_size,br[0]);
+  //MPI_Barrier(MPI_COMM_WORLD);
+  //MPI_Bcast(br.data(), nR_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+  //MPI_Bcast(bz.data(), nZ_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+  //printf("Hello world from processor %s, rank %d"
+  //                   " out of %d processors bfield value %f \n",
+  //                                         processor_name, world_rank, world_size,br[0]);
 #endif
   std::string profiles_folder = "output/profiles";  
   
@@ -371,6 +373,10 @@ int main()
       auto finish_clock0 = Time0::now();
       fsec0 fs0 = finish_clock0 - start_clock0;
       printf("Time taken          is %6.3f (secs) \n", fs0.count());
+#if USE_MPI > 0  
+      if(world_rank == 0)
+      {
+#endif
     NcFile ncFile_hash("output/geomHash.nc", NcFile::replace);
     NcDim hashNR = ncFile_hash.addDim("nR",nR_closeGeom);
     #if USE3DTETGEOM > 0
@@ -399,6 +405,9 @@ int main()
     hash_gridZ.putVar(&closeGeomGridz[0]);
     hash.putVar(&closeGeom[0]);
     ncFile_hash.close();
+#if USE_MPI > 0
+      }
+#endif
   #elif GEOM_HASH > 1
     getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridRString",closeGeomGridr);
     getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridZString",closeGeomGridz);
@@ -1430,6 +1439,7 @@ int main()
     #if SPECTROSCOPY < 3
 
       sim::Array<float> net_Bins((nBins+1)*net_nX*net_nZ);
+      sim::Array<float> net_BinsTotal((nBins+1)*net_nX*net_nZ);
     #else
       sim::Array<float> net_Bins((nBins+1)*net_nX*net_nY*net_nZ);
     #endif
@@ -1471,6 +1481,7 @@ int main()
   int nA_surfaceModel = 1;
   int nDistE_surfaceModel = 1, nDistA_surfaceModel = 1;
   int nAdistBins_surfaceModel = 1,nEdistBins_surfaceModel = 1;
+#if USESURFACEMODEL > 0
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
   getVariable(cfg,surfaceModelCfg+"fileString",surfaceModelFile);
@@ -1480,6 +1491,7 @@ int main()
   nAdistBins_surfaceModel = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridNABinsString");
   nDistE_surfaceModel = nE_surfaceModel*nA_surfaceModel*nEdistBins_surfaceModel;
   nDistA_surfaceModel = nE_surfaceModel*nA_surfaceModel*nAdistBins_surfaceModel;
+#endif
   sim::Array<float> E_surfaceModel(nE_surfaceModel), A_surfaceModel(nA_surfaceModel),
                     Elog_surfaceModel(nE_surfaceModel),
                     energyDistGrid(nEdistBins_surfaceModel), cosDistGrid(nAdistBins_surfaceModel),
@@ -1495,6 +1507,7 @@ int main()
                     cosDist_CDFregrid(nDistA_surfaceModel),energyDist_CDFregrid(nDistE_surfaceModel),
                     cosDist_CDFregridReflection(nDistA_surfaceModel),
                     energyDist_CDFregridReflection(nDistE_surfaceModel);
+#if USESURFACEMODEL > 0
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridEString",E_surfaceModel);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridAString",A_surfaceModel);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridDistEString",energyDistGrid);
@@ -1534,7 +1547,7 @@ int main()
   float sputEInterpVal = interp3d ( 0.5,0.0,log10(244.2),nEdistBins_surfaceModel,nA_surfaceModel,nE_surfaceModel,
               energyDistGrid01.data(),A_surfaceModel.data(),Elog_surfaceModel.data() ,energyDist_CDFregrid.data() );
   std::cout << "Finished surface model import " <<spylInterpVal << " " << sputEInterpVal<< std::endl; 
-
+#endif
   // Particle time stepping control
   int ionization_nDtPerApply  = cfg.lookup("timeStep.ionization_nDtPerApply");
   int collision_nDtPerApply  = cfg.lookup("timeStep.collision_nDtPerApply");
@@ -1788,6 +1801,12 @@ int main()
     Ex = E*sin(phi)*cos(theta);
     Ey = E*sin(phi)*sin(theta);
     Ez = E*cos(phi);
+    if(phi == 0.0)
+    {
+        Ex=0.0;
+        Ey=0.0;
+        Ez=E;
+    }
   #elif PARTICLE_SOURCE_ANGLE > 0
 
     std::cout << "Read particle source " << std::endl;
@@ -1981,7 +2000,7 @@ int main()
   } 
 #if USE_MPI > 0
   if(world_rank==0)
-{ 
+  { 
 #endif
     NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
     NcDim pNP = ncFile_particles.addDim("nP",nP);
@@ -2005,7 +2024,7 @@ int main()
     p_z.putVar(&pz[0]);
     ncFile_particles.close();
 #if USE_MPI > 0
-}
+  }
 #endif
 //  #elif PARTICLE_SOURCE == 1
 //    float x;
@@ -2419,6 +2438,10 @@ int main()
 
   #if PARTICLE_TRACKS > 0
     int subSampleFac = 1;
+    if(cfg.lookupValue("diagnostics.trackSubSampleFactor", subSampleFac))
+       {std::cout << "Tracks subsample factor imported" << std::endl;}
+    else
+    { std::cout << "ERROR: Could not get tracks sub sample info from input file " << std::endl;}
     std::cout << "history array length " << (nT/subSampleFac)*nP << std::endl;
     #if USE_CUDA > 0
       sim::Array<float> positionHistoryX(nP*nT/subSampleFac);
@@ -2767,7 +2790,7 @@ nDevices = 2;
 #ifdef __CUDACC__
     cudaThreadSynchronize();
 #endif
-        thrust::for_each(thrust::device,particleBegin,particleEnd, 
+        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleEnd, 
                 move_boris(particleArray,dt,boundaries.data(), nLines,
                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
                     &br.front(),&bz.front(),&by.front(),
@@ -2782,7 +2805,7 @@ nDevices = 2;
          // exit(0);
        //particleArray->x[0] = 0.0;
         //try {
-            thrust::for_each(thrust::device,particleBegin, particleEnd,
+            thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
                     geometry_check(particleArray,nLines,&boundaries[0],surfaces,dt,tt,
                         nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
                         &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
@@ -2795,12 +2818,12 @@ nDevices = 2;
         }
         */
 #if SPECTROSCOPY > 0
-            thrust::for_each(thrust::device, particleBegin,particleEnd,
+            thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,// particleBegin,particleEnd,
                     spec_bin(particleArray,nBins,net_nX,net_nY, net_nZ, &gridX_bins.front(),&gridY_bins.front(),
                         &gridZ_bins.front(), &net_Bins.front(),dt) );
 #endif            
 #if USEIONIZATION > 0
-        thrust::for_each(thrust::device, particleBegin,particleEnd,
+        thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
                 ionize(particleArray, dt,&state1.front(),
                     nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),  
                     nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
@@ -2808,7 +2831,7 @@ nDevices = 2;
                     &gridDensity_Ionization.front(), &rateCoeff_Ionization.front(),tt));
 #endif
 #if USERECOMBINATION > 0
-        thrust::for_each(thrust::device, particleBegin,particleEnd,
+        thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
                 recombine(particleArray, dt,&state1.front(),
                     nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),  
                     nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
@@ -2817,19 +2840,19 @@ nDevices = 2;
                     rateCoeff_Recombination.data(),tt));
 #endif
 #if USEPERPDIFFUSION > 0
-        thrust::for_each(thrust::device,particleBegin, particleEnd,
+        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
                 crossFieldDiffusion(particleArray,dt,&state1.front(),perpDiffusionCoeff,
                     nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
                                         &br.front(),&bz.front(),&by.front()));
             
-            thrust::for_each(thrust::device, particleBegin,particleEnd,
+            thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
                     geometry_check(particleArray,nLines,&boundaries[0],surfaces,dt,tt,
                         nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
                         &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
                         &closeGeom.front()) );
 #endif
 #if USECOULOMBCOLLISIONS > 0
-        thrust::for_each(thrust::device, particleBegin, particleEnd, 
+        thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd, 
                 coulombCollisions(particleArray,dt,&state1.front(),
                     nR_flowV,nY_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridy.front(),&flowVGridz.front(),
                     &flowVr.front(),&flowVz.front(),&flowVt.front(),
@@ -2841,7 +2864,7 @@ nDevices = 2;
 
 #endif
 #if USETHERMALFORCE > 0
-        thrust::for_each(thrust::device,particleBegin, particleEnd,
+        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
                 thermalForce(particleArray,dt,background_amu,
                     nR_gradT,nZ_gradT,gradTGridr.data(),gradTGridz.data(),
                     gradTiR.data(),gradTiZ.data(), gradTiY.data(), 
@@ -2851,7 +2874,7 @@ nDevices = 2;
 #endif
 
 #if USESURFACEMODEL > 0
-        thrust::for_each(thrust::device,particleBegin, particleEnd, 
+        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd, 
                 reflection(particleArray,dt,&state1.front(),nLines,&boundaries[0],nAngle,nEnergy,
                       spYlGridAngle.data(),
                             spYlGridE.data(), 
@@ -2861,7 +2884,7 @@ nDevices = 2;
 
 #if PARTICLE_TRACKS >0
 #if USE_CUDA > 0
-   thrust::for_each(thrust::device, particleBegin,particleEnd,
+   thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
       history(particleArray,tt,subSampleFac,nP,&positionHistoryX.front(),
       &positionHistoryY.front(),&positionHistoryZ.front(),
       &velocityHistoryX.front(),&velocityHistoryY.front(),
@@ -2918,10 +2941,29 @@ for(int i=0; i<nP ; i++)
 #if USE_CUDA
     cudaDeviceSynchronize();
 #endif
+#if USE_MPI > 0
+    MPI_Barrier(MPI_COMM_WORLD);
+    //Collect stuff
+    if(world_rank == 1)
+{
+    MPI_Send(&particleArray->z[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+}
+else if(world_rank == 0)
+{
+    MPI_Recv(&particleArray->z[1*nP/world_size], nP/world_size, MPI_FLOAT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+}
+//MPI_Barrier(MPI_COMM_WORLD);
+MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], (nBins+1)*net_nX*net_nZ, MPI_FLOAT, MPI_SUM, 0,
+                   MPI_COMM_WORLD);
+#endif
 //    tmp202 =  particleArray->vx[0];
     //std::cout << "memory access hitwall " 
     //<< particleArray->xprevious[0] << std::endl;
     //std::cout << "transit time counting " << std::endl;
+#if USE_MPI > 0
+    if(world_rank == 0)
+{
+#endif
 int totalHitWall=0;
 for(int i=0;i<nP;i++)
 {
@@ -3039,7 +3081,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     std::cout << "positions.m writing " << std::endl;
     ofstream outfile2;
     outfile2.open ("output/positions.m");
-    for(int i=1 ; i<=nP ; i++)
+    for(int i=1 ; i<nP+1 ; i++)
       {
         outfile2 << "Pos( " << i<< ",:) = [ " ;
         outfile2 << particleArray->x[i-1] << " " << particleArray->y[i-1] 
@@ -3195,7 +3237,9 @@ ncFile.close();
     std::cout << "Total ionization time: " << ionizTime*1e-9 << '\n';
     */
 #endif
-
+#if USE_MPI > 0
+    }
+#endif
 #ifdef __CUDACC__
     cudaError_t err = cudaDeviceReset();
 //cudaProfilerStop();

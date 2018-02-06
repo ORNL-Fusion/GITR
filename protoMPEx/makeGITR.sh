@@ -7,7 +7,7 @@ source ../env.gpufusion.sh
     -DLIBCONFIGPP_LIBRARY=$LIBCONFIGDIR/$LIBCONFIGLIB \
     -DUSE_CUDA=1 \
     -DUSEMPI=0 \
-    -DUSE_MPI=0 \
+    -DUSE_MPI=1 \
     -DUSE_OPENMP=0 \
     -DUSE_BOOST=1 \
     -DUSEIONIZATION=0 \
