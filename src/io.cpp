@@ -225,7 +225,7 @@ int read_profileNs( string fileName, string nxName, string nzName,int &n_x,int &
     n_x = nc_nx.getSize(); 
     n_z = nc_nz.getSize(); 
 
-
+    nc.close();
     return(0);
 
 }
@@ -276,7 +276,7 @@ int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, sim::Ar
 
     NcVar nc_ne(nc.getVar(dataName));
     nc_ne.getVar(&data[0]);
-
+    nc.close();
     return(0);
 
 }
