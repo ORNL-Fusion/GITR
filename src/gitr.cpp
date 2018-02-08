@@ -102,6 +102,9 @@ int main()
   cudaSetDevice(world_rank%ppn);  
     // Finalize the MPI environment.
     //MPI_Finalize();
+  #else
+    int world_rank=0;
+    int world_size=1;
   #endif
   //Prepare config files for import
   Config cfg,cfg_geom;
@@ -2952,9 +2955,11 @@ else if(world_rank == 0)
 {
     MPI_Recv(&particleArray->z[1*nP/world_size], nP/world_size, MPI_FLOAT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 }
+#if SPECTROSCOPY > 0
 //MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], (nBins+1)*net_nX*net_nZ, MPI_FLOAT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
+#endif
 #endif
 //    tmp202 =  particleArray->vx[0];
     //std::cout << "memory access hitwall " 

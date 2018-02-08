@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+#PBS -A FUS049
+#PBS -q debug
+#PBS -l walltime=00:10:00
+#PBS -l nodes=1
+#PBS -j oe
+#PBS -e log.error
+#PBS -o log.ouput
+#PBS -N gitr
+#cd $PBS_O_WORKDIR
+source /ccs/home/tyounkin/code/gitr/env.titan.sh
+aprun -n 1 /lustre/atlas/scratch/tyounkin/fus049/code/gitr/binary/GITR > log.running
