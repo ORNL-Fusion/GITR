@@ -314,6 +314,7 @@ void operator()(std::size_t indx) const {
 		//int plus_minus3 = floor(dist(state[indx]) + 0.5)*2 - 1;
             std::normal_distribution<double> distribution(0.0,1.0);
             std::uniform_real_distribution<float> dist(0.0, 1.0);
+            float n1 = distribution(state[indx]);
             float n2 = distribution(state[indx]);
             float xsi = dist(state[indx]);
 #endif

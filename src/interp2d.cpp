@@ -1,6 +1,7 @@
 #if USE_BOOST
 #endif
 #include "interp2d.hpp"
+#include <iostream>
 #ifdef __CUDACC__
 #endif
 
