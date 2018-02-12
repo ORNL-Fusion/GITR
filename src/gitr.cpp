@@ -11,6 +11,7 @@
 #include <libconfig.h++>
 #include <vector>
 #include <netcdf>
+#include "ncFile.h"
 #include "utils.h"
 #include "boris.h"
 #include "geometryCheck.h"
@@ -73,14 +74,14 @@ using namespace netCDF;
 using namespace exceptions;
 using namespace netCDF::exceptions;
 
-int main()
+int main(int argc, char **argv)
 {
 
  #if USE_MPI > 0
-        int ppn = 4;
-        int np = 2;
+        int ppn = 32;
+        int np = 1;
     // Initialize the MPI environment
-    MPI_Init(NULL, NULL);
+    MPI_Init(&argc,&argv);
     
     // Get the number of processes
     int world_size;
@@ -99,7 +100,9 @@ int main()
     printf("Hello world from processor %s, rank %d"
            " out of %d processors\n",
                       processor_name, world_rank, world_size);
+  #if USE_CUDA > 0
   cudaSetDevice(world_rank%ppn);  
+  #endif
     // Finalize the MPI environment.
     //MPI_Finalize();
   #else
@@ -1559,24 +1562,24 @@ int main()
     cout<<"Using THRUST"<<endl;
   #else
     cout<<"Not using THRUST"<<endl;
-    int nthreads, tid;
-    #pragma omp parallel private(nthreads, tid)
-    {
-        nthreads = omp_get_num_threads();
-          tid = omp_get_thread_num();
-          if(tid == 0)
-          {
-              std::cout << "N Threads " << nthreads << std::endl;
-          }
-          std::cout << "Hello world" << tid << std::endl;
-    }
-        //nthreads = omp_get_num_threads();
-        nthreads = 24;
-        std::cout << "N threads " << nthreads << std::endl;
-    thrust::counting_iterator<std::size_t> ex0(0);  
-    thrust::counting_iterator<std::size_t> ex1(nthreads-1);
-                  thrust::for_each(thrust::device, ex0,ex1,
-                                   ompPrint());
+    //int nthreads, tid;
+    //#pragma omp parallel private(nthreads, tid)
+    //{
+    //    nthreads = omp_get_num_threads();
+    //      tid = omp_get_thread_num();
+    //      if(tid == 0)
+    //      {
+    //          std::cout << "N Threads " << nthreads << std::endl;
+    //      }
+    //      std::cout << "Hello world" << tid << std::endl;
+    //}
+    //    //nthreads = omp_get_num_threads();
+    //    //nthreads = 24;
+    //    //std::cout << "N threads " << nthreads << std::endl;
+    //thrust::counting_iterator<std::size_t> ex0(0);  
+    //thrust::counting_iterator<std::size_t> ex1(nthreads-1);
+    //              thrust::for_each(thrust::device, ex0,ex1,
+    //                               ompPrint());
   #endif
 
   float dt;
@@ -1835,14 +1838,28 @@ int main()
   #endif
   #if PARTICLE_SOURCE_FILE > 0 // File source
     Config cfg_particles;
-    std::string ncParticleSourceFile; 
+    std::string ncParticleSourceFile;
     getVariable(cfg,"particleSource.ncFileString",ncParticleSourceFile);
+std::cout << "About to try to open NcFile ncp0 " << std::endl;
+// Return this in event of a problem.
+static const int NC_ERR = 2;   
+try
+   {
+    NcFile ncp0("input/"+ncParticleSourceFile, NcFile::read);
+   }catch(NcException& e)
+     {
+       e.what();
+       cout<<"FAILURE*************************************"<<endl;
+       return NC_ERR;
+     }
+std::cout << "finished NcFile ncp0 starting ncp" << std::endl;
     NcFile ncp("input/"+ncParticleSourceFile, NcFile::read);
-
+std::cout << "getting dim nP" << std::endl;
     NcDim ps_nP(ncp.getDim("nP"));
 
     int nPfile = ps_nP.getSize();
 
+std::cout << "nPfile "<< nPfile << std::endl;
     NcVar ncp_x(ncp.getVar("x"));
     NcVar ncp_y(ncp.getVar("y"));
     NcVar ncp_z(ncp.getVar("z"));
@@ -1850,15 +1867,19 @@ int main()
     NcVar ncp_Ey(ncp.getVar("Ey"));
     NcVar ncp_Ez(ncp.getVar("Ez"));
 
+std::cout << "got through NcVar " << std::endl;
     vector<float> xpfile(nPfile),ypfile(nPfile),zpfile(nPfile),
     Expfile(nPfile),Eypfile(nPfile),Ezpfile(nPfile);
+std::cout << "defined file vectors " << std::endl;
     ncp_x.getVar(&xpfile[0]);  
     ncp_y.getVar(&ypfile[0]);  
     ncp_z.getVar(&zpfile[0]);  
     ncp_Ex.getVar(&Expfile[0]);  
     ncp_Ey.getVar(&Eypfile[0]);  
     ncp_Ez.getVar(&Ezpfile[0]);
+std::cout << "defined file vectors " << std::endl;
   ncp.close();  
+std::cout << "closed ncp " << std::endl;
     //for(int i=0;i<nPfile;i++)
     //{
     //    std::cout << " xyz from file " << xpfile[i] << " " << ypfile[i] << " " << zpfile[i] << std::endl;  
@@ -2005,7 +2026,9 @@ int main()
   if(world_rank==0)
   { 
 #endif
+std::cout <<" about to write ncFile_particles " << std::endl;
     NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
+std::cout <<" opened file " << std::endl;
     NcDim pNP = ncFile_particles.addDim("nP",nP);
     NcVar p_surfNormx = ncFile_particles.addVar("surfNormX",ncFloat,pNP);
     NcVar p_surfNormy = ncFile_particles.addVar("surfNormY",ncFloat,pNP);
@@ -2016,6 +2039,7 @@ int main()
     NcVar p_x = ncFile_particles.addVar("x",ncFloat,pNP);
     NcVar p_y = ncFile_particles.addVar("y",ncFloat,pNP);
     NcVar p_z = ncFile_particles.addVar("z",ncFloat,pNP);
+std::cout <<" added vars " << std::endl;
     p_surfNormx.putVar(&pSurfNormX[0]);
     p_surfNormy.putVar(&pSurfNormY[0]);
     p_surfNormz.putVar(&pSurfNormZ[0]);
@@ -2025,7 +2049,9 @@ int main()
     p_x.putVar(&px[0]);
     p_y.putVar(&py[0]);
     p_z.putVar(&pz[0]);
+std::cout <<" put vars complete " << std::endl;
     ncFile_particles.close();
+std::cout <<" closed ncFile_particles " << std::endl;
 #if USE_MPI > 0
   }
 #endif
@@ -2763,22 +2789,24 @@ int main()
     #if USE_OPENMP
     //for(int device=0;device <1;device++)
 //{ cudaSetDevice(device); 
-nDevices = 2;
-    std::cout << "nDevices " << nDevices << std::endl;
-     omp_set_num_threads(nDevices);  // create as many CPU threads as there are CUDA devices
+    //int nDevices=32;
+    //std::cout << "nDevices " << nDevices << std::endl;
+     //omp_set_num_threads(nDevices);  // create as many CPU threads as there are CUDA devices
+    //std::cout << "nDevices " << nDevices << std::endl;
+     int nDevices=0;
      #pragma omp parallel
      {
         nDevices = omp_get_num_threads();
         //tid = omp_get_thread_num();
          unsigned int cpu_thread_id = omp_get_thread_num();
          unsigned int num_cpu_threads = omp_get_num_threads();
-         int gpu_id = -1;
+         //int gpu_id = -1;
              //cudaSetDevice(cpu_thread_id);
         //cudaSetDevice(cpu_thread_id % nDevices);        // "% num_gpus" allows more CPU threads than GPU devices
-        if(cpu_thread_id ==0 ) cudaSetDevice(0); 
-        if(cpu_thread_id ==1 ) cudaSetDevice(3); 
-        cudaGetDevice(&gpu_id);
-         printf("CPU thread %d (of %d) uses CUDA device %d\n", cpu_thread_id, num_cpu_threads, gpu_id);
+        //if(cpu_thread_id ==0 ) cudaSetDevice(0); 
+        //if(cpu_thread_id ==1 ) cudaSetDevice(3); 
+        //cudaGetDevice(&gpu_id);
+         printf("CPU thread %d (of %d) uses CUDA device %d\n", cpu_thread_id, num_cpu_threads);
 #if USE_MPI > 0 
     printf("Hello world from processor %s, rank %d"
            " out of %d processors and cpu_thread_id %i \n",
@@ -2947,13 +2975,28 @@ for(int i=0; i<nP ; i++)
 #if USE_MPI > 0
     MPI_Barrier(MPI_COMM_WORLD);
     //Collect stuff
-    if(world_rank == 1)
+   for(int rr=1; rr<world_size;rr++)
 {
+if(world_rank == rr)
+{
+    MPI_Send(&particleArray->x[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(&particleArray->y[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
     MPI_Send(&particleArray->z[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(&particleArray->vx[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(&particleArray->vy[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(&particleArray->vz[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(&particleArray->hitWall[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
 }
 else if(world_rank == 0)
 {
-    MPI_Recv(&particleArray->z[1*nP/world_size], nP/world_size, MPI_FLOAT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&particleArray->x[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&particleArray->y[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&particleArray->z[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&particleArray->vx[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&particleArray->vy[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&particleArray->vz[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&particleArray->hitWall[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+}
 }
 #if SPECTROSCOPY > 0
 //MPI_Barrier(MPI_COMM_WORLD);
