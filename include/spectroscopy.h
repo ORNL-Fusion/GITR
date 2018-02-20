@@ -39,25 +39,27 @@ void operator()(std::size_t indx) const {
     float x = particlesPointer->xprevious[indx];
     float y = particlesPointer->yprevious[indx];
     float z = particlesPointer->zprevious[indx];
-#if USECYLSYMM > 0
-    float dim1 = sqrtf(x*x + y*y);
-    //float dim1 = particlesPointer->xprevious[indx];
+#if SPECTROSCOPY > 2
+    float dim1 = particlesPointer->xprevious[indx];
 #else
-  float dim1 = particlesPointer->xprevious[indx];
+    float dim1 = sqrtf(x*x + y*y);
 #endif
+
     if ((z > gridZ[0]) && (z < gridZ[nZ-1]))
         {
           if((dim1 > gridX[0]) && (dim1 < gridX[nX-1]))
           {
               dx = gridX[1] - gridX[0];
               dz = gridZ[1] - gridZ[0];
-#if USECYLSYMM > 0
+#if SPECTROSCOPY < 3
               int indx_X = floor((dim1-gridX[0])/dx);
               int indx_Z = floor((z-gridZ[0])/dz);
               int indx_Y = 1;
 #else
-              int indx_X = floor((dim1-gridX[0])/dx+0.5);
-              int indx_Z = floor((z-gridZ[0])/dz + 0.5);
+              if((y > gridY[0]) && (y < gridY[nY-1]))
+              { 
+              int indx_X = floor((dim1-gridX[0])/dx);
+              int indx_Z = floor((z-gridZ[0])/dz);
               dy = gridY[1] - gridY[0];
               int indx_Y = floor((y-gridY[0])/dy);
               if (indx_Y < 0 || indx_Y >= nY) indx_Y = 0;
@@ -98,7 +100,10 @@ void operator()(std::size_t indx) const {
               }
 #endif
               }
-          }
+#if SPECTROSCOPY >2
+              }
+#endif
+              }
         }
     }
 };

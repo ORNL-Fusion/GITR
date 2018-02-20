@@ -16,6 +16,53 @@
 using namespace std;
 CUDA_CALLABLE_MEMBER
 
+float interp2d ( float x, float z,int nx, int nz,
+    float* gridx,float* gridz,float* data ) {
+    
+    float fxz = 0.0;
+    float fx_z1 = 0.0;
+    float fx_z2 = 0.0; 
+    if(nx*nz == 1)
+    {
+        fxz = data[0];
+    }
+    else{
+    float dim1 = x;
+    float d_dim1 = gridx[1] - gridx[0];
+    float dz = gridz[1] - gridz[0];
+    int i = floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
+    int j = floor((z - gridz[0])/dz);
+    
+    //float interp_value = data[i + j*nx];
+    if (i < 0) i =0;
+    if (j< 0 ) j=0;
+    if (i >=nx-1 && j>=nz-1)
+    {
+        fxz = data[nx-1+(nz-1)*nx];
+    }
+    else if (i >=nx-1)
+    {
+        fx_z1 = data[nx-1+j*nx];
+        fx_z2 = data[nx-1+(j+1)*nx];
+        fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+    }
+    else if (j >=nz-1)
+    {
+        fx_z1 = data[i+(nz-1)*nx];
+        fx_z2 = data[i+(nz-1)*nx];
+        fxz = ((gridx[i+1]-dim1)*fx_z1+(dim1 - gridx[i])*fx_z2)/d_dim1;
+        
+    }
+    else
+    {
+      fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
+      fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
+      fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+    }
+    }
+
+    return fxz;
+}
 float interp2dCombined ( float x, float y, float z,int nx, int nz,
     float* gridx,float* gridz,float* data ) {
     
@@ -82,31 +129,35 @@ float interp3d ( float x, float y, float z,int nx,int ny, int nz,
     int i = floor((x - gridx[0])/dx);//addition of 0.5 finds nearest gridpoint
     int j = floor((y - gridy[0])/dy);
     int k = floor((z - gridz[0])/dz);
-    std::cout << "dxyz ijk " << dx << " "<<dy << " " << dz<< " " << i
-        << " " << j << " " << k << std::endl;
+    //std::cout << "dxyz ijk " << dx << " "<<dy << " " << dz<< " " << i
+    //    << " " << j << " " << k << std::endl;
     if(i <0 ) i=0;
     else if(i >=nx-1) i=nx-2;
     if(j <0 ) j=0;
     else if(j >=ny-1) j=ny-2;
     if(k <0 ) k=0;
     else if(k >=nz-1) k=nz-2;
+    if(ny <=1) j=0;
+    if(nz <=1) k=0;
     //if(j <0 || j>ny-1) j=0;
     //if(k <0 || k>nz-1) k=0;
     float fx_z0 = (data[i + j*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + k*nx*ny]*(x-gridx[i]))/dx;
     float fx_z1 = (data[i + j*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
 
-
-    std::cout << "fxz0 fxz1 " << fx_z0 << " "<<fx_z1 << std::endl;
+    
+    //std::cout << "fxz0 fxz1 " << fx_z0 << " "<<fx_z1 << std::endl;
     float fxy_z0 = (data[i + (j+1)*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + (j+1)*nx + k*nx*ny]*(x-gridx[i]))/dx;
     float fxy_z1 = (data[i + (j+1)*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + (j+1)*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
-    std::cout << "fxyz0 fxyz1 " << fxy_z0 << " "<<fxy_z1 << std::endl;
+    //std::cout << "fxyz0 fxyz1 " << fxy_z0 << " "<<fxy_z1 << std::endl;
 
     float fxz0 = (fx_z0*(gridz[k+1] - z) + fx_z1*(z-gridz[k]))/dz;
     float fxz1 = (fxy_z0*(gridz[k+1] - z) + fxy_z1*(z-gridz[k]))/dz;
-    std::cout << "fxz0 fxz1 " << fxz0 << " "<<fxz1 << std::endl;
+    //std::cout << "fxz0 fxz1 " << fxz0 << " "<<fxz1 << std::endl;
 
     fxyz = (fxz0*(gridy[j+1] - y) + fxz1*(y-gridy[j]))/dy;
-    std::cout <<"fxyz " << fxyz << std::endl; 
+    if(ny <=1) fxyz=fxz0;
+    if(nz <=1) fxyz=fx_z0;
+    //std::cout <<"fxyz " << fxyz << std::endl;
     return fxyz;
 }
 

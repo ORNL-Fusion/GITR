@@ -67,6 +67,8 @@ public:
   sim::Array<int> wallIndex;
   sim::Array<float> perpDistanceToSurface;
   sim::Array<float> test;
+  sim::Array<float> test0;
+  sim::Array<float> test1;
   sim::Array<float> distanceTraveled;
   sim::Array<float> weight;
   sim::Array<float> PionizationPrevious;
@@ -132,7 +134,7 @@ public:
 #endif
       hitWall{nP,0.0},
    transitTime{nP,0.0},wallHit{nP,0}, wallIndex{nP}, perpDistanceToSurface{nP}, 
-      test{nP},distanceTraveled{nP},weight{nP,1.0}, PionizationPrevious{nP,1.0},
+      test{nP},test0{nP},test1{nP},distanceTraveled{nP},weight{nP,1.0}, PionizationPrevious{nP,1.0},
     PrecombinationPrevious{nP,1.0} {};   
 
 };

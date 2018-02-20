@@ -647,6 +647,8 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
        //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     
     //std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
+#if USE3DTETGEOM > 0
+#else
 #if USECYLSYMM > 0
             //if cylindrical geometry
             float theta = atan2f(y,x0);
@@ -656,6 +658,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
 #else
             E[0] = Er;
             E[1] = Et;
+#endif
 #endif
             //std::cout << "Ex and Ey and Ez " << E[0] << " " << E[1] << " " << E[2] << std::endl;
    

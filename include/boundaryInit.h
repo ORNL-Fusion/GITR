@@ -62,20 +62,17 @@ struct boundary_init {
 #endif
         b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density);
         b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
-        //std::cout << "midpointx and z " << midpointx << " " << midpointz << std::endl;        
-        //std::cout << "density and ti " << b.density << " " << b.ti << std::endl;        
-        float br = interp2dCombined(midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldR);        
-        float bz = interp2dCombined(midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldZ);
-        float bt = interp2dCombined(midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,bfieldGridz,bfieldT); 
-        float norm_B = sqrt(br*br+bz*bz+bt*bt);
-#if USE3DTETGEOM
         float B[3] = {0.0,0.0,0.0};
-        float planeNormal[3] = {b.a,b.b,b.c};
-        vectorAssign(br,bt,bz,B);
-        float theta = acos(vectorDotProduct(B,planeNormal)/(vectorNorm(B)*vectorNorm(planeNormal)));
+interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
+                 bfieldGridz,bfieldR,bfieldZ,bfieldT);
+        float norm_B = vectorNorm(B);
+#if USE3DTETGEOM
+        float surfNorm[3] = {0.0,0.0,0.0};
+        b.getSurfaceNormal(surfNorm);
+        float theta = acos(vectorDotProduct(B,surfNorm)/(vectorNorm(B)*vectorNorm(surfNorm)));
         if (theta > 3.14159265359*0.5)
         {
-          theta = theta - (3.14159265359*0.5);
+          theta = abs(theta - (3.14159265359));
         }
 #else
         float theta = acos((-br*b.slope_dzdx + bz)/(sqrt(br*br+bz*bz+bt*bt)*sqrt(b.slope_dzdx*b.slope_dzdx + 1.0)));
@@ -92,10 +89,11 @@ struct boundary_init {
         b.impacts = 0.0;
 #if BIASED_SURFACE
         b.potential = potential;
-        float cs = sqrt(2*b.ti*1.602e-19/(1.66e-27*background_amu));
-        float jsat_ion = 1.602e-19*b.density*cs;
-        b.ChildLangmuirDist = 2.0/3.0*pow(2*1.602e-19/(background_amu*1.66e-27),0.25)*pow(potential,0.75)
-                              /(2.0*sqrt(3.1415*jsat_ion))*1.055e-5;
+        //float cs = sqrt(2*b.ti*1.602e-19/(1.66e-27*background_amu));
+        //float jsat_ion = 1.602e-19*b.density*cs;
+        //b.ChildLangmuirDist = 2.0/3.0*pow(2*1.602e-19/(background_amu*1.66e-27),0.25)
+        //*pow(potential,0.75)/(2.0*sqrt(3.1415*jsat_ion))*1.055e-5;
+        b.ChildLangmuirDist = b.debyeLength*pow(abs(b.potential)/b.ti,0.75);
 #else
         b.potential = 3.0*b.ti;    
 #endif        

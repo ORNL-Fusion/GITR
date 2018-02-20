@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 {
 
  #if USE_MPI > 0
-        int ppn = 32;
+        int ppn = 4;
         int np = 1;
     // Initialize the MPI environment
     MPI_Init(&argc,&argv);
@@ -249,7 +249,6 @@ int main(int argc, char **argv)
   std::cout << "Starting Boundary Init..." << std::endl;
   std::cout << " y1 and y2 " << boundaries[nLines].y1 << " " << boundaries[nLines].y2 << std::endl;
   float biasPotential = 0.0;
-  
   #if BIASED_SURFACE > 0
     getVariable(cfg,"backgroundPlasmaProfiles.biasPotential",biasPotential);
   #endif
@@ -331,6 +330,14 @@ int main(int argc, char **argv)
     thrust::counting_iterator<std::size_t> lines0(0);  
    std::cout << "iterator2 " << std::endl; 
     thrust::counting_iterator<std::size_t> lines1(nR_closeGeom*nY_closeGeom*nZ_closeGeom);
+    int nHashMeshPointsPerProcess=ceil(nR_closeGeom*nY_closeGeom*nZ_closeGeom/world_size);
+   std::cout << "nHashMeshPointsPerProcess "<< nHashMeshPointsPerProcess << std::endl; 
+   std::vector<int> hashMeshIncrements(world_size);
+   for(int j=0;j<world_size-1;j++)
+   {
+       hashMeshIncrements[j] = nHashMeshPointsPerProcess;
+   }
+   hashMeshIncrements[world_size-1]=nR_closeGeom*nY_closeGeom*nZ_closeGeom - (world_size-1)*nHashMeshPointsPerProcess;
    std::cout << "minDist1 "<< nGeomHash << std::endl; 
     sim::Array<float> minDist1(n_closeGeomElements,1e6);
     std::cout << "Generating geometry hash" << sizeof(int) << " bytes per int, " 
@@ -364,7 +371,7 @@ int main(int argc, char **argv)
                         closeGeomGridz.data(),
                         n_closeGeomElements, closeGeom.data(),
                         nR_closeGeom,nY_closeGeom,nZ_closeGeom);
-       thrust::for_each(thrust::device, lines0,lines1,geo1);
+       thrust::for_each(thrust::device, lines0+world_rank*nHashMeshPointsPerProcess,lines0+world_rank*nHashMeshPointsPerProcess+hashMeshIncrements[world_rank]-1,geo1);
        //for(int i=0;i<nR_closeGeom*nY_closeGeom*nZ_closeGeom;i++)
        //{
        // geo1(i);
@@ -373,6 +380,23 @@ int main(int argc, char **argv)
          cudaDeviceSynchronize();
        #endif
     //}
+#if USE_MPI > 0
+    MPI_Barrier(MPI_COMM_WORLD);
+    //Collect stuff
+   for(int rr=1; rr<world_size;rr++)
+{
+if(world_rank == rr)
+{
+    MPI_Send(&closeGeom[world_rank*nHashMeshPointsPerProcess*n_closeGeomElements], hashMeshIncrements[world_rank]*n_closeGeomElements, MPI_INT, 0, 0, MPI_COMM_WORLD);
+}
+else if(world_rank == 0)
+{
+    MPI_Recv(&closeGeom[rr*nHashMeshPointsPerProcess*n_closeGeomElements], hashMeshIncrements[rr]*n_closeGeomElements, MPI_INT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+}
+}
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Bcast(closeGeom.data(), nR_closeGeom*nY_closeGeom*nZ_closeGeom*n_closeGeomElements,MPI_INT,0,MPI_COMM_WORLD);
+#endif
     #if USE_CUDA
       cudaDeviceSynchronize();
     #endif
@@ -481,18 +505,54 @@ int main(int argc, char **argv)
     thrust::counting_iterator<std::size_t> lines0_s(0);  
     thrust::counting_iterator<std::size_t> lines1_s(nR_closeGeom_sheath*nY_closeGeom_sheath);
     sim::Array<float> minDist1_s(nGeomHash_sheath,1e6);
-    
-    for(int i=0; i<nZ_closeGeom_sheath; i++)
+    int nHashMeshPointsPerProcess_s=ceil(nR_closeGeom_sheath*nY_closeGeom_sheath*nZ_closeGeom_sheath/world_size);
+   std::vector<int> hashMeshIncrements_s(world_size);
+   for(int j=0;j<world_size-1;j++)
+   {
+       hashMeshIncrements_s[j] = nHashMeshPointsPerProcess_s;
+   }
+   hashMeshIncrements_s[world_size-1]=nR_closeGeom_sheath*nY_closeGeom_sheath*nZ_closeGeom_sheath - (world_size-1)*nHashMeshPointsPerProcess_s;
+    typedef std::chrono::high_resolution_clock Time0_s;
+    typedef std::chrono::duration<float> fsec0_s;
+    auto start_clock0_s = Time0_s::now();
+       hashGeom_sheath geo_s(nLines, boundaries.data(), 
+                        closeGeomGridr_sheath.data(), closeGeomGridy_sheath.data(),
+                        closeGeomGridz_sheath.data(),
+                        n_closeGeomElements_sheath, closeGeom_sheath.data(),
+                        nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath);
+       thrust::for_each(thrust::device, lines0_s+world_rank*nHashMeshPointsPerProcess_s,lines0_s+world_rank*nHashMeshPointsPerProcess_s+hashMeshIncrements_s[world_rank]-1,geo_s);
+       #if USE_CUDA
+         cudaDeviceSynchronize();
+       #endif
+#if USE_MPI > 0
+    MPI_Barrier(MPI_COMM_WORLD);
+    //Collect stuff
+   for(int rr=1; rr<world_size;rr++)
+{
+if(world_rank == rr)
+{
+    MPI_Send(&closeGeom_sheath[world_rank*nHashMeshPointsPerProcess_s*n_closeGeomElements_sheath], hashMeshIncrements_s[world_rank]*n_closeGeomElements_sheath, MPI_INT, 0, 0, MPI_COMM_WORLD);
+}
+else if(world_rank == 0)
+{
+    MPI_Recv(&closeGeom_sheath[rr*nHashMeshPointsPerProcess_s*n_closeGeomElements_sheath], hashMeshIncrements_s[rr]*n_closeGeomElements_sheath, MPI_INT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+}
+}
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Bcast(closeGeom_sheath.data(), nR_closeGeom_sheath*nY_closeGeom_sheath*nZ_closeGeom_sheath*n_closeGeomElements_sheath,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    #if USE_CUDA
+      cudaDeviceSynchronize();
+    #endif
+      auto finish_clock0_s = Time0_s::now();
+      fsec0_s fs0_s = finish_clock0_s - start_clock0_s;
+      printf("Time taken          is %6.3f (secs) \n", fs0_s.count());
+#if USE_MPI > 0  
+      if(world_rank == 0)
       {
-        std::cout << "percenent done " << i*1.0/nZ_closeGeom_sheath << std::endl;
-              thrust::for_each(thrust::device, lines0_s,lines1_s,
-                               hashGeom_sheath(i,nLines, boundaries.data(), closeGeomGridr_sheath.data(),
-                               closeGeomGridy_sheath.data(),closeGeomGridz_sheath.data(),
-                               n_closeGeomElements_sheath, minDist1_s.data(), closeGeom_sheath.data(),
-                               nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath));
-              cudaDeviceSynchronize();
-      }
-              cudaDeviceSynchronize();
+#endif
+    
     NcFile ncFile_hash_sheath("output/geomHash_sheath.nc", NcFile::replace);
     NcDim hashNR_sheath = ncFile_hash_sheath.addDim("nR",nR_closeGeom_sheath);
     NcDim hashNY_sheath = ncFile_hash_sheath.addDim("nY",nY_closeGeom_sheath);
@@ -512,6 +572,13 @@ int main(int argc, char **argv)
     hash_gridZ_sheath.putVar(&closeGeomGridz_sheath[0]);
     hash_sheath.putVar(&closeGeom_sheath[0]);
     ncFile_hash_sheath.close();
+#if USE_MPI > 0  
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    #if USE_CUDA
+      cudaDeviceSynchronize();
+    #endif
   #elif GEOM_HASH_SHEATH > 1
     getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridRString",closeGeomGridr_sheath);
     getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridZString",closeGeomGridz_sheath);
@@ -1161,6 +1228,15 @@ int main(int argc, char **argv)
             TempGridz.data(),ti.data(), biasPotential ));
 
    std::cout << "Completed Boundary Init " << std::endl;
+ for (int ii=0; ii<nLines;ii++)
+     {
+         if(boundaries[ii].Z > 0.0)
+         {
+             std::cout << "Z angle potential debyeLength larmorRadius " << 
+                 boundaries[ii].Z << " " <<boundaries[ii].angle<< " " << boundaries[ii].potential
+                << " " << boundaries[ii].debyeLength<< " " <<  boundaries[ii].larmorRadius << std::endl;
+         }
+     } 
   
   //Efield
   int nR_PreSheathEfield = 1;
@@ -1448,6 +1524,7 @@ int main(int argc, char **argv)
       sim::Array<float> net_BinsTotal((nBins+1)*net_nX*net_nZ);
     #else
       sim::Array<float> net_Bins((nBins+1)*net_nX*net_nY*net_nZ);
+      sim::Array<float> net_BinsTotal((nBins+1)*net_nX*net_nY*net_nZ);
     #endif
 
       /*
@@ -1483,76 +1560,105 @@ int main(int argc, char **argv)
   else
   {std::cout << "ERROR: could not get perpendicular diffusion coefficient from input file" << std::endl;}
   //Surface model import
-  int nE_surfaceModel = 1;
-  int nA_surfaceModel = 1;
-  int nDistE_surfaceModel = 1, nDistA_surfaceModel = 1;
-  int nAdistBins_surfaceModel = 1,nEdistBins_surfaceModel = 1;
+  int nE_sputtRefCoeff = 1, nA_sputtRefCoeff=1;
+  int nE_sputtRefDistIn = 1, nA_sputtRefDistIn=1;
+  int nE_sputtRefDistOut = 1, nA_sputtRefDistOut = 1;
+  int nDistE_surfaceModel = 1,nDistA_surfaceModel = 1;
 #if USESURFACEMODEL > 0
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
   getVariable(cfg,surfaceModelCfg+"fileString",surfaceModelFile);
-  nE_surfaceModel = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridNEString");
-  nA_surfaceModel = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridNAString");
-  nEdistBins_surfaceModel = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridNEBinsString");
-  nAdistBins_surfaceModel = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridNABinsString");
-  nDistE_surfaceModel = nE_surfaceModel*nA_surfaceModel*nEdistBins_surfaceModel;
-  nDistA_surfaceModel = nE_surfaceModel*nA_surfaceModel*nAdistBins_surfaceModel;
+  nE_sputtRefCoeff = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nEsputtRefCoeffString");
+  nA_sputtRefCoeff = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nAsputtRefCoeffString");
+  nE_sputtRefDistIn = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nEsputtRefDistInString");
+  nA_sputtRefDistIn = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nAsputtRefDistInString");
+  nE_sputtRefDistOut = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nEsputtRefDistOutString");
+  nA_sputtRefDistOut = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nAsputtRefDistOutString");
+  nDistE_surfaceModel = nE_sputtRefDistIn*nA_sputtRefDistIn*nE_sputtRefDistOut;
+  nDistA_surfaceModel = nE_sputtRefDistIn*nA_sputtRefDistIn*nA_sputtRefDistOut;
+  std::cout <<  " got dimensions of surface model " << std::endl;
 #endif
-  sim::Array<float> E_surfaceModel(nE_surfaceModel), A_surfaceModel(nA_surfaceModel),
-                    Elog_surfaceModel(nE_surfaceModel),
-                    energyDistGrid(nEdistBins_surfaceModel), cosDistGrid(nAdistBins_surfaceModel),
-                    energyDistGrid01(nEdistBins_surfaceModel),
-                    cosDistGrid01(nEdistBins_surfaceModel),
-                    spyl_surfaceModel(nE_surfaceModel*nA_surfaceModel),
-                    rfyl_surfaceModel(nE_surfaceModel*nA_surfaceModel),
-                    cosDist_surfaceModel(nDistA_surfaceModel),energyDist_surfaceModel(nDistE_surfaceModel),
-                    cosDist_surfaceModelReflection(nDistA_surfaceModel),
-                    energyDist_surfaceModelReflection(nDistE_surfaceModel),
-                    cosDist_CDF(nDistA_surfaceModel),energyDist_CDF(nDistE_surfaceModel),
-                    cosDist_CDFReflection(nDistA_surfaceModel),energyDist_CDFReflection(nDistE_surfaceModel),
-                    cosDist_CDFregrid(nDistA_surfaceModel),energyDist_CDFregrid(nDistE_surfaceModel),
-                    cosDist_CDFregridReflection(nDistA_surfaceModel),
-                    energyDist_CDFregridReflection(nDistE_surfaceModel);
+  sim::Array<float> E_sputtRefCoeff(nE_sputtRefCoeff), A_sputtRefCoeff(nA_sputtRefCoeff),
+                    Elog_sputtRefCoeff(nE_sputtRefCoeff),
+                    energyDistGrid01(nE_sputtRefDistIn),
+                    angleDistGrid01(nDistA_surfaceModel),
+                    spyl_surfaceModel(nE_sputtRefCoeff*nA_sputtRefCoeff),
+                    rfyl_surfaceModel(nE_sputtRefCoeff*nA_sputtRefCoeff),
+                    E_sputtRefDistIn(nE_sputtRefDistIn), A_sputtRefDistIn(nA_sputtRefDistIn),
+                    Elog_sputtRefDistIn(nE_sputtRefDistIn),
+                    E_sputtRefDistOut(nE_sputtRefDistOut), A_sputtRefDistOut(nA_sputtRefDistOut),
+                    ADist_Y(nDistA_surfaceModel),EDist_Y(nDistE_surfaceModel),
+                    ADist_R(nDistA_surfaceModel),EDist_R(nDistE_surfaceModel),
+                    ADist_CDF_Y(nDistA_surfaceModel),EDist_CDF_Y(nDistE_surfaceModel),
+                    ADist_CDF_R(nDistA_surfaceModel),EDist_CDF_R(nDistE_surfaceModel),
+                    ADist_CDF_Y_regrid(nDistA_surfaceModel),EDist_CDF_Y_regrid(nDistE_surfaceModel),
+                    ADist_CDF_R_regrid(nDistA_surfaceModel),EDist_CDF_R_regrid(nDistE_surfaceModel);
 #if USESURFACEMODEL > 0
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridEString",E_surfaceModel);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridAString",A_surfaceModel);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridDistEString",energyDistGrid);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"gridDistAString",cosDistGrid);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefCoeff",E_sputtRefCoeff);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefCoeff",A_sputtRefCoeff);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistIn",E_sputtRefDistIn);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefDistIn",A_sputtRefDistIn);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistOut",E_sputtRefDistOut);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefDistOut",A_sputtRefDistOut);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"sputtYldString",spyl_surfaceModel);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"reflYldString",rfyl_surfaceModel);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"cosDistString",cosDist_surfaceModel);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"cosDistStringRef",cosDist_surfaceModelReflection);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"energyDistString",energyDist_surfaceModel);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"energyDistStringRef",energyDist_surfaceModelReflection);
-  for(int i=0;i<nE_surfaceModel;i++)
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"EDist_Y",EDist_Y);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"ADist_Y",ADist_Y);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"EDist_R",EDist_R);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"ADist_R",ADist_R);
+  for(int i=0;i<nDistE_surfaceModel;i++)
   {
-      Elog_surfaceModel[i] = log10(E_surfaceModel[i]);
+      std::cout << " Edist diff Y " << EDist_Y[i] << " " << EDist_R[i] << std::endl;
   }
-  for(int i=0;i<nEdistBins_surfaceModel;i++)
+  for(int i=0;i<nE_sputtRefCoeff;i++)
   {
-      energyDistGrid01[i] = i*1.0/nEdistBins_surfaceModel;
+      Elog_sputtRefCoeff[i] = log10(E_sputtRefCoeff[i]);
   }
-  for(int i=0;i<nAdistBins_surfaceModel;i++)
+  for(int i=0;i<nE_sputtRefDistIn;i++)
   {
-     cosDistGrid01[i] = i*1.0/nAdistBins_surfaceModel;
+      Elog_sputtRefDistIn[i] = log10(E_sputtRefDistIn[i]);
   }
-  make2dCDF(nE_surfaceModel,nA_surfaceModel,nEdistBins_surfaceModel,energyDist_surfaceModel.data(),energyDist_CDF.data());
-  make2dCDF(nE_surfaceModel,nA_surfaceModel,nAdistBins_surfaceModel,cosDist_surfaceModel.data(),cosDist_CDF.data());
-  for(int k=0;k<nEdistBins_surfaceModel;k++)
-{
-        std::cout << "cosDist_CDF " << energyDist_CDF[0*nA_surfaceModel*nEdistBins_surfaceModel + 0*nEdistBins_surfaceModel+k] << std::endl;
+  for(int i=0;i<nE_sputtRefDistOut;i++)
+  {
+      energyDistGrid01[i] = i*1.0/nE_sputtRefDistOut;
+  }
+  for(int i=0;i<nA_sputtRefDistOut;i++)
+  {
+     angleDistGrid01[i] = i*1.0/nA_sputtRefDistOut;
+     std::cout << " angleDistGrid01[i] " << angleDistGrid01[i] << std::endl;
+  }
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,EDist_Y.data(),EDist_CDF_Y.data());
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,ADist_Y.data(),ADist_CDF_Y.data());
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,EDist_R.data(),EDist_CDF_R.data());
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,ADist_R.data(),ADist_CDF_R.data());
+  for(int k=0;k<nDistE_surfaceModel;k++)
+ {
+        std::cout << "cosDist_CDFY " << EDist_CDF_Y[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
+        std::cout << "cosDist_CDFR " << EDist_CDF_R[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
+ }
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,90.0,ADist_CDF_Y.data(),ADist_CDF_Y_regrid.data());
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,energyDistGrid01.data(),nE_sputtRefDistOut,50.0,EDist_CDF_Y.data(),EDist_CDF_Y_regrid.data());
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,90.0,ADist_CDF_R.data(),ADist_CDF_R_regrid.data());
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,energyDistGrid01.data(),nE_sputtRefDistOut,50.0,EDist_CDF_R.data(),EDist_CDF_R_regrid.data());
+ // regrid2dCDF(nE_surfaceModel,nA_surfaceModel,nEdistBins_surfaceModel,energyDistGrid01.data(),nEdistBins_surfaceModel,100.0,energyDist_CDF.data(),energyDist_CDFregrid.data());
+ for(int k=0;k<nE_sputtRefDistOut;k++)
+  {
+        std::cout << "cosDist_CDFregridY " << EDist_CDF_Y_regrid[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
+        std::cout << "cosDist_CDFregridR " << EDist_CDF_R_regrid[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
 }
-  regrid2dCDF(nE_surfaceModel,nA_surfaceModel,nAdistBins_surfaceModel,cosDistGrid01.data(),nAdistBins_surfaceModel,90.0,cosDist_CDF.data(),cosDist_CDFregrid.data());
-  regrid2dCDF(nE_surfaceModel,nA_surfaceModel,nEdistBins_surfaceModel,energyDistGrid01.data(),nEdistBins_surfaceModel,100.0,energyDist_CDF.data(),energyDist_CDFregrid.data());
-  for(int k=0;k<nEdistBins_surfaceModel;k++)
-{
-        std::cout << "cosDist_CDFregrid " << energyDist_CDFregrid[0*nA_surfaceModel*nEdistBins_surfaceModel + 0*nEdistBins_surfaceModel+k] << std::endl;
-}
-  float spylInterpVal = interp3d ( 0.003,87.33,log10(60),nAdistBins_surfaceModel,nA_surfaceModel,nE_surfaceModel,
-              cosDistGrid01.data(),A_surfaceModel.data(),Elog_surfaceModel.data() ,cosDist_CDFregrid.data() );
-  float sputEInterpVal = interp3d ( 0.5,0.0,log10(244.2),nEdistBins_surfaceModel,nA_surfaceModel,nE_surfaceModel,
-              energyDistGrid01.data(),A_surfaceModel.data(),Elog_surfaceModel.data() ,energyDist_CDFregrid.data() );
-  std::cout << "Finished surface model import " <<spylInterpVal << " " << sputEInterpVal<< std::endl; 
+  float spylInterpVal = interp2d(45.0,log10(1000.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
+                              Elog_sputtRefCoeff.data(),spyl_surfaceModel.data());
+  float rfylInterpVal = interp2d(45.0,log10(1000.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
+                              Elog_sputtRefCoeff.data(),rfyl_surfaceModel.data());
+  float spylEInterpVal = interp3d ( 0.44,0.0,log10(126.9),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+          angleDistGrid01.data(),A_sputtRefDistIn.data(),E_sputtRefDistIn.data() ,ADist_CDF_Y_regrid.data() );
+ float sputEInterpVal = interp3d ( 0.44,0.0,log10(126.9),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+              energyDistGrid01.data(),A_sputtRefDistIn.data(),E_sputtRefDistIn.data() ,EDist_CDF_Y_regrid.data() );
+  float rflAInterpVal = interp3d ( 0.44,0.0,log10(126.9),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+          angleDistGrid01.data(),A_sputtRefDistIn.data(),E_sputtRefDistIn.data() ,ADist_CDF_R_regrid.data() );
+ float rflEInterpVal = interp3d ( 0.44,0.0,log10(126.9),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+              energyDistGrid01.data(),A_sputtRefDistIn.data(),E_sputtRefDistIn.data() ,EDist_CDF_R_regrid.data() );
+  std::cout << "Finished surface model import " <<spylInterpVal << " " <<  spylEInterpVal << " " << sputEInterpVal << " "<< rfylInterpVal<< " " << rflAInterpVal << " " << rflEInterpVal <<  std::endl; 
 #endif
   // Particle time stepping control
   int ionization_nDtPerApply  = cfg.lookup("timeStep.ionization_nDtPerApply");
@@ -1599,7 +1705,7 @@ int main(int argc, char **argv)
   auto particleArray = new Particles(nParticles);
   auto particleArray2 = new Particles(nParticles);
   
-  float x,y,z,E,Ex,Ey,Ez,amu,Z,charge,phi,theta,Ex_prime,Ez_prime,theta_transform;      
+  float x,y,z,E,vx,vy,vz,Ex,Ey,Ez,amu,Z,charge,phi,theta,Ex_prime,Ez_prime,theta_transform;      
   if(cfg.lookupValue("impurityParticleSource.initialConditions.impurity_amu",amu) && 
      cfg.lookupValue("impurityParticleSource.initialConditions.impurity_Z",Z) &&
      cfg.lookupValue("impurityParticleSource.initialConditions.charge",charge))
@@ -1863,20 +1969,20 @@ std::cout << "nPfile "<< nPfile << std::endl;
     NcVar ncp_x(ncp.getVar("x"));
     NcVar ncp_y(ncp.getVar("y"));
     NcVar ncp_z(ncp.getVar("z"));
-    NcVar ncp_Ex(ncp.getVar("Ex"));
-    NcVar ncp_Ey(ncp.getVar("Ey"));
-    NcVar ncp_Ez(ncp.getVar("Ez"));
+    NcVar ncp_vx(ncp.getVar("vx"));
+    NcVar ncp_vy(ncp.getVar("vy"));
+    NcVar ncp_vz(ncp.getVar("vz"));
 
 std::cout << "got through NcVar " << std::endl;
     vector<float> xpfile(nPfile),ypfile(nPfile),zpfile(nPfile),
-    Expfile(nPfile),Eypfile(nPfile),Ezpfile(nPfile);
+    vxpfile(nPfile),vypfile(nPfile),vzpfile(nPfile);
 std::cout << "defined file vectors " << std::endl;
     ncp_x.getVar(&xpfile[0]);  
     ncp_y.getVar(&ypfile[0]);  
     ncp_z.getVar(&zpfile[0]);  
-    ncp_Ex.getVar(&Expfile[0]);  
-    ncp_Ey.getVar(&Eypfile[0]);  
-    ncp_Ez.getVar(&Ezpfile[0]);
+    ncp_vx.getVar(&vxpfile[0]);  
+    ncp_vy.getVar(&vypfile[0]);  
+    ncp_vz.getVar(&vzpfile[0]);
 std::cout << "defined file vectors " << std::endl;
   ncp.close();  
 std::cout << "closed ncp " << std::endl;
@@ -1887,7 +1993,7 @@ std::cout << "closed ncp " << std::endl;
     //}
   #endif
   sim::Array<float> pSurfNormX(nP),pSurfNormY(nP),pSurfNormZ(nP), 
-                    px(nP),py(nP),pz(nP),pEx(nP),pEy(nP),pEz(nP);
+                    px(nP),py(nP),pz(nP),pvx(nP),pvy(nP),pvz(nP);
   int surfIndexMod = 0;
   float eVec[3] = {0.0};
   for (int i=0; i< nP ; i++)
@@ -2003,13 +2109,13 @@ std::cout << "closed ncp " << std::endl;
       x = xpfile[i];
       y = ypfile[i];
       z = zpfile[i];
-      Ex = Expfile[i];
-      Ey = Eypfile[i];
-      Ez = Ezpfile[i];
+      vx = vxpfile[i];
+      vy = vypfile[i];
+      vz = vzpfile[i];
     #endif  
 //    std::cout << "particle xyz Exyz Z amu charge " << x << " " << y << " " << z << " "
 //       << Ex << " " << Ey << " " << Ez << " " << Z << " " << amu << " " << charge << " "  << std::endl;
-    particleArray->setParticle(i,x,y, z, Ex, Ey, Ez, Z, amu, charge);   
+    particleArray->setParticleV(i,x,y, z, vx, vy, vz, Z, amu, charge);   
     #if PARTICLE_SOURCE_SPACE > 0
     pSurfNormX[i] = -boundaries[currentSegment].a/boundaries[currentSegment].plane_norm;
     pSurfNormY[i] = -boundaries[currentSegment].b/boundaries[currentSegment].plane_norm;
@@ -2018,9 +2124,9 @@ std::cout << "closed ncp " << std::endl;
     px[i] = x;
     py[i] = y;
     pz[i] = z;
-    pEx[i] = Ex;
-    pEy[i] = Ey;
-    pEz[i] = Ez;
+    pvx[i] = vx;
+    pvy[i] = vy;
+    pvz[i] = vz;
   } 
 #if USE_MPI > 0
   if(world_rank==0)
@@ -2033,9 +2139,9 @@ std::cout <<" opened file " << std::endl;
     NcVar p_surfNormx = ncFile_particles.addVar("surfNormX",ncFloat,pNP);
     NcVar p_surfNormy = ncFile_particles.addVar("surfNormY",ncFloat,pNP);
     NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ",ncFloat,pNP);
-    NcVar p_Ex = ncFile_particles.addVar("Ex",ncFloat,pNP);
-    NcVar p_Ey = ncFile_particles.addVar("Ey",ncFloat,pNP);
-    NcVar p_Ez = ncFile_particles.addVar("Ez",ncFloat,pNP);
+    NcVar p_vx = ncFile_particles.addVar("vx",ncFloat,pNP);
+    NcVar p_vy = ncFile_particles.addVar("vy",ncFloat,pNP);
+    NcVar p_vz = ncFile_particles.addVar("vz",ncFloat,pNP);
     NcVar p_x = ncFile_particles.addVar("x",ncFloat,pNP);
     NcVar p_y = ncFile_particles.addVar("y",ncFloat,pNP);
     NcVar p_z = ncFile_particles.addVar("z",ncFloat,pNP);
@@ -2043,9 +2149,9 @@ std::cout <<" added vars " << std::endl;
     p_surfNormx.putVar(&pSurfNormX[0]);
     p_surfNormy.putVar(&pSurfNormY[0]);
     p_surfNormz.putVar(&pSurfNormZ[0]);
-    p_Ex.putVar(&pEx[0]);
-    p_Ey.putVar(&pEy[0]);
-    p_Ez.putVar(&pEz[0]);
+    p_vx.putVar(&pvx[0]);
+    p_vy.putVar(&pvy[0]);
+    p_vz.putVar(&pvz[0]);
     p_x.putVar(&px[0]);
     p_y.putVar(&py[0]);
     p_z.putVar(&pz[0]);
@@ -2055,397 +2161,8 @@ std::cout <<" closed ncFile_particles " << std::endl;
 #if USE_MPI > 0
   }
 #endif
-//  #elif PARTICLE_SOURCE == 1
-//    float x;
-//    float y;
-//    float z;
-//    
-//    float Ex;
-//    float Ey;
-//    float Ez;
-//    
-//    float amu;
-//    float Z;
-//    float charge;
-//    float impurity_Z = cfg.lookup("impurityParticleSource.Z");
-//    int nImpurityBoundaries = 0;
-//    for (int i=0; i<nLines;i++)
-//    {
-//        if(boundaries[i].Z == impurity_Z)
-//        {
-//            nImpurityBoundaries++;
-//        }
-//    }
-//    std::cout << "n Impurity Boundaries to launch from " << nImpurityBoundaries << std::endl;
-//    sim::Array<int> boundaryIndex_ImpurityLaunch(nImpurityBoundaries);
-//    
-//    int count = 0;
-//    for (int i=0; i<nLines;i++)
-//    {
-//        if(boundaries[i].Z == impurity_Z)
-//        {
-//            boundaryIndex_ImpurityLaunch[count] = i;
-//            count++;
-//            std::cout << "Boundary indices " << i << std::endl;
-//        }
-//    }
-//    
-//    int impuritiesPerBoundary = nP/nImpurityBoundaries;
-//      
-//    std::uniform_real_distribution<float> distributionForSeeds(0,1e6);
-//    #if FIXEDSEEDS ==0
-//        std::random_device randDevice;
-//        std::default_random_engine generator0(randDevice());
-//    #else
-//        float randDevice = 6.5298E+5;
-//        std::default_random_engine generator0(randDevice);
-//    #endif
-//    
-//    sim::Array<float> boundarySeeds0(4*nImpurityBoundaries);
-//    std::generate( boundarySeeds0.begin(), boundarySeeds0.end(), [&]() { return distributionForSeeds(generator0); } );
-//    std::uniform_real_distribution<float> dist01(0.0, 1.0);
-//    float rand0 = 0.0;
-//    float rand1 = 0.0;
-//    float rand2 = 0.0;
-//    float rand3 = 0.0;
-//
-//    sim::Array<std::mt19937> s0(4*nImpurityBoundaries);
-//    
-//    float E0 = 0.0;
-////Create Thompson Distribution
-//    float surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
-//    std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
-//    int nThompDistPoints = 200;
-//    float max_Energy = 100.0;
-//    sim::Array<float> ThompsonDist(nThompDistPoints),CumulativeDFThompson(nThompDistPoints);
-//    for(int i=0;i<nThompDistPoints;i++)
-//        {
-//            ThompsonDist[i] = (i*max_Energy/nThompDistPoints)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,3);
-//            if(i==0)
-//            {
-//                CumulativeDFThompson[i] = ThompsonDist[i]; 
-//            }
-//            else
-//            {
-//                CumulativeDFThompson[i] = CumulativeDFThompson[i-1]+ThompsonDist[i];
-//            }
-//        }
-//    for(int i=0;i<nThompDistPoints;i++)
-//        {
-//            CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
-//            //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
-//        }
-//
-//    for(int j=0; j<4*nImpurityBoundaries;j++)
-//        {
-//            std::mt19937  s(boundarySeeds0[j]);
-//            s0[j] = s;
-//        }
-//    // Particle p1(0.0,0.0,0.0,0.0,0.0,0.0,0,0.0);
-//    for (int i=0; i< nImpurityBoundaries;i++)
-//    {
-//        for(int j=0; j<impuritiesPerBoundary; j++)
-//        {
-//            //Set boundary interval, properties, and random number gen
-//        if (i==0)
-//        {
-//            rand0 = dist01(s0[0]);
-//            x = boundaries[boundaryIndex_ImpurityLaunch[i]].x1 + 
-//                boundaries[boundaryIndex_ImpurityLaunch[i]].length*rand0;//1.4290;
-//            //std::cout << "start pos 1 " << x << std::endl;
-//            z = -1.2540+0.00001;
-//            rand1 = dist01(s0[1]);
-//            rand2 = dist01(s0[2]);
-//            rand3 = dist01(s0[3]);
-//            E0 = interp1dUnstructured(rand2,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
-//            Ex = E0*cos(3.1415*rand1)*sin(3.1415*rand3);
-//            Ey = E0*cos(3.1415*rand3);
-//            Ez = E0*sin(3.1415*rand1)*sin(3.1415*rand3);
-//        }
-//        else
-//        {
-//            rand0 = dist01(s0[4]);
-//            x = boundaries[boundaryIndex_ImpurityLaunch[i]].x1 + boundaries[boundaryIndex_ImpurityLaunch[i]].length*rand0;
-//            //x = 1.3450;
-//            //std::cout << "start pos 2 " << x << std::endl;
-//            z = -1.3660+0.00001;
-//            rand1 = dist01(s0[5]);
-//            rand2 = dist01(s0[6]);
-//            rand3 = dist01(s0[7]);
-//            E0 = interp1dUnstructured(rand2,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
-//            Ex = E0*cos(3.1415*rand1)*sin(3.1415*rand3);
-//            Ey = E0*cos(3.1415*rand3);
-//            Ez = E0*sin(3.1415*rand1)*sin(3.1415*rand3);
-//        }
-//        particleArray->setParticle((i * impuritiesPerBoundary + j),x, 0.0, z, Ex, Ey, Ez, 74, 18400.0, charge);            
-//        }
-//    }
-//  #elif PARTICLE_SOURCE == 2
-//    std::cout << "Read particle source " << std::endl;
-//    Config cfg_particles;
-//    cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
-//    Setting& particleSource = cfg_particles.lookup("particleSource");
-//    std::cout << "found setting particleSource " << std::endl;
-//    float rSample;
-//    float angleSample;
-//    float x;
-//    float y;
-//    float z;
-//    
-//    float Vr;
-//    float Vx;
-//    float Vy;
-//    float Vz;
-//    float V0;
-//    float E0;
-//    float amu;
-//    float Z;
-//    float charge= cfg.lookup("impurityParticleSource.initialConditions.charge");
-//    float impurity_Z = cfg.lookup("impurityParticleSource.Z");
-//    int nSources = particleSource["nSources"];
-//    int nSegments = particleSource["nSegments"];
-//    int nSegmentsAngle = particleSource["nSegmentsAngle"];
-//    int cylSymm = particleSource["cylSymm"];
-//    
-//    sim::Array<float> sourceR(2*nSources);
-//    sim::Array<float> sourceZ(2*nSources);
-//    sim::Array<float> sourceRsegments(nSegments);
-//    sim::Array<float> sourceZsegments(nSegments);
-//    sim::Array<float> spaceCDF(nSegments);
-//    sim::Array<float> sourceAngleSegments(nSegmentsAngle);
-//    sim::Array<float> angleCDF(nSegmentsAngle);
-//    
-//    for (int i=0; i<(nSources*2); i++)
-//    {
-//        sourceR[i] = particleSource["r0"][i];
-//        sourceZ[i] = particleSource["z0"][i];
-//    }
-//    
-//    for (int i=0; i<(nSegments); i++)
-//    {
-//        sourceRsegments[i] = particleSource["r"][i];
-//        sourceZsegments[i] = particleSource["z"][i];
-//        spaceCDF[i] = particleSource["spaceCDF"][i];
-//    }
-//    
-//    for (int i=0; i<(nSegmentsAngle); i++)
-//    {
-//        sourceAngleSegments[i] = particleSource["angles"][i];
-//        angleCDF[i] = particleSource["angleCDF"][i];
-//    }
-//    std::uniform_real_distribution<float> dist01(0.0, 1.0);
-//    float rand0 = 0.0;
-//    float rand1 = 0.0;
-//    float rand2 = 0.0;
-//    float rand3 = 0.0;
-//    float rand4 = 0.0;
-//
-//    sim::Array<std::mt19937> s0(5);
-//    std::mt19937 ss0(123314.234);
-//     s0[0] =  ss0;
-//    std::mt19937 ss1(389362.735);
-//     s0[1] =  ss1;
-//    std::mt19937 ss2(523563.108);
-//     s0[2] =  ss2;
-//    std::mt19937 ss3(752081.751);
-//     s0[3] =  ss3;
-//    std::mt19937 ss4(952381.034);
-//     s0[4] =  ss4;
-//
-//    float surfaceBindingEnergy = cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
-//    std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
-//    int nThompDistPoints = 200;
-//    float max_Energy = 100.0;
-//    sim::Array<float> ThompsonDist(nThompDistPoints),CumulativeDFThompson(nThompDistPoints);
-//    for(int i=0;i<nThompDistPoints;i++)
-//    {
-//       ThompsonDist[i] = (i*max_Energy/nThompDistPoints)/pow((i*max_Energy/nThompDistPoints) + surfaceBindingEnergy,3);
-//       if(i==0)
-//       {
-//           CumulativeDFThompson[i] = ThompsonDist[i]; 
-//       }
-//       else
-//       {
-//           CumulativeDFThompson[i] = CumulativeDFThompson[i-1]+ThompsonDist[i];
-//       }
-//    }
-//    for(int i=0;i<nThompDistPoints;i++)
-//    {
-//       CumulativeDFThompson[i] = CumulativeDFThompson[i]/CumulativeDFThompson[nThompDistPoints-1];
-//       //std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " << CumulativeDFThompson[i] << std::endl;
-//    }
-//
-//    //rand0 = dist01(s0[0]);
-//    //rand1 = dist01(s0[1]);
-//    //rand2 = dist01(s0[2]);
-//    //rand3 = dist01(s0[3]);
-//    sim::Array<float> angleBins(180);
-//    int angleBinNum = 0;
-//    sim::Array<float> angleBins2(180);
-//    int angleBinNum2 = 0;
-//    int closestBoundaryIndex0;
-//    float minDist0;
-//    float thisE0[3] = {0.0,0.0,0.0};
-//    for(int j=0; j<nParticles ; j++)
-//    {
-//      rand0 = dist01(s0[0]);
-//      rSample = interp1dUnstructured2(rand0,nSegments,&sourceRsegments.front() , &spaceCDF.front());
-//      rand4 = dist01(s0[4]);
-//      x = rSample*cos(rand4*2.0*3.1415);
-//      y = rSample*sin(rand4*2.0*3.1415);
-//      z = sourceZ[0];
-//      rand1 = dist01(s0[1]);
-//      E0 = interp1dUnstructured(rand1,nThompDistPoints, max_Energy, &CumulativeDFThompson.front());
-//      V0 = sqrt(2*E0*1.602e-19/(184.0*1.66e-27));
-//      rand2 = dist01(s0[2]);
-//      angleSample = interp1dUnstructured2(rand2,nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front());
-//      angleBinNum=floor(angleSample*180/3.1415);
-//      angleBins[angleBinNum] = angleBins[angleBinNum]+1;
-//      //std::cout << angleSample << std::endl;
-//      //Ey = //E0*cos(angleSample)*sin(2.0*3.1415*rand3);
-//      Vz = V0*cos(angleSample);
-//      Vr = V0*sin(angleSample);//cos(2.0*3.1415*rand3)
-//      //std::cout << "Ez " << Ez << " Er " << Er << std::endl; 
-//      rand3 = dist01(s0[3]);
-//      //rand3 = j*1.0/nParticles;
-//      Vx = Vr*cos(2.0*3.1415*rand3);
-//      Vy = Vr*sin(2.0*3.1415*rand3);//E0*cos(angleSample)*sin(2.0*3.1415*rand3);
-//      angleBinNum2=floor(rand3*180.0);
-//      angleBins2[angleBinNum2] = angleBins2[angleBinNum2]+1;
-//      //std::cout << "rsample " << rSample << " E0 " << E0 << " angleSample " << angleSample << std::endl;
-//    particleArray->setParticleV(j,x,y,z,Vx,Vy,Vz,74, 184.0, charge);
-//       minDist0 = getE ( x,y,z,thisE0, boundaries.data(),nLines,
-//
-//                        nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
-//                        &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
-//                        &closeGeom_sheath.front(),
-//                  closestBoundaryIndex0 );
-//       //std::cout << "closest Boundary " << x << " " << y << " " << z <<" " 
-//       //          << closestBoundaryIndex0 << std::endl;
-//       boundaries[closestBoundaryIndex0].startingParticles = boundaries[closestBoundaryIndex0].startingParticles + 1.0;
-//    }
-//  #endif
 
   std::cout << "finished loading particle source" << std::endl;
-  #if USESURFACEMODEL > 0
-    //import text file
-      std::vector<float> spylGridE,spylGridAngle,spylGridRoughness,spyl;
-      std::string line;
-      std::string delimiter = " ";
-      size_t pos = 0;
-      std::string token;
-      ifstream myfile ("input/cumulativeEA.txt");
-      int counter = 0;
-      int header = 0;
-      if (myfile.is_open())
-      {
-        while ( getline (myfile,line) )
-        {
-          //cout << line << '\n';
-          counter = 0;
-          if(header == 0)
-          {
-              header++;
-          }
-          else
-          {
-            while ((pos = line.find(delimiter)) != std::string::npos) 
-            {
-                  token = line.substr(0, pos);
-                  if(token.empty()){}
-                  else
-                  {    
-                      counter++;
-                      //std::cout <<counter << " " << token << std::endl;
-                      if(header == 1)
-                      {
-                        spylGridE.push_back(atof(token.c_str()));
-                      }
-                      else if(header == 2)
-                      {
-                        spylGridAngle.push_back(atof(token.c_str()));
-                      }
-                      else if (header == 3)
-                      {
-                        spylGridRoughness.push_back(atof(token.c_str()));
-                      }
-                      else{
-                      if(counter == 1)
-                      {  
-                        //spylGridE.push_back(atof(token.c_str()));
-                      }
-                      else if(counter==2)
-                      {
-                        //spylGridAngle.push_back(atof(token.c_str()));
-                      }
-                      else if(counter==3)
-                      {
-                        //spylGridRoughness.push_back(atof(token.c_str()));
-                      }
-                      else if(counter==4)
-                      {
-                        spyl.push_back(atof(token.c_str()));
-                      }
-                      }
-                  }
-                          line.erase(0, pos + delimiter.length());
-            }
-            header++;
-          }
-          //std::cout << line << std::endl;
-        }
-        myfile.close();
-      }
-
-      else cout << "Unable to open file";
-
-      //for(int i=0;i<spylGridE.size();i++)
-      //{
-      //    std::cout << "spylGridE " << spylGridE[i] << std::endl;
-      //    //std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
-      //    //std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
-      //    //std::cout << "spyl " << spyl[i] << std::endl;
-      //}
-      //for(int i=0;i<spylGridAngle.size();i++)
-      //{
-      //    //std::cout << "spylGridE " << spylGridE[i] << std::endl;
-      //    std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
-      //    //std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
-      //    //std::cout << "spyl " << spyl[i] << std::endl;
-      //}
-      //for(int i=0;i<spylGridRoughness.size();i++)
-      //{
-      //    //std::cout << "spylGridE " << spylGridE[i] << std::endl;
-      //    //std::cout << "spylGrida " << spylGridAngle[i] << std::endl;
-      //    std::cout << "spylGridr " << spylGridRoughness[i] << std::endl;
-      //    //std::cout << "spyl " << spyl[i] << std::endl;
-      //}
-      int nAngle = spylGridAngle.size();
-      int nEnergy = spylGridE.size();
-      //std::cout << "interp spyl " << spyl[2+1*nAngle] << " " << spyl[1] << std::endl;
-      //float temp21 = 0.0;
-      //temp21 = interp2dUnstructured(15.0,120.0,nAngle,nEnergy, 
-      //        &spylGridAngle.front(),&spylGridE.front(), &spyl.front());
-      //std::cout << "interp spyl 15, 120 " << temp21 << std::endl;
-      sim::Array<float> spYlGridAngle(nAngle);
-      sim::Array<float> spYlGridE(nEnergy);
-      sim::Array<float> spYl(nAngle*nEnergy);
-      for(int i=0;i<nAngle;i++)
-      {
-        spYlGridAngle[i] = spylGridAngle[i];
-      }
-      for(int i=0;i<nEnergy;i++)
-      {
-        spYlGridE[i] = spylGridE[i];
-      }
-      for(int i=0;i<nAngle*nEnergy;i++)
-      {
-        spYl[i] = spyl[i];
-      }
-      //spYlGridAngle = spylGridAngle;
-      //spYlGridE = spYlGridE;
-      //spYl = spyl;
-  #endif
 
   #if GEOM_TRACE > 0       
     std::uniform_real_distribution<float> dist2(0,1);
@@ -2456,12 +2173,12 @@ std::cout <<" closed ncFile_particles " << std::endl;
     std::cout << "Randomizing velocities to trace geometry. " << std::endl;
 
     for (int i=0 ; i<nParticles ; i++)
-    {   float theta = dist2(generatorTrace)*2*3.1415;
-        float phi = dist2(generatorTrace)*3.1415;
-        float mag = 2e3;
-        particleArray->vx[i] = mag*cos(theta)*sin(phi);
-        particleArray->vy[i] = mag*sin(theta)*sin(phi);
-        particleArray->vz[i] = mag*cos(phi);
+    {   float theta_trace = dist2(generatorTrace)*2*3.1415;
+        float phi_trace = dist2(generatorTrace)*3.1415;
+        float mag_trace = 2e3;
+        particleArray->vx[i] = mag_trace*cos(theta_trace)*sin(phi_trace);
+        particleArray->vy[i] = mag_trace*sin(theta_trace)*sin(phi_trace);
+        particleArray->vz[i] = mag_trace*cos(phi_trace);
     }
   #endif
 
@@ -2559,213 +2276,13 @@ std::cout <<" closed ncFile_particles " << std::endl;
     #else
       sim::Array<std::mt19937> state1(nParticles);
     #endif
-    #if USEIONIZATION > 0
-      #if FIXEDSEEDS ==1
-        std::cout << "ionization fixed seeds" << std::endl;
-        float ionization_seeds = cfg.lookup("operators.ionization.seed");
-        std::default_random_engine generator(ionization_seeds);
-      #endif
-      //sim::Array<float> seeds0(nP);
-      //std::generate( seeds0.begin(), seeds0.end(), [&]() { return dist(generator); } );
-      //thrust::transform(thrust::device, particleArray->streams.begin(),  
-      //                  particleArray->streams.end(),seeds0.begin(), 
-      //                  particleArray->streams.begin(), randInit(0) );
+    #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
+      std::cout << "Initializing curand seeds " << std::endl;
       thrust::for_each(thrust::device, particleBegin,particleEnd,
                            curandInitialize(&state1[0],0));
-#if USE_CUDA
-        cudaDeviceSynchronize();
-#endif
-    #endif
-
-    //#if USERECOMBINATION > 0
-    //  #if FIXEDSEEDS ==1
-    //    std::cout << "recombination fixed seeds" << std::endl;
-    //    float recombination_seeds = cfg.lookup("operators.recombination.seed");
-    //    std::cout << "recombination fixed seeds middle" << std::endl;
-    //    std::default_random_engine generator1(recombination_seeds);
-    //    std::cout << "recombination fixed seeds end" << std::endl;
-    //  #endif
-    //  sim::Array<float> seeds1(nP);
-    //  std::cout << "generate" << std::endl;
-    //  #if __CUDACC__
-    //    cudaDeviceSynchronize();
-    //  #endif
-    //  //std::generate( seeds1.begin(), seeds1.end(), [&]() { return dist(generator1); } );
-    //  std::cout << "transform" << std::endl;
-    //  #if __CUDACC__
-    //    cudaDeviceSynchronize();
-    //  #endif
-    //  //thrust::transform(thrust::device,particleArray->streams_rec.begin(), particleArray->streams_rec.end(),
-    //  //              seeds1.begin(), particleArray->streams_rec.begin(), randInit(1) );
-    //  thrust::for_each(thrust::device,particleBegin,particleEnd,curandInitialize());
-    //  #if __CUDACC__
-    //    cudaDeviceSynchronize();
-    //  #endif
-    //  std::cout << "finished transform" << std::endl;
-    //#endif
-
-    //#if USEPERPDIFFUSION > 0
-    //  #if FIXEDSEEDS ==1
-    //    std::cout << "diffusion fixed seeds" << std::endl;
-    //    float diffusion_seeds = cfg.lookup("operators.perpDiffusion.seed");
-    //    std::default_random_engine generator2(diffusion_seeds);
-    //  #endif
-    //  sim::Array<float> seeds2(nP);
-    //  #if USE_CUDA  
-    //  cudaDeviceSynchronize();
-    //  #endif
-    //  std::generate( seeds2.begin(), seeds2.end(), [&]() { return dist(generator2); } );
-    //  #if __CUDACC__
-    //    cudaDeviceSynchronize();
-    //  #endif
-    //  thrust::transform(thrust::device,particleArray->streams_diff.begin(), particleArray->streams_diff.end(),
-    //                seeds2.begin(), particleArray->streams_diff.begin(), randInit(2) );
-    //  #if USE_CUDA  
-    //    cudaDeviceSynchronize();
-    //  #endif
-    //#endif
-
-    #if USECOULOMBCOLLISIONS > 0
-      #if FIXEDSEEDS ==1
-        std::cout << "collision fixed seeds" << std::endl;
-        float collision_seeds1 = cfg.lookup("operators.coulombCollisions.seed1");
-        float collision_seeds2 = cfg.lookup("operators.coulombCollisions.seed2");
-        float collision_seeds3 = cfg.lookup("operators.coulombCollisions.seed3");
-        std::cout << "debug 1" << std::endl;
-        //#if USE_CUDA  
-        //  cudaDeviceSynchronize();
-        //#endif
-        //std::default_random_engine generator3(collision_seeds1);
-        //std::cout << "debug 2" << std::endl;
-        //#if USE_CUDA  
-        //  cudaDeviceSynchronize();
-        //#endif
-        //std::default_random_engine generator4(collision_seeds2);
-        //#if USE_CUDA  
-        //  cudaDeviceSynchronize();
-        //#endif
-        //std::cout << "debug 3" << std::endl;
-        //std::default_random_engine generator5(collision_seeds3);
-      #endif
-      thrust::for_each(thrust::device, particleBegin,particleEnd,
-                           curandInitialize(&state1[0],0));
-      #if USE_CUDA  
+      #if USE_CUDA
         cudaDeviceSynchronize();
       #endif
-      //std::cout << "debug 4" << std::endl;
-      //sim::Array<float> seeds3(nP),seeds4(nP),seeds5(nP);
-      //#if USE_CUDA  
-      //  cudaDeviceSynchronize();
-      //#endif
-      //  std::generate( seeds3.begin(), seeds3.end(), [&]() { return dist(generator3); } );
-      //#if USE_CUDA  
-      //  cudaDeviceSynchronize();
-      //#endif
-      //  std::generate( seeds4.begin(), seeds4.end(), [&]() { return dist(generator4); } );
-      //#if USE_CUDA  
-      //  cudaDeviceSynchronize();
-      //#endif
-      //  std::generate( seeds5.begin(), seeds5.end(), [&]() { return dist(generator5); } );
-      //#if USE_CUDA  
-      //  cudaDeviceSynchronize();
-      //#endif
-      //std::cout << "debug 5" << std::endl;
-      //thrust::transform(thrust::device,particleArray->streams_collision1.begin(), 
-      //                                 particleArray->streams_collision1.end(),
-      //                                 seeds3.begin(), 
-      //                                 particleArray->streams_collision1.begin(), randInit(3) );
-      //  std::cout << "debug 6" << std::endl;
-      //#if USE_CUDA  
-      //  cudaDeviceSynchronize();
-      //#endif
-      //  thrust::transform(thrust::device,particleArray->streams_collision2.begin(), 
-      //                                 particleArray->streams_collision2.end(),
-      //                                 seeds4.begin(),
-      //                                 particleArray->streams_collision2.begin(), randInit(4) );
-      //#if USE_CUDA  
-      //  cudaDeviceSynchronize();
-      //#endif
-      //  std::cout << "debug 7" << std::endl;
-      //#if USE_CUDA  
-      //  cudaDeviceSynchronize();
-      //#endif
-      //thrust::transform(thrust::device,particleArray->streams_collision3.begin(),
-      //                                 particleArray->streams_collision3.end(),
-      //                                 seeds5.begin(), 
-      //                                 particleArray->streams_collision3.begin(), randInit(5) );
-      //#if USE_CUDA  
-      //  cudaDeviceSynchronize();
-      //#endif
-      //  std::cout << "debug 8" << std::endl;
-    #endif
-   std::cout<< "finished collision seeds" << std::endl;
-    #if USESURFACEMODEL > 0
-      #if FIXEDSEEDS ==1
-        std::cout << "surface model fixed seeds" << std::endl;
-        float surface_seeds = cfg.lookup("operators.surfaceModel.seed");
-        std::default_random_engine generator6(surface_seeds);
-      #endif
-      sim::Array<float> seeds6(nP);
-      #if USE_CUDA  
-      cudaDeviceSynchronize();
-      #endif
-      std::generate( seeds6.begin(), seeds6.end(), [&]() { return dist(generator6); } );
-      #if USE_CUDA  
-        cudaDeviceSynchronize();
-      #endif
-      thrust::transform(thrust::device,particleArray->streams_surf.begin(), particleArray->streams_surf.end(),
-                    seeds6.begin(), particleArray->streams_surf.begin(), randInit(6) );
-      #if USE_CUDA  
-        cudaDeviceSynchronize();
-      #endif
-    #endif
-
-    std::cout << "at empty defns" << std::endl;
-    #if __CUDACC__
-    //  sim::Array<curandState> state1(7);//Definition empty for passing to module
-    #else
-      //sim::Array<std::mt19937> state1(7);//Empty definition
-    #endif
-
-    std::cout << "finished empty defns" << std::endl;
-  #else //ParticleSeeds == 0
-
-    #if __CUDACC__
-      sim::Array<curandState> state1(9*nThreads*nDevices);
-      thrust::counting_iterator<std::size_t> threads0(0);  
-      thrust::counting_iterator<std::size_t> threads1(nThreads-1);
-                  thrust::for_each(thrust::device, threads0,threads1,
-                                   curandInitialize(&state1[0],0));
-      //curandInitialize<<<1,1>>>(&state1[0],19);
-      //curandInitialize<<<1,1>>>(&state1[1],25);
-      //curandInitialize<<<1,1>>>(&state1[2],32);
-      //curandInitialize<<<1,1>>>(&state1[3],39);
-      //curandInitialize<<<1,1>>>(&state1[4],43);
-      //curandInitialize<<<1,1>>>(&state1[5],48);
-      //curandInitialize<<<1,1>>>(&state1[6],51);
-      //curandInitialize<<<1,1>>>(&state1[7],56);
-      //curandInitialize<<<1,1>>>(&state1[8],60);
-      cudaDeviceSynchronize();
-    #else
-      sim::Array<std::mt19937> state1(9);
-      std::mt19937 s000(348763);
-      std::mt19937 s1(358763);
-      std::mt19937 s2(346763);
-      std::mt19937 s3(348263);
-      std::mt19937 s4(349763);
-      std::mt19937 s5(318763);
-      std::mt19937 s6(448763);
-      std::mt19937 s7(448963);
-      std::mt19937 s8(463763);
-      state1[0] = s000;
-      state1[1] = s1;
-      state1[2] = s2;
-      state1[3] = s3;
-      state1[4] = s4;
-      state1[5] = s5;
-      state1[6] = s6;
-      state1[7] = s7;
-      state1[8] = s8;
     #endif
   #endif
 
@@ -2906,11 +2423,15 @@ std::cout <<" closed ncFile_particles " << std::endl;
 
 #if USESURFACEMODEL > 0
         thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd, 
-                reflection(particleArray,dt,&state1.front(),nLines,&boundaries[0],nAngle,nEnergy,
-                      spYlGridAngle.data(),
-                            spYlGridE.data(), 
-                                  spYl.data(),nSegmentsAngle,&sourceAngleSegments.front() , &angleCDF.front(),
-                   nThompDistPoints, max_Energy, &CumulativeDFThompson.front() ) );
+                reflection(particleArray,dt,&state1.front(),nLines,&boundaries[0],
+                    nE_sputtRefCoeff, nA_sputtRefCoeff,A_sputtRefCoeff.data(),
+                    Elog_sputtRefCoeff.data(),spyl_surfaceModel.data(), rfyl_surfaceModel.data(),
+                    nE_sputtRefDistOut, nA_sputtRefDistOut,nE_sputtRefDistIn,nA_sputtRefDistIn,
+                    E_sputtRefDistIn.data(),A_sputtRefDistIn.data(),
+                    E_sputtRefDistOut.data(),A_sputtRefDistOut.data(),
+                    energyDistGrid01.data(),angleDistGrid01.data(),
+                    EDist_CDF_Y_regrid.data(),ADist_CDF_Y_regrid.data(),
+                    EDist_CDF_R_regrid.data(),ADist_CDF_R_regrid.data()) );
 #endif        
 
 #if PARTICLE_TRACKS >0
@@ -3064,12 +2585,6 @@ std::cout << " starting loop "  << std::endl;
 
 std::cout << "maximum boundary " << max_boundary << std::endl;
 std::cout << "number of counts " << max_impacts << std::endl;
-int totalHitWall=0;
-for(int i=0;i<nP;i++)
-{
-  if(particleArray->hitWall[i] = 1.0) totalHitWall++;
-}
-std::cout << "Percent of particles that hit wall " << totalHitWall*1.0/nP << std::endl;
 /*
 sim::Array<float> tally00(nLines,0);
 for (int j=0; j<nP; j++)
@@ -3164,9 +2679,9 @@ NcVar nc_vz0 = ncFile0.addVar("vz",ncDouble,dims0);
 NcVar nc_trans0 = ncFile0.addVar("transitTime",ncDouble,dims0);
 NcVar nc_impact0 = ncFile0.addVar("hitWall",ncDouble,dims0);
 
-nc_x0.putVar(finalPosX);
-nc_y0.putVar(finalPosY);
-nc_z0.putVar(finalPosZ);
+nc_x0.putVar(&particleArray->x[0]);
+nc_y0.putVar(&particleArray->y[0]);
+nc_z0.putVar(&particleArray->z[0]);
 nc_vx0.putVar(finalVx);
 nc_vy0.putVar(finalVy);
 nc_vz0.putVar(finalVz);
@@ -3285,6 +2800,10 @@ ncFile.close();
     std::cout << "Total ionization time: " << ionizTime*1e-9 << '\n';
     */
 #endif
+    for(int i=0;i<100;i++)
+{
+    std::cout << "particle hitwall and Ez " << particleArray->hitWall[i] << " " << particleArray->test[i] << " "<< particleArray->test0[i] << " " << particleArray->test1[i] << std::endl;
+}
 #if USE_MPI > 0
     }
 #endif
