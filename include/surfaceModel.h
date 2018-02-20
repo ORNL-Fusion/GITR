@@ -279,6 +279,7 @@ void operator()(std::size_t indx) const {
                 float r7 = dist(state[indx]);
                 float r8 = dist(state[indx]);
                 float r9 = dist(state[indx]);
+                float r10 = dist(state[indx]);
               #endif
 
             #else

@@ -75,6 +75,9 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
           theta = abs(theta - (3.14159265359));
         }
 #else
+        float br = B[0];
+        float bt = B[1];
+        float bz = B[2];
         float theta = acos((-br*b.slope_dzdx + bz)/(sqrt(br*br+bz*bz+bt*bt)*sqrt(b.slope_dzdx*b.slope_dzdx + 1.0)));
  
         if (theta > 3.14159265359*0.5)
