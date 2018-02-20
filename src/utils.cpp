@@ -109,7 +109,7 @@ int make2dCDF(int nX, int nY, int nZ, float* distribution, float* cdf)
 }
 int regrid2dCDF(int nX, int nY, int nZ,float* xGrid,int nNew,float maxNew, float*cdf, float* cdf_regrid)
 {
-  //std::cout << " inside regrid function "<<nX << " " << nY << " " << nZ << std::endl;
+  std::cout << " inside regrid function "<<nX << " " << nY << " " << nZ << std::endl;
   int lowInd=0;
   int index=0;
   float spline = 0.0;

@@ -93,6 +93,7 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
   std::string full_path = geom_folder + "/" + geom_outname;
   outfile.open (full_path );
   #if USE3DTETGEOM > 0
+    std::cout << "Reading 3D geometry file " << std::endl;
     for(int i=0 ; i<nLines ; i++)
     {
        boundaries[i].x1 = geom["x1"][i];
@@ -111,8 +112,13 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[i].d = geom["d"][i];
        boundaries[i].plane_norm = geom["plane_norm"][i];
        boundaries[i].area = geom["area"][i];
+       //if(boundaries[i].Z > 0.0)
+       //{
+       //    std::cout << "abcd " << boundaries[i].a << " " << boundaries[i].b << " " << boundaries[i].c << " " << boundaries[i].d << std::endl; 
+       //}
      }   
      #if USECYLSYMM
+          std::cout << "Reading cylindrically symmetric boundary characteristics " << std::endl;
        boundaries[nLines].y1 = geom["theta0"];
        boundaries[nLines].y2 = geom["theta1"];
        boundaries[nLines].periodic = geom["periodic"];

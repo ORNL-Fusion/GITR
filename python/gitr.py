@@ -199,6 +199,27 @@ def nc_plotSpec(filename='spec.nc'):
         plt.imshow(dens,origin='lower')
         plt.colorbar(orientation='vertical')
     plt.savefig('image1.png')
+def nc_plotSpec3D(filename='spec.nc'):
+    ncFile = netCDF4.Dataset(filename,"r")
+    nBins = ncFile.dimensions['nBins'].size
+    nR = ncFile.dimensions['nR'].size
+    nY = ncFile.dimensions['nY'].size
+    nZ = ncFile.dimensions['nZ'].size
+    n = np.array(ncFile.variables['n'])
+    print('n ', n.shape)
+    dens = n[nBins-1,:,:,:]
+    print('dens ', dens.shape)
+    plt.close()
+    plt.figure(1,figsize=(10, 6), dpi=2000)
+    plt.imshow(n[0,5,:,:])
+    plt.colorbar(orientation='vertical')
+    #plotsize = math.ceil(nBins**(0.5))
+    #for i in range(nBins):
+    #    dens = np.log10(n[i,:,:])
+    #    plt.subplot(plotsize,plotsize,i+1)
+    #    plt.imshow(dens,origin='lower')
+    #    plt.colorbar(orientation='vertical')
+    plt.savefig('slice1.png')
 def nc_plotPositions(filename='positions.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nP = ncFile.dimensions['nP'].size
@@ -281,8 +302,8 @@ def plotPitch(filename='positions.nc'):
 if __name__ == "__main__":
     #asdfanc_show("surface.nc")
     #depositedEdist()
-    #nc_plotHist()
+    nc_plotHist()
     nc_plotSpec()
-    #nc_plotPositions()
+    nc_plotPositions()
     #nc_plotVz()
     #plotPitch()

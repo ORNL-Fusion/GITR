@@ -13,6 +13,10 @@
 #include <vector>
 #include <math.h>
 using namespace std;
+CUDA_CALLABLE_MEMBER
+
+float interp2d ( float x, float z,int nx, int nz,
+    float* gridx,float* gridz,float* data );
 
 CUDA_CALLABLE_MEMBER
 

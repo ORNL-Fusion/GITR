@@ -13,7 +13,6 @@
 #include <vector>
 #include "array.h"
 #include "managed_allocation.h"
-
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
@@ -23,7 +22,6 @@
 #else
 #include <random>
 #endif
-
 //CUDA_CALLABLE_MEMBER
 
 class Boundary {
@@ -83,10 +81,15 @@ class Boundary {
     CUDA_CALLABLE_MEMBER
     void getSurfaceParallel(float A[])
     {
+#if USE3DTETGEOM > 0
+        float norm = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
+        A[1] = (y2-y1)/norm;
+#else
         float norm = sqrt((x2-x1)*(x2-x1) + (z2-z1)*(z2-z1));
+        A[1] = 0.0;
+#endif
         //std::cout << "surf par calc " << x2 << " " << x1 << " " << norm << std::endl;
         A[0] = (x2-x1)/norm;
-        A[1] = 0.0;
         A[2] = (z2-z1)/norm;
 
     }
@@ -95,6 +98,9 @@ class Boundary {
     void getSurfaceNormal(float B[])
     {
 #if USE3DTETGEOM > 0
+        B[0] = -a/plane_norm;
+        B[1] = -b/plane_norm;
+        B[2] = -c/plane_norm;
 #else
         //float perpSlope = -1.0/slope_dzdx;
         //B[0] = 1.0/sqrt(perpSlope*perpSlope+1.0);
@@ -106,7 +112,27 @@ class Boundary {
         //std::cout << "perp x and z comp " << B[0] << " " << B[2] << std::endl;
 #endif
     }
-    //CUDA_CALLABLE_MEMBER
+    CUDA_CALLABLE_MEMBER
+        void transformToSurface(float C[])
+        {
+            float X[3] = {0.0f};
+            float Y[3] = {0.0f};
+            float Z[3] = {0.0f};
+            float tmp[3] = {0.0f};
+            getSurfaceParallel(X);
+            getSurfaceNormal(Z);
+            Y[0] = Z[1]*X[2] - Z[2]*X[1]; 
+            Y[1] = Z[2]*X[0] - Z[0]*X[2]; 
+            Y[2] = Z[0]*X[1] - Z[1]*X[0];
+
+            tmp[0] = X[0]*C[0] + Y[0]*C[1] + Z[0]*C[2];
+            tmp[1] = X[1]*C[0] + Y[1]*C[1] + Z[1]*C[2];
+            tmp[2] = X[2]*C[0] + Y[2]*C[1] + Z[2]*C[2];
+            C[0] = tmp[0];
+            C[1] = tmp[1];
+            C[2] = tmp[2];
+
+        }
 //        Boundary(float x1,float y1, float z1, float x2, float y2, float z2,float slope, float intercept, float Z, float amu)
 //		{
 //    
