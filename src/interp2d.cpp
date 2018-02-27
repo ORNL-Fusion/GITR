@@ -85,8 +85,8 @@ float interp2dCombined ( float x, float y, float z,int nx, int nz,
     int j = floor((z - gridz[0])/dz);
     
     //float interp_value = data[i + j*nx];
-    if (i < 0) i =0;
-    if (j< 0 ) j=0;
+    if (i < 0) i=0;
+    if (j < 0) j=0;
     if (i >=nx-1 && j>=nz-1)
     {
         fxz = data[nx-1+(nz-1)*nx];
