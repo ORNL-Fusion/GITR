@@ -76,7 +76,6 @@ using namespace netCDF::exceptions;
 
 int main(int argc, char **argv)
 {
-
  #if USE_MPI > 0
         int ppn = 4;
         int np = 1;
@@ -1581,8 +1580,8 @@ else if(world_rank == 0)
 #endif
   sim::Array<float> E_sputtRefCoeff(nE_sputtRefCoeff), A_sputtRefCoeff(nA_sputtRefCoeff),
                     Elog_sputtRefCoeff(nE_sputtRefCoeff),
-                    energyDistGrid01(nE_sputtRefDistIn),
-                    angleDistGrid01(nDistA_surfaceModel),
+                    energyDistGrid01(nE_sputtRefDistOut),
+                    angleDistGrid01(nA_sputtRefDistOut),
                     spyl_surfaceModel(nE_sputtRefCoeff*nA_sputtRefCoeff),
                     rfyl_surfaceModel(nE_sputtRefCoeff*nA_sputtRefCoeff),
                     E_sputtRefDistIn(nE_sputtRefDistIn), A_sputtRefDistIn(nA_sputtRefDistIn),
@@ -2134,30 +2133,32 @@ std::cout << "closed ncp " << std::endl;
   { 
 #endif
 std::cout <<" about to write ncFile_particles " << std::endl;
-    //NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
-    //std::cout <<" opened file " << std::endl;
-    //NcDim pNP = ncFile_particles.addDim("nP",nP);
-    //NcVar p_surfNormx = ncFile_particles.addVar("surfNormX",ncFloat,pNP);
-    //NcVar p_surfNormy = ncFile_particles.addVar("surfNormY",ncFloat,pNP);
-    //NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ",ncFloat,pNP);
-    //NcVar p_vx = ncFile_particles.addVar("vx",ncFloat,pNP);
-    //NcVar p_vy = ncFile_particles.addVar("vy",ncFloat,pNP);
-    //NcVar p_vz = ncFile_particles.addVar("vz",ncFloat,pNP);
-    //NcVar p_x = ncFile_particles.addVar("x",ncFloat,pNP);
-    //NcVar p_y = ncFile_particles.addVar("y",ncFloat,pNP);
-    //NcVar p_z = ncFile_particles.addVar("z",ncFloat,pNP);
-    //std::cout <<" added vars " << std::endl;
-    //p_surfNormx.putVar(&pSurfNormX[0]);
-    //p_surfNormy.putVar(&pSurfNormY[0]);
-    //p_surfNormz.putVar(&pSurfNormZ[0]);
-    //p_vx.putVar(&pvx[0]);
-    //p_vy.putVar(&pvy[0]);
-    //p_vz.putVar(&pvz[0]);
-    //p_x.putVar(&px[0]);
-    //p_y.putVar(&py[0]);
-    //p_z.putVar(&pz[0]);
-    //std::cout <<" put vars complete " << std::endl;
-    //ncFile_particles.close();
+    NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
+    std::cout <<" opened file " << std::endl;
+    NcDim pNP = ncFile_particles.addDim("nP",nP);
+    NcVar p_surfNormx = ncFile_particles.addVar("surfNormX",ncFloat,pNP);
+    NcVar p_surfNormy = ncFile_particles.addVar("surfNormY",ncFloat,pNP);
+    NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ",ncFloat,pNP);
+    NcVar p_vx = ncFile_particles.addVar("vx",ncFloat,pNP);
+    NcVar p_vy = ncFile_particles.addVar("vy",ncFloat,pNP);
+    NcVar p_vz = ncFile_particles.addVar("vz",ncFloat,pNP);
+    NcVar p_x = ncFile_particles.addVar("x",ncFloat,pNP);
+    NcVar p_y = ncFile_particles.addVar("y",ncFloat,pNP);
+    NcVar p_z = ncFile_particles.addVar("z",ncFloat,pNP);
+    std::cout <<" added vars " << std::endl;
+    p_surfNormx.putVar(&pSurfNormX[0]);
+    p_surfNormy.putVar(&pSurfNormY[0]);
+    p_surfNormz.putVar(&pSurfNormZ[0]);
+    p_vx.putVar(&pvx[0]);
+    p_vy.putVar(&pvy[0]);
+    p_vz.putVar(&pvz[0]);
+    p_x.putVar(&px[0]);
+    p_y.putVar(&py[0]);
+    p_z.putVar(&pz[0]);
+    std::cout <<" put vars complete " << std::endl;
+    ncFile_particles.close();
+NcFile ncFile_test("testfile.nc", NcFile::replace);
+ncFile_test.close();
 std::cout <<" closed ncFile_particles " << std::endl;
 #if USE_MPI > 0
   }
@@ -2540,10 +2541,12 @@ MPI_Reduce(&surfaces->grossDeposition[0], &grossDeposition[0],nSurfaces, MPI_FLO
 MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->grossErosion[0], &grossErosion[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
+MPI_Barrier(MPI_COMM_WORLD);
 #if FLUX_EA > 0 
 MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->energyDistribution[0], &energyDistribution[0],nSurfaces*nEdist*nAdist, 
         MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+MPI_Barrier(MPI_COMM_WORLD);
 #endif
 #endif
 #endif
@@ -2582,6 +2585,7 @@ std::cout << " mean transit time " << meanTransitTime0 << std::endl;
     float max_impacts1 = 0.0;
     std::cout << " new pointers with nLines " << nLines << std::endl;
     float* impacts = new float[nLines];
+    float* xOut = new float[nP];
     std::cout << " first one worked "  << std::endl;
     float* redeposit = new float[nLines];
     float* startingParticles = new float[nLines];
@@ -2604,6 +2608,10 @@ std::cout << " starting loop "  << std::endl;
         surfZ[i] = boundaries[i].Z;
     }
 
+    for (int i=0; i<nP; i++)
+    {
+xOut[i] = particleArray->x[i];
+}
 
 std::cout << "maximum boundary " << max_boundary << std::endl;
 std::cout << "number of counts " << max_impacts << std::endl;
@@ -2697,9 +2705,12 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
        std::cout << "finished writing positions.m " << std::endl;
 // Write netCDF output for positions
 NcFile ncFile0("output/positions.nc", NcFile::replace);
+       std::cout << "created file " << std::endl;
 NcDim nc_nP0 = ncFile0.addDim("nP",nP);
+       std::cout << "created dim nP " << std::endl;
 vector<NcDim> dims0;
 dims0.push_back(nc_nP0);
+       std::cout << "created dims Vector " << std::endl;
 
 NcVar nc_x0 = ncFile0.addVar("x",ncDouble,dims0);
 NcVar nc_y0 = ncFile0.addVar("y",ncDouble,dims0);
@@ -2710,8 +2721,11 @@ NcVar nc_vz0 = ncFile0.addVar("vz",ncDouble,dims0);
 NcVar nc_trans0 = ncFile0.addVar("transitTime",ncDouble,dims0);
 NcVar nc_impact0 = ncFile0.addVar("hitWall",ncDouble,dims0);
 NcVar nc_weight0 = ncFile0.addVar("weight",ncDouble,dims0);
+       std::cout << "added Vars " << std::endl;
+       std::cout << "x0 "<< particleArray->x[0] << std::endl;
 
-nc_x0.putVar(&particleArray->x[0]);
+nc_x0.putVar(&xOut[0]);
+       std::cout << "added x " << std::endl;
 nc_y0.putVar(&particleArray->y[0]);
 nc_z0.putVar(&particleArray->z[0]);
 nc_vx0.putVar(&particleArray->vx[0]);
@@ -2721,6 +2735,8 @@ nc_trans0.putVar(&particleArray->transitTime[0]);
 nc_impact0.putVar(&particleArray->hitWall[0]);
 nc_weight0.putVar(&particleArray->weight[0]);
 ncFile0.close();
+       std::cout << "closed positions opening surface " << std::endl;
+#if USESURFACEMODEL > 0
 NcFile ncFile1("output/surface.nc", NcFile::replace);
 NcDim nc_nLines = ncFile1.addDim("nSurfaces",nSurfaces);
 vector<NcDim> dims1;
@@ -2754,6 +2770,7 @@ nc_surfEDist.putVar(&energyDistribution[0]);
 //NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
 //nc_surfADistGrid.putVar(&surfaces->gridA[0]);
 ncFile1.close();
+#endif
 #if PARTICLE_TRACKS > 0
 
 // Write netCDF output for histories
