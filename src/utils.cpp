@@ -125,8 +125,8 @@ int regrid2dCDF(int nX, int nY, int nZ,float* xGrid,int nNew,float maxNew, float
         cdf_regrid[index] = spline;  
         if(i==0 && j==0)
         {
-          std::cout << "index xGrid[k] " << index << " " << xGrid[k] << " " << nNew << " " <<
-              maxNew << " " << spline << std::endl;
+          //std::cout << "index xGrid[k] " << index << " " << xGrid[k] << " " << nNew << " " <<
+              //maxNew << " " << spline << std::endl;
         }
       }  
     }

@@ -61,6 +61,7 @@ class Boundary {
     float distanceToParticle;
     int periodic;
     int pointLine;
+    int surfaceNumber;
     float angle;
     float fd;
     float density;
