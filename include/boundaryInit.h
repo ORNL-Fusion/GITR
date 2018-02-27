@@ -96,11 +96,21 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         //float jsat_ion = 1.602e-19*b.density*cs;
         //b.ChildLangmuirDist = 2.0/3.0*pow(2*1.602e-19/(background_amu*1.66e-27),0.25)
         //*pow(potential,0.75)/(2.0*sqrt(3.1415*jsat_ion))*1.055e-5;
-        b.ChildLangmuirDist = b.debyeLength*pow(abs(b.potential)/b.ti,0.75);
+        if(b.ti > 0.0)
+        {
+          b.ChildLangmuirDist = b.debyeLength*pow(abs(b.potential)/b.ti,0.75);
+        }
+        else
+        { b.ChildLangmuirDist = 1e12;
+        }
 #else
         b.potential = 3.0*b.ti;    
 #endif        
-        //std::cout << " angle debye length and lr " <<b.angle << " " << b.debyeLength << " " << b.larmorRadius << std::endl;        
+        //if(b.Z > 0.0)
+        //{
+        //std::cout << "Boundary ti density potensial and CLdist " <<b.ti << " " << 
+        //    b.density << " " << b.potential << " " << b.ChildLangmuirDist << std::endl;   
+        //}     
     }	
 };
 

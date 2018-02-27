@@ -91,6 +91,7 @@ float interpRateCoeff2d ( int charge, float x, float y, float z,int nx, int nz, 
     //std::cout << "Interpolating RC " << std::endl;
     float RClocal = rateCoeffInterp(charge,tlocal,nlocal,nT_Rates,nD_Rates,rateGrid_Temp, rateGrid_Dens, Rates);
     float tion = 1/(RClocal*nlocal);
+    if(tlocal == 0.0 || nlocal == 0.0) tion=1.0e12;
     //std::cout << "Returning " << std::endl;
     return tion;
 }

@@ -60,6 +60,7 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
     Setting& geom = cfg_geom.lookup("geom");
     std::cout << "Boundary import routine " << int(boundaries.size()) << std::endl;
     int nLines = boundaries.size() - 1;
+    int nZSurfs = 0;
   std::string geom_outname = "geom.m";
   std::string geom_folder = "output/geometry";
   ofstream outfile;
@@ -112,10 +113,12 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[i].d = geom["d"][i];
        boundaries[i].plane_norm = geom["plane_norm"][i];
        boundaries[i].area = geom["area"][i];
-       //if(boundaries[i].Z > 0.0)
-       //{
+       if(boundaries[i].Z > 0.0)
+       {
+           boundaries[i].surfaceNumber = nZSurfs;
+           nZSurfs = nZSurfs + 1;
        //    std::cout << "abcd " << boundaries[i].a << " " << boundaries[i].b << " " << boundaries[i].c << " " << boundaries[i].d << std::endl; 
-       //}
+       }
      }   
      #if USECYLSYMM
           std::cout << "Reading cylindrically symmetric boundary characteristics " << std::endl;
@@ -158,7 +161,7 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
     boundaries[nLines].y2 = geom["y2"];
     boundaries[nLines].periodic = geom["periodic"];
   #endif
-    return 0;
+    return nZSurfs;
 }
 int read_ar2Input( string fileName, float *Bfield[]) {
 

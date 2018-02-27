@@ -11,6 +11,7 @@
 
 #include "Particles.h"
 #include "Boundary.h"
+#include "Surfaces.h"
 #include <cmath>
 #include <math.h>
 
@@ -121,6 +122,7 @@ struct reflection {
     const double dt;
     int nLines;
     Boundary * boundaryVector;
+    Surfaces * surfaces;
     int nE_sputtRefCoeff;
     int nA_sputtRefCoeff;
     float* A_sputtRefCoeff;
@@ -141,6 +143,12 @@ struct reflection {
     float* ADist_CDF_Y_regrid;
     float* EDist_CDF_R_regrid;
     float* ADist_CDF_R_regrid;
+    int nEdist;
+    float E0dist;
+    float Edist;
+    int nAdist;
+    float A0dist;
+    float Adist;
 #if __CUDACC__
         curandState *state;
 #else
@@ -153,6 +161,7 @@ struct reflection {
                             std::mt19937 *_state,
 #endif
             int _nLines,Boundary * _boundaryVector,
+            Surfaces * _surfaces,
     int _nE_sputtRefCoeff,
     int _nA_sputtRefCoeff,
     float* _A_sputtRefCoeff,
@@ -172,8 +181,15 @@ struct reflection {
     float* _EDist_CDF_Y_regrid,
     float* _ADist_CDF_Y_regrid, 
     float* _EDist_CDF_R_regrid,
-    float* _ADist_CDF_R_regrid) :
+    float* _ADist_CDF_R_regrid,
+    int _nEdist,
+    float _E0dist,
+    float _Edist,
+    int _nAdist,
+    float _A0dist,
+    float _Adist) :
     particles(_particles), dt(_dt), state(_state),nLines(_nLines),boundaryVector(_boundaryVector),
+    surfaces(_surfaces),
     nE_sputtRefCoeff(_nE_sputtRefCoeff),nA_sputtRefCoeff(_nA_sputtRefCoeff),
     A_sputtRefCoeff(_A_sputtRefCoeff),
     Elog_sputtRefCoeff(_Elog_sputtRefCoeff),
@@ -192,7 +208,9 @@ struct reflection {
     EDist_CDF_Y_regrid(_EDist_CDF_Y_regrid),
     ADist_CDF_Y_regrid(_ADist_CDF_Y_regrid),
     EDist_CDF_R_regrid(_EDist_CDF_R_regrid),
-    ADist_CDF_R_regrid(_ADist_CDF_R_regrid){}
+    ADist_CDF_R_regrid(_ADist_CDF_R_regrid),
+    nEdist(_nEdist), E0dist(_E0dist),Edist(_Edist),
+    nAdist(_nAdist), A0dist(_A0dist),Adist(_Adist) {}
 
 CUDA_CALLABLE_MEMBER_DEVICE
 void operator()(std::size_t indx) const {
@@ -218,9 +236,16 @@ void operator()(std::size_t indx) const {
     float totalYR=0.0;
     float newWeight=0.0;
     int wallHit = particles->wallHit[indx];
+    int surfaceHit = boundaryVector[wallHit].surfaceNumber;
     float eInterpVal=0.0;
     float aInterpVal=0.0;
-
+    float weight = particles->weight[indx];
+    #if FLUX_EA > 0
+      float dEdist = (Edist - E0dist)/nEdist;
+      float dAdist = (Adist - A0dist)/nAdist;
+      int AdistInd=0;
+      int EdistInd=0;
+    #endif
     E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/1.60217662e-19;
     particleTrackVector[0] = particles->vx[indx];
     particleTrackVector[1] = particles->vy[indx];
@@ -307,7 +332,7 @@ void operator()(std::size_t indx) const {
                            nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                                          energyDistGrid01,A_sputtRefDistIn,
                                          E_sputtRefDistIn,EDist_CDF_R_regrid );
-                   newWeight=R0/(1.0f-sputtProb);
+                   newWeight=R0/(1.0f-sputtProb)*weight;
             }
             else //sputters
             {
@@ -319,30 +344,41 @@ void operator()(std::size_t indx) const {
                            nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                            energyDistGrid01,A_sputtRefDistIn,
                            E_sputtRefDistIn,EDist_CDF_Y_regrid);
-                   newWeight=Y0/sputtProb;
+                   newWeight=Y0/sputtProb*weight;
+            if(sputtProb == 0) newWeight = 0.0;
+            #if USE_CUDA > 0
+                if( boundaryVector[wallHit].Z > 0.0)
+                {
+
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
+                    atomicAdd(&surfaces->grossErosion[surfaceHit],newWeight);
+                }
+            #endif
             }
                 //deposit on surface
-            //#if USESURFACEMODEL == 1
-            //  #if USE_CUDA > 0
-            //    atomicAdd(&boundaryVector[wallHit].impacts, particles->weight[indx]);
-            //  #else
-            //    boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
-            //  #endif
-            //#endif
-            //float deposited = 0.0; 
-            //   if(Y0 <= 1.0)
-            //   {
-            //     deposited = particles->weight[indx]*(1.0-Y0);
-            //   }
-            //#if USE_CUDA > 0
-            //    atomicAdd(&boundaryVector[wallHit].redeposit, deposited);
-            //#else
-            //   boundaryVector[wallHit].redeposit = boundaryVector[wallHit].redeposit +deposited;
-            //#endif
+                if( boundaryVector[wallHit].Z > 0.0)
+                {
+            #if USE_CUDA > 0
+              atomicAdd(&surfaces->sumWeightStrike[surfaceHit],weight);
+              atomicAdd(&surfaces->sumParticlesStrike[surfaceHit],1);
+            #else
+              boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
+            #endif
+            #if FLUX_EA > 0
+              EdistInd = floor((E0-E0dist)/dEdist);
+              AdistInd = floor((thetaImpact-A0dist)/dAdist);
+              //if((EdistInd >= 0) && (EdistInd < nEdist) && 
+              //   (AdistInd >= 0) && (AdistInd < nAdist))
+              //{
+                  atomicAdd(&surfaces->energyDistribution[surfaceHit*nEdist*nAdist + 
+                                               EdistInd*nAdist + AdistInd], weight);
+              //}
+            #endif 
+                } 
                 //reflect with weight and new initial conditions
                 if( boundaryVector[wallHit].Z > 0.0)
                 {
-                particles->weight[indx] = particles->weight[indx]*newWeight;
+                particles->weight[indx] = newWeight;
                 particles->hitWall[indx] = 0.0;
                 particles->charge[indx] = 0.0;
                 float V0 = sqrt(2*eInterpVal*1.602e-19/(particles->amu[indx]*1.66e-27));
@@ -353,9 +389,9 @@ void operator()(std::size_t indx) const {
     particles->vx[indx] = -signPartDotNormal*vSampled[0];
     particles->vy[indx] = -signPartDotNormal*vSampled[1];
     particles->vz[indx] = -signPartDotNormal*vSampled[2];
-    particles->test[indx] = -signPartDotNormal*vSampled[0];
-    particles->test0[indx] = -signPartDotNormal*vSampled[1];
-    particles->test1[indx] = -signPartDotNormal*vSampled[2];
+    //particles->test[indx] = surfaceHit;
+    //particles->test0[indx] = EdistInd;
+    //particles->test1[indx] = AdistInd;
 
     particles->xprevious[indx] = particles->x[indx] + -signPartDotNormal*surfaceNormalVector[0]*1e-6;
     particles->yprevious[indx] = particles->y[indx] + -signPartDotNormal*surfaceNormalVector[1]*1e-6;

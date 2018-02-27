@@ -302,8 +302,8 @@ def plotPitch(filename='positions.nc'):
 if __name__ == "__main__":
     #asdfanc_show("surface.nc")
     #depositedEdist()
-    nc_plotHist()
-    nc_plotSpec()
+    #nc_plotHist()
+    nc_plotSpec3D()
     nc_plotPositions()
     #nc_plotVz()
     #plotPitch()

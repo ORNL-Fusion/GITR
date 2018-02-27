@@ -67,10 +67,10 @@ struct ionize {
 	//if(particlesPointer->hitWall[indx] == 0.0){        
         //std::cout << "interpolating rate coeff at "<< particlesPointer->x[indx] << " " << particlesPointer->y[indx] << " " << particlesPointer->z[indx] << std::endl;
         float tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesIonize,nDensitiesIonize,gridTemperature_Ionization,gridDensity_Ionization,rateCoeff_Ionization );	
-    float PiP = particlesPointer->PionizationPrevious[indx];
+    //float PiP = particlesPointer->PionizationPrevious[indx];
     float P = expf(-dt/tion);
-    particlesPointer->PionizationPrevious[indx] = PiP*P;
-    float P1 = 1.0-PiP*P;
+    //particlesPointer->PionizationPrevious[indx] = PiP*P;
+    float P1 = 1.0-P;
     //std::cout << "tion P P1 " << tion << " " << P << " " << P1 << " " << PiP<< std::endl;
     if(particlesPointer->hitWall[indx] == 0.0)
     {
@@ -99,15 +99,27 @@ struct ionize {
     //{
       //std::cout << "r1 " << r1 << " " << P1 << std::endl;
 		//particlesPointer->charge[indx] = particlesPointer->charge[indx]+1;
-       particlesPointer->test[indx] = r1; 
+       //particlesPointer->test[indx] = tion; 
+       //particlesPointer->test0[indx] = P1; 
+       //particlesPointer->test1[indx] = r1; 
 	    if(r1 <= P1)
 	    {
 		  particlesPointer->charge[indx] = particlesPointer->charge[indx]+1;
           particlesPointer->PionizationPrevious[indx] = 1.0;
         //std::cout << "Particle " << indx << " ionized at step " << tt << std::endl;
+       if(particlesPointer->firstIonizationZ[indx] == 0.0)
+       {
+           particlesPointer->firstIonizationZ[indx] = particlesPointer->z[indx];
+       }
 	    }
-        
-        
+        else
+        {
+       if(particlesPointer->firstIonizationZ[indx] == 0.0)
+       {
+           particlesPointer->firstIonizationT[indx] = particlesPointer->firstIonizationT[indx] + dt;
+       }
+
+        } 
        
     //} 
 	}	
