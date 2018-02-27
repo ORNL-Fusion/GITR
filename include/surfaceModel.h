@@ -370,9 +370,11 @@ void operator()(std::size_t indx) const {
               //if((EdistInd >= 0) && (EdistInd < nEdist) && 
               //   (AdistInd >= 0) && (AdistInd < nAdist))
               //{
+#if USE_CUDA > 0
                   atomicAdd(&surfaces->energyDistribution[surfaceHit*nEdist*nAdist + 
                                                EdistInd*nAdist + AdistInd], weight);
-              //}
+#endif
+                  //}
             #endif 
                 } 
                 //reflect with weight and new initial conditions
