@@ -17,6 +17,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import pylab as pl
 import scipy as sp
 import math
+import os
 
 def copy_folder(from_folder, to_folder):
     copy_tree(from_folder, to_folder)
@@ -80,6 +81,13 @@ def writeEDfile(name,gridE,Edist):
     np.savetxt(datafile_id, data, fmt=['%.4f','%.4f'])
     #here the ascii file is populated. 
     datafile_id.close()
+def modifyInputParam(filename="input/gitrInput.cfg",nT=100):
+    with io.open(filename) as f:
+        config = libconf.load(f)
+    config['timeStep']['nT'] = nT    
+    with io.open(filename,'w') as f:
+        libconf.dump(config,f)
+    
 def plot2dGeom(filename="gitrGeometry.cfg"):
     with io.open(filename) as f:
         config = libconf.load(f)
@@ -103,6 +111,63 @@ def plot2dGeom(filename="gitrGeometry.cfg"):
     plt.savefig('geomPlot.png') 
     print('config', config) 
     print('x1 ', x1)
+def read3dGeom(filename="gitrGeometry.cfg"):
+    with io.open(filename) as f:
+        config = libconf.load(f)
+    
+    x1=np.array(config.geom.x1)
+    x2=np.array(config.geom.x2)
+    x3=np.array(config.geom.x3)
+    y1=np.array(config.geom.y1)
+    y2=np.array(config.geom.y2)
+    y3=np.array(config.geom.y3)
+    z1=np.array(config.geom.z1)
+    z2=np.array(config.geom.z2)
+    z3=np.array(config.geom.z3)
+    area=np.array(config.geom.area)
+    Z = np.array(config.geom.Z)
+    materialSurfaceInidces = np.nonzero(Z)
+    surfIndArray = np.asarray(materialSurfaceInidces)
+    print('Number of W surfaces ', surfIndArray.size)
+    return x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray
+def piscesProcessing(r=0.01):
+    x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray = read3dGeom('input/gitrGeometryPiscesAFinal.cfg')
+    r1 = np.sqrt(np.multiply(x1[surfIndArray],x1[surfIndArray]) + np.multiply(y1[surfIndArray],y1[surfIndArray]))
+    r2 = np.sqrt(np.multiply(x2[surfIndArray],x2[surfIndArray]) + np.multiply(y2[surfIndArray],y2[surfIndArray]))
+    r3 = np.sqrt(np.multiply(x3[surfIndArray],x3[surfIndArray]) + np.multiply(y3[surfIndArray],y3[surfIndArray]))
+    grossDep,grossEro,sumWeightStrike,E,A,EAdist = nc_readSurface()
+    condition = r1 < r
+    dep = np.extract(condition,grossDep)
+    ero = np.extract(condition,grossEro)
+    strike = np.extract(condition,sumWeightStrike)
+    areas = np.extract(condition,area)
+    backgroundIonsPerSec = 3.8640e+19;
+    time = 5000;
+    erodedMass = time*backgroundIonsPerSec*184*1.66e-27*5e-3*1000;
+    erodedMassPerParticle = erodedMass/1e5;
+    netErosion = np.sum(ero - dep);
+    netStrike = np.sum(strike)
+    totalArea = np.sum(areas)
+    impurityParticlePerSecondPerComputationalPartice = backgroundIonsPerSec*5e-3/1e5;
+    impurityFlux = netStrike/totalArea*impurityParticlePerSecondPerComputationalPartice;
+    Wfrac = impurityFlux/3.5e22;
+    print('W impurity flux ', impurityFlux)
+    print('W impurity fraction ', Wfrac)
+    #for i in surfIndArray:
+    np.savetxt('gitrFluxE.dat', E)
+    np.savetxt('gitrFluxA.dat', A)
+    np.savetxt('gitrFluxEAdist.dat', EAdist)
+    
+    Dfrac = 0.5;
+    Hefrac = 0.5;
+    Tfrac = 0.0;
+    file = open('gitrOut.txt','w') 
+    
+    file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
+    file.write('flux='+str(impurityFlux/1e18)+'\n') 
+    file.write('gitrOutputDir='+os.getcwd()+'\n') 
+    file.close() 
+
 def plot3dGeom(filename="gitrGeometry.cfg"):
     with io.open(filename) as f:
         config = libconf.load(f)
@@ -276,6 +341,26 @@ def nc_plotVz(filename='history.nc'):
     plt.figure(1,figsize=(10, 6), dpi=250)
     plt.hist(pitchAngle,bins=30)
     plt.savefig('pa.png')
+def nc_readSurface(filename='output/surface.nc'):
+    ncFile = netCDF4.Dataset(filename,"r")
+    nS = ncFile.dimensions['nSurfaces'].size
+    nE = ncFile.dimensions['nEnergies'].size
+    nA = ncFile.dimensions['nAngles'].size
+    E = np.linspace(0,1000.0,nE+1)
+    A = np.linspace(0,90.0,nA+1)
+    grossDep = np.array(ncFile.variables['grossDeposition'])
+    grossEro = np.array(ncFile.variables['grossErosion'])
+    sumWeightStrike = np.array(ncFile.variables['sumWeightStrike'])
+    surfEdist = np.reshape(np.array(ncFile.variables['surfEDist']),(nS,nA,nE))
+    surfEdist.reshape((nS,nA,nE))
+    print('size surfEdist ', surfEdist.size)
+    print('shape surfEdist ', surfEdist.shape)
+    EAdist = np.sum(surfEdist,axis=0)
+    print('shape EAdist ', EAdist.shape)
+    EAdist = EAdist.reshape(nE,nA)
+    plt.pcolor(EAdist)
+    plt.savefig('EAdist.png')
+    return grossDep,grossEro,sumWeightStrike,E,A,EAdist
 def plotPitch(filename='positions.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nP = ncFile.dimensions['nP'].size
@@ -303,7 +388,10 @@ if __name__ == "__main__":
     #asdfanc_show("surface.nc")
     #depositedEdist()
     #nc_plotHist()
-    nc_plotSpec3D()
-    nc_plotPositions()
+    #nc_plotSpec3D()
+    #nc_plotPositions()
     #nc_plotVz()
     #plotPitch()
+    #piscesProcessing()
+    modifyInputParam()
+    #nc_readSurface()

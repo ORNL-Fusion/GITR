@@ -381,16 +381,6 @@ void operator()(std::size_t indx) const {
         BfieldR,
         BfieldZ,
         BfieldT);
-		//parallel_contribution = (1.0-nu_friction*dt + plus_minus1*sqrt(nu_parallel*dt));
-		//dv_perp1[0] = perp_direction1[0]*plus_minus2*sqrt(nu_deflection/2*dt);
-		//dv_perp1[1] = perp_direction1[1]*plus_minus2*sqrt(nu_deflection/2*dt);
-		//dv_perp1[2] = perp_direction1[2]*plus_minus2*sqrt(nu_deflection/2*dt);
-        //        dv_perp2[0] = perp_direction2[0]*plus_minus3*sqrt(nu_deflection/2*dt);
-        //        dv_perp2[1] = perp_direction2[1]*plus_minus3*sqrt(nu_deflection/2*dt);
-        //        dv_perp2[2] = perp_direction2[2]*plus_minus3*sqrt(nu_deflection/2*dt);
-        //std::cout << "parallel direction " << parallel_direction[0] << " " << parallel_direction[1] << " " <<parallel_direction[2] << std::endl;
-        //std::cout << "perp direction1 " << perp_direction1[0] << " " << perp_direction1[1] << " " <<perp_direction1[2] << std::endl;
-        //std::cout << "perp direction2 " << perp_direction2[0] << " " << perp_direction2[1] << " " <<perp_direction2[2] << std::endl;
         float coeff_par = 1.0 + n1*sqrt(nu_parallel*dt) - nu_friction*dt;
         float coeff_perp =  abs(n2)*sqrt(nu_deflection*dt*0.5);
         float coeff_Energy = 1.0-nu_energy*dt*0.5;
@@ -404,11 +394,11 @@ float velocityCollisionsNorm = vectorNorm(velocityCollisions);
         particlesPointer->vx[indx] = coeff_Energy*velocityRelativeNorm*velocityCollisions[0]/velocityCollisionsNorm + flowVelocity[0]; 
 		particlesPointer->vy[indx] = coeff_Energy*velocityRelativeNorm*velocityCollisions[1]/velocityCollisionsNorm + flowVelocity[1];
 		particlesPointer->vz[indx] = coeff_Energy*velocityRelativeNorm*velocityCollisions[2]/velocityCollisionsNorm + flowVelocity[2];   	
-            //particlesPointer->test[indx] =  coeff_Energy; 
-            //particlesPointer->test0[indx] = coeff_par;
-            //particlesPointer->test1[indx] = coeff_perp;
-            //particlesPointer->test2[indx] = velocityRelativeNorm;
-            //particlesPointer->test3[indx] = velocityCollisionsNorm;
+            particlesPointer->test[indx] =  coeff_par; 
+            particlesPointer->test0[indx] = n1;
+            particlesPointer->test1[indx] = nu_parallel;
+            particlesPointer->test2[indx] = nu_friction;
+            particlesPointer->test3[indx] = 0.1234;
     //std::cout << "particle velocity "<< particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " << particlesPointer->vz[indx]    << std::endl;
     
 	}
