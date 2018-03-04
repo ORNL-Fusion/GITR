@@ -26,4 +26,5 @@ export BOOST_ROOT=~/code/boost
 export BOOST_INCLUDEDIR=~/code/boost/include
 export BOOST_LIBRARYDIR=~/code/boost/lib
 
-export PYTHONPATH=/home/tqd/code/netcdf4-python/build
+PYTHONPATH=$PYTHONPATH:/home/tqd/gitr/python/
+export PYTHONPATH=$PYTHONPATH:/home/tqd/code/netcdf4-python/build

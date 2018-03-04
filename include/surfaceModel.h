@@ -240,30 +240,22 @@ void operator()(std::size_t indx) const {
     float eInterpVal=0.0;
     float aInterpVal=0.0;
     float weight = particles->weight[indx];
+    float vx = particles->vx[indx];
+    float vy = particles->vy[indx];
+    float vz = particles->vz[indx];
     #if FLUX_EA > 0
       float dEdist = (Edist - E0dist)/nEdist;
       float dAdist = (Adist - A0dist)/nAdist;
       int AdistInd=0;
       int EdistInd=0;
     #endif
-    E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/1.60217662e-19;
-    particleTrackVector[0] = particles->vx[indx];
-    particleTrackVector[1] = particles->vy[indx];
-    particleTrackVector[2] = particles->vz[indx];
+    particleTrackVector[0] = vx;
+    particleTrackVector[1] = vy;
+    particleTrackVector[2] = vz;
+    norm_part = sqrt(particleTrackVector[0]*particleTrackVector[0] + particleTrackVector[1]*particleTrackVector[1] + particleTrackVector[2]*particleTrackVector[2]);
+    E0 = 0.5*particles->amu[indx]*1.6737236e-27*(norm_part*norm_part)/1.60217662e-19;
     wallIndex = particles->wallIndex[indx];
     boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector);
-    //#if USECYLSYMM > 0 
-    //  float theta = atan2f(particles->yprevious[indx],particles->xprevious[indx]);
-    //  Sr = surfaceNormalVector[0];
-    //  surfaceNormalVector[0] = cosf(theta)*Sr;
-    //  surfaceNormalVector[1] = sinf(theta)*Sr;
-    //#endif            
-            //std::cout << "velocities " << particles->vx[indx] << " " << particles->vy[indx] << " " << particles->vz[indx] << std::endl;
-            //std::cout << "surface norm " << surfaceNormalVector[0] << " " << surfaceNormalVector[1] << " " << surfaceNormalVector[2] << std::endl;
-    norm_part = sqrt(particleTrackVector[0]*particleTrackVector[0] + particleTrackVector[1]*particleTrackVector[1] + particleTrackVector[2]*particleTrackVector[2]);
-            //          norm_normal = sqrt(surfaceNormalVectorRotated[0]*surfaceNormalVectorRotated[0] + surfaceNormalVectorRotated[1]*surfaceNormalVectorRotated[1] + surfaceNormalVectorRotated[2]*surfaceNormalVectorRotated[2]);
-    //        std::cout << "norm of particle track " << norm_part << std::endl;
-    //        std::cout << "norm of surface normal " << norm_normal << std::endl;
             particleTrackVector[0] = particleTrackVector[0]/norm_part;
             particleTrackVector[1] = particleTrackVector[1]/norm_part;
             particleTrackVector[2] = particleTrackVector[2]/norm_part;
@@ -291,7 +283,13 @@ void operator()(std::size_t indx) const {
                 R0 = 0.0;
             }
             totalYR=Y0+R0;
-
+            //if(particles->test[indx] == 0.0)
+            //{
+            //    particles->test[indx] = 1.0;
+            //    particles->test0[indx] = E0;
+            //    particles->test1[indx] = thetaImpact;
+            //    particles->test2[indx] = Y0;
+            //}
             //std::cout << "Energy angle yield " << E0 << " " << thetaImpact << " " << Y0 << std::endl; 
             #if PARTICLESEEDS > 0
               #ifdef __CUDACC__
@@ -322,6 +320,8 @@ void operator()(std::size_t indx) const {
             #endif
             //particle either reflects or deposits
             float sputtProb = Y0/totalYR;
+            if(totalYR > 0.0)
+            {
             if(r7 > sputtProb) //reflects
             {
                   aInterpVal = interp3d (r8,thetaImpact,log10(E0),
@@ -332,7 +332,7 @@ void operator()(std::size_t indx) const {
                            nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                                          energyDistGrid01,A_sputtRefDistIn,
                                          E_sputtRefDistIn,EDist_CDF_R_regrid );
-                   newWeight=R0/(1.0f-sputtProb)*weight;
+                   newWeight=(R0/(1.0f-sputtProb))*weight;
             }
             else //sputters
             {
@@ -344,8 +344,8 @@ void operator()(std::size_t indx) const {
                            nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                            energyDistGrid01,A_sputtRefDistIn,
                            E_sputtRefDistIn,EDist_CDF_Y_regrid);
-                   newWeight=Y0/sputtProb*weight;
-            if(sputtProb == 0) newWeight = 0.0;
+                   newWeight=(Y0/sputtProb)*weight;
+            if(sputtProb == 0.0) newWeight = 0.0;
             #if USE_CUDA > 0
                 if( boundaryVector[wallHit].Z > 0.0)
                 {
@@ -354,6 +354,7 @@ void operator()(std::size_t indx) const {
                     atomicAdd(&surfaces->grossErosion[surfaceHit],newWeight);
                 }
             #endif
+            }
             }
                 //deposit on surface
                 if( boundaryVector[wallHit].Z > 0.0)
@@ -367,14 +368,14 @@ void operator()(std::size_t indx) const {
             #if FLUX_EA > 0
               EdistInd = floor((E0-E0dist)/dEdist);
               AdistInd = floor((thetaImpact-A0dist)/dAdist);
-              //if((EdistInd >= 0) && (EdistInd < nEdist) && 
-              //   (AdistInd >= 0) && (AdistInd < nAdist))
-              //{
+              if((EdistInd >= 0) && (EdistInd < nEdist) && 
+                 (AdistInd >= 0) && (AdistInd < nAdist))
+              {
 #if USE_CUDA > 0
                   atomicAdd(&surfaces->energyDistribution[surfaceHit*nEdist*nAdist + 
                                                EdistInd*nAdist + AdistInd], weight);
 #endif
-                  //}
+               }
             #endif 
                 } 
                 //reflect with weight and new initial conditions
