@@ -1632,33 +1632,33 @@ else if(world_rank == 0)
   make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,ADist_Y.data(),ADist_CDF_Y.data());
   make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,EDist_R.data(),EDist_CDF_R.data());
   make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,ADist_R.data(),ADist_CDF_R.data());
-  //for(int k=0;k<nDistE_surfaceModel;k++)
-  //{
-  //      std::cout << "cosDist_CDFY " << EDist_CDF_Y[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
+  for(int k=0;k<nE_sputtRefDistOut;k++)
+  {
+        std::cout << "Edist_CDF_Y " << EDist_CDF_Y[44*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
   //      std::cout << "cosDist_CDFR " << EDist_CDF_R[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
-  //}
- regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,90.0,ADist_CDF_Y.data(),ADist_CDF_Y_regrid.data());
- regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,energyDistGrid01.data(),nE_sputtRefDistOut,50.0,EDist_CDF_Y.data(),EDist_CDF_Y_regrid.data());
- regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,90.0,ADist_CDF_R.data(),ADist_CDF_R_regrid.data());
- regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,energyDistGrid01.data(),nE_sputtRefDistOut,50.0,EDist_CDF_R.data(),EDist_CDF_R_regrid.data());
+  }
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,A_sputtRefDistOut[nA_sputtRefDistOut-1],ADist_CDF_Y.data(),ADist_CDF_Y_regrid.data());
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,energyDistGrid01.data(),nE_sputtRefDistOut,E_sputtRefDistOut[nE_sputtRefDistOut-1],EDist_CDF_Y.data(),EDist_CDF_Y_regrid.data());
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,A_sputtRefDistOut[nA_sputtRefDistOut-1],ADist_CDF_R.data(),ADist_CDF_R_regrid.data());
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,energyDistGrid01.data(),nE_sputtRefDistOut,E_sputtRefDistOut[nE_sputtRefDistOut-1],EDist_CDF_R.data(),EDist_CDF_R_regrid.data());
  // regrid2dCDF(nE_surfaceModel,nA_surfaceModel,nEdistBins_surfaceModel,energyDistGrid01.data(),nEdistBins_surfaceModel,100.0,energyDist_CDF.data(),energyDist_CDFregrid.data());
- //for(int k=0;k<nE_sputtRefDistOut;k++)
- // {
- //       std::cout << "cosDist_CDFregridY " << EDist_CDF_Y_regrid[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
+ for(int k=0;k<nE_sputtRefDistOut;k++)
+  {
+        std::cout << "EDist_CDFregridY " << EDist_CDF_Y_regrid[44*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
  //       std::cout << "cosDist_CDFregridR " << EDist_CDF_R_regrid[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
- // }
-  float spylInterpVal = interp2d(0.0,log10(1130.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
+  }
+  float spylInterpVal = interp2d(0.0,log10(500.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
                               Elog_sputtRefCoeff.data(),spyl_surfaceModel.data());
-  float rfylInterpVal = interp2d(0.0,log10(1130.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
+  float rfylInterpVal = interp2d(0.0,log10(500.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
                               Elog_sputtRefCoeff.data(),rfyl_surfaceModel.data());
-  float spylEInterpVal = interp3d ( 0.44,0.0,log10(1126.9),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
-          angleDistGrid01.data(),A_sputtRefDistIn.data(),E_sputtRefDistIn.data() ,ADist_CDF_Y_regrid.data() );
- float sputEInterpVal = interp3d ( 0.44,0.0,log10(1126.9),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
-              energyDistGrid01.data(),A_sputtRefDistIn.data(),E_sputtRefDistIn.data() ,EDist_CDF_Y_regrid.data() );
-  float rflAInterpVal = interp3d ( 0.44,0.0,log10(1126.9),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
-          angleDistGrid01.data(),A_sputtRefDistIn.data(),E_sputtRefDistIn.data() ,ADist_CDF_R_regrid.data() );
- float rflEInterpVal = interp3d ( 0.44,0.0,log10(1126.9),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
-              energyDistGrid01.data(),A_sputtRefDistIn.data(),E_sputtRefDistIn.data() ,EDist_CDF_R_regrid.data() );
+  float spylEInterpVal = interp3d ( 0.44,0.0,log10(500.0),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+          angleDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,ADist_CDF_Y_regrid.data() );
+ float sputEInterpVal = interp3d ( 0.44,0.0,log10(500.0),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+              energyDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,EDist_CDF_Y_regrid.data() );
+  float rflAInterpVal = interp3d ( 0.44,0.0,log10(500.0),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+          angleDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,ADist_CDF_R_regrid.data() );
+ float rflEInterpVal = interp3d ( 0.44,0.0,log10(500.0),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+              energyDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,EDist_CDF_R_regrid.data() );
   std::cout << "Finished surface model import " <<spylInterpVal << " " <<  spylEInterpVal << " " << sputEInterpVal << " "<< rfylInterpVal<< " " << rflAInterpVal << " " << rflEInterpVal <<  std::endl; 
 #endif
   // Particle time stepping control
