@@ -343,9 +343,9 @@ def nc_plotVz(filename='history.nc'):
     plt.savefig('pa.png')
 def nc_readSurface(filename='output/surface.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
-    nS = ncFile.dimensions['nSurfaces'].size
-    nE = ncFile.dimensions['nEnergies'].size
-    nA = ncFile.dimensions['nAngles'].size
+    nS = len(ncFile.dimensions['nSurfaces'])
+    nE = len(ncFile.dimensions['nEnergies'])
+    nA = len(ncFile.dimensions['nAngles'])
     E = np.linspace(0,1000.0,nE+1)
     A = np.linspace(0,90.0,nA+1)
     grossDep = np.array(ncFile.variables['grossDeposition'])
@@ -392,6 +392,6 @@ if __name__ == "__main__":
     #nc_plotPositions()
     #nc_plotVz()
     #plotPitch()
-    #piscesProcessing()
-    modifyInputParam()
+    piscesProcessing()
+    #modifyInputParam()
     #nc_readSurface()
