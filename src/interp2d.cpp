@@ -129,8 +129,8 @@ float interp3d ( float x, float y, float z,int nx,int ny, int nz,
     int i = floor((x - gridx[0])/dx);//addition of 0.5 finds nearest gridpoint
     int j = floor((y - gridy[0])/dy);
     int k = floor((z - gridz[0])/dz);
-    std::cout << "dxyz ijk " << dx << " "<<dy << " " << dz<< " " << i
-        << " " << j << " " << k << std::endl;
+    //std::cout << "dxyz ijk " << dx << " "<<dy << " " << dz<< " " << i
+    //    << " " << j << " " << k << std::endl;
     if(i <0 ) i=0;
     else if(i >=nx-1) i=nx-2;
     if(j <0 ) j=0;
@@ -145,19 +145,19 @@ float interp3d ( float x, float y, float z,int nx,int ny, int nz,
     float fx_z1 = (data[i + j*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
 
     
-    std::cout << "fxz0 fxz1 " << fx_z0 << " "<<fx_z1 << std::endl;
+    //std::cout << "fxz0 fxz1 " << fx_z0 << " "<<fx_z1 << std::endl;
     float fxy_z0 = (data[i + (j+1)*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + (j+1)*nx + k*nx*ny]*(x-gridx[i]))/dx;
     float fxy_z1 = (data[i + (j+1)*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + (j+1)*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
-    std::cout << "fxyz0 fxyz1 " << fxy_z0 << " "<<fxy_z1 << std::endl;
+    //std::cout << "fxyz0 fxyz1 " << fxy_z0 << " "<<fxy_z1 << std::endl;
 
     float fxz0 = (fx_z0*(gridz[k+1] - z) + fx_z1*(z-gridz[k]))/dz;
     float fxz1 = (fxy_z0*(gridz[k+1] - z) + fxy_z1*(z-gridz[k]))/dz;
-    std::cout << "fxz0 fxz1 " << fxz0 << " "<<fxz1 << std::endl;
+    //std::cout << "fxz0 fxz1 " << fxz0 << " "<<fxz1 << std::endl;
 
     fxyz = (fxz0*(gridy[j+1] - y) + fxz1*(y-gridy[j]))/dy;
     if(ny <=1) fxyz=fxz0;
     if(nz <=1) fxyz=fx_z0;
-    std::cout <<"fxyz " << fxyz << std::endl;
+    //std::cout <<"fxyz " << fxyz << std::endl;
     return fxyz;
 }
 
