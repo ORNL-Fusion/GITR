@@ -2311,6 +2311,11 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
     #if __CUDACC__
       cudaDeviceSynchronize();
     #endif
+     int nDevices=0;
+     nDevices = omp_get_num_threads();
+         unsigned int cpu_thread_id = omp_get_thread_num();
+         unsigned int num_cpu_threads = omp_get_num_threads();
+         printf("Number of CPU threads %d (ID %d)\n", cpu_thread_id, num_cpu_threads);
     #if USE_OPENMP
     //for(int device=0;device <1;device++)
 //{ cudaSetDevice(device); 
