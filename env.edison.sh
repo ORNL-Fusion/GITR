@@ -1,6 +1,7 @@
 #!/bin/bash
 module swap PrgEnv-intel/6.0.4 PrgEnv-gnu
-module load cray-netcdf
+#module load cray-netcdf
+module load cray-parallel-netcdf
 module load boost/1.63
 module unload cray-mpich
 #module load libconfig/gcc/64/1.5 
@@ -64,3 +65,13 @@ export OMPI_ROOT=/project/projectdirs/atom/users/elwasif/ompi/install_4.0
 export PATH=$OMPI_ROOT/bin:$PATH
 export LD_LIBRARY_PATH=$OMPI_ROOT/lib64:$OMPI_ROOT/lib:$LD_LIBRARY_PATH
 export MANPATH=$OMPI_ROOT/share/man:$MANPATH
+export ATOM=/project/projectdirs/atom
+
+################
+# Edison specfic
+################
+
+export ATOM_EDISON=$ATOM/atom-install-edison
+export GITR_PATH=$ATOM/atom-install-edison/GITR
+export FTRIDYN_PATH=$ATOM/atom-install-cori/fractal-tridyn
+export PYTHONPATH=$GITR_PATH/ftridyn:$PYTHONPATH:$FTRIDYN_PATH/utils:$GITR_PATH/python:/project/projectdirs/atom/users/tyounkin/libconfPython:/project/projectdirs/atom/users/tyounkin/libconfPython/lib/python2.7/site-packages/:/global/homes/t/tyounkin/code/netcdfPython/lib.linux-x86_64-2.7/

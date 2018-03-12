@@ -346,14 +346,17 @@ void operator()(std::size_t indx) const {
                            E_sputtRefDistIn,EDist_CDF_Y_regrid);
                    newWeight=(Y0/sputtProb)*weight;
             if(sputtProb == 0.0) newWeight = 0.0;
-            #if USE_CUDA > 0
                 if( boundaryVector[wallHit].Z > 0.0)
                 {
 
+            #if USE_CUDA > 0
                     atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
                     atomicAdd(&surfaces->grossErosion[surfaceHit],newWeight);
-                }
+            #else
+                    surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
+                    surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit] + newWeight;
             #endif
+                }
             }
             }
                 //deposit on surface
@@ -363,7 +366,9 @@ void operator()(std::size_t indx) const {
               atomicAdd(&surfaces->sumWeightStrike[surfaceHit],weight);
               atomicAdd(&surfaces->sumParticlesStrike[surfaceHit],1);
             #else
-              boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
+              surfaces->sumWeightStrike[surfaceHit] =surfaces->sumWeightStrike[surfaceHit] +weight;
+              surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
+              //boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
             #endif
             #if FLUX_EA > 0
               EdistInd = floor((E0-E0dist)/dEdist);
@@ -374,6 +379,10 @@ void operator()(std::size_t indx) const {
 #if USE_CUDA > 0
                   atomicAdd(&surfaces->energyDistribution[surfaceHit*nEdist*nAdist + 
                                                EdistInd*nAdist + AdistInd], weight);
+#else
+
+                  surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
+                    surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
 #endif
                }
             #endif 

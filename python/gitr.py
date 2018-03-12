@@ -130,7 +130,7 @@ def read3dGeom(filename="gitrGeometry.cfg"):
     surfIndArray = np.asarray(materialSurfaceInidces)
     print('Number of W surfaces ', surfIndArray.size)
     return x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray
-def piscesProcessing(r=0.01):
+def piscesProcessing(r=0.01,path=''):
     x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray = read3dGeom('input/gitrGeometryPiscesAFinal.cfg')
     r1 = np.sqrt(np.multiply(x1[surfIndArray],x1[surfIndArray]) + np.multiply(y1[surfIndArray],y1[surfIndArray]))
     r2 = np.sqrt(np.multiply(x2[surfIndArray],x2[surfIndArray]) + np.multiply(y2[surfIndArray],y2[surfIndArray]))
@@ -142,6 +142,7 @@ def piscesProcessing(r=0.01):
     strike = np.extract(condition,sumWeightStrike)
     areas = np.extract(condition,area)
     backgroundIonsPerSec = 3.8640e+19;
+    backgroundFlux = 3.5e22;
     time = 5000;
     erodedMass = time*backgroundIonsPerSec*184*1.66e-27*5e-3*1000;
     erodedMassPerParticle = erodedMass/1e5;
@@ -150,13 +151,21 @@ def piscesProcessing(r=0.01):
     totalArea = np.sum(areas)
     impurityParticlePerSecondPerComputationalPartice = backgroundIonsPerSec*5e-3/1e5;
     impurityFlux = netStrike/totalArea*impurityParticlePerSecondPerComputationalPartice;
-    Wfrac = impurityFlux/3.5e22;
+    Wfrac = impurityFlux/backgroundFlux;
+    Aweight = np.sum(EAdist,axis=0)
     print('W impurity flux ', impurityFlux)
     print('W impurity fraction ', Wfrac)
     #for i in surfIndArray:
     np.savetxt('gitrFluxE.dat', E)
-    np.savetxt('gitrFluxA.dat', A)
+    np.savetxt('gitrFluxAweight.dat', Aweight)
+    np.savetxt('gitrFluxA.dat', A[:-1])
     np.savetxt('gitrFluxEAdist.dat', EAdist)
+    
+    if(path != ''): 
+        np.savetxt(path+'/'+'gitrFluxE.dat', E)
+        np.savetxt(path+'/'+'gitrFluxAweight.dat', Aweight)
+        np.savetxt(path+'/'+'gitrFluxA.dat', A)
+        np.savetxt(path+'/'+'gitrFluxEAdist.dat', EAdist)
     
     Dfrac = 0.5;
     Hefrac = 0.5;
@@ -164,10 +173,31 @@ def piscesProcessing(r=0.01):
     file = open('gitrOut.txt','w') 
     
     file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
-    file.write('flux='+str(impurityFlux/1e18)+'\n') 
+    file.write('flux='+str(backgroundFlux/1e18)+'\n') 
     file.write('gitrOutputDir='+os.getcwd()+'\n') 
     file.close() 
 
+    if(path != ''): 
+        file = open(path+'/'+'gitrOut.txt','w') 
+        
+        file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
+        file.write('flux='+str(impurityFlux/1e18)+'\n') 
+        file.write('gitrOutputDir='+os.getcwd()+'\n') 
+        file.close() 
+
+    E0=0.0;
+    E=1000.0;
+    nE=100;
+    dE = E/nE;
+    Evec = np.linspace(0.5*dE,E-0.5*dE,nE);
+    A0=0.0;
+    A=90.0;
+    nA=90;
+    for i in range(0,nA):
+        print('Evec size ', Evec.size)
+        print('EAdist[:,i] size ', EAdist[:,i].size)
+        edOut = np.column_stack((Evec,EAdist[:,i]))
+        np.savetxt('dist'+str(i)+'.dat', edOut)
 def plot3dGeom(filename="gitrGeometry.cfg"):
     with io.open(filename) as f:
         config = libconf.load(f)
