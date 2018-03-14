@@ -132,7 +132,7 @@ def read3dGeom(filename="gitrGeometry.cfg"):
     print('Number of W surfaces ', surfIndArray.size)
     return x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray
 def piscesProcessing(r=0.01,path=''):
-    x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray = read3dGeom('input/gitrGeometryPiscesAFinal.cfg')
+    x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray = read3dGeom('input/gitrGeometryPisces1inch.cfg')
     r1 = np.sqrt(np.multiply(x1[surfIndArray],x1[surfIndArray]) + np.multiply(y1[surfIndArray],y1[surfIndArray]))
     r2 = np.sqrt(np.multiply(x2[surfIndArray],x2[surfIndArray]) + np.multiply(y2[surfIndArray],y2[surfIndArray]))
     r3 = np.sqrt(np.multiply(x3[surfIndArray],x3[surfIndArray]) + np.multiply(y3[surfIndArray],y3[surfIndArray]))
@@ -142,15 +142,15 @@ def piscesProcessing(r=0.01,path=''):
     ero = np.extract(condition,grossEro)
     strike = np.extract(condition,sumWeightStrike)
     areas = np.extract(condition,area)
-    backgroundIonsPerSec = 3.8640e+19;
-    backgroundFlux = 3.5e22;
-    time = 5000;
-    erodedMass = time*backgroundIonsPerSec*184*1.66e-27*5e-3*1000;
+    backgroundIonsPerSec = 6.134e17; #3.8640e+19;for pisces He high flux case
+    backgroundFlux = 1.5e22;#3.5e22;
+    time = 1000;
+    erodedMass = time*backgroundIonsPerSec*184*1.66e-27*3.9e-3*1000;
     erodedMassPerParticle = erodedMass/1e5;
     netErosion = np.sum(ero - dep);
     netStrike = np.sum(strike)
     totalArea = np.sum(areas)
-    impurityParticlePerSecondPerComputationalPartice = backgroundIonsPerSec*5e-3/1e5;
+    impurityParticlePerSecondPerComputationalPartice = backgroundIonsPerSec*3.9e-3/1e5;
     impurityFlux = netStrike/totalArea*impurityParticlePerSecondPerComputationalPartice;
     Wfrac = impurityFlux/backgroundFlux;
     Aweight = np.sum(EAdist,axis=0)
@@ -168,8 +168,8 @@ def piscesProcessing(r=0.01,path=''):
         np.savetxt(path+'/'+'gitrFluxA.dat', A)
         np.savetxt(path+'/'+'gitrFluxEAdist.dat', EAdist)
     
-    Dfrac = 0.5;
-    Hefrac = 0.5;
+    Dfrac = 0.9;
+    Hefrac = 0.1;
     Tfrac = 0.0;
     file = open('gitrOut.txt','w') 
     file.write('plasmaSpecies=He W D T\n') 
