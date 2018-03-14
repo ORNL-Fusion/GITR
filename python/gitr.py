@@ -18,6 +18,7 @@ import pylab as pl
 import scipy as sp
 import math
 import os
+import shutil
 
 def copy_folder(from_folder, to_folder):
     copy_tree(from_folder, to_folder)
@@ -171,19 +172,20 @@ def piscesProcessing(r=0.01,path=''):
     Hefrac = 0.5;
     Tfrac = 0.0;
     file = open('gitrOut.txt','w') 
-    
+    file.write('plasmaSpecies=He W D T\n') 
     file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
     file.write('flux='+str(backgroundFlux/1e18)+'\n') 
     file.write('gitrOutputDir='+os.getcwd()+'\n') 
     file.close() 
 
     if(path != ''): 
-        file = open(path+'/'+'gitrOut.txt','w') 
-        
-        file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
-        file.write('flux='+str(impurityFlux/1e18)+'\n') 
-        file.write('gitrOutputDir='+os.getcwd()+'\n') 
-        file.close() 
+        shutil.copyfile('gitrOut.txt',path+'/'+'gitrOut.txt')
+        #file = open(path+'/'+'gitrOut.txt','w') 
+        #
+        #file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
+        #file.write('flux='+str(backgroundFlux/1e18)+'\n') 
+        #file.write('gitrOutputDir='+os.getcwd()+'\n') 
+        #file.close() 
 
     E0=0.0;
     E=1000.0;
