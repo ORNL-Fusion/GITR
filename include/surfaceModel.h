@@ -342,16 +342,25 @@ void operator()(std::size_t indx) const {
                           E_sputtRefDistIn,ADist_CDF_Y_regrid);
                   eInterpVal = interp3d(r9,thetaImpact,log10(E0),
                            nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
-                           energyDistGrid01,A_sputtRefDistIn,
-                           E_sputtRefDistIn,EDist_CDF_Y_regrid);
-                   newWeight=(Y0/sputtProb)*weight;
-            if(sputtProb == 0.0) newWeight = 0.0;
-                if( boundaryVector[wallHit].Z > 0.0)
+                           energyDistGrid01,A_sputtRefDistIn,E_sputtRefDistIn,EDist_CDF_Y_regrid);
+            if(particles->test[indx] == 0.0)
+            {
+                particles->test[indx] = 1.0;
+                particles->test0[indx] = E0;
+                particles->test1[indx] = thetaImpact;
+                particles->test2[indx] = r8;
+                particles->test3[indx] = r9;
+            }            
+                  newWeight=(Y0/sputtProb)*weight;
+                  if(sputtProb == 0.0) newWeight = 0.0;
+                  if( boundaryVector[wallHit].Z > 0.0)
                 {
 
             #if USE_CUDA > 0
                     atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
                     atomicAdd(&surfaces->grossErosion[surfaceHit],newWeight);
+                    atomicAdd(&surfaces->aveSputtYld[surfaceHit],Y0);
+                    atomicAdd(&surfaces->sputtYldCount[surfaceHit],1);
             #else
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
                     surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit] + newWeight;
@@ -359,6 +368,15 @@ void operator()(std::size_t indx) const {
                 }
             }
             }
+            else
+            {       newWeight = 0.0;
+                    particles->hitWall[indx] = 2.0;
+            }
+            //if(particles->test[indx] == 1.0)
+            //{
+            //    particles->test3[indx] = eInterpVal;
+            //    particles->test[indx] = 2.0;
+            //}
                 //deposit on surface
                 if( boundaryVector[wallHit].Z > 0.0)
                 {
@@ -394,6 +412,7 @@ void operator()(std::size_t indx) const {
                 particles->hitWall[indx] = 0.0;
                 particles->charge[indx] = 0.0;
                 float V0 = sqrt(2*eInterpVal*1.602e-19/(particles->amu[indx]*1.66e-27));
+                particles->newVelocity[indx] = V0;
     vSampled[0] = V0*sin(aInterpVal*3.1415/180)*cos(2.0*3.1415*r10);
     vSampled[1] = V0*sin(aInterpVal*3.1415/180)*sin(2.0*3.1415*r10);
     vSampled[2] = V0*cos(aInterpVal*3.1415/180);

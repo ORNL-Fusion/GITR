@@ -41,6 +41,7 @@ public:
   sim::Array<float> Z;
   sim::Array<float> amu;
   sim::Array<float> charge;
+  sim::Array<float> newVelocity;
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
   //sim::Array<curandState> streams;
@@ -131,7 +132,7 @@ public:
   CUDA_CALLABLE_MEMBER
   Particles(std::size_t nP) :
    nParticles{nP}, x{nP}, y{nP}, z{nP}, xprevious{nP}, yprevious{nP}, zprevious{nP},
-   vx{nP}, vy{nP}, vz{nP}, Z{nP}, amu{nP}, charge{nP},
+   vx{nP}, vy{nP}, vz{nP}, Z{nP}, amu{nP}, charge{nP}, newVelocity{nP},
 #if PARTICLESEEDS > 0
   //    streams{nP},streams_rec{nP},streams_collision1{nP},streams_collision2{nP},
   //    streams_collision3{nP},streams_diff{nP},streams_surf{nP},
