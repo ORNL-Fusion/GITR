@@ -130,40 +130,40 @@ int main(int argc, char **argv)
   
   // show memory usage of GPU
   #if USE_CUDA 
-    //size_t free_byte ;
-    //size_t total_byte ;
-    //cudaError_t    cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
+    size_t free_byte ;
+    size_t total_byte ;
+    cudaError_t    cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
   
-    //if(cudaSuccess != cuda_status )
-    //{
+    if(cudaSuccess != cuda_status )
+    {
   
-    //   printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status) );
-    //   exit(1);
-    //}
+       printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status) );
+       exit(1);
+    }
   
-    //double free_db = (double)free_byte ;
-    //double total_db = (double)total_byte ;
-    //double used_db = total_db - free_db ;
-    //
-    //printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
-    //  used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
-    //int nDevices;
-    //int nThreads;
-    //cudaGetDeviceCount(&nDevices);
-    //for (int i = 0; i < nDevices; i++) {
-    //  cudaDeviceProp prop;
-    //  cudaGetDeviceProperties(&prop, i);
-    //  printf("Device Number: %d\n", i);
-    //  printf("  Device name: %s\n", prop.name);
-    //  printf("  Memory Clock Rate (KHz): %d\n",
-    //                     prop.memoryClockRate);
-    //  printf("  Memory Bus Width (bits): %d\n",
-    //                     prop.memoryBusWidth);
-    //  printf("  Peak Memory Bandwidth (GB/s): %f\n\n",
-    //                     2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
-    //  printf("  Total number of threads: %d\n", prop.maxThreadsPerMultiProcessor);
-    //  nThreads = prop.maxThreadsPerMultiProcessor;
-    //  }
+    double free_db = (double)free_byte ;
+    double total_db = (double)total_byte ;
+    double used_db = total_db - free_db ;
+    
+    printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
+      used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
+    int nDevices;
+    int nThreads;
+    cudaGetDeviceCount(&nDevices);
+    for (int i = 0; i < nDevices; i++) {
+      cudaDeviceProp prop;
+      cudaGetDeviceProperties(&prop, i);
+      printf("Device Number: %d\n", i);
+      printf("  Device name: %s\n", prop.name);
+      printf("  Memory Clock Rate (KHz): %d\n",
+                         prop.memoryClockRate);
+      printf("  Memory Bus Width (bits): %d\n",
+                         prop.memoryBusWidth);
+      printf("  Peak Memory Bandwidth (GB/s): %f\n\n",
+                         2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
+      printf("  Total number of threads: %d\n", prop.maxThreadsPerMultiProcessor);
+      nThreads = prop.maxThreadsPerMultiProcessor;
+      }
   #endif 
   #if USE_BOOST
     //Output
@@ -282,6 +282,8 @@ int main(int argc, char **argv)
   sim::Array<float> grossErosion(nSurfaces,0.0);
   sim::Array<float> sumWeightStrike(nSurfaces,0.0);
   sim::Array<float> energyDistribution(nSurfaces*nEdist*nAdist,0.0);
+  sim::Array<float> aveSputtYld(nSurfaces,0.0);
+  sim::Array<int> sputtYldCount(nSurfaces,0);
 
   int nR_closeGeom = 1;
   int nY_closeGeom = 1;
@@ -896,7 +898,18 @@ else if(world_rank == 0)
   std::cout << "Finished density import "<< interp2dCombined(0.001,0.0,0.1,nR_Dens,nZ_Dens,
                          &DensGridr.front(),&DensGridz.front(),&ne.front())
  <<" " << interp2dCombined(0.02,0.0,0.1,nR_Dens,nZ_Dens,
-                                 &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl; 
+                                 &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
+  for(int i=0;i<100;i++)
+  {
+      std::cout << i*0.001 << " " << interp2dCombined(0.001*i,0.0,0.0,nR_Dens,nZ_Dens,
+                                       &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
+  }
+  std::cout << " z=0.1" << std::endl;
+  for(int i=0; i<100;i++)
+  {
+      std::cout << i*0.001 << " " << interp2dCombined(0.001*i,0.0,0.1,nR_Dens,nZ_Dens,
+                                       &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
+  }
   //Background Plasma flow velocity initialization    
   int nR_flowV = 1;
   int nY_flowV = 1;
@@ -1647,17 +1660,17 @@ else if(world_rank == 0)
         std::cout << "EDist_CDFregridY " << EDist_CDF_Y_regrid[44*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
  //       std::cout << "cosDist_CDFregridR " << EDist_CDF_R_regrid[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
   }
-  float spylInterpVal = interp2d(0.0,log10(500.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
+  float spylInterpVal = interp2d(5.0,log10(250.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
                               Elog_sputtRefCoeff.data(),spyl_surfaceModel.data());
-  float rfylInterpVal = interp2d(0.0,log10(500.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
+  float rfylInterpVal = interp2d(5.0,log10(250.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
                               Elog_sputtRefCoeff.data(),rfyl_surfaceModel.data());
-  float spylEInterpVal = interp3d ( 0.44,0.0,log10(500.0),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+  float spylEInterpVal = interp3d ( 0.44,5.0,log10(250.0),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
           angleDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,ADist_CDF_Y_regrid.data() );
- float sputEInterpVal = interp3d ( 0.44,0.0,log10(500.0),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+ float sputEInterpVal = interp3d ( 0.44,5.0,log10(250.0),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
               energyDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,EDist_CDF_Y_regrid.data() );
-  float rflAInterpVal = interp3d ( 0.44,0.0,log10(500.0),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+  float rflAInterpVal = interp3d ( 0.44,5.0,log10(250.0),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
           angleDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,ADist_CDF_R_regrid.data() );
- float rflEInterpVal = interp3d ( 0.44,0.0,log10(500.0),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+ float rflEInterpVal = interp3d ( 0.44,5.0,log10(250.0),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
               energyDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,EDist_CDF_R_regrid.data() );
   std::cout << "Finished surface model import " <<spylInterpVal << " " <<  spylEInterpVal << " " << sputEInterpVal << " "<< rfylInterpVal<< " " << rflAInterpVal << " " << rflEInterpVal <<  std::endl; 
 #endif
@@ -2311,11 +2324,11 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
     #if __CUDACC__
       cudaDeviceSynchronize();
     #endif
-     int nDevices=0;
-     nDevices = omp_get_num_threads();
-         unsigned int cpu_thread_id = omp_get_thread_num();
-         unsigned int num_cpu_threads = omp_get_num_threads();
-         printf("Number of CPU threads %d (ID %d)\n", cpu_thread_id, num_cpu_threads);
+     //int nDevices=0;
+     //nDevices = omp_get_num_threads();
+     //    unsigned int cpu_thread_id = omp_get_thread_num();
+     //    unsigned int num_cpu_threads = omp_get_num_threads();
+     //    printf("Number of CPU threads %d (ID %d)\n", cpu_thread_id, num_cpu_threads);
     #if USE_OPENMP
     //for(int device=0;device <1;device++)
 //{ cudaSetDevice(device); 
@@ -2440,7 +2453,7 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
                     nE_sputtRefCoeff, nA_sputtRefCoeff,A_sputtRefCoeff.data(),
                     Elog_sputtRefCoeff.data(),spyl_surfaceModel.data(), rfyl_surfaceModel.data(),
                     nE_sputtRefDistOut, nA_sputtRefDistOut,nE_sputtRefDistIn,nA_sputtRefDistIn,
-                    E_sputtRefDistIn.data(),A_sputtRefDistIn.data(),
+                    Elog_sputtRefDistIn.data(),A_sputtRefDistIn.data(),
                     E_sputtRefDistOut.data(),A_sputtRefDistOut.data(),
                     energyDistGrid01.data(),angleDistGrid01.data(),
                     EDist_CDF_Y_regrid.data(),ADist_CDF_Y_regrid.data(),
@@ -2551,6 +2564,12 @@ MPI_Reduce(&surfaces->grossErosion[0], &grossErosion[0],nSurfaces, MPI_FLOAT, MP
                    MPI_COMM_WORLD);
 MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->sumWeightStrike[0], &sumWeightStrike[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
+                   MPI_COMM_WORLD);
+MPI_Barrier(MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->aveSputtYld[0], &aveSputtYld[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
+                   MPI_COMM_WORLD);
+MPI_Barrier(MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->sputtYldCount[0], &sputtYldCount[0],nSurfaces, MPI_INT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
 MPI_Barrier(MPI_COMM_WORLD);
 #if FLUX_EA > 0 
@@ -2763,9 +2782,13 @@ dimsSurfE.push_back(nc_nAngles);
 dimsSurfE.push_back(nc_nEnergies);
 NcVar nc_grossDep = ncFile1.addVar("grossDeposition",ncDouble,nc_nLines);
 NcVar nc_grossEro = ncFile1.addVar("grossErosion",ncDouble,nc_nLines);
+NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl",ncDouble,nc_nLines);
+NcVar nc_spylCounts = ncFile1.addVar("spylCounts",ncInt,nc_nLines);
 NcVar nc_sumWeightStrike = ncFile1.addVar("sumWeightStrike",ncDouble,nc_nLines);
 nc_grossDep.putVar(&grossDeposition[0]);
 nc_grossEro.putVar(&grossErosion[0]);
+nc_aveSpyl.putVar(&aveSputtYld[0]);
+nc_spylCounts.putVar(&sputtYldCount[0]);
 nc_sumWeightStrike.putVar(&sumWeightStrike[0]);
 //NcVar nc_surfImpacts = ncFile1.addVar("impacts",ncDouble,dims1);
 //NcVar nc_surfRedeposit = ncFile1.addVar("redeposit",ncDouble,dims1);
@@ -2877,6 +2900,10 @@ ncFile.close();
     for(int i=0;i<100;i++)
 {
     std::cout << "particle ionization z and t " << particleArray->firstIonizationZ[i] << " " << particleArray->firstIonizationT[i]  << std::endl;
+}
+    for(int i=0;i<100;i++)
+{
+    std::cout << "reflected/sputtered energy " << particleArray->newVelocity[i]   << std::endl;
 }
 #if USE_MPI > 0
     }

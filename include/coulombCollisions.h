@@ -123,7 +123,14 @@ float ME = 9.10938356e-31;
     nu_deflection = nu_deflection_i + nu_deflection_e;
     nu_parallel = nu_parallel_i + nu_parallel_e;
     nu_energy = nu_energy_i + nu_energy_e;
-    if(te_eV == 0.0)
+    if(te_eV == 0.0 || ti_eV == 0.0)
+    {
+        nu_friction = 0.0;
+        nu_deflection = 0.0;
+        nu_parallel = 0.0;
+        nu_energy = 0.0;
+    }
+    if(density == 0.0)
     {
         nu_friction = 0.0;
         nu_deflection = 0.0;
@@ -394,11 +401,11 @@ float velocityCollisionsNorm = vectorNorm(velocityCollisions);
         particlesPointer->vx[indx] = coeff_Energy*velocityRelativeNorm*velocityCollisions[0]/velocityCollisionsNorm + flowVelocity[0]; 
 		particlesPointer->vy[indx] = coeff_Energy*velocityRelativeNorm*velocityCollisions[1]/velocityCollisionsNorm + flowVelocity[1];
 		particlesPointer->vz[indx] = coeff_Energy*velocityRelativeNorm*velocityCollisions[2]/velocityCollisionsNorm + flowVelocity[2];   	
-            particlesPointer->test[indx] =  coeff_par; 
-            particlesPointer->test0[indx] = n1;
-            particlesPointer->test1[indx] = nu_parallel;
-            particlesPointer->test2[indx] = nu_friction;
-            particlesPointer->test3[indx] = 0.1234;
+            //particlesPointer->test[indx] =  coeff_par; 
+            //particlesPointer->test0[indx] = n1;
+            //particlesPointer->test1[indx] = nu_parallel;
+            //particlesPointer->test2[indx] = nu_friction;
+            //particlesPointer->test3[indx] = 0.1234;
     //std::cout << "particle velocity "<< particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " << particlesPointer->vz[indx]    << std::endl;
     
 	}
