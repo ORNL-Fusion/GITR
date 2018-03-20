@@ -360,7 +360,10 @@ void operator()(std::size_t indx) const {
                     atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
                     atomicAdd(&surfaces->grossErosion[surfaceHit],newWeight);
                     atomicAdd(&surfaces->aveSputtYld[surfaceHit],Y0);
-                    atomicAdd(&surfaces->sputtYldCount[surfaceHit],1);
+                    if(weight > 0.0)
+                    {
+                        atomicAdd(&surfaces->sputtYldCount[surfaceHit],1);
+                    }
             #else
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
                     surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit] + newWeight;

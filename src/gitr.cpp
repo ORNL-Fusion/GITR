@@ -284,6 +284,7 @@ int main(int argc, char **argv)
   sim::Array<float> energyDistribution(nSurfaces*nEdist*nAdist,0.0);
   sim::Array<float> aveSputtYld(nSurfaces,0.0);
   sim::Array<int> sputtYldCount(nSurfaces,0);
+  sim::Array<int> sumParticlesStrike(nSurfaces,0);
 
   int nR_closeGeom = 1;
   int nY_closeGeom = 1;
@@ -2521,13 +2522,21 @@ for(int i=0; i<nP ; i++)
     cudaDeviceSynchronize();
 #endif
 #if USE_MPI > 0
+    sim::Array<float> xGather(nP,0);
+    //float *x_gather = NULL;
+    //if (world_rank == 0) {
+    //      x_gather = malloc(sizeof(float)*nP);
+    //}
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->x[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &xGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+
     MPI_Barrier(MPI_COMM_WORLD);
     //Collect stuff
    for(int rr=1; rr<world_size;rr++)
 {
 if(world_rank == rr)
 {
-    MPI_Send(&particleArray->x[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    //MPI_Send(&particleArray->x[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
     MPI_Send(&particleArray->y[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
     MPI_Send(&particleArray->z[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
     MPI_Send(&particleArray->vx[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
@@ -2539,7 +2548,7 @@ if(world_rank == rr)
 }
 else if(world_rank == 0)
 {
-    MPI_Recv(&particleArray->x[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    //MPI_Recv(&particleArray->x[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     MPI_Recv(&particleArray->y[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     MPI_Recv(&particleArray->z[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     MPI_Recv(&particleArray->vx[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -2570,6 +2579,9 @@ MPI_Reduce(&surfaces->aveSputtYld[0], &aveSputtYld[0],nSurfaces, MPI_FLOAT, MPI_
                    MPI_COMM_WORLD);
 MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->sputtYldCount[0], &sputtYldCount[0],nSurfaces, MPI_INT, MPI_SUM, 0,
+                   MPI_COMM_WORLD);
+MPI_Barrier(MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->sumParticlesStrike[0], &sumParticlesStrike[0],nSurfaces, MPI_INT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
 MPI_Barrier(MPI_COMM_WORLD);
 #if FLUX_EA > 0 
@@ -2784,11 +2796,13 @@ NcVar nc_grossDep = ncFile1.addVar("grossDeposition",ncDouble,nc_nLines);
 NcVar nc_grossEro = ncFile1.addVar("grossErosion",ncDouble,nc_nLines);
 NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl",ncDouble,nc_nLines);
 NcVar nc_spylCounts = ncFile1.addVar("spylCounts",ncInt,nc_nLines);
+NcVar nc_sumParticlesStrike = ncFile1.addVar("sumParticlesStrike",ncInt,nc_nLines);
 NcVar nc_sumWeightStrike = ncFile1.addVar("sumWeightStrike",ncDouble,nc_nLines);
 nc_grossDep.putVar(&grossDeposition[0]);
 nc_grossEro.putVar(&grossErosion[0]);
 nc_aveSpyl.putVar(&aveSputtYld[0]);
 nc_spylCounts.putVar(&sputtYldCount[0]);
+nc_spylCounts.putVar(&sumParticlesStrike[0]);
 nc_sumWeightStrike.putVar(&sumWeightStrike[0]);
 //NcVar nc_surfImpacts = ncFile1.addVar("impacts",ncDouble,dims1);
 //NcVar nc_surfRedeposit = ncFile1.addVar("redeposit",ncDouble,dims1);
