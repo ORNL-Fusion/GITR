@@ -76,7 +76,11 @@ using namespace netCDF::exceptions;
 
 int main(int argc, char **argv)
 {
- #if USE_MPI > 0
+    typedef std::chrono::high_resolution_clock Time;
+    typedef std::chrono::duration<float> fsec;
+    auto GITRstart_clock = Time::now();
+ 
+  #if USE_MPI > 0
         int ppn = 4;
         int np = 1;
     // Initialize the MPI environment
@@ -2311,8 +2315,6 @@ std::cout <<" closed ncFile_particles " << std::endl;
     //cpu_times copyToDeviceTime = timer.elapsed();
     //std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
 #endif
-    typedef std::chrono::high_resolution_clock Time;
-    typedef std::chrono::duration<float> fsec;
     auto start_clock = Time::now();
     std::cout << "Starting main loop"  << std::endl;
     float testFlowVec[3] = {0.0f};
@@ -2522,79 +2524,98 @@ for(int i=0; i<nP ; i++)
     cudaDeviceSynchronize();
 #endif
 #if USE_MPI > 0
-    sim::Array<float> xGather(nP,0);
+    sim::Array<float> xGather(nP,0.0);
+    sim::Array<float> yGather(nP,0.0);
+    sim::Array<float> zGather(nP,0.0);
+    sim::Array<float> vxGather(nP,0.0);
+    sim::Array<float> vyGather(nP,0.0);
+    sim::Array<float> vzGather(nP,0.0);
+    sim::Array<float> hitWallGather(nP,0.0);
+    sim::Array<float> weightGather(nP,0.0);
+    sim::Array<float> chargeGather(nP,0.0);
     //float *x_gather = NULL;
     //if (world_rank == 0) {
     //      x_gather = malloc(sizeof(float)*nP);
     //}
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Gather(&particleArray->x[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &xGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->y[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &yGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->z[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &zGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->vx[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &vxGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->vy[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &vyGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->vz[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &vzGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->hitWall[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &hitWallGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->weight[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &weightGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->charge[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &chargeGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    //Collect stuff
-   for(int rr=1; rr<world_size;rr++)
-{
-if(world_rank == rr)
-{
-    //MPI_Send(&particleArray->x[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-    MPI_Send(&particleArray->y[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-    MPI_Send(&particleArray->z[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-    MPI_Send(&particleArray->vx[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-    MPI_Send(&particleArray->vy[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-    MPI_Send(&particleArray->vz[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-    MPI_Send(&particleArray->hitWall[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-    MPI_Send(&particleArray->weight[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-    MPI_Send(&particleArray->charge[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-}
-else if(world_rank == 0)
-{
-    //MPI_Recv(&particleArray->x[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&particleArray->y[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&particleArray->z[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&particleArray->vx[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&particleArray->vy[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&particleArray->vz[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&particleArray->hitWall[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&particleArray->weight[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&particleArray->charge[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-}
-}
+//    MPI_Barrier(MPI_COMM_WORLD);
+//    //Collect stuff
+//   for(int rr=1; rr<world_size;rr++)
+//{
+//if(world_rank == rr)
+//{
+//    //MPI_Send(&particleArray->x[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+//    //MPI_Send(&particleArray->y[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+//    MPI_Send(&particleArray->z[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+//    MPI_Send(&particleArray->vx[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+//    MPI_Send(&particleArray->vy[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+//    MPI_Send(&particleArray->vz[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+//    MPI_Send(&particleArray->hitWall[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+//    MPI_Send(&particleArray->weight[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+//    MPI_Send(&particleArray->charge[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+//}
+//else if(world_rank == 0)
+//{
+//    //MPI_Recv(&particleArray->x[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//    //MPI_Recv(&particleArray->y[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//    MPI_Recv(&particleArray->z[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//    MPI_Recv(&particleArray->vx[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//    MPI_Recv(&particleArray->vy[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//    MPI_Recv(&particleArray->vz[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//    MPI_Recv(&particleArray->hitWall[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//    MPI_Recv(&particleArray->weight[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//    MPI_Recv(&particleArray->charge[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//}
+//}
 #if SPECTROSCOPY > 0
 //MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], (nBins+1)*net_nX*net_nZ, MPI_FLOAT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
 #endif
 #if USESURFACEMODEL > 0
-MPI_Barrier(MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->grossDeposition[0], &grossDeposition[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
-MPI_Barrier(MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->grossErosion[0], &grossErosion[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
-MPI_Barrier(MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->sumWeightStrike[0], &sumWeightStrike[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
-MPI_Barrier(MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->aveSputtYld[0], &aveSputtYld[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
-MPI_Barrier(MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->sputtYldCount[0], &sputtYldCount[0],nSurfaces, MPI_INT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
-MPI_Barrier(MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->sumParticlesStrike[0], &sumParticlesStrike[0],nSurfaces, MPI_INT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
-MPI_Barrier(MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
 #if FLUX_EA > 0 
-MPI_Barrier(MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->energyDistribution[0], &energyDistribution[0],nSurfaces*nEdist*nAdist, 
         MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
 MPI_Barrier(MPI_COMM_WORLD);
 #endif
 #endif
 #endif
+    if(world_rank == 0)
+{
     auto MPIfinish_clock = Time::now();
     fsec fsmpi = MPIfinish_clock - finish_clock;
     printf("Time taken for mpi reduction          is %6.3f (secs) \n", fsmpi.count());
+}
 //    tmp202 =  particleArray->vx[0];
     //std::cout << "memory access hitwall " 
     //<< particleArray->xprevious[0] << std::endl;
@@ -2769,7 +2790,18 @@ NcVar nc_weight0 = ncFile0.addVar("weight",ncDouble,dims0);
 NcVar nc_charge0 = ncFile0.addVar("charge",ncDouble,dims0);
        std::cout << "added Vars " << std::endl;
        std::cout << "x0 "<< particleArray->x[0] << std::endl;
-
+#if USE_MPI > 0
+nc_x0.putVar(&xGather[0]);
+nc_y0.putVar(&yGather[0]);
+nc_z0.putVar(&zGather[0]);
+nc_vx0.putVar(&vxGather[0]);
+nc_vy0.putVar(&vyGather[0]);
+nc_vz0.putVar(&vzGather[0]);
+nc_trans0.putVar(&particleArray->transitTime[0]);
+nc_impact0.putVar(&hitWallGather[0]);
+nc_weight0.putVar(&weightGather[0]);
+nc_charge0.putVar(&chargeGather[0]);
+#else
 nc_x0.putVar(&xOut[0]);
        std::cout << "added x " << std::endl;
 nc_y0.putVar(&particleArray->y[0]);
@@ -2781,6 +2813,7 @@ nc_trans0.putVar(&particleArray->transitTime[0]);
 nc_impact0.putVar(&particleArray->hitWall[0]);
 nc_weight0.putVar(&particleArray->weight[0]);
 nc_charge0.putVar(&particleArray->charge[0]);
+#endif
 ncFile0.close();
        std::cout << "closed positions opening surface " << std::endl;
 #if USESURFACEMODEL > 0
@@ -2933,5 +2966,11 @@ ncFile.close();
     // Finalize the MPI environment.
     MPI_Finalize();
 #endif
+  if(world_rank == 0)
+  {
+    auto GITRfinish_clock = Time::now();
+    fsec fstotal = GITRfinish_clock - GITRstart_clock;
+    printf("Total runtime for GITR is %6.3f (secs) \n", fstotal.count());
+  }
     return 0;
     }
