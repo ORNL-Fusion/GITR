@@ -2580,6 +2580,9 @@ MPI_Barrier(MPI_COMM_WORLD);
 #endif
 #endif
 #endif
+    auto MPIfinish_clock = Time::now();
+    fsec fsmpi = MPIfinish_clock - finish_clock;
+    printf("Time taken for mpi reduction          is %6.3f (secs) \n", fsmpi.count());
 //    tmp202 =  particleArray->vx[0];
     //std::cout << "memory access hitwall " 
     //<< particleArray->xprevious[0] << std::endl;
