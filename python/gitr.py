@@ -142,15 +142,20 @@ def piscesProcessing(r=0.01,path=''):
     ero = np.extract(condition,grossEro)
     strike = np.extract(condition,sumWeightStrike)
     areas = np.extract(condition,area)
-    backgroundIonsPerSec = 6.134e17; #3.8640e+19;for pisces He high flux case
-    backgroundFlux = 1.5e22;#3.5e22;
-    time = 1000;
-    erodedMass = time*backgroundIonsPerSec*184*1.66e-27*3.9e-3*1000;
-    erodedMassPerParticle = erodedMass/1e5;
+    with io.open('input/gitrInput.cfg') as f:
+        config = libconf.load(f)
+
+    backgroundIonsPerSec = float(config.postProcessing.backgroundIonsPerSec); #3.8640e+19;for pisces He high flux case
+    backgroundFlux = float(config.postProcessing.backgroundFlux);#3.5e22;
+    time = float(config.postProcessing.time);
+    nParticles = float(config.impurityParticleSource.nP);
+    backgroundSputtYield = float(config.postProcessing.backgroundSputtYield);
+    erodedMass = time*backgroundIonsPerSec*184*1.66e-27*backgroundSputtYield*1000;
+    erodedMassPerParticle = erodedMass/nParticles;
     netErosion = np.sum(ero - dep);
     netStrike = np.sum(strike)
     totalArea = np.sum(areas)
-    impurityParticlePerSecondPerComputationalPartice = backgroundIonsPerSec*3.9e-3/1e5;
+    impurityParticlePerSecondPerComputationalPartice = backgroundIonsPerSec*backgroundSputtYield/nParticles;
     impurityFlux = netStrike/totalArea*impurityParticlePerSecondPerComputationalPartice;
     Wfrac = impurityFlux/backgroundFlux;
     Aweight = np.sum(EAdist,axis=0)
@@ -168,9 +173,9 @@ def piscesProcessing(r=0.01,path=''):
         np.savetxt(path+'/'+'gitrFluxA.dat', A)
         np.savetxt(path+'/'+'gitrFluxEAdist.dat', EAdist)
     
-    Dfrac = 0.9;
-    Hefrac = 0.1;
-    Tfrac = 0.0;
+    Dfrac = float(config.postProcessing.Dfrac);
+    Hefrac = float(config.postProcessing.Hefrac);
+    Tfrac = float(config.postProcessing.Tfrac);
     file = open('gitrOut.txt','w') 
     file.write('plasmaSpecies=He W D T\n') 
     file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
