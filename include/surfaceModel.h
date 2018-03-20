@@ -367,6 +367,8 @@ void operator()(std::size_t indx) const {
             #else
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
                     surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit] + newWeight;
+                    surfaces->aveSputtYld[surfaceHit] = surfaces->aveSputtYld[surfaceHit] + Y0;
+                    surfaces->sputtYldCount[surfaceHit] = surfaces->sputtYldCount[surfaceHit] + 1;
             #endif
                 }
             }
