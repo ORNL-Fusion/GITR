@@ -2316,6 +2316,8 @@ std::cout <<" closed ncFile_particles " << std::endl;
     //std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
 #endif
     auto start_clock = Time::now();
+    fsec fs1 = start_clock - GITRstart_clock;
+    printf("Initialize time for node %i          is %6.3f (secs) \n", world_rank,fs1.count());
     std::cout << "Starting main loop"  << std::endl;
     float testFlowVec[3] = {0.0f};
     interp2dVector(&testFlowVec[0],0.01,-0.02,0.1,nR_flowV,nZ_flowV,
