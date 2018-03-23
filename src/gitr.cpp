@@ -192,6 +192,10 @@ int main(int argc, char **argv)
   int nZ_Bfield = 1;
   int n_Bfield = 1;
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
+  #if USE_MPI > 0 
+    //if(world_rank == 0)
+    //{
+  #endif
   #if BFIELD_INTERP > 0
     std::string bfieldFile;
     getVariable(cfg,bfieldCfg+"fileString",bfieldFile);
@@ -203,9 +207,22 @@ int main(int argc, char **argv)
   #if BFIELD_INTERP > 2
     nY_Bfield = getDimFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridNyString");
   #endif
+  #if USE_MPI > 0 
+    //}
+    //MPI_Bcast(&nR_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
+    //MPI_Bcast(&nY_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
+    //MPI_Bcast(&nZ_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
+    //MPI_Barrier(MPI_COMM_WORLD);
+  #endif
+
   sim::Array<float> bfieldGridr(nR_Bfield),bfieldGridy(nY_Bfield),bfieldGridz(nZ_Bfield);
   n_Bfield = nR_Bfield*nY_Bfield*nZ_Bfield;
   sim::Array<float> br(n_Bfield),by(n_Bfield),bz(n_Bfield);
+  
+  #if USE_MPI > 0 
+    //if(world_rank == 0)
+    //{
+  #endif
   #if BFIELD_INTERP == 0
     getVariable(cfg,bfieldCfg+"r",br[0]);
     getVariable(cfg,bfieldCfg+"y",by[0]);
@@ -223,6 +240,16 @@ int main(int argc, char **argv)
     getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"yString",by);
     getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"zString",bz);
   #endif 
+  #if USE_MPI > 0 
+    //}
+    //MPI_Bcast(br.data(), nR_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    //MPI_Bcast(by.data(), nY_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    //MPI_Bcast(bz.data(), nZ_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    //MPI_Bcast(bfieldGridr.data(),nR_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    //MPI_Bcast(bfieldGridy.data(),nY_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    //MPI_Bcast(bfieldGridz.data(),nZ_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    //MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   float Btest[3] = {0.0f}; 
   interp2dVector(&Btest[0],0.0,0.0,0.0,nR_Bfield,
                     nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),by.data());
@@ -242,16 +269,52 @@ int main(int argc, char **argv)
   std::string profiles_folder = "output/profiles";  
   
   //Geometry Definition
+  int nLines = 1;
+  int nSurfaces = 0;
+  #if USE_MPI > 0
+    if(world_rank == 0){
+  #endif
   Setting& geom = cfg_geom.lookup("geom");
-  int nLines = geom["x1"].getLength();
-  int nSurfaces=0;
+  nLines = geom["x1"].getLength();
+   std::cout << "Just read nLines " << nLines << std::endl;
+  #if USE_MPI > 0
+   }
+    MPI_Bcast(&nLines,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   //int nMaterials = geom["nMaterials"];
   std::cout << "Number of Geometric Objects To Load: " << nLines << std::endl;
   
   sim::Array<Boundary> boundaries(nLines+1,Boundary());
+  #if USE_MPI > 0
+    if(world_rank == 0){
+  #endif
   nSurfaces = importGeometry(cfg_geom, boundaries);
   std::cout << "Starting Boundary Init..." << std::endl;
   std::cout << " y1 and y2 " << boundaries[nLines].y1 << " " << boundaries[nLines].y2 << std::endl;
+  #if USE_MPI > 0
+   }
+    MPI_Bcast(&nSurfaces,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].x1, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].y1, nLines+1,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].z1, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].x3, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].y3, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].z3, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].x2, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].y2, nLines+1,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].z2, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].Z, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].a, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].b, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].c, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].d, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].plane_norm, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].area, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[0].surfaceNumber, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[nLines].periodic, 1,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   float biasPotential = 0.0;
   #if BIASED_SURFACE > 0
     getVariable(cfg,"backgroundPlasmaProfiles.biasPotential",biasPotential);
@@ -297,6 +360,10 @@ int main(int argc, char **argv)
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
   #if GEOM_HASH == 1
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
     getVariable(cfg,geomHashCfg+"nR_closeGeom",nR_closeGeom);
     getVariable(cfg,geomHashCfg+"nZ_closeGeom",nZ_closeGeom);
     getVariable(cfg,geomHashCfg+"n_closeGeomElements",n_closeGeomElements);
@@ -305,10 +372,23 @@ int main(int argc, char **argv)
       getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom);
       nGeomHash = nY_closeGeom*nGeomHash;
     #endif
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(&nR_closeGeom,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_closeGeom,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_closeGeom,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&n_closeGeomElements,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nGeomHash,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   #endif
 
   #if GEOM_HASH > 1
     std::string hashFile;
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
     getVariable(cfg,geomHashCfg+"fileString",hashFile);
     nR_closeGeom = getDimFromFile(cfg,input_path+hashFile,geomHashCfg,"gridNrString");
     nZ_closeGeom = getDimFromFile(cfg,input_path+hashFile,geomHashCfg,"gridNzString");
@@ -319,10 +399,21 @@ int main(int argc, char **argv)
       nGeomHash = nY_closeGeom*nGeomHash;
     #else
     #endif
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(&nR_closeGeom,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_closeGeom,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_closeGeom,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&n_closeGeomElements,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nGeomHash,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
   #endif
+  #endif
+  
   sim::Array<float> closeGeomGridr(nR_closeGeom), closeGeomGridy(nY_closeGeom),
       closeGeomGridz(nZ_closeGeom);
   sim::Array<int> closeGeom(nGeomHash,0);
+  
   #if GEOM_HASH == 1
     float hashX0,hashX1,hashY0,hashY1,hashZ0,hashZ1;
     getVariable(cfg,geomHashCfg+"hashX0",hashX0);
@@ -453,6 +544,10 @@ else if(world_rank == 0)
       }
 #endif
   #elif GEOM_HASH > 1
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
     getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridRString",closeGeomGridr);
     getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridZString",closeGeomGridz);
     #if USE3DTETGEOM >0
@@ -462,6 +557,14 @@ else if(world_rank == 0)
               << " " << nZ_closeGeom << " " << n_closeGeomElements << std::endl;
     getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"closeGeomString",closeGeom);
     std::cout << "geom hash indices " << closeGeom[0] << " " << closeGeom[1] << " " << closeGeom[2] << std::endl;
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(closeGeomGridr.data(), nR_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeomGridy.data(), nY_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeomGridz.data(), nZ_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeom.data(),nGeomHash,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   #endif
               
   int nR_closeGeom_sheath = 1;
@@ -483,6 +586,10 @@ else if(world_rank == 0)
 
   #if GEOM_HASH_SHEATH > 1
     std::string hashFile_sheath;
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
     getVariable(cfg,geomHashSheathCfg+"fileString",hashFile_sheath);
     nR_closeGeom_sheath = getDimFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridNrString");
     nZ_closeGeom_sheath = getDimFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridNzString");
@@ -493,11 +600,22 @@ else if(world_rank == 0)
       nGeomHash_sheath = nY_closeGeom_sheath*nGeomHash_sheath;
     #else
     #endif
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(&nR_closeGeom_sheath,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_closeGeom_sheath,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_closeGeom_sheath,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&n_closeGeomElements_sheath,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nGeomHash_sheath,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
   #endif
+  #endif
+
   sim::Array<float> closeGeomGridr_sheath(nR_closeGeom_sheath), 
                     closeGeomGridy_sheath(nY_closeGeom_sheath),
                     closeGeomGridz_sheath(nZ_closeGeom_sheath);
   sim::Array<int> closeGeom_sheath(nGeomHash_sheath);
+
   #if GEOM_HASH_SHEATH  ==1
     float hashX0_s,hashX1_s,hashY0_s,hashY1_s,hashZ0_s,hashZ1_s;
     getVariable(cfg,geomHashSheathCfg+"hashX0",hashX0_s);
@@ -594,12 +712,24 @@ else if(world_rank == 0)
       cudaDeviceSynchronize();
     #endif
   #elif GEOM_HASH_SHEATH > 1
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
     getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridRString",closeGeomGridr_sheath);
     getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridZString",closeGeomGridz_sheath);
     #if USE3DTETGEOM >0
       getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridYString",closeGeomGridy_sheath);
     #endif
       getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"closeGeomString",closeGeom_sheath);
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(closeGeomGridr_sheath.data(), nR_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeomGridy_sheath.data(), nY_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeomGridz_sheath.data(), nZ_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeom_sheath.data(),nGeomHash,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   #endif
 
   int nR_Lc = 1;
@@ -830,6 +960,10 @@ else if(world_rank == 0)
   std::string tempCfg = "backgroundPlasmaProfiles.Temperature.";
   #if TEMP_INTERP > 0
     std::string tempFile;
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
     getVariable(cfg,tempCfg+"fileString",tempFile);
     nR_Temp = getDimFromFile(cfg,input_path+tempFile,tempCfg,"gridNrString");
   #endif
@@ -839,11 +973,22 @@ else if(world_rank == 0)
   #if TEMP_INTERP > 2
     nY_Temp = getDimFromFile(cfg,input_path+tempFile,tempCfg,"gridNyString");
   #endif
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(&nR_Temp, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_Temp, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_Temp, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   
   sim::Array<float> TempGridr(nR_Temp), TempGridz(nZ_Temp), TempGridy(nY_Temp);
   n_Temp = nR_Temp*nY_Temp*nZ_Temp;
   sim::Array<float> ti(n_Temp), te(n_Temp);
 
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
   #if TEMP_INTERP == 0
     getVariable(cfg,tempCfg+"ti",ti[0]);
     getVariable(cfg,tempCfg+"te",te[0]);
@@ -857,6 +1002,15 @@ else if(world_rank == 0)
     #endif
     getVarFromFile(cfg,input_path+tempFile,tempCfg,"IonTempString",ti);
     getVarFromFile(cfg,input_path+tempFile,tempCfg,"ElectronTempString",te);
+  #endif
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(TempGridr.data(), nR_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(TempGridy.data(), nY_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(TempGridz.data(), nZ_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(ti.data(), n_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(te.data(), n_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
   #endif
 
   float testVec = 0.0;
@@ -872,6 +1026,10 @@ else if(world_rank == 0)
   std::string densCfg = "backgroundPlasmaProfiles.Density.";
   #if DENSITY_INTERP > 0
     std::string densFile;
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
     getVariable(cfg,densCfg+"fileString",densFile);
     nR_Dens = getDimFromFile(cfg,input_path+densFile,densCfg,"gridNrString");
   #endif
@@ -881,11 +1039,22 @@ else if(world_rank == 0)
   #if DENSITY_INTERP > 2
     nY_Dens = getDimFromFile(cfg,input_path+densFile,densCfg,"gridNyString");
   #endif
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(&nR_Dens, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_Dens, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_Dens, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   
   sim::Array<float> DensGridr(nR_Dens), DensGridz(nZ_Dens), DensGridy(nY_Dens);
   n_Dens = nR_Dens*nY_Dens*nZ_Dens;
   sim::Array<float> ni(n_Dens), ne(n_Dens);
 
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
   #if DENSITY_INTERP == 0
     getVariable(cfg,densCfg+"ni",ni[0]);
     getVariable(cfg,densCfg+"ne",ne[0]);
@@ -915,6 +1084,15 @@ else if(world_rank == 0)
       std::cout << i*0.001 << " " << interp2dCombined(0.001*i,0.0,0.1,nR_Dens,nZ_Dens,
                                        &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
   }
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(DensGridr.data(), nR_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(DensGridy.data(), nY_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(DensGridz.data(), nZ_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(ni.data(), n_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(ne.data(), n_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   //Background Plasma flow velocity initialization    
   int nR_flowV = 1;
   int nY_flowV = 1;
@@ -1586,6 +1764,10 @@ else if(world_rank == 0)
 #if USESURFACEMODEL > 0
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
   getVariable(cfg,surfaceModelCfg+"fileString",surfaceModelFile);
   nE_sputtRefCoeff = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nEsputtRefCoeffString");
   nA_sputtRefCoeff = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nAsputtRefCoeffString");
@@ -1596,6 +1778,18 @@ else if(world_rank == 0)
   nDistE_surfaceModel = nE_sputtRefDistIn*nA_sputtRefDistIn*nE_sputtRefDistOut;
   nDistA_surfaceModel = nE_sputtRefDistIn*nA_sputtRefDistIn*nA_sputtRefDistOut;
   std::cout <<  " got dimensions of surface model " << std::endl;
+  #if USE_MPI > 0
+    }
+      MPI_Bcast(&nE_sputtRefCoeff, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nA_sputtRefCoeff, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nE_sputtRefDistIn, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nA_sputtRefDistIn, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nE_sputtRefDistOut, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nA_sputtRefDistOut, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nDistE_surfaceModel, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nDistA_surfaceModel, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+  #endif
 #endif
   sim::Array<float> E_sputtRefCoeff(nE_sputtRefCoeff), A_sputtRefCoeff(nA_sputtRefCoeff),
                     Elog_sputtRefCoeff(nE_sputtRefCoeff),
@@ -1613,6 +1807,10 @@ else if(world_rank == 0)
                     ADist_CDF_Y_regrid(nDistA_surfaceModel),EDist_CDF_Y_regrid(nDistE_surfaceModel),
                     ADist_CDF_R_regrid(nDistA_surfaceModel),EDist_CDF_R_regrid(nDistE_surfaceModel);
 #if USESURFACEMODEL > 0
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefCoeff",E_sputtRefCoeff);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefCoeff",A_sputtRefCoeff);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistIn",E_sputtRefDistIn);
@@ -1678,6 +1876,34 @@ else if(world_rank == 0)
  float rflEInterpVal = interp3d ( 0.44,5.0,log10(250.0),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
               energyDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,EDist_CDF_R_regrid.data() );
   std::cout << "Finished surface model import " <<spylInterpVal << " " <<  spylEInterpVal << " " << sputEInterpVal << " "<< rfylInterpVal<< " " << rflAInterpVal << " " << rflEInterpVal <<  std::endl; 
+  #if USE_MPI > 0
+    }
+      MPI_Bcast(E_sputtRefCoeff.data(), nE_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(A_sputtRefCoeff.data(), nA_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(Elog_sputtRefCoeff.data(), nE_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(energyDistGrid01.data(), nE_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(angleDistGrid01.data(), nA_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(spyl_surfaceModel.data(), nE_sputtRefCoeff*nA_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(rfyl_surfaceModel.data(), nE_sputtRefCoeff*nA_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(E_sputtRefDistIn.data(), nE_sputtRefDistIn,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(A_sputtRefDistIn.data(), nA_sputtRefDistIn,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(Elog_sputtRefDistIn.data(), nE_sputtRefDistIn,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(E_sputtRefDistOut.data(), nE_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(A_sputtRefDistOut.data(), nA_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(ADist_Y.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_Y.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(ADist_R.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_R.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(ADist_CDF_Y.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_CDF_Y.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(ADist_CDF_R.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_CDF_R.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(ADist_CDF_Y_regrid.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_CDF_Y_regrid.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(ADist_CDF_R_regrid.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_CDF_R_regrid.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+  #endif
 #endif
   // Particle time stepping control
   int ionization_nDtPerApply  = cfg.lookup("timeStep.ionization_nDtPerApply");
@@ -1961,9 +2187,17 @@ else if(world_rank == 0)
     float randA = 0.0;
     int lowIndA = 0;
   #endif
+  std::cout << "Starting psourcefile import " << std::endl;
   #if PARTICLE_SOURCE_FILE > 0 // File source
     Config cfg_particles;
+    vector<float> xpfile(nP),ypfile(nP),zpfile(nP),
+    vxpfile(nP),vypfile(nP),vzpfile(nP);
     std::string ncParticleSourceFile;
+    int nPfile=0;
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
     getVariable(cfg,"particleSource.ncFileString",ncParticleSourceFile);
 std::cout << "About to try to open NcFile ncp0 " << std::endl;
 // Return this in event of a problem.
@@ -1982,20 +2216,21 @@ std::cout << "finished NcFile ncp0 starting ncp" << std::endl;
 std::cout << "getting dim nP" << std::endl;
     NcDim ps_nP(ncp.getDim("nP"));
 
-    int nPfile = ps_nP.getSize();
-
-std::cout << "nPfile "<< nPfile << std::endl;
+    nPfile = ps_nP.getSize();
+    xpfile.resize(nPfile);
+    ypfile.resize(nPfile);
+    zpfile.resize(nPfile);
+    vxpfile.resize(nPfile);
+    vypfile.resize(nPfile);
+    vzpfile.resize(nPfile);
+//std::cout << "nPfile "<< nPfile << std::endl;
     NcVar ncp_x(ncp.getVar("x"));
     NcVar ncp_y(ncp.getVar("y"));
     NcVar ncp_z(ncp.getVar("z"));
     NcVar ncp_vx(ncp.getVar("vx"));
     NcVar ncp_vy(ncp.getVar("vy"));
     NcVar ncp_vz(ncp.getVar("vz"));
-
 std::cout << "got through NcVar " << std::endl;
-    vector<float> xpfile(nPfile),ypfile(nPfile),zpfile(nPfile),
-    vxpfile(nPfile),vypfile(nPfile),vzpfile(nPfile);
-std::cout << "defined file vectors " << std::endl;
     ncp_x.getVar(&xpfile[0]);  
     ncp_y.getVar(&ypfile[0]);  
     ncp_z.getVar(&zpfile[0]);  
@@ -2005,6 +2240,27 @@ std::cout << "defined file vectors " << std::endl;
 std::cout << "defined file vectors " << std::endl;
   ncp.close();  
 std::cout << "closed ncp " << std::endl;
+    #if USE_MPI > 0
+      }
+      MPI_Bcast(&nPfile, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+      if(world_rank > 0)
+      {
+        xpfile.resize(nPfile);
+        ypfile.resize(nPfile);
+        zpfile.resize(nPfile);
+        vxpfile.resize(nPfile);
+        vypfile.resize(nPfile);
+        vzpfile.resize(nPfile);
+      }
+      MPI_Bcast(xpfile.data(), nPfile,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(ypfile.data(), nPfile,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(zpfile.data(), nPfile,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(vxpfile.data(), nPfile,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(vypfile.data(), nPfile,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(vzpfile.data(), nPfile,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+    #endif
     //for(int i=0;i<nPfile;i++)
     //{
     //    std::cout << " xyz from file " << xpfile[i] << " " << ypfile[i] << " " << zpfile[i] << std::endl;  
