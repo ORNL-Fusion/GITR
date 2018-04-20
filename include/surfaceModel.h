@@ -12,7 +12,8 @@
 #include "Particles.h"
 #include "Boundary.h"
 #include "Surfaces.h"
-#include <cmath>
+//#include <cmath>
+
 #include <math.h>
 
 #ifdef __CUDACC__
@@ -289,6 +290,7 @@ void operator()(std::size_t indx) const {
             //    particles->test0[indx] = E0;
             //    particles->test1[indx] = thetaImpact;
             //    particles->test2[indx] = Y0;
+            //    particles->test3[indx] = R0;
             //}
             //std::cout << "Energy angle yield " << E0 << " " << thetaImpact << " " << Y0 << std::endl; 
             #if PARTICLESEEDS > 0
@@ -343,14 +345,14 @@ void operator()(std::size_t indx) const {
                   eInterpVal = interp3d(r9,thetaImpact,log10(E0),
                            nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                            energyDistGrid01,A_sputtRefDistIn,E_sputtRefDistIn,EDist_CDF_Y_regrid);
-            if(particles->test[indx] == 0.0)
-            {
-                particles->test[indx] = 1.0;
-                particles->test0[indx] = E0;
-                particles->test1[indx] = thetaImpact;
-                particles->test2[indx] = r8;
-                particles->test3[indx] = r9;
-            }            
+            //if(particles->test[indx] == 0.0)
+            //{
+            //    particles->test[indx] = 1.0;
+            //    particles->test0[indx] = aInterpVal;
+            //    particles->test1[indx] = eInterpVal;
+            //    particles->test2[indx] = r8;
+            //    particles->test3[indx] = r9;
+            //}            
                   newWeight=(Y0/sputtProb)*weight;
                   if(sputtProb == 0.0) newWeight = 0.0;
                   if( boundaryVector[wallHit].Z > 0.0)
@@ -411,7 +413,7 @@ void operator()(std::size_t indx) const {
             #endif 
                 } 
                 //reflect with weight and new initial conditions
-                if( boundaryVector[wallHit].Z > 0.0)
+                if( boundaryVector[wallHit].Z > 0.0 && newWeight > 0.0)
                 {
                 particles->weight[indx] = newWeight;
                 particles->hitWall[indx] = 0.0;
@@ -425,13 +427,30 @@ void operator()(std::size_t indx) const {
     particles->vx[indx] = -signPartDotNormal*vSampled[0];
     particles->vy[indx] = -signPartDotNormal*vSampled[1];
     particles->vz[indx] = -signPartDotNormal*vSampled[2];
-    //particles->test[indx] = surfaceHit;
-    //particles->test0[indx] = EdistInd;
-    //particles->test1[indx] = AdistInd;
+            //if(particles->test[indx] == 0.0)
+            //{
+            //    particles->test[indx] = 1.0;
+            //    particles->test0[indx] = aInterpVal;
+            //    particles->test1[indx] = eInterpVal;
+            //    particles->test2[indx] = V0;
+            //    particles->test3[indx] = vSampled[2];
+            //}            
 
     particles->xprevious[indx] = particles->x[indx] + -signPartDotNormal*surfaceNormalVector[0]*1e-6;
     particles->yprevious[indx] = particles->y[indx] + -signPartDotNormal*surfaceNormalVector[1]*1e-6;
     particles->zprevious[indx] = particles->z[indx] + -signPartDotNormal*surfaceNormalVector[2]*1e-6;
+            //if(particles->test[indx] == 0.0)
+            //{
+            //    particles->test[indx] = 1.0;
+            //    particles->test0[indx] = particles->x[indx];
+            //    particles->test1[indx] = particles->y[indx];
+            //    particles->test2[indx] = particles->z[indx];
+            //    particles->test3[indx] = signPartDotNormal;
+            //}
+            //else
+            //{
+            //    particles->test[indx] = particles->test[indx] + 1.0;
+            //}            
             }
                 else
                 {

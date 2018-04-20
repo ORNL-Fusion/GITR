@@ -8,7 +8,8 @@
 #endif
 
 #include "Particles.h"
-#include <cmath>
+//#include <cmath>
+#include "math.h"
 
 struct crossFieldDiffusion { 
     Particles *particlesPointer;

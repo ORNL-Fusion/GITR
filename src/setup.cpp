@@ -1,13 +1,13 @@
 #include "h1.cuh"
-#include <math.h>
+//#include <math.h>
 #include <iostream>
 
 #include <iomanip>
 #include <cstdlib>
 #include <libconfig.h++>
-#include <cmath>
-
-using namespace std;
+//#include <cmath>
+#include "math.h"
+//using namespace std;
 using namespace libconfig;
 
 

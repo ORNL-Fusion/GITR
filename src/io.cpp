@@ -153,6 +153,11 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
           boundaries[i].x2 << ", " << boundaries[i].z2 << ", " <<
           boundaries[i].slope_dzdx << ", " << boundaries[i].intercept_z << ", " <<
           boundaries[i].length << ", " << boundaries[i].Z << "];" << std::endl;
+       if(boundaries[i].Z > 0.0)
+       {
+           boundaries[i].surfaceNumber = nZSurfs;
+           nZSurfs = nZSurfs + 1;
+       }
     }   
 
     outfile.close();

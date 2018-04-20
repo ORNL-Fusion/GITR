@@ -187,6 +187,28 @@ float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {
 
 }
 CUDA_CALLABLE_MEMBER
+void interpFieldAlignedVector (float* field, float x, float y, float z,int nx, int nz,
+float* gridx,float* gridz,float* datar, float* dataz, float* datat,
+int nxB, int nzB, float* gridxB,float* gridzB,float* datarB,float* datazB, float* datatB) {
+
+   float Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar);
+   float B[3] = {0.0};
+   float B_unit[3] = {0.0};
+   float Bmag = 0.0;
+   interp2dVector (&B[0],x,y,z,nxB,nzB,
+                   gridxB,gridzB,datarB,datazB,datatB);
+   Bmag = sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
+   B_unit[0] = B[0]/Bmag;
+   B_unit[1] = B[1]/Bmag;
+   B_unit[2] = B[2]/Bmag;
+   std::cout << " Ar and Bunit " << Ar << " " << B_unit[0] << " " <<
+                " " << B_unit[1] << " " << B_unit[2] << std::endl; 
+   field[0] = Ar*B_unit[0];
+   field[1] = Ar*B_unit[1];
+   field[2] = Ar*B_unit[2];
+
+}
+CUDA_CALLABLE_MEMBER
 float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data,int &lowInd)
 {
     int done = 0;

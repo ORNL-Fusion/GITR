@@ -558,6 +558,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
             {
                 minDistance = boundaryVector[j].distanceToParticle;
                 minIndex = j;
+                closestBoundaryIndex = j;
                 direction_type = boundaryVector[j].pointLine;
             }
         }

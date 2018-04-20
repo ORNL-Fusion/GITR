@@ -8,7 +8,7 @@
 #endif
 
 #include "Particles.h"
-#include <cmath>
+//#include <cmath>
 #include <math.h>
 
 struct thermalForce { 
@@ -27,11 +27,11 @@ struct thermalForce {
     float* gradTeT;
     int nR_Bfield;
     int nZ_Bfield;
-    float * BfieldGridRDevicePointer;
-    float * BfieldGridZDevicePointer;
-    float * BfieldRDevicePointer;
-    float * BfieldZDevicePointer;
-    float * BfieldTDevicePointer;
+    float * BfieldGridR;
+    float * BfieldGridZ;
+    float * BfieldR;
+    float * BfieldZ;
+    float * BfieldT;
     
     float dv_ITGx;
     float dv_ITGy;
@@ -45,11 +45,11 @@ struct thermalForce {
                  float* _gradTiR, float* _gradTiZ, float* _gradTiT, float* _gradTeR, 
                  float* _gradTeZ,float* _gradTeT,
                  int _nR_Bfield, int _nZ_Bfield,
-                 float * _BfieldGridRDevicePointer,
-                 float * _BfieldGridZDevicePointer,
-                 float * _BfieldRDevicePointer,
-                 float * _BfieldZDevicePointer,
-                 float * _BfieldTDevicePointer)
+                 float * _BfieldGridR,
+                 float * _BfieldGridZ,
+                 float * _BfieldR,
+                 float * _BfieldZ,
+                 float * _BfieldT)
         
        : particlesPointer(_particlesPointer), dt(_dt), background_amu(_background_amu),
         nR_gradT(_nR_gradT),nZ_gradT(_nZ_gradT),
@@ -57,10 +57,10 @@ struct thermalForce {
         gradTiR(_gradTiR), gradTiZ(_gradTiZ),gradTiT(_gradTiT), gradTeR(_gradTeR), 
         gradTeZ(_gradTeZ),gradTeT(_gradTeT), 
         nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), 
-        BfieldGridRDevicePointer(_BfieldGridRDevicePointer), 
-        BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
-        BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), 
-        BfieldTDevicePointer(_BfieldTDevicePointer)
+        BfieldGridR(_BfieldGridR), 
+        BfieldGridZ(_BfieldGridZ),
+        BfieldR(_BfieldR), BfieldZ(_BfieldZ), 
+        BfieldT(_BfieldT)
         ,dv_ITGx{0.0},dv_ITGy{0.0},dv_ITGz{0.0},dv_ETGx{0.0},dv_ETGy{0.0},dv_ETGz{0.0},
         dv_ITG{0.0,0.0,0.0}
         {}
@@ -91,30 +91,50 @@ void operator()(std::size_t indx)
     float Z = particlesPointer->charge[indx];
     float amu = particlesPointer->amu[indx];
     float propConst = dt/(amu*MI)*kB*KelvinPerEv;
-    float fudgeFactor = 0.1;
-        
+    interp2dVector(&B[0],x,y,z,nR_Bfield,nZ_Bfield,BfieldGridR,
+                   BfieldGridZ,BfieldR,BfieldZ,BfieldT);
+    vectorNormalize(B,B_unit); 
+#if USEFIELDALIGNEDVALUES > 0 
+    interpFieldAlignedVector(gradTi,x,y,z,                 
+                             nR_gradT,nZ_gradT, 
+                             gradTGridr,gradTGridz,gradTiR, 
+                             gradTiZ,gradTiT,nR_Bfield,nZ_Bfield, 
+                             BfieldGridR,BfieldGridZ,BfieldR, 
+                             BfieldZ,BfieldT); 
+    interpFieldAlignedVector(gradTe,x,y,z,                 
+                             nR_gradT,nZ_gradT, 
+                             gradTGridr,gradTGridz,gradTeR, 
+                             gradTeZ,gradTeT,nR_Bfield,nZ_Bfield, 
+                             BfieldGridR,BfieldGridZ,BfieldR, 
+                             BfieldZ,BfieldT);
+    B_unit[0] = abs(B_unit[0]);
+    B_unit[1] = abs(B_unit[1]);
+    B_unit[2] = abs(B_unit[2]);
+#else 
     interp2dVector(&gradTi[0],x,y,z,nR_gradT,nZ_gradT,gradTGridr ,gradTGridz ,gradTiR,gradTiZ, gradTiT );
     interp2dVector(&gradTe[0],x,y,z,nR_gradT,nZ_gradT,gradTGridr ,gradTGridz ,gradTeR,gradTeZ, gradTeT );
-    interp2dVector(&B[0],x,y,z,nR_Bfield,nZ_Bfield,BfieldGridRDevicePointer,
-                   BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
-    vectorNormalize(B,B_unit); 
-    //gradTeDotB = vectorDotProduct(B_unit,gradTe); 
-    //gradTiDotB = vectorDotProduct(B_unit,gradTi);
+#endif
 	mu = amu/(background_amu + amu);
     alpha = Z*Z*0.71;
 	beta =  3.0*(mu + 7.0711*Z*Z*(1.1*powf(mu,(2.5))- 0.35*powf(mu,(1.5))) - 1.0)/(2.6 - 2*mu+ 5.4*mu*mu);
-	dv_ETGx = propConst*(alpha*(gradTe[0]*B_unit[0]))*fudgeFactor;
-	this->dv_ETGy = propConst*(alpha*(gradTe[1]*B_unit[1]))*fudgeFactor;
-	this->dv_ETGz = propConst*(alpha*(gradTe[2]*B_unit[2]))*fudgeFactor;
+	dv_ETGx = propConst*(alpha*(gradTe[0]*B_unit[0]));
+	this->dv_ETGy = propConst*(alpha*(gradTe[1]*B_unit[1]));
+	this->dv_ETGz = propConst*(alpha*(gradTe[2]*B_unit[2]));
 
-	dv_ITG[0] = propConst*(beta*(gradTi[0]*B_unit[0]))*fudgeFactor;
-	this->dv_ITGy = propConst*(beta*(gradTi[1]*B_unit[1]))*fudgeFactor;
-	this->dv_ITGz = propConst*(beta*(gradTi[2]*B_unit[2]))*fudgeFactor;
+	dv_ITGx = propConst*(beta*(gradTi[0]*B_unit[0]));
+	this->dv_ITGy = propConst*(beta*(gradTi[1]*B_unit[1]));
+	this->dv_ITGz = propConst*(beta*(gradTi[2]*B_unit[2]));
 
     particlesPointer->vx[indx] = particlesPointer->vx[indx] + dv_ETGx + dv_ITGx;
 	particlesPointer->vy[indx] = particlesPointer->vy[indx] + dv_ETGy + dv_ITGy;
 	particlesPointer->vz[indx] = particlesPointer->vz[indx] + dv_ETGz + dv_ITGz;	
         
+    particlesPointer->test[indx] = dv_ETGx;
+    particlesPointer->test0[indx] = dv_ETGy;
+    particlesPointer->test1[indx] = dv_ETGz;
+    particlesPointer->test2[indx] = dv_ITGx;
+    particlesPointer->test3[indx] = dv_ITGy;
+    particlesPointer->test4[indx] = dv_ITGz;
   }
 }
 };

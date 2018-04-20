@@ -45,8 +45,15 @@ void operator()(std::size_t indx) const {
     //std::cout << "geometry check particle z" << particlesPointer->z[indx] << particlesPointer->z[indx]previous <<std::endl;
     //std::cout << "geometry check particle hitwall" << p.hitWall <<std::endl;
   if(particlesPointer->hitWall[indx] == 0.0)
-  { 
-    #if USE3DTETGEOM > 0
+  {
+     float x = particlesPointer->x[indx]; 
+     float y = particlesPointer->y[indx]; 
+     float z = particlesPointer->z[indx]; 
+     float xprev = particlesPointer->xprevious[indx]; 
+     float yprev = particlesPointer->yprevious[indx]; 
+     float zprev = particlesPointer->zprevious[indx]; 
+     float dpath = sqrt((x-xprev)*(x-xprev) + (y-yprev)*(y-yprev) + (z-zprev)*(z-zprev));
+   #if USE3DTETGEOM > 0
 
       float a = 0.0; 
       float b = 0.0; 
@@ -402,9 +409,11 @@ void operator()(std::size_t indx) const {
              // {
                 if (nIntersections ==0) 
                 {
+                    particlesPointer->distTraveled[indx] = particlesPointer->distTraveled[indx] + dpath;
                     particlesPointer->xprevious[indx] = particlesPointer->x[indx];
                     particlesPointer->yprevious[indx] = particlesPointer->y[indx];
                     particlesPointer->zprevious[indx] = particlesPointer->z[indx];
+                    //particlesPointer->test0[indx] = -50.0;
 
                     //std::cout << "r " << particlesPointer->x[indx] << " " << particlesPointer->y[indx] << " " << particlesPointer->z[indx] << std::endl;
                     //std::cout << "r0 " << particlesPointer->xprevious[indx] << " " << particlesPointer->yprevious[indx] << " " << particlesPointer->zprevious[indx] << std::endl;
@@ -413,6 +422,8 @@ void operator()(std::size_t indx) const {
                 {
                     particlesPointer->hitWall[indx] = 1.0f;
                     particlesPointer->wallIndex[indx] = intersectionIndices[0];
+                    particlesPointer->wallHit[indx] = intersectionIndices[0];
+                    //particlesPointer->test0[indx] = -100.0;
                     if (particle_slope >= tol*0.75f)
                     {
   #if USECYLSYMM > 0
@@ -425,18 +436,22 @@ void operator()(std::size_t indx) const {
                     else
                     {
   #if USECYLSYMM > 0
+                    //particlesPointer->test0[indx] = -200.0;
                        thetaNew = theta0 + (intersectionx[0] - pdim1previous)/(pdim1 - pdim1previous)*(theta1 - theta0);    
-                       particlesPointer->yprevious[indx] = intersectionx[0]*sinf(thetaNew);
+                       particlesPointer->yprevious[indx] = intersectionx[0]*sinf(thetaNew);             particlesPointer->y[indx] = particlesPointer->yprevious[indx];
   #else                           
                        particlesPointer->y[indx] = particlesPointer->yprevious[indx] + (intersectionx[0] - particlesPointer->xprevious[indx])/(particlesPointer->x[indx] - particlesPointer->xprevious[indx])*(particlesPointer->y[indx] - particlesPointer->yprevious[indx]);
   #endif                
                     }
   #if USECYLSYMM > 0
                 particlesPointer->xprevious[indx] = intersectionx[0]*cosf(thetaNew);
+                particlesPointer->x[indx] = particlesPointer->xprevious[indx];
   #else                
                 particlesPointer->x[indx] = intersectionx[0];
+                particlesPointer->xprevious[indx] = intersectionx[0];
   #endif     
                 particlesPointer->zprevious[indx] = intersectiony[0];
+                particlesPointer->z[indx] = intersectiony[0];
                 //std::cout << "nInt = 1 position " << intersectionx[0] << " " << intersectiony[0]  << std::endl;
                }
                else
@@ -454,6 +469,7 @@ void operator()(std::size_t indx) const {
                  }
 
                  particlesPointer->wallIndex[indx] = intersectionIndices[minDistInd];
+                 particlesPointer->wallHit[indx] = intersectionIndices[minDistInd];
                  particlesPointer->hitWall[indx] = 1.0f;
   #if USECYLSYMM > 0
                  thetaNew = theta0 + (intersectionx[minDistInd] - pdim1previous)/(pdim1 - pdim1previous)*(theta1 - theta0);

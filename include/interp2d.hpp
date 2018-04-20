@@ -12,7 +12,7 @@
 #include <thrust/device_vector.h>
 #include <vector>
 #include <math.h>
-using namespace std;
+//using namespace std;
 CUDA_CALLABLE_MEMBER
 
 float interp2d ( float x, float z,int nx, int nz,
@@ -32,6 +32,10 @@ void interp3dVector (float* field, float x, float y, float z,int nx,int ny, int 
 CUDA_CALLABLE_MEMBER
 void interp2dVector (float* field, float x, float y, float z,int nx, int nz,
 float* gridx,float* gridz,float* datar, float* dataz, float* datat );
+CUDA_CALLABLE_MEMBER
+void interpFieldAlignedVector (float* field, float x, float y, float z,int nx, int nz,
+        float* gridx,float* gridz,float* datar, float* dataz, float* datat,
+        int nxB, int nzB, float* gridxB,float* gridzB,float* datarB,float* datazB, float* datatB);
 CUDA_CALLABLE_MEMBER
 float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data,int &lowInd);
 CUDA_CALLABLE_MEMBER

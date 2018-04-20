@@ -12,7 +12,7 @@
 #include <thrust/device_vector.h>
 #include <vector>
 #include <math.h>
-#include <cmath>
+//#include <cmath>
 using namespace std;
 
 CUDA_CALLABLE_MEMBER
