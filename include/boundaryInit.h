@@ -12,7 +12,7 @@
 #include <random>
 #include <stdlib.h>
 #endif
-#include <math.h>
+#include "math.h"
 
 struct boundary_init {
     float background_Z;

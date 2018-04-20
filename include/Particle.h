@@ -8,7 +8,8 @@
 #endif
 
 #include <cstdlib>
-#include <cmath>
+//#include <cmath>
+#include "math.h"
 #include <stdio.h>
 #include <vector>
 #include "array.h"

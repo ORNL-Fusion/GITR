@@ -1,7 +1,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <chrono>
-#include <cmath>
+//#include <cmath>
+#include "math.h"
 #include <fstream>
 #include <stdlib.h>
 #include <algorithm>
@@ -63,7 +64,7 @@
 #include <thrust/transform.h>
 #include <thrust/functional.h>
 
-using namespace std;
+//using namespace std;
 using namespace libconfig;
 
 #if USE_BOOST
@@ -192,15 +193,14 @@ int main(int argc, char **argv)
   int nZ_Bfield = 1;
   int n_Bfield = 1;
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
-  #if USE_MPI > 0 
-    //if(world_rank == 0)
-    //{
-  #endif
   #if BFIELD_INTERP > 0
     std::string bfieldFile;
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
     getVariable(cfg,bfieldCfg+"fileString",bfieldFile);
     nR_Bfield = getDimFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridNrString");
-  #endif
   #if BFIELD_INTERP > 1
     nZ_Bfield = getDimFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridNzString");
   #endif
@@ -208,11 +208,12 @@ int main(int argc, char **argv)
     nY_Bfield = getDimFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridNyString");
   #endif
   #if USE_MPI > 0 
-    //}
-    //MPI_Bcast(&nR_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
-    //MPI_Bcast(&nY_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
-    //MPI_Bcast(&nZ_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
-    //MPI_Barrier(MPI_COMM_WORLD);
+    }
+    MPI_Bcast(&nR_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   #endif
 
   sim::Array<float> bfieldGridr(nR_Bfield),bfieldGridy(nY_Bfield),bfieldGridz(nZ_Bfield);
@@ -220,8 +221,8 @@ int main(int argc, char **argv)
   sim::Array<float> br(n_Bfield),by(n_Bfield),bz(n_Bfield);
   
   #if USE_MPI > 0 
-    //if(world_rank == 0)
-    //{
+    if(world_rank == 0)
+    {
   #endif
   #if BFIELD_INTERP == 0
     getVariable(cfg,bfieldCfg+"r",br[0]);
@@ -241,14 +242,15 @@ int main(int argc, char **argv)
     getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"zString",bz);
   #endif 
   #if USE_MPI > 0 
-    //}
-    //MPI_Bcast(br.data(), nR_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-    //MPI_Bcast(by.data(), nY_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-    //MPI_Bcast(bz.data(), nZ_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-    //MPI_Bcast(bfieldGridr.data(),nR_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-    //MPI_Bcast(bfieldGridy.data(),nY_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-    //MPI_Bcast(bfieldGridz.data(),nZ_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-    //MPI_Barrier(MPI_COMM_WORLD);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Bcast(br.data(), n_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(by.data(), n_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(bz.data(), n_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(bfieldGridr.data(),nR_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(bfieldGridy.data(),nY_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(bfieldGridz.data(),nZ_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
   #endif
   float Btest[3] = {0.0f}; 
   interp2dVector(&Btest[0],0.0,0.0,0.0,nR_Bfield,
@@ -258,14 +260,6 @@ int main(int argc, char **argv)
                     nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),by.data());
   std::cout << "Bfield at 000.2 "<< Btest[0] << " " << Btest[1] << " " << Btest[2] << std::endl; 
   std::cout << "Finished Bfield import" << std::endl;
-#if USE_MPI > 0 
-  //MPI_Barrier(MPI_COMM_WORLD);
-  //MPI_Bcast(br.data(), nR_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-  //MPI_Bcast(bz.data(), nZ_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-  //printf("Hello world from processor %s, rank %d"
-  //                   " out of %d processors bfield value %f \n",
-  //                                         processor_name, world_rank, world_size,br[0]);
-#endif
   std::string profiles_folder = "output/profiles";  
   
   //Geometry Definition
@@ -290,30 +284,115 @@ int main(int argc, char **argv)
     if(world_rank == 0){
   #endif
   nSurfaces = importGeometry(cfg_geom, boundaries);
-  std::cout << "Starting Boundary Init..." << std::endl;
+  std::cout << "Starting Boundary Init... nSurfaces "<<nSurfaces << std::endl;
   std::cout << " y1 and y2 " << boundaries[nLines].y1 << " " << boundaries[nLines].y2 << std::endl;
   #if USE_MPI > 0
    }
+    std::vector<float> x1(nLines);
+    std::vector<float> y1(nLines);
+    std::vector<float> z1(nLines);
+    std::vector<float> x2(nLines);
+    std::vector<float> y2(nLines);
+    std::vector<float> z2(nLines);
+    std::vector<float> Zboundary(nLines);
+    std::vector<float> a(nLines);
+    std::vector<float> b(nLines);
+    std::vector<float> c(nLines);
+    std::vector<float> d(nLines);
+    std::vector<float> plane_norm(nLines);
+    std::vector<float> surfaceNumber(nLines);
+    #if USE3DTETGEOM > 0
+      std::vector<float> x3(nLines);
+      std::vector<float> y3(nLines);
+      std::vector<float> z3(nLines);
+      std::vector<float> area(nLines);
+    #else
+      std::vector<float> length(nLines);
+      std::vector<float> slope_dzdx(nLines);
+      std::vector<float> intercept_z(nLines);
+    #endif
+    for(int i=0;i<nLines;i++)
+    {
+        x1[i] = boundaries[i].x1;
+        y1[i] = boundaries[i].y1;
+        z1[i] = boundaries[i].z1;
+        x2[i] = boundaries[i].x2;
+        y2[i] = boundaries[i].y2;
+        z2[i] = boundaries[i].z2;
+        Zboundary[i] = boundaries[i].Z;
+        a[i] = boundaries[i].a;
+        b[i] = boundaries[i].b;
+        c[i] = boundaries[i].c;
+        d[i] = boundaries[i].d;
+        plane_norm[i] = boundaries[i].plane_norm;
+        surfaceNumber[i] = boundaries[i].surfaceNumber;
+        #if USE3DTETGEOM > 0
+          x3[i] = boundaries[i].x3;
+          y3[i] = boundaries[i].y3;
+          z3[i] = boundaries[i].z3;
+          area[i] = boundaries[i].area;
+        #else
+          length[i] = boundaries[i].length;
+          slope_dzdx[i] = boundaries[i].slope_dzdx;
+          intercept_z[i] = boundaries[i].intercept_z;
+        #endif
+    }
     MPI_Bcast(&nSurfaces,1,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].x1, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].y1, nLines+1,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].z1, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].x3, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].y3, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].z3, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].x2, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].y2, nLines+1,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].z2, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].Z, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].a, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].b, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].c, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].d, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].plane_norm, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].area, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[0].surfaceNumber, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaries[nLines].periodic, 1,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&x1[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&y1[0], nLines+1,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&z1[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&x2[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&y2[0], nLines+1,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&z2[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&Zboundary[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&a[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&b[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&c[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&d[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&plane_norm[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&surfaceNumber[0], nLines,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&boundaries[nLines].periodic, 1,MPI_INT,0,MPI_COMM_WORLD);
+    #if USE3DTETGEOM > 0
+      MPI_Bcast(&x3[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&y3[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&z3[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&area[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    #else
+      MPI_Bcast(&length[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&slope_dzdx[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&intercept_z[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+    #endif
     MPI_Barrier(MPI_COMM_WORLD);
+    for(int i=0;i<nLines;i++)
+    {
+        boundaries[i].x1 = x1[i];
+        boundaries[i].y1 = y1[i];
+        boundaries[i].z1 = z1[i];
+        boundaries[i].x2 = x2[i];
+        boundaries[i].y2 = y2[i];
+        boundaries[i].z2 = z2[i];
+        boundaries[i].Z = Zboundary[i];
+        boundaries[i].a = a[i];
+        boundaries[i].b = b[i];
+        boundaries[i].c = c[i];
+        boundaries[i].d = d[i];
+        boundaries[i].plane_norm = plane_norm[i];
+        boundaries[i].surfaceNumber = surfaceNumber[i];
+        #if USE3DTETGEOM > 0
+          boundaries[i].x3 = x3[i];
+          boundaries[i].y3 = y3[i];
+          boundaries[i].z3 = z3[i];
+          boundaries[i].area = area[i];
+        #else
+          boundaries[i].length = length[i];
+          boundaries[i].slope_dzdx = slope_dzdx[i];
+          boundaries[i].intercept_z = intercept_z[i];
+        #endif
+    }
+    //for(int ii=0;ii<nLines;ii++)
+    //{
+        std::cout << "Boundary slope for node "<< world_rank << " " <<boundaries[65].x1<< " "  << boundaries[65].slope_dzdx << std::endl;
+    //}
   #endif
   float biasPotential = 0.0;
   #if BIASED_SURFACE > 0
@@ -739,7 +818,7 @@ else if(world_rank == 0)
   std::string connLengthCfg= "connectionLength.";  
   std::string lcFile;
   getVariable(cfg,connLengthCfg+"fileString",lcFile);
-  #if GENERATE_LC == 1
+  #if GENERATE_LC > 0
     getVariable(cfg,connLengthCfg+"nX",nR_Lc);
     getVariable(cfg,connLengthCfg+"nY",nY_Lc);
     getVariable(cfg,connLengthCfg+"nZ",nZ_Lc);
@@ -753,11 +832,12 @@ else if(world_rank == 0)
     getVariable(cfg,connLengthCfg+"netz1",z1_Lc);
     getVariable(cfg,connLengthCfg+"nTraceSteps",nTraceSteps);
     getVariable(cfg,connLengthCfg+"dr",dr);
-  #endif 
-  #if LC_INTERP > 1
-    nR_Lc = getDimFromFile(cfg,input_path+lcFile,connLengthCfg,"gridNrString");
-    nY_Lc = getDimFromFile(cfg,input_path+lcFile,connLengthCfg,"gridNyString");
-    nZ_Lc = getDimFromFile(cfg,input_path+lcFile,connLengthCfg,"gridNzString");
+  #else
+    #if LC_INTERP > 1
+      nR_Lc = getDimFromFile(cfg,input_path+lcFile,connLengthCfg,"gridNrString");
+      nY_Lc = getDimFromFile(cfg,input_path+lcFile,connLengthCfg,"gridNyString");
+      nZ_Lc = getDimFromFile(cfg,input_path+lcFile,connLengthCfg,"gridNzString");
+    #endif
   #endif
   
   #if USE3DTETGEOM > 0
@@ -769,8 +849,8 @@ else if(world_rank == 0)
   sim::Array<float> Lc(nTracers),s(nTracers);
   sim::Array<float> gridRLc(nR_Lc),gridYLc(nY_Lc),gridZLc(nZ_Lc);
   sim::Array<int> noIntersectionNodes(nTracers);
-  #if GENERATE_LC ==1
-  float lcBuffer = 0.75;
+  #if GENERATE_LC > 0
+  float lcBuffer = 0.0;
    // if( !boost::filesystem::exists( lcFile ) )
    // {
     //   std::cout << "No pre-existing connection length file found" << std::endl;    
@@ -792,9 +872,21 @@ else if(world_rank == 0)
       {
        gridZLc[j] = z0_Lc + j*dz_Lc;
       }
+      if(nTracers % world_size != 0)
+      {
+        std::cout << "nTracers for Lc not divisible by num MPI threads" << std::endl;
+        exit(0);
+      }
+      //for(size_t i = 0; i < world_size; i++) {
+        std::pair<size_t, size_t> pair{
+                    world_rank * nTracers / world_size,
+                              (world_rank + 1) * nTracers / world_size
+                                      };
+            std::cout << "Group " << (world_rank+1) << ": [" << pair.first << "," << pair.second << ") - " << (pair.second - pair.first) << " elements." << std::endl;
+//}
       std::cout << "Creating tracer particles" << std::endl;
-      thrust::counting_iterator<std::size_t> lcBegin(0);  
-      thrust::counting_iterator<std::size_t> lcEnd(nTracers);
+      thrust::counting_iterator<std::size_t> lcBegin(pair.first);  
+      thrust::counting_iterator<std::size_t> lcEnd(pair.second-1);
       auto forwardTracerParticles = new Particles(nTracers);
       auto backwardTracerParticles = new Particles(nTracers);
       int addIndex = 0;
@@ -864,6 +956,25 @@ else if(world_rank == 0)
       #if USE_CUDA 
          cudaDeviceSynchronize();
       #endif
+#if USE_MPI > 0
+    sim::Array<float> forwardHitWall(nTracers,0.0),backwardHitWall(nTracers,0.0);
+    sim::Array<float> forwardDistanceTraveled(nTracers,0.0),backwardDistanceTraveled(nTracers,0.0);
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Gather(&forwardTracerParticles->hitWall[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &forwardHitWall[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&backwardTracerParticles->hitWall[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &backwardHitWall[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&forwardTracerParticles->distanceTraveled[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &forwardDistanceTraveled[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&backwardTracerParticles->distanceTraveled[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &backwardDistanceTraveled[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    for(int i=0; i<nTracers; i++)
+    {
+       forwardTracerParticles->hitWall[i] = forwardHitWall[i];
+       forwardTracerParticles->distanceTraveled[i] = forwardDistanceTraveled[i];
+       backwardTracerParticles->hitWall[i] = backwardHitWall[i];
+       backwardTracerParticles->distanceTraveled[i] = backwardDistanceTraveled[i];
+    }
+  if(world_rank ==0)
+  {
+#endif
       addIndex = 0;
       float forwardDist = 0.0;
       float backwardDist = 0.0;
@@ -896,18 +1007,38 @@ else if(world_rank == 0)
              if(Lc[addIndex] > 0.0)
              {
                 Lc[addIndex] = Lc[addIndex] + lcBuffer;
-             } 
+             }
+             else Lc[addIndex] = 1.0e4; 
       //       if(forwardTracerParticles->distanceTraveled[addIndex] > 
       //               backwardTracerParticles->distanceTraveled[addIndex])
-             if(forwardTracerParticles->distanceTraveled[addIndex] > 
+             //if(forwardTracerParticles->distanceTraveled[addIndex] > 
+             //        0.5*Lc[addIndex])
+             //{
+             //  s[addIndex] = -(0.5*Lc[addIndex]-backwardTracerParticles->distanceTraveled[addIndex]);
+             //}
+             //else
+             //{
+             //  s[addIndex] = (0.5*Lc[addIndex]-forwardTracerParticles->distanceTraveled[addIndex]);
+             //}
+             if(forwardTracerParticles->hitWall[addIndex] > 0 &&
+                backwardTracerParticles->hitWall[addIndex] > 0)
+             {
+               s[addIndex] = min(forwardTracerParticles->distanceTraveled[addIndex],backwardTracerParticles->distanceTraveled[addIndex]);
+               if(forwardTracerParticles->distanceTraveled[addIndex] > 
                      0.5*Lc[addIndex])
-             {
-               s[addIndex] = -(0.5*Lc[addIndex]-backwardTracerParticles->distanceTraveled[addIndex]);
+               {
+                 s[addIndex] = -s[addIndex];
+               }
              }
-             else
+             else if(forwardTracerParticles->hitWall[addIndex] > 0)
              {
-               s[addIndex] = (0.5*Lc[addIndex]-forwardTracerParticles->distanceTraveled[addIndex]);
+                 s[addIndex] = forwardTracerParticles->distanceTraveled[addIndex];
              }
+             else if(backwardTracerParticles->hitWall[addIndex] > 0)
+             {
+                 s[addIndex] = -backwardTracerParticles->distanceTraveled[addIndex];
+             }
+             else s[addIndex] = 1.0e4; 
              if(forwardTracerParticles->hitWall[addIndex] + backwardTracerParticles->hitWall[addIndex]<4.0)
              {
                noIntersectionNodes[addIndex] = 1;    
@@ -917,14 +1048,18 @@ else if(world_rank == 0)
       }
 
       NcFile ncFileLC("LcS.nc", NcFile::replace);
+      vector<NcDim> dims_lc;
       NcDim nc_nTracers = ncFileLC.addDim("nTracers",nTracers);
       NcDim nc_nRLc = ncFileLC.addDim("nR",nR_Lc);
       NcDim nc_nYLc = ncFileLC.addDim("nY",nY_Lc);
       NcDim nc_nZLc = ncFileLC.addDim("nZ",nZ_Lc);
+      dims_lc.push_back(nc_nRLc);
+      dims_lc.push_back(nc_nYLc);
+      dims_lc.push_back(nc_nZLc);
       
-      NcVar nc_Lc = ncFileLC.addVar("Lc",ncDouble,nc_nTracers);
-      NcVar nc_s = ncFileLC.addVar("s",ncDouble,nc_nTracers);
-      NcVar nc_nI = ncFileLC.addVar("noIntersection",ncDouble,nc_nTracers);
+      NcVar nc_Lc = ncFileLC.addVar("Lc",ncDouble,dims_lc);
+      NcVar nc_s = ncFileLC.addVar("s",ncDouble,dims_lc);
+      NcVar nc_nI = ncFileLC.addVar("noIntersection",ncDouble,dims_lc);
       NcVar nc_gridRLc = ncFileLC.addVar("gridR",ncDouble,nc_nRLc);
       NcVar nc_gridYLc = ncFileLC.addVar("gridY",ncDouble,nc_nYLc);
       NcVar nc_gridZLc = ncFileLC.addVar("gridZ",ncDouble,nc_nZLc);
@@ -936,6 +1071,12 @@ else if(world_rank == 0)
       nc_gridYLc.putVar(&gridYLc[0]);
       nc_gridZLc.putVar(&gridZLc[0]);
       ncFileLC.close();
+#if USE_MPI > 0
+  }
+  MPI_Bcast(Lc.data(), nTracers,MPI_FLOAT,0,MPI_COMM_WORLD);
+  MPI_Bcast(s.data(), nTracers,MPI_FLOAT,0,MPI_COMM_WORLD);
+  MPI_Bcast(noIntersectionNodes.data(), nTracers,MPI_FLOAT,0,MPI_COMM_WORLD);
+#endif
   #if USE_CUDA 
              cudaDeviceSynchronize();
       #endif
@@ -966,7 +1107,6 @@ else if(world_rank == 0)
   #endif
     getVariable(cfg,tempCfg+"fileString",tempFile);
     nR_Temp = getDimFromFile(cfg,input_path+tempFile,tempCfg,"gridNrString");
-  #endif
   #if TEMP_INTERP > 1
     nZ_Temp = getDimFromFile(cfg,input_path+tempFile,tempCfg,"gridNzString");
   #endif
@@ -979,6 +1119,7 @@ else if(world_rank == 0)
     MPI_Bcast(&nY_Temp, 1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(&nZ_Temp, 1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   #endif
   
   sim::Array<float> TempGridr(nR_Temp), TempGridz(nZ_Temp), TempGridy(nY_Temp);
@@ -1032,7 +1173,6 @@ else if(world_rank == 0)
   #endif
     getVariable(cfg,densCfg+"fileString",densFile);
     nR_Dens = getDimFromFile(cfg,input_path+densFile,densCfg,"gridNrString");
-  #endif
   #if DENSITY_INTERP > 1
     nZ_Dens = getDimFromFile(cfg,input_path+densFile,densCfg,"gridNzString");
   #endif
@@ -1045,6 +1185,7 @@ else if(world_rank == 0)
     MPI_Bcast(&nY_Dens, 1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(&nZ_Dens, 1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
+  #endif
   #endif
   
   sim::Array<float> DensGridr(nR_Dens), DensGridz(nZ_Dens), DensGridy(nY_Dens);
@@ -1106,6 +1247,9 @@ else if(world_rank == 0)
   #endif
   #if FLOWV_INTERP > 1
     std::string flowVFile;
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
     getVariable(cfg,flowVCfg+"fileString",flowVFile);
     nR_flowV = getDimFromFile(cfg,input_path+flowVFile,flowVCfg,"gridNrString");
     nZ_flowV = getDimFromFile(cfg,input_path+flowVFile,flowVCfg,"gridNzString");
@@ -1113,23 +1257,48 @@ else if(world_rank == 0)
   #if FLOWV_INTERP > 2
     nY_flowV = getDimFromFile(cfg,input_path+flowVFile,flowVCfg,"gridNyString");
   #endif
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(&nR_flowV, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_flowV, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_flowV, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
+  #endif
 
   sim::Array<float> flowVGridr(nR_flowV),flowVGridy(nY_flowV), flowVGridz(nZ_flowV);
   n_flowV = nR_flowV*nY_flowV*nZ_flowV;
   sim::Array<float> flowVr(n_flowV), flowVz(n_flowV),flowVt(n_flowV);
 
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
   #if FLOWV_INTERP == 0
     getVariable(cfg,flowVCfg+"flowVr",flowVr[0]);
     getVariable(cfg,flowVCfg+"flowVy",flowVt[0]);
     getVariable(cfg,flowVCfg+"flowVz",flowVz[0]);
   #else
     #if FLOWV_INTERP > 1
+      getVarFromFile(cfg,input_path+flowVFile,flowVCfg,"gridRString",flowVGridr);
+      getVarFromFile(cfg,input_path+flowVFile,flowVCfg,"gridZString",flowVGridz);
       getVarFromFile(cfg,input_path+flowVFile,flowVCfg,"flowVrString",flowVr);
       getVarFromFile(cfg,input_path+flowVFile,flowVCfg,"flowVtString",flowVt);
-    #endif
-    #if FLOWV_INTERP > 2  
       getVarFromFile(cfg,input_path+flowVFile,flowVCfg,"flowVzString",flowVz);
     #endif
+    #if FLOWV_INTERP > 2  
+      getVarFromFile(cfg,input_path+flowVFile,flowVCfg,"gridYString",flowVGridy);
+    #endif
+  #endif
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(flowVGridr.data(), nR_flowV,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(flowVGridy.data(), nY_flowV,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(flowVGridz.data(), nZ_flowV,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(flowVr.data(), n_flowV,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(flowVt.data(), n_flowV,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(flowVz.data(), n_flowV,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
   #endif
   #if FLOWV_INTERP == 1
     for(int i=0;i<nR_flowV;i++)
@@ -1452,17 +1621,32 @@ else if(world_rank == 0)
     #endif
     #if PRESHEATH_INTERP > 1
       std::string efieldFile;
+#if USE_MPI > 0
+      if(world_rank == 0)
+{
+#endif
       getVariable(cfg,PSECfg+"fileString",efieldFile);
       nR_PreSheathEfield = getDimFromFile(cfg,input_path+efieldFile,PSECfg,"gridNrString");
       nZ_PreSheathEfield = getDimFromFile(cfg,input_path+efieldFile,PSECfg,"gridNzString");
-    #endif
     #if PRESHEATH_INTERP > 2
       nY_PreSheathEfield = getDimFromFile(cfg,input_path+efieldFile,PSECfg,"gridNyString");
     #endif
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(&nR_PreSheathEfield, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_PreSheathEfield, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_PreSheathEfield, 1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
+  #endif
     nPSEs = nR_PreSheathEfield*nY_PreSheathEfield*nZ_PreSheathEfield;
     sim::Array<float> preSheathEGridr(nR_PreSheathEfield),preSheathEGridy(nY_PreSheathEfield),
                       preSheathEGridz(nZ_PreSheathEfield);
     sim::Array<float> PSEr(nPSEs), PSEz(nPSEs),PSEt(nPSEs);
+#if USE_MPI > 0
+      if(world_rank == 0)
+{
+#endif
     #if PRESHEATH_INTERP == 0
       getVariable(cfg,PSECfg+"Er",PSEr[0]);
       getVariable(cfg,PSECfg+"Et",PSEt[0]);
@@ -1470,6 +1654,7 @@ else if(world_rank == 0)
     #elif PRESHEATH_INTERP > 1
       getVarFromFile(cfg,input_path+efieldFile,PSECfg,"gridRString",preSheathEGridr);
       getVarFromFile(cfg,input_path+efieldFile,PSECfg,"gridZString",preSheathEGridz);
+      getVarFromFile(cfg,input_path+efieldFile,PSECfg,"gridYString",preSheathEGridy);
       #if PRESHEATH_INTERP > 2
         getVarFromFile(cfg,input_path+efieldFile,PSECfg,"gridYString",preSheathEGridy);
       #endif
@@ -1478,6 +1663,16 @@ else if(world_rank == 0)
       getVarFromFile(cfg,input_path+efieldFile,PSECfg,"toroidalComponentString",PSEt);
       getVarFromFile(cfg,input_path+efieldFile,PSECfg,"axialComponentString",PSEz);
     #endif  
+  #if USE_MPI > 0 
+    }
+    MPI_Bcast(preSheathEGridr.data(), nR_PreSheathEfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(preSheathEGridy.data(), nY_PreSheathEfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(preSheathEGridz.data(), nZ_PreSheathEfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(PSEr.data(), nPSEs,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(PSEt.data(), nPSEs,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(PSEz.data(), nPSEs,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  #endif
 
     #if PRESHEATH_INTERP == 1
     
@@ -1717,8 +1912,8 @@ else if(world_rank == 0)
     std::cout << "spec bin Ns " << net_nX << " " << net_nY << " " << net_nZ << std::endl; 
     #if SPECTROSCOPY < 3
 
-      sim::Array<float> net_Bins((nBins+1)*net_nX*net_nZ);
-      sim::Array<float> net_BinsTotal((nBins+1)*net_nX*net_nZ);
+      sim::Array<double> net_Bins((nBins+1)*net_nX*net_nZ);
+      sim::Array<double> net_BinsTotal((nBins+1)*net_nX*net_nZ);
     #else
       sim::Array<float> net_Bins((nBins+1)*net_nX*net_nY*net_nZ);
       sim::Array<float> net_BinsTotal((nBins+1)*net_nX*net_nY*net_nZ);
@@ -1950,7 +2145,7 @@ else if(world_rank == 0)
   auto particleArray = new Particles(nParticles);
   auto particleArray2 = new Particles(nParticles);
   
-  float x,y,z,E,vx,vy,vz,Ex,Ey,Ez,amu,Z,charge,phi,theta,Ex_prime,Ez_prime,theta_transform;      
+  float x,y,z,E,vtotal,vx,vy,vz,Ex,Ey,Ez,amu,Z,charge,phi,theta,Ex_prime,Ez_prime,theta_transform;      
   if(cfg.lookupValue("impurityParticleSource.initialConditions.impurity_amu",amu) && 
      cfg.lookupValue("impurityParticleSource.initialConditions.impurity_Z",Z) &&
      cfg.lookupValue("impurityParticleSource.initialConditions.charge",charge))
@@ -2155,14 +2350,15 @@ else if(world_rank == 0)
     { std::cout << "ERROR: Could not get point source angular initial conditions" << std::endl;}
     phi = phi*3.141592653589793/180.0;
     theta = theta*3.141592653589793/180.0;
-    Ex = E*sin(phi)*cos(theta);
-    Ey = E*sin(phi)*sin(theta);
-    Ez = E*cos(phi);
+    vtotal = sqrt(2.0*E*1.602e-19/amu/1.66e-27);
+    vx = vtotal*sin(phi)*cos(theta);
+    vy = vtotal*sin(phi)*sin(theta);
+    vz = vtotal*cos(phi);
     if(phi == 0.0)
     {
-        Ex=0.0;
-        Ey=0.0;
-        Ez=E;
+        vx=0.0;
+        vy=0.0;
+        vz=vtotal;
     }
   #elif PARTICLE_SOURCE_ANGLE > 0
 
@@ -2267,6 +2463,10 @@ std::cout << "closed ncp " << std::endl;
     //    std::cout << " Exyz from file " << Expfile[i] << " " << Eypfile[i] << " " << Ezpfile[i] << std::endl;  
     //}
   #endif
+      std::cout << "particle file import done" <<std::endl;
+      #if USE3DTETGEOM > 0
+        MPI_Bcast(&boundaries[0].area, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+      #endif
   sim::Array<float> pSurfNormX(nP),pSurfNormY(nP),pSurfNormZ(nP), 
                     px(nP),py(nP),pz(nP),pvx(nP),pvy(nP),pvz(nP);
   int surfIndexMod = 0;
@@ -2468,12 +2668,21 @@ std::cout <<" closed ncFile_particles " << std::endl;
     std::cout << "history array length " << (nT/subSampleFac)*nP << std::endl;
     #if USE_CUDA > 0
       sim::Array<float> positionHistoryX(nP*nT/subSampleFac);
+      sim::Array<float> positionHistoryXgather(nP*nT/subSampleFac,0.0);
       sim::Array<float> positionHistoryY(nP*nT/subSampleFac);
+      sim::Array<float> positionHistoryYgather(nP*nT/subSampleFac);
       sim::Array<float> positionHistoryZ(nP*nT/subSampleFac);
+      sim::Array<float> positionHistoryZgather(nP*nT/subSampleFac);
       sim::Array<float> velocityHistoryX(nP*nT/subSampleFac);
       sim::Array<float> velocityHistoryY(nP*nT/subSampleFac);
       sim::Array<float> velocityHistoryZ(nP*nT/subSampleFac);
+      sim::Array<float> velocityHistoryXgather(nP*nT/subSampleFac);
+      sim::Array<float> velocityHistoryYgather(nP*nT/subSampleFac);
+      sim::Array<float> velocityHistoryZgather(nP*nT/subSampleFac);
       sim::Array<float> chargeHistory(nP*nT/subSampleFac);
+      sim::Array<float> chargeHistoryGather(nP*nT/subSampleFac);
+      sim::Array<float> weightHistory(nP*nT/subSampleFac);
+      sim::Array<float> weightHistoryGather(nP*nT/subSampleFac);
     #else
       float **positionHistoryX;
       float **positionHistoryY;
@@ -2576,9 +2785,18 @@ std::cout <<" closed ncFile_particles " << std::endl;
     printf("Initialize time for node %i          is %6.3f (secs) \n", world_rank,fs1.count());
     std::cout << "Starting main loop"  << std::endl;
     float testFlowVec[3] = {0.0f};
-    interp2dVector(&testFlowVec[0],0.01,-0.02,0.1,nR_flowV,nZ_flowV,
+#if USEFIELDALIGNEDVALUES > 0
+    interpFieldAlignedVector(&testFlowVec[0],1.4981,0.0,
+                             -1.2408,nR_flowV,nZ_flowV,
+                             flowVGridr.data(),flowVGridz.data(),flowVr.data(),
+                             flowVz.data(),flowVt.data(),nR_Bfield,nZ_Bfield,
+                             bfieldGridr.data(),bfieldGridz.data(),br.data(),
+                             bz.data(),by.data());
+#else
+    interp2dVector(&testFlowVec[0],1.4981,0.0,-1.2408,nR_flowV,nZ_flowV,
                                      flowVGridr.data(),flowVGridz.data(),
-                                     flowVr.data(),flowVz.data(),flowVt.data());    
+                                     flowVr.data(),flowVz.data(),flowVt.data());   
+#endif
 std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << testFlowVec[2]  << std::endl;
     std::cout << "Starting main loop" << particleArray->xprevious[0] << std::endl;
 //Main time loop
@@ -2725,10 +2943,11 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
 #if PARTICLE_TRACKS >0
 #if USE_CUDA > 0
    thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
-      history(particleArray,tt,subSampleFac,nP,&positionHistoryX.front(),
+      history(particleArray,tt,nT,subSampleFac,nP,&positionHistoryX.front(),
       &positionHistoryY.front(),&positionHistoryZ.front(),
       &velocityHistoryX.front(),&velocityHistoryY.front(),
-      &velocityHistoryZ.front(),&chargeHistory.front()) );
+      &velocityHistoryZ.front(),&chargeHistory.front(),
+      &weightHistory.front()) );
 #else
 if (tt % subSampleFac == 0)  
 {    
@@ -2758,6 +2977,11 @@ if (tt % subSampleFac == 0)
     fsec fs = finish_clock - start_clock;
     printf("Time taken          is %6.3f (secs) \n", fs.count());
     printf("Time taken per step is %6.3f (secs) \n", fs.count() / (float) nT);
+    std::cout << "x position of first particle per node " << world_rank << " " << particleArray->xprevious[world_rank*nP/world_size+1] << " " <<
+   particleArray->vx[world_rank*nP/world_size] << " " << 
+   particleArray->vy[world_rank*nP/world_size] << " " << 
+   particleArray->vz[world_rank*nP/world_size] << " " << 
+   std::endl;
 #if USE_BOOST
     //cpu_times ionizeTimeGPU = timer.elapsed();
     //std::cout << "Particle Moving Time: " << ionizeTimeGPU.wall*1e-9 << '\n';
@@ -2783,6 +3007,8 @@ for(int i=0; i<nP ; i++)
 #endif
 #if USE_MPI > 0
     sim::Array<float> xGather(nP,0.0);
+    sim::Array<float> test0Gather(nP,0.0);
+    sim::Array<float> test1Gather(nP,0.0);
     sim::Array<float> yGather(nP,0.0);
     sim::Array<float> zGather(nP,0.0);
     sim::Array<float> vxGather(nP,0.0);
@@ -2791,6 +3017,8 @@ for(int i=0; i<nP ; i++)
     sim::Array<float> hitWallGather(nP,0.0);
     sim::Array<float> weightGather(nP,0.0);
     sim::Array<float> chargeGather(nP,0.0);
+    sim::Array<float> firstIonizationTGather(nP,0.0);
+    sim::Array<float> firstIonizationZGather(nP,0.0);
     //float *x_gather = NULL;
     //if (world_rank == 0) {
     //      x_gather = malloc(sizeof(float)*nP);
@@ -2805,6 +3033,22 @@ for(int i=0; i<nP ; i++)
     MPI_Gather(&particleArray->hitWall[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &hitWallGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->weight[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &weightGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->charge[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &chargeGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->firstIonizationT[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &firstIonizationTGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->firstIonizationZ[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &firstIonizationZGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->test0[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &test0Gather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->test1[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &test1Gather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+MPI_Barrier(MPI_COMM_WORLD);
+#if PARTICLE_TRACKS >0
+    MPI_Gather(&positionHistoryX[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &positionHistoryXgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&positionHistoryY[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &positionHistoryYgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&positionHistoryZ[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &positionHistoryZgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&velocityHistoryX[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &velocityHistoryXgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&velocityHistoryY[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &velocityHistoryYgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&velocityHistoryZ[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &velocityHistoryZgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&chargeHistory[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &chargeHistoryGather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&weightHistory[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &weightHistoryGather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
+MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
 //    MPI_Barrier(MPI_COMM_WORLD);
 //    //Collect stuff
@@ -2837,7 +3081,7 @@ for(int i=0; i<nP ; i++)
 //}
 #if SPECTROSCOPY > 0
 //MPI_Barrier(MPI_COMM_WORLD);
-MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], (nBins+1)*net_nX*net_nZ, MPI_FLOAT, MPI_SUM, 0,
+MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], (nBins+1)*net_nX*net_nZ, MPI_DOUBLE, MPI_SUM, 0,
                    MPI_COMM_WORLD);
 #endif
 #if USESURFACEMODEL > 0
@@ -2964,7 +3208,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
         surfZ[i] = boundaries[i].Z;
     }
 #endif
-
+std::cout << "Beginning erosion to surface counting "<<px[0] << std::endl;
  //add initial particle erosion to surface counting
  int closestBoundaryIndex=0;
  int surfIndex=0;
@@ -2979,8 +3223,12 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
             &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),
             &closeGeomGridz_sheath.front(),&closeGeom_sheath.front(),
             closestBoundaryIndex);
+      std::cout << "Starting surf minDistance and closestBoundaryIndex " << closestBoundaryIndex << " " <<
+          minDistance << std::endl;
     if(boundaries[closestBoundaryIndex].Z > 0.0)
     {
+      std::cout << "Starting surf Z " << closestBoundaryIndex << " " <<
+          boundaries[closestBoundaryIndex].Z << std::endl;
       surfIndex = boundaries[closestBoundaryIndex].surfaceNumber;
       grossErosion[surfIndex] = grossErosion[surfIndex] + 1.0;
     }
@@ -3137,16 +3385,18 @@ NcVar nc_vy = ncFile_hist.addVar("vy",ncDouble,dims_hist);
 NcVar nc_vz = ncFile_hist.addVar("vz",ncDouble,dims_hist);
 
 NcVar nc_charge = ncFile_hist.addVar("charge",ncDouble,dims_hist);
+NcVar nc_weight = ncFile_hist.addVar("weight",ncDouble,dims_hist);
 #if USE_CUDA > 0
-nc_x.putVar(&positionHistoryX[0]);
-nc_y.putVar(&positionHistoryY[0]);
-nc_z.putVar(&positionHistoryZ[0]);
+nc_x.putVar(&positionHistoryXgather[0]);
+nc_y.putVar(&positionHistoryYgather[0]);
+nc_z.putVar(&positionHistoryZgather[0]);
 
-nc_vx.putVar(&velocityHistoryX[0]);
-nc_vy.putVar(&velocityHistoryY[0]);
-nc_vz.putVar(&velocityHistoryZ[0]);
+nc_vx.putVar(&velocityHistoryXgather[0]);
+nc_vy.putVar(&velocityHistoryYgather[0]);
+nc_vz.putVar(&velocityHistoryZgather[0]);
 
-nc_charge.putVar(&chargeHistory[0]);
+nc_charge.putVar(&chargeHistoryGather[0]);
+nc_weight.putVar(&weightHistoryGather[0]);
 #else
 nc_x.putVar(positionHistoryX[0]);
 nc_y.putVar(positionHistoryY[0]);
@@ -3180,10 +3430,9 @@ dims.push_back(nc_nR);
 NcVar nc_n = ncFile.addVar("n",ncDouble,dims);
 NcVar nc_gridR = ncFile.addVar("gridR",ncDouble,nc_nR);
 NcVar nc_gridZ = ncFile.addVar("gridZ",ncDouble,nc_nZ);
-float *binPointer = &net_Bins[0];
 nc_gridR.putVar(&gridX_bins[0]);
 nc_gridZ.putVar(&gridZ_bins[0]);
-nc_n.putVar(binPointer);
+nc_n.putVar(&net_BinsTotal[0]);
 ncFile.close();
 #endif
 #ifdef __CUDACC__
@@ -3200,14 +3449,17 @@ ncFile.close();
     std::cout << "Total ionization time: " << ionizTime*1e-9 << '\n';
     */
 #endif
+    std::cout << "sqrt 0 " << sqrt(-0.0) << std::endl;
     for(int i=0;i<100;i++)
 {
-    std::cout << "particle hitwall and Ez " << particleArray->hitWall[i] << " " << particleArray->test[i] << " "<< particleArray->test0[i] << " " << particleArray->test1[i]<< " "<<
-        particleArray->test2[i] << " " << particleArray->test3[i] << std::endl;
+    std::cout << "particle hitwall and Ez " << particleArray->hitWall[i] << " " << particleArray->test[i] << " "<< test0Gather[i] << " " << test1Gather[i]<< " "<<
+        particleArray->test2[i] << " " << particleArray->test3[i] << " " << particleArray->test4[i] << 
+        " " << particleArray->distTraveled[i] << std::endl;
 }
     for(int i=0;i<100;i++)
 {
-    std::cout << "particle ionization z and t " << particleArray->firstIonizationZ[i] << " " << particleArray->firstIonizationT[i]  << std::endl;
+    std::cout << "particle ionization z and t " << firstIonizationZGather[i] << " " << firstIonizationTGather[i] << " " << xGather[i] << " " << 
+      vxGather[i] << " " << chargeGather[i] << std::endl;
 }
     for(int i=0;i<100;i++)
 {

@@ -8,7 +8,8 @@
 #endif
 
 #include <cstdlib>
-#include <cmath>
+//#include <cmath>
+#include "math.h"
 #include <stdio.h>
 #include <vector>
 #include "array.h"
@@ -65,6 +66,7 @@ public:
   sim::Array<float> hitWall;
   sim::Array<int> wallHit;
   sim::Array<float> transitTime;
+  sim::Array<float> distTraveled;
   sim::Array<int> wallIndex;
   sim::Array<float> perpDistanceToSurface;
   sim::Array<float> test;
@@ -72,6 +74,7 @@ public:
   sim::Array<float> test1;
   sim::Array<float> test2;
   sim::Array<float> test3;
+  sim::Array<float> test4;
   sim::Array<float> distanceTraveled;
   sim::Array<float> weight;
   sim::Array<float> PionizationPrevious;
@@ -138,8 +141,9 @@ public:
   //    streams_collision3{nP},streams_diff{nP},streams_surf{nP},
 #endif
       hitWall{nP,0.0},
-   transitTime{nP,0.0},wallHit{nP,0}, wallIndex{nP}, perpDistanceToSurface{nP}, 
-      test{nP},test0{nP},test1{nP},test2{nP},test3{nP},distanceTraveled{nP},weight{nP,1.0}, PionizationPrevious{nP,1.0},
+   transitTime{nP,0.0},distTraveled{nP,0.0},
+      wallHit{nP,0}, wallIndex{nP}, perpDistanceToSurface{nP}, 
+      test{nP},test0{nP},test1{nP},test2{nP},test3{nP},test4{nP},distanceTraveled{nP},weight{nP,1.0}, PionizationPrevious{nP,1.0},
     PrecombinationPrevious{nP,1.0}, firstIonizationZ{nP,0.0},firstIonizationT{nP,0.0} {};   
 
 };

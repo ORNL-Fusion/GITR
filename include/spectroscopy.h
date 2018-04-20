@@ -11,7 +11,18 @@
 #include "Boundary.h"
 #include <math.h>
 #include <vector>
-
+__device__ double atomicAdd(double* address, double val)
+{
+   unsigned long long int* address_as_ull =
+                                              (unsigned long long int*)address;
+   unsigned long long int old = *address_as_ull, assumed;
+   do {
+         assumed = old;
+         old = atomicCAS(address_as_ull, assumed, 
+               __double_as_longlong(val +                                                 __longlong_as_double(assumed)));
+      } while (assumed != old);
+            return __longlong_as_double(old);
+}
 struct spec_bin { 
     Particles *particlesPointer;
     const int nBins;
@@ -21,11 +32,11 @@ struct spec_bin {
     float *gridX;
     float *gridY;
     float *gridZ;
-    float *bins;
+    double *bins;
     float dt;
 
     spec_bin(Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, float *_gridX,float *_gridY,float *_gridZ,
-           float * _bins, float _dt) : 
+           double * _bins, float _dt) : 
         particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
         dt(_dt) {}
 
@@ -89,7 +100,7 @@ void operator()(std::size_t indx) const {
               atomicAdd(&bins[nBins*nX*nY*nZ + indx_Z*nX*nY +indx_Y*nX+ indx_X], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
               if(charge < nBins)
               {
-                atomicAdd(&bins[charge*nX*nY*nZ + indx_Z*nX*nY + indx_Y*nX+ indx_X], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
+                atomicAdd(&bins[charge*nX*nY*nZ + indx_Z*nX*nY + indx_Y*nX+ indx_X], 1.0*specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
               }
 
 #else

@@ -8,8 +8,8 @@
 #endif
 #include "Particles.h"
 #include "Boundary.h"
-#include <cmath>
-#include <math.h>
+//#include <cmath>
+#include "math.h"
 
 struct field_line_trace {
     float BfieldFactor; 
