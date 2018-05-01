@@ -40,7 +40,11 @@ void getSlowDownFrequencies ( float& nu_friction, float& nu_deflection, float& n
     int nZ_Temp,
     float* TempGridr,
     float* TempGridz,
-    float* ti, float* te,float background_Z, float background_amu
+    float* ti, float* te,float background_Z, float background_amu,
+                        int nR_Bfield, int nZ_Bfield,
+                        float* BfieldGridR ,float* BfieldGridZ ,
+                        float* BfieldR ,float* BfieldZ ,
+                 float* BfieldT 
                 ) {
         float Q = 1.60217662e-19;
         float EPS0 = 8.854187e-12;
@@ -79,8 +83,23 @@ float ME = 9.10938356e-31;
     float nu_parallel_e; 
     float nu_energy_e;
                 
-    interp2dVector(&flowVelocity[0],x,y,z,nR_flowV,nZ_flowV,
-                                       flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
+#if FLOWV_INTERP == 3
+        interp3dVector (&flowVelocity[0], x,y,z,nR_flowV,nY_flowV,nZ_flowV,
+                flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
+#elif FLOWV_INTERP < 3    
+#if USEFIELDALIGNEDVALUES > 0
+        interpFieldAlignedVector(&flowVelocity[0],x,y,z,
+                                 nR_flowV,nZ_flowV,
+                                 flowVGridr,flowVGridz,flowVr,
+                                 flowVz,flowVt,nR_Bfield,nZ_Bfield,
+                                 BfieldGridR,BfieldGridZ,BfieldR,
+                                 BfieldZ,BfieldT);
+#else
+               interp2dVector(&flowVelocity[0],x,y,z,
+                        nR_flowV,nZ_flowV,
+                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
+#endif
+#endif
 	relativeVelocity[0] = vx - flowVelocity[0];
 	relativeVelocity[1] = vy - flowVelocity[1];
 	relativeVelocity[2] = vz - flowVelocity[2];
@@ -100,10 +119,12 @@ float ME = 9.10938356e-31;
                 	psi_prime = 2*sqrtf(xx/pi)*expf(-xx);
                 	psi_psiprime = erf(1.0*sqrtf(xx));
                 	psi = psi_psiprime - psi_prime;
+                    if(psi < 0.0) psi = 0.0;
                 	xx_e = powf(velocityNorm,2)*a_electron;
                 	psi_prime_e = 2*sqrtf(xx_e/pi)*expf(-xx_e);
                 	psi_psiprime_e = erf(1.0*sqrtf(xx_e));
                 	psi_e = psi_psiprime_e - psi_prime_e;
+                    if(psi_e < 0.0) psi_e = 0.0;
                 	nu_0_i = gam_electron_background*density/powf(velocityNorm,3);
                 	nu_0_e = gam_ion_background*density/powf(velocityNorm,3);
                 	nu_friction_i = (1+amu/background_amu)*psi*nu_0_i;
@@ -138,7 +159,10 @@ float ME = 9.10938356e-31;
         nu_energy = 0.0;
     }
 
-    if(!isfinite(nu_parallel)) nu_energy = psi;
+    //if(nu_parallel < 0.0) 
+    //nu_energy = vx;
+    //nu_friction = vy;
+    //nu_deflection = vz;
     //std::cout << "nu friction i e total " << nu_deflection_i << " " << nu_deflection_e << " " <<nu_deflection  << std::endl;
 
 }
@@ -308,6 +332,7 @@ void operator()(std::size_t indx) const {
 		float nu_parallel = 0.0;
 		float nu_energy = 0.0;
 		float flowVelocity[3]= {0.0f};
+		float vUpdate[3]= {0.0f};
 		float relativeVelocity[3] = {0.0f};
 		float velocityCollisions[3]= {0.0f};	
 		float velocityRelativeNorm;	
@@ -323,6 +348,7 @@ void operator()(std::size_t indx) const {
         float vx = particlesPointer->vx[indx];
         float vy = particlesPointer->vy[indx];
         float vz = particlesPointer->vz[indx];
+        float vPartNorm = 0.0f;
 #if FLOWV_INTERP == 3 
         interp3dVector (&flowVelocity[0], particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_flowV,nY_flowV,nZ_flowV,
                 flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
@@ -341,6 +367,7 @@ void operator()(std::size_t indx) const {
                         flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
 #endif
 #endif
+            vPartNorm = sqrt(vx*vx + vy*vy + vz*vz);
             relativeVelocity[0] = vx - flowVelocity[0];
         	relativeVelocity[1] = vy - flowVelocity[1];
         	relativeVelocity[2] = vz - flowVelocity[2];
@@ -401,7 +428,14 @@ void operator()(std::size_t indx) const {
         flowVz,flowVt,
          nR_Dens, nZ_Dens,DensGridr,
         DensGridz,ni, nR_Temp,  nZ_Temp,
-        TempGridr, TempGridz,ti,te, background_Z, background_amu);
+        TempGridr, TempGridz,ti,te, background_Z, background_amu,
+        nR_Bfield,
+        nZ_Bfield,
+        BfieldGridR,
+        BfieldGridZ,
+        BfieldR,
+        BfieldZ,
+        BfieldT);
 
 		getSlowDownDirections(parallel_direction, perp_direction1,perp_direction2,
         x,y,z,
@@ -417,33 +451,46 @@ void operator()(std::size_t indx) const {
         BfieldR,
         BfieldZ,
         BfieldT);
-        //float coeff_par = 1.0 ;//+ n1*sqrt(nu_parallel*dt) - nu_friction*dt;
+        float coeff_par = 1.0 + n1*sqrt(nu_parallel*dt) - nu_friction*dt;
         //float coeff_par = 1.0 + n1*sqrt(nu_parallel*dt);
-        float coeff_par = 1.0 - nu_friction*dt;
+        //float coeff_par = 1.0 - nu_friction*dt;
         float coeff_perp = 0.0;// abs(n2)*sqrt(nu_deflection*dt*0.5);
-        float coeff_Energy = 1.0;//1.0-nu_energy*dt*0.5;
+        float coeff_Energy = 1.0-nu_energy*dt*0.5;
         float cosXsi = cos(2.0*pi*xsi);
         float sinXsi = sin(2.0*pi*xsi);
 		velocityCollisions[0] = coeff_par*parallel_direction[0] + coeff_perp*(perp_direction1[0]*cosXsi + perp_direction2[0]*sinXsi);
 		velocityCollisions[1] = coeff_par*parallel_direction[1] + coeff_perp*(perp_direction1[1]*cosXsi + perp_direction2[1]*sinXsi);
 		velocityCollisions[2] = coeff_par*parallel_direction[2] + coeff_perp*(perp_direction1[2]*cosXsi + perp_direction2[2]*sinXsi);
 float velocityCollisionsNorm = vectorNorm(velocityCollisions);
-      
-        particlesPointer->vx[indx] = coeff_Energy*velocityRelativeNorm*velocityCollisions[0] + flowVelocity[0]; 
-		particlesPointer->vy[indx] = coeff_Energy*velocityRelativeNorm*velocityCollisions[1] + flowVelocity[1];
-		particlesPointer->vz[indx] = coeff_Energy*velocityRelativeNorm*velocityCollisions[2] + flowVelocity[2];   	
-    if(isnan((float)nu_parallel))
+        vUpdate[0] = velocityRelativeNorm*velocityCollisions[0] + flowVelocity[0];    
+        vUpdate[1] = velocityRelativeNorm*velocityCollisions[1] + flowVelocity[1];    
+        vUpdate[2] = velocityRelativeNorm*velocityCollisions[2] + flowVelocity[2];    
+float velocityColl = vectorNorm(vUpdate);
+        particlesPointer->vx[indx] = coeff_Energy*vPartNorm*vUpdate[0]/velocityColl; 
+		particlesPointer->vy[indx] = coeff_Energy*vPartNorm*vUpdate[1]/velocityColl;
+		particlesPointer->vz[indx] = coeff_Energy*vPartNorm*vUpdate[2]/velocityColl;   	
+    //if(particlesPointer->vx[indx] != particlesPointer->vx[indx])
+    //{
+    //    if(particlesPointer->test[indx] == 0.0)
+    //    {
+    //        particlesPointer->test[indx] = 1.0;
+    //        particlesPointer->test0[indx]  = nu_energy;
+    //        particlesPointer->test1[indx] = flowVelocity[0];
+    //        particlesPointer->test2[indx] = flowVelocity[1];
+    //        particlesPointer->test3[indx] = flowVelocity[2];
+    //    }
+    //}
+    if( nu_parallel > particlesPointer->test1[indx])
     {
-        if(particlesPointer->test[indx] == 0.0)
-        {
-            particlesPointer->test[indx] = 1.0;
-            particlesPointer->test0[indx]  = nu_energy;
-        }
+        particlesPointer->test1[indx] =  nu_parallel;
+        particlesPointer->test2[indx] =  nu_energy;
+        particlesPointer->test3[indx] =  nu_friction;
+        particlesPointer->test4[indx] =  nu_deflection;
     }
-            //particlesPointer->test[indx] =  velocityRelativeNorm*velocityCollisions[0]+ flowVelocity[0]; 
-            //particlesPointer->test0[indx] = velocityRelativeNorm*velocityCollisions[1]+ flowVelocity[1];
-            particlesPointer->test1[indx] = flowVelocity[0];
-            particlesPointer->test2[indx] = flowVelocity[1];
+            particlesPointer->test[indx] =  vUpdate[2]; 
+            particlesPointer->test0[indx] = particlesPointer->vz[indx];//velocityRelativeNorm*velocityCollisions[1]+ flowVelocity[1];
+            particlesPointer->test1[indx] = velocityCollisionsNorm;//flowVelocity[0];
+            particlesPointer->test2[indx] = velocityCollisions[2];
             particlesPointer->test3[indx] = flowVelocity[2];
     //std::cout << "particle velocity "<< particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " << particlesPointer->vz[indx]    << std::endl;
     

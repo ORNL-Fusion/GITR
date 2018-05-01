@@ -11,7 +11,7 @@
 #include "Boundary.h"
 #include "Surfaces.h"
 #include "surfaceModel.h"
-#include <math.h>
+#include "math.h"
 
 /*template <typename T>
 CUDA_CALLABLE_MEMBER_DEVICE

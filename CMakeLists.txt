@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(gitr)
 
-set(OPENMP 1)
+set(CUDA 1)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 set(CMAKE_CXX_STANDARD 14) # Doesn't set NVCC C++ standard
@@ -25,7 +25,7 @@ find_package(MPI)
 IF (MPI_FOUND)
     include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 endif()
-#find_package(OpenMP REQUIRED)
+find_package(OpenMP REQUIRED)
 # Add includes
 include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
 include_directories(${THRUST_INCLUDE_DIRS})
@@ -70,6 +70,7 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DSPECTROSCOPY=${SPECTROSCOPY}
         -DUSE3DTETGEOM=${USE3DTETGEOM}
         -DUSECYLSYMM=${USECYLSYMM}
+        -DUSEFIELDALIGNEDVALUES=${USEFIELDALIGNEDVALUES}
         -DFLUX_EA=${FLUX_EA}
         -DCHECK_COMPATIBILITY=${CHECK_COMPATIBILITY})
 

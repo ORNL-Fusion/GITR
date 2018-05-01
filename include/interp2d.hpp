@@ -11,7 +11,7 @@
 
 #include <thrust/device_vector.h>
 #include <vector>
-#include <math.h>
+#include "math.h"
 //using namespace std;
 CUDA_CALLABLE_MEMBER
 

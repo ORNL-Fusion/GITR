@@ -101,17 +101,19 @@ def plot2dGeom(filename="gitrGeometry.cfg"):
     y2 = config.geom.y2
     ys1 = np.ones(x1.size)*y1
     ys2 = np.ones(x1.size)*y2
-
-    fig = plt.figure()
-    #fig.patch.set_facecolor('black')
-    ax = fig.gca(projection='3d')
-    ax.plot(np.append(x1,x1[0]), np.append(ys1,ys1[0]), np.append(z1,z1[0]))
-    ax.plot(np.append(x2,x2[0]), np.append(ys2,ys2[0]), np.append(z2,z2[0]))
-    for i in range(0,x1.size):
-        ax.plot(np.append(x1[i],x1[i]),np.append(y1,y2),np.append(z1[i],z1[i]))
-    plt.savefig('geomPlot.png') 
-    print('config', config) 
-    print('x1 ', x1)
+    if plt.fignum_exists(1):
+        plt.plot(np.append(x1,x1[0]),np.append(z1,z1[0]),linewidth=2.0,color='k')
+    else:    
+        fig = plt.figure()
+        #fig.patch.set_facecolor('black')
+        ax = fig.gca(projection='3d')
+        ax.plot(np.append(x1,x1[0]), np.append(ys1,ys1[0]), np.append(z1,z1[0]))
+        ax.plot(np.append(x2,x2[0]), np.append(ys2,ys2[0]), np.append(z2,z2[0]))
+        for i in range(0,x1.size):
+            ax.plot(np.append(x1[i],x1[i]),np.append(y1,y2),np.append(z1[i],z1[i]))
+        plt.savefig('geomPlot.png') 
+        print('config', config) 
+        print('x1 ', x1)
 def read3dGeom(filename="gitrGeometry.cfg"):
     with io.open(filename) as f:
         config = libconf.load(f)
@@ -205,6 +207,37 @@ def piscesProcessing(r=0.01,path=''):
         print('EAdist[:,i] size ', EAdist[:,i].size)
         edOut = np.column_stack((Evec,EAdist[:,i]))
         np.savetxt('dist'+str(i)+'.dat', edOut)
+
+def d3dProcessing(r=0.01,path=''):
+    #plt.figure(1,figsize=(6, 10), dpi=1000)
+    #plot2dGeom(filename='../input/gitrD3DGeometry2DWrings.cfg')
+    grossDep,grossEro,sumWeightStrike,E,A,EAdist = nc_readSurface()
+    print('W gross deposition ', grossDep)
+    print('W gross erosion ', grossEro)
+    #condition = r1 < r
+    #dep = np.extract(condition,grossDep)
+    #ero = np.extract(condition,grossEro)
+    #strike = np.extract(condition,sumWeightStrike)
+    #areas = np.extract(condition,area)
+    #with io.open('input/gitrInput.cfg') as f:
+    #    config = libconf.load(f)
+
+    #backgroundIonsPerSec = float(config.postProcessing.backgroundIonsPerSec); #3.8640e+19;for pisces He high flux case
+    #backgroundFlux = float(config.postProcessing.backgroundFlux);#3.5e22;
+    #time = float(config.postProcessing.time);
+    #nParticles = float(config.impurityParticleSource.nP);
+    #backgroundSputtYield = float(config.postProcessing.backgroundSputtYield);
+    #erodedMass = time*backgroundIonsPerSec*184*1.66e-27*backgroundSputtYield*1000;
+    #erodedMassPerParticle = erodedMass/nParticles;
+    #netErosion = np.sum(ero - dep);
+    #netStrike = np.sum(strike)
+    #totalArea = np.sum(areas)
+    #impurityParticlePerSecondPerComputationalPartice = backgroundIonsPerSec*backgroundSputtYield/nParticles;
+    #impurityFlux = netStrike/totalArea*impurityParticlePerSecondPerComputationalPartice;
+    #Wfrac = impurityFlux/backgroundFlux;
+    #Aweight = np.sum(EAdist,axis=0)
+    #print('W impurity flux ', impurityFlux)
+    #print('W impurity fraction ', Wfrac)
 def plot3dGeom(filename="gitrGeometry.cfg"):
     with io.open(filename) as f:
         config = libconf.load(f)
@@ -250,38 +283,45 @@ def nc_plotHist(filename='history.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nT = ncFile.dimensions['nT'].size
     nP = ncFile.dimensions['nP'].size
-    x = np.reshape(np.array(ncFile.variables['x']),(nT,nP))
-    y = np.reshape(np.array(ncFile.variables['y']),(nT,nP))
-    z = np.reshape(np.array(ncFile.variables['z']),(nT,nP))
+    x = np.reshape(np.array(ncFile.variables['x']),(nP,nT))
+    y = np.reshape(np.array(ncFile.variables['y']),(nP,nT))
+    z = np.reshape(np.array(ncFile.variables['z']),(nP,nT))
     r = np.sqrt(np.multiply(x,x) + np.multiply(y,y))
 #    print('z ', z[:,0])
     print('x ', x.shape)
-    print('x ', x[:,0])
+    print('x ', x[0,:])
 #    print('r ', r.shape)
 #    print('z ', z[0][:].shape)
 #    #for i in range(nT):
 #    #    print('r,z ',i, x[i][0],z[i][0]) 
 #    single = x[0][:];
-    plt.figure(1,figsize=(10, 6), dpi=100)
-    for i in range(nP):
+    plt.figure(1,figsize=(6, 10), dpi=1000)
+    plot2dGeom(filename='../input/gitrGeometry.cfg')
+    for i in range(80):
       #print('i', i)  
 #      print('size', r[:,i].size)  
 #      print('r ', r[:,i])  
-      plt.plot(r[:,i],z[:,i],linewidth=0.5)
+      plt.plot(r[i,:],z[i,:],linewidth=0.5)
 #      #plt.plot(r[i,:],z[i,:],linewidth=1.0)
 #      #plt.setp(linewidth=0.2)
-    plt.axis('equal')
+    plt.xlim((-0.01,0.01))
+    plt.ylim((0.0,0.2))
+    #plt.autoscale(enable=True, axis='x', tight=True)
+    plt.title('DIII-D W Impurity Simulation',fontsize=20)
+    plt.xlabel('r [m]',fontsize=16)
+    plt.ylabel('z [m]',fontsize=16)
+    #plt.axis('equal')
     print('saving tracksRZ')
     plt.savefig('tracksRZ.png')
     plt.close()
     plt.figure(1,figsize=(10, 6), dpi=100)
-    for i in range(nP):
+    for i in range(80):
       #print('i', i)  
-      plt.plot(x[:,i],y[:,i],linewidth=0.5)
-    #plt.ylim((-5.0,5.0))
-    #plt.xlim((3.8,8.5))
+      plt.plot(x[i,:],y[i,:],linewidth=0.5)
+    plt.ylim((-0.02,0.02))
+    plt.xlim((-0.02,0.02))
     plt.axis('equal')
-    print('saving tracksRZ')
+    print('saving tracksXY')
     plt.savefig('tracksXY.png')
 def nc_plotSpec(filename='spec.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
@@ -296,10 +336,11 @@ def nc_plotSpec(filename='spec.nc'):
     plt.figure(1,figsize=(10, 6), dpi=2000)
     plotsize = math.ceil(nBins**(0.5))
     for i in range(nBins):
-        dens = np.log10(n[i,:,:])
-        plt.subplot(plotsize,plotsize,i+1)
-        plt.imshow(dens,origin='lower')
-        plt.colorbar(orientation='vertical')
+        if i == 4:
+            dens = np.log10(n[i,:,:])
+            #plt.subplot(plotsize,plotsize,i+1)
+            plt.imshow(dens,origin='lower')
+            plt.colorbar(orientation='vertical')
     plt.savefig('image1.png')
 def nc_plotSpec3D(filename='spec.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
@@ -424,11 +465,12 @@ def plotPitch(filename='positions.nc'):
 if __name__ == "__main__":
     #asdfanc_show("surface.nc")
     #depositedEdist()
-    #nc_plotHist()
+    nc_plotHist()
+    nc_plotSpec()
     #nc_plotSpec3D()
     #nc_plotPositions()
     #nc_plotVz()
     #plotPitch()
-    piscesProcessing()
+    #piscesProcessing()
     #modifyInputParam()
     #nc_readSurface()

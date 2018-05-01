@@ -14,7 +14,7 @@
 #include "Surfaces.h"
 //#include <cmath>
 
-#include <math.h>
+#include "math.h"
 
 #ifdef __CUDACC__
 #include <thrust/random.h>
