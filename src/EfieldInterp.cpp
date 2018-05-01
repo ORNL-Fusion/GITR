@@ -1,10 +1,11 @@
 #define EInterpNumber 2
 
 #include <iostream>
-#include <cmath>
+//#include <cmath>
+#include "math.h"
 #include <stdlib.h>
 #include "h1.cuh"
-using namespace std;
+//using namespace std;
 
 void Efield(double E[], double perpDistanceToSurface)
 {

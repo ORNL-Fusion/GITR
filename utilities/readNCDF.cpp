@@ -6,8 +6,9 @@
 #include <fstream>
 #include <string>
 #include <cstring>
-#include <cmath>
-using namespace std;
+//#include <cmath>
+#include "math.h"
+//using namespace std;
 using namespace netCDF;
 
     int main()

@@ -9,7 +9,7 @@
 
 #include "Particles.h"
 #include "Boundary.h"
-#include <math.h>
+#include "math.h"
 #include <vector>
 
 struct history { 

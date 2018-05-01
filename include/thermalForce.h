@@ -9,7 +9,7 @@
 
 #include "Particles.h"
 //#include <cmath>
-#include <math.h>
+#include "math.h"
 
 struct thermalForce { 
     Particles *particlesPointer;
