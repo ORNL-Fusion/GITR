@@ -6,9 +6,10 @@ void checkFlags(libconfig::Config &cfg)
 {
     std::cout << "Checking compatibility of compile flags with input file "
                       << std::endl;
-    const char *flags0[] = {"flags.USE_CUDA","flags.USEMPI",
-                            "flags.USE_MPI","flags.USE_OPENMP",
-                            "flags.USE_BOOST","flags.USEIONIZATION",
+    const char *flags0[] = {//"flags.USE_CUDA","flags.USEMPI",
+                            //"flags.USE_MPI","flags.USE_OPENMP",
+                            //"flags.USE_BOOST",
+                            "flags.USEIONIZATION",
                             "flags.USERECOMBINATION","flags.USEPERPDIFFUSION",
                             "flags.USECOULOMBCOLLISIONS",
                             "flags.USETHERMALFORCE","flags.USESURFACEMODEL",
@@ -27,7 +28,8 @@ void checkFlags(libconfig::Config &cfg)
                             "flags.PARTICLE_SOURCE_FILE",
                             "flags.SPECTROSCOPY","flags.USE3DTETGEOM","flags.USECYLSYMM",
                             "flags.FLUX_EA"};
-        int flagValues[] =  {USE_CUDA, USEMPI,USE_MPI,USE_OPENMP, USE_BOOST,USEIONIZATION,
+        int flagValues[] =  {//USE_CUDA, USEMPI,USE_MPI,USE_OPENMP, USE_BOOST,
+                             USEIONIZATION,
                              USERECOMBINATION,USEPERPDIFFUSION,USECOULOMBCOLLISIONS,
                              USETHERMALFORCE,USESURFACEMODEL,USESHEATHEFIELD,BIASED_SURFACE,
                              USEPRESHEATHEFIELD,BFIELD_INTERP,LC_INTERP, GENERATE_LC,
