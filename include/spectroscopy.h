@@ -11,6 +11,7 @@
 #include "Boundary.h"
 #include "math.h"
 #include <vector>
+#if USE_CUDA >0
 __device__ double atomicAdd(double* address, double val)
 {
    unsigned long long int* address_as_ull =
@@ -23,6 +24,8 @@ __device__ double atomicAdd(double* address, double val)
       } while (assumed != old);
             return __longlong_as_double(old);
 }
+#endif
+
 struct spec_bin { 
     Particles *particlesPointer;
     const int nBins;

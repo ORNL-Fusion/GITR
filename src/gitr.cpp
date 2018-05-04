@@ -64,7 +64,7 @@
 #include <thrust/transform.h>
 #include <thrust/functional.h>
 
-//using namespace std;
+using namespace std;
 using namespace libconfig;
 
 #if USE_BOOST
@@ -170,15 +170,16 @@ int main(int argc, char **argv)
       nThreads = prop.maxThreadsPerMultiProcessor;
       }
   #endif 
-  #if USE_BOOST
+  #if USE_BOOST > 0
+    std::string output_folder="/Users/tyounkin/Code/gitr2/examples/operatorTests/straightLine/2Dgeom/output";
     //Output
-    boost::filesystem::path dir("output"); 
+    boost::filesystem::path dir(output_folder); 
     if(!(boost::filesystem::exists(dir)))
     {
-      // std::cout<<"Doesn't Exists"<<std::endl;
+      std::cout<<"Doesn't Exist in main"<<std::endl;
       if (boost::filesystem::create_directory(dir))
       {
-         //std::cout << " Successfully Created " << std::endl;
+         std::cout << " Successfully Created " << std::endl;
       }
     }
   #endif
@@ -3308,7 +3309,7 @@ nc_impact0.putVar(&hitWallGather[0]);
 nc_weight0.putVar(&weightGather[0]);
 nc_charge0.putVar(&chargeGather[0]);
 #else
-nc_x0.putVar(&xOut[0]);
+nc_x0.putVar(&particleArray->x[0]);
        std::cout << "added x " << std::endl;
 nc_y0.putVar(&particleArray->y[0]);
 nc_z0.putVar(&particleArray->z[0]);
@@ -3449,6 +3450,7 @@ ncFile.close();
     std::cout << "Total ionization time: " << ionizTime*1e-9 << '\n';
     */
 #endif
+#if USE_MPI > 0
     std::cout << "sqrt 0 " << sqrt(-0.0) << std::endl;
     for(int i=0;i<100;i++)
 {
@@ -3461,6 +3463,7 @@ ncFile.close();
     std::cout << "particle ionization z and t " << firstIonizationZGather[i] << " " << firstIonizationTGather[i] << " " << xGather[i] << " " << 
       vxGather[i] << " " << chargeGather[i] << std::endl;
 }
+#endif
     for(int i=0;i<100;i++)
 {
     std::cout << "reflected/sputtered energy " << particleArray->newVelocity[i]   << std::endl;
