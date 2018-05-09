@@ -1210,21 +1210,21 @@ else if(world_rank == 0)
     getVarFromFile(cfg,input_path+densFile,densCfg,"IonDensityString",ni);
     getVarFromFile(cfg,input_path+densFile,densCfg,"ElectronDensityString",ne);
   #endif
-  std::cout << "Finished density import "<< interp2dCombined(0.001,0.0,0.1,nR_Dens,nZ_Dens,
-                         &DensGridr.front(),&DensGridz.front(),&ne.front())
- <<" " << interp2dCombined(0.02,0.0,0.1,nR_Dens,nZ_Dens,
-                                 &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
-  for(int i=0;i<100;i++)
-  {
-      std::cout << i*0.001 << " " << interp2dCombined(0.001*i,0.0,0.0,nR_Dens,nZ_Dens,
-                                       &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
-  }
-  std::cout << " z=0.1" << std::endl;
-  for(int i=0; i<100;i++)
-  {
-      std::cout << i*0.001 << " " << interp2dCombined(0.001*i,0.0,0.1,nR_Dens,nZ_Dens,
-                                       &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
-  }
+  //std::cout << "Finished density import "<< interp2dCombined(0.001,0.0,0.1,nR_Dens,nZ_Dens,
+  //                       &DensGridr.front(),&DensGridz.front(),&ne.front())
+  // <<" " << interp2dCombined(0.02,0.0,0.1,nR_Dens,nZ_Dens,
+  // &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
+  //for(int i=0;i<100;i++)
+  //{
+  //    std::cout << i*0.001 << " " << interp2dCombined(0.001*i,0.0,0.0,nR_Dens,nZ_Dens,
+  //                                     &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
+  //}
+  //std::cout << " z=0.1" << std::endl;
+  //for(int i=0; i<100;i++)
+  //{
+  //    std::cout << i*0.001 << " " << interp2dCombined(0.001*i,0.0,0.1,nR_Dens,nZ_Dens,
+  //                                     &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
+  //}
   #if USE_MPI > 0 
     }
     MPI_Bcast(DensGridr.data(), nR_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -2630,11 +2630,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     p_x.putVar(&px[0]);
     p_y.putVar(&py[0]);
     p_z.putVar(&pz[0]);
-    std::cout <<" put vars complete " << std::endl;
     ncFile_particles.close();
-NcFile ncFile_test("testfile.nc", NcFile::replace);
-ncFile_test.close();
-std::cout <<" closed ncFile_particles " << std::endl;
 #if USE_MPI > 0
   }
 #endif
@@ -3464,10 +3460,10 @@ ncFile.close();
       vxGather[i] << " " << chargeGather[i] << std::endl;
 }
 #endif
-    for(int i=0;i<100;i++)
-{
-    std::cout << "reflected/sputtered energy " << particleArray->newVelocity[i]   << std::endl;
-}
+//    for(int i=0;i<100;i++)
+//{
+//    std::cout << "reflected/sputtered energy " << particleArray->newVelocity[i]   << std::endl;
+//}
 #if USE_MPI > 0
     }
 #endif
