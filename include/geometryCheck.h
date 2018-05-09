@@ -46,6 +46,7 @@ void operator()(std::size_t indx) const {
     //std::cout << "geometry check particle hitwall" << p.hitWall <<std::endl;
   if(particlesPointer->hitWall[indx] == 0.0)
   {
+     int hitSurface=0;
      float x = particlesPointer->x[indx]; 
      float y = particlesPointer->y[indx]; 
      float z = particlesPointer->z[indx]; 
@@ -80,6 +81,8 @@ void operator()(std::size_t indx) const {
       float crossABAp[3] = {0.0,0.0,0.0};
       float crossBCBp[3] = {0.0,0.0,0.0};
       float crossCACp[3] = {0.0,0.0,0.0};
+      float vxy[3] = {0.0f};
+      float vtheta[3] = {0.0f};
       float signDot0 = 0.0;
       float signDot1 = 0.0;
       float signDot2 = 0.0;
@@ -101,13 +104,33 @@ void operator()(std::size_t indx) const {
       {  float pi =3.14159265; 
          float theta = atan2f(particlesPointer->y[indx],particlesPointer->x[indx]);   
          float thetaPrev = atan2f(particlesPointer->yprevious[indx],particlesPointer->xprevious[indx]);   
-         float vtheta = atan2f(particlesPointer->vy[indx],particlesPointer->vx[indx]);   
+         //float vtheta = atan2f(particlesPointer->vy[indx],particlesPointer->vx[indx]);   
          float rprev = sqrt(particlesPointer->xprevious[indx]*particlesPointer->xprevious[indx] + 
                    particlesPointer->yprevious[indx]*particlesPointer->yprevious[indx]);   
          float r = sqrt(particlesPointer->x[indx]*particlesPointer->x[indx] + 
                    particlesPointer->y[indx]*particlesPointer->y[indx]);   
+         float rHat[3] = {0.0f};
+         float vr[3] = {0.0f};
+         rHat[0] = particlesPointer->x[indx];
+         rHat[1] = particlesPointer->y[indx];
+ 
+         vectorNormalize(rHat,rHat);
+         vxy[0] = particlesPointer->vx[indx];
+         vxy[1] = particlesPointer->vy[indx];
+         vectorScalarMult(vectorDotProduct(rHat,vxy),rHat,vr);
+         float vrMag = vectorNorm(vr);
+         vectorSubtract(vxy,vr,vtheta);
+         float vthetaMag = vectorNorm(vtheta);
          float vx0 = 0.0;
          float vy0 = 0.0; 
+         if(indx==853 && tt==706)
+	 {
+	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << std::endl;
+         } 
+         if(indx==853 && tt==705)
+	 {
+	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << std::endl;
+         } 
          if(theta <= boundaryVector[nLines].y1 )
          {
             particlesPointer->xprevious[indx] = r*cos(boundaryVector[nLines].y2 + theta);
@@ -115,8 +138,8 @@ void operator()(std::size_t indx) const {
             particlesPointer->x[indx] = rprev*cos(boundaryVector[nLines].y2 + theta);
             particlesPointer->y[indx] = rprev*sin(boundaryVector[nLines].y2 + theta);
 
-            vx0 = particlesPointer->vx[indx]*cos(boundaryVector[nLines].y2 + theta) - particlesPointer->vy[indx]*sin(boundaryVector[nLines].y2 + theta);
-            vy0 = particlesPointer->vy[indx]*sin(boundaryVector[nLines].y2 + theta) + particlesPointer->vy[indx]*cos(boundaryVector[nLines].y2 + theta);
+            vx0 = vrMag*cos(boundaryVector[nLines].y2 + theta) - vthetaMag*sin(boundaryVector[nLines].y2 + theta);
+            vy0 = vrMag*sin(boundaryVector[nLines].y2 + theta) + vthetaMag*cos(boundaryVector[nLines].y2 + theta);
             particlesPointer->vx[indx] = vx0;
             particlesPointer->vy[indx] = vy0;
          }        
@@ -127,10 +150,25 @@ void operator()(std::size_t indx) const {
            particlesPointer->x[indx] = rprev*cos(theta-boundaryVector[nLines].y2);
            particlesPointer->y[indx] = rprev*sin(theta-boundaryVector[nLines].y2);
 
-           vx0 = particlesPointer->vx[indx]*cos(theta-boundaryVector[nLines].y2) - particlesPointer->vy[indx]*sin(theta-boundaryVector[nLines].y2);
-           vy0 = particlesPointer->vy[indx]*sin(theta-boundaryVector[nLines].y2) + particlesPointer->vy[indx]*cos(theta-boundaryVector[nLines].y2);
+           vx0 = vrMag*cos(theta-boundaryVector[nLines].y2) - vthetaMag*sin(theta-boundaryVector[nLines].y2);
+           vy0 = vrMag*sin(theta-boundaryVector[nLines].y2) + vthetaMag*cos(theta-boundaryVector[nLines].y2);
            particlesPointer->vx[indx] = vx0;
            particlesPointer->vy[indx] = vy0;
+         }
+         if(indx==853 && tt==705)
+	 {
+	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << std::endl;
+         } 
+         if(indx==853 && tt==706)
+	 {
+            if(vx0 > 2000.0 || vy0 > 2000.0)
+            {
+	    std::cout << "Messing up particle index and time step " << indx << " " << tt << std::endl;
+	    std::cout << "vx0 vy0  " << vx0 << " " << vy0 << std::endl;
+	    std::cout << "theta thetaPrev vtheta  " << theta << " " << thetaPrev << " " << vtheta << std::endl;
+	    std::cout << "r rPrev" << r << " " <<rprev << std::endl;
+	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << std::endl;
+            } 
          }
       }         
       float p0[3] = {particlesPointer->xprevious[indx],
@@ -228,6 +266,12 @@ void operator()(std::size_t indx) const {
           totalSigns = abs(signDot0 + signDot1 + signDot2);
 
           if (totalSigns == 3.0)
+          {hitSurface=1;}
+          if(vectorNorm(crossABAp) == 0.0 || 
+             vectorNorm(crossBCBp) == 0.0 ||
+             vectorNorm(crossCACp) == 0.0)
+	  {hitSurface=1;}
+          if(hitSurface==1)
           {
               boundariesCrossed[nBoundariesCrossed] = i; 
               nBoundariesCrossed++;
@@ -473,7 +517,9 @@ void operator()(std::size_t indx) const {
                  particlesPointer->hitWall[indx] = 1.0f;
   #if USECYLSYMM > 0
                  thetaNew = theta0 + (intersectionx[minDistInd] - pdim1previous)/(pdim1 - pdim1previous)*(theta1 - theta0);
-                 particlesPointer->y[indx] = intersectionx[minDistInd]*cosf(thetaNew);
+                 particlesPointer->yprevious[indx] = intersectionx[minDistInd]*sinf(thetaNew); 
+            particlesPointer->y[indx] = particlesPointer->yprevious[indx];
+                 //particlesPointer->y[indx] = intersectionx[minDistInd]*cosf(thetaNew);
                  particlesPointer->x[indx] = intersectionx[minDistInd]*cosf(thetaNew);
   #else
                  particlesPointer->y[indx] = particlesPointer->yprevious[indx] + (intersectionx[minDistInd] - pdim1previous)/(pdim1 - pdim1previous)*(particlesPointer->y[indx] - particlesPointer->yprevious[indx]);
@@ -524,6 +570,10 @@ void operator()(std::size_t indx) const {
             {
                 particlesPointer->transitTime[indx] = tt*dt;
             }    
+         if(indx==853 && tt==705)
+	 {
+	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << std::endl;
+         } 
         }
 
     //std::cout << "2geometry check particle x" << particlesPointer->x[indx] << particlesPointer->x[indx]previous <<std::endl;
