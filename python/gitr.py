@@ -7,7 +7,7 @@ import netCDF4
 import numpy as np
 #import Tkinter
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 #matplotlib.use('agg')
 #import cv2
@@ -101,7 +101,7 @@ def plot2dGeom(filename="gitrGeometry.cfg"):
     y2 = config.geom.y2
     ys1 = np.ones(x1.size)*y1
     ys2 = np.ones(x1.size)*y2
-    if plt.fignum_exists(1):
+    if plt.fignum_exists(num=1):
         plt.plot(np.append(x1,x1[0]),np.append(z1,z1[0]),linewidth=2.0,color='k')
     else:    
         fig = plt.figure()
@@ -290,22 +290,25 @@ def nc_plotHist(filename='history.nc'):
 #    print('z ', z[:,0])
     print('x ', x.shape)
     print('x ', x[0,:])
-#    print('r ', r.shape)
+    print('r ', r.shape)
 #    print('z ', z[0][:].shape)
 #    #for i in range(nT):
 #    #    print('r,z ',i, x[i][0],z[i][0]) 
 #    single = x[0][:];
-    plt.figure(1,figsize=(6, 10), dpi=1000)
-    plot2dGeom(filename='../input/gitrGeometry.cfg')
-    for i in range(80):
-      #print('i', i)  
-#      print('size', r[:,i].size)  
-#      print('r ', r[:,i])  
-      plt.plot(r[i,:],z[i,:],linewidth=0.5)
-#      #plt.plot(r[i,:],z[i,:],linewidth=1.0)
-#      #plt.setp(linewidth=0.2)
-    plt.xlim((-0.01,0.01))
-    plt.ylim((0.0,0.2))
+    plt.figure(1,figsize=(6, 10), dpi=60)
+    #plot2dGeom(filename='../input/gitrGeometry.cfg')
+    if(x.shape[0] ==1):
+        plt.plot(x[0][:],z[0][:],linewidth=5,color='green')
+    else:
+        for i in range(80):
+          #print('i', i)  
+#          print('size', r[:,i].size)  
+#          print('r ', r[:,i])  
+          plt.plot(r[i,:],z[i,:],linewidth=0.5)
+#          #plt.plot(r[i,:],z[i,:],linewidth=1.0)
+#          #plt.setp(linewidth=0.2)
+    #plt.xlim((0.8,2.2))
+    #plt.ylim((-0.2,1.2))
     #plt.autoscale(enable=True, axis='x', tight=True)
     plt.title('DIII-D W Impurity Simulation',fontsize=20)
     plt.xlabel('r [m]',fontsize=16)
@@ -313,16 +316,21 @@ def nc_plotHist(filename='history.nc'):
     #plt.axis('equal')
     print('saving tracksRZ')
     plt.savefig('tracksRZ.png')
-    plt.close()
+    plt.show()
     plt.figure(1,figsize=(10, 6), dpi=100)
-    for i in range(80):
-      #print('i', i)  
-      plt.plot(x[i,:],y[i,:],linewidth=0.5)
-    plt.ylim((-0.02,0.02))
-    plt.xlim((-0.02,0.02))
+    if(x.shape[0] ==1):
+        plt.plot(r,z,linewidth=0.5)
+    else:
+        for i in range(80):
+          #print('i', i)  
+          plt.plot(x[i,:],y[i,:],linewidth=0.5)
+    #plt.ylim((-0.02,0.02))
+    #plt.xlim((-0.02,0.02))
+    plt.autoscale(enable=True, axis='x', tight=True)
     plt.axis('equal')
     print('saving tracksXY')
     plt.savefig('tracksXY.png')
+    return x,y,z,r
 def nc_plotSpec(filename='spec.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nBins = ncFile.dimensions['nBins'].size
@@ -368,11 +376,18 @@ def nc_plotPositions(filename='positions.nc'):
     nP = ncFile.dimensions['nP'].size
     x = np.array(ncFile.variables['x'])
     y = np.array(ncFile.variables['y'])
+    r = np.sqrt(np.multiply(x,x) + np.multiply(y,y))
     z = np.array(ncFile.variables['z'])
+    print('x ',x)
+    print('y ',y)
+    print('r ',r)
+    print('z ',z)
     plt.close()
     fig = plt.figure()
-    ax = fig.add_subplot(111,projection='3d')
-    ax.scatter(x, y, z)
+    ax = fig.add_subplot(121)
+    ax.scatter(x, y)
+    ax = fig.add_subplot(122)
+    ax.scatter(r,z)
     fig.savefig('positions.png')
 def nc_plotVz(filename='history.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
