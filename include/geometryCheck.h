@@ -123,14 +123,6 @@ void operator()(std::size_t indx) const {
          float vthetaMag = vectorNorm(vtheta);
          float vx0 = 0.0;
          float vy0 = 0.0; 
-         if(indx==853 && tt==706)
-	 {
-	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << std::endl;
-         } 
-         if(indx==853 && tt==705)
-	 {
-	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << std::endl;
-         } 
          if(theta <= boundaryVector[nLines].y1 )
          {
             particlesPointer->xprevious[indx] = r*cos(boundaryVector[nLines].y2 + theta);
@@ -154,21 +146,6 @@ void operator()(std::size_t indx) const {
            vy0 = vrMag*sin(theta-boundaryVector[nLines].y2) + vthetaMag*cos(theta-boundaryVector[nLines].y2);
            particlesPointer->vx[indx] = vx0;
            particlesPointer->vy[indx] = vy0;
-         }
-         if(indx==853 && tt==705)
-	 {
-	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << std::endl;
-         } 
-         if(indx==853 && tt==706)
-	 {
-            if(vx0 > 2000.0 || vy0 > 2000.0)
-            {
-	    std::cout << "Messing up particle index and time step " << indx << " " << tt << std::endl;
-	    std::cout << "vx0 vy0  " << vx0 << " " << vy0 << std::endl;
-	    std::cout << "theta thetaPrev vtheta  " << theta << " " << thetaPrev << " " << vtheta << std::endl;
-	    std::cout << "r rPrev" << r << " " <<rprev << std::endl;
-	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << std::endl;
-            } 
          }
       }         
       float p0[3] = {particlesPointer->xprevious[indx],

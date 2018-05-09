@@ -837,10 +837,6 @@ cpu_times initTime0 = timer.elapsed();
                 particlesPointer->x[indx] = position[0] + v[0] * dt;
                 particlesPointer->y[indx] = position[1] + v[1] * dt;
                 particlesPointer->z[indx] = position[2] + v[2] * dt;
-         if(indx==853 && tt==705)
-	 {
-	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " <<v[0] << " " << v[1] << std::endl;
-         } 
                 particlesPointer->vx[indx] = v[0];
                 particlesPointer->vy[indx] = v[1];
                 particlesPointer->vz[indx] = v[2];    
