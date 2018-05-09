@@ -668,6 +668,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
 
 struct move_boris { 
     Particles *particlesPointer;
+    int tt;
     Boundary *boundaryVector;
     int nR_Bfield;
     int nZ_Bfield;
@@ -696,7 +697,7 @@ struct move_boris {
     const float span;
     const int nLines;
    
-    move_boris(Particles *_particlesPointer, float _span, Boundary *_boundaryVector,int _nLines,
+    move_boris(Particles *_particlesPointer,int _tt, float _span, Boundary *_boundaryVector,int _nLines,
             int _nR_Bfield, int _nZ_Bfield,
             float * _BfieldGridRDevicePointer,
             float * _BfieldGridZDevicePointer,
@@ -712,7 +713,7 @@ struct move_boris {
             float * _EfieldTDevicePointer,
             int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr,float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom)
         
-        : particlesPointer(_particlesPointer), span(_span), boundaryVector(_boundaryVector), nLines(_nLines), nR_Bfield(_nR_Bfield), 
+        : particlesPointer(_particlesPointer),tt(_tt), span(_span), boundaryVector(_boundaryVector), nLines(_nLines), nR_Bfield(_nR_Bfield), 
         nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), 
         BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
         BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), 
@@ -836,10 +837,15 @@ cpu_times initTime0 = timer.elapsed();
                 particlesPointer->x[indx] = position[0] + v[0] * dt;
                 particlesPointer->y[indx] = position[1] + v[1] * dt;
                 particlesPointer->z[indx] = position[2] + v[2] * dt;
+         if(indx==853 && tt==705)
+	 {
+	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " <<v[0] << " " << v[1] << std::endl;
+         } 
                 particlesPointer->vx[indx] = v[0];
                 particlesPointer->vy[indx] = v[1];
                 particlesPointer->vz[indx] = v[2];    
-              //std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
+              
+//std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
     	    }
 #endif
 

@@ -39,7 +39,6 @@
 #include "boundaryInit.h"
 #include "array.h"
 #include "ompPrint.h"
-
 #if USE_BOOST
     #include <boost/timer/timer.hpp>
     #include "boost/filesystem.hpp"
@@ -171,7 +170,7 @@ int main(int argc, char **argv)
       }
   #endif 
   #if USE_BOOST > 0
-    std::string output_folder="/Users/tyounkin/Code/gitr2/examples/operatorTests/straightLine/2Dgeom/output";
+    std::string output_folder="output";
     //Output
     boost::filesystem::path dir(output_folder); 
     if(!(boost::filesystem::exists(dir)))
@@ -2466,7 +2465,7 @@ std::cout << "closed ncp " << std::endl;
   #endif
       std::cout << "particle file import done" <<std::endl;
       #if USE3DTETGEOM > 0
-        MPI_Bcast(&boundaries[0].area, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
+        //MPI_Bcast(&boundaries[0].area, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
       #endif
   sim::Array<float> pSurfNormX(nP),pSurfNormY(nP),pSurfNormZ(nP), 
                     px(nP),py(nP),pz(nP),pvx(nP),pvy(nP),pvz(nP);
@@ -2652,7 +2651,7 @@ std::cout <<" closed ncFile_particles " << std::endl;
 
     for (int i=0 ; i<nParticles ; i++)
     {   float theta_trace = dist2(generatorTrace)*2*3.1415;
-        float phi_trace = dist2(generatorTrace)*3.1415;
+        float phi_trace =dist2(generatorTrace)*3.1415;
         float mag_trace = 2e3;
         particleArray->vx[i] = mag_trace*cos(theta_trace)*sin(phi_trace);
         particleArray->vy[i] = mag_trace*sin(theta_trace)*sin(phi_trace);
@@ -2845,7 +2844,7 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
     cudaThreadSynchronize();
 #endif
         thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleEnd, 
-                move_boris(particleArray,dt,boundaries.data(), nLines,
+                move_boris(particleArray,tt,dt,boundaries.data(), nLines,
                     nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
                     &br.front(),&bz.front(),&by.front(),
                     nR_PreSheathEfield,nY_PreSheathEfield,nZ_PreSheathEfield,
@@ -2978,7 +2977,8 @@ if (tt % subSampleFac == 0)
     fsec fs = finish_clock - start_clock;
     printf("Time taken          is %6.3f (secs) \n", fs.count());
     printf("Time taken per step is %6.3f (secs) \n", fs.count() / (float) nT);
-    std::cout << "x position of first particle per node " << world_rank << " " << particleArray->xprevious[world_rank*nP/world_size+1] << " " <<
+std::cout << "y pos right after loop " << particleArray->y[0] << std::endl;    
+std::cout << "x position of first particle per node " << world_rank << " " << particleArray->xprevious[world_rank*nP/world_size+1] << " " <<
    particleArray->vx[world_rank*nP/world_size] << " " << 
    particleArray->vy[world_rank*nP/world_size] << " " << 
    particleArray->vz[world_rank*nP/world_size] << " " << 
@@ -3224,12 +3224,12 @@ std::cout << "Beginning erosion to surface counting "<<px[0] << std::endl;
             &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),
             &closeGeomGridz_sheath.front(),&closeGeom_sheath.front(),
             closestBoundaryIndex);
-      std::cout << "Starting surf minDistance and closestBoundaryIndex " << closestBoundaryIndex << " " <<
-          minDistance << std::endl;
+      //std::cout << "Starting surf minDistance and closestBoundaryIndex " << closestBoundaryIndex << " " <<
+      //    minDistance << std::endl;
     if(boundaries[closestBoundaryIndex].Z > 0.0)
     {
-      std::cout << "Starting surf Z " << closestBoundaryIndex << " " <<
-          boundaries[closestBoundaryIndex].Z << std::endl;
+      //std::cout << "Starting surf Z " << closestBoundaryIndex << " " <<
+        //  boundaries[closestBoundaryIndex].Z << std::endl;
       surfIndex = boundaries[closestBoundaryIndex].surfaceNumber;
       grossErosion[surfIndex] = grossErosion[surfIndex] + 1.0;
     }
@@ -3309,10 +3309,10 @@ nc_impact0.putVar(&hitWallGather[0]);
 nc_weight0.putVar(&weightGather[0]);
 nc_charge0.putVar(&chargeGather[0]);
 #else
-nc_x0.putVar(&particleArray->x[0]);
-       std::cout << "added x " << std::endl;
-nc_y0.putVar(&particleArray->y[0]);
-nc_z0.putVar(&particleArray->z[0]);
+nc_x0.putVar(&particleArray->xprevious[0]);
+       std::cout << "added x "<< particleArray->x[0] << " " <<particleArray->y[0] << std::endl;
+nc_y0.putVar(&particleArray->yprevious[0]);
+nc_z0.putVar(&particleArray->zprevious[0]);
 nc_vx0.putVar(&particleArray->vx[0]);
 nc_vy0.putVar(&particleArray->vy[0]);
 nc_vz0.putVar(&particleArray->vz[0]);
