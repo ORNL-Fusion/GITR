@@ -27,41 +27,63 @@
 struct hashGeom {
    //int k;
    int nLines; 
+   int nHashes;
    Boundary* boundary;
    float* x;
    float* y;
    float* z;
-   const int n_closeGeomElements;
+   int* n_closeGeomElements;
    //float* minDist;
    int* closeGeom;
-   int nR;
-   int nY;
-   int nZ;
+   int* nR;
+   int* nY;
+   int* nZ;
 
 
-   hashGeom( int _nLines,
+   hashGeom( int _nLines,int _nHashes,
                 Boundary* _boundary,
                 float* _x,
                 float* _y, 
                 float* _z, 
-                int _n_closeGeomElements,//float *_minDist,
+                int* _n_closeGeomElements,//float *_minDist,
                 int *_closeGeom,
-                int _nR, int _nY, int _nZ)
-               :  nLines(_nLines),boundary(_boundary), x(_x), y(_y), z(_z), 
+                int* _nR, int* _nY, int* _nZ)
+               :  nLines(_nLines),nHashes(_nHashes),boundary(_boundary), x(_x), y(_y), z(_z), 
                n_closeGeomElements(_n_closeGeomElements), 
                //minDist(_minDist),
                closeGeom(_closeGeom), nR(_nR), nY(_nY), nZ(_nZ) {}
     
    CUDA_CALLABLE_MEMBER_DEVICE 
-   void operator()(std::size_t indx) const { 
+   void operator()(std::size_t indx) const {
+      int nHash=0;
+      int hashSum=0;
+      int nRhashSum=0;
+      int nYhashSum=0;
+      int nZhashSum=0;
+     for(int i=0;i<nHashes;i++)
+     {  
+         nRhashSum = nRhashSum + nR[i];
+         nYhashSum = nYhashSum + nY[i];
+         nZhashSum = nZhashSum + nZ[i];
+         hashSum = hashSum + nR[i]*nY[i]*nZ[i]*n_closeGeomElements[i];
+        if(indx >=  hashSum)
+        {nHash = nHash +1;}
+     }
+     for(int i=0;i<nHash;i++)
+     {  
+         nRhashSum = nRhashSum + nR[i];
+         nYhashSum = nYhashSum + nY[i];
+         nZhashSum = nZhashSum + nZ[i];
+         hashSum = hashSum + nR[i]*nY[i]*nZ[i]*n_closeGeomElements[i];
+     }
     //std::cout << "index " << indx << std::endl;
     #if USE3DTETGEOM > 0
-       float kk = indx/(nR*nY);
+       float kk = (indx-hashSum)/(nR[nHash]*nY[nHash]);
        int k = floor(kk);
-       int jjj = indx - k*nR*nY;
-       float jj = 1.0*jjj/nR;
+       int jjj = (indx-hashSum) - k*nR[nHash]*nY[nHash];
+       float jj = 1.0*jjj/nR[nHash];
        int j = floor(jj);
-       int i = indx - j*nR - k*(nR*nY);
+       int i = (indx-hashSum)- j*nR[nHash] - k*(nR[nHash]*nY[nHash]);
        //float jj = indx/nR;
        //int j = floor(jj);
        //int i = indx - j*nR;
@@ -71,9 +93,9 @@ struct hashGeom {
        //if( k > nZ || k < 0){ std::cout << "k out of range " << k  << "indx " << indx<< std::endl; exit(0);}
        //std::cout << "ijk " << i << " " << j << " "<< k << std::endl;
        int xyzIndx = indx;
-       float x0 = x[i];
-       float y0 = y[j];
-       float z0 = z[k];
+       float x0 = x[nRhashSum+i];
+       float y0 = y[nYhashSum+j];
+       float z0 = z[nZhashSum+k];
       //std::cout << "point "  <<  x0 << " " <<  y0 << " "
       //     <<  z0 << std::endl;
      #else
@@ -111,8 +133,8 @@ struct hashGeom {
             float signDot2 = 0.0;
             float totalSigns = 0.0;
 #if USE_CUDA
-           float *minDist  = new float[n_closeGeomElements];
-           for(int i1=0;i1<n_closeGeomElements;i1++){ minDist[i1] = 1.0e6;}
+           float *minDist  = new float[n_closeGeomElements[nHash]];
+           for(int i1=0;i1<n_closeGeomElements[nHash];i1++){ minDist[i1] = 1.0e6;}
            //float minDist[10] = {1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6};
 #else
            sim::Array<float> minDist(n_closeGeomElements,1e6);      
@@ -249,8 +271,8 @@ struct hashGeom {
       //std::cout << "mindist "  << minOf3 << " " <<  std::endl;
        //  if(indx ==1)
        //  {std::cout << "minof3" << perpDist <<  " " << minEdge << " " << minOf3<< std::endl;}
-          int minIndClose = n_closeGeomElements;
-           for(int m=0; m< n_closeGeomElements; m++)
+          int minIndClose = n_closeGeomElements[nHash];
+           for(int m=0; m< n_closeGeomElements[nHash]; m++)
            {
        //  if(indx ==1)
        //  {std::cout << "minDist" << minDist[m] << std::endl;}
@@ -261,22 +283,22 @@ struct hashGeom {
               }
            }
 
-           if((minIndClose < n_closeGeomElements) && (minIndClose > -1))
+           if((minIndClose < n_closeGeomElements[nHash]) && (minIndClose > -1))
            {
         //std::cout << "min INd close " << l << std::endl;
                //%shift numbers down
-               for(int n=n_closeGeomElements-1; n>minIndClose; n--)
+               for(int n=n_closeGeomElements[nHash]-1; n>minIndClose; n--)
                {
                     //minDist[xyzIndx*n_closeGeomElements + n] = 
                     //minDist[xyzIndx*n_closeGeomElements + n-1];  
                     minDist[n] = 
                     minDist[n-1];  
-               closeGeom[indx*n_closeGeomElements+ n] =    
-               closeGeom[indx*n_closeGeomElements + n-1];
+               closeGeom[indx*n_closeGeomElements[nHash]+ n] =    
+               closeGeom[indx*n_closeGeomElements[nHash] + n-1];
                }
                //minDist[xyzIndx*n_closeGeomElements + minIndClose] = minOf3;
                minDist[minIndClose] = minOf3;
-              closeGeom[indx*n_closeGeomElements + minIndClose] = l;
+              closeGeom[indx*n_closeGeomElements[nHash] + minIndClose] = l;
          //if(indx ==1)
          //{std::cout << "l minof3" << l << " " << minOf3<< std::endl;}
            //    if((indx*n_closeGeomElements + minIndClose) ==10)

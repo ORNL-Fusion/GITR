@@ -7,7 +7,7 @@ import netCDF4
 import numpy as np
 #import Tkinter
 import matplotlib
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 #matplotlib.use('agg')
 #import cv2

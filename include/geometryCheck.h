@@ -547,10 +547,6 @@ void operator()(std::size_t indx) const {
             {
                 particlesPointer->transitTime[indx] = tt*dt;
             }    
-         if(indx==853 && tt==705)
-	 {
-	    std::cout << "vx vy" <<  particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << std::endl;
-         } 
         }
 
     //std::cout << "2geometry check particle x" << particlesPointer->x[indx] << particlesPointer->x[indx]previous <<std::endl;
