@@ -389,6 +389,7 @@ def nc_plotPositions(filename='positions.nc'):
     ax = fig.add_subplot(122)
     ax.scatter(r,z)
     fig.savefig('positions.png')
+    return x,y,r,z
 def nc_plotVz(filename='history.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nT = ncFile.dimensions['nT'].size
