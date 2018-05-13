@@ -124,9 +124,10 @@ struct hashGeom {
       //std::cout << "point "  <<  x0 << " " <<  y0 << " "
       //     <<  z0 << std::endl;
      #else
-       float kk = indx/(nR);
+       int buffIndx=0;
+       float kk = indx/(nR[0]);
        int k = floor(kk);
-       int i = indx - k*(nR);
+       int i = indx - k*(nR[0]);
        float x0 = x[i];
        float y0 = 0.0;
        float z0 = z[k];
