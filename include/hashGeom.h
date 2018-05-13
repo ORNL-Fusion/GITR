@@ -124,7 +124,6 @@ struct hashGeom {
       //std::cout << "point "  <<  x0 << " " <<  y0 << " "
       //     <<  z0 << std::endl;
      #else
-       int buffIndx=0;
        float kk = indx/(nR[0]);
        int k = floor(kk);
        int i = indx - k*(nR[0]);
@@ -132,6 +131,7 @@ struct hashGeom {
        float y0 = 0.0;
        float z0 = z[k];
        int xyzIndx = indx;
+       int buffIndx=(k*(nR[0])+ i)*n_closeGeomElements[0];
      #endif
        //float minDist[n_closeGeomElements] = {0.0};
        //for(int i1=0;i1<n_closeGeomElements; i1++)
