@@ -400,12 +400,12 @@ void operator()(std::size_t indx) const {
           float dz = closeGeomGridz[1] - closeGeomGridz[0];    
           int rInd = floor((r_position - closeGeomGridr[0])/dr + 0.5f);
           int zInd = floor((particlesPointer->zprevious[indx] - closeGeomGridz[0])/dz + 0.5f);
-          if(rInd < 0 || rInd >= nR_closeGeom) rInd = 0;
-          if(zInd < 0 || zInd >= nZ_closeGeom) zInd = 0;
+          if(rInd < 0 || rInd >= nR_closeGeom[0]) rInd = 0;
+          if(zInd < 0 || zInd >= nZ_closeGeom[0]) zInd = 0;
           int i;
-          for (int j=0; j< n_closeGeomElements; j++)
+          for (int j=0; j< n_closeGeomElements[0]; j++)
           {
-            i = closeGeom[zInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + j];
+            i = closeGeom[zInd*nR_closeGeom[0]*n_closeGeomElements[0] + rInd*n_closeGeomElements[0] + j];
 
           #else
             for (int i=0; i<nLines; i++)

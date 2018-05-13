@@ -459,11 +459,11 @@ int main(int argc, char **argv)
     sim::Array<int> nHashPoints(nHashes,0);
     sim::Array<int> n_closeGeomElements(nHashes,0);
 
+       Setting& geomHash = cfg.lookup("geometry_hash");
   #if USE_MPI > 0 
     if(world_rank == 0)
     {
   #endif
-       Setting& geomHash = cfg.lookup("geometry_hash");
     if(nHashes > 1)
 {
     for(int i=0; i<nHashes;i++)
