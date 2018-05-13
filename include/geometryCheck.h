@@ -26,17 +26,18 @@ struct geometry_check {
     Surfaces *surfaces;
     float dt;
     int tt;
-    int nR_closeGeom;
-    int nY_closeGeom;
-    int nZ_closeGeom;
-    int n_closeGeomElements;
+    int nHashes;
+    int* nR_closeGeom;
+    int* nY_closeGeom;
+    int* nZ_closeGeom;
+    int* n_closeGeomElements;
     float* closeGeomGridr;
     float* closeGeomGridy;
     float* closeGeomGridz;
     int* closeGeom;
 
-    geometry_check(Particles *_particlesPointer, int _nLines,Boundary * _boundaryVector,Surfaces * _surfaces, float _dt, int _tt, int _nR_closeGeom, int _nY_closeGeom, int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom) : 
-        particlesPointer(_particlesPointer), nLines(_nLines), boundaryVector(_boundaryVector), surfaces(_surfaces), dt(_dt), tt(_tt), nR_closeGeom(_nR_closeGeom), nY_closeGeom(_nY_closeGeom), nZ_closeGeom(_nZ_closeGeom), n_closeGeomElements(_n_closeGeomElements), closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy), closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom) {}
+    geometry_check(Particles *_particlesPointer, int _nLines,Boundary * _boundaryVector,Surfaces * _surfaces, float _dt, int _tt,int _nHashes, int* _nR_closeGeom, int* _nY_closeGeom, int* _nZ_closeGeom, int* _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom) : 
+        particlesPointer(_particlesPointer), nLines(_nLines), boundaryVector(_boundaryVector), surfaces(_surfaces), dt(_dt), tt(_tt),nHashes(_nHashes), nR_closeGeom(_nR_closeGeom), nY_closeGeom(_nY_closeGeom), nZ_closeGeom(_nZ_closeGeom), n_closeGeomElements(_n_closeGeomElements), closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy), closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom) {}
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const { 
@@ -155,23 +156,61 @@ void operator()(std::size_t indx) const {
                      particlesPointer->y[indx],
                      particlesPointer->z[indx]};
       #if GEOM_HASH > 0
+        //find which hash
+        int nHash = 0;
+        int rHashInd=0;
+        int yHashInd=0;
+        int zHashInd=0;
+        int rHashInd1=0;
+        int yHashInd1=0;
+        int zHashInd1=0;
         float r_position = particlesPointer->xprevious[indx];
-        float dr = closeGeomGridr[1] - closeGeomGridr[0];
-        float dz = closeGeomGridz[1] - closeGeomGridz[0];    
-        int rInd = floor((r_position - closeGeomGridr[0])/dr + 0.5f);
-        int zInd = floor((particlesPointer->zprevious[indx] - closeGeomGridz[0])/dz + 0.5f);
+        for(int i=0;i<nHashes;i++)
+        {
+           rHashInd1=nR_closeGeom[i]-1;
+           yHashInd1=nY_closeGeom[i]-1;
+           zHashInd1=nZ_closeGeom[i]-1;
+           if(i>0) rHashInd=nR_closeGeom[i-1];
+           if(i>0) yHashInd=nY_closeGeom[i-1];
+           if(i>0) zHashInd=nZ_closeGeom[i-1];
+           if(i>0) rHashInd1=nR_closeGeom[i-1]+nR_closeGeom[i]-1;
+           if(i>0) yHashInd1=nY_closeGeom[i-1]+nY_closeGeom[i]-1;
+           if(i>0) zHashInd1=nZ_closeGeom[i-1]+nZ_closeGeom[i]-1;
+           //std::cout << "rpos " <<rHashInd<< " " << rHashInd1 << " " <<  closeGeomGridr[rHashInd] << " " 
+           //          << closeGeomGridr[rHashInd1] << std::endl;
+           //std::cout << "ypos " << closeGeomGridy[yHashInd] << " " 
+           //          << closeGeomGridy[yHashInd1] << std::endl;
+           //std::cout << "zpos " << closeGeomGridz[zHashInd] << " " 
+           //         << closeGeomGridz[zHashInd1] << std::endl;
+           if(r_position < closeGeomGridr[rHashInd1] && 
+              r_position > closeGeomGridr[rHashInd] &&
+              particlesPointer->yprevious[indx] < closeGeomGridy[yHashInd1] &&
+              particlesPointer->yprevious[indx] > closeGeomGridy[yHashInd] &&
+              particlesPointer->zprevious[indx] < closeGeomGridz[zHashInd1] &&
+              particlesPointer->zprevious[indx] > closeGeomGridz[zHashInd])
+              {
+                nHash=i;
+              }
+        }
+         //std::cout << "nHash " << nHash << std::endl;
+           rHashInd=0;
+           yHashInd=0;
+           zHashInd=0;
+           if(nHash>0) rHashInd=nR_closeGeom[nHash-1];
+           if(nHash>0) yHashInd=nY_closeGeom[nHash-1];
+           if(nHash>0) zHashInd=nZ_closeGeom[nHash-1];
+        float dr = closeGeomGridr[rHashInd+1] - closeGeomGridr[rHashInd];
+        float dz = closeGeomGridz[zHashInd+1] - closeGeomGridz[zHashInd];    
+        float dy = closeGeomGridy[yHashInd+1] - closeGeomGridy[yHashInd];    
+        int rInd = floor((r_position - closeGeomGridr[rHashInd])/dr + 0.5f);
+        int zInd = floor((particlesPointer->zprevious[indx] - closeGeomGridz[zHashInd])/dz + 0.5f);
         int i=0;
-        float dy = closeGeomGridy[1] - closeGeomGridy[0];    
-        int yInd = floor((particlesPointer->yprevious[indx] - closeGeomGridy[0])/dy + 0.5f);
+        int yInd = floor((particlesPointer->yprevious[indx] - closeGeomGridy[yHashInd])/dy + 0.5f);
+         //std::cout << "rHashInd " << rHashInd << " " << yHashInd << " " << zHashInd << std::endl;
+         //std::cout << "dr dy dz " << dr << " " << dy << " " << dz << std::endl;
+         //std::cout << "rind y z " << rInd << " " << yInd << " " << zInd << std::endl;
         if(rInd < 0 || yInd < 0 || zInd < 0)
         {
-          /*std::cout << "indices " << rInd << " " << yInd << " " << zInd << std::endl;
-          std::cout << "pos " << r_position << " " << particlesPointer->yprevious[indx]
-              << " " << particlesPointer->zprevious[indx]  << std::endl;
-          std::cout << "gridz " << closeGeomGridz[0] << " " << closeGeomGridz[1] << std::endl;
-          std::cout << "particle index " << indx << " " << particlesPointer->hitWall[indx] << std::endl;
-            i = closeGeom[-1];
-            */
           rInd = 0;
           yInd = 0;
           zInd = 0;
@@ -180,18 +219,21 @@ void operator()(std::size_t indx) const {
                   //std::cout << "WARNING: particle outside of geometry hash range (low)" << std::endl;
           #endif
         }
-        else if(rInd > nR_closeGeom-1 || yInd > nY_closeGeom-1 || zInd > nZ_closeGeom-1)
+        else if(rInd > nR_closeGeom[nHash]-1 || yInd > nY_closeGeom[nHash]-1 || zInd > nZ_closeGeom[nHash]-1)
         {
            rInd = 0;
            yInd = 0;
            zInd = 0;
 
         }
-        for (int j=0; j< n_closeGeomElements; j++)
+        int buffIndx=0;
+        if(nHash>0) buffIndx = nR_closeGeom[nHash-1]*nY_closeGeom[nHash-1]*nZ_closeGeom[nHash-1]*n_closeGeomElements[nHash-1];
+        //std::cout << "buff Index " << buffIndx << std::endl;
+        for (int j=0; j< n_closeGeomElements[nHash]; j++)
         {
-            i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements
-                        + yInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + j]; 
-            //std::cout << "i's " << i << std::endl;
+            i = closeGeom[buffIndx+zInd*nY_closeGeom[nHash]*nR_closeGeom[nHash]*n_closeGeomElements[nHash]
+                        + yInd*nR_closeGeom[nHash]*n_closeGeomElements[nHash] + rInd*n_closeGeomElements[nHash] + j]; 
+           //std::cout << "i's " << i << std::endl;
       #else
         for (int i=0; i<nLines; i++)
         {
@@ -215,7 +257,7 @@ void operator()(std::size_t indx) const {
           vectorAssign(p0[0] + t*(p1[0] - p0[0]), 
                   p0[1] + t*(p1[1] - p0[1]),
                   p0[2] + t*(p1[2] - p0[2]), p);
-
+          //std::cout << " p " << p[0] << " " << p[1] << " " << p[2] << std::endl;
           vectorAssign(boundaryVector[i].x1, boundaryVector[i].y1, 
               boundaryVector[i].z1, A);    
           vectorAssign(boundaryVector[i].x2, boundaryVector[i].y2, 
@@ -236,21 +278,34 @@ void operator()(std::size_t indx) const {
           vectorCrossProduct(AB,Ap,crossABAp);
           vectorCrossProduct(BC,Bp,crossBCBp);
           vectorCrossProduct(CA,Cp,crossCACp);
-
+          //std::cout << "AB " << AB[0] << " " << AB[1] << " " << AB[2] << std::endl;
+          //std::cout << "Ap " << Ap[0] << " " << Ap[1] << " " << Ap[2] << std::endl;
+          //std::cout << "BC " << BC[0] << " " << BC[1] << " " << BC[2] << std::endl;
+          //std::cout << "Bp " << Bp[0] << " " << Bp[1] << " " << Bp[2] << std::endl;
+          //std::cout << "CA " << CA[0] << " " << CA[1] << " " << CA[2] << std::endl;
+          //std::cout << "Cp " << Cp[0] << " " << Cp[1] << " " << Cp[2] << std::endl;
           signDot0 = sgn(vectorDotProduct(crossABAp,normalVector));
           signDot1 = sgn(vectorDotProduct(crossBCBp,normalVector));
           signDot2 = sgn(vectorDotProduct(crossCACp,normalVector));
-          totalSigns = abs(signDot0 + signDot1 + signDot2);
+          totalSigns = 1.0*abs(signDot0 + signDot1 + signDot2);
+          //std::cout << "signdots " << signDot0 << " " << signDot1 << " " << signDot2 << " " << totalSigns << " " << (totalSigns == 3.0)<<std::endl;
 
-          if (totalSigns == 3.0)
-          {hitSurface=1;}
+//std::cout << "before loop totalSigns hitSurface " << totalSigns << " " << hitSurface << std::endl;
+          hitSurface = 0;
+          if(totalSigns == 3.0)
+          {
+//std::cout << "in loop totalSigns hitSurface " << totalSigns << " " << hitSurface << std::endl;
+          hitSurface=1;
+          }
           if(vectorNorm(crossABAp) == 0.0 || 
              vectorNorm(crossBCBp) == 0.0 ||
              vectorNorm(crossCACp) == 0.0)
 	  {hitSurface=1;}
+//std::cout << "totalSigns hitSurface " << totalSigns << " " << hitSurface << std::endl;
           if(hitSurface==1)
           {
-              boundariesCrossed[nBoundariesCrossed] = i; 
+              boundariesCrossed[nBoundariesCrossed] = i;
+              //std::cout << "boundary crossed " << i << std::endl; 
               nBoundariesCrossed++;
               particlesPointer->hitWall[indx] = 1.0;
               particlesPointer->xprevious[indx] = p[0];

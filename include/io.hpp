@@ -64,18 +64,18 @@ int readFileVar(const std::string& fileName,const std::string& section,const std
            {
                nTotal = nTotal*(xx.getDim(j)).getSize(); 
            }
-           xx.getVar(&x[0]);
+           xx.getVar(&x);
            if(numberOfDimensions == 2)
            {
             OUTPUT2d(profiles_folder,section+varName+".m",
                     (xx.getDim(0)).getSize(), (xx.getDim(1)).getSize(),
-                     &x.front());
+                     &x);
            }
            else if(numberOfDimensions ==3)
            {
             OUTPUT3d(profiles_folder,section+varName+".m",
                     (xx.getDim(0)).getSize(), (xx.getDim(1)).getSize(), 
-                    (xx.getDim(2)).getSize(), &x.front());
+                    (xx.getDim(2)).getSize(), &x);
            }
            return nTotal;
        }
@@ -91,9 +91,9 @@ int readFileVar(const std::string& fileName,const std::string& section,const std
        int xlength;
        xlength = xdim.getSize();
 
-       xx.getVar(&x[0]);
+       xx.getVar(&x);
        std::string fullName = section+varName;
-       OUTPUT1d(profiles_folder,fullName+".m", xlength, &x.front());
+       OUTPUT1d(profiles_folder,fullName+".m", xlength, &x);
        nc.close();
        return xlength;
        } 
