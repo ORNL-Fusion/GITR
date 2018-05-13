@@ -121,9 +121,15 @@ struct hashGeom {
        float x0 = x[nRhashSum+i];
        float y0 = y[nYhashSum+j];
        float z0 = z[nZhashSum+k];
-      //std::cout << "point "  <<  x0 << " " <<  y0 << " "
+      //std::cout << "point "  << nHash << " " <<   x0 << " " <<  y0 << " "
       //     <<  z0 << std::endl;
      #else
+      nHash=0;
+      hashSum=0;
+      nRhashSum=0;
+      nYhashSum=0;
+      nZhashSum=0;
+      nHashPoints=0;
        float kk = indx/(nR[0]);
        int k = floor(kk);
        int i = indx - k*(nR[0]);
@@ -132,6 +138,9 @@ struct hashGeom {
        float z0 = z[k];
        int xyzIndx = indx;
        int buffIndx=(k*(nR[0])+ i)*n_closeGeomElements[0];
+      //std::cout << "point "  <<nHash<< " " <<   x0 << " " <<  z0 << " "
+      //     <<  buffIndx << std::endl;
+       
      #endif
        //float minDist[n_closeGeomElements] = {0.0};
        //for(int i1=0;i1<n_closeGeomElements; i1++)
@@ -347,11 +356,11 @@ struct hashGeom {
      delete[] minDist;
 #endif
      //if(indx == 1){
-     //for(int i=0;i<n_closeGeomElements;i++)
+     //for(int i=0;i<n_closeGeomElements[0];i++)
      //{
-     //    std::cout << "nearest elements index and dist " << closeGeom[xyzIndx*n_closeGeomElements + i] << "  " 
+     //    std::cout << "nearest elements index and dist " << closeGeom[buffIndx + i] << "  " 
      //        <<minDist[i] << std::endl; 
-     //}         }
+     //}         
    }
 };
 
