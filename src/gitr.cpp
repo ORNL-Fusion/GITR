@@ -501,6 +501,7 @@ else
 {
       getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom[0]);
 }
+#endif
       nGeomHash = 0;
   nR_closeGeomTotal = 0;
   nY_closeGeomTotal = 0;
@@ -508,8 +509,15 @@ else
   nGeomHash = 0;
     for(int j=0;j<nHashes;j++)
     {
+      if(nHashes > 1)
+{
       nHashPoints[j] =nR_closeGeom[j]*nY_closeGeom[j]*nZ_closeGeom[j];
-      nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
+}
+else
+{
+      nHashPoints[j] =nR_closeGeom[j]*nZ_closeGeom[j];
+} 
+     nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
       nGeomHash = nGeomHash + nHashPoints[j]*n_closeGeomElements[j];
       nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
       nY_closeGeomTotal = nY_closeGeomTotal + nY_closeGeom[j];
@@ -517,7 +525,6 @@ else
     }
     std::cout << "hhhash nr ny nz total " << nGeomHash << " " << nR_closeGeomTotal << " " << nY_closeGeomTotal << " " << nZ_closeGeomTotal<< std::endl;
     
-#endif
   #if USE_MPI > 0 
     }
     MPI_Bcast(&nR_closeGeom,nHashes,MPI_INT,0,MPI_COMM_WORLD);
