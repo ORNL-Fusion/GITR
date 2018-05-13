@@ -56,34 +56,58 @@ struct hashGeom {
    CUDA_CALLABLE_MEMBER_DEVICE 
    void operator()(std::size_t indx) const {
       int nHash=0;
+    //std::cout << "nHashes "<<nHashes << std::endl;
       int hashSum=0;
       int nRhashSum=0;
       int nYhashSum=0;
       int nZhashSum=0;
+      int nHashPoints=0;
      for(int i=0;i<nHashes;i++)
      {  
          nRhashSum = nRhashSum + nR[i];
          nYhashSum = nYhashSum + nY[i];
          nZhashSum = nZhashSum + nZ[i];
+         nHashPoints = nHashPoints+nR[i]*nY[i]*nZ[i];
          hashSum = hashSum + nR[i]*nY[i]*nZ[i]*n_closeGeomElements[i];
-        if(indx >=  hashSum)
+        if(indx >= nHashPoints)
         {nHash = nHash +1;}
      }
+    //std::cout << "nHash " << nHash << std::endl;
+      hashSum=0;
+      nRhashSum=0;
+      nYhashSum=0;
+      nZhashSum=0;
+      nHashPoints=0;
      for(int i=0;i<nHash;i++)
      {  
          nRhashSum = nRhashSum + nR[i];
          nYhashSum = nYhashSum + nY[i];
          nZhashSum = nZhashSum + nZ[i];
+         nHashPoints = nHashPoints+nR[i]*nY[i]*nZ[i];
          hashSum = hashSum + nR[i]*nY[i]*nZ[i]*n_closeGeomElements[i];
      }
     //std::cout << "index " << indx << std::endl;
+    //std::cout << "hashSum " << hashSum << std::endl;
+    //std::cout << "nR[nHash] " << nR[nHash] << std::endl;
+    //std::cout << "nY[nHash] " << nY[nHash] << std::endl;
+    //std::cout << "nRhashSum " << nRhashSum << std::endl;
+    //std::cout << "nYhashSum " << nYhashSum << std::endl;
+    //std::cout << "nZhashSum " << nZhashSum << std::endl;
     #if USE3DTETGEOM > 0
-       float kk = (indx-hashSum)/(nR[nHash]*nY[nHash]);
+       float kk = (indx-nHashPoints)/(nR[nHash]*nY[nHash]);
+    //std::cout << "kk " << kk << std::endl;
+        
        int k = floor(kk);
-       int jjj = (indx-hashSum) - k*nR[nHash]*nY[nHash];
+    //std::cout << "k " << k << std::endl;
+       int jjj = (indx-nHashPoints) - k*nR[nHash]*nY[nHash];
+    //std::cout << "jjj " << jjj << std::endl;
        float jj = 1.0*jjj/nR[nHash];
+    //std::cout << "jj " << jj << std::endl;
        int j = floor(jj);
-       int i = (indx-hashSum)- j*nR[nHash] - k*(nR[nHash]*nY[nHash]);
+    //std::cout << "j " << j << std::endl;
+       int i = (indx-nHashPoints)- j*nR[nHash] - k*(nR[nHash]*nY[nHash]);
+    //std::cout << "i " << i << std::endl;
+
        //float jj = indx/nR;
        //int j = floor(jj);
        //int i = indx - j*nR;
@@ -93,6 +117,7 @@ struct hashGeom {
        //if( k > nZ || k < 0){ std::cout << "k out of range " << k  << "indx " << indx<< std::endl; exit(0);}
        //std::cout << "ijk " << i << " " << j << " "<< k << std::endl;
        int xyzIndx = indx;
+       int buffIndx = hashSum+(k*(nR[nHash]*nY[nHash])+j*nR[nHash]+i)*n_closeGeomElements[nHash] ;
        float x0 = x[nRhashSum+i];
        float y0 = y[nYhashSum+j];
        float z0 = z[nZhashSum+k];
@@ -137,7 +162,7 @@ struct hashGeom {
            for(int i1=0;i1<n_closeGeomElements[nHash];i1++){ minDist[i1] = 1.0e6;}
            //float minDist[10] = {1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6};
 #else
-           sim::Array<float> minDist(n_closeGeomElements,1e6);      
+           sim::Array<float> minDist(n_closeGeomElements[nHash],1e6);      
 #endif
      for(int l=0; l<nLines; l++)
      {
@@ -293,12 +318,12 @@ struct hashGeom {
                     //minDist[xyzIndx*n_closeGeomElements + n-1];  
                     minDist[n] = 
                     minDist[n-1];  
-               closeGeom[indx*n_closeGeomElements[nHash]+ n] =    
-               closeGeom[indx*n_closeGeomElements[nHash] + n-1];
+               closeGeom[buffIndx+ n] =    
+               closeGeom[buffIndx + n-1];
                }
                //minDist[xyzIndx*n_closeGeomElements + minIndClose] = minOf3;
                minDist[minIndClose] = minOf3;
-              closeGeom[indx*n_closeGeomElements[nHash] + minIndClose] = l;
+              closeGeom[buffIndx + minIndClose] = l;
          //if(indx ==1)
          //{std::cout << "l minof3" << l << " " << minOf3<< std::endl;}
            //    if((indx*n_closeGeomElements + minIndClose) ==10)

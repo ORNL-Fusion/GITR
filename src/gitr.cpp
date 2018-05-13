@@ -447,6 +447,7 @@ int main(int argc, char **argv)
   int nR_closeGeomTotal = 0;
   int nY_closeGeomTotal = 0;
   int nZ_closeGeomTotal = 0;
+  int nHashPointsTotal = 0;
   int nGeomHash = 0;
   std::string geomHashCfg = "geometry_hash.";
   #if GEOM_HASH == 1
@@ -455,19 +456,33 @@ int main(int argc, char **argv)
     sim::Array<int> nR_closeGeom(nHashes,0);
     sim::Array<int> nY_closeGeom(nHashes,0);
     sim::Array<int> nZ_closeGeom(nHashes,0);
+    sim::Array<int> nHashPoints(nHashes,0);
     sim::Array<int> n_closeGeomElements(nHashes,0);
+
   #if USE_MPI > 0 
     if(world_rank == 0)
     {
   #endif
-       Setting& geomHash = cfg_geom.lookup("geometry_hash");
+       Setting& geomHash = cfg.lookup("geometry_hash");
+    if(nHashes > 1)
+{
     for(int i=0; i<nHashes;i++)
     {   
          nR_closeGeom[i] = geomHash["nR_closeGeom"][i];
+         nZ_closeGeom[i] = geomHash["nZ_closeGeom"][i];
+         n_closeGeomElements[i] = geomHash["n_closeGeomElements"][i];
+    std::cout << "hash nr ny nz total " << n_closeGeomElements[i] << " " << nR_closeGeom[i]  << " " << nZ_closeGeom[i]<< std::endl;
     //getVariable(cfg,geomHashCfg+"nR_closeGeom",nR_closeGeom);
     //getVariable(cfg,geomHashCfg+"nZ_closeGeom",nZ_closeGeom);
     //getVariable(cfg,geomHashCfg+"n_closeGeomElements",n_closeGeomElements);
     }
+}
+else
+{
+    getVariable(cfg,geomHashCfg+"nR_closeGeom",nR_closeGeom[0]);
+    getVariable(cfg,geomHashCfg+"nZ_closeGeom",nZ_closeGeom[0]);
+    getVariable(cfg,geomHashCfg+"n_closeGeomElements",n_closeGeomElements[0]);
+}
     for(int j=0;j<nHashes;j++)
     {
       nGeomHash = nGeomHash + nR_closeGeom[j]*nZ_closeGeom[j]*n_closeGeomElements[j];
@@ -475,16 +490,34 @@ int main(int argc, char **argv)
       nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
     }
     #if USE3DTETGEOM > 0
-      //getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom);
+    if(nHashes > 1)
+{
+    for(int i=0; i<nHashes;i++)
+    {   
+         nY_closeGeom[i] = geomHash["nY_closeGeom"][i];
+    }
+}
+else
+{
+      getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom[0]);
+}
       nGeomHash = 0;
+  nR_closeGeomTotal = 0;
+  nY_closeGeomTotal = 0;
+  nZ_closeGeomTotal = 0;
+  nGeomHash = 0;
     for(int j=0;j<nHashes;j++)
     {
-      nGeomHash = nGeomHash + nR_closeGeom[j]*nY_closeGeom[j]*nZ_closeGeom[j]*n_closeGeomElements[j];
+      nHashPoints[j] =nR_closeGeom[j]*nY_closeGeom[j]*nZ_closeGeom[j];
+      nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
+      nGeomHash = nGeomHash + nHashPoints[j]*n_closeGeomElements[j];
       nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
       nY_closeGeomTotal = nY_closeGeomTotal + nY_closeGeom[j];
       nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
     }
-    #endif
+    std::cout << "hhhash nr ny nz total " << nGeomHash << " " << nR_closeGeomTotal << " " << nY_closeGeomTotal << " " << nZ_closeGeomTotal<< std::endl;
+    
+#endif
   #if USE_MPI > 0 
     }
     MPI_Bcast(&nR_closeGeom,nHashes,MPI_INT,0,MPI_COMM_WORLD);
@@ -494,24 +527,53 @@ int main(int argc, char **argv)
     MPI_Bcast(&nGeomHash,1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
   #endif
+   #else
+    sim::Array<int> nR_closeGeom(nHashes,0);
+    sim::Array<int> nY_closeGeom(nHashes,0);
+    sim::Array<int> nZ_closeGeom(nHashes,0);
+    sim::Array<int> nHashPoints(nHashes,0);
+    sim::Array<int> n_closeGeomElements(nHashes,0);
+   std::cout << "nr closegeom " << nR_closeGeom[0] <<std::endl; 
   #endif
 
   #if GEOM_HASH > 1
-    std::string hashFile;
+    getVariable(cfg,geomHashCfg+"nHashes",nHashes);
+    std::vector<std::string> hashFile;
   #if USE_MPI > 0 
     if(world_rank == 0)
     {
   #endif
-    getVariable(cfg,geomHashCfg+"fileString",hashFile);
-    nR_closeGeom = getDimFromFile(cfg,input_path+hashFile,geomHashCfg,"gridNrString");
-    nZ_closeGeom = getDimFromFile(cfg,input_path+hashFile,geomHashCfg,"gridNzString");
-    n_closeGeomElements = getDimFromFile(cfg,input_path+hashFile,geomHashCfg,"nearestNelementsString");
-    nGeomHash = nR_closeGeom*nZ_closeGeom*n_closeGeomElements;
-    #if USE3DTETGEOM > 0
-      nY_closeGeom = getDimFromFile(cfg,input_path+hashFile,geomHashCfg,"gridNyString");
-      nGeomHash = nY_closeGeom*nGeomHash;
+       Setting& geomHash = cfg.lookup("geometry_hash");
+    for(int i=0;i<nHashes;i++)
+{
+    if(nHashes > 1)
+{
+    //hashFile[i] = geomHash["fileString"][i];
+      hashFile.push_back(geomHash["fileString"][i]);
+}
+else
+{
+    hashFile.push_back("dummy");
+    getVariable(cfg,geomHashCfg+"fileString",hashFile[i]);
+}
+   std::cout << "nr closegeom " << i << " " << nR_closeGeom[0] <<  std::endl; 
+   std::cout << "hashFile " << " " << hashFile[0] << std::endl; 
+   nR_closeGeom[i] = getDimFromFile(cfg,input_path+hashFile[i],geomHashCfg,"gridNrString");
+    nZ_closeGeom[i] = getDimFromFile(cfg,input_path+hashFile[i],geomHashCfg,"gridNzString");
+    n_closeGeomElements[i] = getDimFromFile(cfg,input_path+hashFile[i],geomHashCfg,"nearestNelementsString");
+    nGeomHash = nGeomHash+nR_closeGeom[i]*nZ_closeGeom[i]*n_closeGeomElements[i];
+    std::cout << "nGeomHash " << nGeomHash << std::endl;
+     #if USE3DTETGEOM > 0
+      nY_closeGeom[i] = getDimFromFile(cfg,input_path+hashFile[i],geomHashCfg,"gridNyString");
+      nGeomHash = nGeomHash-nR_closeGeom[i]*nZ_closeGeom[i]*n_closeGeomElements[i]+
+nY_closeGeom[i]*nR_closeGeom[i]*nZ_closeGeom[i]*n_closeGeomElements[i];
+    std::cout << "nGeomHash " << nGeomHash << std::endl;
+      nY_closeGeomTotal = nY_closeGeomTotal + nY_closeGeom[i];
     #else
     #endif
+      nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[i];
+      nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[i];
+}
   #if USE_MPI > 0 
     }
     MPI_Bcast(&nR_closeGeom,1,MPI_INT,0,MPI_COMM_WORLD);
@@ -529,60 +591,89 @@ int main(int argc, char **argv)
   
   #if GEOM_HASH == 1
   sim::Array<float> hashX0(nHashes,0.0),hashX1(nHashes,0.0),hashY0(nHashes,0.0),hashY1(nHashes,0.0),hashZ0(nHashes,0.0),hashZ1(nHashes,0.0);
+    if(nHashes > 1)
+{
+    for(int i=0; i<nHashes; i++)
+    {
+     hashX0[i] = geomHash["hashX0"][i];
+     hashX1[i] = geomHash["hashX1"][i];
+     hashZ0[i] = geomHash["hashZ0"][i];
+     hashZ1[i] = geomHash["hashZ1"][i];
     //getVariable(cfg,geomHashCfg+"hashX0",hashX0);
     //getVariable(cfg,geomHashCfg+"hashX1",hashX1);
     //getVariable(cfg,geomHashCfg+"hashZ0",hashZ0);
     //getVariable(cfg,geomHashCfg+"hashZ1",hashZ1);
     #if USE3DTETGEOM > 0
       //getVariable(cfg,geomHashCfg+"hashY0",hashY0);
+     hashY0[i] = geomHash["hashY0"][i];
+     hashY1[i] = geomHash["hashY1"][i];
       //getVariable(cfg,geomHashCfg+"hashY1",hashY1);
     #endif
+    }
+}
+else
+{
+    getVariable(cfg,geomHashCfg+"hashX0",hashX0[0]);
+    getVariable(cfg,geomHashCfg+"hashX1",hashX1[0]);
+    getVariable(cfg,geomHashCfg+"hashZ0",hashZ0[0]);
+    getVariable(cfg,geomHashCfg+"hashZ1",hashZ1[0]);
+    #if USE3DTETGEOM > 0
+      getVariable(cfg,geomHashCfg+"hashY0",hashY0[0]);
+      getVariable(cfg,geomHashCfg+"hashY1",hashY1[0]);
+    #endif
+}
     int nHash=0;
     int hashSum=0;
     for(int i=0; i<nR_closeGeomTotal; i++)
     {
-        if(i==nR_closeGeom[nHash])
+        if(i==hashSum+nR_closeGeom[nHash])
         {
-            nHash = nHash+1;
             hashSum = hashSum+nR_closeGeom[nHash];
+            nHash = nHash+1;
         }
         closeGeomGridr[i] = (hashX1[nHash] - hashX0[nHash])*(i-hashSum)/(nR_closeGeom[nHash] - 1)+ hashX0[nHash];
+   std::cout << "gridX "<< closeGeomGridr[i] << std::endl;
     }
     nHash=0;
     hashSum=0;
     for(int j=0; j<nY_closeGeomTotal; j++)
     {
-        if(j==nY_closeGeom[nHash])
+        if(j==hashSum+nY_closeGeom[nHash])
         {
+            hashSum = hashSum+nY_closeGeom[nHash];
             nHash = nHash+1;
-            hashSum = hashSum+nR_closeGeom[nHash];
         }
-        closeGeomGridy[j] = (hashY1[nHash] - hashY0[nHash])*(j-hashSum)/(nY_closeGeom[nHash] - 1)+ hashY0[nHash];}
+        closeGeomGridy[j] = (hashY1[nHash] - hashY0[nHash])*(j-hashSum)/(nY_closeGeom[nHash] - 1)+ hashY0[nHash];
+   std::cout << "gridY "<< closeGeomGridy[j] << std::endl;
+    }
     nHash=0;
     hashSum=0;
     for(int k=0; k<nZ_closeGeomTotal; k++)
     {  
-        if(k==nZ_closeGeom[nHash])
+        if(k==hashSum+nZ_closeGeom[nHash])
         {
+            hashSum = hashSum+nZ_closeGeom[nHash];
             nHash = nHash+1;
-            hashSum = hashSum+nR_closeGeom[nHash];
         }
         closeGeomGridz[k] = (hashZ1[nHash] - hashZ0[nHash])*(k-hashSum)/(nZ_closeGeom[nHash] - 1)+ hashZ0[nHash];
+   std::cout << "gridz "<< closeGeomGridz[k] << std::endl;
     }
     
    std::cout << "about to create iterator1 " << std::endl; 
     thrust::counting_iterator<std::size_t> lines0(0);  
    std::cout << "iterator2 " << std::endl; 
-    thrust::counting_iterator<std::size_t> lines1(nR_closeGeomTotal*nY_closeGeomTotal*nZ_closeGeomTotal);
-    int nHashMeshPointsPerProcess=ceil(nR_closeGeomTotal*nY_closeGeomTotal*nZ_closeGeomTotal/world_size);
+    thrust::counting_iterator<std::size_t> lines1(nHashPointsTotal);
+    int nHashMeshPointsPerProcess=ceil(nHashPointsTotal/world_size);
    std::cout << "nHashMeshPointsPerProcess "<< nHashMeshPointsPerProcess << std::endl; 
    std::vector<int> hashMeshIncrements(world_size);
    for(int j=0;j<world_size-1;j++)
    {
        hashMeshIncrements[j] = nHashMeshPointsPerProcess;
+   std::cout << "hashMeshIncrements "<< hashMeshIncrements[j] << std::endl;
    }
-   hashMeshIncrements[world_size-1]=nR_closeGeomTotal*nY_closeGeomTotal*nZ_closeGeomTotal - (world_size-1)*nHashMeshPointsPerProcess;
+   hashMeshIncrements[world_size-1]=nHashPointsTotal - (world_size-1)*nHashMeshPointsPerProcess;
    std::cout << "minDist1 "<< nGeomHash << std::endl;
+   std::cout << "nHashPointsTotal "<< nHashPointsTotal << std::endl;
     int Maxn_closeGeomElements = 0;
    for(int i=0;i<nHashes;i++)
    {
@@ -590,7 +681,9 @@ int main(int argc, char **argv)
        {
            Maxn_closeGeomElements =n_closeGeomElements[i];
        }
-   } 
+   }
+ 
+   std::cout << "Maxn_closeGeomElements "<< Maxn_closeGeomElements << std::endl;
     sim::Array<float> minDist1(Maxn_closeGeomElements,1e6);
     std::cout << "Generating geometry hash" << sizeof(int) << " bytes per int, " 
         << nGeomHash << " for the entire hash " <<  std::endl;
@@ -615,6 +708,7 @@ int main(int argc, char **argv)
     //for(int i=0; i<nZ_closeGeom; i++)
     //{
       //  std::cout << "percenent done " << i*1.0/nZ_closeGeom << std::endl;
+   std::cout << "starting geomhash" << std::endl;
     typedef std::chrono::high_resolution_clock Time0;
     typedef std::chrono::duration<float> fsec0;
     auto start_clock0 = Time0::now();
@@ -623,7 +717,9 @@ int main(int argc, char **argv)
                         closeGeomGridz.data(),
                         n_closeGeomElements.data(), closeGeom.data(),
                         nR_closeGeom.data(),nY_closeGeom.data(),nZ_closeGeom.data());
+   std::cout << "starting geomhash2" << std::endl;
        thrust::for_each(thrust::device, lines0+world_rank*nHashMeshPointsPerProcess,lines0+world_rank*nHashMeshPointsPerProcess+hashMeshIncrements[world_rank]-1,geo1);
+   std::cout << "starting geomhash3" << std::endl;
        //for(int i=0;i<nR_closeGeom*nY_closeGeom*nZ_closeGeom;i++)
        //{
        // geo1(i);
@@ -659,34 +755,44 @@ int main(int argc, char **argv)
       if(world_rank == 0)
       {
 #endif
-    //NcFile ncFile_hash("output/geomHash.nc", NcFile::replace);
-    //NcDim hashNR = ncFile_hash.addDim("nR",nR_closeGeom);
-    //#if USE3DTETGEOM > 0
-    //  NcDim hashNY = ncFile_hash.addDim("nY",nY_closeGeom);
-    //#endif
-    //NcDim hashNZ = ncFile_hash.addDim("nZ",nZ_closeGeom);
-    //NcDim hashN = ncFile_hash.addDim("n",n_closeGeomElements);
-    //vector<NcDim> geomHashDim;
-    //geomHashDim.push_back(hashNR);
-    //#if USE3DTETGEOM > 0
-    //  geomHashDim.push_back(hashNY);
-    //#endif
-    //geomHashDim.push_back(hashNZ);
-    //geomHashDim.push_back(hashN);
+    for(int i=0;i<nHashes;i++)
+    {
+    NcFile ncFile_hash("output/geomHash"+std::to_string(i)+".nc", NcFile::replace);
+    //NcDim nGeomHash = ncFile_hash.addDim("nGeomHash",nGeomHash);
     //NcVar hash_gridR = ncFile_hash.addVar("gridR",ncFloat,hashNR);
-    //#if USE3DTETGEOM > 0
-    //  NcVar hash_gridY = ncFile_hash.addVar("gridY",ncFloat,hashNY);
-    //#endif
-    //NcVar hash_gridZ = ncFile_hash.addVar("gridZ",ncFloat,hashNZ);
-    //NcVar hash = ncFile_hash.addVar("hash",ncInt,geomHashDim);
-    //hash_gridR.putVar(&closeGeomGridr[0]);
-    //#if USE3DTETGEOM > 0
-    //  hash_gridY.putVar(&closeGeomGridy[0]);
-    //#endif
+    NcDim hashNR = ncFile_hash.addDim("nR",nR_closeGeom[i]);
+    #if USE3DTETGEOM > 0
+      NcDim hashNY = ncFile_hash.addDim("nY",nY_closeGeom[i]);
+    #endif
+    NcDim hashNZ = ncFile_hash.addDim("nZ",nZ_closeGeom[i]);
+    NcDim hashN = ncFile_hash.addDim("n",n_closeGeomElements[i]);
+    vector<NcDim> geomHashDim;
+    geomHashDim.push_back(hashNR);
+    #if USE3DTETGEOM > 0
+      geomHashDim.push_back(hashNY);
+    #endif
+    geomHashDim.push_back(hashNZ);
+    geomHashDim.push_back(hashN);
+    NcVar hash_gridR = ncFile_hash.addVar("gridR",ncFloat,hashNR);
+    #if USE3DTETGEOM > 0
+      NcVar hash_gridY = ncFile_hash.addVar("gridY",ncFloat,hashNY);
+    #endif
+    NcVar hash_gridZ = ncFile_hash.addVar("gridZ",ncFloat,hashNZ);
+    NcVar hash = ncFile_hash.addVar("hash",ncInt,geomHashDim);
+    int ncIndex=0;
+    if(i > 0) ncIndex=nR_closeGeom[i-1];
+    hash_gridR.putVar(&closeGeomGridr[ncIndex]);
+    #if USE3DTETGEOM > 0
+      if(i > 0) ncIndex=nY_closeGeom[i-1];
+      hash_gridY.putVar(&closeGeomGridy[ncIndex]);
+    #endif
 
-    //hash_gridZ.putVar(&closeGeomGridz[0]);
-    //hash.putVar(&closeGeom[0]);
-    //ncFile_hash.close();
+    if(i > 0) ncIndex=nZ_closeGeom[i-1];
+    hash_gridZ.putVar(&closeGeomGridz[ncIndex]);
+    if(i > 0) ncIndex=nR_closeGeom[i-1]*nY_closeGeom[i-1]*nZ_closeGeom[i-1]*n_closeGeomElements[i-1];
+    hash.putVar(&closeGeom[ncIndex]);
+    ncFile_hash.close();
+    }
 #if USE_MPI > 0
       }
 #endif
@@ -695,15 +801,24 @@ int main(int argc, char **argv)
     if(world_rank == 0)
     {
   #endif
-    getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridRString",closeGeomGridr);
-    getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridZString",closeGeomGridz);
+    for(int i=0;i<nHashes;i++)
+{
+    int dataIndex = 0;
+    if(i > 0) dataIndex = nR_closeGeom[0];
+    getVarFromFile(cfg,input_path+hashFile[i],geomHashCfg,"gridRString",closeGeomGridr[dataIndex]);
+    if(i > 0) dataIndex = nZ_closeGeom[0];
+    getVarFromFile(cfg,input_path+hashFile[i],geomHashCfg,"gridZString",closeGeomGridz[dataIndex]);
     #if USE3DTETGEOM >0
-      getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"gridYString",closeGeomGridy);
+    if(i > 0) dataIndex = nY_closeGeom[0];
+      getVarFromFile(cfg,input_path+hashFile[i],geomHashCfg,"gridYString",closeGeomGridy[dataIndex]);
     #endif
-    std::cout << "geom hash numbers " << nR_closeGeom << " " << nY_closeGeom
-              << " " << nZ_closeGeom << " " << n_closeGeomElements << std::endl;
-    getVarFromFile(cfg,input_path+hashFile,geomHashCfg,"closeGeomString",closeGeom);
-    std::cout << "geom hash indices " << closeGeom[0] << " " << closeGeom[1] << " " << closeGeom[2] << std::endl;
+    //std::cout << "geom hash numbers " << nR_closeGeom << " " << nY_closeGeom
+      //        << " " << nZ_closeGeom << " " << n_closeGeomElements << std::endl;
+    if(i > 0) dataIndex = nR_closeGeom[0]*nY_closeGeom[0]*nZ_closeGeom[0]*n_closeGeomElements[0];
+    getVarFromFile(cfg,input_path+hashFile[i],geomHashCfg,"closeGeomString",closeGeom[dataIndex]);
+    //std::cout << "geom hash indices nxyz " << nR_closeGeom[0] << " " << nY_closeGeom[0] << " " << nZ_closeGeom[0] << std::endl;
+    //std::cout << "geom hash indices " << closeGeom[0] << " " << closeGeom[1] << " " << closeGeom[2] << std::endl;
+    }
   #if USE_MPI > 0 
     }
     MPI_Bcast(closeGeomGridr.data(), nR_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -2924,7 +3039,7 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
         //try {
             thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
                     geometry_check(particleArray,nLines,&boundaries[0],surfaces,dt,tt,
-                        nR_closeGeom[0],nY_closeGeom[0],nZ_closeGeom[0],n_closeGeomElements[0],
+                        nHashes,nR_closeGeom.data(),nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),
                         &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
                         &closeGeom.front()) );
        // }
