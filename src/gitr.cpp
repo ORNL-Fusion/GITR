@@ -527,12 +527,22 @@ else
     
   #if USE_MPI > 0 
     }
-    MPI_Bcast(&nR_closeGeom,nHashes,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&nY_closeGeom,nHashes,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&nZ_closeGeom,nHashes,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&n_closeGeomElements,nHashes,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nR_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&n_closeGeomElements[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(&nGeomHash,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nR_closeGeomTotal,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_closeGeomTotal,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_closeGeomTotal,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nHashPointsTotal,1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "rank and ns fo rhash "<<world_rank << " " <<  nHashes << " " <<
+     nR_closeGeomTotal << " " <<
+     nY_closeGeomTotal << " " <<
+     nZ_closeGeomTotal<< " " <<
+     nHashPointsTotal <<std::endl;
+     std::cout << " rank and nr geomHash " << world_rank << " " << nR_closeGeom[0] << std::endl;
   #endif
    #else
     sim::Array<int> nR_closeGeom(nHashes,0);
@@ -736,21 +746,66 @@ else
        #endif
     //}
 #if USE_MPI > 0
+    //MPI_Barrier(MPI_COMM_WORLD);
+   int hashPoint = 0;
+   int closeGeomPoint = 0;
+   int closeGeomPointTotal = 0;
+   int closeGeomPointProcIndex = 0;
+   std::vector<int> closeGeomPointIndex(world_size,0);
+   std::vector<int> closeGeomPointIncrements(world_size,0);
+ for(int ii=0;ii<world_size;ii++)
+ {
+     for(int i=0;i<nR_closeGeom[ii];i++)
+     {
+#if USE3DTETGEOM
+     for(int j=0;j<nY_closeGeom[ii];j++)
+     {
+#endif
+     for(int k=0;k<nZ_closeGeom[ii];k++)
+     {
+         if(hashPoint ==hashMeshIncrements[closeGeomPointProcIndex])
+         {
+             //if(closeGeomPointProcIndex < (world_size-1))
+             //{
+             closeGeomPointIndex[closeGeomPointProcIndex+1] = 
+                 closeGeomPointTotal;
+             //}
+             closeGeomPointIncrements[closeGeomPointProcIndex] = 
+                 closeGeomPoint;
+             closeGeomPointProcIndex = closeGeomPointProcIndex+1;
+             hashPoint = 0;
+             closeGeomPoint=0;
+         }
+         //std::cout << "hashPoint closeGeomPoint " << hashPoint << " " << closeGeomPoint << " " << closeGeomPointTotal << std::endl; 
+         hashPoint = hashPoint + 1;
+         closeGeomPoint = closeGeomPoint + n_closeGeomElements[ii];
+         closeGeomPointTotal = closeGeomPointTotal + n_closeGeomElements[ii];
+     }
+#if USE3DTETGEOM
+     }
+#endif    
+     }
+}
+closeGeomPointIncrements[world_size-1] = closeGeomPoint;
+for(int i=0;i<world_size;i++)
+{
+    std::cout << " closeGeom index and incr " << closeGeomPointIndex[i] << " " << closeGeomPointIncrements[i]<< std::endl;
+}
     MPI_Barrier(MPI_COMM_WORLD);
     //Collect stuff
-//   for(int rr=1; rr<world_size;rr++)
-//{
-//if(world_rank == rr)
-//{
-//    MPI_Send(&closeGeom[world_rank*nHashMeshPointsPerProcess*n_closeGeomElements], hashMeshIncrements[world_rank]*n_closeGeomElements, MPI_INT, 0, 0, MPI_COMM_WORLD);
-//}
-//else if(world_rank == 0)
-//{
-//    MPI_Recv(&closeGeom[rr*nHashMeshPointsPerProcess*n_closeGeomElements], hashMeshIncrements[rr]*n_closeGeomElements, MPI_INT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//}
-//}
-//  MPI_Barrier(MPI_COMM_WORLD);
-//  MPI_Bcast(closeGeom.data(), nR_closeGeom*nY_closeGeom*nZ_closeGeom*n_closeGeomElements,MPI_INT,0,MPI_COMM_WORLD);
+   for(int rr=1; rr<world_size;rr++)
+{
+if(world_rank == rr)
+{
+    MPI_Send(&closeGeom[closeGeomPointIndex[rr]], closeGeomPointIncrements[rr], MPI_INT, 0, 0, MPI_COMM_WORLD);
+}
+else if(world_rank == 0)
+{
+    MPI_Recv(&closeGeom[closeGeomPointIndex[rr]], closeGeomPointIncrements[rr], MPI_INT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+}
+}
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Bcast(closeGeom.data(), closeGeomPointTotal,MPI_INT,0,MPI_COMM_WORLD);
 #endif
     #if USE_CUDA
       cudaDeviceSynchronize();

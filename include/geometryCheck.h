@@ -402,10 +402,26 @@ void operator()(std::size_t indx) const {
           int zInd = floor((particlesPointer->zprevious[indx] - closeGeomGridz[0])/dz + 0.5f);
           if(rInd < 0 || rInd >= nR_closeGeom[0]) rInd = 0;
           if(zInd < 0 || zInd >= nZ_closeGeom[0]) zInd = 0;
-          int i;
+          int i=0;
+          int closeIndx=0;
           for (int j=0; j< n_closeGeomElements[0]; j++)
           {
-            i = closeGeom[zInd*nR_closeGeom[0]*n_closeGeomElements[0] + rInd*n_closeGeomElements[0] + j];
+              //closeIndx = zInd*nR_closeGeom[0]*n_closeGeomElements[0] + rInd*n_closeGeomElements[0] + j;
+              //if(zInd*nR_closeGeom[0]*n_closeGeomElements[0] + rInd*n_closeGeomElements[0] + j < 0)
+              //{
+              //        zInd=0;
+              //        rInd=0;
+              //        j=0;
+              //    //std::cout << "index " << zInd*nR_closeGeom[0]*n_closeGeomElements[0] + rInd*n_closeGeomElements[0] + j << std::endl;
+              //}        
+              //    if(zInd*nR_closeGeom[0]*n_closeGeomElements[0] + rInd*n_closeGeomElements[0] + j > 1309440)
+              //    {
+              //        zInd=0;
+              //        rInd=0;
+              //        j=0;
+              //        //std::cout << "index " << zInd*nR_closeGeom[0]*n_closeGeomElements[0] + rInd*n_closeGeomElements[0] + j << std::endl;
+              //    }
+                      //i = closeGeom[closeIndx];
 
           #else
             for (int i=0; i<nLines; i++)
