@@ -406,7 +406,7 @@ void operator()(std::size_t indx) const {
           int closeIndx=0;
           for (int j=0; j< n_closeGeomElements[0]; j++)
           {
-              //closeIndx = zInd*nR_closeGeom[0]*n_closeGeomElements[0] + rInd*n_closeGeomElements[0] + j;
+              closeIndx = zInd*nR_closeGeom[0]*n_closeGeomElements[0] + rInd*n_closeGeomElements[0] + j;
               //if(zInd*nR_closeGeom[0]*n_closeGeomElements[0] + rInd*n_closeGeomElements[0] + j < 0)
               //{
               //        zInd=0;
@@ -421,7 +421,7 @@ void operator()(std::size_t indx) const {
               //        j=0;
               //        //std::cout << "index " << zInd*nR_closeGeom[0]*n_closeGeomElements[0] + rInd*n_closeGeomElements[0] + j << std::endl;
               //    }
-                      //i = closeGeom[closeIndx];
+                      i = closeGeom[closeIndx];
 
           #else
             for (int i=0; i<nLines; i++)

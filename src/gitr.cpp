@@ -229,17 +229,17 @@ int main(int argc, char **argv)
     getVariable(cfg,bfieldCfg+"y",by[0]);
     getVariable(cfg,bfieldCfg+"z",bz[0]);
   #else
-    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridRString",bfieldGridr);
+    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridRString",bfieldGridr[0]);
     #if BFIELD_INTERP > 1
-      getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridZString",bfieldGridz);
+      getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridZString",bfieldGridz[0]);
     #endif
     #if BFIELD_INTERP > 2
       getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridYString",bfieldGridy);
     #endif
 
-    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"rString",br);
-    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"yString",by);
-    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"zString",bz);
+    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"rString",br[0]);
+    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"yString",by[0]);
+    getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"zString",bz[0]);
   #endif 
   #if USE_MPI > 0 
     }
@@ -593,11 +593,16 @@ nY_closeGeom[i]*nR_closeGeom[i]*nZ_closeGeom[i]*n_closeGeomElements[i];
 }
   #if USE_MPI > 0 
     }
-    MPI_Bcast(&nR_closeGeom,1,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&nY_closeGeom,1,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&nZ_closeGeom,1,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&n_closeGeomElements,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nR_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&n_closeGeomElements[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(&nGeomHash,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nR_closeGeomTotal,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_closeGeomTotal,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_closeGeomTotal,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nHashPointsTotal,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
   #endif
   #endif
@@ -883,9 +888,9 @@ else if(world_rank == 0)
     }
   #if USE_MPI > 0 
     }
-    MPI_Bcast(closeGeomGridr.data(), nR_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(closeGeomGridy.data(), nY_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(closeGeomGridz.data(), nZ_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeomGridr.data(), nR_closeGeomTotal,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeomGridy.data(), nY_closeGeomTotal,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeomGridz.data(), nZ_closeGeomTotal,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Bcast(closeGeom.data(),nGeomHash,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
   #endif

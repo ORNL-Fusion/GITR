@@ -300,7 +300,7 @@ def nc_plotHist(filename='history.nc'):
     if(x.shape[0] ==1):
         plt.plot(x[0][:],z[0][:],linewidth=5,color='green')
     else:
-        for i in range(80):
+        for i in range(200):
           #print('i', i)  
 #          print('size', r[:,i].size)  
 #          print('r ', r[:,i])  
