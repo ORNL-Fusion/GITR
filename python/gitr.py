@@ -298,7 +298,7 @@ def nc_plotHist(filename='history.nc'):
     plt.figure(1,figsize=(6, 10), dpi=60)
     #plot2dGeom(filename='../input/gitrGeometry.cfg')
     if(x.shape[0] ==1):
-        plt.plot(x[0][:],z[0][:],linewidth=5,color='green')
+        plt.plot(r[0][:],z[0][:],linewidth=5,color='green')
     else:
         for i in range(200):
           #print('i', i)  
@@ -317,9 +317,10 @@ def nc_plotHist(filename='history.nc'):
     print('saving tracksRZ')
     plt.savefig('tracksRZ.png')
     plt.show()
+    plt.close()
     plt.figure(1,figsize=(10, 6), dpi=100)
     if(x.shape[0] ==1):
-        plt.plot(r,z,linewidth=0.5)
+        plt.plot(x,y,linewidth=0.5)
     else:
         for i in range(80):
           #print('i', i)  
