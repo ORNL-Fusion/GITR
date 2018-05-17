@@ -253,12 +253,15 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
   #endif
   float Btest[3] = {0.0f}; 
-  interp2dVector(&Btest[0],0.0,0.0,0.0,nR_Bfield,
+  for(int i=0;i<100;i++)
+{
+  interp2dVector(&Btest[0],4.0+0.04*i,0.0,-4.0,nR_Bfield,
                     nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),by.data());
   std::cout << "Bfield at 000 "<< Btest[0] << " " << Btest[1] << " " << Btest[2] << std::endl; 
-  interp2dVector(&Btest[0],0.0,0.0,0.2,nR_Bfield,
+} 
+ interp2dVector(&Btest[0],5.5,0.0,-4.0,nR_Bfield,
                     nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),br.data(),bz.data(),by.data());
-  std::cout << "Bfield at 000.2 "<< Btest[0] << " " << Btest[1] << " " << Btest[2] << std::endl; 
+  std::cout << "Bfield at 5.5 -4 "<< Btest[0] << " " << Btest[1] << " " << Btest[2] << std::endl; 
   std::cout << "Finished Bfield import" << std::endl;
   std::string profiles_folder = "output/profiles";  
   
