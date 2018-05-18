@@ -68,7 +68,8 @@ void operator()(std::size_t indx) const {
 #if SPECTROSCOPY < 3
               int indx_X = floor((dim1-gridX[0])/dx);
               int indx_Z = floor((z-gridZ[0])/dz);
-              int indx_Y = 1;
+              int indx_Y = 0;
+              int nnYY=1;
 #else
               if((y > gridY[0]) && (y < gridY[nY-1]))
               { 
@@ -77,6 +78,7 @@ void operator()(std::size_t indx) const {
               dy = gridY[1] - gridY[0];
               int indx_Y = floor((y-gridY[0])/dy);
               if (indx_Y < 0 || indx_Y >= nY) indx_Y = 0;
+              int nnYY = nY;
 #endif
               if (indx_X < 0 || indx_X >= nX) indx_X = 0;
               if (indx_Z < 0 || indx_Z >= nZ) indx_Z = 0;
@@ -100,10 +102,10 @@ void operator()(std::size_t indx) const {
               */
                   float specWeight = particlesPointer->weight[indx];
                //for 3d
-              atomicAdd(&bins[nBins*nX*nY*nZ + indx_Z*nX*nY +indx_Y*nX+ indx_X], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
+              atomicAdd(&bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX+ indx_X], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
               if(charge < nBins)
               {
-                atomicAdd(&bins[charge*nX*nY*nZ + indx_Z*nX*nY + indx_Y*nX+ indx_X], 1.0*specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
+                atomicAdd(&bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY + indx_Y*nX+ indx_X], 1.0*specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
               }
 
 #else

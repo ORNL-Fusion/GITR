@@ -97,6 +97,8 @@ def plot2dGeom(filename="gitrGeometry.cfg"):
     x2=np.array(config.geom.x2)
     z1=np.array(config.geom.z1)
     z2=np.array(config.geom.z2)
+    Z=np.array(config.geom.Z)
+    length=np.array(config.geom.length)
     y1 = config.geom.y1
     y2 = config.geom.y2
     ys1 = np.ones(x1.size)*y1
@@ -114,6 +116,7 @@ def plot2dGeom(filename="gitrGeometry.cfg"):
         plt.savefig('geomPlot.png') 
         print('config', config) 
         print('x1 ', x1)
+    return x1,x2,z1,z2,length,Z
 def read3dGeom(filename="gitrGeometry.cfg"):
     with io.open(filename) as f:
         config = libconf.load(f)
@@ -133,6 +136,25 @@ def read3dGeom(filename="gitrGeometry.cfg"):
     surfIndArray = np.asarray(materialSurfaceInidces)
     print('Number of W surfaces ', surfIndArray.size)
     return x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray
+def iter2dProcessing():
+    x1,x2,z1,z2,length,Z = plot2dGeom('input/iter2dRefinedOuterTarget.cfg')
+    plt.close()
+    grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers = nc_readSurface()
+    plt.close()
+    netErosion = grossDep - grossEro
+    colormap = plt.cm.bwr
+    normalize = matplotlib.colors.Normalize(vmin=-1.,vmax=1.) 
+    plt.subplot(2,1,1)
+    for i in range(0,len(surfaceNumbers)):
+        plt.plot([x1[surfaceNumbers[i]], x2[surfaceNumbers[i]]], [z1[surfaceNumbers[i]], z2[surfaceNumbers[i]]],color=colormap(0.))
+        plt.hold(True)
+    plt.subplot(2,1,2)
+    plt.scatter(surfaceNumbers,netErosion)
+    plt.savefig('surfaces.png') 
+    plt.close()
+    x,y,r,z,charge = nc_plotPositions('output/positions.nc')
+    plt.hist(charge)
+    plt.savefig('charge.png')
 def piscesProcessing(r=0.01,path=''):
     x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray = read3dGeom('input/gitrGeometryPisces1inch.cfg')
     r1 = np.sqrt(np.multiply(x1[surfIndArray],x1[surfIndArray]) + np.multiply(y1[surfIndArray],y1[surfIndArray]))
@@ -345,11 +367,14 @@ def nc_plotSpec(filename='spec.nc'):
     plt.figure(1,figsize=(10, 6), dpi=2000)
     plotsize = math.ceil(nBins**(0.5))
     for i in range(nBins):
-        if i == 4:
-            dens = np.log10(n[i,:,:])
-            #plt.subplot(plotsize,plotsize,i+1)
-            plt.imshow(dens,origin='lower')
-            plt.colorbar(orientation='vertical')
+        dens = np.log10(n[i,:,:])
+        plt.subplot(plotsize,plotsize,i+1)
+        plot2dGeom('../input/iter2dRefinedOuterTarget.cfg')
+        plt.title("ITER W Impurity Density")
+        plt.xlabel("r [m]")
+        plt.ylabel("z [m]")
+        plt.imshow(dens,extent =[4.0, 8.4, -4.6, 4.7],origin='lower')
+        plt.colorbar(orientation='vertical')
     plt.savefig('image1.png')
 def nc_plotSpec3D(filename='spec.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
@@ -379,6 +404,7 @@ def nc_plotPositions(filename='positions.nc'):
     y = np.array(ncFile.variables['y'])
     r = np.sqrt(np.multiply(x,x) + np.multiply(y,y))
     z = np.array(ncFile.variables['z'])
+    charge = np.array(ncFile.variables['charge'])
     print('x ',x)
     print('y ',y)
     print('r ',r)
@@ -390,7 +416,7 @@ def nc_plotPositions(filename='positions.nc'):
     ax = fig.add_subplot(122)
     ax.scatter(r,z)
     fig.savefig('positions.png')
-    return x,y,r,z
+    return x,y,r,z,charge
 def nc_plotVz(filename='history.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nT = ncFile.dimensions['nT'].size
@@ -443,6 +469,7 @@ def nc_readSurface(filename='output/surface.nc'):
     nA = len(ncFile.dimensions['nAngles'])
     E = np.linspace(0,1000.0,nE+1)
     A = np.linspace(0,90.0,nA+1)
+    surfaceNumbers = np.array(ncFile.variables['surfaceNumber'])
     grossDep = np.array(ncFile.variables['grossDeposition'])
     grossEro = np.array(ncFile.variables['grossErosion'])
     sumWeightStrike = np.array(ncFile.variables['sumWeightStrike'])
@@ -455,7 +482,7 @@ def nc_readSurface(filename='output/surface.nc'):
     EAdist = EAdist.reshape(nE,nA)
     plt.pcolor(EAdist)
     plt.savefig('EAdist.png')
-    return grossDep,grossEro,sumWeightStrike,E,A,EAdist
+    return grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers
 def plotPitch(filename='positions.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nP = ncFile.dimensions['nP'].size
