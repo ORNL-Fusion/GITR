@@ -104,8 +104,6 @@ struct ionize {
        //particlesPointer->test1[indx] = r1; 
 	    if(r1 <= P1)
 	    {
-          if(particlesPointer->charge[indx] < 1.0)
-          {
 		  particlesPointer->charge[indx] = particlesPointer->charge[indx]+1;}
           particlesPointer->PionizationPrevious[indx] = 1.0;
         //std::cout << "Particle " << indx << " ionized at step " << tt << std::endl;
@@ -124,7 +122,6 @@ struct ionize {
         } 
        
     //} 
-	}	
 
 	} 
 };

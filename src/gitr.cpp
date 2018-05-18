@@ -1408,7 +1408,7 @@ else if(world_rank == 0)
   #endif
 
   float testVec = 0.0;
-  testVec = interp2dCombined(0.01,0.0,0.0,nR_Temp,
+  testVec = interp2dCombined(5.5,0.0,-4.4,nR_Temp,
                     nZ_Temp,TempGridr.data(),TempGridz.data(),ti.data());
   std::cout << "Finished Temperature import "<< testVec << std::endl; 
   
@@ -1463,10 +1463,10 @@ else if(world_rank == 0)
     getVarFromFile(cfg,input_path+densFile,densCfg,"IonDensityString",ni);
     getVarFromFile(cfg,input_path+densFile,densCfg,"ElectronDensityString",ne);
   #endif
-  //std::cout << "Finished density import "<< interp2dCombined(0.001,0.0,0.1,nR_Dens,nZ_Dens,
-  //                       &DensGridr.front(),&DensGridz.front(),&ne.front())
-  // <<" " << interp2dCombined(0.02,0.0,0.1,nR_Dens,nZ_Dens,
-  // &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
+  std::cout << "Finished density import "<< interp2dCombined(5.5,0.0,-4.4,nR_Dens,nZ_Dens,
+                         &DensGridr.front(),&DensGridz.front(),&ne.front())
+   <<" " << interp2dCombined(5.5,0.0,-4.4,nR_Dens,nZ_Dens,
+   &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
   //for(int i=0;i<100;i++)
   //{
   //    std::cout << i*0.001 << " " << interp2dCombined(0.001*i,0.0,0.0,nR_Dens,nZ_Dens,
@@ -2259,18 +2259,18 @@ else if(world_rank == 0)
     if(world_rank == 0)
     {
   #endif
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefCoeff",E_sputtRefCoeff);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefCoeff",A_sputtRefCoeff);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistIn",E_sputtRefDistIn);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefDistIn",A_sputtRefDistIn);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistOut",E_sputtRefDistOut);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefDistOut",A_sputtRefDistOut);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"sputtYldString",spyl_surfaceModel);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"reflYldString",rfyl_surfaceModel);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"EDist_Y",EDist_Y);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"ADist_Y",ADist_Y);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"EDist_R",EDist_R);
-  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"ADist_R",ADist_R);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefCoeff",E_sputtRefCoeff[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefCoeff",A_sputtRefCoeff[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistIn",E_sputtRefDistIn[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefDistIn",A_sputtRefDistIn[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistOut",E_sputtRefDistOut[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefDistOut",A_sputtRefDistOut[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"sputtYldString",spyl_surfaceModel[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"reflYldString",rfyl_surfaceModel[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"EDist_Y",EDist_Y[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"ADist_Y",ADist_Y[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"EDist_R",EDist_R[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"ADist_R",ADist_R[0]);
   //for(int i=0;i<nDistE_surfaceModel;i++)
   //{
   //    std::cout << " Edist diff Y " << EDist_Y[i] << " " << EDist_R[i] << std::endl;
@@ -3573,6 +3573,11 @@ nc_charge0.putVar(&particleArray->charge[0]);
 ncFile0.close();
        std::cout << "closed positions opening surface " << std::endl;
 #if USESURFACEMODEL > 0
+std::vector<int> surfaceNumbers(nSurfaces,0);
+for(int i=0;i<nSurfaces;i++)
+{
+    surfaceNumbers[i] =  boundaries[i].surfaceNumber; 
+}
 NcFile ncFile1("output/surface.nc", NcFile::replace);
 NcDim nc_nLines = ncFile1.addDim("nSurfaces",nSurfaces);
 vector<NcDim> dims1;
@@ -3588,9 +3593,11 @@ NcVar nc_grossDep = ncFile1.addVar("grossDeposition",ncDouble,nc_nLines);
 NcVar nc_grossEro = ncFile1.addVar("grossErosion",ncDouble,nc_nLines);
 NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl",ncDouble,nc_nLines);
 NcVar nc_spylCounts = ncFile1.addVar("spylCounts",ncInt,nc_nLines);
+NcVar nc_surfNum = ncFile1.addVar("surfaceNumber",ncInt,nc_nLines);
 NcVar nc_sumParticlesStrike = ncFile1.addVar("sumParticlesStrike",ncInt,nc_nLines);
 NcVar nc_sumWeightStrike = ncFile1.addVar("sumWeightStrike",ncDouble,nc_nLines);
 nc_grossDep.putVar(&grossDeposition[0]);
+nc_surfNum.putVar(&surfaceNumbers[0]);
 nc_grossEro.putVar(&grossErosion[0]);
 nc_aveSpyl.putVar(&aveSputtYld[0]);
 nc_spylCounts.putVar(&sputtYldCount[0]);
