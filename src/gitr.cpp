@@ -2210,7 +2210,8 @@ int main(int argc, char **argv)
     float netX0=0.0,netX1=0.0,netY0=0.0,netY1=0.0,netZ0=0.0,netZ1=0.0;
     int net_nX=0,net_nY=0,net_nZ=0;
     int nBins=0;
-
+    if(world_rank == 0)
+{
     if(cfg.lookupValue("diagnostics.netx0", netX0) && 
        cfg.lookupValue("diagnostics.netx1", netX1) && 
        cfg.lookupValue("diagnostics.nety0", netY0) && 
@@ -2224,6 +2225,21 @@ int main(int argc, char **argv)
        {std::cout << "Spectroscopy net imported" << std::endl;}
     else
     { std::cout << "ERROR: Could not get spectroscopy net string info from input file " << std::endl;}
+}
+  #if USE_MPI > 0
+      MPI_Bcast(&netX0,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&netX1,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&netY0,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&netY1,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&netZ0,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&netZ1,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&net_nX,1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&net_nY,1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&net_nZ,1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nBins,1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+  #endif
+
     std::cout << "spec bin Ns " << net_nX << " " << net_nY << " " << net_nZ << std::endl; 
     #if SPECTROSCOPY < 3
 
@@ -2701,12 +2717,20 @@ int main(int argc, char **argv)
         int lowIndE = 0;
   #endif
   #if PARTICLE_SOURCE_ANGLE == 0
+    if(world_rank == 0)
+    {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.phi",phi) &&
         cfg.lookupValue("impurityParticleSource.initialConditions.theta",theta))
     { std::cout << "Impurity point source angles phi theta: " << phi << " " << theta << std::endl;
     }
     else
     { std::cout << "ERROR: Could not get point source angular initial conditions" << std::endl;}
+    }
+    #if USE_MPI > 0
+      MPI_Bcast(&phi, 1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&theta, 1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+    #endif
     phi = phi*3.141592653589793/180.0;
     theta = theta*3.141592653589793/180.0;
     vtotal = sqrt(2.0*E*1.602e-19/amu/1.66e-27);
