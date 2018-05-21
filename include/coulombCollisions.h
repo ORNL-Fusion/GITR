@@ -454,7 +454,7 @@ void operator()(std::size_t indx) const {
         float coeff_par = 1.0 + n1*sqrt(nu_parallel*dt) - nu_friction*dt;
         //float coeff_par = 1.0 + n1*sqrt(nu_parallel*dt);
         //float coeff_par = 1.0 - nu_friction*dt;
-        float coeff_perp = 0.0;// abs(n2)*sqrt(nu_deflection*dt*0.5);
+        float coeff_perp = abs(n2)*sqrt(nu_deflection*dt*0.5);
         float coeff_Energy = 1.0-nu_energy*dt*0.5;
         float cosXsi = cos(2.0*pi*xsi);
         float sinXsi = sin(2.0*pi*xsi);

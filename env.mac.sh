@@ -12,6 +12,7 @@ export  NETCDFLIB=$NETCDFDIR/libnetcdf.dylib
 export  NETCDFLIB_CPP=$NETCDFCXX4DIR/libnetcdf_c++4.dylib
 export Boost_DIR=/Users/tyounkin/Code/boostBuild #/usr/local/Cellar/boost/1.67.0_1
 export PYTHONPATH=/Users/tyounkin/Code/gitr2/python:$PYTHONPATH
+export PYTHONPATH=/Users/tyounkin/Code/numpyBuild-1.14.3/lib.macosx-10.12-x86_64-2.7/:$PYTHONPATH
 #-DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE
 #-DNETCDF_CXX_LIBRARY=$NETCDFLIB_CPP
 #-DNETCDF_DIR=$NETCDF_DIR
