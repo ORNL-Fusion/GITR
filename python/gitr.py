@@ -103,19 +103,19 @@ def plot2dGeom(filename="gitrGeometry.cfg"):
     y2 = config.geom.y2
     ys1 = np.ones(x1.size)*y1
     ys2 = np.ones(x1.size)*y2
-    if plt.fignum_exists(num=1):
-        plt.plot(np.append(x1,x1[0]),np.append(z1,z1[0]),linewidth=2.0,color='k')
-    else:    
-        fig = plt.figure()
-        #fig.patch.set_facecolor('black')
-        ax = fig.gca(projection='3d')
-        ax.plot(np.append(x1,x1[0]), np.append(ys1,ys1[0]), np.append(z1,z1[0]))
-        ax.plot(np.append(x2,x2[0]), np.append(ys2,ys2[0]), np.append(z2,z2[0]))
-        for i in range(0,x1.size):
-            ax.plot(np.append(x1[i],x1[i]),np.append(y1,y2),np.append(z1[i],z1[i]))
-        plt.savefig('geomPlot.png') 
-        print('config', config) 
-        print('x1 ', x1)
+    #if plt.fignum_exists(num=1):
+    plt.plot(np.append(x1,x1[0]),np.append(z1,z1[0]),linewidth=2.0,color='k')
+    #else:    
+    #    fig = plt.figure()
+    #    #fig.patch.set_facecolor('black')
+    #    ax = fig.gca(projection='3d')
+    #    ax.plot(np.append(x1,x1[0]), np.append(ys1,ys1[0]), np.append(z1,z1[0]))
+    #    ax.plot(np.append(x2,x2[0]), np.append(ys2,ys2[0]), np.append(z2,z2[0]))
+    #    for i in range(0,x1.size):
+    #        ax.plot(np.append(x1[i],x1[i]),np.append(y1,y2),np.append(z1[i],z1[i]))
+    #    plt.savefig('geomPlot.png') 
+    #    print('config', config) 
+    #    print('x1 ', x1)
     return x1,x2,z1,z2,length,Z
 def read3dGeom(filename="gitrGeometry.cfg"):
     with io.open(filename) as f:
@@ -155,6 +155,26 @@ def iter2dProcessing():
     x,y,r,z,charge = nc_plotPositions('output/positions.nc')
     plt.hist(charge)
     plt.savefig('charge.png')
+    plt.close
+    rSep = 5.5543
+    zSep = -4.3970
+    gridRsep = np.zeros(160)
+    gridZsep = np.zeros(160)
+    rMinusRsep = np.zeros(160)
+    for i in range(160):
+        print(i)
+        thisSurf = surfaceNumbers[i+4]
+        lastSurf = surfaceNumbers[i+3]
+        print(thisSurf)
+        print(z2[thisSurf])
+        if(i == 0):
+            rMinusRsep[i] = z2[thisSurf] - zSep
+        else:
+            rMinusRsep[i] = rMinusRsep[i-1] + length[lastSurf]
+    plt.close('all')
+    plt.scatter(rMinusRsep,netErosion[range(4,164)])
+    plt.savefig('targetErosion.png') 
+    plt.close()
 def piscesProcessing(r=0.01,path=''):
     x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray = read3dGeom('input/gitrGeometryPisces1inch.cfg')
     r1 = np.sqrt(np.multiply(x1[surfIndArray],x1[surfIndArray]) + np.multiply(y1[surfIndArray],y1[surfIndArray]))
@@ -322,15 +342,15 @@ def nc_plotHist(filename='history.nc'):
     if(x.shape[0] ==1):
         plt.plot(r[0][:],z[0][:],linewidth=5,color='green')
     else:
-        for i in range(200):
+        for i in range(nP):
           #print('i', i)  
 #          print('size', r[:,i].size)  
 #          print('r ', r[:,i])  
           plt.plot(r[i,:],z[i,:],linewidth=0.5)
 #          #plt.plot(r[i,:],z[i,:],linewidth=1.0)
 #          #plt.setp(linewidth=0.2)
-    #plt.xlim((0.8,2.2))
-    #plt.ylim((-0.2,1.2))
+    plt.xlim((5.2,5.8))
+    plt.ylim((-4.4,-3.4))
     #plt.autoscale(enable=True, axis='x', tight=True)
     plt.title('DIII-D W Impurity Simulation',fontsize=20)
     plt.xlabel('r [m]',fontsize=16)
@@ -366,10 +386,10 @@ def nc_plotSpec(filename='spec.nc'):
     plt.close()
     plt.figure(1,figsize=(10, 6), dpi=2000)
     plotsize = math.ceil(nBins**(0.5))
-    for i in range(nBins):
+    for i in range(nBins-1,nBins):
         dens = np.log10(n[i,:,:])
-        plt.subplot(plotsize,plotsize,i+1)
-        plot2dGeom('../input/iter2dRefinedOuterTarget.cfg')
+        #plt.subplot(plotsize,plotsize,i+1)
+        plot2dGeom('input/iter2dRefinedOuterTarget.cfg')
         plt.title("ITER W Impurity Density")
         plt.xlabel("r [m]")
         plt.ylabel("z [m]")
@@ -509,8 +529,9 @@ def plotPitch(filename='positions.nc'):
 if __name__ == "__main__":
     #asdfanc_show("surface.nc")
     #depositedEdist()
-    nc_plotHist()
-    nc_plotSpec()
+    nc_plotHist('output/history.nc')
+    nc_plotSpec('output/spec.nc')
+    iter2dProcessing()
     #nc_plotSpec3D()
     #nc_plotPositions()
     #nc_plotVz()
