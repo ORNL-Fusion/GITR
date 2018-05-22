@@ -480,18 +480,18 @@ float velocityColl = vectorNorm(vUpdate);
     //        particlesPointer->test3[indx] = flowVelocity[2];
     //    }
     //}
-    if( nu_parallel > particlesPointer->test1[indx])
-    {
-        particlesPointer->test1[indx] =  nu_parallel;
-        particlesPointer->test2[indx] =  nu_energy;
-        particlesPointer->test3[indx] =  nu_friction;
-        particlesPointer->test4[indx] =  nu_deflection;
-    }
-            particlesPointer->test[indx] =  vUpdate[2]; 
-            particlesPointer->test0[indx] = particlesPointer->vz[indx];//velocityRelativeNorm*velocityCollisions[1]+ flowVelocity[1];
-            particlesPointer->test1[indx] = velocityCollisionsNorm;//flowVelocity[0];
-            particlesPointer->test2[indx] = velocityCollisions[2];
-            particlesPointer->test3[indx] = flowVelocity[2];
+    //if( nu_parallel > particlesPointer->test1[indx])
+    //{
+    //    particlesPointer->test1[indx] =  nu_parallel;
+    //    particlesPointer->test2[indx] =  nu_energy;
+    //    particlesPointer->test3[indx] =  nu_friction;
+    //    particlesPointer->test4[indx] =  nu_deflection;
+    //}
+    //        particlesPointer->test[indx] =  vUpdate[2]; 
+    //        particlesPointer->test0[indx] = particlesPointer->vz[indx];//velocityRelativeNorm*velocityCollisions[1]+ flowVelocity[1];
+    //        particlesPointer->test1[indx] = velocityCollisionsNorm;//flowVelocity[0];
+    //        particlesPointer->test2[indx] = velocityCollisions[2];
+    //        particlesPointer->test3[indx] = flowVelocity[2];
     //std::cout << "particle velocity "<< particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " << particlesPointer->vz[indx]    << std::endl;
     
 	}

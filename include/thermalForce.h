@@ -124,7 +124,12 @@ void operator()(std::size_t indx)
 	dv_ITGx = propConst*(beta*(gradTi[0]*B_unit[0]));
 	this->dv_ITGy = propConst*(beta*(gradTi[1]*B_unit[1]));
 	this->dv_ITGz = propConst*(beta*(gradTi[2]*B_unit[2]));
-
+    if(this->dv_ITGx != this->dv_ITGx) this->dv_ITGx = 0;
+    if(this->dv_ITGy != this->dv_ITGy) this->dv_ITGy = 0;
+    if(this->dv_ITGz != this->dv_ITGz) this->dv_ITGz = 0;
+    if(this->dv_ETGx != this->dv_ETGx) this->dv_ETGx = 0;
+    if(this->dv_ETGy != this->dv_ETGy) this->dv_ETGy = 0;
+    if(this->dv_ETGz != this->dv_ETGz) this->dv_ETGz = 0;
     particlesPointer->vx[indx] = particlesPointer->vx[indx] + dv_ETGx + dv_ITGx;
 	particlesPointer->vy[indx] = particlesPointer->vy[indx] + dv_ETGy + dv_ITGy;
 	particlesPointer->vz[indx] = particlesPointer->vz[indx] + dv_ETGz + dv_ITGz;	
