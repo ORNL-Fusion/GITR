@@ -269,6 +269,8 @@ void operator()(std::size_t indx) const {
             }
             thetaImpact = thetaImpact*180.0/3.14159265359;
             signPartDotNormal = sgn(partDotNormal);
+            if(E0 == 0.0)
+            { thetaImpact = 0.0;}
             if( boundaryVector[wallHit].Z > 0.0)
             {
                 Y0 = interp2d(thetaImpact,log10(E0),nA_sputtRefCoeff,
@@ -283,6 +285,8 @@ void operator()(std::size_t indx) const {
                 Y0 = 0.0;
                 R0 = 0.0;
             }
+            //std::cout << "Particle " << indx << " struck surface with energy and angle " << E0 << " " << thetaImpact << std::endl;
+            //std::cout << " resulting in Y0 and R0 of " << Y0 << " " << R0 << std::endl;
             totalYR=Y0+R0;
             //if(particles->test[indx] == 0.0)
             //{
@@ -335,6 +339,7 @@ void operator()(std::size_t indx) const {
                                          energyDistGrid01,A_sputtRefDistIn,
                                          E_sputtRefDistIn,EDist_CDF_R_regrid );
                    newWeight=(R0/(1.0f-sputtProb))*weight;
+                   //std::cout << " particle reflected with newWeight " << newWeight << std::endl;
             }
             else //sputters
             {
@@ -355,6 +360,7 @@ void operator()(std::size_t indx) const {
             //}            
                   newWeight=(Y0/sputtProb)*weight;
                   if(sputtProb == 0.0) newWeight = 0.0;
+                   //std::cout << " particle sputtered with newWeight " << newWeight << std::endl;
                   if( boundaryVector[wallHit].Z > 0.0)
                 {
 
@@ -376,6 +382,10 @@ void operator()(std::size_t indx) const {
             }
             }
             else
+            {       newWeight = 0.0;
+                    particles->hitWall[indx] = 2.0;
+            }
+            if(eInterpVal <= 0.0)
             {       newWeight = 0.0;
                     particles->hitWall[indx] = 2.0;
             }
@@ -439,6 +449,8 @@ void operator()(std::size_t indx) const {
     particles->xprevious[indx] = particles->x[indx] + -signPartDotNormal*surfaceNormalVector[0]*1e-6;
     particles->yprevious[indx] = particles->y[indx] + -signPartDotNormal*surfaceNormalVector[1]*1e-6;
     particles->zprevious[indx] = particles->z[indx] + -signPartDotNormal*surfaceNormalVector[2]*1e-6;
+            //std::cout << "New vel " << particles->vx[indx] << " " << particles->vy[indx] << " " << particles->vz[indx] << std::endl;
+            //std::cout << "New pos " << particles->xprevious[indx] << " " << particles->yprevious[indx] << " " << particles->zprevious[indx] << std::endl;
             //if(particles->test[indx] == 0.0)
             //{
             //    particles->test[indx] = 1.0;

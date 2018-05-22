@@ -143,7 +143,7 @@ public:
       hitWall{nP,0.0},
    transitTime{nP,0.0},distTraveled{nP,0.0},
       wallHit{nP,0}, wallIndex{nP}, perpDistanceToSurface{nP}, 
-      test{nP},test0{nP},test1{nP},test2{nP},test3{nP},test4{nP},distanceTraveled{nP},weight{nP,1.0}, PionizationPrevious{nP,1.0},
+      test{nP,0.0},test0{nP,0.0},test1{nP,0.0},test2{nP,0.0},test3{nP,0.0},test4{nP,0.0},distanceTraveled{nP},weight{nP,1.0}, PionizationPrevious{nP,1.0},
     PrecombinationPrevious{nP,1.0}, firstIonizationZ{nP,0.0},firstIonizationT{nP,0.0} {};   
 
 };
