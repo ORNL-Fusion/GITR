@@ -501,6 +501,7 @@ def nc_readSurface(filename='output/surface.nc'):
     print('shape EAdist ', EAdist.shape)
     EAdist = EAdist.reshape(nE,nA)
     plt.pcolor(EAdist)
+    plt.colorbar()
     plt.savefig('EAdist.png')
     return grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers
 def plotPitch(filename='positions.nc'):
@@ -529,8 +530,8 @@ def plotPitch(filename='positions.nc'):
 if __name__ == "__main__":
     #asdfanc_show("surface.nc")
     #depositedEdist()
-    nc_plotHist('output/history.nc')
-    nc_plotSpec('output/spec.nc')
+    #nc_plotHist('output/history.nc')
+    #nc_plotSpec('output/spec.nc')
     iter2dProcessing()
     #nc_plotSpec3D()
     #nc_plotPositions()
