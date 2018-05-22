@@ -3262,7 +3262,8 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
                     geometry_check(particleArray,nLines,&boundaries[0],surfaces,dt,tt,
                         nHashes,nR_closeGeom.data(),nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),
                         &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
-                        &closeGeom.front()) );
+                        &closeGeom.front(),
+                        nEdist, E0dist, Edist, nAdist, A0dist, Adist) );
        // }
        /*
             catch (thrust::system_error &e) {
@@ -3302,7 +3303,8 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
                     geometry_check(particleArray,nLines,&boundaries[0],surfaces,dt,tt,
                         nHashes,nR_closeGeom.data(),nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),
                         &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
-                        &closeGeom.front()) );
+                        &closeGeom.front(),
+                        nEdist, E0dist, Edist, nAdist, A0dist, Adist) );
 #endif
 #if USECOULOMBCOLLISIONS > 0
         thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd, 
@@ -3488,7 +3490,7 @@ MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], (nBins+1)*net_nX*net_nZ,
 std::cout <<"Done with spectroscopy reduce " << world_rank<< std::endl;
 MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#if USESURFACEMODEL > 0
+#if (USESURFACEMODEL > 0 || FLUX_EA > 0)
 //MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->grossDeposition[0], &grossDeposition[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
@@ -3507,13 +3509,9 @@ MPI_Reduce(&surfaces->sputtYldCount[0], &sputtYldCount[0],nSurfaces, MPI_INT, MP
 //MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->sumParticlesStrike[0], &sumParticlesStrike[0],nSurfaces, MPI_INT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
-//MPI_Barrier(MPI_COMM_WORLD);
-#if FLUX_EA > 0 
-//MPI_Barrier(MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->energyDistribution[0], &energyDistribution[0],nSurfaces*nEdist*nAdist, 
         MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
 MPI_Barrier(MPI_COMM_WORLD);
-#endif
 #endif
 #endif
     if(world_rank == 0)
@@ -3726,7 +3724,7 @@ nc_charge0.putVar(&particleArray->charge[0]);
 #endif
 ncFile0.close();
        std::cout << "closed positions opening surface " << std::endl;
-#if USESURFACEMODEL > 0
+#if (USESURFACEMODEL > 0 || FLUX_EA > 0)
 std::vector<int> surfaceNumbers(nSurfaces,0);
 int srf = 0;
 for(int i=0;i<nLines;i++)

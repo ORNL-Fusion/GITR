@@ -35,9 +35,23 @@ struct geometry_check {
     float* closeGeomGridy;
     float* closeGeomGridz;
     int* closeGeom;
+    int nEdist;
+    float E0dist;
+    float Edist;
+    int nAdist;
+    float A0dist;
+    float Adist;
 
-    geometry_check(Particles *_particlesPointer, int _nLines,Boundary * _boundaryVector,Surfaces * _surfaces, float _dt, int _tt,int _nHashes, int* _nR_closeGeom, int* _nY_closeGeom, int* _nZ_closeGeom, int* _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom) : 
-        particlesPointer(_particlesPointer), nLines(_nLines), boundaryVector(_boundaryVector), surfaces(_surfaces), dt(_dt), tt(_tt),nHashes(_nHashes), nR_closeGeom(_nR_closeGeom), nY_closeGeom(_nY_closeGeom), nZ_closeGeom(_nZ_closeGeom), n_closeGeomElements(_n_closeGeomElements), closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy), closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom) {}
+    geometry_check(Particles *_particlesPointer, int _nLines,Boundary * _boundaryVector,Surfaces * _surfaces, float _dt, int _tt,int _nHashes, int* _nR_closeGeom, int* _nY_closeGeom, int* _nZ_closeGeom, int* _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom,  int _nEdist,
+    float _E0dist,
+    float _Edist,
+    int _nAdist,
+    float _A0dist,
+    float _Adist) :
+    
+        particlesPointer(_particlesPointer), nLines(_nLines), boundaryVector(_boundaryVector), surfaces(_surfaces), dt(_dt), tt(_tt),nHashes(_nHashes), nR_closeGeom(_nR_closeGeom), nY_closeGeom(_nY_closeGeom), nZ_closeGeom(_nZ_closeGeom), n_closeGeomElements(_n_closeGeomElements), closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy), closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom),
+    nEdist(_nEdist), E0dist(_E0dist),Edist(_Edist),
+    nAdist(_nAdist), A0dist(_A0dist),Adist(_Adist) {}
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const { 
@@ -55,6 +69,12 @@ void operator()(std::size_t indx) const {
      float yprev = particlesPointer->yprevious[indx]; 
      float zprev = particlesPointer->zprevious[indx]; 
      float dpath = sqrt((x-xprev)*(x-xprev) + (y-yprev)*(y-yprev) + (z-zprev)*(z-zprev));
+    #if FLUX_EA > 0
+      float dEdist = (Edist - E0dist)/nEdist;
+      float dAdist = (Adist - A0dist)/nAdist;
+      int AdistInd=0;
+      int EdistInd=0;
+    #endif
    #if USE3DTETGEOM > 0
 
       float a = 0.0; 
@@ -616,6 +636,53 @@ void operator()(std::size_t indx) const {
 #endif        
             if (particlesPointer->hitWall[indx] == 1.0)
             {
+            #if FLUX_EA > 0
+    float E0 = 0.0;
+    float thetaImpact = 0.0;
+    float particleTrackVector[3] = {0.0f};
+    float surfaceNormalVector[3] = {0.0f};
+    float norm_part=0.0;
+    float partDotNormal=0.0;
+    particleTrackVector[0] = particlesPointer->vx[indx];
+    particleTrackVector[1] = particlesPointer->vy[indx];
+    particleTrackVector[2] = particlesPointer->vz[indx];
+    norm_part = sqrt(particleTrackVector[0]*particleTrackVector[0] + particleTrackVector[1]*particleTrackVector[1] + particleTrackVector[2]*particleTrackVector[2]);
+    E0 = 0.5*particlesPointer->amu[indx]*1.6737236e-27*(norm_part*norm_part)/1.60217662e-19;
+    boundaryVector[particlesPointer->wallHit[indx]].getSurfaceNormal(surfaceNormalVector);
+            particleTrackVector[0] = particleTrackVector[0]/norm_part;
+            particleTrackVector[1] = particleTrackVector[1]/norm_part;
+            particleTrackVector[2] = particleTrackVector[2]/norm_part;
+
+            partDotNormal = vectorDotProduct(particleTrackVector,surfaceNormalVector);
+            thetaImpact = acos(partDotNormal);
+            if (thetaImpact > 3.14159265359*0.5)
+            {
+              thetaImpact = abs(thetaImpact - (3.14159265359));
+            }
+            thetaImpact = thetaImpact*180.0/3.14159265359;
+              EdistInd = floor((E0-E0dist)/dEdist);
+              AdistInd = floor((thetaImpact-A0dist)/dAdist);
+    int surfaceHit = boundaryVector[particlesPointer->wallHit[indx]].surfaceNumber;
+    float weight = particlesPointer->weight[indx];
+              if((EdistInd >= 0) && (EdistInd < nEdist) && 
+                 (AdistInd >= 0) && (AdistInd < nAdist))
+              {
+#if USE_CUDA > 0
+                  atomicAdd(&surfaces->energyDistribution[surfaceHit*nEdist*nAdist + 
+                                               EdistInd*nAdist + AdistInd], particlesPointer->weight[indx]);
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],particlesPointer->weight[indx]);
+              atomicAdd(&surfaces->sumWeightStrike[surfaceHit],particlesPointer->weight[indx]);
+              atomicAdd(&surfaces->sumParticlesStrike[surfaceHit],1);
+#else
+
+                  surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
+                    surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
+              surfaces->sumWeightStrike[surfaceHit] =surfaces->sumWeightStrike[surfaceHit] +weight;
+              surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
+                    surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
+#endif
+               }
+#endif
                 particlesPointer->transitTime[indx] = tt*dt;
             }    
         }
