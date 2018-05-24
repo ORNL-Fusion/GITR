@@ -27,8 +27,8 @@ def func1(path,E,a,r,d):
     else:
         name2 = '_'+d['target']
 
-    generate_ftridyn_input.beam_and_target(name1+name2,d['beam'],d['target'],sim_number=1,number_histories=d['nH'], incident_energy=E,depth=200.0,incident_angle=a)
-    p = subprocess.Popen([d['exe']],cwd=cwd+'/'+path)
+    generate_ftridyn_input.beam_and_target(name1+name2,d['beam'],d['target'],sim_number=1,number_histories=d['nH'], incident_energy=E,depth=200.0,incident_angle=a,fluence=1.0E-16)
+    p = subprocess.Popen([d['exe'],name1+name2+'0001.IN'],cwd=cwd+'/'+path)
     p.wait()
     #ftridyn.ftridyn_cpmi('He_W0001.IN')
     ##time.sleep(60)

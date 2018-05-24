@@ -14,4 +14,4 @@ nR 1
 nEdist 100
 maxEdist 100.0
 nAdist 50
-exe /Users/tyounkin/Code/masterSlave/ft.sh
+exe /global/homes/t/tyounkin/atomIPS/atom-install-cori/fractal-tridyn/src/shell_Ftridyn.sh
