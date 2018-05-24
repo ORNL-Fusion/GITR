@@ -1,6 +1,7 @@
 #!/bin/bash
 module swap PrgEnv-intel/6.0.4 PrgEnv-gnu
 module load cray-netcdf
+module unload boost/1.63
 module load boost/1.61
 #module load libconfig/gcc/64/1.5 
 #module load git
@@ -51,7 +52,7 @@ export NETCDF_LIBRARY=$NETCDF_DIR/lib
 #export BOOST_INCLUDEDIR=~/code/boost/include
 #export BOOST_LIBRARYDIR=~/code/boost/lib
 #
-#export PYTHONPATH=/home/tqd/code/netcdf4-python/build
+export PYTHONPATH=/global/homes/t/tyounkin/code/libconfPython/lib/python2.7/site-packages/:$PYTHONPATH
 export MPI_C_LIBRARIES=mpich
 export MPI_C_INCLUDE_PATH=/opt/cray/pe/mpt/7.6.2/gni/mpich-gnu/5.1/include
 export MPI_CXX_LIBRARIES=mpichcxx
