@@ -172,8 +172,21 @@ def iter2dProcessing():
         else:
             rMinusRsep[i] = rMinusRsep[i-1] + length[lastSurf]
     plt.close('all')
-    plt.scatter(rMinusRsep,netErosion[range(4,164)])
+    s1 = plt.scatter(rMinusRsep,grossEro[range(4,164)])
+    plt.hold(True)
+    s2 = plt.scatter(rMinusRsep,grossDep[range(4,164)])
+    s3 = plt.scatter(rMinusRsep,netErosion[range(4,164)])
+    plt.hold(True)
+    plt.legend((s1, s2, s3), ('Gross Erosion', 'Gross Deposition', 'netErosion'))
     plt.savefig('targetErosion.png') 
+    plt.close('all')
+    s1 = plt.scatter(rMinusRsep,np.log10(grossEro[range(4,164)]))
+    plt.hold(True)
+    s2 = plt.scatter(rMinusRsep,np.log10(grossDep[range(4,164)]))
+    s3 = plt.scatter(rMinusRsep,np.sign(netErosion[range(4,164)])*np.log10(np.absolute(netErosion[range(4,164)])))
+    plt.hold(True)
+    plt.legend((s1, s2, s3), ('Gross Erosion', 'Gross Deposition', 'netErosion'))
+    plt.savefig('targetErosionlog.png') 
     plt.close()
 def piscesProcessing(r=0.01,path=''):
     x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray = read3dGeom('input/gitrGeometryPisces1inch.cfg')
