@@ -759,7 +759,7 @@ int main(int argc, char **argv)
       std::cout << "starting mpi close geom2"<< world_rank << std::endl;
       if(world_rank ==0)
       {
-      for(int ii=0;ii<world_size;ii++)
+      for(int ii=0;ii<nHashes;ii++)
       {
         for(int i=0;i<nR_closeGeom[ii];i++)
         {
@@ -1937,32 +1937,32 @@ int main(int argc, char **argv)
     #endif
     #if PRESHEATH_INTERP > 1
       std::string efieldFile;
-#if USE_MPI > 0
-      if(world_rank == 0)
-{
-#endif
+      #if USE_MPI > 0
+        if(world_rank == 0)
+        {
+      #endif
       getVariable(cfg,PSECfg+"fileString",efieldFile);
       nR_PreSheathEfield = getDimFromFile(cfg,input_path+efieldFile,PSECfg,"gridNrString");
       nZ_PreSheathEfield = getDimFromFile(cfg,input_path+efieldFile,PSECfg,"gridNzString");
-    #if PRESHEATH_INTERP > 2
-      nY_PreSheathEfield = getDimFromFile(cfg,input_path+efieldFile,PSECfg,"gridNyString");
+      #if PRESHEATH_INTERP > 2
+        nY_PreSheathEfield = getDimFromFile(cfg,input_path+efieldFile,PSECfg,"gridNyString");
+      #endif
+      #if USE_MPI > 0 
+        }
+        MPI_Bcast(&nR_PreSheathEfield, 1,MPI_INT,0,MPI_COMM_WORLD);
+        MPI_Bcast(&nY_PreSheathEfield, 1,MPI_INT,0,MPI_COMM_WORLD);
+        MPI_Bcast(&nZ_PreSheathEfield, 1,MPI_INT,0,MPI_COMM_WORLD);
+        MPI_Barrier(MPI_COMM_WORLD);
+      #endif
     #endif
-  #if USE_MPI > 0 
-    }
-    MPI_Bcast(&nR_PreSheathEfield, 1,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&nY_PreSheathEfield, 1,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&nZ_PreSheathEfield, 1,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
-  #endif
-  #endif
     nPSEs = nR_PreSheathEfield*nY_PreSheathEfield*nZ_PreSheathEfield;
     sim::Array<float> preSheathEGridr(nR_PreSheathEfield),preSheathEGridy(nY_PreSheathEfield),
                       preSheathEGridz(nZ_PreSheathEfield);
     sim::Array<float> PSEr(nPSEs), PSEz(nPSEs),PSEt(nPSEs);
-#if USE_MPI > 0
+    #if USE_MPI > 0
       if(world_rank == 0)
-{
-#endif
+      {
+    #endif
     #if PRESHEATH_INTERP == 0
       getVariable(cfg,PSECfg+"Er",PSEr[0]);
       getVariable(cfg,PSECfg+"Et",PSEt[0]);
@@ -1978,16 +1978,16 @@ int main(int argc, char **argv)
       getVarFromFile(cfg,input_path+efieldFile,PSECfg,"toroidalComponentString",PSEt[0]);
       getVarFromFile(cfg,input_path+efieldFile,PSECfg,"axialComponentString",PSEz[0]);
     #endif  
-  #if USE_MPI > 0 
-    }
-    MPI_Bcast(preSheathEGridr.data(), nR_PreSheathEfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(preSheathEGridy.data(), nY_PreSheathEfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(preSheathEGridz.data(), nZ_PreSheathEfield,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(PSEr.data(), nPSEs,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(PSEt.data(), nPSEs,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(PSEz.data(), nPSEs,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
-  #endif
+    #if USE_MPI > 0 
+      }
+      MPI_Bcast(preSheathEGridr.data(), nR_PreSheathEfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(preSheathEGridy.data(), nY_PreSheathEfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(preSheathEGridz.data(), nZ_PreSheathEfield,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(PSEr.data(), nPSEs,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(PSEt.data(), nPSEs,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(PSEz.data(), nPSEs,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+    #endif
 
     #if PRESHEATH_INTERP == 1
     
@@ -2123,11 +2123,11 @@ int main(int argc, char **argv)
   std::string outnamePSEfieldZ = "PSEfieldZ.m";
   std::string outnamePSEGridR = "PSEgridR.m";
   std::string outnamePSEGridZ = "PSEgridZ.m";
-  OUTPUT1d(profiles_folder,outnamePSEGridR, nR_PreSheathEfield, &preSheathEGridr.front());
-  OUTPUT1d(profiles_folder,outnamePSEGridZ, nZ_PreSheathEfield, &preSheathEGridz.front());
-  
-  OUTPUT3d(profiles_folder,outnamePSEfieldR, nR_PreSheathEfield,nY_PreSheathEfield, nZ_PreSheathEfield, &PSEr.front());
-  OUTPUT3d(profiles_folder,outnamePSEfieldZ, nR_PreSheathEfield,nY_PreSheathEfield, nZ_PreSheathEfield, &PSEz.front()); 
+  //OUTPUT1d(profiles_folder,outnamePSEGridR, nR_PreSheathEfield, &preSheathEGridr.front());
+  //OUTPUT1d(profiles_folder,outnamePSEGridZ, nZ_PreSheathEfield, &preSheathEGridz.front());
+  //
+  //OUTPUT3d(profiles_folder,outnamePSEfieldR, nR_PreSheathEfield,nY_PreSheathEfield, nZ_PreSheathEfield, &PSEr.front());
+  //OUTPUT3d(profiles_folder,outnamePSEfieldZ, nR_PreSheathEfield,nY_PreSheathEfield, nZ_PreSheathEfield, &PSEz.front()); 
   std::cout << "Completed presheath Efield Init " << std::endl;
   sim::Array<float> Efieldr(nR_Bfield*nZ_Bfield), Efieldz(nR_Bfield*nZ_Bfield),
                     Efieldt(nR_Bfield*nZ_Bfield),minDist(nR_Bfield*nZ_Bfield);
@@ -2240,14 +2240,14 @@ int main(int argc, char **argv)
       MPI_Barrier(MPI_COMM_WORLD);
   #endif
 
-    std::cout << "spec bin Ns " << net_nX << " " << net_nY << " " << net_nZ << std::endl; 
+    std::cout << "spec bin Ns " << nBins << " " << net_nX << " " << net_nY << " " << net_nZ << std::endl; 
     #if SPECTROSCOPY < 3
 
-      sim::Array<double> net_Bins((nBins+1)*net_nX*net_nZ);
-      sim::Array<double> net_BinsTotal((nBins+1)*net_nX*net_nZ);
+      sim::Array<double> net_Bins((nBins+1)*net_nX*net_nZ,0.0);
+      sim::Array<double> net_BinsTotal((nBins+1)*net_nX*net_nZ,0.0);
     #else
-      sim::Array<float> net_Bins((nBins+1)*net_nX*net_nY*net_nZ);
-      sim::Array<float> net_BinsTotal((nBins+1)*net_nX*net_nY*net_nZ);
+      sim::Array<double> net_Bins((nBins+1)*net_nX*net_nY*net_nZ);
+      sim::Array<double> net_BinsTotal((nBins+1)*net_nX*net_nY*net_nZ);
     #endif
 
       /*
