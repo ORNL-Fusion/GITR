@@ -636,7 +636,7 @@ void operator()(std::size_t indx) const {
 #endif        
             if (particlesPointer->hitWall[indx] == 1.0)
             {
-            #if FLUX_EA > 0
+            #if (FLUX_EA > 0 && USESURFACEMODEL == 0 )
     float E0 = 0.0;
     float thetaImpact = 0.0;
     float particleTrackVector[3] = {0.0f};

@@ -27,7 +27,7 @@ def func1(path,E,a,r,d):
     else:
         name2 = '_'+d['target']
 
-    generate_ftridyn_input.beam_and_target(name1+name2,d['beam'],d['target'],sim_number=1,number_histories=d['nH'], incident_energy=E,depth=200.0,incident_angle=a,fluence=1.0E-16)
+    generate_ftridyn_input.beam_and_target(name1+name2,d['beam'],d['target'],sim_number=1,number_histories=d['nH'], incident_energy=E,depth=200.0,incident_angle=a)
     p = subprocess.Popen([d['exe'],name1+name2+'0001.IN'],cwd=cwd+'/'+path)
     p.wait()
     #ftridyn.ftridyn_cpmi('He_W0001.IN')
@@ -68,7 +68,7 @@ def analyzeFTrun(pathString,d):
     np.savetxt(pathString+"/"+"nX.out",nX)
     nP, nX, binsX,nY,binsY,nZ, binsZ = analyze_ftridyn_simulations.plot_reflected_angular_distributions(pathString+"/"+ffilename,nAgrid)
     np.savetxt(pathString+"/"+"nXref.out",nX)
-    nPenergy, nenergy, binsenergy = analyze_ftridyn_simulations.plot_sputtered_energy_distributions(pathString+"/"+ffilename,nEgrid)
+    nPenergy, nenergy, binsenergy = analyze_ftridyn_simulations.plot_sputtered_energy_distributions(pathString+"/"+ffilename,nEgrid,maxE)
     np.savetxt(pathString+"/"+"energy.out",nenergy)
     nPenergyRef, nenergyRef, binsenergyRef = analyze_ftridyn_simulations.plot_reflected_energy_distributions(pathString+"/"+ffilename,nEgrid)
     np.savetxt(pathString+"/"+"energyRef.out",nenergyRef)
