@@ -543,8 +543,10 @@ def plotPitch(filename='positions.nc'):
 if __name__ == "__main__":
     #asdfanc_show("surface.nc")
     #depositedEdist()
-    nc_plotHist('output/history.nc')
-    nc_plotSpec('output/spec.nc')
+    if(os.path.exists('output/history.nc')):
+    	nc_plotHist('output/history.nc')
+    if(os.path.exists('output/spec.nc')):
+    	nc_plotSpec('output/spec.nc')
     iter2dProcessing()
     #nc_plotSpec3D()
     #nc_plotPositions()
