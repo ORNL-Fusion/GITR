@@ -52,7 +52,11 @@ export NETCDF_LIBRARY=$NETCDF_DIR/lib
 #export BOOST_INCLUDEDIR=~/code/boost/include
 #export BOOST_LIBRARYDIR=~/code/boost/lib
 #
+export PATH=/global/homes/t/tyounkin/code/python2.7.14/bin/:$PATH
 export PYTHONPATH=/global/homes/t/tyounkin/code/libconfPython/lib/python2.7/site-packages/:$PYTHONPATH
+export PYTHONPATH=/global/homes/t/tyounkin/code/scipyBuild/lib/python2.7/site-packages:$PYTHONPATH
+export PYTHONPATH=/global/homes/t/tyounkin/atomIPS/atom-install-cori/GITR/python:$PYTHONPATH
+export PYTHONPATH=/global/homes/t/tyounkin/code/netcdfPython/lib.linux-x86_64-2.7:$PYTHONPATH
 export MPI_C_LIBRARIES=mpich
 export MPI_C_INCLUDE_PATH=/opt/cray/pe/mpt/7.6.2/gni/mpich-gnu/5.1/include
 export MPI_CXX_LIBRARIES=mpichcxx
