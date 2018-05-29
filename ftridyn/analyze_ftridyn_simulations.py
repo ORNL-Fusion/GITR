@@ -129,14 +129,14 @@ def plot_sputtered_angular_distributions(simulation_name,nAbins,plotsOn = 0):
 
     return (splst.size, nX, binsX,nY, binsY,nZ, binsZ)
 
-def plot_sputtered_energy_distributions(simulation_name,nEbins, plotsOn=0):
+def plot_sputtered_energy_distributions(simulation_name,nEbins,maxE=100.0, plotsOn=0):
     splst = np.loadtxt(simulation_name+'SPLST.DAT')
     print('splist size ',splst.size)
     if splst.size > 10 :
         en = splst[:,2]
         plt.close()    
         plt.figure(1)
-        n,bins,patches = plt.hist(en,bins=nEbins,range=(0.0,100.0))
+        n,bins,patches = plt.hist(en,bins=nEbins,range=(0.0,maxE))
         if plotsOn :
             plt.title(simulation_name+' Energy Distribution')
             plt.xlabel('Energy [eV]')
