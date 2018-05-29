@@ -122,6 +122,7 @@ target_link_libraries(GITR ${NETCDF_CXX_LIBRARIES})
 target_link_libraries(GITR ${LIBCONFIGPP_LIBRARIES})
 #target_link_libraries(GITR Boost::system Boost::filesystem Boost::timer)
 target_link_libraries(GITR ${MPI_C_LIBRARIES})
+target_link_libraries(GITR ${MPI_CXX_LIBRARIES})
 target_link_libraries(GITR ${Boost_LIBRARIES})
 #target_link_libraries(GITR ${/Users/tyounkin/Code/boostBuild/lib/libboost_system.a /Users/tyounkin/Code/boostBuild/lib/libboost_timer.a /Users/tyounkin/Code/boostBuild/lib/libboost_filesystem.a})
 # Install binaries
