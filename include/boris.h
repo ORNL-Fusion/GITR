@@ -625,12 +625,13 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
            4.2682E-11f  * powf(angle,6.0f);
     pot = boundaryVector[minIndex].potential;
     //std::cout << "potential and debye length " << pot << " " << boundaryVector[minIndex].debyeLength << " " << pot/boundaryVector[minIndex].debyeLength << std::endl;
+    //std::cout << " larmorRad " << boundaryVector[minIndex].larmorRadius << std::endl;
         Emag = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength))+ (1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius) );
       //  std::cout << "Emag " << Emag << std::endl;
         //std::cout << "fd " << fd << std::endl;
-       // std::cout << "minDistance " << minDistance << std::endl;
+       //std::cout << "minDistance " << minDistance << std::endl;
 #endif
-    if(minDistance == 0.0f)
+    if(minDistance == 0.0f || boundaryVector[minIndex].larmorRadius == 0.0f)
     {
         Emag = 0.0f;
         directionUnitVector[0] = 0.0f;
@@ -642,8 +643,8 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
         Et = Emag*directionUnitVector[1];
         E[2] = Emag*directionUnitVector[2];
         //std::cout << "Emag " << Emag << std::endl;
-    //    std::cout << "Min dist " << minDistance << std::endl;
-       // std::cout << "r " << x << "z " << z << std::endl;
+        //std::cout << "Min dist " << minDistance << std::endl;
+        //std::cout << "r " << x << "z " << z << std::endl;
         //std::cout << "E components " << Er << " " << Et << " " << E[2] << std::endl;
        //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     
@@ -696,7 +697,8 @@ struct move_boris {
     int* closeGeom_sheath; 
     const float span;
     const int nLines;
-   
+    float magneticForce[3];
+    float electricForce[3];
     move_boris(Particles *_particlesPointer,int _tt, float _span, Boundary *_boundaryVector,int _nLines,
             int _nR_Bfield, int _nZ_Bfield,
             float * _BfieldGridRDevicePointer,
@@ -725,10 +727,10 @@ struct move_boris {
         EfieldRDevicePointer(_EfieldRDevicePointer), EfieldZDevicePointer(_EfieldZDevicePointer),
         EfieldTDevicePointer(_EfieldTDevicePointer),
    nR_closeGeom_sheath(_nR_closeGeom),nY_closeGeom_sheath(_nY_closeGeom), nZ_closeGeom_sheath(_nZ_closeGeom), n_closeGeomElements_sheath(_n_closeGeomElements), 
-   closeGeomGridr_sheath(_closeGeomGridr),closeGeomGridy_sheath(_closeGeomGridy), closeGeomGridz_sheath(_closeGeomGridz), closeGeom_sheath(_closeGeom) {}
+   closeGeomGridr_sheath(_closeGeomGridr),closeGeomGridy_sheath(_closeGeomGridy), closeGeomGridz_sheath(_closeGeomGridz), closeGeom_sheath(_closeGeom), magneticForce{0.0,0.0,0.0}, electricForce{0.0,0.0,0.0} {}
 
 CUDA_CALLABLE_MEMBER    
-void operator()(std::size_t indx) const { 
+void operator()(std::size_t indx) { 
 #ifdef __CUDACC__
 #else
 float initTime = 0.0f;
@@ -774,7 +776,7 @@ cpu_times initTime0 = timer.elapsed();
                               n_closeGeomElements_sheath,closeGeomGridr_sheath,
                               closeGeomGridy_sheath,
                                    closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex);
-              //std::cout << "Efield in boris " << E[2] << std::endl;
+              //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
               //std::cout << "Charge and Hitwall " << particlesPointer->charge[indx] << " " <<
                // particlesPointer->hitWall[indx]  << std::endl;
 #endif
@@ -817,7 +819,10 @@ cpu_times initTime0 = timer.elapsed();
                 //v_minus = v + q_prime*E;
                vectorScalarMult(q_prime,E,qpE);
                vectorAdd(v,qpE,v_minus);
-
+               this->electricForce[0] = 2.0*qpE[0];
+	       //std::cout << "e force " << q_prime << " " << PSE[0] << " " << PSE[1] << " " << PSE[2] << std::endl;
+               this->electricForce[1] = 2.0*qpE[1];
+               this->electricForce[2] = 2.0*qpE[2];
                //v_prime = v_minus + q_prime*(v_minus x B)
                 vectorCrossProduct(v_minus,B,vmxB);
                 vectorScalarMult(q_prime,vmxB,qp_vmxB);
