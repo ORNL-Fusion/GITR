@@ -27,7 +27,7 @@ void checkFlags(libconfig::Config &cfg)
                             "flags.PARTICLE_SOURCE_ANGLE",
                             "flags.PARTICLE_SOURCE_FILE",
                             "flags.SPECTROSCOPY","flags.USE3DTETGEOM","flags.USECYLSYMM",
-                            "flags.FLUX_EA"};
+                            "flags.FLUX_EA","flags.FORCE_EVAL"};
         int flagValues[] =  {//USE_CUDA, USEMPI,USE_MPI,USE_OPENMP, USE_BOOST,
                              USEIONIZATION,
                              USERECOMBINATION,USEPERPDIFFUSION,USECOULOMBCOLLISIONS,
@@ -40,7 +40,7 @@ void checkFlags(libconfig::Config &cfg)
                              GEOM_HASH_SHEATH,PARTICLE_TRACKS,PARTICLE_SOURCE_SPACE,
                              PARTICLE_SOURCE_ENERGY,PARTICLE_SOURCE_ANGLE,
                              PARTICLE_SOURCE_FILE,
-                             SPECTROSCOPY,USE3DTETGEOM,USECYLSYMM,FLUX_EA};
+                             SPECTROSCOPY,USE3DTETGEOM,USECYLSYMM,FLUX_EA,FORCE_EVAL};
             int check1;
             for (int i=0; i<sizeof(flagValues)/sizeof(int); i++)
                {

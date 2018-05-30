@@ -67,6 +67,8 @@ class Boundary {
     float fd;
     float density;
     float ti;
+    float ne;
+    float te;
     float debyeLength;
     float larmorRadius;
     float flux;

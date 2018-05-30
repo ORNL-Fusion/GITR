@@ -1824,16 +1824,6 @@ int main(int argc, char **argv)
   std::cout << "thermal gradient interpolation gradTi " << gradTi[0] << " " << 
      gradTi[1] << " " << gradTi[2] << " " << std::endl; 
 
-  auto particleExample = new Particles(1);
-  particleExample->setParticle(0,1.5,0.0, 0.0, 4.4, 0.0,0.0, 74.0, 184.0, 1.0);   
-  thermalForce tf(particleExample,1.0e-7,background_amu,
-                    nR_gradT,nZ_gradT,gradTGridr.data(),gradTGridz.data(),
-                    gradTiR.data(),gradTiZ.data(), gradTiY.data(), 
-                    gradTeR.data(), gradTeZ.data(), gradTeY.data(), 
-                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                    &br.front(),&bz.front(),&by.front());
-  tf(0);
-  std::cout << "thermal force values " <<tf.nR_gradT <<" " <<  tf.dv_ITG[0] << std::endl;  
   //Initialization of ionization and recombination coefficients    
   int nCS_Ionize, nCS_Recombine;
   const char *ionizeNcs,*ionizeNDens,*ionizeNTemp,
@@ -1912,11 +1902,11 @@ int main(int argc, char **argv)
   //Applying background values at material boundaries
   std::for_each(boundaries.begin(), boundaries.end()-1,
             boundary_init(background_Z,background_amu,
-            nR_Dens,nZ_Dens,DensGridr.data(),DensGridz.data(),ni.data(),
+            nR_Dens,nZ_Dens,DensGridr.data(),DensGridz.data(),ni.data(),ne.data(),
             nR_Bfield,nZ_Bfield,bfieldGridr.data(),
             bfieldGridz.data(),br.data(),bz.data(), by.data(),
             nR_Temp,nZ_Temp,TempGridr.data(),
-            TempGridz.data(),ti.data(), biasPotential ));
+            TempGridz.data(),ti.data(),te.data(), biasPotential ));
 
    std::cout << "Completed Boundary Init " << std::endl;
   
@@ -3017,7 +3007,89 @@ std::cout <<" about to write ncFile_particles " << std::endl;
 #endif
 
   std::cout << "finished loading particle source" << std::endl;
-
+  #if FORCE_EVAL > 0
+    if(world_rank ==0)
+    {
+      int nR_force, nZ_force;
+      float forceX0, forceX1,forceZ0,forceZ1,testEnergy;
+      std::string forceCfg = "forceEvaluation.";
+      
+      getVariable(cfg,forceCfg+"nR",nR_force);
+      getVariable(cfg,forceCfg+"nZ",nZ_force);
+      std::vector<float> forceR(nR_force,0.0),forceZ(nZ_force,0.0);
+      std::vector<float> dvEr(nR_force*nZ_force,0.0),dvEz(nR_force*nZ_force,0.0),dvEt(nR_force*nZ_force,0.0);
+      getVariable(cfg,forceCfg+"X0",forceX0);
+      getVariable(cfg,forceCfg+"X1",forceX1);
+      getVariable(cfg,forceCfg+"Z0",forceZ0);
+      getVariable(cfg,forceCfg+"Z1",forceZ1);
+      getVariable(cfg,forceCfg+"particleEnergy",testEnergy);
+      for(int i=0;i<nR_force;i++)
+      {
+        forceR[i] = forceX0 + (forceX1 - forceX0)*i/(nR_force-1);
+      }
+      for(int i=0;i<nZ_force;i++)
+      {
+        forceZ[i] = forceZ0 + (forceZ1 - forceZ0)*i/(nZ_force-1);
+      }
+      float Btotal = 0.0;
+      auto particleExample = new Particles(1);
+      particleExample->setParticle(0,5.0,0.0, 0.0,testEnergy, 0.0,0.0,Z,amu,charge+1.0);   
+      thermalForce tf(particleExample,dt,background_amu,
+                    nR_gradT,nZ_gradT,gradTGridr.data(),gradTGridz.data(),
+                    gradTiR.data(),gradTiZ.data(), gradTiY.data(), 
+                    gradTeR.data(), gradTeZ.data(), gradTeY.data(), 
+                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
+                    &br.front(),&bz.front(),&by.front());
+      tf(0);
+  std::cout << "thermal force values " <<tf.nR_gradT <<" " <<  tf.dv_ITG[0] << std::endl;  
+       move_boris    boris(particleExample,0,dt,boundaries.data(), nLines,
+                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
+                    &br.front(),&bz.front(),&by.front(),
+                    nR_PreSheathEfield,nY_PreSheathEfield,nZ_PreSheathEfield,
+                    &preSheathEGridr.front(),&preSheathEGridy.front(),&preSheathEGridz.front(),
+                    &PSEr.front(),&PSEz.front(),&PSEt.front(),
+                        nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
+                        &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
+                        &closeGeom_sheath.front());
+			boris(0);
+      std::cout << "electric force values " <<boris.electricForce[0] <<" " <<  boris.electricForce[1] << " " << boris.electricForce[2]<< std::endl;  
+      for(int i=0;i<nR_force;i++)
+      {
+        for(int j=0;j<nZ_force;j++)
+        {
+          interp2dVector(&Btest[0],forceR[i],0.0,forceZ[j],nR_Bfield,
+                 nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),
+                 br.data(),bz.data(),by.data());
+          Btotal = vectorNorm(Btest);
+          //std::cout << "node " << world_rank << "Bfield at  "<< forceR[i] << " " << forceZ[j]<< " " << Btest[0] << " " << Btest[1] << 
+               //" " << Btest[2] << " " << Btotal << std::endl; 
+          particleExample->setParticle(0,forceR[i],0.0,forceZ[j],testEnergy, 0.0,0.0,Z,amu,charge+1.0);  
+	  boris(0);
+          dvEr[j*nR_force + i] = boris.electricForce[0];
+          dvEz[j*nR_force + i] = boris.electricForce[2];
+          dvEt[j*nR_force + i] = boris.electricForce[1];
+        }
+      }
+    std::cout <<" about to write ncFile_forces " << std::endl;
+    NcFile ncFile_force("output/forces.nc", NcFile::replace);
+    NcDim nc_nRf = ncFile_force.addDim("nR",nR_force);
+    NcDim nc_nZf = ncFile_force.addDim("nZ",nZ_force);
+    vector<NcDim> forceDims;
+    forceDims.push_back(nc_nZf);
+    forceDims.push_back(nc_nRf);
+    NcVar forceRf = ncFile_force.addVar("r",ncFloat,nc_nRf);
+    NcVar forceZf = ncFile_force.addVar("z",ncFloat,nc_nZf);
+    NcVar dvErf = ncFile_force.addVar("dvEr",ncFloat,forceDims);
+    NcVar dvEzf = ncFile_force.addVar("dvEz",ncFloat,forceDims);
+    NcVar dvEtf = ncFile_force.addVar("dvEt",ncFloat,forceDims);
+    forceRf.putVar(&forceR[0]);
+    forceZf.putVar(&forceZ[0]);
+    dvErf.putVar(&dvEr[0]);
+    dvEzf.putVar(&dvEz[0]);
+    dvEtf.putVar(&dvEt[0]);
+    ncFile_force.close();
+    }
+  #endif
   #if GEOM_TRACE > 0       
     std::uniform_real_distribution<float> dist2(0,1);
     //std::random_device rd2;
