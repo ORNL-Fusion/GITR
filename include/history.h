@@ -14,7 +14,7 @@
 
 struct history { 
     Particles *particlesPointer;
-    int tt;
+    int& tt;
     int nT;
     int subSampleFac;
     int nP;
@@ -27,7 +27,7 @@ struct history {
     float *histcharge;
     float *histweight;
 
-    history(Particles *_particlesPointer, int _tt, int _nT,int _subSampleFac, int _nP, float *_histX,float *_histY,float *_histZ,
+    history(Particles *_particlesPointer, int& _tt, int _nT,int _subSampleFac, int _nP, float *_histX,float *_histY,float *_histZ,
           float *_histvx,float *_histvy,float *_histvz, float * _histcharge, float * _histweight) : 
         particlesPointer(_particlesPointer), tt(_tt),nT(_nT),subSampleFac(_subSampleFac), nP(_nP), 
         histX(_histX),histY(_histY),histZ(_histZ),histvx(_histvx),histvy(_histvy),histvz(_histvz), histcharge(_histcharge), histweight(_histweight) {}

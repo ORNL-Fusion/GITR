@@ -326,10 +326,12 @@ void operator()(std::size_t indx) const {
             #endif
             //particle either reflects or deposits
             float sputtProb = Y0/totalYR;
+	    int didReflect = 0;
             if(totalYR > 0.0)
             {
             if(r7 > sputtProb) //reflects
             {
+	          didReflect = 1;
                   aInterpVal = interp3d (r8,thetaImpact,log10(E0),
                           nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                                     angleDistGrid01,A_sputtRefDistIn,
@@ -384,10 +386,23 @@ void operator()(std::size_t indx) const {
             else
             {       newWeight = 0.0;
                     particles->hitWall[indx] = 2.0;
+            #if USE_CUDA > 0
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
+            #else
+                    surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
+            #endif
             }
             if(eInterpVal <= 0.0)
             {       newWeight = 0.0;
                     particles->hitWall[indx] = 2.0;
+		    if(didReflect)
+		    {
+            #if USE_CUDA > 0
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
+            #else
+                    surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
+            #endif
+	            }
             }
             //if(particles->test[indx] == 1.0)
             //{
