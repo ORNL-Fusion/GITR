@@ -40,7 +40,7 @@ struct recombine {
   float* gridTemperature_Recombination;
   float* rateCoeff_Recombination;
   const float dt;
-  int tt;
+  int& tt;
 #if __CUDACC__
       curandState *state;
 #else
@@ -57,7 +57,7 @@ struct recombine {
      float* _DensGridz,float* _ne,int _nR_Temp, int _nZ_Temp,
      float* _TempGridr, float* _TempGridz,float* _te,int _nTemperaturesRecomb,
      int _nDensitiesRecomb,float* _gridTemperature_Recombination,float* _gridDensity_Recombination,
-     float* _rateCoeff_Recombination, int _tt) : 
+     float* _rateCoeff_Recombination, int& _tt) : 
       particlesPointer(_particlesPointer), dt(_dt), state(_state), 
       nR_Dens(_nR_Dens), nZ_Dens(_nZ_Dens), DensGridr(_DensGridr), DensGridz(_DensGridz),ne(_ne),
       nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr), TempGridz(_TempGridz), te(_te),

@@ -669,7 +669,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
 
 struct move_boris { 
     Particles *particlesPointer;
-    int tt;
+    int& tt;
     Boundary *boundaryVector;
     int nR_Bfield;
     int nZ_Bfield;
@@ -699,7 +699,7 @@ struct move_boris {
     const int nLines;
     float magneticForce[3];
     float electricForce[3];
-    move_boris(Particles *_particlesPointer,int _tt, float _span, Boundary *_boundaryVector,int _nLines,
+    move_boris(Particles *_particlesPointer,int& _tt, float _span, Boundary *_boundaryVector,int _nLines,
             int _nR_Bfield, int _nZ_Bfield,
             float * _BfieldGridRDevicePointer,
             float * _BfieldGridZDevicePointer,
@@ -827,6 +827,9 @@ cpu_times initTime0 = timer.elapsed();
                 vectorCrossProduct(v_minus,B,vmxB);
                 vectorScalarMult(q_prime,vmxB,qp_vmxB);
                 vectorAdd(v_minus,qp_vmxB,v_prime);       
+               this->magneticForce[0] = qp_vmxB[0];
+               this->magneticForce[1] = qp_vmxB[1];
+               this->magneticForce[2] = qp_vmxB[2];
                 
                 //v = v_minus + coeff*(v_prime x B)
                 vectorCrossProduct(v_prime, B, vpxB);

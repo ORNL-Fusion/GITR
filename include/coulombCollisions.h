@@ -290,6 +290,7 @@ struct coulombCollisions {
     float * BfieldR;
     float * BfieldZ;
     float * BfieldT;
+    float dv[3];
 #if __CUDACC__
             curandState *state;
 #else
@@ -319,10 +320,11 @@ struct coulombCollisions {
            nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr), TempGridz(_TempGridz),
            ti(_ti),te(_te),background_Z(_background_Z), background_amu(_background_amu),
    nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridR(_BfieldGridR), 
-    BfieldGridZ(_BfieldGridZ),BfieldR(_BfieldR), BfieldZ(_BfieldZ), BfieldT(_BfieldT) {} 
+    BfieldGridZ(_BfieldGridZ),BfieldR(_BfieldR), BfieldZ(_BfieldZ), BfieldT(_BfieldT),
+    dv{0.0f,0.0f,0.0f} {} 
 
 CUDA_CALLABLE_MEMBER_DEVICE    
-void operator()(std::size_t indx) const { 
+void operator()(std::size_t indx)  { 
 
 	    if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
         { 
@@ -469,6 +471,10 @@ float velocityColl = vectorNorm(vUpdate);
         particlesPointer->vx[indx] = coeff_Energy*vPartNorm*vUpdate[0]/velocityColl; 
 		particlesPointer->vy[indx] = coeff_Energy*vPartNorm*vUpdate[1]/velocityColl;
 		particlesPointer->vz[indx] = coeff_Energy*vPartNorm*vUpdate[2]/velocityColl;   	
+    
+    this->dv[0] = velocityCollisions[0];
+    this->dv[1] = velocityCollisions[1];
+    this->dv[2] = velocityCollisions[2];
     //if(particlesPointer->vx[indx] != particlesPointer->vx[indx])
     //{
     //    if(particlesPointer->test[indx] == 0.0)

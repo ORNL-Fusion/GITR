@@ -3007,89 +3007,6 @@ std::cout <<" about to write ncFile_particles " << std::endl;
 #endif
 
   std::cout << "finished loading particle source" << std::endl;
-  #if FORCE_EVAL > 0
-    if(world_rank ==0)
-    {
-      int nR_force, nZ_force;
-      float forceX0, forceX1,forceZ0,forceZ1,testEnergy;
-      std::string forceCfg = "forceEvaluation.";
-      
-      getVariable(cfg,forceCfg+"nR",nR_force);
-      getVariable(cfg,forceCfg+"nZ",nZ_force);
-      std::vector<float> forceR(nR_force,0.0),forceZ(nZ_force,0.0);
-      std::vector<float> dvEr(nR_force*nZ_force,0.0),dvEz(nR_force*nZ_force,0.0),dvEt(nR_force*nZ_force,0.0);
-      getVariable(cfg,forceCfg+"X0",forceX0);
-      getVariable(cfg,forceCfg+"X1",forceX1);
-      getVariable(cfg,forceCfg+"Z0",forceZ0);
-      getVariable(cfg,forceCfg+"Z1",forceZ1);
-      getVariable(cfg,forceCfg+"particleEnergy",testEnergy);
-      for(int i=0;i<nR_force;i++)
-      {
-        forceR[i] = forceX0 + (forceX1 - forceX0)*i/(nR_force-1);
-      }
-      for(int i=0;i<nZ_force;i++)
-      {
-        forceZ[i] = forceZ0 + (forceZ1 - forceZ0)*i/(nZ_force-1);
-      }
-      float Btotal = 0.0;
-      auto particleExample = new Particles(1);
-      particleExample->setParticle(0,5.0,0.0, 0.0,testEnergy, 0.0,0.0,Z,amu,charge+1.0);   
-      thermalForce tf(particleExample,dt,background_amu,
-                    nR_gradT,nZ_gradT,gradTGridr.data(),gradTGridz.data(),
-                    gradTiR.data(),gradTiZ.data(), gradTiY.data(), 
-                    gradTeR.data(), gradTeZ.data(), gradTeY.data(), 
-                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                    &br.front(),&bz.front(),&by.front());
-      tf(0);
-  std::cout << "thermal force values " <<tf.nR_gradT <<" " <<  tf.dv_ITG[0] << std::endl;  
-       move_boris    boris(particleExample,0,dt,boundaries.data(), nLines,
-                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                    &br.front(),&bz.front(),&by.front(),
-                    nR_PreSheathEfield,nY_PreSheathEfield,nZ_PreSheathEfield,
-                    &preSheathEGridr.front(),&preSheathEGridy.front(),&preSheathEGridz.front(),
-                    &PSEr.front(),&PSEz.front(),&PSEt.front(),
-                        nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
-                        &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
-                        &closeGeom_sheath.front());
-			boris(0);
-      std::cout << "electric force values " <<boris.electricForce[0] <<" " <<  boris.electricForce[1] << " " << boris.electricForce[2]<< std::endl;  
-      for(int i=0;i<nR_force;i++)
-      {
-        for(int j=0;j<nZ_force;j++)
-        {
-          interp2dVector(&Btest[0],forceR[i],0.0,forceZ[j],nR_Bfield,
-                 nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),
-                 br.data(),bz.data(),by.data());
-          Btotal = vectorNorm(Btest);
-          //std::cout << "node " << world_rank << "Bfield at  "<< forceR[i] << " " << forceZ[j]<< " " << Btest[0] << " " << Btest[1] << 
-               //" " << Btest[2] << " " << Btotal << std::endl; 
-          particleExample->setParticle(0,forceR[i],0.0,forceZ[j],testEnergy, 0.0,0.0,Z,amu,charge+1.0);  
-	  boris(0);
-          dvEr[j*nR_force + i] = boris.electricForce[0];
-          dvEz[j*nR_force + i] = boris.electricForce[2];
-          dvEt[j*nR_force + i] = boris.electricForce[1];
-        }
-      }
-    std::cout <<" about to write ncFile_forces " << std::endl;
-    NcFile ncFile_force("output/forces.nc", NcFile::replace);
-    NcDim nc_nRf = ncFile_force.addDim("nR",nR_force);
-    NcDim nc_nZf = ncFile_force.addDim("nZ",nZ_force);
-    vector<NcDim> forceDims;
-    forceDims.push_back(nc_nZf);
-    forceDims.push_back(nc_nRf);
-    NcVar forceRf = ncFile_force.addVar("r",ncFloat,nc_nRf);
-    NcVar forceZf = ncFile_force.addVar("z",ncFloat,nc_nZf);
-    NcVar dvErf = ncFile_force.addVar("dvEr",ncFloat,forceDims);
-    NcVar dvEzf = ncFile_force.addVar("dvEz",ncFloat,forceDims);
-    NcVar dvEtf = ncFile_force.addVar("dvEt",ncFloat,forceDims);
-    forceRf.putVar(&forceR[0]);
-    forceZf.putVar(&forceZ[0]);
-    dvErf.putVar(&dvEr[0]);
-    dvEzf.putVar(&dvEz[0]);
-    dvEtf.putVar(&dvEt[0]);
-    ncFile_force.close();
-    }
-  #endif
   #if GEOM_TRACE > 0       
     std::uniform_real_distribution<float> dist2(0,1);
     //std::random_device rd2;
@@ -3247,6 +3164,190 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     float moveTime = 0.0;
     float geomCheckTime = 0.0;
     float ionizTime = 0.0;
+    int tt=0;
+    move_boris move_boris0(particleArray,tt,dt,boundaries.data(), nLines,
+        nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
+        &br.front(),&bz.front(),&by.front(),
+        nR_PreSheathEfield,nY_PreSheathEfield,nZ_PreSheathEfield,
+        &preSheathEGridr.front(),&preSheathEGridy.front(),&preSheathEGridz.front(),
+        &PSEr.front(),&PSEz.front(),&PSEt.front(),
+            nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
+            &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
+            &closeGeom_sheath.front());
+     geometry_check geometry_check0(particleArray,nLines,&boundaries[0],surfaces,dt,tt,
+                        nHashes,nR_closeGeom.data(),nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),
+                        &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
+                        &closeGeom.front(),
+                        nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+#if SPECTROSCOPY > 0
+                 spec_bin   spec_bin0(particleArray,nBins,net_nX,net_nY, net_nZ, &gridX_bins.front(),&gridY_bins.front(),
+                        &gridZ_bins.front(), &net_Bins.front(),dt);
+#endif            
+#if USEIONIZATION > 0
+                ionize ionize0(particleArray, dt,&state1.front(),
+                    nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),  
+                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
+                    nTemperaturesIonize, nDensitiesIonize,&gridTemperature_Ionization.front(),
+                    &gridDensity_Ionization.front(), &rateCoeff_Ionization.front(),tt);
+#endif
+#if USERECOMBINATION > 0
+                recombine recombine0(particleArray, dt,&state1.front(),
+                    nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),  
+                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
+                    nTemperaturesRecombine,nDensitiesRecombine,
+                    gridTemperature_Recombination.data(),gridDensity_Recombination.data(),
+                    rateCoeff_Recombination.data(),tt);
+#endif
+#if USEPERPDIFFUSION > 0
+                crossFieldDiffusion crossFieldDiffusion0(particleArray,dt,&state1.front(),perpDiffusionCoeff,
+                    nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
+                                        &br.front(),&bz.front(),&by.front());
+ #endif           
+#if USECOULOMBCOLLISIONS > 0
+                coulombCollisions coulombCollisions0(particleArray,dt,&state1.front(),
+                    nR_flowV,nY_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridy.front(),&flowVGridz.front(),
+                    &flowVr.front(),&flowVz.front(),&flowVt.front(),
+                    nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),    
+                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),ti.data(),&te.front(),
+                    background_Z,background_amu, 
+                    nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
+                                        &br.front(),&bz.front(),&by.front());
+
+#endif
+#if USETHERMALFORCE > 0
+                thermalForce thermalForce0(particleArray,dt,background_amu,
+                    nR_gradT,nZ_gradT,gradTGridr.data(),gradTGridz.data(),
+                    gradTiR.data(),gradTiZ.data(), gradTiY.data(), 
+                    gradTeR.data(), gradTeZ.data(), gradTeY.data(), 
+                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
+                    &br.front(),&bz.front(),&by.front());
+#endif
+
+#if USESURFACEMODEL > 0
+                reflection reflection0(particleArray,dt,&state1.front(),nLines,&boundaries[0],surfaces,
+                    nE_sputtRefCoeff, nA_sputtRefCoeff,A_sputtRefCoeff.data(),
+                    Elog_sputtRefCoeff.data(),spyl_surfaceModel.data(), rfyl_surfaceModel.data(),
+                    nE_sputtRefDistOut, nA_sputtRefDistOut,nE_sputtRefDistIn,nA_sputtRefDistIn,
+                    Elog_sputtRefDistIn.data(),A_sputtRefDistIn.data(),
+                    E_sputtRefDistOut.data(),A_sputtRefDistOut.data(),
+                    energyDistGrid01.data(),angleDistGrid01.data(),
+                    EDist_CDF_Y_regrid.data(),ADist_CDF_Y_regrid.data(),
+                    EDist_CDF_R_regrid.data(),ADist_CDF_R_regrid.data(),
+                    nEdist, E0dist, Edist, nAdist, A0dist, Adist) ;
+#endif        
+
+#if PARTICLE_TRACKS >0
+      history history0(particleArray,tt,nT,subSampleFac,nP,&positionHistoryX.front(),
+      &positionHistoryY.front(),&positionHistoryZ.front(),
+      &velocityHistoryX.front(),&velocityHistoryY.front(),
+      &velocityHistoryZ.front(),&chargeHistory.front(),
+      &weightHistory.front());
+#endif
+  #if FORCE_EVAL > 0
+    if(world_rank ==0)
+    {
+      int nR_force, nZ_force;
+      float forceX0, forceX1,forceZ0,forceZ1,testEnergy;
+      std::string forceCfg = "forceEvaluation.";
+      
+      getVariable(cfg,forceCfg+"nR",nR_force);
+      getVariable(cfg,forceCfg+"nZ",nZ_force);
+      std::vector<float> forceR(nR_force,0.0),forceZ(nZ_force,0.0);
+      std::vector<float> dvEr(nR_force*nZ_force,0.0),dvEz(nR_force*nZ_force,0.0),dvEt(nR_force*nZ_force,0.0);
+      std::vector<float> dvBr(nR_force*nZ_force,0.0),dvBz(nR_force*nZ_force,0.0),dvBt(nR_force*nZ_force,0.0);
+      std::vector<float> dvCollr(nR_force*nZ_force,0.0),dvCollz(nR_force*nZ_force,0.0),dvCollt(nR_force*nZ_force,0.0);
+      std::vector<float> dvITGr(nR_force*nZ_force,0.0),dvITGz(nR_force*nZ_force,0.0),dvITGt(nR_force*nZ_force,0.0);
+      std::vector<float> dvETGr(nR_force*nZ_force,0.0),dvETGz(nR_force*nZ_force,0.0),dvETGt(nR_force*nZ_force,0.0);
+      getVariable(cfg,forceCfg+"X0",forceX0);
+      getVariable(cfg,forceCfg+"X1",forceX1);
+      getVariable(cfg,forceCfg+"Z0",forceZ0);
+      getVariable(cfg,forceCfg+"Z1",forceZ1);
+      getVariable(cfg,forceCfg+"particleEnergy",testEnergy);
+      for(int i=0;i<nR_force;i++)
+      {
+        forceR[i] = forceX0 + (forceX1 - forceX0)*i/(nR_force-1);
+      }
+      for(int i=0;i<nZ_force;i++)
+      {
+        forceZ[i] = forceZ0 + (forceZ1 - forceZ0)*i/(nZ_force-1);
+      }
+      float Btotal = 0.0;
+      for(int i=0;i<nR_force;i++)
+      {
+        for(int j=0;j<nZ_force;j++)
+        {
+          interp2dVector(&Btest[0],forceR[i],0.0,forceZ[j],nR_Bfield,
+                 nZ_Bfield,bfieldGridr.data(),bfieldGridz.data(),
+                 br.data(),bz.data(),by.data());
+          Btotal = vectorNorm(Btest);
+          //std::cout << "node " << world_rank << "Bfield at  "<< forceR[i] << " " << forceZ[j]<< " " << Btest[0] << " " << Btest[1] << 
+               //" " << Btest[2] << " " << Btotal << std::endl; 
+          particleArray->setParticle(0,forceR[i],0.0,forceZ[j],testEnergy, 0.0,0.0,Z,amu,charge+1.0);  
+	  move_boris0(0);
+	  coulombCollisions0(0);
+	  thermalForce0(0);
+          dvEr[j*nR_force + i] = move_boris0.electricForce[0];
+          dvEz[j*nR_force + i] = move_boris0.electricForce[2];
+          dvEt[j*nR_force + i] = move_boris0.electricForce[1];
+          dvBr[j*nR_force + i] = move_boris0.magneticForce[0];
+          dvBz[j*nR_force + i] = move_boris0.magneticForce[2];
+          dvBt[j*nR_force + i] = move_boris0.magneticForce[1];
+          dvCollr[j*nR_force + i] = coulombCollisions0.dv[0];
+          dvCollz[j*nR_force + i] = coulombCollisions0.dv[2];
+          dvCollt[j*nR_force + i] = coulombCollisions0.dv[1];
+          dvITGr[j*nR_force + i] = thermalForce0.dv_ITGx;
+          dvITGz[j*nR_force + i] = thermalForce0.dv_ITGz;
+          dvITGt[j*nR_force + i] = thermalForce0.dv_ITGy;
+          dvETGr[j*nR_force + i] = thermalForce0.dv_ETGx;
+          dvETGz[j*nR_force + i] = thermalForce0.dv_ETGz;
+          dvETGt[j*nR_force + i] = thermalForce0.dv_ETGy;
+        }
+      }
+    std::cout <<" about to write ncFile_forces " << std::endl;
+    NcFile ncFile_force("output/forces.nc", NcFile::replace);
+    NcDim nc_nRf = ncFile_force.addDim("nR",nR_force);
+    NcDim nc_nZf = ncFile_force.addDim("nZ",nZ_force);
+    vector<NcDim> forceDims;
+    forceDims.push_back(nc_nZf);
+    forceDims.push_back(nc_nRf);
+    NcVar forceRf = ncFile_force.addVar("r",ncFloat,nc_nRf);
+    NcVar forceZf = ncFile_force.addVar("z",ncFloat,nc_nZf);
+    NcVar dvErf = ncFile_force.addVar("dvEr",ncFloat,forceDims);
+    NcVar dvEzf = ncFile_force.addVar("dvEz",ncFloat,forceDims);
+    NcVar dvEtf = ncFile_force.addVar("dvEt",ncFloat,forceDims);
+    NcVar dvBrf = ncFile_force.addVar("dvBr",ncFloat,forceDims);
+    NcVar dvBzf = ncFile_force.addVar("dvBz",ncFloat,forceDims);
+    NcVar dvBtf = ncFile_force.addVar("dvBt",ncFloat,forceDims);
+    NcVar dvCollrf = ncFile_force.addVar("dvCollr",ncFloat,forceDims);
+    NcVar dvCollzf = ncFile_force.addVar("dvCollz",ncFloat,forceDims);
+    NcVar dvColltf = ncFile_force.addVar("dvCollt",ncFloat,forceDims);
+    NcVar dvITGrf = ncFile_force.addVar("dvITGr",ncFloat,forceDims);
+    NcVar dvITGzf = ncFile_force.addVar("dvITGz",ncFloat,forceDims);
+    NcVar dvITGtf = ncFile_force.addVar("dvITGt",ncFloat,forceDims);
+    NcVar dvETGrf = ncFile_force.addVar("dvETGr",ncFloat,forceDims);
+    NcVar dvETGzf = ncFile_force.addVar("dvETGz",ncFloat,forceDims);
+    NcVar dvETGtf = ncFile_force.addVar("dvETGt",ncFloat,forceDims);
+    forceRf.putVar(&forceR[0]);
+    forceZf.putVar(&forceZ[0]);
+    dvErf.putVar(&dvEr[0]);
+    dvEzf.putVar(&dvEz[0]);
+    dvEtf.putVar(&dvEt[0]);
+    dvBrf.putVar(&dvBr[0]);
+    dvBzf.putVar(&dvBz[0]);
+    dvBtf.putVar(&dvBt[0]);
+    dvCollrf.putVar(&dvCollr[0]);
+    dvCollzf.putVar(&dvCollz[0]);
+    dvColltf.putVar(&dvCollt[0]);
+    dvITGrf.putVar(&dvITGr[0]);
+    dvITGzf.putVar(&dvITGz[0]);
+    dvITGtf.putVar(&dvITGt[0]);
+    dvETGrf.putVar(&dvETGr[0]);
+    dvETGzf.putVar(&dvETGz[0]);
+    dvETGtf.putVar(&dvETGt[0]);
+    ncFile_force.close();
+    particleArray->setParticleV(0,px[0],py[0],pz[0],pvx[0], pvy[0],pvz[0],Z,amu,charge);  
+    }
+  #endif
 
 #if USE_BOOST
     //cpu_times copyToDeviceTime = timer.elapsed();
@@ -3310,133 +3411,52 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
 //int cpu_thread_id = 0;
 //nDevices = 2;
 #endif
-    for(int tt=0; tt< nT; tt++)
+    for(tt; tt< nT; tt++)
     {
 #ifdef __CUDACC__
     cudaThreadSynchronize();
 #endif
         thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleEnd, 
-                move_boris(particleArray,tt,dt,boundaries.data(), nLines,
-                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                    &br.front(),&bz.front(),&by.front(),
-                    nR_PreSheathEfield,nY_PreSheathEfield,nZ_PreSheathEfield,
-                    &preSheathEGridr.front(),&preSheathEGridy.front(),&preSheathEGridz.front(),
-                    &PSEr.front(),&PSEz.front(),&PSEt.front(),
-                        nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
-                        &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
-                        &closeGeom_sheath.front()) );
-        //std::cout << "pos " << particleArray->x[0] << "  " << particleArray->xprevious[0] << std::endl;   
-       //if(std::isnan(particleArray->x[0]))
-         // exit(0);
-       //particleArray->x[0] = 0.0;
-        //try {
-            thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
-                    geometry_check(particleArray,nLines,&boundaries[0],surfaces,dt,tt,
-                        nHashes,nR_closeGeom.data(),nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),
-                        &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
-                        &closeGeom.front(),
-                        nEdist, E0dist, Edist, nAdist, A0dist, Adist) );
-       // }
-       /*
-            catch (thrust::system_error &e) {
-            std::cerr << "Thrust system error: " << e.what() << std::endl;
-            exit(-1);
-        }
-        */
+                move_boris0);
+            
+	    thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
+                    geometry_check0);
 #if SPECTROSCOPY > 0
             thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,// particleBegin,particleEnd,
-                    spec_bin(particleArray,nBins,net_nX,net_nY, net_nZ, &gridX_bins.front(),&gridY_bins.front(),
-                        &gridZ_bins.front(), &net_Bins.front(),dt) );
+                    spec_bin0);
 #endif            
 #if USEIONIZATION > 0
         thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
-                ionize(particleArray, dt,&state1.front(),
-                    nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),  
-                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
-                    nTemperaturesIonize, nDensitiesIonize,&gridTemperature_Ionization.front(),
-                    &gridDensity_Ionization.front(), &rateCoeff_Ionization.front(),tt));
+                ionize0);
 #endif
 #if USERECOMBINATION > 0
         thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
-                recombine(particleArray, dt,&state1.front(),
-                    nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),  
-                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
-                    nTemperaturesRecombine,nDensitiesRecombine,
-                    gridTemperature_Recombination.data(),gridDensity_Recombination.data(),
-                    rateCoeff_Recombination.data(),tt));
+                recombine0);
 #endif
 #if USEPERPDIFFUSION > 0
         thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
-                crossFieldDiffusion(particleArray,dt,&state1.front(),perpDiffusionCoeff,
-                    nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
-                                        &br.front(),&bz.front(),&by.front()));
+                crossFieldDiffusion0);
             
             thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
-                    geometry_check(particleArray,nLines,&boundaries[0],surfaces,dt,tt,
-                        nHashes,nR_closeGeom.data(),nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),
-                        &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
-                        &closeGeom.front(),
-                        nEdist, E0dist, Edist, nAdist, A0dist, Adist) );
+                    geometry_check0);
 #endif
 #if USECOULOMBCOLLISIONS > 0
         thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd, 
-                coulombCollisions(particleArray,dt,&state1.front(),
-                    nR_flowV,nY_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridy.front(),&flowVGridz.front(),
-                    &flowVr.front(),&flowVz.front(),&flowVt.front(),
-                    nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),    
-                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),ti.data(),&te.front(),
-                    background_Z,background_amu, 
-                    nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
-                                        &br.front(),&bz.front(),&by.front()));
-
+                coulombCollisions0);
 #endif
 #if USETHERMALFORCE > 0
         thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
-                thermalForce(particleArray,dt,background_amu,
-                    nR_gradT,nZ_gradT,gradTGridr.data(),gradTGridz.data(),
-                    gradTiR.data(),gradTiZ.data(), gradTiY.data(), 
-                    gradTeR.data(), gradTeZ.data(), gradTeY.data(), 
-                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                    &br.front(),&bz.front(),&by.front()));
+                thermalForce0);
 #endif
 
 #if USESURFACEMODEL > 0
         thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd, 
-                reflection(particleArray,dt,&state1.front(),nLines,&boundaries[0],surfaces,
-                    nE_sputtRefCoeff, nA_sputtRefCoeff,A_sputtRefCoeff.data(),
-                    Elog_sputtRefCoeff.data(),spyl_surfaceModel.data(), rfyl_surfaceModel.data(),
-                    nE_sputtRefDistOut, nA_sputtRefDistOut,nE_sputtRefDistIn,nA_sputtRefDistIn,
-                    Elog_sputtRefDistIn.data(),A_sputtRefDistIn.data(),
-                    E_sputtRefDistOut.data(),A_sputtRefDistOut.data(),
-                    energyDistGrid01.data(),angleDistGrid01.data(),
-                    EDist_CDF_Y_regrid.data(),ADist_CDF_Y_regrid.data(),
-                    EDist_CDF_R_regrid.data(),ADist_CDF_R_regrid.data(),
-                    nEdist, E0dist, Edist, nAdist, A0dist, Adist) );
+                reflection0);
 #endif        
 
 #if PARTICLE_TRACKS >0
-//#if USE_CUDA > 0
    thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
-      history(particleArray,tt,nT,subSampleFac,nP,&positionHistoryX.front(),
-      &positionHistoryY.front(),&positionHistoryZ.front(),
-      &velocityHistoryX.front(),&velocityHistoryY.front(),
-      &velocityHistoryZ.front(),&chargeHistory.front(),
-      &weightHistory.front()) );
-//#else
-//if (tt % subSampleFac == 0)  
-//{    
-//        for(int i=0;i<nP;i++)
-//        {
-//            positionHistoryX[i][tt/subSampleFac] = particleArray->xprevious[i];
-//            positionHistoryY[i][tt/subSampleFac] = particleArray->yprevious[i];
-//            positionHistoryZ[i][tt/subSampleFac] = particleArray->zprevious[i];
-//            velocityHistoryX[i][tt/subSampleFac] = particleArray->vx[i];
-//            velocityHistoryY[i][tt/subSampleFac] = particleArray->vy[i];
-//            velocityHistoryZ[i][tt/subSampleFac] = particleArray->vz[i];
-//            chargeHistory[i][tt/subSampleFac] = particleArray->charge[i];
-//        }
-//}
-//#endif
+      history0);
 #endif
     }
 #if USE_OPENMP
