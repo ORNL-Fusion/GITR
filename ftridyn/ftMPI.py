@@ -15,9 +15,9 @@ def func1(path,E,a,r,d):
     print(path)
     cwd=os.getcwd()
     os.mkdir(path)
-    os.chdir(path)
-    cwd1=os.getcwd()
-    print('cwd1 ',cwd1)
+    #os.chdir(path)
+    #cwd1=os.getcwd()
+    #print('cwd1 ',cwd1)
     name1 = ''
     name2 = ''
     if(len(d['beam'])>1):
@@ -29,7 +29,7 @@ def func1(path,E,a,r,d):
     else:
         name2 = '_'+d['target']
 
-    generate_ftridyn_input.beam_and_target(name1+name2,d['beam'],d['target'],sim_number=1,number_histories=d['nH'], incident_energy=E,depth=200.0,incident_angle=a)
+    generate_ftridyn_input.beam_and_target(name1+name2,d['beam'],d['target'],sim_number=1,number_histories=d['nH'], incident_energy=E,depth=200.0,incident_angle=a,fluence=1.0E-16,path=path)
     p = subprocess.Popen([d['exe'],name1+name2+'0001.IN'],cwd=cwd+'/'+path)
     p.wait()
     #ftridyn.ftridyn_cpmi('He_W0001.IN')
@@ -38,9 +38,9 @@ def func1(path,E,a,r,d):
     #sim = analyze_ftridyn_simulations.ftridyn_output_data('He_W','0001')
     #Y = sim.calculate_total_sputtering_yield()
     #print('Energy Yield ',E, Y)
-    os.chdir(cwd)
-    cwd=os.getcwd()
-    analyzeFTrun(path,d)
+    #os.chdir(cwd)
+    #cwd=os.getcwd()
+    #analyzeFTrun(path,d)
     print('cwd ',cwd)
     return 1
 def analyzeFTrun(pathString,d):
@@ -116,10 +116,13 @@ def master(nList):
         
     
 def slave(func,pathList,eList,aList,rList,d):
+    rank = MPI.COMM_WORLD.Get_rank()
+    size = MPI.COMM_WORLD.Get_size()
     comm = MPI.COMM_WORLD
     status = MPI.Status()
     while 1:
         data = comm.recv(None, source=0, tag=MPI.ANY_TAG, status=status)
+        print('rank %d (total %d) received data %d' % ( rank, size,data) )
         if status.Get_tag(): break
         complete = func(pathList[data],eList[data],aList[data],rList[data],d)
         comm.send(complete, dest=0)
@@ -135,25 +138,26 @@ def main(func,argv):
     loadDict = False
     dictName = None
     if(rank ==0):
+        start_time = time.time()
         try:
             opts, args = getopt.getopt(argv, "d", ["dictionary="])
         except getopt.GetoptError as err:
             # print help information and exit:
             print str(err)  # will print something like "option -a not recognized"
             #usage()
-	    exit=1
+            exit=1
             #sys.exit(2)
         output = None
         verbose = False
-	print("opts ", opts)
-	if(exit==0):
+        print("opts ", opts)
+        if(exit==0):
             for o, a in opts:
                 if o in ("-d", "--dictionary"):
                     #usage()
                     #sys.exit()
-		    print("dictionary " , a)
-		    loadDict = True
-		    dictName = a
+        	    print("dictionary " , a)
+        	    loadDict = True
+        	    dictName = a
                 else:
                     assert False, "unhandled option"
                     exit=1
@@ -170,11 +174,11 @@ def main(func,argv):
     
     if rank == 0: # Master
         print('master rank',rank)
-	if loadDict:
-	    f = open(dictName, 'r')   # 'r' for reading; can be omitted
-	    d = pickle.load(f)         # load file content as mydict
-	    f.close()
-	else:
+        if loadDict:
+            f = open(dictName, 'r')   # 'r' for reading; can be omitted
+            d = pickle.load(f)         # load file content as mydict
+            f.close()
+        else:
             with open("ftMPI.in") as f:
                 for line in f:
                     (key, val) = line.split()
@@ -201,88 +205,96 @@ def main(func,argv):
                     eList.append(energy[i])
                     aList.append(angle[j])
                     rList.append(roughness[k])
-        
+        f = open('pathList.pkl', 'w')
+        pickle.dump(pathList,f)
+        f.close() 
+    comm.Barrier()
     pathList = comm.bcast(pathList,root=0)
     eList = comm.bcast(eList,root=0)
     aList = comm.bcast(aList,root=0)
     rList = comm.bcast(rList,root=0)
     d = comm.bcast(d,root=0)
+    comm.Barrier()
     
     if rank == 0: # Master
+        print('master',rank)
         master(len(pathList))
     else: # Any slave
         print('slave rank',rank)
         slave(func,pathList,eList,aList,rList,d)
     
+    print('Task waiting at barrier (rank %d)' % (rank) )
     comm.Barrier()
     print('Task completed (rank %d)' % (rank) )
-    
-    if rank == 0:
-        nEgrid = d['nEdist']
-        maxE = d['maxEdist']
-        nAgrid = d['nAdist']
-        sputt = np.zeros(shape=(len(energy),len(angle)))
-        refl = np.zeros(shape=(len(energy),len(angle)))
-        eDistEgrid = np.linspace(0.0,maxE-maxE/nEgrid,nEgrid) 
-        cosDistAgrid = np.linspace(0.0,90.0-90.0/nAgrid,nAgrid) 
-        cosXDistribution = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
-        cosYDistribution = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
-        cosZDistribution = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
-        cosXDistributionRef = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
-        cosYDistributionRef = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
-        cosZDistributionRef = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
-        eDistribution = np.zeros(shape=(len(energy),len(angle),nEgrid)) 
-        eDistributionRef = np.zeros(shape=(len(energy),len(angle),nEgrid))
-        totalIndex=0
-        for i in range(len(energy)):
-            for j in range(len(angle)):
-                pathString = pathList[totalIndex]
-                yr = np.loadtxt(pathString+"/"+"YR.out", dtype='float')
-                sputt[i,j] = yr[0]
-                refl[i,j] = yr[1]
-                nX = np.loadtxt(pathString+"/"+"nX.out", dtype='float')
-                cosXDistribution[i,j,:] = nX
-                nXref = np.loadtxt(pathString+"/"+"nXref.out", dtype='float')
-                cosXDistributionRef[i,j,:] = nXref
-                nenergy = np.loadtxt(pathString+"/"+"energy.out", dtype='float')
-                eDistribution[i,j,:] = nenergy
-                nenergyRef = np.loadtxt(pathString+"/"+"energyRef.out", dtype='float')
-                eDistributionRef[i,j,:] = nenergyRef
-                totalIndex = totalIndex+1
-        rootgrp = netCDF4.Dataset("ftridyn.nc", "w", format="NETCDF4")
-        ne = rootgrp.createDimension("nE", len(energy))
-        na = rootgrp.createDimension("nA", len(angle))
-        nedistgrid = rootgrp.createDimension("nEdistBins", nEgrid)
-        nadistgrid = rootgrp.createDimension("nAdistBins", nAgrid)
-        spyld = rootgrp.createVariable("spyld","f8",("nE","nA"))
-        rfyld = rootgrp.createVariable("rfyld","f8",("nE","nA"))
-        ee = rootgrp.createVariable("E","f8",("nE"))
-        aa = rootgrp.createVariable("A","f8",("nA"))
-        cosxdist = rootgrp.createVariable("cosXDist","f8",("nE","nA","nAdistBins"))
-        cosydist = rootgrp.createVariable("cosYDist","f8",("nE","nA","nAdistBins"))
-        coszdist = rootgrp.createVariable("cosZDist","f8",("nE","nA","nAdistBins"))
-        cosxdistref = rootgrp.createVariable("cosXDistRef","f8",("nE","nA","nAdistBins"))
-        cosydistref = rootgrp.createVariable("cosYDistRef","f8",("nE","nA","nAdistBins"))
-        coszdistref = rootgrp.createVariable("cosZDistRef","f8",("nE","nA","nAdistBins"))
-        edist = rootgrp.createVariable("energyDist","f8",("nE","nA","nEdistBins"))
-        edistref = rootgrp.createVariable("energyDistRef","f8",("nE","nA","nEdistBins"))
-        edistegrid = rootgrp.createVariable("eDistEgrid","f8",("nEdistBins")) 
-        cosdistagrid = rootgrp.createVariable("cosDistAgrid","f8",("nAdistBins")) 
-        ee[:] = energy
-        aa[:] = angle
-        edistegrid[:] = eDistEgrid
-        cosdistagrid[:] = cosDistAgrid
-        spyld[:] = sputt
-        rfyld[:] = refl
-        cosxdist[:] = cosXDistribution
-        cosydist[:] = cosYDistribution
-        coszdist[:] = cosZDistribution
-        cosxdistref[:] = cosXDistributionRef
-        cosydistref[:] = cosYDistributionRef
-        coszdistref[:] = cosZDistributionRef
-        edist[:] = eDistribution
-        edistref[:] = eDistributionRef
-        rootgrp.close()
+    #
+    #if rank == 0:
+    #    nEgrid = d['nEdist']
+    #    maxE = d['maxEdist']
+    #    nAgrid = d['nAdist']
+    #    sputt = np.zeros(shape=(len(energy),len(angle)))
+    #    refl = np.zeros(shape=(len(energy),len(angle)))
+    #    eDistEgrid = np.linspace(0.0,maxE-maxE/nEgrid,nEgrid) 
+    #    cosDistAgrid = np.linspace(0.0,90.0-90.0/nAgrid,nAgrid) 
+    #    cosXDistribution = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
+    #    cosYDistribution = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
+    #    cosZDistribution = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
+    #    cosXDistributionRef = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
+    #    cosYDistributionRef = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
+    #    cosZDistributionRef = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
+    #    eDistribution = np.zeros(shape=(len(energy),len(angle),nEgrid)) 
+    #    eDistributionRef = np.zeros(shape=(len(energy),len(angle),nEgrid))
+    #    totalIndex=0
+    #    for i in range(len(energy)):
+    #        for j in range(len(angle)):
+    #            pathString = pathList[totalIndex]
+    #            yr = np.loadtxt(pathString+"/"+"YR.out", dtype='float')
+    #            sputt[i,j] = yr[0]
+    #            refl[i,j] = yr[1]
+    #            nX = np.loadtxt(pathString+"/"+"nX.out", dtype='float')
+    #            cosXDistribution[i,j,:] = nX
+    #            nXref = np.loadtxt(pathString+"/"+"nXref.out", dtype='float')
+    #            cosXDistributionRef[i,j,:] = nXref
+    #            nenergy = np.loadtxt(pathString+"/"+"energy.out", dtype='float')
+    #            eDistribution[i,j,:] = nenergy
+    #            nenergyRef = np.loadtxt(pathString+"/"+"energyRef.out", dtype='float')
+    #            eDistributionRef[i,j,:] = nenergyRef
+    #            totalIndex = totalIndex+1
+    #    rootgrp = netCDF4.Dataset("ftridyn.nc", "w", format="NETCDF4")
+    #    ne = rootgrp.createDimension("nE", len(energy))
+    #    na = rootgrp.createDimension("nA", len(angle))
+    #    nedistgrid = rootgrp.createDimension("nEdistBins", nEgrid)
+    #    nadistgrid = rootgrp.createDimension("nAdistBins", nAgrid)
+    #    spyld = rootgrp.createVariable("spyld","f8",("nE","nA"))
+    #    rfyld = rootgrp.createVariable("rfyld","f8",("nE","nA"))
+    #    ee = rootgrp.createVariable("E","f8",("nE"))
+    #    aa = rootgrp.createVariable("A","f8",("nA"))
+    #    cosxdist = rootgrp.createVariable("cosXDist","f8",("nE","nA","nAdistBins"))
+    #    cosydist = rootgrp.createVariable("cosYDist","f8",("nE","nA","nAdistBins"))
+    #    coszdist = rootgrp.createVariable("cosZDist","f8",("nE","nA","nAdistBins"))
+    #    cosxdistref = rootgrp.createVariable("cosXDistRef","f8",("nE","nA","nAdistBins"))
+    #    cosydistref = rootgrp.createVariable("cosYDistRef","f8",("nE","nA","nAdistBins"))
+    #    coszdistref = rootgrp.createVariable("cosZDistRef","f8",("nE","nA","nAdistBins"))
+    #    edist = rootgrp.createVariable("energyDist","f8",("nE","nA","nEdistBins"))
+    #    edistref = rootgrp.createVariable("energyDistRef","f8",("nE","nA","nEdistBins"))
+    #    edistegrid = rootgrp.createVariable("eDistEgrid","f8",("nEdistBins")) 
+    #    cosdistagrid = rootgrp.createVariable("cosDistAgrid","f8",("nAdistBins")) 
+    #    ee[:] = energy
+    #    aa[:] = angle
+    #    edistegrid[:] = eDistEgrid
+    #    cosdistagrid[:] = cosDistAgrid
+    #    spyld[:] = sputt
+    #    rfyld[:] = refl
+    #    cosxdist[:] = cosXDistribution
+    #    cosydist[:] = cosYDistribution
+    #    coszdist[:] = cosZDistribution
+    #    cosxdistref[:] = cosXDistributionRef
+    #    cosydistref[:] = cosYDistributionRef
+    #    coszdistref[:] = cosZDistributionRef
+    #    edist[:] = eDistribution
+    #    edistref[:] = eDistributionRef
+    #    rootgrp.close()
+    #    exec_time = time.time()
+    #    print("Execution of FTRIDYN Cases took --- %s seconds ---" % (exec_time - start_time))
 
 if __name__ == "__main__":
     print 'Argument List:', str(sys.argv[1:])
