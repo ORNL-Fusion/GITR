@@ -7,6 +7,8 @@ import time
 import subprocess
 import numpy as np
 import netCDF4
+import getopt, sys
+import pickle
 WORKTAG=0
 DIETAG=1
 def func1(path,E,a,r,d):
@@ -122,14 +124,44 @@ def slave(func,pathList,eList,aList,rList,d):
         complete = func(pathList[data],eList[data],aList[data],rList[data],d)
         comm.send(complete, dest=0)
 
-def main(func):
-
+def main(func,argv):
+    print 'Argument List:', str(argv)
     name = MPI.Get_processor_name()
     rank = MPI.COMM_WORLD.Get_rank()
     size = MPI.COMM_WORLD.Get_size()
     comm = MPI.COMM_WORLD
-
+    exit=0
     print('I am  %s rank %d (total %d)' % (name, rank, size) )
+    loadDict = False
+    dictName = None
+    if(rank ==0):
+        try:
+            opts, args = getopt.getopt(argv, "d", ["dictionary="])
+        except getopt.GetoptError as err:
+            # print help information and exit:
+            print str(err)  # will print something like "option -a not recognized"
+            #usage()
+	    exit=1
+            #sys.exit(2)
+        output = None
+        verbose = False
+	print("opts ", opts)
+	if(exit==0):
+            for o, a in opts:
+                if o in ("-d", "--dictionary"):
+                    #usage()
+                    #sys.exit()
+		    print("dictionary " , a)
+		    loadDict = True
+		    dictName = a
+                else:
+                    assert False, "unhandled option"
+                    exit=1
+
+    exit = comm.bcast(exit,root=0)
+    if(exit):
+        MPI.COMM_WORLD.Abort()
+        sys.exit()
     pathList = []
     eList = []
     aList = []
@@ -138,16 +170,20 @@ def main(func):
     
     if rank == 0: # Master
         print('master rank',rank)
-    
-        with open("ftMPI.in") as f:
-            for line in f:
-                (key, val) = line.split()
-                if(key == 'beam' or key=='target' or key=='Escale' or key=='exe'):
-                    d[key] = val
-                elif(key == 'nE' or key == 'nA' or key=='nR' or key=='nEdist' or key=='nAdist' or key=='nH'):
-                    d[key] = int(val)
-                else:
-                    d[key] = float(val)
+	if loadDict:
+	    f = open(dictName, 'r')   # 'r' for reading; can be omitted
+	    d = pickle.load(f)         # load file content as mydict
+	    f.close()
+	else:
+            with open("ftMPI.in") as f:
+                for line in f:
+                    (key, val) = line.split()
+                    if(key == 'beam' or key=='target' or key=='Escale' or key=='exe'):
+                        d[key] = val
+                    elif(key == 'nE' or key == 'nA' or key=='nR' or key=='nEdist' or key=='nAdist' or key=='nH'):
+                        d[key] = int(val)
+                    else:
+                        d[key] = float(val)
         print d
     
         if(d['Escale'] == 'log'):
@@ -249,5 +285,6 @@ def main(func):
         rootgrp.close()
 
 if __name__ == "__main__":
-    main(func1)
+    print 'Argument List:', str(sys.argv[1:])
+    main(func1,sys.argv[1:])
     #main(func2)
