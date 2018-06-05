@@ -29,7 +29,7 @@ def func1(path,E,a,r,d):
     else:
         name2 = '_'+d['target']
 
-    generate_ftridyn_input.beam_and_target(name1+name2,d['beam'],d['target'],sim_number=1,number_histories=d['nH'], incident_energy=E,depth=200.0,incident_angle=a,fluence=1.0E-16,path=path)
+    generate_ftridyn_input.beam_and_target(name1+name2,d['beam'],d['target'],sim_number=1,number_histories=d['nH'], incident_energy=E,depth=200.0,incident_angle=a,fluence=1.0E-16,path=path+'/')
     p = subprocess.Popen([d['exe'],name1+name2+'0001.IN'],cwd=cwd+'/'+path)
     p.wait()
     #ftridyn.ftridyn_cpmi('He_W0001.IN')
@@ -122,8 +122,9 @@ def slave(func,pathList,eList,aList,rList,d):
     status = MPI.Status()
     while 1:
         data = comm.recv(None, source=0, tag=MPI.ANY_TAG, status=status)
-        print('rank %d (total %d) received data %d' % ( rank, size,data) )
         if status.Get_tag(): break
+        else:
+	    print('rank %d (total %d) received data %i' % ( rank, size,int(data)) )
         complete = func(pathList[data],eList[data],aList[data],rList[data],d)
         comm.send(complete, dest=0)
 
