@@ -35,11 +35,12 @@ def func1(path,E,a,r,d):
     #returnCode = p.wait()
     try:
         fileLog = open(path+'/log.txt','w') 
-        fileErr = open(path+'/logErr.txt','w') 
-        p = subprocess.check_call([d['exe'],name1+name2+'0001.IN'],cwd=cwd+'/'+path,stdout=fileLog, stderr=fileErr)
+        fileErr = open(path+'/logErr.txt','w')
+	fileIn = open(path+'/'+name1+name2+'0001.IN')
+        p = subprocess.check_call([d['exe']],stdin=fileIn,cwd=cwd+'/'+path,stdout=fileLog, stderr=fileErr)
         fileLog.close()
         fileErr.close()
-    except CalledProcessError as e:
+    except subprocess.CalledProcessError as e:
         sys.exit("'ls' failed, returned code %d (check 'errors.txt')" \
 	             % (e.returncode))
     print('path, returncode', path, p)
