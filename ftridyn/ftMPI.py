@@ -33,11 +33,15 @@ def func1(path,E,a,r,d):
     #p = subprocess.Popen([d['exe'],name1+name2+'0001.IN'],cwd=cwd+'/'+path,stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     #stdoutdata, stderrdata = p.communicate()
     #returnCode = p.wait()
-    fileLog = open(path+'/log.txt','w') 
-    fileErr = open(path+'/logErr.txt','w') 
-    p = subprocess.check_call([d['exe'],name1+name2+'0001.IN'],cwd=cwd+'/'+path,stdout=fileLog, stderr=fileErr)
-    fileLog.close()
-    fileErr.close()
+    try:
+        fileLog = open(path+'/log.txt','w') 
+        fileErr = open(path+'/logErr.txt','w') 
+        p = subprocess.check_call([d['exe'],name1+name2+'0001.IN'],cwd=cwd+'/'+path,stdout=fileLog, stderr=fileErr)
+        fileLog.close()
+        fileErr.close()
+    except CalledProcessError as e:
+        sys.exit("'ls' failed, returned code %d (check 'errors.txt')" \
+	             % (e.returncode))
     print('path, returncode', path, p)
     returnCode=0
     #file = open(path+'/log.txt','w') 
