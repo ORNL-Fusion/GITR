@@ -30,8 +30,16 @@ def func1(path,E,a,r,d):
         name2 = '_'+d['target']
 
     generate_ftridyn_input.beam_and_target(name1+name2,d['beam'],d['target'],sim_number=1,number_histories=d['nH'], incident_energy=E,depth=200.0,incident_angle=a,fluence=1.0E-16,path=path+'/')
-    p = subprocess.Popen([d['exe'],name1+name2+'0001.IN'],cwd=cwd+'/'+path)
-    p.wait()
+    p = subprocess.Popen([d['exe'],name1+name2+'0001.IN'],cwd=cwd+'/'+path,stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    stdoutdata, stderrdata = p.communicate()
+    returnCode = p.wait()
+    print('path, returncode', path, returnCode)
+    file = open(path+'/log.txt','w') 
+    file.write(str(stdoutdata)) 
+    file.close() 
+    file = open(path+'/logErr.txt','w') 
+    file.write(str(stderrdata)) 
+    file.close() 
     #ftridyn.ftridyn_cpmi('He_W0001.IN')
     ##time.sleep(60)
     #print('finished simulation')
@@ -42,7 +50,7 @@ def func1(path,E,a,r,d):
     #cwd=os.getcwd()
     #analyzeFTrun(path,d)
     print('cwd ',cwd)
-    return 1
+    return returnCode
 def analyzeFTrun(pathString,d):
     nEgrid = d['nEdist']
     maxE = d['maxEdist']
@@ -216,10 +224,10 @@ def main(func,argv):
     rList = comm.bcast(rList,root=0)
     d = comm.bcast(d,root=0)
     comm.Barrier()
-    
+    all_data = []
     if rank == 0: # Master
         print('master',rank)
-        master(len(pathList))
+        all_data = master(len(pathList))
     else: # Any slave
         print('slave rank',rank)
         slave(func,pathList,eList,aList,rList,d)
@@ -227,6 +235,8 @@ def main(func,argv):
     print('Task waiting at barrier (rank %d)' % (rank) )
     comm.Barrier()
     print('Task completed (rank %d)' % (rank) )
+    if(rank ==0):
+        print('returns ' , all_data)
     #
     #if rank == 0:
     #    nEgrid = d['nEdist']
