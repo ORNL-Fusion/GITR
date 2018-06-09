@@ -137,7 +137,7 @@ def read3dGeom(filename="gitrGeometry.cfg"):
     print('Number of W surfaces ', surfIndArray.size)
     return x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray
 def iter2dProcessing():
-    x1,x2,z1,z2,length,Z = plot2dGeom('input/iter2dRefinedOuterTarget.cfg')
+    x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
     plt.close()
     grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers = nc_readSurface()
     plt.close()
@@ -402,7 +402,7 @@ def nc_plotSpec(filename='spec.nc'):
     for i in range(nBins-1,nBins):
         dens = np.log10(n[i,:,:])
         #plt.subplot(plotsize,plotsize,i+1)
-        plot2dGeom('input/iter2dRefinedOuterTarget.cfg')
+        plot2dGeom('input/iterRefinedTest.cfg')
         plt.title("ITER W Impurity Density")
         plt.xlabel("r [m]")
         plt.ylabel("z [m]")
