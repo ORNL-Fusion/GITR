@@ -559,7 +559,15 @@ int main(int argc, char **argv)
   #endif
 
   #if GEOM_HASH > 1
-    getVariable(cfg,geomHashCfg+"nHashes",nHashes);
+    if(world_rank == 0)
+    {
+      getVariable(cfg,geomHashCfg+"nHashes",nHashes);
+    }
+    #if USE_MPI > 0 
+      MPI_Bcast(&nHashes,1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "finished mpibacast" << std::endl;
+    #endif
     std::vector<std::string> hashFile;
     if(world_rank == 0)
     {
@@ -590,6 +598,7 @@ int main(int argc, char **argv)
       }
     }
     #if USE_MPI > 0 
+    std::cout << "starting mpibacast" << std::endl;
       MPI_Bcast(&nR_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nY_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nZ_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
@@ -600,6 +609,7 @@ int main(int argc, char **argv)
       MPI_Bcast(&nZ_closeGeomTotal,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nHashPointsTotal,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "finished mpibacast" << std::endl;
     #endif
   #endif
   
