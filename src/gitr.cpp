@@ -3284,23 +3284,31 @@ std::cout <<" about to write ncFile_particles " << std::endl;
                //" " << Btest[2] << " " << Btotal << std::endl; 
           particleArray->setParticle(0,forceR[i],0.0,forceZ[j],testEnergy, 0.0,0.0,Z,amu,charge+1.0);  
 	  move_boris0(0);
+#if USECOULOMBCOLLISIONS > 0
 	  coulombCollisions0(0);
+#endif
+#if USETHERMALFORCE > 0
 	  thermalForce0(0);
+#endif
           dvEr[j*nR_force + i] = move_boris0.electricForce[0];
           dvEz[j*nR_force + i] = move_boris0.electricForce[2];
           dvEt[j*nR_force + i] = move_boris0.electricForce[1];
           dvBr[j*nR_force + i] = move_boris0.magneticForce[0];
           dvBz[j*nR_force + i] = move_boris0.magneticForce[2];
           dvBt[j*nR_force + i] = move_boris0.magneticForce[1];
+#if USECOULOMBCOLLISIONS > 0
           dvCollr[j*nR_force + i] = coulombCollisions0.dv[0];
           dvCollz[j*nR_force + i] = coulombCollisions0.dv[2];
           dvCollt[j*nR_force + i] = coulombCollisions0.dv[1];
+#endif
+#if USETHERMALFORCE > 0
           dvITGr[j*nR_force + i] = thermalForce0.dv_ITGx;
           dvITGz[j*nR_force + i] = thermalForce0.dv_ITGz;
           dvITGt[j*nR_force + i] = thermalForce0.dv_ITGy;
           dvETGr[j*nR_force + i] = thermalForce0.dv_ETGx;
           dvETGz[j*nR_force + i] = thermalForce0.dv_ETGz;
           dvETGt[j*nR_force + i] = thermalForce0.dv_ETGy;
+#endif
         }
       }
     std::cout <<" about to write ncFile_forces " << std::endl;

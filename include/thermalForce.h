@@ -133,19 +133,24 @@ void operator()(std::size_t indx)
     if(this->dv_ETGx != this->dv_ETGx) this->dv_ETGx = 0;
     if(this->dv_ETGy != this->dv_ETGy) this->dv_ETGy = 0;
     if(this->dv_ETGz != this->dv_ETGz) this->dv_ETGz = 0;
+#if USE_CUDA 
+#else
     if(isnan(dv_ITGx)) this->dv_ITGx = 0;
     if(isnan(dv_ITGy)) this->dv_ITGy = 0;
     if(isnan(dv_ITGz)) this->dv_ITGz = 0;
     if(isnan(dv_ETGx)) this->dv_ETGx = 0;
     if(isnan(dv_ETGy)) this->dv_ETGy = 0;
     if(isnan(dv_ETGz)) this->dv_ETGz = 0;
+#endif
     particlesPointer->vx[indx] = particlesPointer->vx[indx] + dv_ETGx + dv_ITGx;
 	particlesPointer->vy[indx] = particlesPointer->vy[indx] + dv_ETGy + dv_ITGy;
 	particlesPointer->vz[indx] = particlesPointer->vz[indx] + dv_ETGz + dv_ITGz;	
+#if USE_CUDA 
+#else
     if(isnan(particlesPointer->vx[indx]) || isinf(particlesPointer->vx[indx])) particlesPointer->vx[indx] = vx;
     if(isnan(particlesPointer->vy[indx]) || isinf(particlesPointer->vy[indx])) particlesPointer->vy[indx] = vy;
     if(isnan(particlesPointer->vz[indx]) || isinf(particlesPointer->vz[indx])) particlesPointer->vz[indx] = vz;
-        
+#endif        
     particlesPointer->test[indx] = dv_ETGx;
     particlesPointer->test0[indx] = dv_ETGy;
     particlesPointer->test1[indx] = dv_ETGz;
