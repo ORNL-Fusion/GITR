@@ -1043,10 +1043,10 @@ int main(int argc, char **argv)
       geomHashDim_sheath.push_back(hashNY_sheath);
       geomHashDim_sheath.push_back(hashNZ_sheath);
       geomHashDim_sheath.push_back(hashN_sheath);
-      NcVar hash_gridR_sheath = ncFile_hash_sheath.addVar("gridR",ncDouble,hashNR_sheath);
-      NcVar hash_gridY_sheath = ncFile_hash_sheath.addVar("gridY",ncDouble,hashNY_sheath);
-      NcVar hash_gridZ_sheath = ncFile_hash_sheath.addVar("gridZ",ncDouble,hashNZ_sheath);
-      NcVar hash_sheath = ncFile_hash_sheath.addVar("hash",ncDouble,geomHashDim_sheath);
+      NcVar hash_gridR_sheath = ncFile_hash_sheath.addVar("gridR",ncFloat,hashNR_sheath);
+      NcVar hash_gridY_sheath = ncFile_hash_sheath.addVar("gridY",ncFloat,hashNY_sheath);
+      NcVar hash_gridZ_sheath = ncFile_hash_sheath.addVar("gridZ",ncFloat,hashNZ_sheath);
+      NcVar hash_sheath = ncFile_hash_sheath.addVar("hash",ncInt,geomHashDim_sheath);
       hash_gridR_sheath.putVar(&closeGeomGridr_sheath[0]);
       hash_gridY_sheath.putVar(&closeGeomGridy_sheath[0]);
       hash_gridZ_sheath.putVar(&closeGeomGridz_sheath[0]);
@@ -1338,12 +1338,12 @@ int main(int argc, char **argv)
       dims_lc.push_back(nc_nYLc);
       dims_lc.push_back(nc_nZLc);
       
-      NcVar nc_Lc = ncFileLC.addVar("Lc",ncDouble,dims_lc);
-      NcVar nc_s = ncFileLC.addVar("s",ncDouble,dims_lc);
-      NcVar nc_nI = ncFileLC.addVar("noIntersection",ncDouble,dims_lc);
-      NcVar nc_gridRLc = ncFileLC.addVar("gridR",ncDouble,nc_nRLc);
-      NcVar nc_gridYLc = ncFileLC.addVar("gridY",ncDouble,nc_nYLc);
-      NcVar nc_gridZLc = ncFileLC.addVar("gridZ",ncDouble,nc_nZLc);
+      NcVar nc_Lc = ncFileLC.addVar("Lc",ncFloat,dims_lc);
+      NcVar nc_s = ncFileLC.addVar("s",ncFloat,dims_lc);
+      NcVar nc_nI = ncFileLC.addVar("noIntersection",ncFloat,dims_lc);
+      NcVar nc_gridRLc = ncFileLC.addVar("gridR",ncFloat,nc_nRLc);
+      NcVar nc_gridYLc = ncFileLC.addVar("gridY",ncFloat,nc_nYLc);
+      NcVar nc_gridZLc = ncFileLC.addVar("gridZ",ncFloat,nc_nZLc);
       
       nc_Lc.putVar(&Lc[0]);
       nc_s.putVar(&s[0]);
@@ -1734,9 +1734,9 @@ int main(int argc, char **argv)
     dimsFlowV.push_back(nc_nZflow);
     dimsFlowV.push_back(nc_nYflow);
     dimsFlowV.push_back(nc_nRflow);
-    NcVar nc_flowVr = ncFileFlow.addVar("flowVr",ncDouble,dimsFlowV);
-    NcVar nc_flowVt = ncFileFlow.addVar("flowVt",ncDouble,dimsFlowV);
-    NcVar nc_flowVz = ncFileFlow.addVar("flowVz",ncDouble,dimsFlowV);
+    NcVar nc_flowVr = ncFileFlow.addVar("flowVr",ncFloat,dimsFlowV);
+    NcVar nc_flowVt = ncFileFlow.addVar("flowVt",ncFloat,dimsFlowV);
+    NcVar nc_flowVz = ncFileFlow.addVar("flowVz",ncFloat,dimsFlowV);
     nc_flowVr.putVar(&flowVr[0]);
     nc_flowVt.putVar(&flowVt[0]);
     nc_flowVz.putVar(&flowVz[0]);
@@ -2105,9 +2105,9 @@ int main(int argc, char **argv)
                  }
 
       }
-      NcVar nc_PSEr = ncFileLC.addVar("PSEr",ncDouble,nc_nTracers);
-      NcVar nc_PSEt = ncFileLC.addVar("PSEt",ncDouble,nc_nTracers);
-      NcVar nc_PSEz = ncFileLC.addVar("PSEz",ncDouble,nc_nTracers);
+      NcVar nc_PSEr = ncFileLC.addVar("PSEr",ncFloat,nc_nTracers);
+      NcVar nc_PSEt = ncFileLC.addVar("PSEt",ncFloat,nc_nTracers);
+      NcVar nc_PSEz = ncFileLC.addVar("PSEz",ncFloat,nc_nTracers);
       nc_PSEr.putVar(&PSEr[0]);
       nc_PSEt.putVar(&PSEt[0]);
       nc_PSEz.putVar(&PSEz[0]);
@@ -3796,16 +3796,16 @@ vector<NcDim> dims0;
 dims0.push_back(nc_nP0);
        std::cout << "created dims Vector " << std::endl;
 
-NcVar nc_x0 = ncFile0.addVar("x",ncDouble,dims0);
-NcVar nc_y0 = ncFile0.addVar("y",ncDouble,dims0);
-NcVar nc_z0 = ncFile0.addVar("z",ncDouble,dims0);
-NcVar nc_vx0 = ncFile0.addVar("vx",ncDouble,dims0);
-NcVar nc_vy0 = ncFile0.addVar("vy",ncDouble,dims0);
-NcVar nc_vz0 = ncFile0.addVar("vz",ncDouble,dims0);
-NcVar nc_trans0 = ncFile0.addVar("transitTime",ncDouble,dims0);
-NcVar nc_impact0 = ncFile0.addVar("hitWall",ncDouble,dims0);
-NcVar nc_weight0 = ncFile0.addVar("weight",ncDouble,dims0);
-NcVar nc_charge0 = ncFile0.addVar("charge",ncDouble,dims0);
+NcVar nc_x0 = ncFile0.addVar("x",ncFloat,dims0);
+NcVar nc_y0 = ncFile0.addVar("y",ncFloat,dims0);
+NcVar nc_z0 = ncFile0.addVar("z",ncFloat,dims0);
+NcVar nc_vx0 = ncFile0.addVar("vx",ncFloat,dims0);
+NcVar nc_vy0 = ncFile0.addVar("vy",ncFloat,dims0);
+NcVar nc_vz0 = ncFile0.addVar("vz",ncFloat,dims0);
+NcVar nc_trans0 = ncFile0.addVar("transitTime",ncFloat,dims0);
+NcVar nc_impact0 = ncFile0.addVar("hitWall",ncFloat,dims0);
+NcVar nc_weight0 = ncFile0.addVar("weight",ncFloat,dims0);
+NcVar nc_charge0 = ncFile0.addVar("charge",ncFloat,dims0);
        std::cout << "added Vars " << std::endl;
        std::cout << "x0 "<< particleArray->x[0] << std::endl;
 #if USE_MPI > 0
