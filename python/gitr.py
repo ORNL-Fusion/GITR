@@ -131,11 +131,12 @@ def read3dGeom(filename="gitrGeometry.cfg"):
     z2=np.array(config.geom.z2)
     z3=np.array(config.geom.z3)
     area=np.array(config.geom.area)
+    surf=np.array(config.geom.surface)
     Z = np.array(config.geom.Z)
     materialSurfaceInidces = np.nonzero(Z)
     surfIndArray = np.asarray(materialSurfaceInidces)
     print('Number of W surfaces ', surfIndArray.size)
-    return x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray
+    return x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf
 def iter2dProcessing():
     x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
     plt.close()
@@ -188,6 +189,92 @@ def iter2dProcessing():
     plt.legend((s1, s2, s3), ('Gross Erosion', 'Gross Deposition', 'netErosion'))
     plt.savefig('targetErosionlog.png') 
     plt.close()
+def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
+
+    #x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
+    x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf = read3dGeom('input/iterRefinedTest.cfg')
+    plt.close()
+    grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers = nc_readSurface()
+    plt.close()
+    print('e', E)
+    #loc1 = -4.17
+    #loc2 = -4.081
+    #loc3 = -4.25
+    #loc4 = -3.6
+    #locWidth = 0.02
+    surfInd = surf >0
+    z1 = np.extract(surfInd,z1)
+    for i in range(len(loc)):
+        condition = [(z1 < loc[i]+locWidth) & (z1 > loc[i]-locWidth)]
+        dep = np.extract(condition,grossDep)
+        ero = np.extract(condition,grossEro)
+        strike = np.extract(condition,sumWeightStrike)
+        areas = np.extract(condition,area)
+        with io.open('input/gitrInput.cfg') as f:
+            config = libconf.load(f)
+        backgroundIonsPerSec = float(config.postProcessing.backgroundIonsPerSec); #3.8640e+19;for pisces He high flux case
+        backgroundFlux = float(config.postProcessing.backgroundFlux);#3.5e22;
+        time = float(config.postProcessing.time);
+        nParticles = float(config.impurityParticleSource.nP);
+        backgroundSputtYield = float(config.postProcessing.backgroundSputtYield);
+        erodedMass = time*backgroundIonsPerSec*184*1.66e-27*backgroundSputtYield*1000;
+        erodedMassPerParticle = erodedMass/nParticles;
+        netErosion = np.sum(ero - dep);
+        netStrike = np.sum(strike)
+        totalArea = np.sum(areas)
+        impurityParticlePerSecondPerComputationalPartice = backgroundIonsPerSec*backgroundSputtYield/nParticles;
+        impurityFlux = netStrike/totalArea*impurityParticlePerSecondPerComputationalPartice;
+        Wfrac = impurityFlux/backgroundFlux;
+        Aweight = np.sum(EAdist,axis=0)
+        print('W impurity flux ', impurityFlux)
+        print('W impurity fraction ', Wfrac)
+        #for i in surfIndArray:
+	gitrDir = 'gitr'+str(i)
+	os.mkdir(gitrDir)
+        np.savetxt(gitrDir+'/gitrFluxE.dat', E)
+        np.savetxt(gitrDir+'/gitrFluxAweight.dat', Aweight)
+        np.savetxt(gitrDir+'/gitrFluxA.dat', A[:-1])
+        np.savetxt(gitrDir+'/gitrFluxEAdist.dat', EAdist)
+        
+        if(path != ''): 
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxE.dat', E)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxAweight.dat', Aweight)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxA.dat', A)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxEAdist.dat', EAdist)
+        
+        Dfrac = float(config.postProcessing.Dfrac);
+        Hefrac = float(config.postProcessing.Hefrac);
+        Tfrac = float(config.postProcessing.Tfrac);
+        file = open('gitrOut_'+str(i)+'.txt','w') 
+        file.write('plasmaSpecies=He W D T\n') 
+        file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
+        file.write('flux='+str(backgroundFlux/1e18)+'\n') 
+        file.write('gitrOutputDir='+os.getcwd()+'/'+gitrDir+'\n') 
+        file.close() 
+
+        if(path != ''): 
+            shutil.copyfile('gitrOut.txt',path+'/'+gitrDir+'/gitrOut.txt')
+            #file = open(path+'/'+'gitrOut.txt','w') 
+            #
+            #file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
+            #file.write('flux='+str(backgroundFlux/1e18)+'\n') 
+            #file.write('gitrOutputDir='+os.getcwd()+'\n') 
+            #file.close() 
+
+        E0=0.0;
+        E1=1000.0;
+        nE=200;
+        dE = E1/nE;
+        Evec = np.linspace(0.5*dE,E1-0.5*dE,nE);
+        A0=0.0;
+        A1=90.0;
+        nA=30;
+        for i in range(0,nA):
+            print('Evec size ', Evec.size)
+            print('EAdist[:,i] size ', EAdist[:,i].size)
+            edOut = np.column_stack((Evec,EAdist[:,i]))
+            np.savetxt(gitrDir+'/dist'+str(i)+'.dat', edOut)
+    return
 def piscesProcessing(r=0.01,path=''):
     x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray = read3dGeom('input/gitrGeometryPisces1inch.cfg')
     r1 = np.sqrt(np.multiply(x1[surfIndArray],x1[surfIndArray]) + np.multiply(y1[surfIndArray],y1[surfIndArray]))
@@ -543,11 +630,12 @@ def plotPitch(filename='positions.nc'):
 if __name__ == "__main__":
     #asdfanc_show("surface.nc")
     #depositedEdist()
-    if(os.path.exists('output/history.nc')):
-    	nc_plotHist('output/history.nc')
-    if(os.path.exists('output/spec.nc')):
-    	nc_plotSpec('output/spec.nc')
-    iter2dProcessing()
+    #if(os.path.exists('output/history.nc')):
+    #	nc_plotHist('output/history.nc')
+    #if(os.path.exists('output/spec.nc')):
+    #	nc_plotSpec('output/spec.nc')
+    #iter2dProcessing()
+    iter3dProcessing()
     #nc_plotSpec3D()
     #nc_plotPositions()
     #nc_plotVz()
