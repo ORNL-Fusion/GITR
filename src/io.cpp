@@ -113,7 +113,8 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[i].d = geom["d"][i];
        boundaries[i].plane_norm = geom["plane_norm"][i];
        boundaries[i].area = geom["area"][i];
-       if(boundaries[i].Z > 0.0)
+       boundaries[i].surface = geom["surface"][i];
+       if(boundaries[i].surface > 0)
        {
            boundaries[i].surfaceNumber = nZSurfs;
            nZSurfs = nZSurfs + 1;

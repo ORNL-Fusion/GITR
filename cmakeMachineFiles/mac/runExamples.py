@@ -115,6 +115,8 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     code_flags = code_flags+" -DUSEFIELDALIGNEDVALUES="+str(USEFIELDALIGNEDVALUES)
     FLUX_EA=config.flags.FLUX_EA
     code_flags = code_flags+" -DFLUX_EA="+str(FLUX_EA)
+    FORCE_EVAL=config.flags.FORCE_EVAL
+    code_flags = code_flags+" -DFORCE_EVAL="+str(FORCE_EVAL)
     CHECK_COMPATIBILITY=config.flags.CHECK_COMPATIBILITY
     code_flags = code_flags+" -DCHECK_COMPATIBILITY="+str(CHECK_COMPATIBILITY)
     
@@ -146,4 +148,4 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     #print colored('GITR successfully built','green')
 
 if __name__ == "__main__":
-    buildGITR('../iter/iter_milestone/2d')
+    buildGITR('../iter/iter_milestone/3d')

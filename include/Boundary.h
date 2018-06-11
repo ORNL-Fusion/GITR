@@ -63,6 +63,7 @@ class Boundary {
     int periodic;
     int pointLine;
     int surfaceNumber;
+    int surface;
     float angle;
     float fd;
     float density;
