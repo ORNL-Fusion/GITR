@@ -256,6 +256,9 @@ void operator()(std::size_t indx) const {
     particleTrackVector[2] = vz;
     norm_part = sqrt(particleTrackVector[0]*particleTrackVector[0] + particleTrackVector[1]*particleTrackVector[1] + particleTrackVector[2]*particleTrackVector[2]);
     E0 = 0.5*particles->amu[indx]*1.6737236e-27*(norm_part*norm_part)/1.60217662e-19;
+    //std::cout << "Particle hit wall with energy " << E0 << std::endl;
+    //std::cout << "Particle hit wall with v " << vx << " " << vy << " " << vz<< std::endl;
+    //std::cout << "Particle amu norm_part " << particles->amu[indx] << " " << vy << " " << vz<< std::endl;
     wallIndex = particles->wallIndex[indx];
     boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector);
             particleTrackVector[0] = particleTrackVector[0]/norm_part;
