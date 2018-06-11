@@ -299,6 +299,7 @@ int main(int argc, char **argv)
     std::vector<float> d(nLines);
     std::vector<float> plane_norm(nLines);
     std::vector<float> surfaceNumber(nLines);
+    std::vector<int> surface(nLines);
     int boundaryPeriodic=0;
     float boundaryTheta0=0.0;
     float boundaryTheta1=0.0;
@@ -331,6 +332,7 @@ int main(int argc, char **argv)
         d[i] = boundaries[i].d;
         plane_norm[i] = boundaries[i].plane_norm;
         surfaceNumber[i] = boundaries[i].surfaceNumber;
+        surface[i] = boundaries[i].surface;
         #if USE3DTETGEOM > 0
           x3[i] = boundaries[i].x3;
           y3[i] = boundaries[i].y3;
@@ -356,6 +358,7 @@ int main(int argc, char **argv)
     MPI_Bcast(&d[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Bcast(&plane_norm[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Bcast(&surfaceNumber[0], nLines,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&surface[0], nLines,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(&boundaryPeriodic, 1,MPI_INT,0,MPI_COMM_WORLD);
     #if USE3DTETGEOM > 0
       MPI_Bcast(&x3[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -386,6 +389,7 @@ int main(int argc, char **argv)
       boundaries[i].d = d[i];
       boundaries[i].plane_norm = plane_norm[i];
       boundaries[i].surfaceNumber = surfaceNumber[i];
+      boundaries[i].surface = surface[i];
       #if USE3DTETGEOM > 0
         boundaries[i].x3 = x3[i];
         boundaries[i].y3 = y3[i];
@@ -1061,18 +1065,18 @@ int main(int argc, char **argv)
     if(world_rank == 0)
     {
   #endif
-    getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridRString",closeGeomGridr_sheath);
-    getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridZString",closeGeomGridz_sheath);
+    getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridRString",closeGeomGridr_sheath[0]);
+    getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridZString",closeGeomGridz_sheath[0]);
     #if USE3DTETGEOM >0
-      getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridYString",closeGeomGridy_sheath);
+      getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"gridYString",closeGeomGridy_sheath[0]);
     #endif
-      getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"closeGeomString",closeGeom_sheath);
+      getVarFromFile(cfg,input_path+hashFile_sheath,geomHashSheathCfg,"closeGeomString",closeGeom_sheath[0]);
   #if USE_MPI > 0 
     }
-    MPI_Bcast(closeGeomGridr_sheath.data(), nR_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(closeGeomGridy_sheath.data(), nY_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(closeGeomGridz_sheath.data(), nZ_closeGeom,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(closeGeom_sheath.data(),nGeomHash,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeomGridr_sheath.data(), nR_closeGeom_sheath,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeomGridy_sheath.data(), nY_closeGeom_sheath,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeomGridz_sheath.data(), nZ_closeGeom_sheath,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(closeGeom_sheath.data(),nGeomHash_sheath,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
   #endif
   #endif
@@ -3839,7 +3843,7 @@ std::vector<int> surfaceNumbers(nSurfaces,0);
 int srf = 0;
 for(int i=0;i<nLines;i++)
 {
-    if(boundaries[i].surfaceNumber>=0 && boundaries[i].Z>0.0)
+    if(boundaries[i].surface)
     {
       surfaceNumbers[srf] =  i;
 

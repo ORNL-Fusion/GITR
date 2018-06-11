@@ -663,7 +663,9 @@ void operator()(std::size_t indx) const {
               EdistInd = floor((E0-E0dist)/dEdist);
               AdistInd = floor((thetaImpact-A0dist)/dAdist);
     int surfaceHit = boundaryVector[particlesPointer->wallHit[indx]].surfaceNumber;
+    int surface = boundaryVector[particlesPointer->wallHit[indx]].surface;
     float weight = particlesPointer->weight[indx];
+    if(surface){
               if((EdistInd >= 0) && (EdistInd < nEdist) && 
                  (AdistInd >= 0) && (AdistInd < nAdist))
               {
@@ -682,6 +684,7 @@ void operator()(std::size_t indx) const {
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
 #endif
                }
+	       }
 #endif
                 particlesPointer->transitTime[indx] = tt*dt;
             }    

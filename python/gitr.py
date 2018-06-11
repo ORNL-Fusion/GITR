@@ -402,7 +402,7 @@ def nc_plotSpec(filename='spec.nc'):
     for i in range(nBins-1,nBins):
         dens = np.log10(n[i,:,:])
         #plt.subplot(plotsize,plotsize,i+1)
-        plot2dGeom('input/iterRefinedTest.cfg')
+        plot2dGeom('../2d/input/iter2dRefinedOuterTarget.cfg')
         plt.title("ITER W Impurity Density")
         plt.xlabel("r [m]")
         plt.ylabel("z [m]")
