@@ -200,10 +200,12 @@ def printHeDist(path = '',z = [-4.1,-4.0]):
     EAdist = np.array(ncFile.variables['EAdist'])
     gridE = np.array(ncFile.variables['gridE'])
     gridA = np.array(ncFile.variables['gridA'])
+    heFlux = np.zeros(len(z))
     os.mkdir('GITRoutput')
     for i in range(len(z)):
         idx = (np.abs(zPoints - z[i])).argmin()
         print('index',idx)
+        heFlux[i] = flux[idx] 
         thisDist = EAdist[:,:,idx] #first dimension is angle, second is energy
         thisDist = np.transpose(thisDist)
         print('thisDist size', thisDist.shape)
@@ -226,7 +228,7 @@ def printHeDist(path = '',z = [-4.1,-4.0]):
             print('EAdist[:,i] size ', EAdist[:,i].size)
             edOut = np.column_stack((gridE,thisDist[:,i]))
             np.savetxt(gitrDir+'/dist'+str(i)+'.dat', edOut)
-    return gitrDir
+    return gitrDir, heFlux
 def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
 
     #x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
@@ -241,8 +243,8 @@ def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
     #loc4 = -3.6
     #locWidth = 0.02
     surfInd = surf >0
-    z1 = np.extract(surfInd,z1)
-    gitrDirHe=printHeDist(z=loc)
+    z1= np.extract(surfInd,z1)
+    gitrDirHe,heFlux=printHeDist(z=loc)
     os.mkdir('GITRoutput_W')
     for i in range(len(loc)):
         condition = [(z1 < loc[i]+locWidth) & (z1 > loc[i]-locWidth)]
@@ -252,19 +254,18 @@ def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
         areas = np.extract(condition,area)
         with io.open('input/gitrInput.cfg') as f:
             config = libconf.load(f)
-        backgroundIonsPerSec = float(config.postProcessing.backgroundIonsPerSec); #3.8640e+19;for pisces He high flux case
-        backgroundFlux = float(config.postProcessing.backgroundFlux);#3.5e22;
-        time = float(config.postProcessing.time);
+        #backgroundIonsPerSec = float(config.postProcessing.backgroundIonsPerSec); #3.8640e+19;for pisces He high flux case
+        #backgroundFlux = float(config.postProcessing.backgroundFlux);#3.5e22;
+        #time = float(config.postProcessing.time);
         nParticles = float(config.impurityParticleSource.nP);
-        backgroundSputtYield = float(config.postProcessing.backgroundSputtYield);
-        erodedMass = time*backgroundIonsPerSec*184*1.66e-27*backgroundSputtYield*1000;
-        erodedMassPerParticle = erodedMass/nParticles;
+        #backgroundSputtYield = float(config.postProcessing.backgroundSputtYield);
+        erodedFlux = float(config.postProcessing.totalWFlux);
+        erodedFluxPerParticle = erodedFlux/nParticles;
         netErosion = np.sum(ero - dep);
         netStrike = np.sum(strike)
         totalArea = np.sum(areas)
-        impurityParticlePerSecondPerComputationalPartice = backgroundIonsPerSec*backgroundSputtYield/nParticles;
-        impurityFlux = netStrike/totalArea*impurityParticlePerSecondPerComputationalPartice;
-        Wfrac = impurityFlux/backgroundFlux;
+        impurityFlux = netStrike*erodedFluxPerParticle;
+        Wfrac = impurityFlux/heFlux[i];
         Aweight = np.sum(EAdist,axis=0)
         print('W impurity flux ', impurityFlux)
         print('W impurity fraction ', Wfrac)
@@ -290,7 +291,7 @@ def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
 	file.write('inputEnergy=-1.0 -1.0 0.0 0.0\n')
 	file.write('inputAngle=-1.0 -1.0 0.0 0.0\n')
         file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
-        file.write('flux='+str(backgroundFlux/1e18)+'\n') 
+        file.write('flux='+str(heFlux[i]/1e18)+'\n') 
         file.write('gitrOutputDir_He='+os.getcwd()+'/'+gitrDirHe+'\n') 
         file.write('gitrOutputDir_W='+os.getcwd()+'/'+gitrDir+'\n') 
         file.close() 
