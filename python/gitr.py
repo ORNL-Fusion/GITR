@@ -189,6 +189,44 @@ def iter2dProcessing():
     plt.legend((s1, s2, s3), ('Gross Erosion', 'Gross Deposition', 'netErosion'))
     plt.savefig('targetErosionlog.png') 
     plt.close()
+def printHeDist(path = '',z = [-4.1,-4.0]):
+    ncFile = netCDF4.Dataset("input/iterHeDist.nc","r")
+    nPoints = ncFile.dimensions['nPoints'].size
+    nE = ncFile.dimensions['nE'].size
+    nA = ncFile.dimensions['nA'].size
+
+    zPoints = np.array(ncFile.variables['z'])
+    flux = np.array(ncFile.variables['flux'])
+    EAdist = np.array(ncFile.variables['EAdist'])
+    gridE = np.array(ncFile.variables['gridE'])
+    gridA = np.array(ncFile.variables['gridA'])
+    os.mkdir('GITRoutput')
+    for i in range(len(z)):
+        idx = (np.abs(zPoints - z[i])).argmin()
+        print('index',idx)
+        thisDist = EAdist[:,:,idx] #first dimension is angle, second is energy
+        thisDist = np.transpose(thisDist)
+        print('thisDist size', thisDist.shape)
+        Aweight = np.sum(EAdist,axis=0)
+        gitrDir = 'GITRoutput/'+'gitr'+str(i)
+        os.mkdir(gitrDir)
+        np.savetxt(gitrDir+'/gitrFluxE.dat', gridE)
+        np.savetxt(gitrDir+'/gitrFluxAweight.dat', Aweight)
+        np.savetxt(gitrDir+'/gitrFluxA.dat',gridA[:-1])
+        np.savetxt(gitrDir+'/gitrFluxEAdist.dat', thisDist)
+        
+        if(path != ''): 
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxE.dat', gridE)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxAweight.dat', Aweight)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxA.dat', gridA)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxEAdist.dat', thisDist)
+
+        for i in range(0,nA):
+            print('Evec size ', gridE.size)
+            print('EAdist[:,i] size ', EAdist[:,i].size)
+            edOut = np.column_stack((gridE,thisDist[:,i]))
+            np.savetxt(gitrDir+'/dist'+str(i)+'.dat', edOut)
+    return gitrDir
 def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
 
     #x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
@@ -204,6 +242,8 @@ def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
     #locWidth = 0.02
     surfInd = surf >0
     z1 = np.extract(surfInd,z1)
+    gitrDirHe=printHeDist(z=loc)
+    os.mkdir('GITRoutput_W')
     for i in range(len(loc)):
         condition = [(z1 < loc[i]+locWidth) & (z1 > loc[i]-locWidth)]
         dep = np.extract(condition,grossDep)
@@ -229,7 +269,7 @@ def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
         print('W impurity flux ', impurityFlux)
         print('W impurity fraction ', Wfrac)
         #for i in surfIndArray:
-	gitrDir = 'gitr'+str(i)
+	gitrDir = 'GITRoutput_W/'+'gitr'+str(i)
 	os.mkdir(gitrDir)
         np.savetxt(gitrDir+'/gitrFluxE.dat', E)
         np.savetxt(gitrDir+'/gitrFluxAweight.dat', Aweight)
@@ -247,9 +287,12 @@ def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
         Tfrac = float(config.postProcessing.Tfrac);
         file = open('gitrOut_'+str(i)+'.txt','w') 
         file.write('plasmaSpecies=He W D T\n') 
+	file.write('inputEnergy=-1.0 -1.0 0.0 0.0\n')
+	file.write('inputAngle=-1.0 -1.0 0.0 0.0\n')
         file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
         file.write('flux='+str(backgroundFlux/1e18)+'\n') 
-        file.write('gitrOutputDir='+os.getcwd()+'/'+gitrDir+'\n') 
+        file.write('gitrOutputDir_He='+os.getcwd()+'/'+gitrDirHe+'\n') 
+        file.write('gitrOutputDir_W='+os.getcwd()+'/'+gitrDir+'\n') 
         file.close() 
 
         if(path != ''): 
@@ -636,6 +679,7 @@ if __name__ == "__main__":
     #	nc_plotSpec('output/spec.nc')
     #iter2dProcessing()
     iter3dProcessing()
+    #printHeDist()
     #nc_plotSpec3D()
     #nc_plotPositions()
     #nc_plotVz()
