@@ -17,7 +17,7 @@ def runFTexec(nCall,b):
     fileIndex = int(nCall*b+rank)
     if( fileIndex < len(file_namelist)):
         this_folder = file_namelist[fileIndex]
-        input_cmd_sh= "/home/tqd/code/fractal-tridyn/src/shell_Ftridyn.sh W_W_0001.IN"
+        input_cmd_sh= "/project/projectdirs/atom/atom-install-edison/fractal-tridyn/src/shell_FtridynGITR.sh W_W_0001.IN"
         subprocess.check_output(input_cmd_sh,cwd=this_folder,shell=True)
     text = 'name and rank and arg '+str(name)+' '+ str(rank) + ' ' + this_folder
     print(text)
