@@ -191,9 +191,9 @@ def iter2dProcessing():
     plt.close()
 def printHeDist(path = '',z = [-4.1,-4.0]):
     ncFile = netCDF4.Dataset("input/iterHeDist.nc","r")
-    nPoints = ncFile.dimensions['nPoints'].size
-    nE = ncFile.dimensions['nE'].size
-    nA = ncFile.dimensions['nA'].size
+    nPoints = len(ncFile.dimensions['nPoints'])
+    nE = len(ncFile.dimensions['nE'])
+    nA = len(ncFile.dimensions['nA'])
 
     zPoints = np.array(ncFile.variables['z'])
     flux = np.array(ncFile.variables['flux'])
@@ -209,7 +209,7 @@ def printHeDist(path = '',z = [-4.1,-4.0]):
         thisDist = EAdist[:,:,idx] #first dimension is angle, second is energy
         thisDist = np.transpose(thisDist)
         print('thisDist size', thisDist.shape)
-        Aweight = np.sum(EAdist,axis=0)
+        Aweight = np.sum(thisDist,axis=0)
         gitrDir = 'GITRoutput/'+'gitr'+str(i)
         os.mkdir(gitrDir)
         np.savetxt(gitrDir+'/gitrFluxE.dat', gridE)
@@ -224,12 +224,12 @@ def printHeDist(path = '',z = [-4.1,-4.0]):
             np.savetxt(path+'/'+gitrDir+'/gitrFluxEAdist.dat', thisDist)
 
         for i in range(0,nA):
-            print('Evec size ', gridE.size)
-            print('EAdist[:,i] size ', EAdist[:,i].size)
+            #print('Evec size ', gridE.size)
+            #print('EAdist[:,i] size ', EAdist[:,i].size)
             edOut = np.column_stack((gridE,thisDist[:,i]))
             np.savetxt(gitrDir+'/dist'+str(i)+'.dat', edOut)
     return gitrDir, heFlux
-def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
+def iter3dProcessing(path = '',loc = [-4.17,-4.081,-3.6,-4.25],locWidth = 0.02):
 
     #x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
     x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf = read3dGeom('input/iterRefinedTest.cfg')
@@ -246,6 +246,7 @@ def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
     z1= np.extract(surfInd,z1)
     gitrDirHe,heFlux=printHeDist(z=loc)
     os.mkdir('GITRoutput_W')
+    nLocations = len(loc)
     for i in range(len(loc)):
         condition = [(z1 < loc[i]+locWidth) & (z1 > loc[i]-locWidth)]
         dep = np.extract(condition,grossDep)
@@ -314,11 +315,11 @@ def iter3dProcessing(path = '',loc = [-4.17,-4.081],locWidth = 0.02):
         A1=90.0;
         nA=30;
         for i in range(0,nA):
-            print('Evec size ', Evec.size)
-            print('EAdist[:,i] size ', EAdist[:,i].size)
+            #print('Evec size ', Evec.size)
+            #print('EAdist[:,i] size ', EAdist[:,i].size)
             edOut = np.column_stack((Evec,EAdist[:,i]))
             np.savetxt(gitrDir+'/dist'+str(i)+'.dat', edOut)
-    return
+    return nLocations
 def piscesProcessing(r=0.01,path=''):
     x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray = read3dGeom('input/gitrGeometryPisces1inch.cfg')
     r1 = np.sqrt(np.multiply(x1[surfIndArray],x1[surfIndArray]) + np.multiply(y1[surfIndArray],y1[surfIndArray]))
