@@ -223,14 +223,14 @@ def printHeDist(path = '',z = [-4.1,-4.0]):
             np.savetxt(path+'/'+gitrDir+'/gitrFluxA.dat', gridA)
             np.savetxt(path+'/'+gitrDir+'/gitrFluxEAdist.dat', thisDist)
 
-        for i in range(0,nA):
+        for j in range(0,nA):
             #print('Evec size ', gridE.size)
             #print('EAdist[:,i] size ', EAdist[:,i].size)
-            edOut = np.column_stack((gridE,thisDist[:,i]))
-            np.savetxt(gitrDir+'/dist'+str(i)+'.dat', edOut)
+            edOut = np.column_stack((gridE,thisDist[:,j]))
+            np.savetxt(gitrDir+'/dist'+str(j)+'.dat', edOut)
     return gitrDir, heFlux
-def iter3dProcessing(path = '',loc = [-4.17,-4.081,-3.6,-4.25],locWidth = 0.02):
-
+def iter3dProcessing(path = '',loc = [-4.50,-4.437,-4.3570,-4.2770,-4.1970,-4.1170,-4.0371,-3.9574,-3.8775,-3.5341,-3.3679,-3.273],locWidth = 0.02):
+    #loc = [-4.517,-4.477,-4.437,-4.397,-4.3570,-4.3170,-4.2770,-4.2370,-4.1970,-4.1570,-4.1170,-4.0770,-4.0371,-3.9973,-3.9574,-3.9174,-3.8775,-3.838,-3.7395,-3.6341,-3.5341,-3.4428,-3.3679,-3.3083,-3.2500]
     #x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
     x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf = read3dGeom('input/iterRefinedTest.cfg')
     plt.close()
@@ -265,7 +265,9 @@ def iter3dProcessing(path = '',loc = [-4.17,-4.081,-3.6,-4.25],locWidth = 0.02):
         netErosion = np.sum(ero - dep);
         netStrike = np.sum(strike)
         totalArea = np.sum(areas)
-        impurityFlux = netStrike*erodedFluxPerParticle;
+        impurityFlux = netErosion*erodedFluxPerParticle;
+        if(heFlux[i]==0.0):
+            heFlux[i] = 1.0e19
         Wfrac = impurityFlux/heFlux[i];
         Aweight = np.sum(EAdist,axis=0)
         print('W impurity flux ', impurityFlux)
@@ -676,7 +678,7 @@ if __name__ == "__main__":
     #asdfanc_show("surface.nc")
     #depositedEdist()
     #if(os.path.exists('output/history.nc')):
-    #	nc_plotHist('output/history.nc')
+    # 	nc_plotHist('output/history.nc')
     #if(os.path.exists('output/spec.nc')):
     #	nc_plotSpec('output/spec.nc')
     #iter2dProcessing()
