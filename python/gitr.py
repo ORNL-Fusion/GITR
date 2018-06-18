@@ -208,7 +208,8 @@ def printHeDist(path = '',z = [-4.1,-4.0]):
         heFlux[i] = flux[idx] 
         thisDist = EAdist[:,:,idx] #first dimension is angle, second is energy
         thisDist = np.transpose(thisDist)
-        print('thisDist size', thisDist.shape)
+        print('thisDistHe size', thisDist.shape)
+	#print(thisDist)
         Aweight = np.sum(thisDist,axis=0)
         gitrDir = 'GITRoutput/'+'gitr'+str(i)
         os.mkdir(gitrDir)
@@ -295,7 +296,7 @@ def iter3dProcessing(path = '',loc = [-4.50,-4.437,-4.3570,-4.2770,-4.1970,-4.11
 	file.write('inputAngle=-1.0 -1.0 0.0 0.0\n')
         file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
         file.write('flux='+str(heFlux[i]/1e18)+'\n') 
-        file.write('gitrOutputDir_He='+os.getcwd()+'/'+gitrDirHe+'\n') 
+        file.write('gitrOutputDir_He='+os.getcwd()+'/'+'GITRoutput/'+'gitr'+str(i)+'\n') 
         file.write('gitrOutputDir_W='+os.getcwd()+'/'+gitrDir+'\n') 
         file.close() 
 
@@ -316,11 +317,11 @@ def iter3dProcessing(path = '',loc = [-4.50,-4.437,-4.3570,-4.2770,-4.1970,-4.11
         A0=0.0;
         A1=90.0;
         nA=30;
-        for i in range(0,nA):
+        for j in range(0,nA):
             #print('Evec size ', Evec.size)
             #print('EAdist[:,i] size ', EAdist[:,i].size)
-            edOut = np.column_stack((Evec,EAdist[:,i]))
-            np.savetxt(gitrDir+'/dist'+str(i)+'.dat', edOut)
+            edOut = np.column_stack((Evec,EAdist[:,j]))
+            np.savetxt(gitrDir+'/dist'+str(j)+'.dat', edOut)
     return nLocations
 def piscesProcessing(r=0.01,path=''):
     x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray = read3dGeom('input/gitrGeometryPisces1inch.cfg')
