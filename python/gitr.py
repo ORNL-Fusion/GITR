@@ -140,7 +140,7 @@ def read3dGeom(filename="gitrGeometry.cfg"):
 def iter2dProcessing():
     x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
     plt.close()
-    grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers = nc_readSurface()
+    grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers,surfEdist = nc_readSurface()
     plt.close()
     netErosion = grossDep - grossEro
     colormap = plt.cm.bwr
@@ -236,7 +236,7 @@ def iter3dProcessing(path = '',loc = [-4.5020,   -4.4628,   -4.4237,   -4.3846, 
     #x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
     x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf = read3dGeom('input/iterRefinedTest.cfg')
     plt.close()
-    grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers = nc_readSurface()
+    grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers,surfEdist = nc_readSurface()
     plt.close()
     print('e', E)
     #loc1 = -4.17
@@ -251,6 +251,19 @@ def iter3dProcessing(path = '',loc = [-4.5020,   -4.4628,   -4.4237,   -4.3846, 
     nLocations = len(loc)
     for i in range(len(loc)):
         condition = [(z1 < loc[i]+locWidth) & (z1 > loc[i]-locWidth)]
+	theseInd = np.where(condition)[1]
+	print('theseInd',theseInd)
+	print('condition',condition)
+	print('surfEdist Shape',surfEdist.shape)
+	print('theseInd',theseInd)
+	print('theseInd',theseInd.shape)
+	thisDist = surfEdist[theseInd,:,:]
+	print('size thisDist',thisDist.shape)
+	thisDist = np.sum(thisDist,axis=0)
+	print('size thisDist',thisDist.shape) 
+	#thisDist = np.sum(thisDist,axis=1)
+	print('size thisDist',thisDist.shape) 
+	print('thisDist',thisDist) 
         dep = np.extract(condition,grossDep)
         ero = np.extract(condition,grossEro)
         strike = np.extract(condition,sumWeightStrike)
@@ -271,7 +284,7 @@ def iter3dProcessing(path = '',loc = [-4.5020,   -4.4628,   -4.4237,   -4.3846, 
         if(heFlux[i]==0.0):
             heFlux[i] = 1.0e19
         Wfrac = impurityFlux/heFlux[i];
-        Aweight = np.sum(EAdist,axis=0)
+        Aweight = np.sum(thisDist,axis=1)
         print('W impurity flux ', impurityFlux)
         print('W impurity fraction ', Wfrac)
         #for i in surfIndArray:
@@ -280,13 +293,13 @@ def iter3dProcessing(path = '',loc = [-4.5020,   -4.4628,   -4.4237,   -4.3846, 
         np.savetxt(gitrDir+'/gitrFluxE.dat', E)
         np.savetxt(gitrDir+'/gitrFluxAweight.dat', Aweight)
         np.savetxt(gitrDir+'/gitrFluxA.dat', A[:-1])
-        np.savetxt(gitrDir+'/gitrFluxEAdist.dat', EAdist)
+        np.savetxt(gitrDir+'/gitrFluxEAdist.dat', thisDist)
         
         if(path != ''): 
             np.savetxt(path+'/'+gitrDir+'/gitrFluxE.dat', E)
             np.savetxt(path+'/'+gitrDir+'/gitrFluxAweight.dat', Aweight)
             np.savetxt(path+'/'+gitrDir+'/gitrFluxA.dat', A)
-            np.savetxt(path+'/'+gitrDir+'/gitrFluxEAdist.dat', EAdist)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxEAdist.dat', thisDist)
         
         Dfrac = float(config.postProcessing.Dfrac);
         Hefrac = float(config.postProcessing.Hefrac);
@@ -652,7 +665,7 @@ def nc_readSurface(filename='output/surface.nc'):
     plt.pcolor(EAdist)
     plt.colorbar()
     plt.savefig('EAdist.png')
-    return grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers
+    return grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers,surfEdist
 def plotPitch(filename='positions.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nP = ncFile.dimensions['nP'].size
