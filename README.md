@@ -10,7 +10,7 @@ The physics implemented in GITR is based on the trace-impurity assumption. i.e. 
 
 The code is manifested in the time stepping of a particle with a set of initial conditions through a set of operators until certain conditions on the particles are reached (crossing a boundary or timing out). The operators acting on the particles are dependent on the prescibed fields and profiles of the background.
 
-![Operator Loop and Equation of Motion](PlasmaTransp.png)
+![Operator Loop and Equation of Motion](GITR_integration.png)
 
 ## Program Files
 The program is organized into C++, matLab, and python files. The C++ are the buildable program (located in src and include directories), with the matlab scripts (located in the matlab directory) being used to generate inputs, run benchmarks, and post process outputs. The build directory contains scripts used to compile the GITR executable via passing cmake arguments.
