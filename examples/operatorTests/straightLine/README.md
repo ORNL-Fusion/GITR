@@ -21,18 +21,30 @@ applied in 3D space with one of the following:
 
 An example geometry cfg file used for the 2D geometry is shown below:
 ```
+#2Dgeom/input/gitrGeometry.cfg
 geom = 
 {
    x1 = [1.0,2.0,2.0,1.0] 
    z1 = [0.0,0.0,1.0,1.0] 
    x2 = [2.0,2.0,1.0,1.0] 
    z2 = [0.0,1.0,1.0,0.0]
-   slope = [0.000000,1000000000000.000000,0.000000,-1000000000000.000000]
-   intercept = [0.00000,1000000000000.000000,1.0,1000000000000.000000]
+   slope = [0.0,1000000000000.0,0.0,-1000000000000.0]
+   intercept = [0.0,1000000000000.0,1.0,1000000000000.0]
    length = [1.0,1.0,1.0,1.0]   
    Z = [74.0,74.0,74.0,74.0,0.0]       
    y1 = -1.0;
    y2 = 1.0;
    periodic = 0;
 }
+
 ```
+The end points of the lines are shown to make up 4 lines:
+(1,0) to (2,0) - slope and intercept of 0 length of 1
+(2,0) to (2,1) - large slope and intercept (vertical line approximation)
+(2,1) to (1,1) - zero slope and intercept of 1
+(1,1) to (1,0) - large negative slope and intercept (vertical line approximation)
+
+The material Z has one more element than lines to describe the material of bounding plane in the y direction.
+y1 and y2 can describe the bounds in either y or theta depending on whether the geometry is being used in the cylindrical application or not.
+
+periodic=1 is on and periodic=0 is off.
