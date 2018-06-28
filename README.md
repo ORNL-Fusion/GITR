@@ -15,7 +15,7 @@ The code is manifested in the time stepping of a particle with a set of initial 
 ## Program Files
 The program is organized into C++, matLab, and python files. The C++ are the buildable program (located in src and include directories), with the matlab and python scripts (located in the matlab/python directory) being used to generate inputs, run benchmarks, and post process outputs. The build directory contains scripts used to compile the GITR executable via passing cmake arguments.
 ```
-. (Makefile, machine environment files, etc.)
+. (CMakeLists.txt, machine environment files, etc.)
 ├── build (Contains sh scripts used to compile GITR by passing cmake the proper arguments executable is built here)
 ├── cmakeMachineFiles (example CMake files for different machines and configurations)
 ├── examples (operator tests and simulation setup examples)
@@ -27,6 +27,8 @@ The program is organized into C++, matLab, and python files. The C++ are the bui
 └── tests (regression test cases with reference solutions)
 ```
 ## Dependencies 
+
+cmake version 3.1 or newer required
 
 ### Libconfig (https://github.com/hyperrealm/libconfig) [v1.7.1 tested]
 The human readable input files are of the format defined by the libconfig API. Libconfig can be found at the above location on github.
@@ -92,68 +94,90 @@ python
 The THRUST API provides for single thread CPU (CPP), multi thread OpenMP (OMP), and CUDA (CUDA) targets via the appropriate choice of THRUST policy. Within the top level `CMakeLists.txt` the THRUST policy (which selects either CPU, OPENMP, or GPU) is selected by uncommenting the desired choice as 
 
 Within CMakeLists.txt set CUDA 1 or OPENMP 1
-```
-# Select only one.
 
-USE_SERIAL:= 0
-USE_CUDA  := 0
-USE_OPENMP:= 1
+Within the makeGITR.sh file or runExamples.py first set the machine specific compile flags
+```
+    ##Machine specific flags
+    USE_CUDA=0
+    USE_MPI=1
+    USE_OPENMP=0
+    USE_BOOST=1
  ```
-Also, various code features and debugging levels can be enabled at build time by specifying any of the following within the makeGITR.sh file or using the runExamples.py script. 
+ 
+In some cases cmake needs additional help finding the dependencies and specific arguments should be passed.
+The following are examples that could be necessary.
+```
+-DTHRUST_INCLUDE_DIR=/Users/tyounkin/code/thrust/ \
+        -DCMAKE_C_COMPILER=gcc \
+        -DCMAKE_CXX_COMPILER=g++ \
+        -DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE \
+        -DNETCDF_CXX_LIBRARY=$NETCDFLIB_CPP \
+        -DNETCDF_DIR=$NETCDFDIR \
+        -DNETCDF_INCLUDE_DIR=$NETCDFINCLUDE \
+        -DNETCDF_LIBRARY=$NETCDFLIB \
+        -DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE \
+        -DLIBCONFIGPP_INCLUDE_DIR=/Users/tyounkin/Code/libconfigBuild/include \
+        -DBoost_DIR=/Users/tyounkin/Code/boostBuild \
+        -DBoost_INCLUDE_DIR=/Users/tyounkin/Code/boostBuild/include
+```
+Also, various code features can be enabled at build time by specifying any of the following within the makeGITR.sh file or using the runExamples.py script. 
 
 ```
-# Features
-CPPFLAGS += -DCYLINDRICAL_INPUT_FIELDS=1 # Are the input (NetCDF) fields in Cylindrical or not. 
-CPPFLAGS += -D_PARTICLE_BOUNDARY=1 # 1 = particle absorbing walls, 2 = periodic, 3 = reflective
-CPPFLAGS += -DGC_ORBITS=0 # Use Guiding Center evalulation (Not yet functional)
-CPPFLAGS += -DCOMPLEX_WRF=0 # Use the complex omega as the time integral decay time, as opposed to the Hanning window.  
-
-# Non THRUST Implementations
-CPPFLAGS += -DDO_CPU_ITERATOR_APPROACH=0
-CPPFLAGS += -DDO_CPU_APPROACH=0
-
-# Timing Info
-CPPFLAGS += -DUSEPAPI=0
-CPPFLAGS += -DLOWMEM_USEPAPI=0
-CPPFLAGS += -DCLOCK=1
-CPPFLAGS += -DPRINT_INFO=1
-
-# Debug Info Level
-CPPFLAGS += -DDEBUG_GC=0
-CPPFLAGS += -DDEBUG_EVAL_VGC=0
-CPPFLAGS += -DDEBUG_EVAL_APAR=0
-CPPFLAGS += -DDEBUGLEVEL=0
-CPPFLAGS += -DDEBUG_LINES=0
-CPPFLAGS += -DDEBUG_INTERP=0
-CPPFLAGS += -DDEBUG_MAXWELLIAN=0
-CPPFLAGS += -DDEBUG_FORCE_TERM=0
-CPPFLAGS += -DDEBUG_MOVE=0
-CPPFLAGS += -DDEBUG_ROTATION=0
-CPPFLAGS += -DDEBUG_INTVECARRAY=0
-CPPFLAGS += -DDEBUG_READ_E_FIELD=0
-
-# File Write Options
-CPPFLAGS += -DLOWMEM_ORBIT_WRITE=0
-CPPFLAGS += -DF1_WRITE=0
+    -DUSEIONIZATION=1 \
+    -DUSERECOMBINATION=1 \
+    -DUSEPERPDIFFUSION=1 \
+    -DUSECOULOMBCOLLISIONS=1 \
+    -DUSETHERMALFORCE=1 \
+    -DUSESURFACEMODEL=1 \
+    -DUSESHEATHEFIELD=1 \
+    -DBIASED_SURFACE=0 \
+    -DUSEPRESHEATHEFIELD=0 \
+    -DBFIELD_INTERP=0 \
+    -DLC_INTERP=0 \
+    -DGENERATE_LC=0 \
+    -DEFIELD_INTERP=0 \
+    -DPRESHEATH_INTERP=0 \
+    -DDENSITY_INTERP=0 \
+    -DTEMP_INTERP=0 \
+    -DFLOWV_INTERP=0 \
+    -DGRADT_INTERP=0 \
+    -DODEINT=0 \
+    -DFIXEDSEEDS=0 \
+    -DPARTICLESEEDS=1 \
+    -DGEOM_TRACE=0 \
+    -DGEOM_HASH=0 \
+    -DGEOM_HASH_SHEATH=0 \
+    -DPARTICLE_TRACKS=1 \
+    -DPARTICLE_SOURCE_SPACE=0 \
+    -DPARTICLE_SOURCE_ENERGY=0 \
+    -DPARTICLE_SOURCE_ANGLE=0 \
+    -DPARTICLE_SOURCE_FILE=0 \
+    -DSPECTROSCOPY=2 \
+    -DUSE3DTETGEOM=0 \
+    -DUSECYLSYMM=1 \
+    -DUSEFIELDALIGNEDVALUES=1 \
+    -DFLUX_EA=1 \
+    -DFORCE_EVAL=1 \
+    -DCHECK_COMPATIBILITY=1 \
 ```
 
 ## Specific Machine Build Notes
 
 ### edison.nersc.gov
 ```
-source env-edison.sh
-make clean
+source env.edison.sh
+./cleanGITR.sh
+./makeGITR.sh
 make
-make test # (although you're better off running the tests on the compute nodes as described below)
 ```
 
 ### gpufusion.ornl.gov
 
 ```
-source env-gpufusion.sh
-make clean
+source env.gpufusion.sh
+./cleanGITR.sh
+./makeGITR.sh
 make
-make test
 ```
 
 ## Running Kinetic-J
