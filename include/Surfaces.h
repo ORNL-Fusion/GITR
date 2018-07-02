@@ -29,10 +29,7 @@
 
 class Surfaces : public ManagedAllocation {
 public: 
-  std::size_t nSurfaces;  
-  sim::Array<float> energyDistribution;
-  sim::Array<float> gridE;
-  sim::Array<float> gridA;
+  int nSurfaces;  
   int nE;
   int nA;
   float E0;
@@ -41,12 +38,15 @@ public:
   float A;
   float dE;
   float dA;
-  sim::Array<float> sumWeightStrike;
   sim::Array<int> sumParticlesStrike;
+  sim::Array<float> gridE;
+  sim::Array<float> gridA;
+  sim::Array<float> sumWeightStrike;
   sim::Array<float> grossDeposition;
   sim::Array<float> grossErosion;
   sim::Array<float> aveSputtYld;
   sim::Array<float> sputtYldCount;
+  sim::Array<float> energyDistribution;
 
   CUDA_CALLABLE_MEMBER
   

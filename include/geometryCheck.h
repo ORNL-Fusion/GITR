@@ -75,52 +75,9 @@ void operator()(std::size_t indx) const {
       int AdistInd=0;
       int EdistInd=0;
     #endif
-   #if USE3DTETGEOM > 0
-
-      float a = 0.0; 
-      float b = 0.0; 
-      float c = 0.0; 
-      float d = 0.0; 
-      float plane_norm = 0.0;
-      float pointToPlaneDistance0 = 0.0; 
-      float pointToPlaneDistance1 = 0.0; 
-      float signPoint0 = 0.0;
-      float signPoint1 = 0.0;
-      float t = 0.0;
-      float A[3] = {0.0,0.0,0.0};
-      float B[3] = {0.0,0.0,0.0};
-      float C[3] = {0.0,0.0,0.0};
-      float AB[3] = {0.0,0.0,0.0};
-      float AC[3] = {0.0,0.0,0.0};
-      float BC[3] = {0.0,0.0,0.0};
-      float CA[3] = {0.0,0.0,0.0};
-      float p[3] = {0.0,0.0,0.0};
-      float Ap[3] = {0.0,0.0,0.0};
-      float Bp[3] = {0.0,0.0,0.0};
-      float Cp[3] = {0.0,0.0,0.0};
-      float normalVector[3] = {0.0,0.0,0.0};
-      float crossABAp[3] = {0.0,0.0,0.0};
-      float crossBCBp[3] = {0.0,0.0,0.0};
-      float crossCACp[3] = {0.0,0.0,0.0};
       float vxy[3] = {0.0f};
       float vtheta[3] = {0.0f};
-      float signDot0 = 0.0;
-      float signDot1 = 0.0;
-      float signDot2 = 0.0;
-      float totalSigns = 0.0;
-      int nBoundariesCrossed = 0;
-      int boundariesCrossed[6] = {0,0,0,0,0,0};
-      /*
-      if(particlesPointer->xprevious[indx] < 0 || particlesPointer->yprevious[indx] < 0 ||
-              particlesPointer->zprevious[indx]< 0)
-      {
-      std::cout << "pos " << particlesPointer->xprevious[indx] << " " 
-          << particlesPointer->yprevious[indx]
-          << " " << particlesPointer->zprevious[indx]  << std::endl;
-      }
-       */
-
-      
+   #if USECYLSYMM > 0
       if(boundaryVector[nLines].periodic) //if periodic
       {  float pi =3.14159265; 
          float theta = atan2f(particlesPointer->y[indx],particlesPointer->x[indx]);   
@@ -158,17 +115,76 @@ void operator()(std::size_t indx) const {
          }        
          else if(theta >= boundaryVector[nLines].y2)
          {
-           particlesPointer->xprevious[indx] = r*cos(theta-boundaryVector[nLines].y2);
-           particlesPointer->yprevious[indx] = r*sin(theta-boundaryVector[nLines].y2);
-           particlesPointer->x[indx] = rprev*cos(theta-boundaryVector[nLines].y2);
-           particlesPointer->y[indx] = rprev*sin(theta-boundaryVector[nLines].y2);
+           particlesPointer->xprevious[indx] = rprev*cos(thetaPrev-boundaryVector[nLines].y2);
+           particlesPointer->yprevious[indx] = rprev*sin(thetaPrev-boundaryVector[nLines].y2);
+           particlesPointer->x[indx] = r*cos(theta-boundaryVector[nLines].y2);
+           particlesPointer->y[indx] = r*sin(theta-boundaryVector[nLines].y2);
 
            vx0 = vrMag*cos(theta-boundaryVector[nLines].y2) - vthetaMag*sin(theta-boundaryVector[nLines].y2);
            vy0 = vrMag*sin(theta-boundaryVector[nLines].y2) + vthetaMag*cos(theta-boundaryVector[nLines].y2);
            particlesPointer->vx[indx] = vx0;
            particlesPointer->vy[indx] = vy0;
          }
-      }         
+      }     
+      #else
+            if (boundaryVector[nLines].periodic)
+            {
+                if (particlesPointer->y[indx] < boundaryVector[nLines].y1)
+                {
+                      particlesPointer->y[indx] = boundaryVector[nLines].y2  - (boundaryVector[nLines].y1 - particlesPointer->y[indx]);
+                      particlesPointer->yprevious[indx] = boundaryVector[nLines].y2  - (boundaryVector[nLines].y1 - particlesPointer->y[indx]);
+                
+                }
+                else if (particlesPointer->y[indx] > boundaryVector[nLines].y2)
+                { 
+                      particlesPointer->y[indx] = boundaryVector[nLines].y1  + (particlesPointer->y[indx] - boundaryVector[nLines].y2);
+                      particlesPointer->yprevious[indx] = boundaryVector[nLines].y1  + (particlesPointer->y[indx] - boundaryVector[nLines].y2);
+                }
+            }
+      #endif
+   #if USE3DTETGEOM > 0
+
+      float a = 0.0; 
+      float b = 0.0; 
+      float c = 0.0; 
+      float d = 0.0; 
+      float plane_norm = 0.0;
+      float pointToPlaneDistance0 = 0.0; 
+      float pointToPlaneDistance1 = 0.0; 
+      float signPoint0 = 0.0;
+      float signPoint1 = 0.0;
+      float t = 0.0;
+      float A[3] = {0.0,0.0,0.0};
+      float B[3] = {0.0,0.0,0.0};
+      float C[3] = {0.0,0.0,0.0};
+      float AB[3] = {0.0,0.0,0.0};
+      float AC[3] = {0.0,0.0,0.0};
+      float BC[3] = {0.0,0.0,0.0};
+      float CA[3] = {0.0,0.0,0.0};
+      float p[3] = {0.0,0.0,0.0};
+      float Ap[3] = {0.0,0.0,0.0};
+      float Bp[3] = {0.0,0.0,0.0};
+      float Cp[3] = {0.0,0.0,0.0};
+      float normalVector[3] = {0.0,0.0,0.0};
+      float crossABAp[3] = {0.0,0.0,0.0};
+      float crossBCBp[3] = {0.0,0.0,0.0};
+      float crossCACp[3] = {0.0,0.0,0.0};
+      float signDot0 = 0.0;
+      float signDot1 = 0.0;
+      float signDot2 = 0.0;
+      float totalSigns = 0.0;
+      int nBoundariesCrossed = 0;
+      int boundariesCrossed[6] = {0,0,0,0,0,0};
+      /*
+      if(particlesPointer->xprevious[indx] < 0 || particlesPointer->yprevious[indx] < 0 ||
+              particlesPointer->zprevious[indx]< 0)
+      {
+      std::cout << "pos " << particlesPointer->xprevious[indx] << " " 
+          << particlesPointer->yprevious[indx]
+          << " " << particlesPointer->zprevious[indx]  << std::endl;
+      }
+       */
+
       float p0[3] = {particlesPointer->xprevious[indx],
                      particlesPointer->yprevious[indx],
                      particlesPointer->zprevious[indx]};
@@ -596,32 +612,6 @@ void operator()(std::size_t indx) const {
                  particlesPointer->z[indx] = intersectiony[minDistInd];
                }
 
-            if (boundaryVector[nLines].periodic)
-            {
-                if (particlesPointer->y[indx] < boundaryVector[nLines].y1)
-                {
-                    if(particlesPointer->hitWall[indx] > 0.0)
-                    {
-                      particlesPointer->y[indx] = boundaryVector[nLines].y2  - (boundaryVector[nLines].y1 - particlesPointer->y[indx]);
-                    }
-                    else
-                    {
-                      particlesPointer->yprevious[indx] = boundaryVector[nLines].y2  - (boundaryVector[nLines].y1 - particlesPointer->y[indx]);
-                
-                    }
-                }
-                else if (particlesPointer->y[indx] > boundaryVector[nLines].y2)
-                {
-                    if(particlesPointer->hitWall[indx] > 0.0)
-                    {
-                      particlesPointer->y[indx] = boundaryVector[nLines].y1  + (particlesPointer->y[indx] - boundaryVector[nLines].y2);
-                    }
-                    else
-                    {
-                      particlesPointer->yprevious[indx] = boundaryVector[nLines].y1  + (particlesPointer->y[indx] - boundaryVector[nLines].y2);
-                    }
-                }
-            }
             //else
             //{
             //    if (particlesPointer->y[indx] < boundaryVector[nLines].y1)

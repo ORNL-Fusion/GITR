@@ -38,8 +38,9 @@ void operator()(std::size_t indx) const
        if (tt % subSampleFac == 0)
        {
         int histInd = indx*nT/subSampleFac + tt/subSampleFac;
-        if(histInd < nP*nT/subSampleFac && histInd >= 0 && indx < nP)
+        if(histInd < (nP*nT/subSampleFac+1) && histInd >= 0 && indx < nP)
         {
+	  //std::cout << "inside history " << indx << " " << histInd << " " << particlesPointer->zprevious[indx] << std::endl;
           histX[histInd] = particlesPointer->xprevious[indx];
           histY[histInd] = particlesPointer->yprevious[indx];
           histZ[histInd] = particlesPointer->zprevious[indx];
