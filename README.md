@@ -180,90 +180,16 @@ source env.gpufusion.sh
 make
 ```
 
-## Running Kinetic-J
-Set a `KINETICJ_ROOT` environment variable to be the location of the cloned source ...
-```
-cd ~/code
-git clone https://github.com/ORNL-Fusion/kineticj.git
-export KINETICJ_ROOT=~/code/kineticj
-```
+## Running GITR
+In order to run GITR, navigate to the desired run foler which contains the input directory e.g. `GITR/examples/operatorTests/straightLine/2Dgeom` and execute the GITR executable `~/Code/GITR/build/GITR`
 
-### Run the regression tests
-To aid development testing we include some simple regression testing. This is run as follows (or via `make test`) ...
-```
-cd $KINETICJ_ROOT/tests
-python ../python/kj_test.py
-```
-or at NERSC ...
-```
-cd $KINETICJ_ROOT
-source env-edison.sh
-cd $SCRATCH
-mkdir kineticj
-cp -r $KINETICJ_ROOT/tests .
-cd tests
-salloc -N 1 -p debug
-python $KINETICJ_ROOT/python/kj_test.py
-exit
-```
-with the expected output being ...
-```
-python $KINETICJ_ROOT/python/kj_test.py
 
-benchmark1-00007    PASS [2.9 seconds]
-benchmark2-00013    PASS [2.5 seconds]
-benchmark3-00004    PASS [4.2 seconds]
-test4               PASS [3.4 seconds]
-```
+### Run the operator tests
+In order to run the operator tests the runExamples.py file in the build folder must be properly configured.
+
 
 ### Run the test case
-A standalone test case is also availble where we demonstrate the current response for a variable magnetic field (1/r) where the fundamental and 2nd harmonic ion cyclotron resonances are in the domain (at x=1.75 and x=3.5 respectively). We have provided an input file `template/input/input-data.nc` with an electric field with `kx=pi/(2*rho_L)` where `rho_L` is the Lamor radius at the location of the 2nd harmonic resonance, i.e., the finite Lamor radius interaction is captured per pg.270-271 of Stix. This case is run via the following commands ...
 
-```
-cd $KINETICJ_ROOT
-cd template
-./bin/kineticj
-python ../python/kj_plot.py
-```
-
-or for NERSC (Edison with a single node using OpenMP)
-
-```
-cd $KINETICJ_ROOT
-source env-edison.sh
-cd $SCRATCH
-mkdir kineticj
-cp -r $KINETICJ_ROOT/template .
-cd template
-salloc -N 1 -p debug
-$KINETICJ_ROOT/bin/kineticj
-exit
-python $KINETICJ_ROOT/python/kj_plot.py
-```
-<img src="/template/template.png" width="300">
-
-Changing the variables in `template/kj.cfg` will allow experimenting with running the code. 
-
-```
-  1 xGridMin = 1.0;
-  2 xGridMax = 5.0;
-  3 nXGrid = 200
-  4 nRFCycles = 50.0;
-  5 species_number = 0;
-  6 species_amu = 1.0;
-  7 species_Z = 1.0;
-  8 runIdent = "template";
-  9 nP_Vx = 5;
- 10 nP_Vy = 5;
- 11 nP_Vz = 5;
- 12 nThermal = 3;
- 13 nPhi = 0;
- 14 ky = 0.0;
- 15 T_keV = 5.0;
- 16 input_fName = "input/input-data.nc";
- 17 kz = 0.0;
- 18 nStepsPerCyclotronPeriod = 30.0;
-```
 
 ## Other Information
 
