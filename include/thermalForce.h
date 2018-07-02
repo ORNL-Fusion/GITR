@@ -151,12 +151,12 @@ void operator()(std::size_t indx)
     if(isnan(particlesPointer->vy[indx]) || isinf(particlesPointer->vy[indx])) particlesPointer->vy[indx] = vy;
     if(isnan(particlesPointer->vz[indx]) || isinf(particlesPointer->vz[indx])) particlesPointer->vz[indx] = vz;
 #endif        
-    particlesPointer->test[indx] = dv_ETGx;
-    particlesPointer->test0[indx] = dv_ETGy;
-    particlesPointer->test1[indx] = dv_ETGz;
-    particlesPointer->test2[indx] = dv_ITGx;
-    particlesPointer->test3[indx] = dv_ITGy;
-    particlesPointer->test4[indx] = dv_ITGz;
+    //particlesPointer->test[indx] = dv_ETGx;
+    //particlesPointer->test0[indx] = dv_ETGy;
+    //particlesPointer->test1[indx] = dv_ETGz;
+    //particlesPointer->test2[indx] = dv_ITGx;
+    //particlesPointer->test3[indx] = dv_ITGy;
+    //particlesPointer->test4[indx] = dv_ITGz;
   }
 }
 };

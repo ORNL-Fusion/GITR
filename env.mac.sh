@@ -15,3 +15,4 @@ export Boost_DIR=/usr/local/Cellar/boost/1.67.0_1/
 export Boost_INCLUDE_DIR=/usr/local/Cellar/boost/1.67.0_1/include
 export PYTHONPATH=/Users/tyounkin/Code/gitr2/python:$PYTHONPATH
 export PYTHONPATH=/Users/tyounkin/Code/numpyBuild-1.14.3/lib.macosx-10.12-x86_64-2.7/:$PYTHONPATH
+export PYTHONPATH=$PYTHONPATH:/Users/tyounkin/Code/python2/lib/python2.7/site-packages

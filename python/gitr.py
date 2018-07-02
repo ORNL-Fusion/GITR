@@ -483,7 +483,7 @@ def plot3dGeom(filename="gitrGeometry.cfg"):
     ax.set_zlim3d(-0.5,1.5)
     ax.add_collection3d(Poly3DCollection(verts))
     plt.savefig('geomPlot.png') 
-def nc_plotHist(filename='history.nc'):
+def nc_plotHist(filename='output/history.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nT = ncFile.dimensions['nT'].size
     nP = ncFile.dimensions['nP'].size
@@ -511,9 +511,9 @@ def nc_plotHist(filename='history.nc'):
           plt.plot(r[i,:],z[i,:],linewidth=0.5)
 #          #plt.plot(r[i,:],z[i,:],linewidth=1.0)
 #          #plt.setp(linewidth=0.2)
-    plt.xlim((5.3,6.0))
-    plt.ylim((-4.4,-3.0))
-    #plt.autoscale(enable=True, axis='x', tight=True)
+    #plt.xlim((5.3,6.0))
+    #plt.ylim((-4.4,-3.0))
+    plt.autoscale(enable=True, axis='x', tight=True)
     plt.title('DIII-D W Impurity Simulation',fontsize=20)
     plt.xlabel('r [m]',fontsize=16)
     plt.ylabel('z [m]',fontsize=16)
@@ -524,7 +524,7 @@ def nc_plotHist(filename='history.nc'):
     plt.close()
     plt.figure(1,figsize=(10, 6), dpi=100)
     if(x.shape[0] ==1):
-        plt.plot(x,y,linewidth=0.5)
+        plt.plot(x[0][:],y[0][:],linewidth=0.5)
     else:
         for i in range(80):
           #print('i', i)  
@@ -579,7 +579,7 @@ def nc_plotSpec3D(filename='spec.nc'):
     #    plt.imshow(dens,origin='lower')
     #    plt.colorbar(orientation='vertical')
     plt.savefig('slice1.png')
-def nc_plotPositions(filename='positions.nc'):
+def nc_plotPositions(filename='output/positions.nc',cfg='input/gitrInput.cfg'):
     ncFile = netCDF4.Dataset(filename,"r")
     nP = ncFile.dimensions['nP'].size
     x = np.array(ncFile.variables['x'])
@@ -592,12 +592,52 @@ def nc_plotPositions(filename='positions.nc'):
     print('r ',r)
     print('z ',z)
     plt.close()
-    fig = plt.figure()
-    ax = fig.add_subplot(121)
-    ax.scatter(x, y)
-    ax = fig.add_subplot(122)
-    ax.scatter(r,z)
-    fig.savefig('positions.png')
+    with io.open(cfg) as f:
+        config = libconf.load(f)
+    used3d = config['flags']['USE3DTETGEOM']    
+    hasTracks = config['flags']['PARTICLE_TRACKS']    
+    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    f.suptitle('Position Plots for x,y(left) and r,z (right)')
+    ax1.scatter(x, y)
+    ax2.scatter(r, z)
+    if(used3d==0):
+        gcfg='input/gitrGeometry.cfg'
+        with io.open(gcfg) as ff:
+            config = libconf.load(ff)
+        
+        x1=np.array(config.geom.x1)
+        x2=np.array(config.geom.x2)
+        z1=np.array(config.geom.z1)
+        z2=np.array(config.geom.z2)
+        ax2.plot(np.append(x1,x1[0]),np.append(z1,z1[0]),linewidth=2.0,color='k') 
+    if(hasTracks):
+      ncFile = netCDF4.Dataset("output/history.nc","r")
+      nT = ncFile.dimensions['nT'].size
+      nP = ncFile.dimensions['nP'].size
+      xt = np.reshape(np.array(ncFile.variables['x']),(nP,nT))
+      yt = np.reshape(np.array(ncFile.variables['y']),(nP,nT))
+      zt = np.reshape(np.array(ncFile.variables['z']),(nP,nT))
+      rt = np.sqrt(np.multiply(xt,xt) + np.multiply(yt,yt))
+      plt.figure(1,figsize=(6, 10), dpi=60)
+      if(xt.shape[0] ==1):
+          ax1.plot(xt[0][:],yt[0][:],linewidth=1,color='green')
+          ax2.plot(rt[0][:],zt[0][:],linewidth=1,color='green')
+      else:
+          for i in range(nP):
+            ax1.plot(xt[i,:],yt[i,:],linewidth=0.5)
+            ax2.plot(rt[i,:],zt[i,:],linewidth=0.5)
+        
+    #fig = plt.figure()
+    #ax = fig.add_subplot(121)
+    #ax.scatter(x, y)
+    #ax = fig.add_subplot(122)
+    #ax.scatter(r,z)
+    #plt.title("Position Plots for x,y(left) and r,z (right)")
+    ax1.set(xlabel='x-label', ylabel='y-label')
+    ax2.set(xlabel='x-label', ylabel='y-label')
+    #f.xlabel("r [m]")
+    #f.ylabel("z [m]")
+    f.savefig('positions.png')
     return x,y,r,z,charge
 def nc_plotVz(filename='history.nc'):
     ncFile = netCDF4.Dataset(filename,"r")

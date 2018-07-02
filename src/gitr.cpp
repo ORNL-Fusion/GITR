@@ -30,7 +30,6 @@
 #include "spectroscopy.h"
 #include "fieldLineTrace.h"
 #include "history.h"
-#include "io.hpp"
 #include "hashGeom.h"
 #include "hashGeomSheath.h"
 #include "testRoutine.h"
@@ -81,10 +80,37 @@ int main(int argc, char **argv)
  
   #if USE_MPI > 0
     int ppn = 4;
-    int np = 1;
+    //int np = 1;
     // Initialize the MPI environment
     MPI_Init(&argc,&argv);
+  #endif
+  int counter;
+  printf("Program Name Is: %s",argv[0]);
+  if(argc==1)
+    printf("\nNo Extra Command Line Argument Passed Other Than Program Name");
+  if(argc>=2)
+  {
+    printf("\nNumber Of Arguments Passed: %d",argc);
+    printf("\n----Following Are The Command Line Arguments Passed----");
+    for(counter=0;counter<argc;counter++)
+    {
+      printf("\nargv[%d]: %s",counter,argv[counter]);
+      if(std::string(argv[counter]) == "-nGPUPerNode")
+      {
+        if (counter + 1 < argc) 
+	{ // Make sure we aren't at the end of argv!
+          ppn = std::stoi(argv[counter+1]);	  
+          printf("\nGITR set to use %d GPUs per node",ppn);
+	} else 
+	{ // Uh-oh, there was no argument to the destination option.
+	   std::cerr << "--nGPUPerNode option requires one argument." << std::endl;
+          return 1;
+	} 
+      }
+    }
+  }
     
+    #if USE_MPI > 0
     // Get the number of processes
     int world_size;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -182,8 +208,9 @@ int main(int argc, char **argv)
       }
     }
   #endif
+
   // Background species info
-  float background_Z,background_amu;
+  float background_Z=0.0,background_amu=0.0;
   if(world_rank == 0)
   {
     getVariable(cfg,"backgroundPlasmaProfiles.Z",background_Z);
@@ -196,30 +223,18 @@ int main(int argc, char **argv)
   #endif
 
   //Bfield initialization
-  int nR_Bfield = 1;
-  int nY_Bfield = 1;
-  int nZ_Bfield = 1;
-  int n_Bfield = 1;
+  int nR_Bfield = 1,nY_Bfield = 1,nZ_Bfield = 1,n_Bfield = 1;
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
-  #if BFIELD_INTERP > 0
-    std::string bfieldFile;
-    if(world_rank == 0)
-    {
-      getVariable(cfg,bfieldCfg+"fileString",bfieldFile);
-      nR_Bfield = getDimFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridNrString");
-      #if BFIELD_INTERP > 1
-        nZ_Bfield = getDimFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridNzString");
-      #endif
-      #if BFIELD_INTERP > 2
-        nY_Bfield = getDimFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridNyString");
-      #endif
-    }
-    #if USE_MPI > 0 
-      MPI_Bcast(&nR_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
-      MPI_Bcast(&nY_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
-      MPI_Bcast(&nZ_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
-    #endif
+  std::string bfieldFile;
+  if(world_rank == 0)
+  {
+    importVectorFieldNs(cfg,input_path,BFIELD_INTERP,bfieldCfg,nR_Bfield, nY_Bfield,nZ_Bfield,bfieldFile);
+  }
+  #if USE_MPI > 0 
+    MPI_Bcast(&nR_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nY_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nZ_Bfield,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
   #endif
 
   sim::Array<float> bfieldGridr(nR_Bfield),bfieldGridy(nY_Bfield),bfieldGridz(nZ_Bfield);
@@ -228,24 +243,7 @@ int main(int argc, char **argv)
   
   if(world_rank == 0)
   {
-    #if BFIELD_INTERP == 0
-      getVariable(cfg,bfieldCfg+"r",br[0]);
-      getVariable(cfg,bfieldCfg+"y",by[0]);
-      getVariable(cfg,bfieldCfg+"z",bz[0]);
-    #else
-      getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridRString",bfieldGridr[0]);
-      #if BFIELD_INTERP > 1
-        getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridZString",bfieldGridz[0]);
-      #endif
-      #if BFIELD_INTERP > 2
-        getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"gridYString",bfieldGridy);
-      #endif
-
-      getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"rString",br[0]);
-      getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"yString",by[0]);
-      getVarFromFile(cfg,input_path+bfieldFile,bfieldCfg,"zString",bz[0]);
-    #endif
-    std::cout << "Finished Bfield import" << std::endl;
+    importVectorField(cfg,input_path,BFIELD_INTERP,bfieldCfg,nR_Bfield, nY_Bfield,nZ_Bfield,bfieldGridr.front(),bfieldGridy.front(),bfieldGridz.front(),br.front(),by.front(),bz.front(),bfieldFile);
   } 
   #if USE_MPI > 0 
     MPI_Bcast(br.data(), n_Bfield,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -286,122 +284,35 @@ int main(int argc, char **argv)
     std::cout << "Starting Boundary Init... nSurfaces "<<nSurfaces << std::endl;
   }
   #if USE_MPI > 0
-    std::vector<float> x1(nLines);
-    std::vector<float> y1(nLines+1);
-    std::vector<float> z1(nLines);
-    std::vector<float> x2(nLines);
-    std::vector<float> y2(nLines+1);
-    std::vector<float> z2(nLines);
-    std::vector<float> Zboundary(nLines);
-    std::vector<float> a(nLines);
-    std::vector<float> b(nLines);
-    std::vector<float> c(nLines);
-    std::vector<float> d(nLines);
-    std::vector<float> plane_norm(nLines);
-    std::vector<float> surfaceNumber(nLines);
-    std::vector<int> surface(nLines);
-    int boundaryPeriodic=0;
-    float boundaryTheta0=0.0;
-    float boundaryTheta1=0.0;
+  MPI_Bcast(&nSurfaces,1,MPI_INT,0,MPI_COMM_WORLD);
     #if USE3DTETGEOM > 0
-      std::vector<float> x3(nLines);
-      std::vector<float> y3(nLines);
-      std::vector<float> z3(nLines);
-      std::vector<float> area(nLines);
+      const int nBoundaryMembers = 38;
     #else
-      std::vector<float> length(nLines);
-      std::vector<float> slope_dzdx(nLines);
-      std::vector<float> intercept_z(nLines);
+      const int nBoundaryMembers = 36;
     #endif
-    boundaryPeriodic=boundaries[nLines].periodic;  
-    y1[nLines] = boundaries[nLines].y1;
-    y2[nLines] = boundaries[nLines].y2;
-   
-    for(int i=0;i<nLines;i++)
+    int nIntMembers = 4;
+    int lengths[nBoundaryMembers] = {0};
+    MPI_Aint offsets[nBoundaryMembers] = {};
+    MPI_Datatype types[nBoundaryMembers] = {};
+    for(int i=0;i<nBoundaryMembers;i++)
     {
-        x1[i] = boundaries[i].x1;
-        y1[i] = boundaries[i].y1;
-        z1[i] = boundaries[i].z1;
-        x2[i] = boundaries[i].x2;
-        y2[i] = boundaries[i].y2;
-        z2[i] = boundaries[i].z2;
-        Zboundary[i] = boundaries[i].Z;
-        a[i] = boundaries[i].a;
-        b[i] = boundaries[i].b;
-        c[i] = boundaries[i].c;
-        d[i] = boundaries[i].d;
-        plane_norm[i] = boundaries[i].plane_norm;
-        surfaceNumber[i] = boundaries[i].surfaceNumber;
-        surface[i] = boundaries[i].surface;
-        #if USE3DTETGEOM > 0
-          x3[i] = boundaries[i].x3;
-          y3[i] = boundaries[i].y3;
-          z3[i] = boundaries[i].z3;
-          area[i] = boundaries[i].area;
-        #else
-          length[i] = boundaries[i].length;
-          slope_dzdx[i] = boundaries[i].slope_dzdx;
-          intercept_z[i] = boundaries[i].intercept_z;
-        #endif
+      lengths[i] = 1;
+      offsets[i] = i*4;
+      if(i < nIntMembers)
+      {
+        types[i] = MPI_INT;
+      }
+      else
+      {
+        types[i] = MPI_FLOAT;
+      }
     }
-    MPI_Bcast(&nSurfaces,1,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&x1[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&y1[0], nLines+1,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&z1[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&x2[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&y2[0], nLines+1,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&z2[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&Zboundary[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&a[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&b[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&c[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&d[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&plane_norm[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&surfaceNumber[0], nLines,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&surface[0], nLines,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&boundaryPeriodic, 1,MPI_INT,0,MPI_COMM_WORLD);
-    #if USE3DTETGEOM > 0
-      MPI_Bcast(&x3[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-      MPI_Bcast(&y3[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-      MPI_Bcast(&z3[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-      MPI_Bcast(&area[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    #else
-      MPI_Bcast(&length[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-      MPI_Bcast(&slope_dzdx[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-      MPI_Bcast(&intercept_z[0], nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-    #endif
-    MPI_Barrier(MPI_COMM_WORLD);
-    boundaries[nLines].periodic=boundaryPeriodic;
-    boundaries[nLines].y1 = y1[nLines];
-    boundaries[nLines].y2 = y2[nLines];
-    for(int i=0;i<nLines;i++)
-    {
-      boundaries[i].x1 = x1[i];
-      boundaries[i].y1 = y1[i];
-      boundaries[i].z1 = z1[i];
-      boundaries[i].x2 = x2[i];
-      boundaries[i].y2 = y2[i];
-      boundaries[i].z2 = z2[i];
-      boundaries[i].Z = Zboundary[i];
-      boundaries[i].a = a[i];
-      boundaries[i].b = b[i];
-      boundaries[i].c = c[i];
-      boundaries[i].d = d[i];
-      boundaries[i].plane_norm = plane_norm[i];
-      boundaries[i].surfaceNumber = surfaceNumber[i];
-      boundaries[i].surface = surface[i];
-      #if USE3DTETGEOM > 0
-        boundaries[i].x3 = x3[i];
-        boundaries[i].y3 = y3[i];
-        boundaries[i].z3 = z3[i];
-        boundaries[i].area = area[i];
-      #else
-        boundaries[i].length = length[i];
-        boundaries[i].slope_dzdx = slope_dzdx[i];
-        boundaries[i].intercept_z = intercept_z[i];
-      #endif
-    }
+    MPI_Datatype boundary_type;
+    MPI_Type_create_struct(nBoundaryMembers, lengths, offsets, types,&boundary_type);    
+    MPI_Type_commit(&boundary_type);
+    MPI_Bcast(&boundaries[0],nLines+1,boundary_type,0,MPI_COMM_WORLD);
   #endif
+ 
   float biasPotential = 0.0;
   #if BIASED_SURFACE > 0
     if(world_rank == 0)
@@ -413,6 +324,7 @@ int main(int argc, char **argv)
       MPI_Barrier(MPI_COMM_WORLD);
     #endif
   #endif
+  
   //create Surface data structures
   int nEdist = 1;
   float E0dist = 0.0;
@@ -435,6 +347,19 @@ int main(int argc, char **argv)
       std::cout << "nLines before surfaces " << nLines << std::endl;
     }
     #if USE_MPI > 0
+      const int nSurfaceMembers = 18;
+      
+      int lengthsSurface[nSurfaceMembers] = {1,1,1,1,1,1,1,1,1,nEdist*nAdist,nEdist,nAdist,nEdist*nAdist,nEdist*nAdist,nEdist*nAdist,nEdist*nAdist,nEdist*nAdist,nSurfaces*nEdist*nAdist};
+      MPI_Aint offsetsSurface[nSurfaceMembers] = {offsetof(Surfaces, nSurfaces), offsetof(Surfaces, nE),offsetof(Surfaces,nA),offsetof(Surfaces,E0), offsetof(Surfaces, E),offsetof(Surfaces,A0),
+      offsetof(Surfaces, A), offsetof(Surfaces, dE),offsetof(Surfaces,dA),
+      offsetof(Surfaces,sumParticlesStrike), offsetof(Surfaces, gridE),offsetof(Surfaces,gridA),
+      offsetof(Surfaces,sumWeightStrike), offsetof(Surfaces, grossDeposition),offsetof(Surfaces,grossErosion),
+      offsetof(Surfaces,aveSputtYld), offsetof(Surfaces,sputtYldCount),offsetof(Surfaces,energyDistribution)};
+      MPI_Datatype typesSurface[nSurfaceMembers] = {MPI_INT,MPI_INT,MPI_INT,MPI_FLOAT,
+      MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_INT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT};
+      MPI_Datatype surface_type;
+      MPI_Type_create_struct(nSurfaceMembers, lengthsSurface, offsetsSurface, typesSurface,&surface_type);    
+      MPI_Type_commit(&surface_type);
       MPI_Bcast(&nEdist,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nAdist,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&E0dist,1,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -445,8 +370,10 @@ int main(int argc, char **argv)
     #endif
   #endif
   auto surfaces = new Surfaces(nSurfaces,nEdist,nAdist);
+  surfaces->setSurface(nEdist,E0dist,Edist,nAdist,A0dist,Adist);
   
   #if USE_MPI > 0
+    //Arrays used for reduction at end of sim
     sim::Array<float> grossDeposition(nSurfaces,0.0);
     sim::Array<float> grossErosion(nSurfaces,0.0);
     sim::Array<float> sumWeightStrike(nSurfaces,0.0);
@@ -473,7 +400,7 @@ int main(int argc, char **argv)
       MPI_Bcast(&nHashes,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
     #endif
-
+  #endif
     std::cout << " node and nHashes " << world_rank << " " << nHashes << std::endl;
     sim::Array<int> nR_closeGeom(nHashes,0);
     sim::Array<int> nY_closeGeom(nHashes,0);
@@ -481,66 +408,68 @@ int main(int argc, char **argv)
     sim::Array<int> nHashPoints(nHashes,0);
     sim::Array<int> n_closeGeomElements(nHashes,0);
 
+  #if GEOM_HASH == 1
     if(world_rank == 0)
     {
-      Setting& geomHash = cfg.lookup("geometry_hash");
-      if(nHashes > 1)
-      {
-        for(int i=0; i<nHashes;i++)
-        {   
-          nR_closeGeom[i] = geomHash["nR_closeGeom"][i];
-          nZ_closeGeom[i] = geomHash["nZ_closeGeom"][i];
-          n_closeGeomElements[i] = geomHash["n_closeGeomElements"][i];
-          std::cout << "hash nr ny nz total " << n_closeGeomElements[i] << " " << nR_closeGeom[i]  << " " << nZ_closeGeom[i]<< std::endl;
-        }
-      }
-      else
-      {
-        getVariable(cfg,geomHashCfg+"nR_closeGeom",nR_closeGeom[0]);
-        getVariable(cfg,geomHashCfg+"nZ_closeGeom",nZ_closeGeom[0]);
-        getVariable(cfg,geomHashCfg+"n_closeGeomElements",n_closeGeomElements[0]);
-      }
-      for(int j=0;j<nHashes;j++)
-      {
-        nGeomHash = nGeomHash + nR_closeGeom[j]*nZ_closeGeom[j]*n_closeGeomElements[j];
-        nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
-        nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
-      }
-      #if USE3DTETGEOM > 0
-      if(nHashes > 1)
-      {
-        for(int i=0; i<nHashes;i++)
-        {   
-          nY_closeGeom[i] = geomHash["nY_closeGeom"][i];
-        }
-      }
-      else
-      {
-        getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom[0]);
-      }
-      #endif
-      nGeomHash = 0;
-      nR_closeGeomTotal = 0;
-      nY_closeGeomTotal = 0;
-      nZ_closeGeomTotal = 0;
-      nGeomHash = 0;
-      for(int j=0;j<nHashes;j++)
-      {
-        if(nHashes > 1)
-        {
-          nHashPoints[j] =nR_closeGeom[j]*nY_closeGeom[j]*nZ_closeGeom[j];
-        }
-        else
-        {
-          nHashPoints[j] =nR_closeGeom[j]*nZ_closeGeom[j];
-        } 
-        nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
-        nGeomHash = nGeomHash + nHashPoints[j]*n_closeGeomElements[j];
-        nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
-        nY_closeGeomTotal = nY_closeGeomTotal + nY_closeGeom[j];
-        nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
-      }
-      std::cout << "hhhash nr ny nz total " << nGeomHash << " " << nR_closeGeomTotal << " " << nY_closeGeomTotal << " " << nZ_closeGeomTotal<< std::endl;
+        importHashNs(cfg,input_path,nHashes,"geometry_hash",nR_closeGeom.front(), nY_closeGeom.front(),nZ_closeGeom.front(),n_closeGeomElements.front(),nR_closeGeomTotal,nY_closeGeomTotal,nZ_closeGeomTotal,nHashPoints, nHashPointsTotal,nGeomHash)
+      //Setting& geomHash = cfg.lookup("geometry_hash");
+      //if(nHashes > 1)
+      //{
+      //  for(int i=0; i<nHashes;i++)
+      //  {   
+      //    nR_closeGeom[i] = geomHash["nR_closeGeom"][i];
+      //    nZ_closeGeom[i] = geomHash["nZ_closeGeom"][i];
+      //    n_closeGeomElements[i] = geomHash["n_closeGeomElements"][i];
+      //    std::cout << "hash nr ny nz total " << n_closeGeomElements[i] << " " << nR_closeGeom[i]  << " " << nZ_closeGeom[i]<< std::endl;
+      //  }
+      //}
+      //else
+      //{
+      //  getVariable(cfg,geomHashCfg+"nR_closeGeom",nR_closeGeom[0]);
+      //  getVariable(cfg,geomHashCfg+"nZ_closeGeom",nZ_closeGeom[0]);
+      //  getVariable(cfg,geomHashCfg+"n_closeGeomElements",n_closeGeomElements[0]);
+      //}
+      //for(int j=0;j<nHashes;j++)
+      //{
+      //  nGeomHash = nGeomHash + nR_closeGeom[j]*nZ_closeGeom[j]*n_closeGeomElements[j];
+      //  nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
+      //  nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
+      //}
+      //#if USE3DTETGEOM > 0
+      //if(nHashes > 1)
+      //{
+      //  for(int i=0; i<nHashes;i++)
+      //  {   
+      //    nY_closeGeom[i] = geomHash["nY_closeGeom"][i];
+      //  }
+      //}
+      //else
+      //{
+      //  getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom[0]);
+      //}
+      //#endif
+      //nGeomHash = 0;
+      //nR_closeGeomTotal = 0;
+      //nY_closeGeomTotal = 0;
+      //nZ_closeGeomTotal = 0;
+      //nGeomHash = 0;
+      //for(int j=0;j<nHashes;j++)
+      //{
+      //  if(nHashes > 1)
+      //  {
+      //    nHashPoints[j] =nR_closeGeom[j]*nY_closeGeom[j]*nZ_closeGeom[j];
+      //  }
+      //  else
+      //  {
+      //    nHashPoints[j] =nR_closeGeom[j]*nZ_closeGeom[j];
+      //  } 
+      //  nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
+      //  nGeomHash = nGeomHash + nHashPoints[j]*n_closeGeomElements[j];
+      //  nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
+      //  nY_closeGeomTotal = nY_closeGeomTotal + nY_closeGeom[j];
+      //  nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
+      //}
+      //std::cout << "hhhash nr ny nz total " << nGeomHash << " " << nR_closeGeomTotal << " " << nY_closeGeomTotal << " " << nZ_closeGeomTotal<< std::endl;
     }
     #if USE_MPI > 0 
       MPI_Bcast(&nR_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
@@ -554,12 +483,6 @@ int main(int argc, char **argv)
       MPI_Bcast(&nHashPointsTotal,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
     #endif
-  #else
-    sim::Array<int> nR_closeGeom(nHashes,0);
-    sim::Array<int> nY_closeGeom(nHashes,0);
-    sim::Array<int> nZ_closeGeom(nHashes,0);
-    sim::Array<int> nHashPoints(nHashes,0);
-    sim::Array<int> n_closeGeomElements(nHashes,0);
   #endif
 
   #if GEOM_HASH > 1
@@ -2474,6 +2397,7 @@ int main(int argc, char **argv)
   int nP = 0;//cfg.lookup("impurityParticleSource.nP");
   long nParticles = 0;//nP;
   int nT=0;
+
   if(world_rank == 0)
   {
   nP = cfg.lookup("impurityParticleSource.nP");
@@ -2487,6 +2411,31 @@ int main(int argc, char **argv)
   else
   {std::cout << "ERROR: could not get nT, dt, or nP from input file" << std::endl;}
   }
+  sim::Array<int> nPPerRank(world_size,0),pStartIndx(world_size,0);
+  int countP=0;
+  if(nP >= world_size)
+  {
+    for(int i=0;i<world_size;i++)
+    {
+      nPPerRank[i] = floor(nP/world_size);
+      if(i==0)
+      {
+        nPPerRank[i] = nPPerRank[i] + nP%world_size;
+      }
+      pStartIndx[i] = countP;
+      countP = countP + nPPerRank[i];
+      std::cout << "countP " << countP << std::endl;
+    }
+   }
+   else
+   {
+     for(int i=0;i<nP;i++)
+     {
+       nPPerRank[i] = 1;
+       pStartIndx[i] = countP;
+       countP = countP + nPPerRank[i];
+     }
+   }
   #if USE_MPI > 0
       MPI_Bcast(&dt,1,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nP,1,MPI_INT,0,MPI_COMM_WORLD);
@@ -3052,82 +3001,43 @@ std::cout <<" about to write ncFile_particles " << std::endl;
       MPI_Bcast(&subSampleFac, 1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
     #endif
-    std::cout << "history array length " << (nT/subSampleFac)*nP << std::endl;
+    int nHistoriesPerParticle = (nT/subSampleFac) + 1;
+    int nHistories = nHistoriesPerParticle*nP;
+    std::cout << "history array length " << nHistories << std::endl;
     #if USE_CUDA > 0
-      sim::Array<float> positionHistoryX(nP*nT/subSampleFac);
-      sim::Array<float> positionHistoryXgather(nP*nT/subSampleFac,0.0);
-      sim::Array<float> positionHistoryY(nP*nT/subSampleFac);
-      sim::Array<float> positionHistoryYgather(nP*nT/subSampleFac);
-      sim::Array<float> positionHistoryZ(nP*nT/subSampleFac);
-      sim::Array<float> positionHistoryZgather(nP*nT/subSampleFac);
-      sim::Array<float> velocityHistoryX(nP*nT/subSampleFac);
-      sim::Array<float> velocityHistoryY(nP*nT/subSampleFac);
-      sim::Array<float> velocityHistoryZ(nP*nT/subSampleFac);
-      sim::Array<float> velocityHistoryXgather(nP*nT/subSampleFac);
-      sim::Array<float> velocityHistoryYgather(nP*nT/subSampleFac);
-      sim::Array<float> velocityHistoryZgather(nP*nT/subSampleFac);
-      sim::Array<float> chargeHistory(nP*nT/subSampleFac);
-      sim::Array<float> chargeHistoryGather(nP*nT/subSampleFac);
-      sim::Array<float> weightHistory(nP*nT/subSampleFac);
-      sim::Array<float> weightHistoryGather(nP*nT/subSampleFac);
+      sim::Array<float> positionHistoryX(nHistories);
+      sim::Array<float> positionHistoryXgather(nHistories,0.0);
+      sim::Array<float> positionHistoryY(nHistories);
+      sim::Array<float> positionHistoryYgather(nHistories);
+      sim::Array<float> positionHistoryZ(nHistories);
+      sim::Array<float> positionHistoryZgather(nHistories);
+      sim::Array<float> velocityHistoryX(nHistories);
+      sim::Array<float> velocityHistoryY(nHistories);
+      sim::Array<float> velocityHistoryZ(nHistories);
+      sim::Array<float> velocityHistoryXgather(nHistories);
+      sim::Array<float> velocityHistoryYgather(nHistories);
+      sim::Array<float> velocityHistoryZgather(nHistories);
+      sim::Array<float> chargeHistory(nHistories);
+      sim::Array<float> chargeHistoryGather(nHistories);
+      sim::Array<float> weightHistory(nHistories);
+      sim::Array<float> weightHistoryGather(nHistories);
     #else
-      std::vector<float> positionHistoryX(nP*nT/subSampleFac);
-      std::vector<float> positionHistoryXgather(nP*nT/subSampleFac,0.0);
-      std::vector<float> positionHistoryY(nP*nT/subSampleFac);
-      std::vector<float> positionHistoryYgather(nP*nT/subSampleFac);
-      std::vector<float> positionHistoryZ(nP*nT/subSampleFac);
-      std::vector<float> positionHistoryZgather(nP*nT/subSampleFac);
-      std::vector<float> velocityHistoryX(nP*nT/subSampleFac);
-      std::vector<float> velocityHistoryY(nP*nT/subSampleFac);
-      std::vector<float> velocityHistoryZ(nP*nT/subSampleFac);
-      std::vector<float> velocityHistoryXgather(nP*nT/subSampleFac);
-      std::vector<float> velocityHistoryYgather(nP*nT/subSampleFac);
-      std::vector<float> velocityHistoryZgather(nP*nT/subSampleFac);
-      std::vector<float> chargeHistory(nP*nT/subSampleFac);
-      std::vector<float> chargeHistoryGather(nP*nT/subSampleFac);
-      std::vector<float> weightHistory(nP*nT/subSampleFac);
-      std::vector<float> weightHistoryGather(nP*nT/subSampleFac);
-      //float **positionHistoryX;
-      //float **positionHistoryY;
-      //float **positionHistoryZ;
-      //float **velocityHistoryX;
-      //float **velocityHistoryY;
-      //float **velocityHistoryZ;
-      //float **chargeHistory;
-      //positionHistoryX = new float* [nP];
-      //positionHistoryY = new float* [nP];
-      //positionHistoryZ = new float* [nP];
-      //velocityHistoryX = new float* [nP];
-      //velocityHistoryY = new float* [nP];
-      //velocityHistoryZ = new float* [nP];
-      //chargeHistory = new float* [nP];
-      //positionHistoryX[0] = new float [(nT/subSampleFac)*nP];
-      //positionHistoryY[0] = new float [(nT/subSampleFac)*nP];
-      //positionHistoryZ[0] = new float [(nT/subSampleFac)*nP];
-      //velocityHistoryX[0] = new float [(nT/subSampleFac)*nP];
-      //velocityHistoryY[0] = new float [(nT/subSampleFac)*nP];
-      //velocityHistoryZ[0] = new float [(nT/subSampleFac)*nP];
-      //chargeHistory[0] = new float [(nT/subSampleFac)*nP];
-      //for(int i=0 ; i<nP ; i++)
-      //{
-      //    positionHistoryX[i] = &positionHistoryX[0][(nT/subSampleFac)*i];
-      //    positionHistoryY[i] = &positionHistoryY[0][(nT/subSampleFac)*i];
-      //    positionHistoryZ[i] = &positionHistoryZ[0][(nT/subSampleFac)*i];
-      //    velocityHistoryX[i] = &velocityHistoryX[0][(nT/subSampleFac)*i];
-      //    velocityHistoryY[i] = &velocityHistoryY[0][(nT/subSampleFac)*i];
-      //    velocityHistoryZ[i] = &velocityHistoryZ[0][(nT/subSampleFac)*i];
-      //    chargeHistory[i] = &chargeHistory[0][(nT/subSampleFac)*i];
-      //    for(int j=0 ; j<nT/subSampleFac ; j++)
-      //    {
-      //        positionHistoryX[i][j] = 0.0;
-      //        positionHistoryY[i][j] = 0.0;
-      //        positionHistoryZ[i][j] = 0.0;
-      //        velocityHistoryX[i][j] = 0.0;
-      //        velocityHistoryY[i][j] = 0.0;
-      //        velocityHistoryZ[i][j] = 0.0;
-      //        chargeHistory[i][j] = 0.0;
-      //    }
-      //}
+      std::vector<float> positionHistoryX(nHistories);
+      std::vector<float> positionHistoryXgather(nHistories,0.0);
+      std::vector<float> positionHistoryY(nHistories);
+      std::vector<float> positionHistoryYgather(nHistories);
+      std::vector<float> positionHistoryZ(nHistories);
+      std::vector<float> positionHistoryZgather(nHistories);
+      std::vector<float> velocityHistoryX(nHistories);
+      std::vector<float> velocityHistoryY(nHistories);
+      std::vector<float> velocityHistoryZ(nHistories);
+      std::vector<float> velocityHistoryXgather(nHistories);
+      std::vector<float> velocityHistoryYgather(nHistories);
+      std::vector<float> velocityHistoryZgather(nHistories);
+      std::vector<float> chargeHistory(nHistories);
+      std::vector<float> chargeHistoryGather(nHistories);
+      std::vector<float> weightHistory(nHistories);
+      std::vector<float> weightHistoryGather(nHistories);
     #endif
   #endif 
   float* finalPosX = new float[nP];
@@ -3158,6 +3068,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
 
   thrust::counting_iterator<std::size_t> particleBegin(0);  
   thrust::counting_iterator<std::size_t> particleEnd(nParticles);
+    auto randInitStart_clock = Time::now();
     
   #if PARTICLESEEDS > 0
     #if USE_CUDA  
@@ -3166,14 +3077,24 @@ std::cout <<" about to write ncFile_particles " << std::endl;
       sim::Array<std::mt19937> state1(nParticles);
     #endif
     #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
+      std::random_device randDeviceInit; 
       std::cout << "Initializing curand seeds " << std::endl;
-      thrust::for_each(thrust::device, particleBegin,particleEnd,
-                           curandInitialize(&state1[0],0));
+      //thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,
+      //                     curandInitialize(&state1[0],randDeviceInit,0));
+       //std::mt19937 s0(randDeviceInit);
+       for(int i=world_rank*nP/world_size;i<(world_rank+1)*nP/world_size;i++)
+       {
+           std::mt19937 s0(randDeviceInit());
+           state1[i] = s0;
+       }
       #if USE_CUDA
         cudaDeviceSynchronize();
       #endif
     #endif
   #endif
+    auto randInitEnd_clock = Time::now();
+    fsec fsRandInit = randInitEnd_clock - randInitStart_clock;
+    printf("Random Number Initialize time for node %i          is %6.3f (secs) \n", world_rank,fsRandInit.count());
 
     float moveTime = 0.0;
     float geomCheckTime = 0.0;
@@ -3438,6 +3359,10 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
 #ifdef __CUDACC__
     cudaThreadSynchronize();
 #endif
+#if PARTICLE_TRACKS >0
+   thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
+      history0);
+#endif
         thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleEnd, 
                 move_boris0);
             
@@ -3476,11 +3401,13 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
                 reflection0);
 #endif        
 
+    }
 #if PARTICLE_TRACKS >0
+   tt = nT+subSampleFac-1;
+   std::cout << " tt for final history " << tt << std::endl;
    thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
       history0);
 #endif
-    }
 #if USE_OPENMP
 }
 #endif
@@ -3540,7 +3467,10 @@ for(int i=0; i<nP ; i++)
     //if (world_rank == 0) {
     //      x_gather = malloc(sizeof(float)*nP);
     //}
+    std::cout << "reached gather barrier" << std::endl;
+
     MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "started gather" << std::endl;
     MPI_Gather(&particleArray->x[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &xGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->y[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &yGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->z[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &zGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -3554,48 +3484,21 @@ for(int i=0; i<nP ; i++)
     MPI_Gather(&particleArray->firstIonizationZ[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &firstIonizationZGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->test0[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &test0Gather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->test1[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &test1Gather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    std::cout << "wating after gathers" << std::endl;
 MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "passed barrier after gather" << std::endl;
 #if PARTICLE_TRACKS >0
-    MPI_Gather(&positionHistoryX[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &positionHistoryXgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&positionHistoryY[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &positionHistoryYgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&positionHistoryZ[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &positionHistoryZgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&velocityHistoryX[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &velocityHistoryXgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&velocityHistoryY[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &velocityHistoryYgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&velocityHistoryZ[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &velocityHistoryZgather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&chargeHistory[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &chargeHistoryGather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&weightHistory[world_rank*nP/world_size*nT/subSampleFac], nP/world_size*nT/subSampleFac, MPI_FLOAT, &weightHistoryGather[0], nP/world_size*nT/subSampleFac,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&positionHistoryX[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &positionHistoryXgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&positionHistoryY[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &positionHistoryYgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&positionHistoryZ[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &positionHistoryZgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&velocityHistoryX[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryXgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&velocityHistoryY[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryYgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&velocityHistoryZ[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryZgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&chargeHistory[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &chargeHistoryGather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&weightHistory[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &weightHistoryGather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
 MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-//    MPI_Barrier(MPI_COMM_WORLD);
-//    //Collect stuff
-//   for(int rr=1; rr<world_size;rr++)
-//{
-//if(world_rank == rr)
-//{
-//    //MPI_Send(&particleArray->x[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-//    //MPI_Send(&particleArray->y[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-//    MPI_Send(&particleArray->z[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-//    MPI_Send(&particleArray->vx[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-//    MPI_Send(&particleArray->vy[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-//    MPI_Send(&particleArray->vz[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-//    MPI_Send(&particleArray->hitWall[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-//    MPI_Send(&particleArray->weight[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-//    MPI_Send(&particleArray->charge[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-//}
-//else if(world_rank == 0)
-//{
-//    //MPI_Recv(&particleArray->x[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//    //MPI_Recv(&particleArray->y[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//    MPI_Recv(&particleArray->z[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//    MPI_Recv(&particleArray->vx[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//    MPI_Recv(&particleArray->vy[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//    MPI_Recv(&particleArray->vz[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//    MPI_Recv(&particleArray->hitWall[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//    MPI_Recv(&particleArray->weight[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//    MPI_Recv(&particleArray->charge[rr*nP/world_size], nP/world_size, MPI_FLOAT, rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//}
-//}
 #if SPECTROSCOPY > 0
 MPI_Barrier(MPI_COMM_WORLD);
 std::cout <<"Starting spectroscopy reduce " << world_rank<< std::endl;
@@ -3898,7 +3801,7 @@ ncFile1.close();
 
 // Write netCDF output for histories
 NcFile ncFile_hist("output/history.nc", NcFile::replace);
-NcDim nc_nT = ncFile_hist.addDim("nT",nT/subSampleFac);
+NcDim nc_nT = ncFile_hist.addDim("nT",nHistories);
 NcDim nc_nP = ncFile_hist.addDim("nP",nP);
 vector<NcDim> dims_hist;
 dims_hist.push_back(nc_nP);
@@ -3982,14 +3885,14 @@ ncFile.close();
     std::cout << "sqrt 0 " << sqrt(-0.0) << std::endl;
     for(int i=0;i<100;i++)
 {
-    std::cout << "particle hitwall and Ez " << particleArray->hitWall[i] << " " << particleArray->test[i] << " "<< test0Gather[i] << " " << test1Gather[i]<< " "<<
-        particleArray->test2[i] << " " << particleArray->test3[i] << " " << particleArray->test4[i] << 
-        " " << particleArray->distTraveled[i] << std::endl;
+    //std::cout << "particle hitwall and Ez " << particleArray->hitWall[i] << " " << particleArray->test[i] << " "<< test0Gather[i] << " " << test1Gather[i]<< " "<<
+    //    particleArray->test2[i] << " " << particleArray->test3[i] << " " << particleArray->test4[i] << 
+    //    " " << particleArray->distTraveled[i] << std::endl;
 }
     for(int i=0;i<100;i++)
 {
-    std::cout << "particle ionization z and t " << firstIonizationZGather[i] << " " << firstIonizationTGather[i] << " " << xGather[i] << " " << 
-      vxGather[i] << " " << chargeGather[i] << std::endl;
+    //std::cout << "particle ionization z and t " << firstIonizationZGather[i] << " " << firstIonizationTGather[i] << " " << xGather[i] << " " << 
+      //vxGather[i] << " " << chargeGather[i] << std::endl;
 }
 #endif
 //    for(int i=0;i<100;i++)
