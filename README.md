@@ -183,6 +183,54 @@ make
 ## Running GITR
 In order to run GITR, navigate to the desired run foler which contains the input directory e.g. `GITR/examples/operatorTests/straightLine/2Dgeom` and execute the GITR executable `~/Code/GITR/build/GITR`
 
+In most cases you will want to modify the options in the makeGITR.sh script to match those found in the input/gitrInput.cfg file at the end of the file where the flags are specified:
+```
+flags = 
+{
+        USE_CUDA=1;
+        USEMPI=0;
+        USE_MPI=0;
+        USE_OPENMP=0;
+        USE_BOOST=1;
+        USEIONIZATION=0;
+        USERECOMBINATION=0;
+        USEPERPDIFFUSION=0;
+        USECOULOMBCOLLISIONS=0;
+        USETHERMALFORCE=0;
+        USESURFACEMODEL=0;
+        USESHEATHEFIELD=0;
+        BIASED_SURFACE=0;
+        USEPRESHEATHEFIELD=0;
+        BFIELD_INTERP=0;
+        LC_INTERP=0;
+        GENERATE_LC=0;
+        EFIELD_INTERP=0;
+        PRESHEATH_INTERP=0;
+        DENSITY_INTERP=0;
+        TEMP_INTERP=0;
+        FLOWV_INTERP=0;
+        GRADT_INTERP=0;
+        ODEINT=0;
+        FIXEDSEEDS=0;
+        PARTICLESEEDS=1;
+        GEOM_TRACE=0;
+        GEOM_HASH=0;
+        GEOM_HASH_SHEATH=0;
+        PARTICLE_TRACKS=1;
+        PARTICLE_SOURCE_SPACE=0;
+        PARTICLE_SOURCE_ENERGY=0;
+        PARTICLE_SOURCE_ANGLE=0;
+        PARTICLE_SOURCE_FILE=0;
+        SPECTROSCOPY=0;
+        USE3DTETGEOM=0;
+        USECYLSYMM=0;
+        USEFIELDALIGNEDVALUES=0;
+        FLUX_EA=0;
+        FORCE_EVAL=0;
+        CHECK_COMPATIBILITY=1;
+}
+```
+
 
 ### Run the operator tests
 In order to run the operator tests the runExamples.py file in the build folder must be properly configured.
