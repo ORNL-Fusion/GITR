@@ -11,7 +11,7 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     filename = examplePath+"/input/gitrInput.cfg"
     ##Machine specific flags
     USE_CUDA=0
-    USE_MPI=0
+    USE_MPI=1
     USEMPI=0
     USE_OPENMP=0
     USE_BOOST=1
@@ -115,6 +115,8 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     code_flags = code_flags+" -DUSEFIELDALIGNEDVALUES="+str(USEFIELDALIGNEDVALUES)
     FLUX_EA=config.flags.FLUX_EA
     code_flags = code_flags+" -DFLUX_EA="+str(FLUX_EA)
+    FORCE_EVAL=config.flags.FORCE_EVAL
+    code_flags = code_flags+" -DFORCE_EVAL="+str(FORCE_EVAL)
     CHECK_COMPATIBILITY=config.flags.CHECK_COMPATIBILITY
     code_flags = code_flags+" -DCHECK_COMPATIBILITY="+str(CHECK_COMPATIBILITY)
     
@@ -145,3 +147,5 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     p3.wait()
     #print colored('GITR successfully built','green')
 
+if __name__ == "__main__":
+    buildGITR('../iter/iter_milestone/3d')

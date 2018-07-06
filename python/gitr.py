@@ -131,15 +131,16 @@ def read3dGeom(filename="gitrGeometry.cfg"):
     z2=np.array(config.geom.z2)
     z3=np.array(config.geom.z3)
     area=np.array(config.geom.area)
+    surf=np.array(config.geom.surface)
     Z = np.array(config.geom.Z)
     materialSurfaceInidces = np.nonzero(Z)
     surfIndArray = np.asarray(materialSurfaceInidces)
     print('Number of W surfaces ', surfIndArray.size)
-    return x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray
+    return x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf
 def iter2dProcessing():
-    x1,x2,z1,z2,length,Z = plot2dGeom('input/iter2dRefinedOuterTarget.cfg')
+    x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
     plt.close()
-    grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers = nc_readSurface()
+    grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers,surfEdist = nc_readSurface()
     plt.close()
     netErosion = grossDep - grossEro
     colormap = plt.cm.bwr
@@ -188,6 +189,154 @@ def iter2dProcessing():
     plt.legend((s1, s2, s3), ('Gross Erosion', 'Gross Deposition', 'netErosion'))
     plt.savefig('targetErosionlog.png') 
     plt.close()
+def printHeDist(path = '',z = [-4.1,-4.0]):
+    ncFile = netCDF4.Dataset("input/iterHeDist.nc","r")
+    nPoints = len(ncFile.dimensions['nPoints'])
+    nE = len(ncFile.dimensions['nE'])
+    nA = len(ncFile.dimensions['nA'])
+
+    zPoints = np.array(ncFile.variables['z'])
+    flux = np.array(ncFile.variables['flux'])
+    EAdist = np.array(ncFile.variables['EAdist'])
+    gridE = np.array(ncFile.variables['gridE'])
+    gridA = np.array(ncFile.variables['gridA'])
+    heFlux = np.zeros(len(z))
+    os.mkdir('GITRoutput')
+    for i in range(len(z)):
+        idx = (np.abs(zPoints - z[i])).argmin()
+        print('index',idx)
+        heFlux[i] = flux[idx] 
+        thisDist = EAdist[:,:,idx] #first dimension is angle, second is energy
+        thisDist = np.transpose(thisDist)
+        print('thisDistHe size', thisDist.shape)
+	#print(thisDist)
+        Aweight = np.sum(thisDist,axis=0)
+        gitrDir = 'GITRoutput/'+'gitr'+str(i)
+        os.mkdir(gitrDir)
+        np.savetxt(gitrDir+'/gitrFluxE.dat', gridE)
+        np.savetxt(gitrDir+'/gitrFluxAweight.dat', Aweight)
+        np.savetxt(gitrDir+'/gitrFluxA.dat',gridA[:-1])
+        np.savetxt(gitrDir+'/gitrFluxEAdist.dat', thisDist)
+        
+        if(path != ''): 
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxE.dat', gridE)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxAweight.dat', Aweight)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxA.dat', gridA)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxEAdist.dat', thisDist)
+
+        for j in range(0,nA):
+            #print('Evec size ', gridE.size)
+            #print('EAdist[:,i] size ', EAdist[:,i].size)
+            edOut = np.column_stack((gridE,thisDist[:,j]))
+            np.savetxt(gitrDir+'/dist'+str(j)+'.dat', edOut)
+    return gitrDir, heFlux
+def iter3dProcessing(path = '',loc = [-4.5020,   -4.4628,   -4.4237,   -4.3846,   -4.3455,   -4.3064,   -4.2672,   -4.2281, -4.1890,   -4.1499,   -4.1108,   -4.0717,   -4.0327,   -3.9938,   -3.9547,   -3.9157, -3.8766,   -3.8380,   -3.7395,   -3.6386,   -3.5423,   -3.4537,   -3.3799,   -3.3195,-3.2744],locWidth = 0.02):
+    #loc = [-4.5020,   -4.4628,   -4.4237,   -4.3846,   -4.3455,   -4.3064,   -4.2672,   -4.2281, -4.1890,   -4.1499,   -4.1108,   -4.0717,   -4.0327,   -3.9938   -3.9547,   -3.9157, -3.8766,   -3.8380,   -3.7395,   -3.6386,   -3.5423,   -3.4537,   -3.3799,   -3.3195,-3.2744]
+    #loc = [-4.50,-4.437,-4.3570,-4.2770,-4.1970,-4.1170,-4.0371,-3.9574,-3.8775,-3.5341,-3.3679,-3.273]
+    #x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
+    x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf = read3dGeom('input/iterRefinedTest.cfg')
+    plt.close()
+    grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers,surfEdist = nc_readSurface()
+    plt.close()
+    print('e', E)
+    #loc1 = -4.17
+    #loc2 = -4.081
+    #loc3 = -4.25
+    #loc4 = -3.6
+    #locWidth = 0.02
+    surfInd = surf >0
+    z1= np.extract(surfInd,z1)
+    gitrDirHe,heFlux=printHeDist(z=loc)
+    os.mkdir('GITRoutput_W')
+    nLocations = len(loc)
+    for i in range(len(loc)):
+        condition = [(z1 < loc[i]+locWidth) & (z1 > loc[i]-locWidth)]
+	theseInd = np.where(condition)[1]
+	print('theseInd',theseInd)
+	print('condition',condition)
+	print('surfEdist Shape',surfEdist.shape)
+	print('theseInd',theseInd)
+	print('theseInd',theseInd.shape)
+	thisDist = surfEdist[theseInd,:,:]
+	print('size thisDist',thisDist.shape)
+	thisDist = np.sum(thisDist,axis=0)
+	print('size thisDist',thisDist.shape) 
+	#thisDist = np.sum(thisDist,axis=1)
+	print('size thisDist',thisDist.shape) 
+	print('thisDist',thisDist) 
+        dep = np.extract(condition,grossDep)
+        ero = np.extract(condition,grossEro)
+        strike = np.extract(condition,sumWeightStrike)
+        areas = np.extract(condition,area)
+        with io.open('input/gitrInput.cfg') as f:
+            config = libconf.load(f)
+        #backgroundIonsPerSec = float(config.postProcessing.backgroundIonsPerSec); #3.8640e+19;for pisces He high flux case
+        #backgroundFlux = float(config.postProcessing.backgroundFlux);#3.5e22;
+        #time = float(config.postProcessing.time);
+        nParticles = float(config.impurityParticleSource.nP);
+        #backgroundSputtYield = float(config.postProcessing.backgroundSputtYield);
+        erodedFlux = float(config.postProcessing.totalWFlux);
+        erodedFluxPerParticle = erodedFlux/nParticles;
+        netErosion = np.sum(ero - dep);
+        netStrike = np.sum(strike)
+        totalArea = np.sum(areas)
+        impurityFlux = netErosion*erodedFluxPerParticle;
+        if(heFlux[i]==0.0):
+            heFlux[i] = 1.0e19
+        Wfrac = impurityFlux/heFlux[i];
+        Aweight = np.sum(thisDist,axis=1)
+        print('W impurity flux ', impurityFlux)
+        print('W impurity fraction ', Wfrac)
+        #for i in surfIndArray:
+	gitrDir = 'GITRoutput_W/'+'gitr'+str(i)
+	os.mkdir(gitrDir)
+        np.savetxt(gitrDir+'/gitrFluxE.dat', E)
+        np.savetxt(gitrDir+'/gitrFluxAweight.dat', Aweight)
+        np.savetxt(gitrDir+'/gitrFluxA.dat', A[:-1])
+        np.savetxt(gitrDir+'/gitrFluxEAdist.dat', thisDist)
+        
+        if(path != ''): 
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxE.dat', E)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxAweight.dat', Aweight)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxA.dat', A)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxEAdist.dat', thisDist)
+        
+        Dfrac = float(config.postProcessing.Dfrac);
+        Hefrac = float(config.postProcessing.Hefrac);
+        Tfrac = float(config.postProcessing.Tfrac);
+        file = open('gitrOut_'+str(i)+'.txt','w') 
+        file.write('plasmaSpecies=He W D T\n') 
+	file.write('inputEnergy=-1.0 -1.0 0.0 0.0\n')
+	file.write('inputAngle=-1.0 -1.0 0.0 0.0\n')
+        file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
+        file.write('flux='+str(heFlux[i]/1e18)+'\n') 
+        file.write('gitrOutputDir_He='+os.getcwd()+'/'+'GITRoutput/'+'gitr'+str(i)+'\n') 
+        file.write('gitrOutputDir_W='+os.getcwd()+'/'+gitrDir+'\n') 
+        file.close() 
+
+        if(path != ''): 
+            shutil.copyfile('gitrOut.txt',path+'/'+gitrDir+'/gitrOut.txt')
+            #file = open(path+'/'+'gitrOut.txt','w') 
+            #
+            #file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
+            #file.write('flux='+str(backgroundFlux/1e18)+'\n') 
+            #file.write('gitrOutputDir='+os.getcwd()+'\n') 
+            #file.close() 
+
+        E0=0.0;
+        E1=1000.0;
+        nE=200;
+        dE = E1/nE;
+        Evec = np.linspace(0.5*dE,E1-0.5*dE,nE);
+        A0=0.0;
+        A1=90.0;
+        nA=30;
+        for j in range(0,nA):
+            #print('Evec size ', Evec.size)
+            #print('EAdist[:,i] size ', EAdist[:,i].size)
+            edOut = np.column_stack((Evec,EAdist[:,j]))
+            np.savetxt(gitrDir+'/dist'+str(j)+'.dat', edOut)
+    return nLocations
 def piscesProcessing(r=0.01,path=''):
     x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray = read3dGeom('input/gitrGeometryPisces1inch.cfg')
     r1 = np.sqrt(np.multiply(x1[surfIndArray],x1[surfIndArray]) + np.multiply(y1[surfIndArray],y1[surfIndArray]))
@@ -334,7 +483,7 @@ def plot3dGeom(filename="gitrGeometry.cfg"):
     ax.set_zlim3d(-0.5,1.5)
     ax.add_collection3d(Poly3DCollection(verts))
     plt.savefig('geomPlot.png') 
-def nc_plotHist(filename='history.nc'):
+def nc_plotHist(filename='output/history.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nT = ncFile.dimensions['nT'].size
     nP = ncFile.dimensions['nP'].size
@@ -362,9 +511,9 @@ def nc_plotHist(filename='history.nc'):
           plt.plot(r[i,:],z[i,:],linewidth=0.5)
 #          #plt.plot(r[i,:],z[i,:],linewidth=1.0)
 #          #plt.setp(linewidth=0.2)
-    plt.xlim((5.2,5.8))
-    plt.ylim((-4.4,-3.4))
-    #plt.autoscale(enable=True, axis='x', tight=True)
+    #plt.xlim((5.3,6.0))
+    #plt.ylim((-4.4,-3.0))
+    plt.autoscale(enable=True, axis='x', tight=True)
     plt.title('DIII-D W Impurity Simulation',fontsize=20)
     plt.xlabel('r [m]',fontsize=16)
     plt.ylabel('z [m]',fontsize=16)
@@ -375,7 +524,7 @@ def nc_plotHist(filename='history.nc'):
     plt.close()
     plt.figure(1,figsize=(10, 6), dpi=100)
     if(x.shape[0] ==1):
-        plt.plot(x,y,linewidth=0.5)
+        plt.plot(x[0][:],y[0][:],linewidth=0.5)
     else:
         for i in range(80):
           #print('i', i)  
@@ -402,7 +551,7 @@ def nc_plotSpec(filename='spec.nc'):
     for i in range(nBins-1,nBins):
         dens = np.log10(n[i,:,:])
         #plt.subplot(plotsize,plotsize,i+1)
-        plot2dGeom('input/iter2dRefinedOuterTarget.cfg')
+        plot2dGeom('../2d/input/iter2dRefinedOuterTarget.cfg')
         plt.title("ITER W Impurity Density")
         plt.xlabel("r [m]")
         plt.ylabel("z [m]")
@@ -430,7 +579,7 @@ def nc_plotSpec3D(filename='spec.nc'):
     #    plt.imshow(dens,origin='lower')
     #    plt.colorbar(orientation='vertical')
     plt.savefig('slice1.png')
-def nc_plotPositions(filename='positions.nc'):
+def nc_plotPositions(filename='output/positions.nc',cfg='input/gitrInput.cfg'):
     ncFile = netCDF4.Dataset(filename,"r")
     nP = ncFile.dimensions['nP'].size
     x = np.array(ncFile.variables['x'])
@@ -443,12 +592,52 @@ def nc_plotPositions(filename='positions.nc'):
     print('r ',r)
     print('z ',z)
     plt.close()
-    fig = plt.figure()
-    ax = fig.add_subplot(121)
-    ax.scatter(x, y)
-    ax = fig.add_subplot(122)
-    ax.scatter(r,z)
-    fig.savefig('positions.png')
+    with io.open(cfg) as f:
+        config = libconf.load(f)
+    used3d = config['flags']['USE3DTETGEOM']    
+    hasTracks = config['flags']['PARTICLE_TRACKS']    
+    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    f.suptitle('Position Plots for x,y(left) and r,z (right)')
+    ax1.scatter(x, y)
+    ax2.scatter(r, z)
+    if(used3d==0):
+        gcfg='input/gitrGeometry.cfg'
+        with io.open(gcfg) as ff:
+            config = libconf.load(ff)
+        
+        x1=np.array(config.geom.x1)
+        x2=np.array(config.geom.x2)
+        z1=np.array(config.geom.z1)
+        z2=np.array(config.geom.z2)
+        ax2.plot(np.append(x1,x1[0]),np.append(z1,z1[0]),linewidth=2.0,color='k') 
+    if(hasTracks):
+      ncFile = netCDF4.Dataset("output/history.nc","r")
+      nT = ncFile.dimensions['nT'].size
+      nP = ncFile.dimensions['nP'].size
+      xt = np.reshape(np.array(ncFile.variables['x']),(nP,nT))
+      yt = np.reshape(np.array(ncFile.variables['y']),(nP,nT))
+      zt = np.reshape(np.array(ncFile.variables['z']),(nP,nT))
+      rt = np.sqrt(np.multiply(xt,xt) + np.multiply(yt,yt))
+      plt.figure(1,figsize=(6, 10), dpi=60)
+      if(xt.shape[0] ==1):
+          ax1.plot(xt[0][:],yt[0][:],linewidth=1,color='green')
+          ax2.plot(rt[0][:],zt[0][:],linewidth=1,color='green')
+      else:
+          for i in range(nP):
+            ax1.plot(xt[i,:],yt[i,:],linewidth=0.5)
+            ax2.plot(rt[i,:],zt[i,:],linewidth=0.5)
+        
+    #fig = plt.figure()
+    #ax = fig.add_subplot(121)
+    #ax.scatter(x, y)
+    #ax = fig.add_subplot(122)
+    #ax.scatter(r,z)
+    #plt.title("Position Plots for x,y(left) and r,z (right)")
+    ax1.set(xlabel='x-label', ylabel='y-label')
+    ax2.set(xlabel='x-label', ylabel='y-label')
+    #f.xlabel("r [m]")
+    #f.ylabel("z [m]")
+    f.savefig('positions.png')
     return x,y,r,z,charge
 def nc_plotVz(filename='history.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
@@ -516,7 +705,7 @@ def nc_readSurface(filename='output/surface.nc'):
     plt.pcolor(EAdist)
     plt.colorbar()
     plt.savefig('EAdist.png')
-    return grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers
+    return grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers,surfEdist
 def plotPitch(filename='positions.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nP = ncFile.dimensions['nP'].size
@@ -543,11 +732,13 @@ def plotPitch(filename='positions.nc'):
 if __name__ == "__main__":
     #asdfanc_show("surface.nc")
     #depositedEdist()
-    if(os.path.exists('output/history.nc')):
-    	nc_plotHist('output/history.nc')
-    if(os.path.exists('output/spec.nc')):
-    	nc_plotSpec('output/spec.nc')
-    iter2dProcessing()
+    #if(os.path.exists('output/history.nc')):
+    # 	nc_plotHist('output/history.nc')
+    #if(os.path.exists('output/spec.nc')):
+    #	nc_plotSpec('output/spec.nc')
+    #iter2dProcessing()
+    iter3dProcessing()
+    #printHeDist()
     #nc_plotSpec3D()
     #nc_plotPositions()
     #nc_plotVz()

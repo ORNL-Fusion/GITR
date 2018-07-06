@@ -238,6 +238,7 @@ void operator()(std::size_t indx) const {
     float newWeight=0.0;
     int wallHit = particles->wallHit[indx];
     int surfaceHit = boundaryVector[wallHit].surfaceNumber;
+    int surface = boundaryVector[wallHit].surface;
     float eInterpVal=0.0;
     float aInterpVal=0.0;
     float weight = particles->weight[indx];
@@ -255,6 +256,9 @@ void operator()(std::size_t indx) const {
     particleTrackVector[2] = vz;
     norm_part = sqrt(particleTrackVector[0]*particleTrackVector[0] + particleTrackVector[1]*particleTrackVector[1] + particleTrackVector[2]*particleTrackVector[2]);
     E0 = 0.5*particles->amu[indx]*1.6737236e-27*(norm_part*norm_part)/1.60217662e-19;
+    //std::cout << "Particle hit wall with energy " << E0 << std::endl;
+    //std::cout << "Particle hit wall with v " << vx << " " << vy << " " << vz<< std::endl;
+    //std::cout << "Particle amu norm_part " << particles->amu[indx] << " " << vy << " " << vz<< std::endl;
     wallIndex = particles->wallIndex[indx];
     boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector);
             particleTrackVector[0] = particleTrackVector[0]/norm_part;
@@ -363,7 +367,7 @@ void operator()(std::size_t indx) const {
                   newWeight=(Y0/sputtProb)*weight;
                   if(sputtProb == 0.0) newWeight = 0.0;
                    //std::cout << " particle sputtered with newWeight " << newWeight << std::endl;
-                  if( boundaryVector[wallHit].Z > 0.0)
+                  if(surface > 0)
                 {
 
             #if USE_CUDA > 0
@@ -386,15 +390,20 @@ void operator()(std::size_t indx) const {
             else
             {       newWeight = 0.0;
                     particles->hitWall[indx] = 2.0;
+                  if(surface > 0)
+                {
             #if USE_CUDA > 0
                     atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
             #else
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
             #endif
+	        }
             }
             if(eInterpVal <= 0.0)
             {       newWeight = 0.0;
                     particles->hitWall[indx] = 2.0;
+                  if(surface > 0)
+                {
 		    if(didReflect)
 		    {
             #if USE_CUDA > 0
@@ -403,6 +412,7 @@ void operator()(std::size_t indx) const {
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
             #endif
 	            }
+		    }
             }
             //if(particles->test[indx] == 1.0)
             //{
@@ -410,7 +420,7 @@ void operator()(std::size_t indx) const {
             //    particles->test[indx] = 2.0;
             //}
                 //deposit on surface
-                if( boundaryVector[wallHit].Z > 0.0)
+                if(surface)
                 {
             #if USE_CUDA > 0
               atomicAdd(&surfaces->sumWeightStrike[surfaceHit],weight);

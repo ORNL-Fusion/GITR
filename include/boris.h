@@ -650,6 +650,8 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     
     //std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
 #if USE3DTETGEOM > 0
+            E[0] = Er;
+            E[1] = Et;
 #else
 #if USECYLSYMM > 0
             //if cylindrical geometry
