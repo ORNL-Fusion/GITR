@@ -99,7 +99,7 @@ struct ionize {
     //{
       //std::cout << "r1 " << r1 << " " << P1 << std::endl;
 		//particlesPointer->charge[indx] = particlesPointer->charge[indx]+1;
-       //particlesPointer->test[indx] = tion; 
+       particlesPointer->test[indx] = r1; 
        //particlesPointer->test0[indx] = P1; 
        //particlesPointer->test1[indx] = r1; 
 	    if(r1 <= P1)

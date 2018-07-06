@@ -1,10 +1,11 @@
 makeCommand = "./makeGITRmac.sh"
 import subprocess
-#from termcolor import colored
+from termcolor import colored
 import io,libconf
 import numpy as np
 import os
 from subprocess import check_output
+import gitr
 
 def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     env_file = "../env.mac.sh"
@@ -115,6 +116,8 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     code_flags = code_flags+" -DUSEFIELDALIGNEDVALUES="+str(USEFIELDALIGNEDVALUES)
     FLUX_EA=config.flags.FLUX_EA
     code_flags = code_flags+" -DFLUX_EA="+str(FLUX_EA)
+    FORCE_EVAL=config.flags.FORCE_EVAL
+    code_flags = code_flags+" -DFORCE_EVAL="+str(FORCE_EVAL)
     CHECK_COMPATIBILITY=config.flags.CHECK_COMPATIBILITY
     code_flags = code_flags+" -DCHECK_COMPATIBILITY="+str(CHECK_COMPATIBILITY)
     
@@ -145,5 +148,69 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     p3.wait()
     #print colored('GITR successfully built','green')
 
+def runGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
+    os.chdir(examplePath)
+    os.system('/Users/tyounkin/Code/gitr2/build/runGITR.sh')
+def getAnswer(filename,x,y,r,z,charge):
+    with io.open(filename) as f:
+        config = libconf.load(f)
+    relTol=1e-4	
+    if(np.isclose(x,float(config.answer.x),rtol=relTol) and np.isclose(y,float(config.answer.y),rtol=relTol)	and np.isclose(z,float(config.answer.z),rtol=relTol) and np.isclose(r,float(config.answer.r),rtol=relTol) and np.isclose(charge,float(config.answer.charge),rtol=relTol)):
+        print colored('Test passed','green')
+	passed=1
+    else:
+        print colored('Test failed','red')
+        print('x xAns',x,config.answer.x,np.isclose(x,float(config.answer.x),rtol=1e-04))
+        print('y yAns',y,config.answer.y,y==float(config.answer.y))
+        print('z zAns',z,config.answer.z,z==float(config.answer.z))
+        print('r rAns',r,config.answer.r,r==float(config.answer.r))
+        print('charge chargeAns',charge,config.answer.charge,charge==float(config.answer.charge))
+	passed=0
+	
+    return passed	
 if __name__ == "__main__":
-    buildGITR('../iter/iter_milestone/2d')
+    #cwd = os.getcwd()
+    #buildGITR('../examples/operatorTests/straightLine/2Dgeom')
+    #runGITR()
+    #x,y,r,z,charge = gitr.nc_plotPositions('output/positions.nc')
+
+    #print('x ',x[0])
+    #getAnswer('input/answer.cfg',x[0],y[0],r[0],z[0],charge[0])
+    #os.chdir(cwd)
+    #buildGITR('../examples/operatorTests/straightLine/2DgeomCyl')
+    #runGITR('../examples/operatorTests/straightLine/2DgeomCyl')
+    #x,y,r,z,charge = gitr.nc_plotPositions('output/positions.nc')
+
+    #print('x ',x[0])
+    #getAnswer('input/answer.cfg',x[0],y[0],r[0],z[0],charge[0])
+    #os.chdir(cwd)
+    #buildGITR('../examples/operatorTests/straightLine/2DgeomPeriodic')
+    #runGITR('../examples/operatorTests/straightLine/2DgeomPeriodic')
+    #x,y,r,z,charge = gitr.nc_plotPositions('output/positions.nc')
+
+    #print('x ',x[0])
+    #getAnswer('input/answer.cfg',x[0],y[0],r[0],z[0],charge[0])
+    #os.chdir(cwd)
+    #buildGITR('../examples/operatorTests/straightLine/2DgeomCylPeriodic')
+    #runGITR('../examples/operatorTests/straightLine/2DgeomCylPeriodic')
+    #x,y,r,z,charge = gitr.nc_plotPositions('output/positions.nc')
+
+    #print('x ',x[0])
+    #getAnswer('input/answer.cfg',x[0],y[0],r[0],z[0],charge[0])
+    #os.chdir(cwd)
+    #buildGITR('../examples/operatorTests/straightLine/3Dgeom')
+    #runGITR('../examples/operatorTests/straightLine/3Dgeom')
+    #x,y,r,z,charge = gitr.nc_plotPositions('output/positions.nc')
+
+    #print('x ',x[0])
+    #getAnswer('input/answer.cfg',x[0],y[0],r[0],z[0],charge[0])
+    #os.chdir(cwd)
+    buildGITR('../examples/operatorTests/singleParticleMotion/gyroMotion')
+    runGITR('../examples/operatorTests/singleParticleMotion/gyroMotion')
+    x,y,z,r = gitr.nc_plotHist('output/history.nc')
+
+    print('x ',np.min(x))
+    print('y ',np.min(y))
+    getAnswer('input/answer.cfg',np.min(x),np.min(y),0,0,0)
+    os.chdir(cwd)
+    #buildGITR('../iter/iter_milestone/3d')

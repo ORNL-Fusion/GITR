@@ -28,10 +28,10 @@ struct curandInitialize{
 #else
          std::mt19937 *_s,
 #endif
-         int _seed) : s(_s), seed(_seed) {} 
+         int _seed) : s(_s),seed(_seed) {} 
     CUDA_CALLABLE_MEMBER_DEVICE
 //void curandInitialize(curandState *s, int seed){
-    void operator()(std::size_t indx) const {
+    void operator()(std::size_t indx) {
 #if USE_CUDA
        uint32_t block_id=blockIdx.y*gridDim.x+blockIdx.x;
        uint32_t blockSize=blockDim.z*blockDim.y*blockDim.x;
