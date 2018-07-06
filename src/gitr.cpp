@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <libconfig.h++>
 #include <vector>
-#include <netcdf>
+#include <netcdf.h>
 #include "ncFile.h"
 #include "utils.h"
 #include "boris.h"
