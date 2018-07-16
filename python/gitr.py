@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 #matplotlib.use('agg')
 #import cv2
 import io,libconf
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+#from mpl_toolkits.mplot3d import Axes3D
+#from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import pylab as pl
 import scipy as sp
 import math
@@ -473,16 +473,16 @@ def plot3dGeom(filename="gitrGeometry.cfg"):
     #ax = fig.gca(projection='3d')
     #ax.plot_trisurf(xs,ys)
     print('xs ys zs', xs, ys, zs)
-    ax = Axes3D(fig)
-    verts = [zip(xs,ys,zs)]
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    ax.set_xlim3d(0.5,2.5)
-    ax.set_ylim3d(-0.2,0.2)
-    ax.set_zlim3d(-0.5,1.5)
-    ax.add_collection3d(Poly3DCollection(verts))
-    plt.savefig('geomPlot.png') 
+    #ax = Axes3D(fig)
+    #verts = [zip(xs,ys,zs)]
+    #ax.set_xlabel('X')
+    #ax.set_ylabel('Y')
+    #ax.set_zlabel('Z')
+    #ax.set_xlim3d(0.5,2.5)
+    #ax.set_ylim3d(-0.2,0.2)
+    #ax.set_zlim3d(-0.5,1.5)
+    #ax.add_collection3d(Poly3DCollection(verts))
+    #plt.savefig('geomPlot.png') 
 def nc_plotHist(filename='output/history.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nT = ncFile.dimensions['nT'].size
@@ -499,6 +499,7 @@ def nc_plotHist(filename='output/history.nc'):
 #    #for i in range(nT):
 #    #    print('r,z ',i, x[i][0],z[i][0]) 
 #    single = x[0][:];
+    plt.close() 
     plt.figure(1,figsize=(6, 10), dpi=60)
     #plot2dGeom(filename='../input/gitrGeometry.cfg')
     if(x.shape[0] ==1):
@@ -526,7 +527,7 @@ def nc_plotHist(filename='output/history.nc'):
     if(x.shape[0] ==1):
         plt.plot(x[0][:],y[0][:],linewidth=0.5)
     else:
-        for i in range(80):
+        for i in range(nP):
           #print('i', i)  
           plt.plot(x[i,:],y[i,:],linewidth=0.5)
     #plt.ylim((-0.02,0.02))
