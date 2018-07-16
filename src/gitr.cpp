@@ -2400,18 +2400,26 @@ int main(int argc, char **argv)
 
   if(world_rank == 0)
   {
-  nP = cfg.lookup("impurityParticleSource.nP");
-  nParticles = nP;
-  if (cfg.lookupValue("timeStep.dt",dt) &&
-      cfg.lookupValue("timeStep.nT",nT))    
-  {
-    cout << "Number of time steps: " << nT << " With dt = " << dt << endl; 
-    cout << "Number of particles: " << nP << endl;              
+    nP = cfg.lookup("impurityParticleSource.nP");
+    nParticles = nP;
+    if (cfg.lookupValue("timeStep.dt",dt) &&
+        cfg.lookupValue("timeStep.nT",nT))    
+    {
+      cout << "Number of time steps: " << nT << " With dt = " << dt << endl; 
+      cout << "Number of particles: " << nP << endl;              
+    }
+    else
+    {std::cout << "ERROR: could not get nT, dt, or nP from input file" << std::endl;}
   }
-  else
-  {std::cout << "ERROR: could not get nT, dt, or nP from input file" << std::endl;}
-  }
-  sim::Array<int> nPPerRank(world_size,0),pStartIndx(world_size,0);
+  #if USE_MPI > 0
+      MPI_Bcast(&dt,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nP,1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nT,1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nParticles,1,MPI_LONG,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+  #endif
+
+  sim::Array<int> nPPerRank(world_size,0),pStartIndx(world_size,0),pDisplacement(world_size,0),pHistPerNode(world_size,0);
   int countP=0;
   if(nP >= world_size)
   {
@@ -2426,23 +2434,18 @@ int main(int argc, char **argv)
       countP = countP + nPPerRank[i];
       std::cout << "countP " << countP << std::endl;
     }
-   }
-   else
-   {
-     for(int i=0;i<nP;i++)
-     {
-       nPPerRank[i] = 1;
-       pStartIndx[i] = countP;
-       countP = countP + nPPerRank[i];
-     }
-   }
-  #if USE_MPI > 0
-      MPI_Bcast(&dt,1,MPI_FLOAT,0,MPI_COMM_WORLD);
-      MPI_Bcast(&nP,1,MPI_INT,0,MPI_COMM_WORLD);
-      MPI_Bcast(&nT,1,MPI_INT,0,MPI_COMM_WORLD);
-      MPI_Bcast(&nParticles,1,MPI_LONG,0,MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
-  #endif
+  }
+  else
+  {
+    for(int i=0;i<nP;i++)
+    {
+      nPPerRank[i] = 1;
+      pStartIndx[i] = countP;
+      countP = countP + nPPerRank[i];
+    }
+  }
+  
+  std::cout << "World rank " << world_rank << " has " << nPPerRank[world_rank] << " starting at " << pStartIndx[world_rank] << std::endl;
   auto particleArray = new Particles(nParticles);
   auto particleArray2 = new Particles(nParticles);
   
@@ -3003,6 +3006,14 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     #endif
     int nHistoriesPerParticle = (nT/subSampleFac) + 1;
     int nHistories = nHistoriesPerParticle*nP;
+    for(int i=0;i<world_size;i++)
+    {
+      pDisplacement[i]=pStartIndx[i]*nHistoriesPerParticle;
+      pHistPerNode[i]=nPPerRank[i]*nHistoriesPerParticle;
+      std::cout << "pdispl and phispn " << i <<  " " << pHistPerNode[i] << " " << pDisplacement[i] << std::endl; 
+    }
+    const int* displ=&pDisplacement[0];
+    const int* phpn=&pHistPerNode[0];
     std::cout << "history array length " << nHistories << std::endl;
     #if USE_CUDA > 0
       sim::Array<float> positionHistoryX(nHistories);
@@ -3356,58 +3367,67 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
 #endif
     for(tt; tt< nT; tt++)
     {
-#ifdef __CUDACC__
-    cudaThreadSynchronize();
-#endif
-#if PARTICLE_TRACKS >0
-   thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
-      history0);
-#endif
-        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleEnd, 
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+
+      #if PARTICLE_TRACKS >0
+        thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
+          history0);
+      #endif
+
+      thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleEnd, 
                 move_boris0);
             
-	    thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
+      thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
                     geometry_check0);
-#if SPECTROSCOPY > 0
-            thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,// particleBegin,particleEnd,
+
+      #if SPECTROSCOPY > 0
+        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,// particleBegin,particleEnd,
                     spec_bin0);
-#endif            
-#if USEIONIZATION > 0
+      #endif  
+
+      #if USEIONIZATION > 0
         thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
                 ionize0);
-#endif
-#if USERECOMBINATION > 0
+      #endif
+
+      #if USERECOMBINATION > 0
         thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
                 recombine0);
-#endif
-#if USEPERPDIFFUSION > 0
+      #endif
+
+      #if USEPERPDIFFUSION > 0
         thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
                 crossFieldDiffusion0);
             
-            thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
+        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
                     geometry_check0);
-#endif
-#if USECOULOMBCOLLISIONS > 0
+      #endif
+
+      #if USECOULOMBCOLLISIONS > 0
         thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd, 
                 coulombCollisions0);
-#endif
-#if USETHERMALFORCE > 0
+      #endif
+      
+      #if USETHERMALFORCE > 0
         thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
                 thermalForce0);
-#endif
+      #endif
 
-#if USESURFACEMODEL > 0
+      #if USESURFACEMODEL > 0
         thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd, 
                 reflection0);
-#endif        
+      #endif        
 
     }
-#if PARTICLE_TRACKS >0
-   tt = nT+subSampleFac-1;
-   std::cout << " tt for final history " << tt << std::endl;
-   thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
+   #if PARTICLE_TRACKS >0
+     tt = nT+subSampleFac-1;
+     std::cout << " tt for final history " << tt << std::endl;
+     thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
       history0);
-#endif
+   #endif
+
 #if USE_OPENMP
 }
 #endif
@@ -3488,15 +3508,58 @@ for(int i=0; i<nP ; i++)
 MPI_Barrier(MPI_COMM_WORLD);
     std::cout << "passed barrier after gather" << std::endl;
 #if PARTICLE_TRACKS >0
-    MPI_Gather(&positionHistoryX[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &positionHistoryXgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&positionHistoryY[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &positionHistoryYgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&positionHistoryZ[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &positionHistoryZgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&velocityHistoryX[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryXgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&velocityHistoryY[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryYgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&velocityHistoryZ[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryZgather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&chargeHistory[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &chargeHistoryGather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&weightHistory[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &weightHistoryGather[0], nPPerRank[world_rank]*nHistoriesPerParticle,MPI_FLOAT, 0, MPI_COMM_WORLD);
+   
+    std::vector<float> exampleArray(4,0.0);
+    std::vector<float> exampleArrayGather(4,0.0);
+    if(world_rank ==0)
+    {
+      exampleArray[0]=1;
+      exampleArray[1]=1;
+    }
+    if(world_rank ==1)
+    {
+      exampleArray[2]=2;
+      exampleArray[3]=2;
+    }
+    std::vector<int> exCount(2,2),exDispl(2,0);
+    exDispl[0] = 0;
+    exDispl[1] = 2;
+    const int* exdispl=&exDispl[0];
+    const int* excount = &exCount[0];
+
+    MPI_Gatherv(&exampleArray[exDispl[world_rank]],2,MPI_FLOAT,&exampleArrayGather[0],excount,exdispl,MPI_FLOAT,0,MPI_COMM_WORLD);
+
+    //for(int i=0;i<4;i++)
+    //{
+    //  std::cout << "rank " << world_rank << " val " << exampleArrayGather[i] << std::endl; 
+    //}
+
 MPI_Barrier(MPI_COMM_WORLD);
+
+    //for(int i=pDisplacement[world_rank];i<pDisplacement[world_rank]+pHistPerNode[world_rank];i++)
+    //{
+    //  std::cout << "Rank i "<< i << " "  << world_rank << "z " << positionHistoryZ[i] << std::endl;
+    //}
+    //std::cout << "starting particle tracks gather "<< world_rank<< " pstart "<< pStartIndx[world_rank] << "nhist " << nHistoriesPerParticle << std::endl;
+    //std::cout << "start gather 2 "<< world_rank<< " nppr "<< nPPerRank[world_rank] << "nhist " << nHistoriesPerParticle << std::endl;
+    MPI_Gatherv(&positionHistoryX[pDisplacement[world_rank]], pHistPerNode[world_rank],MPI_FLOAT,&positionHistoryXgather[0],phpn,displ, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&positionHistoryY[pDisplacement[world_rank]], pHistPerNode[world_rank],MPI_FLOAT,&positionHistoryYgather[0],phpn,displ, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&positionHistoryZ[pDisplacement[world_rank]], pHistPerNode[world_rank], MPI_FLOAT, &positionHistoryZgather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&velocityHistoryX[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryXgather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&velocityHistoryY[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryYgather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&velocityHistoryZ[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryZgather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&chargeHistory[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &chargeHistoryGather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&weightHistory[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &weightHistoryGather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    std::cout << "at barrier tracks gather" << std::endl;
+MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "finished particle tracks gather" << std::endl;
+    //if(world_rank ==0)
+    //{
+    //for(int i=0;i<401;i++)
+    //{
+    //  std::cout << "Rank " << world_rank << "z " << positionHistoryZgather[i] << std::endl;
+    //}
+    //}
 #endif
 
 #if SPECTROSCOPY > 0
@@ -3541,19 +3604,19 @@ MPI_Barrier(MPI_COMM_WORLD);
     //std::cout << "memory access hitwall " 
     //<< particleArray->xprevious[0] << std::endl;
     //std::cout << "transit time counting " << std::endl;
-#if USE_MPI > 0
+  #if USE_MPI > 0
     if(world_rank == 0)
-{
-#endif
-int totalHitWall=0;
-for(int i=0;i<nP;i++)
-{
-  if(particleArray->hitWall[i] > 0.0) totalHitWall++;
-}
-std::cout << "Number and percent of particles that hit wall " << 
-           totalHitWall << " " << totalHitWall*1.0/(nP*1.0) << std::endl;
-#if USE3DTETGEOM > 0
-    float meanTransitTime0 = 0.0;
+      {
+  #endif
+        int totalHitWall=0;
+        for(int i=0;i<nP;i++)
+        {
+          if(particleArray->hitWall[i] > 0.0) totalHitWall++;
+        }
+        std::cout << "Number and percent of particles that hit wall " << 
+        totalHitWall << " " << totalHitWall*1.0/(nP*1.0) << std::endl;
+        #if USE3DTETGEOM > 0
+          float meanTransitTime0 = 0.0;
     /*
     for (int i=0; i<nP; i++)
     {
@@ -3564,36 +3627,36 @@ std::cout << "Number and percent of particles that hit wall " <<
         }
     }
     */
-meanTransitTime0 = meanTransitTime0/nP;
-std::cout << " mean transit time " << meanTransitTime0 << std::endl;
-    int max_boundary = 0;
-    float max_impacts = 0.0;
-    int max_boundary1 = 0;
-    float max_impacts1 = 0.0;
-    std::cout << " new pointers with nLines " << nLines << std::endl;
-    float* impacts = new float[nLines];
-    float* xOut = new float[nP];
-    std::cout << " first one worked "  << std::endl;
-    float* redeposit = new float[nLines];
-    float* startingParticles = new float[nLines];
-    float* surfZ = new float[nLines];
-    //int nA = 90;
-    //int nE = 1000;
-    //float* impactEnergy = new float[nLines*nA*nE];
-std::cout << "before starting loop "<< particleArray->xprevious[0]  << std::endl;
-std::cout << " starting loop "  << std::endl;
-    for (int i=0; i<nLines; i++)
-    {
-        impacts[i] = boundaries[i].impacts;
-        redeposit[i] = boundaries[i].redeposit;
-        startingParticles[i] = boundaries[i].startingParticles;
-        if (boundaries[i].impacts > max_impacts)
-        {
-            max_impacts = boundaries[i].impacts;
-            max_boundary = i;
-        }
-        surfZ[i] = boundaries[i].Z;
-    }
+          meanTransitTime0 = meanTransitTime0/nP;
+          std::cout << " mean transit time " << meanTransitTime0 << std::endl;
+          int max_boundary = 0;
+          float max_impacts = 0.0;
+          int max_boundary1 = 0;
+          float max_impacts1 = 0.0;
+          std::cout << " new pointers with nLines " << nLines << std::endl;
+          float* impacts = new float[nLines];
+          float* xOut = new float[nP];
+          std::cout << " first one worked "  << std::endl;
+          float* redeposit = new float[nLines];
+          float* startingParticles = new float[nLines];
+          float* surfZ = new float[nLines];
+          //int nA = 90;
+          //int nE = 1000;
+          //float* impactEnergy = new float[nLines*nA*nE];
+          std::cout << "before starting loop "<< particleArray->xprevious[0]  << std::endl;
+          std::cout << " starting loop "  << std::endl;
+          for (int i=0; i<nLines; i++)
+          {
+              impacts[i] = boundaries[i].impacts;
+              redeposit[i] = boundaries[i].redeposit;
+              startingParticles[i] = boundaries[i].startingParticles;
+              if (boundaries[i].impacts > max_impacts)
+              {
+                  max_impacts = boundaries[i].impacts;
+                  max_boundary = i;
+              }
+              surfZ[i] = boundaries[i].Z;
+          }
 
     for (int i=0; i<nP; i++)
     {
@@ -3801,7 +3864,7 @@ ncFile1.close();
 
 // Write netCDF output for histories
 NcFile ncFile_hist("output/history.nc", NcFile::replace);
-NcDim nc_nT = ncFile_hist.addDim("nT",nHistories);
+NcDim nc_nT = ncFile_hist.addDim("nT",nHistoriesPerParticle);
 NcDim nc_nP = ncFile_hist.addDim("nP",nP);
 vector<NcDim> dims_hist;
 dims_hist.push_back(nc_nP);
@@ -3819,6 +3882,14 @@ NcVar nc_vz = ncFile_hist.addVar("vz",ncDouble,dims_hist);
 NcVar nc_charge = ncFile_hist.addVar("charge",ncDouble,dims_hist);
 NcVar nc_weight = ncFile_hist.addVar("weight",ncDouble,dims_hist);
 #if USE_MPI > 0
+    //if(world_rank ==0)
+    //{
+    //for(int i=0;i<401;i++)
+    //{
+    //  std::cout << "Rank " << world_rank << "z " << positionHistoryZgather[i] << std::endl;
+    //}
+    //}
+std::cout << "printing gathered data" << std::endl;
 nc_x.putVar(&positionHistoryXgather[0]);
 nc_y.putVar(&positionHistoryYgather[0]);
 nc_z.putVar(&positionHistoryZgather[0]);
@@ -3830,6 +3901,7 @@ nc_vz.putVar(&velocityHistoryZgather[0]);
 nc_charge.putVar(&chargeHistoryGather[0]);
 nc_weight.putVar(&weightHistoryGather[0]);
 #else
+std::cout << "printing NOT gathered data" << std::endl;
 nc_x.putVar(positionHistoryX[0]);
 nc_y.putVar(positionHistoryY[0]);
 nc_z.putVar(positionHistoryZ[0]);
