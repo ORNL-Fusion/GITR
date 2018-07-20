@@ -30,6 +30,7 @@
 class Particles : public ManagedAllocation {
 public: 
   std::size_t nParticles;  
+  sim::Array<int> indx;
   sim::Array<float> x;
   sim::Array<float> y;
   sim::Array<float> z;
@@ -88,6 +89,7 @@ public:
   CUDA_CALLABLE_MEMBER
   void  setParticle(int indx, float x, float y, float z, float Ex, float Ey, float Ez, float Z, float amu, float charge) {
 
+        this->indx[indx] = indx;
         this->xprevious[indx] = x;
         this->yprevious[indx] = y;
         this->zprevious[indx] = z;
@@ -116,6 +118,7 @@ public:
   CUDA_CALLABLE_MEMBER
   void  setParticleV(int indx, float x, float y, float z, float Vx, float Vy, float Vz, float Z, float amu, float charge) {
 
+        this->indx[indx] = indx;
         this->xprevious[indx] = x;
         this->yprevious[indx] = y;
         this->zprevious[indx] = z;
@@ -133,8 +136,28 @@ public:
 
       };    
   CUDA_CALLABLE_MEMBER
+  void  setP(const Particles* p,int indx,int n) {
+
+        //this->xprevious[indx] = x;
+        //this->yprevious[indx] = y;
+        //this->zprevious[indx] = z;
+        //this->x[indx] = x;
+        //this->y[indx] = y;
+        this->z[indx] = p->z[n];
+        this->weight[indx] = p->weight[n];
+        //this->Z[indx] = Z;
+        //this->charge[indx]= charge;
+        //this->amu[indx] = amu;
+        //this->hitWall[indx] = 0.0;
+        //this->wallIndex[indx] = 0;
+        //this->vx[indx] = Vx;
+        //this->vy[indx] = Vy;
+        //this->vz[indx] = Vz;
+
+      };    
+  CUDA_CALLABLE_MEMBER
   Particles(std::size_t nP) :
-   nParticles{nP}, x{nP}, y{nP}, z{nP}, xprevious{nP}, yprevious{nP}, zprevious{nP},
+   nParticles{nP}, indx{0}, x{nP}, y{nP}, z{nP}, xprevious{nP}, yprevious{nP}, zprevious{nP},
    vx{nP}, vy{nP}, vz{nP}, Z{nP}, amu{nP}, charge{nP}, newVelocity{nP},
 #if PARTICLESEEDS > 0
   //    streams{nP},streams_rec{nP},streams_collision1{nP},streams_collision2{nP},
