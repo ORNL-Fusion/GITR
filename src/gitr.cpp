@@ -60,7 +60,9 @@
 #include <thrust/sequence.h>
 #include <thrust/transform.h>
 #include <thrust/functional.h>
-
+#include <thrust/sort.h>
+#include <thrust/binary_search.h>
+#include "sortParticles.h"
 using namespace std;
 using namespace libconfig;
 
@@ -71,7 +73,6 @@ using namespace libconfig;
 using namespace netCDF;
 using namespace exceptions;
 using namespace netCDF::exceptions;
-
 int main(int argc, char **argv)
 {
   typedef std::chrono::high_resolution_clock Time;
@@ -2419,7 +2420,7 @@ int main(int argc, char **argv)
       MPI_Barrier(MPI_COMM_WORLD);
   #endif
 
-  sim::Array<int> nPPerRank(world_size,0),pStartIndx(world_size,0),pDisplacement(world_size,0),pHistPerNode(world_size,0);
+  sim::Array<int> nPPerRank(world_size,0),pStartIndx(world_size,0),pDisplacement(world_size,0),pHistPerNode(world_size,0),nActiveParticlesOnRank(world_size,0);
   int countP=0;
   if(nP >= world_size)
   {
@@ -2445,9 +2446,13 @@ int main(int argc, char **argv)
     }
   }
   
+  for(int i=0;i<world_size;i++)
+  {
+    nActiveParticlesOnRank[i] = nPPerRank[i];
+  }
   std::cout << "World rank " << world_rank << " has " << nPPerRank[world_rank] << " starting at " << pStartIndx[world_rank] << std::endl;
   auto particleArray = new Particles(nParticles);
-  auto particleArray2 = new Particles(nParticles);
+  //auto particleArray2 = new Particles(nParticles);
   
   float x,y,z,E,vtotal,vx,vy,vz,Ex,Ey,Ez,amu,Z,charge,phi,theta,Ex_prime,Ez_prime,theta_transform;     
   if(world_rank == 0)
@@ -2808,8 +2813,9 @@ std::cout << "closed ncp " << std::endl;
                     px(nP),py(nP),pz(nP),pvx(nP),pvy(nP),pvz(nP);
   int surfIndexMod = 0;
   float eVec[3] = {0.0};
-  for (int i=0; i< nP ; i++)
+  for (int i=pStartIndx[world_rank]; i< pStartIndx[world_rank]+nPPerRank[world_rank] ; i++)
   {
+    std::cout<< "setting particle " << i << std::endl;
     #if PARTICLE_SOURCE_SPACE > 0 // File source
       #if USE3DTETGEOM > 0
       surfIndexMod = i%nSourceSurfaces;
@@ -2925,8 +2931,8 @@ std::cout << "closed ncp " << std::endl;
       vy = vypfile[i];
       vz = vzpfile[i];
     #endif  
-//    std::cout << "particle xyz Exyz Z amu charge " << x << " " << y << " " << z << " "
-//       << Ex << " " << Ey << " " << Ez << " " << Z << " " << amu << " " << charge << " "  << std::endl;
+    std::cout << "particle xyz Exyz Z amu charge " << x << " " << y << " " << z << " "
+       << vx << " " << vy << " " << vz << " " << Z << " " << amu << " " << charge << " "  << std::endl;
     particleArray->setParticleV(i,x,y, z, vx, vy, vz, Z, amu, charge);   
     #if PARTICLE_SOURCE_SPACE > 0
     pSurfNormX[i] = -boundaries[currentSegment].a/boundaries[currentSegment].plane_norm;
@@ -2945,29 +2951,29 @@ std::cout << "closed ncp " << std::endl;
   { 
 #endif
 std::cout <<" about to write ncFile_particles " << std::endl;
-    NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
-    std::cout <<" opened file " << std::endl;
-    NcDim pNP = ncFile_particles.addDim("nP",nP);
-    NcVar p_surfNormx = ncFile_particles.addVar("surfNormX",ncFloat,pNP);
-    NcVar p_surfNormy = ncFile_particles.addVar("surfNormY",ncFloat,pNP);
-    NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ",ncFloat,pNP);
-    NcVar p_vx = ncFile_particles.addVar("vx",ncFloat,pNP);
-    NcVar p_vy = ncFile_particles.addVar("vy",ncFloat,pNP);
-    NcVar p_vz = ncFile_particles.addVar("vz",ncFloat,pNP);
-    NcVar p_x = ncFile_particles.addVar("x",ncFloat,pNP);
-    NcVar p_y = ncFile_particles.addVar("y",ncFloat,pNP);
-    NcVar p_z = ncFile_particles.addVar("z",ncFloat,pNP);
-    std::cout <<" added vars " << std::endl;
-    p_surfNormx.putVar(&pSurfNormX[0]);
-    p_surfNormy.putVar(&pSurfNormY[0]);
-    p_surfNormz.putVar(&pSurfNormZ[0]);
-    p_vx.putVar(&pvx[0]);
-    p_vy.putVar(&pvy[0]);
-    p_vz.putVar(&pvz[0]);
-    p_x.putVar(&px[0]);
-    p_y.putVar(&py[0]);
-    p_z.putVar(&pz[0]);
-    ncFile_particles.close();
+    //NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
+    //std::cout <<" opened file " << std::endl;
+    //NcDim pNP = ncFile_particles.addDim("nP",nP);
+    //NcVar p_surfNormx = ncFile_particles.addVar("surfNormX",ncFloat,pNP);
+    //NcVar p_surfNormy = ncFile_particles.addVar("surfNormY",ncFloat,pNP);
+    //NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ",ncFloat,pNP);
+    //NcVar p_vx = ncFile_particles.addVar("vx",ncFloat,pNP);
+    //NcVar p_vy = ncFile_particles.addVar("vy",ncFloat,pNP);
+    //NcVar p_vz = ncFile_particles.addVar("vz",ncFloat,pNP);
+    //NcVar p_x = ncFile_particles.addVar("x",ncFloat,pNP);
+    //NcVar p_y = ncFile_particles.addVar("y",ncFloat,pNP);
+    //NcVar p_z = ncFile_particles.addVar("z",ncFloat,pNP);
+    //std::cout <<" added vars " << std::endl;
+    //p_surfNormx.putVar(&pSurfNormX[0]);
+    //p_surfNormy.putVar(&pSurfNormY[0]);
+    //p_surfNormz.putVar(&pSurfNormZ[0]);
+    //p_vx.putVar(&pvx[0]);
+    //p_vy.putVar(&pvy[0]);
+    //p_vz.putVar(&pvz[0]);
+    //p_x.putVar(&px[0]);
+    //p_y.putVar(&py[0]);
+    //p_z.putVar(&pz[0]);
+    //ncFile_particles.close();
 #if USE_MPI > 0
   }
 #endif
@@ -3125,6 +3131,9 @@ std::cout <<" about to write ncFile_particles " << std::endl;
                         &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
                         &closeGeom.front(),
                         nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+      #if USE_SORT > 0
+        sortParticles sort0(particleArray,nP,0.25,pStartIndx[world_rank],nActiveParticlesOnRank[world_rank],&state1.front());
+      #endif
 #if SPECTROSCOPY > 0
                  spec_bin   spec_bin0(particleArray,nBins,net_nX,net_nY, net_nZ, &gridX_bins.front(),&gridY_bins.front(),
                         &gridZ_bins.front(), &net_Bins.front(),dt);
@@ -3360,35 +3369,42 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
     printf("Hello world from processor %s, rank %d"
            " out of %d processors and cpu_thread_id %i \n",
                       processor_name, world_rank, world_size,cpu_thread_id);
+    MPI_Barrier(MPI_COMM_WORLD);
 #endif
     std::cout << "nDevices " << nDevices  << "  " << cpu_thread_id << " " << num_cpu_threads<< " particle index " << cpu_thread_id*nP/nDevices << " " << (cpu_thread_id+1)*nP/nDevices - 1 << std::endl;
 //int cpu_thread_id = 0;
 //nDevices = 2;
 #endif
+#if USE_MPI > 0 
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
     for(tt; tt< nT; tt++)
     {
+      #if USE_SORT > 0
+        thrust::for_each(thrust::device,tmpInt.begin(),tmpInt.end(),sort0);
+      #endif
       #ifdef __CUDACC__
         cudaThreadSynchronize();
       #endif
 
       #if PARTICLE_TRACKS >0
-        thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
-          history0);
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],history0);
       #endif
 
-      thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleEnd, 
+      thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
                 move_boris0);
             
-      thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
+      thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
                     geometry_check0);
 
       #if SPECTROSCOPY > 0
-        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,// particleBegin,particleEnd,
+        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,
                     spec_bin0);
       #endif  
 
       #if USEIONIZATION > 0
-        thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
                 ionize0);
       #endif
 
@@ -3422,9 +3438,9 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
 
     }
    #if PARTICLE_TRACKS >0
-     tt = nT+subSampleFac-1;
+     tt = nT;
      std::cout << " tt for final history " << tt << std::endl;
-     thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
+     thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
       history0);
    #endif
 
@@ -3804,6 +3820,56 @@ nc_charge0.putVar(&particleArray->charge[0]);
 #endif
 ncFile0.close();
        std::cout << "closed positions opening surface " << std::endl;
+       //auto particleArray2 = new Particles(1);
+       //std::cout << "particleArray2 z weight"<<particleArray2->z[0] << " " << particleArray2->weight[0] << std::endl;
+      //particleArray2->setP(particleArray,0,0);
+
+       //std::cout << "particleArray2 z weight"<<particleArray2->z[0] << " " << particleArray2->weight[0] << std::endl;
+       //sim::Array<thrust::pair<int,float>> pair1(100);
+       //sim::Array<float> weights1(100,0.0);
+       //sim::Array<float> charge1(particleArray->charge);
+       //charge1=particleArray->weight;
+       //for(int i=0;i<nP;i++) std::cout << " charge "<< i << " "  << charge1[i] << std::endl;
+       ////thrust::transform(charge1.begin(),
+       //for(int i=0;i<100;i++)
+       //{
+       //  pair1[i].first = i;
+       //  pair1[i].second = 1.0*i;
+       //  weights1[i] = 1.0*i;
+       //std::cout << "pair "  << " " << pair1[i].first << " " << pair1[i].second << std::endl;
+       ////for (auto it= pair1.begin();it !=pair1.end();it++)
+       ////{
+       ////  //pair1[it]=.first=1;
+       ////  //pair1[it].second=1.0;
+       ////  std::cout << "pair " << it << " " << pair1[it].first << " " << pair1[it].second << std::endl;
+       //}
+       //thrust::sort(pair1.begin(),pair1.end(),ordering());
+       //for(int i=0;i<100;i++)
+       //{
+       //std::cout << "pair "  << " " << pair1[i].first << " " << pair1[i].second << std::endl;
+       //weights1[i] = pair1[i].second; 
+       //}
+       //sim::Array<float> weightThreshold(1,38.0);
+       //sim::Array<int> lowerBoundIndex(1,0);
+       //for(int i=0;i<100;i++)
+       //{
+       //std::cout << "weights "  << " " << weights1[i] << " " << weightThreshold[0] << std::endl;
+       //}
+       //thrust::lower_bound(weights1.begin(), weights1.end(),
+       //                    weightThreshold.begin(),weightThreshold.end() , 
+       // 		   lowerBoundIndex.begin(),thrust::less<float>());
+       //std::cout << " min index " << lowerBoundIndex[0] << " " << weights1[lowerBoundIndex[0]] << std::endl;			   
+       //float tmpWeight = 0.0;
+       //for(int i=0;i<=lowerBoundIndex[0];i++)
+       //{
+       //tmpWeight = weights1[i];
+       //weights1[i] = pair1[100-1-i].second;
+       //weights1[100-1-i] = tmpWeight;
+       //}
+       //for(int i=0;i<100;i++)
+       //{
+       //std::cout << "weights "  << " " << weights1[i] << " " << weightThreshold[0] << std::endl;
+       //}
 #if (USESURFACEMODEL > 0 || FLUX_EA > 0)
 std::vector<int> surfaceNumbers(nSurfaces,0);
 int srf = 0;
