@@ -176,14 +176,14 @@ namespace sim {
     /*! Add element to end of the array
      * Copies argument to the back of array and increased the size by one
      */
-/*
+
     void push_back(const T &value) {
       if (size_ + 1 > capacity_)
         throw std::runtime_error("Not enough capacity to push_back");
       else
         data_[size_++] = value;
     }
-*/
+
     /*! Add multiple elements of a single value to end of the array
      * Copies argument value push_count times and increased the size by push_count
      */
