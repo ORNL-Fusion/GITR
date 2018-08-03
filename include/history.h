@@ -34,11 +34,13 @@ struct history {
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const 
-    {
+    {  
+       //std::cout << "tt subsamplefac indx, nT " << tt << " "<< subSampleFac << " " << indx << " " << nT << std::endl;
        if (tt % subSampleFac == 0)
        {
-        int histInd = indx*nT/subSampleFac + tt/subSampleFac;
-        if(histInd < (nP*nT/subSampleFac+1) && histInd >= 0 && indx < nP)
+        int histInd = indx*(nT/subSampleFac+1) + tt/subSampleFac;
+       //std::cout << "histInd " << histInd << std::endl;
+        if(histInd <= (nP*(nT/subSampleFac+1)) && histInd >= 0 && indx < nP)
         {
 	  //std::cout << "inside history " << indx << " " << histInd << " " << particlesPointer->zprevious[indx] << std::endl;
           histX[histInd] = particlesPointer->xprevious[indx];
