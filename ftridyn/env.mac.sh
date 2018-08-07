@@ -3,5 +3,6 @@ export PYTHONPATH=/Users/tyounkin/Code/numpyBuild-1.14.3/lib.macosx-10.12-x86_64
 export PYTHONPATH=/Users/tyounkin/Code/ftridyn2/utils/:$PYTHONPATH
 export PYTHONPATH=/Users/tyounkin/Code/ftridyn2/src/:$PYTHONPATH
 export PYTHONPATH=/Users/tyounkin/Code/gitr2/ftridyn/:$PYTHONPATH
+export PYTHONPATH=$HOME/Code/FtridynFromPython/build:$PYTHONPATH
 
 

@@ -2813,9 +2813,9 @@ std::cout << "closed ncp " << std::endl;
                     px(nP),py(nP),pz(nP),pvx(nP),pvy(nP),pvz(nP);
   int surfIndexMod = 0;
   float eVec[3] = {0.0};
-  for (int i=pStartIndx[world_rank]; i< pStartIndx[world_rank]+nPPerRank[world_rank] ; i++)
+  for (int i=0; i<nP ; i++)
   {
-    std::cout<< "setting particle " << i << std::endl;
+    //std::cout<< "setting particle " << i << std::endl;
     #if PARTICLE_SOURCE_SPACE > 0 // File source
       #if USE3DTETGEOM > 0
       surfIndexMod = i%nSourceSurfaces;
@@ -2931,8 +2931,8 @@ std::cout << "closed ncp " << std::endl;
       vy = vypfile[i];
       vz = vzpfile[i];
     #endif  
-    std::cout << "particle xyz Exyz Z amu charge " << x << " " << y << " " << z << " "
-       << vx << " " << vy << " " << vz << " " << Z << " " << amu << " " << charge << " "  << std::endl;
+    //std::cout << "particle xyz Exyz Z amu charge " << x << " " << y << " " << z << " "
+      // << vx << " " << vy << " " << vz << " " << Z << " " << amu << " " << charge << " "  << std::endl;
     particleArray->setParticleV(i,x,y, z, vx, vy, vz, Z, amu, charge);   
     #if PARTICLE_SOURCE_SPACE > 0
     pSurfNormX[i] = -boundaries[currentSegment].a/boundaries[currentSegment].plane_norm;
@@ -2951,29 +2951,29 @@ std::cout << "closed ncp " << std::endl;
   { 
 #endif
 std::cout <<" about to write ncFile_particles " << std::endl;
-    //NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
-    //std::cout <<" opened file " << std::endl;
-    //NcDim pNP = ncFile_particles.addDim("nP",nP);
-    //NcVar p_surfNormx = ncFile_particles.addVar("surfNormX",ncFloat,pNP);
-    //NcVar p_surfNormy = ncFile_particles.addVar("surfNormY",ncFloat,pNP);
-    //NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ",ncFloat,pNP);
-    //NcVar p_vx = ncFile_particles.addVar("vx",ncFloat,pNP);
-    //NcVar p_vy = ncFile_particles.addVar("vy",ncFloat,pNP);
-    //NcVar p_vz = ncFile_particles.addVar("vz",ncFloat,pNP);
-    //NcVar p_x = ncFile_particles.addVar("x",ncFloat,pNP);
-    //NcVar p_y = ncFile_particles.addVar("y",ncFloat,pNP);
-    //NcVar p_z = ncFile_particles.addVar("z",ncFloat,pNP);
-    //std::cout <<" added vars " << std::endl;
-    //p_surfNormx.putVar(&pSurfNormX[0]);
-    //p_surfNormy.putVar(&pSurfNormY[0]);
-    //p_surfNormz.putVar(&pSurfNormZ[0]);
-    //p_vx.putVar(&pvx[0]);
-    //p_vy.putVar(&pvy[0]);
-    //p_vz.putVar(&pvz[0]);
-    //p_x.putVar(&px[0]);
-    //p_y.putVar(&py[0]);
-    //p_z.putVar(&pz[0]);
-    //ncFile_particles.close();
+    NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
+    std::cout <<" opened file " << std::endl;
+    NcDim pNP = ncFile_particles.addDim("nP",nP);
+    NcVar p_surfNormx = ncFile_particles.addVar("surfNormX",ncFloat,pNP);
+    NcVar p_surfNormy = ncFile_particles.addVar("surfNormY",ncFloat,pNP);
+    NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ",ncFloat,pNP);
+    NcVar p_vx = ncFile_particles.addVar("vx",ncFloat,pNP);
+    NcVar p_vy = ncFile_particles.addVar("vy",ncFloat,pNP);
+    NcVar p_vz = ncFile_particles.addVar("vz",ncFloat,pNP);
+    NcVar p_x = ncFile_particles.addVar("x",ncFloat,pNP);
+    NcVar p_y = ncFile_particles.addVar("y",ncFloat,pNP);
+    NcVar p_z = ncFile_particles.addVar("z",ncFloat,pNP);
+    std::cout <<" added vars " << std::endl;
+    p_surfNormx.putVar(&pSurfNormX[0]);
+    p_surfNormy.putVar(&pSurfNormY[0]);
+    p_surfNormz.putVar(&pSurfNormZ[0]);
+    p_vx.putVar(&pvx[0]);
+    p_vy.putVar(&pvy[0]);
+    p_vz.putVar(&pvz[0]);
+    p_x.putVar(&px[0]);
+    p_y.putVar(&py[0]);
+    p_z.putVar(&pz[0]);
+    ncFile_particles.close();
 #if USE_MPI > 0
   }
 #endif
@@ -3132,7 +3132,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
                         &closeGeom.front(),
                         nEdist, E0dist, Edist, nAdist, A0dist, Adist);
       #if USE_SORT > 0
-        sortParticles sort0(particleArray,nP,0.25,pStartIndx[world_rank],nActiveParticlesOnRank[world_rank],&state1.front());
+        sortParticles sort0(particleArray,nP,0.01,tt,10000,pStartIndx.data(),nActiveParticlesOnRank.data(),world_rank,&state1.front());
       #endif
 #if SPECTROSCOPY > 0
                  spec_bin   spec_bin0(particleArray,nBins,net_nX,net_nY, net_nZ, &gridX_bins.front(),&gridY_bins.front(),
@@ -3399,8 +3399,7 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
                     geometry_check0);
 
       #if SPECTROSCOPY > 0
-        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,
-                    spec_bin0);
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],spec_bin0);
       #endif  
 
       #if USEIONIZATION > 0
@@ -3409,31 +3408,25 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #endif
 
       #if USERECOMBINATION > 0
-        thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin,particleEnd,
-                recombine0);
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],recombine0);
       #endif
 
       #if USEPERPDIFFUSION > 0
-        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
-                crossFieldDiffusion0);
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],crossFieldDiffusion0);
             
-        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
-                    geometry_check0);
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],geometry_check0);
       #endif
 
       #if USECOULOMBCOLLISIONS > 0
-        thrust::for_each(thrust::device, particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd, 
-                coulombCollisions0);
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],coulombCollisions0);
       #endif
       
       #if USETHERMALFORCE > 0
-        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd,
-                thermalForce0);
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],thermalForce0);
       #endif
 
       #if USESURFACEMODEL > 0
-        thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,//particleBegin, particleEnd, 
-                reflection0);
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],reflection0);
       #endif        
 
     }
@@ -3581,13 +3574,15 @@ MPI_Barrier(MPI_COMM_WORLD);
 #if SPECTROSCOPY > 0
 MPI_Barrier(MPI_COMM_WORLD);
 std::cout <<"Starting spectroscopy reduce " << world_rank<< std::endl;
-MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], (nBins+1)*net_nX*net_nZ, 
+MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], (nBins+1)*net_nX*net_nY*net_nZ, 
            MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 std::cout <<"Done with spectroscopy reduce " << world_rank<< std::endl;
 MPI_Barrier(MPI_COMM_WORLD);
 #endif
 #if (USESURFACEMODEL > 0 || FLUX_EA > 0)
 //MPI_Barrier(MPI_COMM_WORLD);
+std::cout <<"Starting surface reduce " << world_rank<< std::endl;
+for(int i=0;i<nSurfaces;i++) std::cout << surfaces->grossDeposition[i]<<std::endl;
 MPI_Reduce(&surfaces->grossDeposition[0], &grossDeposition[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
 //MPI_Barrier(MPI_COMM_WORLD);
@@ -4002,6 +3997,10 @@ NcVar nc_gridR = ncFile.addVar("gridR",ncDouble,nc_nR);
 NcVar nc_gridZ = ncFile.addVar("gridZ",ncDouble,nc_nZ);
 nc_gridR.putVar(&gridX_bins[0]);
 nc_gridZ.putVar(&gridZ_bins[0]);
+#if SPECTROSCOPY > 2
+NcVar nc_gridY = ncFile.addVar("gridY",ncDouble,nc_nY);
+nc_gridY.putVar(&gridY_bins[0]);
+#endif
 nc_n.putVar(&net_BinsTotal[0]);
 ncFile.close();
 #endif
