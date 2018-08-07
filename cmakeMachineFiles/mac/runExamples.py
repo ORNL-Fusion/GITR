@@ -118,6 +118,8 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     code_flags = code_flags+" -DFLUX_EA="+str(FLUX_EA)
     FORCE_EVAL=config.flags.FORCE_EVAL
     code_flags = code_flags+" -DFORCE_EVAL="+str(FORCE_EVAL)
+    USE_SORT=config.flags.USE_SORT
+    code_flags = code_flags+" -DUSE_SORT="+str(USE_SORT)
     CHECK_COMPATIBILITY=config.flags.CHECK_COMPATIBILITY
     code_flags = code_flags+" -DCHECK_COMPATIBILITY="+str(CHECK_COMPATIBILITY)
     
@@ -136,6 +138,7 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     print(env)
     #print colored('Completed clean','green')
     cmake_command = "cmake " +cmake_flags+code_flags
+    print cmake_command
     p1 = subprocess.Popen(cmake_command,shell=True,env=env, stdout=subprocess.PIPE)
     output, error = p1.communicate()
     p1.wait()
@@ -169,7 +172,7 @@ def getAnswer(filename,x,y,r,z,charge):
 	
     return passed	
 if __name__ == "__main__":
-    #cwd = os.getcwd()
+    cwd = os.getcwd()
     #buildGITR('../examples/operatorTests/straightLine/2Dgeom')
     #runGITR()
     #x,y,r,z,charge = gitr.nc_plotPositions('output/positions.nc')
@@ -212,5 +215,15 @@ if __name__ == "__main__":
     print('x ',np.min(x))
     print('y ',np.min(y))
     getAnswer('input/answer.cfg',np.min(x),np.min(y),0,0,0)
+    os.chdir(cwd)
+    buildGITR('../examples/operatorTests/singleParticleMotion/eCrossBdrift')
+    runGITR('../examples/operatorTests/singleParticleMotion/eCrossBdrift')
+    x,y,z,r = gitr.nc_plotHist('output/history.nc')
+    x = x[0][:]
+    y = y[0][:]
+    z = z[0][:]
+    print('x ',x.shape,x[-1])
+    print('y ',y[-1])
+    getAnswer('input/answer.cfg',float(x[-1]),float(y[-1]),0.0,float(z[-1]),1.0)
     os.chdir(cwd)
     #buildGITR('../iter/iter_milestone/3d')

@@ -38,19 +38,20 @@ void operator()(std::size_t indx) const
        //std::cout << "tt subsamplefac indx, nT " << tt << " "<< subSampleFac << " " << indx << " " << nT << std::endl;
        if (tt % subSampleFac == 0)
        {
-        int histInd = indx*(nT/subSampleFac+1) + tt/subSampleFac;
+       int indexP = particlesPointer->index[indx];
+        int histInd = indexP*(nT/subSampleFac+1) + tt/subSampleFac;
        //std::cout << "histInd " << histInd << std::endl;
-        if(histInd <= (nP*(nT/subSampleFac+1)) && histInd >= 0 && indx < nP)
+        if(histInd <= (nP*(nT/subSampleFac+1)) && histInd >= 0 && indexP < nP)
         {
 	  //std::cout << "inside history " << indx << " " << histInd << " " << particlesPointer->zprevious[indx] << std::endl;
-          histX[histInd] = particlesPointer->xprevious[indx];
-          histY[histInd] = particlesPointer->yprevious[indx];
-          histZ[histInd] = particlesPointer->zprevious[indx];
-          histvx[histInd] = particlesPointer->vx[indx];
-          histvy[histInd] = particlesPointer->vy[indx];
-          histvz[histInd] = particlesPointer->vz[indx];
-          histcharge[histInd] = particlesPointer->charge[indx];
-          histweight[histInd] = particlesPointer->weight[indx];
+          histX[histInd] = particlesPointer->xprevious[indexP];
+          histY[histInd] = particlesPointer->yprevious[indexP];
+          histZ[histInd] = particlesPointer->zprevious[indexP];
+          histvx[histInd] = particlesPointer->vx[indexP];
+          histvy[histInd] = particlesPointer->vy[indexP];
+          histvz[histInd] = particlesPointer->vz[indexP];
+          histcharge[histInd] = particlesPointer->charge[indexP];
+          histweight[histInd] = particlesPointer->weight[indexP];
         }
         //else
         //{
