@@ -19,7 +19,7 @@ import scipy as sp
 import math
 import os
 import shutil
-
+import math
 def copy_folder(from_folder, to_folder):
     copy_tree(from_folder, to_folder)
 
@@ -472,7 +472,7 @@ def plot3dGeom(filename="gitrGeometry.cfg"):
     #fig.patch.set_facecolor('black')
     #ax = fig.gca(projection='3d')
     #ax.plot_trisurf(xs,ys)
-    print('xs ys zs', xs, ys, zs)
+    #print('xs ys zs', xs, ys, zs)
     #ax = Axes3D(fig)
     #verts = [zip(xs,ys,zs)]
     #ax.set_xlabel('X')
@@ -483,60 +483,66 @@ def plot3dGeom(filename="gitrGeometry.cfg"):
     #ax.set_zlim3d(-0.5,1.5)
     #ax.add_collection3d(Poly3DCollection(verts))
     #plt.savefig('geomPlot.png') 
-def nc_plotHist(filename='output/history.nc'):
+def nc_plotHist(filename='output/history.nc',plot=1):
     ncFile = netCDF4.Dataset(filename,"r")
     nT = ncFile.dimensions['nT'].size
     nP = ncFile.dimensions['nP'].size
     x = np.reshape(np.array(ncFile.variables['x']),(nP,nT))
     y = np.reshape(np.array(ncFile.variables['y']),(nP,nT))
     z = np.reshape(np.array(ncFile.variables['z']),(nP,nT))
+    vx = np.reshape(np.array(ncFile.variables['vx']),(nP,nT))
+    vy = np.reshape(np.array(ncFile.variables['vy']),(nP,nT))
+    vz = np.reshape(np.array(ncFile.variables['vz']),(nP,nT))
+    charge = np.reshape(np.array(ncFile.variables['charge']),(nP,nT))
+    weight = np.reshape(np.array(ncFile.variables['weight']),(nP,nT))
     r = np.sqrt(np.multiply(x,x) + np.multiply(y,y))
-#    print('z ', z[:,0])
-    print('x ', x.shape)
-    print('x ', x[0,:])
-    print('r ', r.shape)
-#    print('z ', z[0][:].shape)
-#    #for i in range(nT):
-#    #    print('r,z ',i, x[i][0],z[i][0]) 
-#    single = x[0][:];
-    plt.close() 
-    plt.figure(1,figsize=(6, 10), dpi=60)
-    #plot2dGeom(filename='../input/gitrGeometry.cfg')
-    if(x.shape[0] ==1):
-        plt.plot(r[0][:],z[0][:],linewidth=5,color='green')
-    else:
-        for i in range(nP):
-          #print('i', i)  
-#          print('size', r[:,i].size)  
-#          print('r ', r[:,i])  
-          plt.plot(r[i,:],z[i,:],linewidth=0.5)
-#          #plt.plot(r[i,:],z[i,:],linewidth=1.0)
-#          #plt.setp(linewidth=0.2)
-    #plt.xlim((5.3,6.0))
-    #plt.ylim((-4.4,-3.0))
-    plt.autoscale(enable=True, axis='x', tight=True)
-    plt.title('DIII-D W Impurity Simulation',fontsize=20)
-    plt.xlabel('r [m]',fontsize=16)
-    plt.ylabel('z [m]',fontsize=16)
-    #plt.axis('equal')
-    print('saving tracksRZ')
-    plt.savefig('tracksRZ.png')
-    plt.show()
-    plt.close()
-    plt.figure(1,figsize=(10, 6), dpi=100)
-    if(x.shape[0] ==1):
-        plt.plot(x[0][:],y[0][:],linewidth=0.5)
-    else:
-        for i in range(nP):
-          #print('i', i)  
-          plt.plot(x[i,:],y[i,:],linewidth=0.5)
-    #plt.ylim((-0.02,0.02))
-    #plt.xlim((-0.02,0.02))
-    plt.autoscale(enable=True, axis='x', tight=True)
-    plt.axis('equal')
-    print('saving tracksXY')
-    plt.savefig('tracksXY.png')
-    return x,y,z,r
+    #print('z ', z[:,0])
+    #print('x ', x.shape)
+    #print('x ', x[0,:])
+    #print('r ', r.shape)
+    #print('z ', z[0][:].shape)
+    ##for i in range(nT):
+    ##    print('r,z ',i, x[i][0],z[i][0]) 
+    #single = x[0][:];
+    if plot ==1:
+        plt.close() 
+        plt.figure(1,figsize=(6, 10), dpi=60)
+        #plot2dGeom(filename='../input/gitrGeometry.cfg')
+        if(x.shape[0] ==1):
+            plt.plot(r[0][:],z[0][:],linewidth=5,color='green')
+        else:
+            for i in range(nP):
+              #print('i', i)  
+#              print('size', r[:,i].size)  
+#              print('r ', r[:,i])  
+              plt.plot(r[i,:],z[i,:],linewidth=0.5)
+#              #plt.plot(r[i,:],z[i,:],linewidth=1.0)
+#              #plt.setp(linewidth=0.2)
+        #plt.xlim((5.3,6.0))
+        #plt.ylim((-4.4,-3.0))
+        plt.autoscale(enable=True, axis='x', tight=True)
+        plt.title('DIII-D W Impurity Simulation',fontsize=20)
+        plt.xlabel('r [m]',fontsize=16)
+        plt.ylabel('z [m]',fontsize=16)
+        #plt.axis('equal')
+        print('saving tracksRZ')
+        plt.savefig('tracksRZ.png')
+        plt.show()
+        plt.close()
+        plt.figure(1,figsize=(10, 6), dpi=100)
+        if(x.shape[0] ==1):
+            plt.plot(x[0][:],y[0][:],linewidth=0.5)
+        else:
+            for i in range(nP):
+              #print('i', i)  
+              plt.plot(x[i,:],y[i,:],linewidth=0.5)
+        #plt.ylim((-0.02,0.02))
+        #plt.xlim((-0.02,0.02))
+        plt.autoscale(enable=True, axis='x', tight=True)
+        plt.axis('equal')
+        print('saving tracksXY')
+        plt.savefig('tracksXY.png')
+    return x,y,z,r,vx,vy,vz,charge,weight,nP,nT
 def nc_plotSpec(filename='spec.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
     nBins = ncFile.dimensions['nBins'].size

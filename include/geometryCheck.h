@@ -655,6 +655,8 @@ void operator()(std::size_t indx) const {
     int surfaceHit = boundaryVector[particlesPointer->wallHit[indx]].surfaceNumber;
     int surface = boundaryVector[particlesPointer->wallHit[indx]].surface;
     float weight = particlesPointer->weight[indx];
+    //std::cout << "impact energy and angle " << E0 << " " << thetaImpact << std::endl;
+    //std::cout << "surface EAinds " <<surface<< " " <<  EdistInd << " " << AdistInd << std::endl;
     if(surface){
               if((EdistInd >= 0) && (EdistInd < nEdist) && 
                  (AdistInd >= 0) && (AdistInd < nAdist))
@@ -675,6 +677,8 @@ void operator()(std::size_t indx) const {
 #endif
                }
 	       }
+#elif (FLUX_EA == 0 && USESURFACEMODEL == 0 )
+                particlesPointer->weight[indx]=0.0;
 #endif
                 particlesPointer->transitTime[indx] = tt*dt;
             }    

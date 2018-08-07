@@ -30,7 +30,7 @@
 class Particles : public ManagedAllocation {
 public: 
   std::size_t nParticles;  
-  sim::Array<int> indx;
+  sim::Array<int> index;
   sim::Array<float> x;
   sim::Array<float> y;
   sim::Array<float> z;
@@ -89,7 +89,7 @@ public:
   CUDA_CALLABLE_MEMBER
   void  setParticle(int indx, float x, float y, float z, float Ex, float Ey, float Ez, float Z, float amu, float charge) {
 
-        this->indx[indx] = indx;
+        //this->index[indx] = indx;
         this->xprevious[indx] = x;
         this->yprevious[indx] = y;
         this->zprevious[indx] = z;
@@ -117,8 +117,8 @@ public:
 
   CUDA_CALLABLE_MEMBER
   void  setParticleV(int indx, float x, float y, float z, float Vx, float Vy, float Vz, float Z, float amu, float charge) {
-
-        this->indx[indx] = indx;
+        int indTmp=indx;
+        this->index[indx] = indTmp;
         this->xprevious[indx] = x;
         this->yprevious[indx] = y;
         this->zprevious[indx] = z;
@@ -136,28 +136,76 @@ public:
 
       };    
   CUDA_CALLABLE_MEMBER
-  void  setP(const Particles* p,int indx,int n) {
+  void  swapP(int indx,int n) {
+        int iT=this->index[indx];
+        float xpT=this->xprevious[indx];
+        float ypT=this->yprevious[indx];
+        float zpT=this->zprevious[indx];
+        float xT=this->x[indx];
+        float yT=this->y[indx];
+        float zT=this->z[indx];
+        float wT=this->weight[indx];
+        float ZT=this->Z[indx];
+        float cT=this->charge[indx];
+        float aT=this->amu[indx];
+        float hWT=this->hitWall[indx];
+        int wIT=this->wallIndex[indx];
+        float vxT=this->vx[indx];
+        float vyT=this->vy[indx];
+        float vzT=this->vz[indx];
+        int wHT=this->wallHit[indx];
+  float ttT=this->transitTime[indx];
+  float dtT=this->distTraveled[indx];
+  float firstIonizationZT=this->firstIonizationZ[indx];
+  float firstIonizationTT=this->firstIonizationT[indx];
 
-        //this->xprevious[indx] = x;
-        //this->yprevious[indx] = y;
-        //this->zprevious[indx] = z;
-        //this->x[indx] = x;
-        //this->y[indx] = y;
-        this->z[indx] = p->z[n];
-        this->weight[indx] = p->weight[n];
-        //this->Z[indx] = Z;
-        //this->charge[indx]= charge;
-        //this->amu[indx] = amu;
-        //this->hitWall[indx] = 0.0;
-        //this->wallIndex[indx] = 0;
-        //this->vx[indx] = Vx;
-        //this->vy[indx] = Vy;
-        //this->vz[indx] = Vz;
+        this->index[indx] = this->index[n];
+        this->xprevious[indx] = this->xprevious[n];
+        this->yprevious[indx] = this->yprevious[n];
+        this->zprevious[indx] = this->zprevious[n];
+        this->x[indx] =this->x[n];
+        this->y[indx] =this->y[n];
+        this->z[indx] = this->z[n];
+        this->weight[indx] = this->weight[n];
+        this->Z[indx] = this->Z[n];
+        this->charge[indx]= this->charge[n];
+        this->amu[indx] =this->amu[n];
+        this->hitWall[indx] =this->hitWall[n];
+        this->wallIndex[indx]=this->wallIndex[n];
+        this->vx[indx] =this->vx[n];
+        this->vy[indx] = this->vy[n];
+        this->vz[indx] =this->vz[n];
+        this->wallHit[indx]=this->wallHit[n];
+        this->transitTime[indx]=this->transitTime[n];
+        this->distTraveled[indx]=this->distTraveled[n];
+        this->firstIonizationZ[indx]=this->firstIonizationZ[n];
+        this->firstIonizationT[indx]=this->firstIonizationT[n];
 
+        this->index[n] = iT;
+        this->xprevious[n] = xpT;
+        this->yprevious[n] = ypT;
+        this->zprevious[n] = zpT;
+        this->x[n] =xT;
+        this->y[n] =yT;
+        this->z[n] =zT;
+        this->weight[n] = wT;
+        this->Z[n] = ZT;
+        this->charge[n]= cT;
+        this->amu[n] =aT;
+        this->hitWall[n] =hWT;
+        this->wallIndex[n]=wIT;
+        this->vx[n] =vxT;
+        this->vy[n] =vyT;
+        this->vz[n] =vzT;
+        this-> wallHit[n]=wHT;
+        this->transitTime[n]=ttT;
+        this->distTraveled[n]=dtT;
+        this->firstIonizationZ[n]=firstIonizationZT;
+        this->firstIonizationT[n]=firstIonizationTT;
       };    
   CUDA_CALLABLE_MEMBER
   Particles(std::size_t nP) :
-   nParticles{nP}, indx{0}, x{nP}, y{nP}, z{nP}, xprevious{nP}, yprevious{nP}, zprevious{nP},
+   nParticles{nP}, index{nP,0}, x{nP}, y{nP}, z{nP}, xprevious{nP}, yprevious{nP}, zprevious{nP},
    vx{nP}, vy{nP}, vz{nP}, Z{nP}, amu{nP}, charge{nP}, newVelocity{nP},
 #if PARTICLESEEDS > 0
   //    streams{nP},streams_rec{nP},streams_collision1{nP},streams_collision2{nP},
