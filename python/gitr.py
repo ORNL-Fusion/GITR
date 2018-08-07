@@ -12,14 +12,14 @@ import matplotlib.pyplot as plt
 #matplotlib.use('agg')
 #import cv2
 import io,libconf
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+#from mpl_toolkits.mplot3d import Axes3D
+#from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import pylab as pl
 import scipy as sp
 import math
 import os
 import shutil
-
+import math
 def copy_folder(from_folder, to_folder):
     copy_tree(from_folder, to_folder)
 
@@ -29,16 +29,16 @@ def nc_show(filename):
     #print("nLines ", surfFile.dimensions.keys())
     print("DIMENSIONS: ")
     for key in ncFile.dimensions:
-        print(key,len(ncFile.dimensions[key]))
+        print(key,ncFile.dimensions[key].size)
 
     print("VARIABLES: ")
     for key in ncFile.variables:
         print(key,ncFile.variables[key].dimensions,ncFile.variables[key][:])
 def depositedEdist():
     ncFile = netCDF4.Dataset("surface.nc","r")
-    nLines = len(ncFile.dimensions['nLines'])
-    nE = len(ncFile.dimensions['nAngles'])
-    nA = len(ncFile.dimensions['nEnergies'])
+    nLines = ncFile.dimensions['nLines'].size
+    nE = ncFile.dimensions['nAngles'].size
+    nA = ncFile.dimensions['nEnergies'].size
 
     Z = np.array(ncFile.variables['Z'][:])
     Edist = np.array(ncFile.variables['surfEDist'])
@@ -58,12 +58,12 @@ def depositedEdist():
     totalImpacts = np.sum(EdistOnly,axis=0)
     print('total Impacts ', totalImpacts)
     E = np.linspace(0, 1000, 200)
-    plt.figure(figsize=(10, 6)) #, dpi=80)
+    plt.figure(1,figsize=(10, 6), dpi=80)
     #plt.plot(E,edistSurf1)
     plt.plot(gridE,EdistOnly)
     #plt.show()
     plt.savefig('image1.png')
-    plt.figure(figsize=(10, 6)) #, dpi=80)
+    plt.figure(2,figsize=(10, 6), dpi=80)
     plt.plot(gridA,AdistOnly)
     plt.savefig('image2.png')
     #image = cv2.imread("image1.png")
@@ -413,7 +413,7 @@ def piscesProcessing(r=0.01,path=''):
         np.savetxt('dist'+str(i)+'.dat', edOut)
 
 def d3dProcessing(r=0.01,path=''):
-    #plt.figure,figsize=(6, 10)) #, dpi=1000)
+    #plt.figure(1,figsize=(6, 10), dpi=1000)
     #plot2dGeom(filename='../input/gitrD3DGeometry2DWrings.cfg')
     grossDep,grossEro,sumWeightStrike,E,A,EAdist = nc_readSurface()
     print('W gross deposition ', grossDep)
@@ -442,7 +442,7 @@ def d3dProcessing(r=0.01,path=''):
     #Aweight = np.sum(EAdist,axis=0)
     #print('W impurity flux ', impurityFlux)
     #print('W impurity fraction ', Wfrac)
-def plot3dGeom(filename="input/gitrGeometry.cfg"):
+def plot3dGeom(filename="gitrGeometry.cfg"):
     with io.open(filename) as f:
         config = libconf.load(f)
     
@@ -472,81 +472,88 @@ def plot3dGeom(filename="input/gitrGeometry.cfg"):
     #fig.patch.set_facecolor('black')
     #ax = fig.gca(projection='3d')
     #ax.plot_trisurf(xs,ys)
-    print('xs ys zs', xs, ys, zs)
-    ax = Axes3D(fig)
-    verts = [zip(xs,ys,zs)]
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    ax.set_xlim3d(0.5,2.5)
-    ax.set_ylim3d(-0.2,0.2)
-    ax.set_zlim3d(-0.5,1.5)
-    ax.add_collection3d(Poly3DCollection(verts))
-    plt.savefig('geomPlot.png') 
-def nc_plotHist(filename='output/history.nc'):
+    #print('xs ys zs', xs, ys, zs)
+    #ax = Axes3D(fig)
+    #verts = [zip(xs,ys,zs)]
+    #ax.set_xlabel('X')
+    #ax.set_ylabel('Y')
+    #ax.set_zlabel('Z')
+    #ax.set_xlim3d(0.5,2.5)
+    #ax.set_ylim3d(-0.2,0.2)
+    #ax.set_zlim3d(-0.5,1.5)
+    #ax.add_collection3d(Poly3DCollection(verts))
+    #plt.savefig('geomPlot.png') 
+def nc_plotHist(filename='output/history.nc',plot=1):
     ncFile = netCDF4.Dataset(filename,"r")
-    nT = len(ncFile.dimensions['nT'])
-    nP = len(ncFile.dimensions['nP'])
+    nT = ncFile.dimensions['nT'].size
+    nP = ncFile.dimensions['nP'].size
     x = np.reshape(np.array(ncFile.variables['x']),(nP,nT))
     y = np.reshape(np.array(ncFile.variables['y']),(nP,nT))
     z = np.reshape(np.array(ncFile.variables['z']),(nP,nT))
+    vx = np.reshape(np.array(ncFile.variables['vx']),(nP,nT))
+    vy = np.reshape(np.array(ncFile.variables['vy']),(nP,nT))
+    vz = np.reshape(np.array(ncFile.variables['vz']),(nP,nT))
+    charge = np.reshape(np.array(ncFile.variables['charge']),(nP,nT))
+    weight = np.reshape(np.array(ncFile.variables['weight']),(nP,nT))
     r = np.sqrt(np.multiply(x,x) + np.multiply(y,y))
-#    print('z ', z[:,0])
-    print('x ', x.shape)
-    print('x ', x[0,:])
-    print('r ', r.shape)
-#    print('z ', z[0][:].shape)
-#    #for i in range(nT):
-#    #    print('r,z ',i, x[i][0],z[i][0]) 
-#    single = x[0][:];
-    plt.figure(figsize=(6, 10)) #, dpi=60)
-    #plot2dGeom(filename='../input/gitrGeometry.cfg')
-    if(x.shape[0] ==1):
-        plt.plot(r[0][:],z[0][:],linewidth=5,color='green')
-    else:
-        for i in range(nP):
-          #print('i', i)  
-#          print('size', r[:,i].size)  
-#          print('r ', r[:,i])  
-          plt.plot(r[i,:],z[i,:],linewidth=0.5)
-#          #plt.plot(r[i,:],z[i,:],linewidth=1.0)
-#          #plt.setp(linewidth=0.2)
-    #plt.xlim((5.3,6.0))
-    #plt.ylim((-4.4,-3.0))
-    plt.autoscale(enable=True, axis='x', tight=True)
-    plt.title('DIII-D W Impurity Simulation',fontsize=20)
-    plt.xlabel('r [m]',fontsize=16)
-    plt.ylabel('z [m]',fontsize=16)
-    #plt.axis('equal')
-    print('saving tracksRZ')
-    plt.savefig('tracksRZ.png')
-    plt.show()
-    #plt.close()
-    plt.figure(figsize=(10, 6)) #, dpi=100)
-    if(x.shape[0] ==1):
-        plt.plot(x[0][:],y[0][:],'k-',linewidth=0.5)
-    else:
-        for i in range(80):
-          #print('i', i)  
-          plt.plot(x[i,:],y[i,:],'k-',linewidth=0.5)
-    #plt.ylim((-0.02,0.02))
-    #plt.xlim((-0.02,0.02))
-    plt.autoscale(enable=True, axis='x', tight=True)
-    plt.axis('equal')
-    print('saving tracksXY')
-    plt.savefig('tracksXY.png')
-    return x,y,z,r
+    #print('z ', z[:,0])
+    #print('x ', x.shape)
+    #print('x ', x[0,:])
+    #print('r ', r.shape)
+    #print('z ', z[0][:].shape)
+    ##for i in range(nT):
+    ##    print('r,z ',i, x[i][0],z[i][0]) 
+    #single = x[0][:];
+    if plot ==1:
+        plt.close() 
+        plt.figure(1,figsize=(6, 10), dpi=60)
+        #plot2dGeom(filename='../input/gitrGeometry.cfg')
+        if(x.shape[0] ==1):
+            plt.plot(r[0][:],z[0][:],linewidth=5,color='green')
+        else:
+            for i in range(nP):
+              #print('i', i)  
+#              print('size', r[:,i].size)  
+#              print('r ', r[:,i])  
+              plt.plot(r[i,:],z[i,:],linewidth=0.5)
+#              #plt.plot(r[i,:],z[i,:],linewidth=1.0)
+#              #plt.setp(linewidth=0.2)
+        #plt.xlim((5.3,6.0))
+        #plt.ylim((-4.4,-3.0))
+        plt.autoscale(enable=True, axis='x', tight=True)
+        plt.title('DIII-D W Impurity Simulation',fontsize=20)
+        plt.xlabel('r [m]',fontsize=16)
+        plt.ylabel('z [m]',fontsize=16)
+        #plt.axis('equal')
+        print('saving tracksRZ')
+        plt.savefig('tracksRZ.png')
+        plt.show()
+        plt.close()
+        plt.figure(1,figsize=(10, 6), dpi=100)
+        if(x.shape[0] ==1):
+            plt.plot(x[0][:],y[0][:],linewidth=0.5)
+        else:
+            for i in range(nP):
+              #print('i', i)  
+              plt.plot(x[i,:],y[i,:],linewidth=0.5)
+        #plt.ylim((-0.02,0.02))
+        #plt.xlim((-0.02,0.02))
+        plt.autoscale(enable=True, axis='x', tight=True)
+        plt.axis('equal')
+        print('saving tracksXY')
+        plt.savefig('tracksXY.png')
+    return x,y,z,r,vx,vy,vz,charge,weight,nP,nT
 def nc_plotSpec(filename='spec.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
-    nBins = len(ncFile.dimensions['nBins'])
-    nR = len(ncFile.dimensions['nR'])
-    nZ = len(ncFile.dimensions['nZ'])
+    nBins = ncFile.dimensions['nBins'].size
+    nR = ncFile.dimensions['nR'].size
+    nZ = ncFile.dimensions['nZ'].size
     n = np.array(ncFile.variables['n'])
     print('n ', n.shape)
     dens = n[nBins-1,:,:]
     print('dens ', dens.shape)
     plt.close()
-    plt.figure(figsize=(10, 6)) #, dpi=2000)
+    plt.figure(1,figsize=(10, 6), dpi=2000)
     plotsize = math.ceil(nBins**(0.5))
     for i in range(nBins-1,nBins):
         dens = np.log10(n[i,:,:])
@@ -560,16 +567,16 @@ def nc_plotSpec(filename='spec.nc'):
     plt.savefig('image1.png')
 def nc_plotSpec3D(filename='spec.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
-    nBins = len(ncFile.dimensions['nBins'])
-    nR = len(ncFile.dimensions['nR'])
-    nY = len(ncFile.dimensions['nY'])
-    nZ = len(ncFile.dimensions['nZ'])
+    nBins = ncFile.dimensions['nBins'].size
+    nR = ncFile.dimensions['nR'].size
+    nY = ncFile.dimensions['nY'].size
+    nZ = ncFile.dimensions['nZ'].size
     n = np.array(ncFile.variables['n'])
     print('n ', n.shape)
     dens = n[nBins-1,:,:,:]
     print('dens ', dens.shape)
     plt.close()
-    plt.figure(figsize=(10, 6)) #, dpi=2000)
+    plt.figure(1,figsize=(10, 6), dpi=2000)
     plt.imshow(n[0,5,:,:])
     plt.colorbar(orientation='vertical')
     #plotsize = math.ceil(nBins**(0.5))
@@ -581,7 +588,7 @@ def nc_plotSpec3D(filename='spec.nc'):
     plt.savefig('slice1.png')
 def nc_plotPositions(filename='output/positions.nc',cfg='input/gitrInput.cfg'):
     ncFile = netCDF4.Dataset(filename,"r")
-    nP = len(ncFile.dimensions['nP'])
+    nP = ncFile.dimensions['nP'].size
     x = np.array(ncFile.variables['x'])
     y = np.array(ncFile.variables['y'])
     r = np.sqrt(np.multiply(x,x) + np.multiply(y,y))
@@ -591,7 +598,7 @@ def nc_plotPositions(filename='output/positions.nc',cfg='input/gitrInput.cfg'):
     print('y ',y)
     print('r ',r)
     print('z ',z)
-    plt.close('all')
+    plt.close()
     with io.open(cfg) as f:
         config = libconf.load(f)
     used3d = config['flags']['USE3DTETGEOM']    
@@ -612,13 +619,13 @@ def nc_plotPositions(filename='output/positions.nc',cfg='input/gitrInput.cfg'):
         ax2.plot(np.append(x1,x1[0]),np.append(z1,z1[0]),linewidth=2.0,color='k') 
     if(hasTracks):
       ncFile = netCDF4.Dataset("output/history.nc","r")
-      nT = len(ncFile.dimensions['nT'])
-      nP = len(ncFile.dimensions['nP'])
+      nT = ncFile.dimensions['nT'].size
+      nP = ncFile.dimensions['nP'].size
       xt = np.reshape(np.array(ncFile.variables['x']),(nP,nT))
       yt = np.reshape(np.array(ncFile.variables['y']),(nP,nT))
       zt = np.reshape(np.array(ncFile.variables['z']),(nP,nT))
       rt = np.sqrt(np.multiply(xt,xt) + np.multiply(yt,yt))
-      #plt.figure(figsize=(6, 10)) #, dpi=60)
+      plt.figure(1,figsize=(6, 10), dpi=60)
       if(xt.shape[0] ==1):
           ax1.plot(xt[0][:],yt[0][:],linewidth=1,color='green')
           ax2.plot(rt[0][:],zt[0][:],linewidth=1,color='green')
@@ -639,10 +646,10 @@ def nc_plotPositions(filename='output/positions.nc',cfg='input/gitrInput.cfg'):
     #f.ylabel("z [m]")
     f.savefig('positions.png')
     return x,y,r,z,charge
-def nc_plotVz(filename='output/history.nc'):
+def nc_plotVz(filename='history.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
-    nT = len(ncFile.dimensions['nT'])
-    nP = len(ncFile.dimensions['nP'])
+    nT = ncFile.dimensions['nT'].size
+    nP = ncFile.dimensions['nP'].size
     x = np.reshape(np.array(ncFile.variables['x']),(nT,nP))
     y = np.reshape(np.array(ncFile.variables['y']),(nT,nP))
     z = np.reshape(np.array(ncFile.variables['z']),(nT,nP))
@@ -652,7 +659,7 @@ def nc_plotVz(filename='output/history.nc'):
     vperp = np.sqrt(np.multiply(vx[nT-1,:],vx[nT-1,:]) + np.multiply(vy[nT-1,:],vy[nT-1,:]))
     pitchAngle = np.arctan(np.divide(vperp,vz[nT-1,:]))
     r = np.sqrt(np.multiply(x,x) + np.multiply(y,y))
-    plt.figure(figsize=(10, 6))#, dpi=250)
+    plt.figure(1,figsize=(10, 6), dpi=250)
     #plt.plot(z[:,1],vz[:,1],linewidth=0.5)
     plt.plot(z,vz,linewidth=0.5,label=str(np.linspace(0,nP-1,nP)))
     #plt.legend()
@@ -668,7 +675,7 @@ def nc_plotVz(filename='output/history.nc'):
 ##      #plt.setp(linewidth=0.2)
 #    plt.savefig('tracksRZ.png')
 #    plt.close()
-#    plt.figure(figsize=(10, 6)) #, dpi=1000)
+#    plt.figure(1,figsize=(10, 6), dpi=1000)
 #    for i in range(nP):
 #      print('i', i)  
 #      plt.plot(x[:,i],y[:,i],linewidth=0.5)
@@ -680,8 +687,8 @@ def nc_plotVz(filename='output/history.nc'):
     plt.ylabel("v_par [m/s]")
     #plt.legend()
     plt.savefig('vz.png')
-    #plt.close()
-    plt.figure(figsize=(10, 6))#, dpi=250)
+    plt.close()
+    plt.figure(1,figsize=(10, 6), dpi=250)
     plt.hist(pitchAngle,bins=30)
     plt.savefig('pa.png')
 def nc_readSurface(filename='output/surface.nc'):
@@ -706,9 +713,9 @@ def nc_readSurface(filename='output/surface.nc'):
     plt.colorbar()
     plt.savefig('EAdist.png')
     return grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers,surfEdist
-def plotPitch(filename='output/positions.nc'):
+def plotPitch(filename='positions.nc'):
     ncFile = netCDF4.Dataset(filename,"r")
-    nP = len(ncFile.dimensions['nP'])
+    nP = ncFile.dimensions['nP'].size
     x = np.array(ncFile.variables['x'])
     y = np.array(ncFile.variables['y'])
     z = np.array(ncFile.variables['z'])
@@ -718,7 +725,7 @@ def plotPitch(filename='output/positions.nc'):
     vperp = np.sqrt(np.multiply(vx,vx) + np.multiply(vy,vy))
     pitchAngle = np.arctan(np.divide(vperp,vz))
     r = np.sqrt(np.multiply(x,x) + np.multiply(y,y))
-    plt.figure(figsize=(10, 6)) #, dpi=250)
+    plt.figure(1,figsize=(10, 6), dpi=250)
     plt.hist(pitchAngle,bins=30)
     plt.savefig('pa.png')
     plt.close()
