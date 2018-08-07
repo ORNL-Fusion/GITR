@@ -75,6 +75,7 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DUSEFIELDALIGNEDVALUES=${USEFIELDALIGNEDVALUES}
         -DFLUX_EA=${FLUX_EA}
         -DFORCE_EVAL=${FORCE_EVAL}
+        -DUSE_SORT=${USE_SORT}
         -DCHECK_COMPATIBILITY=${CHECK_COMPATIBILITY})
 
 # Setup for CUDA backend
@@ -94,7 +95,7 @@ if (${OPENMP})
     Message("Enabling OpenMP backend")
     find_package(OpenMP REQUIRED)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -O3")
     set_source_files_properties(${SRC_FILES} PROPERTIES LANGUAGE CXX)
     add_executable(GITR ${SRC_FILES})
     add_definitions("-x c++ -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP")

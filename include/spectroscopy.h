@@ -91,6 +91,7 @@ void operator()(std::size_t indx) const {
               int charge = floor(particlesPointer->charge[indx]);
               if(particlesPointer->hitWall[indx]== 0.0)
               {
+                  float specWeight = particlesPointer->weight[indx];
 #if USE_CUDA >0
               //for 2d
               /*
@@ -100,7 +101,6 @@ void operator()(std::size_t indx) const {
                 atomicAdd(&bins[charge*nX*nZ + indx_Z*nX + indx_X], 1.0);//0*nX*nZ + indx_Z*nZ + indx_X
               }
               */
-                  float specWeight = particlesPointer->weight[indx];
                //for 3d
               atomicAdd(&bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX+ indx_X], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
               if(charge < nBins)
@@ -109,10 +109,12 @@ void operator()(std::size_t indx) const {
               }
 
 #else
-              bins[nBins*nX*nZ + indx_Z*nX + indx_X] = bins[nBins*nX*nZ + indx_Z*nX + indx_X] + 1.0;
+              bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY  +indx_Y*nX +indx_X] = 
+	                          bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY+ indx_Y*nX + indx_X] + specWeight;
               if(charge < nBins)
               {
-                bins[charge*nX*nZ + indx_Z*nX + indx_X] = bins[charge*nX*nZ + indx_Z*nX + indx_X] + 1.0;
+                bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX + indx_X] = 
+		                  bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY+indx_Y*nX + indx_X] + specWeight;
               }
 #endif
               }
