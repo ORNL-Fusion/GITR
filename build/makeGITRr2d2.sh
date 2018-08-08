@@ -1,5 +1,5 @@
 #!/bin/bash
-source ../env.mac.sh
+source ../env.r2d2.sh
 
 cmake -DTHRUST_INCLUDE_DIR=$THRUST_DIR \
     -DCMAKE_C_COMPILER=gcc \
@@ -11,6 +11,7 @@ cmake -DTHRUST_INCLUDE_DIR=$THRUST_DIR \
     -DNETCDF_LIBRARY=$NETCDFLIB \
     -DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE \
     -DLIBCONFIGPP_INCLUDE_DIR=$LIBCONFIGPP_INCLUDE \
+    -DLIBCONFIGPP_LIBRARY=$LIBCONFIGDIR/lib/libconfig++.so \
     -DBoost_DIR=$Boost_DIR \
     -DBoost_INCLUDE_DIR=$Boost_INCLUDE_DIR \
     -DUSE_CUDA=0 \
