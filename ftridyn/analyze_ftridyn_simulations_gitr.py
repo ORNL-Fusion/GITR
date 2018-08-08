@@ -93,41 +93,44 @@ def plot_sputtered_angular_distributions(simulation_name,nAbins,plotsOn = 0):
     #bins = np.zeros(shape=(51))
     if splst.size > 10 :
         cos_angles = splst[:,6:9]
+        alpha0 = cos_angles[:,0]
+        beta0 = cos_angles[:,1]
+        gamma0 = cos_angles[:,2]
         angles = np.arccos(cos_angles)*180.0 / np.pi
-
+        theta = np.arctan2(gamma0,beta0)*180.0/np.pi
         alpha = angles[:,0]
         beta = angles[:,1]
         gamma = angles[:,2]
-        plt.close()    
-        plt.figure(1)
         nX,binsX,patches = plt.hist(alpha,bins=nAbins,range=(0.0,90.0))
         if plotsOn :
+            plt.close()    
+            plt.figure(1)
             plt.title(simulation_name+' Alpha Angle Distribution')
             plt.xlabel('alpha [deg]')
             plt.savefig(simulation_name+'alpha_dist.png')
         
-        plt.figure(2)
-        nY,binsY,patches = plt.hist(beta,bins=nAbins,range=(0.0,90.0))
+        nY,binsY,patches = plt.hist(theta,bins=nAbins,range=(-180.0,180.0))
         if plotsOn :
+            plt.figure(2)
             plt.title(simulation_name+' Beta Angle Distribution')
             plt.xlabel('beta [deg]')
             plt.savefig(simulation_name+'beta_dist.png')
         
-        plt.figure(3)
-        nZ,binsZ,patches = plt.hist(gamma,bins=nAbins,range=(0.0,90.0))
-        if plotsOn :
-            plt.title(simulation_name+' Gamma Angle Distribution')
-            plt.xlabel('gamma [deg]')
-            plt.savefig(simulation_name+'gamma_dist.png')
+        #plt.figure(3)
+        #nZ,binsZ,patches = plt.hist(gamma,bins=nAbins,range=(0.0,90.0))
+        #if plotsOn :
+        #    plt.title(simulation_name+' Gamma Angle Distribution')
+        #    plt.xlabel('gamma [deg]')
+        #    plt.savefig(simulation_name+'gamma_dist.png')
     else :
         nX = np.zeros(shape=(nAbins))
         binsX = np.zeros(shape=(nAbins+1))
         nY = nX
-        nZ = nX
+        #nZ = nX
         binsY = binsX
-        binsZ = binsX
+        #binsZ = binsX
 
-    return (splst.size, nX, binsX,nY, binsY,nZ, binsZ)
+    return (splst.size, nX, binsX,nY, binsY)
 
 def plot_sputtered_energy_distributions(simulation_name,nEbins,maxE=100.0, plotsOn=0):
     splst = np.loadtxt(simulation_name+'SPLST.DAT')
@@ -154,41 +157,45 @@ def plot_reflected_angular_distributions(simulation_name,nAbins,plotsOn = 0):
     #bins = np.zeros(shape=(51))
     if splst.size > 10 :
         cos_angles = splst[:,6:9]
+        alpha0 = cos_angles[:,0]
+        beta0 = cos_angles[:,1]
+        gamma0 = cos_angles[:,2]
         angles = np.arccos(cos_angles)*180.0 / np.pi
+        theta = np.arctan2(gamma0,beta0)*180.0/np.pi
 
         alpha = angles[:,0]
         beta = angles[:,1]
         gamma = angles[:,2]
-        plt.close()    
-        plt.figure(1)
         nX,binsX,patches = plt.hist(alpha,bins=nAbins,range=(0.0,90.0))
         if plotsOn :
+            plt.close()    
+            plt.figure(1)
             plt.title(simulation_name+' Alpha Angle Distribution')
             plt.xlabel('alpha [deg]')
             plt.savefig(simulation_name+'alpha_dist.png')
         
-        plt.figure(2)
-        nY,binsY,patches = plt.hist(beta,bins=nAbins,range=(0.0,90.0))
+        nY,binsY,patches = plt.hist(theta,bins=nAbins,range=(-180.0,180.0))
         if plotsOn :
+            plt.figure(2)
             plt.title(simulation_name+' Beta Angle Distribution')
             plt.xlabel('beta [deg]')
             plt.savefig(simulation_name+'beta_dist.png')
         
-        plt.figure(3)
-        nZ,binsZ,patches = plt.hist(gamma,bins=nAbins,range=(0.0,90.0))
-        if plotsOn :
-            plt.title(simulation_name+' Gamma Angle Distribution')
-            plt.xlabel('gamma [deg]')
-            plt.savefig(simulation_name+'gamma_dist.png')
+        #plt.figure(3)
+        #nZ,binsZ,patches = plt.hist(gamma,bins=nAbins,range=(0.0,90.0))
+        #if plotsOn :
+        #    plt.title(simulation_name+' Gamma Angle Distribution')
+        #    plt.xlabel('gamma [deg]')
+        #    plt.savefig(simulation_name+'gamma_dist.png')
     else :
         nX = np.zeros(shape=(nAbins))
         binsX = np.zeros(shape=(nAbins+1))
         nY = nX
-        nZ = nX
+        #nZ = nX
         binsY = binsX
-        binsZ = binsX
+        #binsZ = binsX
 
-    return (splst.size, nX, binsX,nY, binsY,nZ, binsZ)
+    return (splst.size, nX, binsX,nY, binsY)
 
 def plot_reflected_energy_distributions(simulation_name,nEbins=50, plotsOn=0):
     splst = np.loadtxt(simulation_name+'RFLST.DAT')

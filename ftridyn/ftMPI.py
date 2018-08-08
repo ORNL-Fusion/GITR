@@ -1,6 +1,6 @@
 from mpi4py import MPI
 import generate_ftridyn_input_gitr
-import analyze_ftridyn_simulations
+import analyze_ftridyn_simulations_gitr
 import ftridyn
 import os
 import time
@@ -110,23 +110,23 @@ def analyzeFTrun(pathString,d,specNum):
     ffilename = name1+name2
     spyl_file = ffilename +'SPYL.DAT'
     print('doing analysis on ' , pathString+"/"+spyl_file)
-    WW=analyze_ftridyn_simulations.ftridyn_output_data(pathString+"/"+ffilename,'0001')
+    WW=analyze_ftridyn_simulations_gitr.ftridyn_output_data(pathString+"/"+ffilename,'0001')
     thisSpyl = WW.calculate_total_sputtering_yield()
     print('sputtering yield', thisSpyl)
     thisRefyl = WW.calculate_total_reflection_yield()
     np.savetxt(pathString+"/"+"YR.out",[thisSpyl,thisRefyl])
     print('reflection yield', thisRefyl)
-    nP, nX, binsX,nY,binsY,nZ, binsZ = analyze_ftridyn_simulations.plot_sputtered_angular_distributions(pathString+"/"+ffilename,nAgrid)
+    nP, nX, binsX,nY,binsY = analyze_ftridyn_simulations_gitr.plot_sputtered_angular_distributions(pathString+"/"+ffilename,nAgrid)
     np.savetxt(pathString+"/"+"nX.out",nX)
     np.savetxt(pathString+"/"+"nY.out",nY)
-    np.savetxt(pathString+"/"+"nZ.out",nZ)
-    nP, nX, binsX,nY,binsY,nZ, binsZ = analyze_ftridyn_simulations.plot_reflected_angular_distributions(pathString+"/"+ffilename,nAgrid)
+    #np.savetxt(pathString+"/"+"nZ.out",nZ)
+    nP, nX, binsX,nY,binsY = analyze_ftridyn_simulations_gitr.plot_reflected_angular_distributions(pathString+"/"+ffilename,nAgrid)
     np.savetxt(pathString+"/"+"nXref.out",nX)
     np.savetxt(pathString+"/"+"nYref.out",nY)
-    np.savetxt(pathString+"/"+"nZref.out",nZ)
-    nPenergy, nenergy, binsenergy = analyze_ftridyn_simulations.plot_sputtered_energy_distributions(pathString+"/"+ffilename,nEgrid,maxE)
+    #np.savetxt(pathString+"/"+"nZref.out",nZ)
+    nPenergy, nenergy, binsenergy = analyze_ftridyn_simulations_gitr.plot_sputtered_energy_distributions(pathString+"/"+ffilename,nEgrid,maxE)
     np.savetxt(pathString+"/"+"energy.out",nenergy)
-    nPenergyRef, nenergyRef, binsenergyRef = analyze_ftridyn_simulations.plot_reflected_energy_distributions(pathString+"/"+ffilename,nEgrid)
+    nPenergyRef, nenergyRef, binsenergyRef = analyze_ftridyn_simulations_gitr.plot_reflected_energy_distributions(pathString+"/"+ffilename,nEgrid)
     np.savetxt(pathString+"/"+"energyRef.out",nenergyRef)
 
 def func2(path,E,a,r):
@@ -298,23 +298,24 @@ def main(func,argv):
         sputt = np.zeros(shape=(d['nS'],len(energy),len(angle)))
         refl = np.zeros(shape=(d['nS'],len(energy),len(angle)))
         eDistEgrid = np.linspace(0.0,maxE-maxE/nEgrid,nEgrid) 
-        cosDistAgrid = np.linspace(0.0,90.0-90.0/nAgrid,nAgrid) 
+        phiGrid = np.linspace(0.0,90.0-90.0/nAgrid,nAgrid) 
+        thetaGrid = np.linspace(0.0,180.0-180.0/nAgrid,nAgrid) 
         cosXDistribution = np.zeros(shape=(d['nS'],len(energy),len(angle),nAgrid)) 
         cosYDistribution = np.zeros(shape=(d['nS'],len(energy),len(angle),nAgrid)) 
-        cosZDistribution = np.zeros(shape=(d['nS'],len(energy),len(angle),nAgrid)) 
+        #cosZDistribution = np.zeros(shape=(d['nS'],len(energy),len(angle),nAgrid)) 
         cosXDistributionRef = np.zeros(shape=(d['nS'],len(energy),len(angle),nAgrid)) 
         cosYDistributionRef = np.zeros(shape=(d['nS'],len(energy),len(angle),nAgrid)) 
-        cosZDistributionRef = np.zeros(shape=(d['nS'],len(energy),len(angle),nAgrid)) 
+        #cosZDistributionRef = np.zeros(shape=(d['nS'],len(energy),len(angle),nAgrid)) 
         eDistribution = np.zeros(shape=(d['nS'],len(energy),len(angle),nEgrid)) 
         eDistributionRef = np.zeros(shape=(d['nS'],len(energy),len(angle),nEgrid))
         sputtSelf = np.zeros(shape=(len(energy),len(angle)))
         reflSelf = np.zeros(shape=(len(energy),len(angle)))
         cosXDistributionSelf = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
         cosYDistributionSelf = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
-        cosZDistributionSelf = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
+        #cosZDistributionSelf = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
         cosXDistributionRefSelf = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
         cosYDistributionRefSelf = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
-        cosZDistributionRefSelf = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
+        #cosZDistributionRefSelf = np.zeros(shape=(len(energy),len(angle),nAgrid)) 
         eDistributionSelf = np.zeros(shape=(len(energy),len(angle),nEgrid)) 
         eDistributionRefSelf = np.zeros(shape=(len(energy),len(angle),nEgrid))
         totalIndex=0
@@ -330,14 +331,14 @@ def main(func,argv):
                     cosXDistribution[specNum,i,j,:] = nX
                     nY = np.loadtxt(pathString+"/"+"nY.out", dtype='float')
                     cosYDistribution[specNum,i,j,:] = nY
-                    nZ = np.loadtxt(pathString+"/"+"nZ.out", dtype='float')
-                    cosZDistribution[specNum,i,j,:] = nZ
+                    #nZ = np.loadtxt(pathString+"/"+"nZ.out", dtype='float')
+                    #cosZDistribution[specNum,i,j,:] = nZ
                     nXref = np.loadtxt(pathString+"/"+"nXref.out", dtype='float')
                     cosXDistributionRef[specNum,i,j,:] = nXref
                     nYref = np.loadtxt(pathString+"/"+"nYref.out", dtype='float')
                     cosYDistributionRef[specNum,i,j,:] = nYref
-                    nZref = np.loadtxt(pathString+"/"+"nZref.out", dtype='float')
-                    cosZDistributionRef[specNum,i,j,:] = nZref
+                    #nZref = np.loadtxt(pathString+"/"+"nZref.out", dtype='float')
+                    #cosZDistributionRef[specNum,i,j,:] = nZref
                     nenergy = np.loadtxt(pathString+"/"+"energy.out", dtype='float')
                     eDistribution[specNum,i,j,:] = nenergy
                     nenergyRef = np.loadtxt(pathString+"/"+"energyRef.out", dtype='float')
@@ -356,26 +357,28 @@ def main(func,argv):
         aa = rootgrp.createVariable("A","f8",("nA"))
         cosxdist = rootgrp.createVariable("cosXDist","f8",("nS","nE","nA","nAdistBins"))
         cosydist = rootgrp.createVariable("cosYDist","f8",("nS","nE","nA","nAdistBins"))
-        coszdist = rootgrp.createVariable("cosZDist","f8",("nS","nE","nA","nAdistBins"))
+        #coszdist = rootgrp.createVariable("cosZDist","f8",("nS","nE","nA","nAdistBins"))
         cosxdistref = rootgrp.createVariable("cosXDistRef","f8",("nS","nE","nA","nAdistBins"))
         cosydistref = rootgrp.createVariable("cosYDistRef","f8",("nS","nE","nA","nAdistBins"))
-        coszdistref = rootgrp.createVariable("cosZDistRef","f8",("nS","nE","nA","nAdistBins"))
+        #coszdistref = rootgrp.createVariable("cosZDistRef","f8",("nS","nE","nA","nAdistBins"))
         edist = rootgrp.createVariable("energyDist","f8",("nS","nE","nA","nEdistBins"))
         edistref = rootgrp.createVariable("energyDistRef","f8",("nS","nE","nA","nEdistBins"))
         edistegrid = rootgrp.createVariable("eDistEgrid","f8",("nEdistBins")) 
-        cosdistagrid = rootgrp.createVariable("cosDistAgrid","f8",("nAdistBins")) 
+        phigrid = rootgrp.createVariable("phiGrid","f8",("nAdistBins")) 
+        thetagrid = rootgrp.createVariable("thetaGrid","f8",("nAdistBins")) 
         ee[:] = energy
         aa[:] = angle
         edistegrid[:] = eDistEgrid
-        cosdistagrid[:] = cosDistAgrid
+        phigrid[:] = phiGrid
+        thetagrid[:] = thetaGrid
         spyld[:] = sputt[0:d['nS']-1,:,:]
         rfyld[:] = refl[0:d['nS']-1,:,:]
         cosxdist[:] = cosXDistribution[0:d['nS']-1,:,:,:]
         cosydist[:] = cosYDistribution[0:d['nS']-1,:,:,:]
-        coszdist[:] = cosZDistribution[0:d['nS']-1,:,:,:]
+        #coszdist[:] = cosZDistribution[0:d['nS']-1,:,:,:]
         cosxdistref[:] = cosXDistributionRef[0:d['nS']-1,:,:,:]
         cosydistref[:] = cosYDistributionRef[0:d['nS']-1,:,:,:]
-        coszdistref[:] = cosZDistributionRef[0:d['nS']-1,:,:,:]
+        #coszdistref[:] = cosZDistributionRef[0:d['nS']-1,:,:,:]
         edist[:] = eDistribution[0:d['nS']-1,:,:,:]
         edistref[:] = eDistributionRef[0:d['nS']-1,:,:,:]
         rootgrp.close()
@@ -397,19 +400,21 @@ def main(func,argv):
         edist = rootgrp.createVariable("energyDist","f8",("nE","nA","nEdistBins"))
         edistref = rootgrp.createVariable("energyDistRef","f8",("nE","nA","nEdistBins"))
         edistegrid = rootgrp.createVariable("eDistEgrid","f8",("nEdistBins")) 
-        cosdistagrid = rootgrp.createVariable("cosDistAgrid","f8",("nAdistBins")) 
+        phigrid = rootgrp.createVariable("phiGrid","f8",("nAdistBins")) 
+        thetagrid = rootgrp.createVariable("thetaGrid","f8",("nAdistBins")) 
+        phigrid[:] = phiGrid
+        thetagrid[:] = thetaGrid
         ee[:] = energy
         aa[:] = angle
         edistegrid[:] = eDistEgrid
-        cosdistagrid[:] = cosDistAgrid
         spyld[:] = sputt[-1,:,:]
         rfyld[:] = refl[-1,:,:]
         cosxdist[:] = cosXDistribution[-1,:,:,:]
         cosydist[:] = cosYDistribution[-1,:,:,:]
-        coszdist[:] = cosZDistribution[-1,:,:,:]
+        #coszdist[:] = cosZDistribution[-1,:,:,:]
         cosxdistref[:] = cosXDistributionRef[-1,:,:,:]
         cosydistref[:] = cosYDistributionRef[-1,:,:,:]
-        coszdistref[:] = cosZDistributionRef[-1,:,:,:]
+        #coszdistref[:] = cosZDistributionRef[-1,:,:,:]
         edist[:] = eDistribution[-1,:,:,:]
         edistref[:] = eDistributionRef[-1,:,:,:]
         rootgrp.close()
