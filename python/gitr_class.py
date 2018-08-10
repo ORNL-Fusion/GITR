@@ -12,6 +12,9 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 # imports within other functions
 # from netCDF4 import Dataset
 
+_VERSION = 1.0
+_LAST_UPDATE = 'Aug. 10. 2018'
+
 # ----------------------------------------------------------------------------------------
 # general figure font configuration, global change throughout python session
 FONTSIZE = 18
@@ -558,6 +561,25 @@ def openNCfile(Filename):
 				D[n] = data.variables[n][:]
 	return D
 
+
+# -------------------------------------------------------------------------------------------------------------
+# --- main ----------------------------------------------------------------------------------------------------
+def main():
+	g = gitr(show = True)
+	plt.show()
+
+if __name__ == '__main__':
+	import argparse
+	import textwrap
+	parser = argparse.ArgumentParser(description = 'Load, Post-process and Plot GITR output', 
+				formatter_class = argparse.RawDescriptionHelpFormatter,
+				epilog = 'Please report bugs to: wingen@fusion.gat.com')
+
+	parser.add_argument('-v', '--version', help = 'Show current version number and release data', action = 'store_true', default = False)
+	args = parser.parse_args()
+
+	if args.version: print '\ngitr_class, Version: ' + str(_VERSION) + ', Release: ' + _LAST_UPDATE + '\n'
+	else: main()
 
 
 
