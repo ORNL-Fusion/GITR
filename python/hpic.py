@@ -6,8 +6,97 @@ import numpy.matlib as ml
 import gitr
 import scipy.interpolate as scii
 import netCDF4
+import os
 from scipy.interpolate import griddata
-def plot_hpic_iead(solps_path='solpsTarg.txt',HpicDataFolder = 'hpicwork0004'):
+def plot_hpic_iead(solps_path='solpsTarg.txt',HpicDataFolder = '/Users/tyounkin/Dissertation/ITER/mq4/hpicdata_solps_DT_20180730/hpicwork0004'):
+    me   =  9.10938356e-31; # Electron mass
+    mp   =  1.67262190e-27; # Proton mass
+    
+    # Specify the following three to generate the figures: 
+    #   - File containing the SOLPS data (skip first row)
+    #   - Folder containing hPIC data 
+    #   - List of SOLPS points resolved with hPIC
+    #   - Ai, Ion Atomic Mass
+    #   - Zi, Charge State
+    SOLPS = np.loadtxt(solps_path, dtype='float',skiprows=1,delimiter=' ')
+    nL = 36;
+    SolpsLocationList = range(1,nL+1);
+    Ai  = [ 2, 3, 4, 4, 9, 9, 9, 9, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20 ];
+    Zi  = [ 1, 1, 1, 2, 1, 2, 3, 4, 1,  2,  3,  4,  5,  6,  7,  8,  9,  10 ];
+    nS = len(Ai);
+    nA = 90;
+    nE = 240;
+    nn = np.zeros([nS,nL]);
+    ff = np.zeros([nS,nL]);
+    EEE = np.zeros([nL,nE]);
+    AAA =  np.zeros([nL,nA]);
+    IEADs = np.zeros([nS,nL,nE,nA]);
+    for i in range(len(SolpsLocationList)):
+        Ti  = SOLPS[i,3];
+        Te  = SOLPS[i,-4]; 
+        ni  = np.append(SOLPS[i,5], np.append(np.append(np.append(SOLPS[i,5], SOLPS[i,7:9]), SOLPS[i,10:14]), SOLPS[i,15:25]));
+	print 'ni', ni
+        fi  = SOLPS[i,[21+5,21+5,28,29,31,32,33,34,36,37,38,39,40,41,42,43,44,45]];
+        nn[:,i] = ni;
+        ff[:,i] = fi;
+        ntot = sum(ni);
+        ci = ni/ntot;
+        phi_floating = -Te*(np.log(sum(np.multiply(np.multiply(Zi,ci),np.sqrt(np.divide(2*np.pi*me/mp,Ai))))));
+        phi_total = phi_floating + 0.5*Te;
+        EE   = np.linspace(0,24*Te,240);
+        AA   = np.linspace(0,90,90);
+        EEE[i,:] = EE;
+        AAA[i,:] = AA;
+        for j in range(len(Ai)):
+            ID   = 'SolpsPoint'+str(i+1);
+            IEAD = np.loadtxt( HpicDataFolder +'/' +ID +'_IEAD_Sp'+ str(j) +'.dat',dtype='float');
+            IEADs[j,i,:,:] = IEAD;
+            #plt.close()
+	    #plt.pcolor(AA,EE,IEAD)
+            #plt.colorbar(orientation='vertical')
+            #plt.title('plot title')
+            #plt.title('ITER Divertor Target Plasma Density')
+            #plt.ylabel('n[m-3]')
+            #plt.xlabel('R-Rsep[m]')
+            #plt.savefig('iead00.png')
+    
+    rootgrp = netCDF4.Dataset("hpic.nc", "w", format="NETCDF4")
+    nll = rootgrp.createDimension("nL", nL)
+    nss = rootgrp.createDimension("nS", nS)
+    nee = rootgrp.createDimension("nE", nE)
+    naa = rootgrp.createDimension("nA", nA)
+    rr = rootgrp.createVariable("r","f8",("nL"))
+    zzz = rootgrp.createVariable("z","f8",("nL"))
+    aa = rootgrp.createVariable("A","f8",("nS"))
+    zz = rootgrp.createVariable("Z","f8",("nS"))
+    rmrs = rootgrp.createVariable("RmRs","f8",("nL"))
+    gridee = rootgrp.createVariable("gridE","f8",("nL","nE"))
+    gridaa = rootgrp.createVariable("gridA","f8",("nL","nA"))
+    fff = rootgrp.createVariable("flux","f8",("nS","nL"))
+    nnn = rootgrp.createVariable("dens","f8",("nS","nL"))
+    ieadd = rootgrp.createVariable("iead","f8",("nS","nL","nE","nA"))
+    rr[:] = SOLPS[:,1]
+    zzz[:] = SOLPS[:,2]
+    aa[:] = Ai
+    zz[:] = Zi
+    rmrs[:] = SOLPS[:,0]
+    gridaa[:] = AAA
+    gridee[:] = EEE
+    fff[:] = ff
+    nnn[:] = nn
+    ieadd[:] = IEADs
+    rootgrp.close()
+    print 'shapes', SOLPS[:,0].shape, ff.shape
+    plt.close()
+    plt.plot(SOLPS[:,0],abs(ff.T))
+    plt.title('plot title')
+    plt.title('ITER Divertor Target Plasma Density')
+    plt.ylabel('n[m-3]')
+    plt.xlabel('R-Rsep[m]')
+    plt.yscale('log')
+    plt.savefig('flux.png')
+    plt.close()
+def plot_hpic_ieadDavide(solps_path='solpsTarg.txt',HpicDataFolder = '/Users/tyounkin/Dissertation/ITER/mq4/hpicdata_solps_DT_20180730/hpicwork0004'):
     me   =  9.10938356e-31; # Electron mass
     mp   =  1.67262190e-27; # Proton mass
     
@@ -65,6 +154,8 @@ def plot_hpic_iead(solps_path='solpsTarg.txt',HpicDataFolder = 'hpicwork0004'):
     nss = rootgrp.createDimension("nS", nS)
     nee = rootgrp.createDimension("nE", nE)
     naa = rootgrp.createDimension("nA", nA)
+    rr = rootgrp.createVariable("r","f8",("nL"))
+    zzz = rootgrp.createVariable("z","f8",("nL"))
     aa = rootgrp.createVariable("A","f8",("nS"))
     zz = rootgrp.createVariable("Z","f8",("nS"))
     rmrs = rootgrp.createVariable("RmRs","f8",("nL"))
@@ -73,6 +164,8 @@ def plot_hpic_iead(solps_path='solpsTarg.txt',HpicDataFolder = 'hpicwork0004'):
     fff = rootgrp.createVariable("flux","f8",("nS","nL"))
     nnn = rootgrp.createVariable("dens","f8",("nS","nL"))
     ieadd = rootgrp.createVariable("iead","f8",("nS","nL","nE","nA"))
+    rr[:] = SOLPS[:,1]
+    zzz[:] = SOLPS[:,2]
     aa[:] = Ai
     zz[:] = Zi
     rmrs[:] = SOLPS[:,0]
@@ -101,6 +194,8 @@ def readHpic(fname = 'hpic.nc'):
     nA = len(ncFile.dimensions['nA'])
     print "dimensions nL nS nE nA", nLocations, nSpecies, nE, nA
 
+    r = np.array(ncFile.variables['r'])
+    z = np.array(ncFile.variables['z'])
     Z = np.array(ncFile.variables['Z'])
     A = np.array(ncFile.variables['A'])
     print "Z",Z
@@ -164,7 +259,7 @@ def readHpic(fname = 'hpic.nc'):
     #        #print('EAdist[:,i] size ', EAdist[:,i].size)
     #        edOut = np.column_stack((gridE,thisDist[:,j]))
     #        np.savetxt(gitrDir+'/dist'+str(j)+'.dat', edOut)
-    return RmRs,nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD
+    return RmRs,r,z,nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD
 def readFtridynSelf(fname='ftridynSelf.nc'):
     ncFile = netCDF4.Dataset(fname,"r")
     nE = len(ncFile.dimensions['nE'])
@@ -236,6 +331,7 @@ def readFtridynBackground(fname='ftridynBackground.nc'):
     #plt.savefig('Edist.png')
     return E,A,spyld
 def computeSputtYld(plots=0):
+    plot_hpic_iead()
     Energy,Angle,spyld=readFtridynBackground()
     RmRs,nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic()
     ftSpecies=0
@@ -292,9 +388,16 @@ def computeSputtYld(plots=0):
                 sputtContribution[i,j] = np.sum(mult)
                 fContribution[i,j] = np.sum(np.reshape(IEAD[j,i,:,:],(nE,nA)))
     normSputtCont = np.divide(sputtContribution,np.sum(fContribution,axis=1)[:,None])
+    normSputtCont[np.isnan(normSputtCont)] = 0.0
     plt.close()
-    plt.plot(RmRs,normSputtCont)
-    plt.legend(['D_1+','T_1+','He_1+','He_2+','Be_1+','Be_2+','Be_3+','Be_4+','Ne_1+','Ne_2+','Ne_3+','Ne_4+','Ne_5+','Ne_6+','Ne_7+','Ne_8+','Ne_9+','Ne_10+'])
+    plt.plot(RmRs,normSputtCont[:,0:8])
+    plt.plot(RmRs,normSputtCont[:,8:16],linestyle='dashed')
+    plt.plot(RmRs,normSputtCont[:,16:19],linestyle='dotted')
+    plt.ticklabel_format(style='sci', axis='y',scilimits=(-4,-4))
+    plt.title('Energy-Angle Averaged Sputtering Yield \n of Background Species\n')
+    plt.ylabel('Yield')
+    plt.xlabel('R-Rsep [m]')
+    plt.legend(['D_1+','T_1+','He_1+','He_2+','Be_1+','Be_2+','Be_3+','Be_4+','Ne_1+','Ne_2+','Ne_3+','Ne_4+','Ne_5+','Ne_6+','Ne_7+','Ne_8+','Ne_9+','Ne_10+'],loc=1)
     plt.savefig('totalSputt.png')
     heTotal = np.sum(normSputtCont[:,2:3],axis=1)
     beTotal = np.sum(normSputtCont[:,4:7],axis=1)
@@ -307,10 +410,121 @@ def computeSputtYld(plots=0):
     plt.plot(RmRs,neTotal)
     plt.legend(['D','T','He','Be','Ne'])
     plt.savefig('totalSputt2.png')
+    specArray = ['D_1+','T_1+','He_1+','He_2+','Be_1+','Be_2+','Be_3+','Be_4+','Ne_1+','Ne_2+','Ne_3+','Ne_4+','Ne_5+','Ne_6+','Ne_7+','Ne_8+','Ne_9+','Ne_10+']
+    
+    np.savetxt('SpylPerSpecies.dat', normSputtCont,header=" ".join(specArray))
+def printBackgroundDist(path = '',rmrsPoints = [-0.1,0.02,0.09,0.2]):
+    RmRs,r,zPoints,nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic()
+    flux = np.abs(flux)
+    specNames = ['D','T','He','Ne']
+    specInds = [0,1,[2,3],[8,9,10,11,12,13,14,15,16,17]]
+    bgFlux = np.zeros((len(specNames),len(rmrsPoints)))
+    for k in range(len(specNames)):
+        if os.path.isdir("GITRoutput_"+specNames[k]):
+            print("GITRoutput folder already exists")
+        else:
+            os.mkdir('GITRoutput_'+specNames[k])
+
+    for i in range(len(rmrsPoints)):
+        #idx = (np.abs(RmRs - rmrsPoints[i])).argmin()
+	aa = RmRs - rmrsPoints[i]
+	rsepPlus = min(ii for ii in aa if ii >= 0)
+	print("Position:", list(aa).index(rsepPlus))
+	print("Value:", rsepPlus)
+	idx = list(aa).index(rsepPlus)
+	rsepPlus = RmRs[idx]
+	rsepMinus = RmRs[idx-1]
+	idxMinus = idx-1
+        print('index',idx)
+	print('RsepMinus and indxMInus',rsepMinus,idxMinus)
+	thisDist = np.zeros((len(specNames),nE,nA))
+	for j in range(len(specNames)):
+	    print('flux shape',flux.shape)
+            bgFlux[j,i] = (rmrsPoints[i] - rsepMinus)/(rsepPlus-rsepMinus)*np.sum(flux[specInds[j],idx]) + (rsepPlus - rmrsPoints[i])/(rsepPlus-rsepMinus)*np.sum(flux[specInds[j],idxMinus])
+	    if isinstance(specInds[j],int):
+	        thisDist[j,:,:] = (rmrsPoints[i] - rsepMinus)/(rsepPlus-rsepMinus)*IEAD[specInds[j],idx,:,:] + (rsepPlus - rmrsPoints[i])/(rsepPlus-rsepMinus)*IEAD[specInds[j],idxMinus,:,:]
+            else:
+
+	        thisDist[j,:,:] = np.sum((rmrsPoints[i] - rsepMinus)/(rsepPlus-rsepMinus)*IEAD[specInds[j],idx,:,:] + (rsepPlus - rmrsPoints[i])/(rsepPlus-rsepMinus)*IEAD[specInds[j],idxMinus,:,:],axis=0)
+                #thisDist[j,:,:] = np.sum(IEAD[specInds[j],idx,:,:],axis=0) #first dimension is angle, second is energy
+        #thisDist = np.transpose(thisDist)
+        print('thisDistHe size', thisDist.shape)
+	#print(thisDist)
+        Aweight = np.sum(thisDist,axis=1)
+        #gitrDir = 'GITRoutput/'+'gitr'+str(i)
+        #if os.path.isdir(gitrDir):
+	#    print("director already exists",gitrDir)
+	#else:
+        #    os.mkdir(gitrDir)
+        
+	for k in range(len(specNames)):
+            gitrDirSpec = 'GITRoutput_'+specNames[k]+'/gitr'+str(i)
+            if os.path.isdir(gitrDirSpec):
+	        print("director already exists",gitrDirSpec)
+	    else:
+                os.mkdir(gitrDirSpec)
+	    
+	    if isinstance(specInds[k],int):
+                print('single charge species')
+	    else:		
+                nChargeStates = len(specInds[k])
+		for jj in range(nChargeStates):
+                    plt.close()
+	            plt.pcolor(gridA[idx,:],gridE[idx,:],IEAD[specInds[k][jj],idx,:,:])
+                    plt.colorbar(orientation='vertical')
+                    plt.title('IEAD'+str(jj+1))
+                    plt.ylabel('E[eV]')
+                    plt.xlabel('A[degrees]')
+                    plt.savefig(gitrDirSpec+'/iead'+str(jj+1)+'.png')
+            plt.close()
+	    plt.pcolor(gridA[idx,:],gridE[idx,:],thisDist[k,:,:])
+            plt.colorbar(orientation='vertical')
+            plt.title('IEAD')
+            plt.ylabel('E[eV]')
+            plt.xlabel('A[degrees]')
+            plt.savefig(gitrDirSpec+'/iead.png')
+            np.savetxt(gitrDirSpec+'/gitrFluxE.dat', gridE[idx,:])
+            np.savetxt(gitrDirSpec+'/gitrFluxAweight.dat', Aweight[k,:])
+            np.savetxt(gitrDirSpec+'/gitrFluxA.dat',gridA[idx,:])
+            np.savetxt(gitrDirSpec+'/gitrFluxEAdist.dat', thisDist[k,:,:])
+            
+            if(path != ''): 
+                np.savetxt(gitrDirSpec+'/gitrFluxE.dat', gridE[idx,:])
+                np.savetxt(gitrDirSpec+'/gitrFluxAweight.dat', Aweight[k,:])
+                np.savetxt(gitrDirSpec+'/gitrFluxA.dat',gridA[idx,:])
+                np.savetxt(gitrDirSpec+'/gitrFluxEAdist.dat', thisDist[k,:,:])
+
+            for j in range(0,nA):
+                #print('Evec size ', gridE.size)
+                #print('EAdist[:,i] size ', EAdist[:,i].size)
+                edOut = np.column_stack((gridE[idx,:],thisDist[k,:,j]))
+                np.savetxt(gitrDirSpec+'/dist'+str(j)+'.dat', edOut)
+    
+        fluxTotal = np.sum(bgFlux[:,i])
+        Dfrac =  bgFlux[0,i]/fluxTotal
+        Hefrac = bgFlux[2,i]/fluxTotal
+        Tfrac = bgFlux[1,i]/fluxTotal
+        Nefrac = bgFlux[3,i]/fluxTotal
+	Wfrac = 0.0
+        file = open('gitrOut'+str(i)+'.txt','w') 
+        file.write('plasmaSpecies=He W D T Ne\n') 
+        file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+' '+str(Nefrac)+'\n') 
+        file.write('flux='+str(fluxTotal/1e18)+'\n') 
+        file.write('gitrOutputDir_W='+os.getcwd()+'gitrOutput_W'+'\n') 
+        file.write('gitrOutputDir_D='+os.getcwd()+'gitrOutput_D'+'\n') 
+        file.write('gitrOutputDir_T='+os.getcwd()+'gitrOutput_T'+'\n') 
+        file.write('gitrOutputDir_He='+os.getcwd()+'gitrOutput_He'+'\n') 
+        file.write('gitrOutputDir_Ne='+os.getcwd()+'gitrOutput_Ne'+'\n') 
+        file.close() 
+
+        #if(path != ''): 
+        #    shutil.copyfile('gitrOut.txt',path+'/'+'gitrOut.txt')
+    return  bgFlux
 if __name__ == "__main__":   
-    #plot_hpic_iead(solps_path='hpicdata_solps_DT_20180730/solpsTarg.txt',HpicDataFolder = 'hpicdata_solps_DT_20180730/hpicwork0004')
+    #plot_hpic_ieadDavide(solps_path='/Users/tyounkin/Dissertation/ITER/mq4/hpicdata_solps_DT_20180730/solpsTarg.txt',HpicDataFolder = '/Users/tyounkin/Dissertation/ITER/mq4/hpicdata_solps_DT_20180730/hpicwork0004')
 
     #nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic()
     #readFtridynSelf()
     #readFtridynBackground()
-    computeSputtYld()
+    #computeSputtYld()
+    printBackgroundDist()
