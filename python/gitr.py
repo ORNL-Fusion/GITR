@@ -135,8 +135,13 @@ def read3dGeom(filename="gitrGeometry.cfg"):
     Z = np.array(config.geom.Z)
     materialSurfaceInidces = np.nonzero(Z)
     surfIndArray = np.asarray(materialSurfaceInidces)
+    a=np.array(config.geom.a)
+    b=np.array(config.geom.b)
+    c=np.array(config.geom.c)
+    d=np.array(config.geom.d)
+    plane_norm=np.array(config.geom.plane_norm)
     print('Number of W surfaces ', surfIndArray.size)
-    return x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf
+    return x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf,a,b,c,d,plane_norm
 def iter2dProcessing():
     x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
     plt.close()
@@ -234,7 +239,7 @@ def iter3dProcessing(path = '',loc = [-4.5020,   -4.4628,   -4.4237,   -4.3846, 
     #loc = [-4.5020,   -4.4628,   -4.4237,   -4.3846,   -4.3455,   -4.3064,   -4.2672,   -4.2281, -4.1890,   -4.1499,   -4.1108,   -4.0717,   -4.0327,   -3.9938   -3.9547,   -3.9157, -3.8766,   -3.8380,   -3.7395,   -3.6386,   -3.5423,   -3.4537,   -3.3799,   -3.3195,-3.2744]
     #loc = [-4.50,-4.437,-4.3570,-4.2770,-4.1970,-4.1170,-4.0371,-3.9574,-3.8775,-3.5341,-3.3679,-3.273]
     #x1,x2,z1,z2,length,Z = plot2dGeom('input/iterRefinedTest.cfg')
-    x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf = read3dGeom('input/iterRefinedTest.cfg')
+    x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf,a,b,c,d,plane_norm = read3dGeom('input/iterRefinedTest.cfg')
     plt.close()
     grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers,surfEdist = nc_readSurface()
     plt.close()
