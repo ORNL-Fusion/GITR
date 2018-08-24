@@ -44,7 +44,7 @@ def plot_hpic_iead(solps_path='solpsTarg.txt',HpicDataFolder = '/Users/tyounkin/
         phi_floating = -Te*(np.log(sum(np.multiply(np.multiply(Zi,ci),np.sqrt(np.divide(2*np.pi*me/mp,Ai))))));
         phi_total = phi_floating + 0.5*Te;
         EE   = np.linspace(0,24*Te,240);
-        AA   = np.linspace(0,90,90);
+        AA   = np.linspace(0,89,90);
         EEE[i,:] = EE;
         AAA[i,:] = AA;
         for j in range(len(Ai)):
@@ -133,7 +133,7 @@ def plot_hpic_ieadDavide(solps_path='solpsTarg.txt',HpicDataFolder = '/Users/tyo
         phi_floating = -Te*(np.log(sum(np.multiply(np.multiply(Zi,ci),np.sqrt(np.divide(2*np.pi*me/mp,Ai))))));
         phi_total = phi_floating + 0.5*Te;
         EE   = np.linspace(0,24*Te,240);
-        AA   = np.linspace(0,90,90);
+        AA   = np.linspace(0,89.0,90);
         EEE[i,:] = EE;
         AAA[i,:] = AA;
         for j in range(len(Ai)):
@@ -440,12 +440,17 @@ def printBackgroundDist(path = '',rmrsPoints = [-0.1,0.02,0.09,0.2]):
 	thisDist = np.zeros((len(specNames),nE,nA))
 	for j in range(len(specNames)):
 	    print('flux shape',flux.shape)
-            bgFlux[j,i] = (rmrsPoints[i] - rsepMinus)/(rsepPlus-rsepMinus)*np.sum(flux[specInds[j],idx]) + (rsepPlus - rmrsPoints[i])/(rsepPlus-rsepMinus)*np.sum(flux[specInds[j],idxMinus])
-	    if isinstance(specInds[j],int):
-	        thisDist[j,:,:] = (rmrsPoints[i] - rsepMinus)/(rsepPlus-rsepMinus)*IEAD[specInds[j],idx,:,:] + (rsepPlus - rmrsPoints[i])/(rsepPlus-rsepMinus)*IEAD[specInds[j],idxMinus,:,:]
+	    if (idx > 0) and (idx < len(RmRs)):
+                bgFlux[j,i] = (rmrsPoints[i] - rsepMinus)/(rsepPlus-rsepMinus)*np.sum(flux[specInds[j],idx]) + (rsepPlus - rmrsPoints[i])/(rsepPlus-rsepMinus)*np.sum(flux[specInds[j],idxMinus])
             else:
+	        bgFlux[j,i] = 0.0
+	    if isinstance(specInds[j],int):
+	        if (idx > 0) and (idx < len(RmRs)):
+	            thisDist[j,:,:] = (rmrsPoints[i] - rsepMinus)/(rsepPlus-rsepMinus)*IEAD[specInds[j],idx,:,:] + (rsepPlus - rmrsPoints[i])/(rsepPlus-rsepMinus)*IEAD[specInds[j],idxMinus,:,:]
+            else:
+	        if (idx > 0) and (idx < len(RmRs)):
 
-	        thisDist[j,:,:] = np.sum((rmrsPoints[i] - rsepMinus)/(rsepPlus-rsepMinus)*IEAD[specInds[j],idx,:,:] + (rsepPlus - rmrsPoints[i])/(rsepPlus-rsepMinus)*IEAD[specInds[j],idxMinus,:,:],axis=0)
+	            thisDist[j,:,:] = np.sum((rmrsPoints[i] - rsepMinus)/(rsepPlus-rsepMinus)*IEAD[specInds[j],idx,:,:] + (rsepPlus - rmrsPoints[i])/(rsepPlus-rsepMinus)*IEAD[specInds[j],idxMinus,:,:],axis=0)
                 #thisDist[j,:,:] = np.sum(IEAD[specInds[j],idx,:,:],axis=0) #first dimension is angle, second is energy
         #thisDist = np.transpose(thisDist)
         print('thisDistHe size', thisDist.shape)
@@ -483,13 +488,16 @@ def printBackgroundDist(path = '',rmrsPoints = [-0.1,0.02,0.09,0.2]):
             plt.ylabel('E[eV]')
             plt.xlabel('A[degrees]')
             plt.savefig(gitrDirSpec+'/iead.png')
-            np.savetxt(gitrDirSpec+'/gitrFluxE.dat', gridE[idx,:])
+	    thisGridE = gridE[idx,:]
+            if thisGridE[0] == 0.0:
+                thisGridE = thisGridE + 0.5*(thisGridE[1] - thisGridE[0])
+            np.savetxt(gitrDirSpec+'/gitrFluxE.dat', thisGridE)
             np.savetxt(gitrDirSpec+'/gitrFluxAweight.dat', Aweight[k,:])
             np.savetxt(gitrDirSpec+'/gitrFluxA.dat',gridA[idx,:])
             np.savetxt(gitrDirSpec+'/gitrFluxEAdist.dat', thisDist[k,:,:])
             
             if(path != ''): 
-                np.savetxt(gitrDirSpec+'/gitrFluxE.dat', gridE[idx,:])
+                np.savetxt(gitrDirSpec+'/gitrFluxE.dat', thisGridE)
                 np.savetxt(gitrDirSpec+'/gitrFluxAweight.dat', Aweight[k,:])
                 np.savetxt(gitrDirSpec+'/gitrFluxA.dat',gridA[idx,:])
                 np.savetxt(gitrDirSpec+'/gitrFluxEAdist.dat', thisDist[k,:,:])
@@ -497,7 +505,7 @@ def printBackgroundDist(path = '',rmrsPoints = [-0.1,0.02,0.09,0.2]):
             for j in range(0,nA):
                 #print('Evec size ', gridE.size)
                 #print('EAdist[:,i] size ', EAdist[:,i].size)
-                edOut = np.column_stack((gridE[idx,:],thisDist[k,:,j]))
+                edOut = np.column_stack((thisGridE,thisDist[k,:,j]))
                 np.savetxt(gitrDirSpec+'/dist'+str(j)+'.dat', edOut)
     
         fluxTotal = np.sum(bgFlux[:,i])
@@ -521,7 +529,7 @@ def printBackgroundDist(path = '',rmrsPoints = [-0.1,0.02,0.09,0.2]):
         #    shutil.copyfile('gitrOut.txt',path+'/'+'gitrOut.txt')
     return  bgFlux
 if __name__ == "__main__":   
-    #plot_hpic_ieadDavide(solps_path='/Users/tyounkin/Dissertation/ITER/mq4/hpicdata_solps_DT_20180730/solpsTarg.txt',HpicDataFolder = '/Users/tyounkin/Dissertation/ITER/mq4/hpicdata_solps_DT_20180730/hpicwork0004')
+    plot_hpic_ieadDavide(solps_path='/Users/tyounkin/Dissertation/ITER/mq4/hpicdata_solps_DT_20180730/solpsTarg.txt',HpicDataFolder = '/Users/tyounkin/Dissertation/ITER/mq4/hpicdata_solps_DT_20180730/hpicwork0004')
 
     #nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic()
     #readFtridynSelf()
