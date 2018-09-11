@@ -6,7 +6,7 @@ import numpy.matlib as ml
 import gitr
 import scipy.interpolate as scii
 import netCDF4
-def readEquilibrium(filename='Baseline2008-li0.70.x4.equ',geometryFile='/Users/tyounkin/Code/gitr2/iter/iter_milestone/2d/input/iter2dRefinedOuterTarget.cfg'):
+def readEquilibrium(filename='/global/homes/t/tyounkin/atomIPS/atom-install-edison/solps-iter-data/Baseline2008-li0.70.x4.equ',geometryFile='/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/iter/iter_milestone/2d/input/iter2dRefinedOuterTarget.cfg'):
     print 'Reading B Equilibrium file %s and making use of GITR geometry file %s' %(filename,geometryFile)
     rr=0
     zz=0
@@ -74,12 +74,20 @@ def readEquilibrium(filename='Baseline2008-li0.70.x4.equ',geometryFile='/Users/t
     gitr.plot2dGeom(geometryFile)
     print 'Saving psi contour as psiContour.png '			
     plt.savefig('psiContour.png')
-    [gradz,gradr] = np.gradient(psi,z,r) #z[1]-z[0],r[1]-r[0])
-    #print(gradr)
-    #print(gradz)
+    print('About to take gradient')
+    print(r.shape)
+    print(z.shape)
+    print(psi.shape)
+    [gradz,gradr] = np.gradient(np.array(psi),z[1]-z[0],r[1]-r[0]) #z,r) sometimes this doesn't work
+    print(gradr.shape)
+    print(gradz.shape)
     br = -gradz/r
+    print(br.shape)
     bz =gradr/r
+    print(bz.shape)
     plt.close()
+    print(r)
+    print(z)
     plt.pcolor(r,z,br)
     plt.colorbar()
     print 'Saving br profile as br.png '			
@@ -144,7 +152,7 @@ def findStrikepoint(x1,x2,z1,z2,length,r,z,psi,rmin=5.55,rmax=6.226,zmin=-4.6,zm
     zsep = z1[sepBoundary2] + abs(psiTarg[sepBoundary,0])/(psiTarg[sepBoundary,1]-psiTarg[sepBoundary,0])*(z2[sepBoundary2]-z1[sepBoundary2])
     print 'Rsep Zsep of strike point: ',rsep,zsep
     return rsep, zsep, targInds, sepBoundary2
-def interpolateBfield(r,z,br, bz, bt,psi,rTarget,zTarget,geometryFile='/Users/tyounkin/Code/gitr2/iter/iter_milestone/2d/input/iter2dRefinedOuterTarget.cfg',rmin=5.55,rmax=6.226,zmin=-4.6,zmax=-3.238):
+def interpolateBfield(r,z,br, bz, bt,psi,rTarget,zTarget,geometryFile='/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/iter/iter_milestone/2d/input/iter2dRefinedOuterTarget.cfg',rmin=5.55,rmax=6.226,zmin=-4.6,zmax=-3.238):
     print 'Beginning interpolate B-field'
     x1,x2,z1,z2,length,Z = gitr.plot2dGeom(geometryFile) 
     print 'Finding outer target strike point'
@@ -249,7 +257,7 @@ def getRsepFromRZ(x1,x2,z1,z2,slope,rMrs,r,z):
     else:
         rMrSep = rMrs[surfNumber]+dx2
     return rMrSep,surfNumber
-def getBfield(rTarg,zTarg,filename='/Users/tyounkin/Dissertation/ITER/Baseline2008-li0.70.x4.equ',geometryFile='/Users/tyounkin/Code/gitr2/iter/iter_milestone/2d/input/iter2dRefinedOuterTarget.cfg',rmin=5.55,rmax=6.226,zmin=-4.6,zmax=-3.238):    
+def getBfield(rTarg,zTarg,filename='/global/homes/t/tyounkin/atomIPS/atom-install-edison/solps-iter-data/Baseline2008-li0.70.x4.equ',geometryFile='/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/iter/iter_milestone/2d/input/iter2dRefinedOuterTarget.cfg',rmin=5.55,rmax=6.226,zmin=-4.6,zmax=-3.238):    
     r,z,br, bz, bt,psi = readEquilibrium(filename,geometryFile)
     #print 'interpolate bfield',rmin,rmax,zmin,zmax
     rSep,bAngle, bMag = interpolateBfield(r,z,br, bz, bt,psi,rTarg,zTarg,geometryFile,rmin,rmax,zmin,zmax)

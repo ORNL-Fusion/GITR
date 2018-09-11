@@ -477,7 +477,7 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
     std::cout << "Reading 3D geometry file " << std::endl;
     for(int i=0 ; i<nLines ; i++)
     {
-       std::cout << "i " << i << std::endl;
+       //std::cout << "i " << i << std::endl;
        boundaries[i].x1 = geom["x1"][i];
        boundaries[i].y1 = geom["y1"][i];
        boundaries[i].z1 = geom["z1"][i];

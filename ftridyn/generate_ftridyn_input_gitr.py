@@ -333,7 +333,7 @@ def beam_and_target(name,beam_species,target_species,sim_number=1,
 	surface.print_fractal_surface_file()
 
 	simulation_parameters = sim_params(name=name, sim_num=sim_number, IFOUT=number_histories/20,
-		NH=number_histories, IDOUT=number_histories/5, IQOUT=number_histories/5, NCP=number_species, IDREL=0,
+		NH=number_histories, IDOUT=number_histories, IQOUT=number_histories, NCP=number_species, IDREL=0,
 		IQ0=0, IRC0=-1, IRAND=12855897, JSP1=0, JSP2=1, JFRP=1, JNRM=1, FLC=fluence, INEL=1,
 		IWC=3, IDIFF=0, CSBE=0, ANGMN=0, ANGMX=90, TT=depth, TTDYN=1.2*depth, NQX=500,
 		DSF=100.0, IQXN=0, IQXX=250, IMCP=0, surf_name=surface.name+'.surf', species_list=species_list,
