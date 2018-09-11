@@ -379,6 +379,8 @@ int main(int argc, char **argv)
     sim::Array<float> grossErosion(nSurfaces,0.0);
     sim::Array<float> sumWeightStrike(nSurfaces,0.0);
     sim::Array<float> energyDistribution(nSurfaces*nEdist*nAdist,0.0);
+    sim::Array<float> reflDistribution(nSurfaces*nEdist*nAdist,0.0);
+    sim::Array<float> sputtDistribution(nSurfaces*nEdist*nAdist,0.0);
     sim::Array<float> aveSputtYld(nSurfaces,0.0);
     sim::Array<int> sputtYldCount(nSurfaces,0);
     sim::Array<int> sumParticlesStrike(nSurfaces,0);
@@ -2221,6 +2223,7 @@ int main(int argc, char **argv)
   int nE_sputtRefCoeff = 1, nA_sputtRefCoeff=1;
   int nE_sputtRefDistIn = 1, nA_sputtRefDistIn=1;
   int nE_sputtRefDistOut = 1, nA_sputtRefDistOut = 1;
+  int nE_sputtRefDistOutRef = 1,nDistE_surfaceModelRef = 1;
   int nDistE_surfaceModel = 1,nDistA_surfaceModel = 1;
 #if USESURFACEMODEL > 0
   std::string surfaceModelCfg = "surfaceModel.";
@@ -2235,8 +2238,10 @@ int main(int argc, char **argv)
   nE_sputtRefDistIn = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nEsputtRefDistInString");
   nA_sputtRefDistIn = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nAsputtRefDistInString");
   nE_sputtRefDistOut = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nEsputtRefDistOutString");
+  nE_sputtRefDistOutRef = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nEsputtRefDistOutStringRef");
   nA_sputtRefDistOut = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nAsputtRefDistOutString");
   nDistE_surfaceModel = nE_sputtRefDistIn*nA_sputtRefDistIn*nE_sputtRefDistOut;
+  nDistE_surfaceModelRef = nE_sputtRefDistIn*nA_sputtRefDistIn*nE_sputtRefDistOutRef;
   nDistA_surfaceModel = nE_sputtRefDistIn*nA_sputtRefDistIn*nA_sputtRefDistOut;
   std::cout <<  " got dimensions of surface model " << std::endl;
   #if USE_MPI > 0
@@ -2246,8 +2251,10 @@ int main(int argc, char **argv)
       MPI_Bcast(&nE_sputtRefDistIn, 1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nA_sputtRefDistIn, 1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nE_sputtRefDistOut, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nE_sputtRefDistOutRef, 1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nA_sputtRefDistOut, 1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nDistE_surfaceModel, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nDistE_surfaceModelRef, 1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nDistA_surfaceModel, 1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
   #endif
@@ -2255,18 +2262,20 @@ int main(int argc, char **argv)
   sim::Array<float> E_sputtRefCoeff(nE_sputtRefCoeff), A_sputtRefCoeff(nA_sputtRefCoeff),
                     Elog_sputtRefCoeff(nE_sputtRefCoeff),
                     energyDistGrid01(nE_sputtRefDistOut),
+                    energyDistGrid01Ref(nE_sputtRefDistOutRef),
                     angleDistGrid01(nA_sputtRefDistOut),
                     spyl_surfaceModel(nE_sputtRefCoeff*nA_sputtRefCoeff),
                     rfyl_surfaceModel(nE_sputtRefCoeff*nA_sputtRefCoeff),
                     E_sputtRefDistIn(nE_sputtRefDistIn), A_sputtRefDistIn(nA_sputtRefDistIn),
                     Elog_sputtRefDistIn(nE_sputtRefDistIn),
-                    E_sputtRefDistOut(nE_sputtRefDistOut), A_sputtRefDistOut(nA_sputtRefDistOut),
+                    E_sputtRefDistOut(nE_sputtRefDistOut), 
+                    E_sputtRefDistOutRef(nE_sputtRefDistOutRef),A_sputtRefDistOut(nA_sputtRefDistOut),
                     ADist_Y(nDistA_surfaceModel),EDist_Y(nDistE_surfaceModel),
-                    ADist_R(nDistA_surfaceModel),EDist_R(nDistE_surfaceModel),
+                    ADist_R(nDistA_surfaceModel),EDist_R(nDistE_surfaceModelRef),
                     ADist_CDF_Y(nDistA_surfaceModel),EDist_CDF_Y(nDistE_surfaceModel),
-                    ADist_CDF_R(nDistA_surfaceModel),EDist_CDF_R(nDistE_surfaceModel),
+                    ADist_CDF_R(nDistA_surfaceModel),EDist_CDF_R(nDistE_surfaceModelRef),
                     ADist_CDF_Y_regrid(nDistA_surfaceModel),EDist_CDF_Y_regrid(nDistE_surfaceModel),
-                    ADist_CDF_R_regrid(nDistA_surfaceModel),EDist_CDF_R_regrid(nDistE_surfaceModel);
+                    ADist_CDF_R_regrid(nDistA_surfaceModel),EDist_CDF_R_regrid(nDistE_surfaceModelRef);
 #if USESURFACEMODEL > 0
   #if USE_MPI > 0 
     if(world_rank == 0)
@@ -2277,6 +2286,7 @@ int main(int argc, char **argv)
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistIn",E_sputtRefDistIn[0]);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefDistIn",A_sputtRefDistIn[0]);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistOut",E_sputtRefDistOut[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistOutRef",E_sputtRefDistOutRef[0]);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefDistOut",A_sputtRefDistOut[0]);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"sputtYldString",spyl_surfaceModel[0]);
   getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"reflYldString",rfyl_surfaceModel[0]);
@@ -2300,6 +2310,10 @@ int main(int argc, char **argv)
   {
       energyDistGrid01[i] = i*1.0/nE_sputtRefDistOut;
   }
+  for(int i=0;i<nE_sputtRefDistOutRef;i++)
+  {
+      energyDistGrid01Ref[i] = i*1.0/nE_sputtRefDistOutRef;
+  }
   for(int i=0;i<nA_sputtRefDistOut;i++)
   {
      angleDistGrid01[i] = i*1.0/nA_sputtRefDistOut;
@@ -2307,7 +2321,7 @@ int main(int argc, char **argv)
   }
   make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,EDist_Y.data(),EDist_CDF_Y.data());
   make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,ADist_Y.data(),ADist_CDF_Y.data());
-  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,EDist_R.data(),EDist_CDF_R.data());
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOutRef,EDist_R.data(),EDist_CDF_R.data());
   make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,ADist_R.data(),ADist_CDF_R.data());
   for(int k=0;k<nE_sputtRefDistOut;k++)
   {
@@ -2317,7 +2331,7 @@ int main(int argc, char **argv)
  regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,A_sputtRefDistOut[nA_sputtRefDistOut-1],ADist_CDF_Y.data(),ADist_CDF_Y_regrid.data());
  regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,energyDistGrid01.data(),nE_sputtRefDistOut,E_sputtRefDistOut[nE_sputtRefDistOut-1],EDist_CDF_Y.data(),EDist_CDF_Y_regrid.data());
  regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,A_sputtRefDistOut[nA_sputtRefDistOut-1],ADist_CDF_R.data(),ADist_CDF_R_regrid.data());
- regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,energyDistGrid01.data(),nE_sputtRefDistOut,E_sputtRefDistOut[nE_sputtRefDistOut-1],EDist_CDF_R.data(),EDist_CDF_R_regrid.data());
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOutRef,energyDistGrid01Ref.data(),nE_sputtRefDistOutRef,E_sputtRefDistOutRef[nE_sputtRefDistOutRef-1],EDist_CDF_R.data(),EDist_CDF_R_regrid.data());
  // regrid2dCDF(nE_surfaceModel,nA_surfaceModel,nEdistBins_surfaceModel,energyDistGrid01.data(),nEdistBins_surfaceModel,100.0,energyDist_CDF.data(),energyDist_CDFregrid.data());
  for(int k=0;k<nE_sputtRefDistOut;k++)
   {
@@ -2343,6 +2357,7 @@ int main(int argc, char **argv)
       MPI_Bcast(A_sputtRefCoeff.data(), nA_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(Elog_sputtRefCoeff.data(), nE_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(energyDistGrid01.data(), nE_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(energyDistGrid01Ref.data(), nE_sputtRefDistOutRef,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(angleDistGrid01.data(), nA_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(spyl_surfaceModel.data(), nE_sputtRefCoeff*nA_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(rfyl_surfaceModel.data(), nE_sputtRefCoeff*nA_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -2350,19 +2365,20 @@ int main(int argc, char **argv)
       MPI_Bcast(A_sputtRefDistIn.data(), nA_sputtRefDistIn,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(Elog_sputtRefDistIn.data(), nE_sputtRefDistIn,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(E_sputtRefDistOut.data(), nE_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(E_sputtRefDistOutRef.data(), nE_sputtRefDistOutRef,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(A_sputtRefDistOut.data(), nA_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(ADist_Y.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(EDist_Y.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(ADist_R.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
-      MPI_Bcast(EDist_R.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_R.data(), nDistE_surfaceModelRef,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(ADist_CDF_Y.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(EDist_CDF_Y.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(ADist_CDF_R.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
-      MPI_Bcast(EDist_CDF_R.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_CDF_R.data(), nDistE_surfaceModelRef,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(ADist_CDF_Y_regrid.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(EDist_CDF_Y_regrid.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(ADist_CDF_R_regrid.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
-      MPI_Bcast(EDist_CDF_R_regrid.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_CDF_R_regrid.data(), nDistE_surfaceModelRef,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
   #endif
 #endif
@@ -3132,7 +3148,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
                         &closeGeom.front(),
                         nEdist, E0dist, Edist, nAdist, A0dist, Adist);
       #if USE_SORT > 0
-        sortParticles sort0(particleArray,nP,0.01,tt,10000,pStartIndx.data(),nActiveParticlesOnRank.data(),world_rank,&state1.front());
+        sortParticles sort0(particleArray,nP,0.001,tt,10000,pStartIndx.data(),nActiveParticlesOnRank.data(),world_rank,&state1.front());
       #endif
 #if SPECTROSCOPY > 0
                  spec_bin   spec_bin0(particleArray,nBins,net_nX,net_nY, net_nZ, &gridX_bins.front(),&gridY_bins.front(),
@@ -3182,10 +3198,10 @@ std::cout <<" about to write ncFile_particles " << std::endl;
                 reflection reflection0(particleArray,dt,&state1.front(),nLines,&boundaries[0],surfaces,
                     nE_sputtRefCoeff, nA_sputtRefCoeff,A_sputtRefCoeff.data(),
                     Elog_sputtRefCoeff.data(),spyl_surfaceModel.data(), rfyl_surfaceModel.data(),
-                    nE_sputtRefDistOut, nA_sputtRefDistOut,nE_sputtRefDistIn,nA_sputtRefDistIn,
+                    nE_sputtRefDistOut,nE_sputtRefDistOutRef, nA_sputtRefDistOut,nE_sputtRefDistIn,nA_sputtRefDistIn,
                     Elog_sputtRefDistIn.data(),A_sputtRefDistIn.data(),
-                    E_sputtRefDistOut.data(),A_sputtRefDistOut.data(),
-                    energyDistGrid01.data(),angleDistGrid01.data(),
+                    E_sputtRefDistOut.data(),E_sputtRefDistOutRef.data(),A_sputtRefDistOut.data(),
+                    energyDistGrid01.data(),energyDistGrid01Ref.data(),angleDistGrid01.data(),
                     EDist_CDF_Y_regrid.data(),ADist_CDF_Y_regrid.data(),
                     EDist_CDF_R_regrid.data(),ADist_CDF_R_regrid.data(),
                     nEdist, E0dist, Edist, nAdist, A0dist, Adist) ;
@@ -3536,7 +3552,7 @@ MPI_Barrier(MPI_COMM_WORLD);
     const int* exdispl=&exDispl[0];
     const int* excount = &exCount[0];
 
-    MPI_Gatherv(&exampleArray[exDispl[world_rank]],2,MPI_FLOAT,&exampleArrayGather[0],excount,exdispl,MPI_FLOAT,0,MPI_COMM_WORLD);
+    //MPI_Gatherv(&exampleArray[exDispl[world_rank]],2,MPI_FLOAT,&exampleArrayGather[0],excount,exdispl,MPI_FLOAT,0,MPI_COMM_WORLD);
 
     //for(int i=0;i<4;i++)
     //{
@@ -3582,7 +3598,7 @@ MPI_Barrier(MPI_COMM_WORLD);
 #if (USESURFACEMODEL > 0 || FLUX_EA > 0)
 //MPI_Barrier(MPI_COMM_WORLD);
 std::cout <<"Starting surface reduce " << world_rank<< std::endl;
-for(int i=0;i<nSurfaces;i++) std::cout << surfaces->grossDeposition[i]<<std::endl;
+//for(int i=0;i<nSurfaces;i++) std::cout << surfaces->grossDeposition[i]<<std::endl;
 MPI_Reduce(&surfaces->grossDeposition[0], &grossDeposition[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
 //MPI_Barrier(MPI_COMM_WORLD);
@@ -3601,6 +3617,10 @@ MPI_Reduce(&surfaces->sputtYldCount[0], &sputtYldCount[0],nSurfaces, MPI_INT, MP
 MPI_Reduce(&surfaces->sumParticlesStrike[0], &sumParticlesStrike[0],nSurfaces, MPI_INT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
 MPI_Reduce(&surfaces->energyDistribution[0], &energyDistribution[0],nSurfaces*nEdist*nAdist, 
+        MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->sputtDistribution[0], &sputtDistribution[0],nSurfaces*nEdist*nAdist, 
+        MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->reflDistribution[0], &reflDistribution[0],nSurfaces*nEdist*nAdist, 
         MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
 MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -3888,13 +3908,13 @@ NcDim nc_nEnergies = ncFile1.addDim("nEnergies",nEdist);
 NcDim nc_nAngles = ncFile1.addDim("nAngles",nAdist);
 dimsSurfE.push_back(nc_nAngles);
 dimsSurfE.push_back(nc_nEnergies);
-NcVar nc_grossDep = ncFile1.addVar("grossDeposition",ncDouble,nc_nLines);
-NcVar nc_grossEro = ncFile1.addVar("grossErosion",ncDouble,nc_nLines);
-NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl",ncDouble,nc_nLines);
+NcVar nc_grossDep = ncFile1.addVar("grossDeposition",ncFloat,nc_nLines);
+NcVar nc_grossEro = ncFile1.addVar("grossErosion",ncFloat,nc_nLines);
+NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl",ncFloat,nc_nLines);
 NcVar nc_spylCounts = ncFile1.addVar("spylCounts",ncInt,nc_nLines);
 NcVar nc_surfNum = ncFile1.addVar("surfaceNumber",ncInt,nc_nLines);
 NcVar nc_sumParticlesStrike = ncFile1.addVar("sumParticlesStrike",ncInt,nc_nLines);
-NcVar nc_sumWeightStrike = ncFile1.addVar("sumWeightStrike",ncDouble,nc_nLines);
+NcVar nc_sumWeightStrike = ncFile1.addVar("sumWeightStrike",ncFloat,nc_nLines);
 nc_grossDep.putVar(&grossDeposition[0]);
 nc_surfNum.putVar(&surfaceNumbers[0]);
 nc_grossEro.putVar(&grossErosion[0]);
@@ -3902,11 +3922,13 @@ nc_aveSpyl.putVar(&aveSputtYld[0]);
 nc_spylCounts.putVar(&sputtYldCount[0]);
 nc_spylCounts.putVar(&sumParticlesStrike[0]);
 nc_sumWeightStrike.putVar(&sumWeightStrike[0]);
-//NcVar nc_surfImpacts = ncFile1.addVar("impacts",ncDouble,dims1);
-//NcVar nc_surfRedeposit = ncFile1.addVar("redeposit",ncDouble,dims1);
-//NcVar nc_surfStartingParticles = ncFile1.addVar("startingParticles",ncDouble,dims1);
-//NcVar nc_surfZ = ncFile1.addVar("Z",ncDouble,dims1);
-NcVar nc_surfEDist = ncFile1.addVar("surfEDist",ncDouble,dimsSurfE);
+//NcVar nc_surfImpacts = ncFile1.addVar("impacts",ncFloat,dims1);
+//NcVar nc_surfRedeposit = ncFile1.addVar("redeposit",ncFloat,dims1);
+//NcVar nc_surfStartingParticles = ncFile1.addVar("startingParticles",ncFloat,dims1);
+//NcVar nc_surfZ = ncFile1.addVar("Z",ncFloat,dims1);
+NcVar nc_surfEDist = ncFile1.addVar("surfEDist",ncFloat,dimsSurfE);
+NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist",ncFloat,dimsSurfE);
+NcVar nc_surfSputtDist = ncFile1.addVar("surfSputtDist",ncFloat,dimsSurfE);
 //nc_surfImpacts.putVar(impacts);
 //#if USE3DTETGEOM > 0
 //nc_surfRedeposit.putVar(redeposit);
@@ -3915,6 +3937,8 @@ NcVar nc_surfEDist = ncFile1.addVar("surfEDist",ncDouble,dimsSurfE);
 //nc_surfZ.putVar(surfZ);
 std::cout << "writing energy distribution file " << std::endl;
 nc_surfEDist.putVar(&energyDistribution[0]);
+nc_surfReflDist.putVar(&reflDistribution[0]);
+nc_surfSputtDist.putVar(&sputtDistribution[0]);
 //NcVar nc_surfEDistGrid = ncFile1.addVar("gridE",ncDouble,nc_nEnergies);
 //nc_surfEDistGrid.putVar(&surfaces->gridE[0]);
 //NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);

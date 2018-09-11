@@ -131,14 +131,17 @@ struct reflection {
     float* spyl_surfaceModel;
     float* rfyl_surfaceModel;
     int nE_sputtRefDistOut; 
+    int nE_sputtRefDistOutRef; 
     int nA_sputtRefDistOut;
     int nE_sputtRefDistIn;
     int nA_sputtRefDistIn;
     float* E_sputtRefDistIn;
     float* A_sputtRefDistIn;
     float* E_sputtRefDistOut;
+    float* E_sputtRefDistOutRef;
     float* A_sputtRefDistOut;
     float* energyDistGrid01;
+    float* energyDistGrid01Ref;
     float* angleDistGrid01;
     float* EDist_CDF_Y_regrid;
     float* ADist_CDF_Y_regrid;
@@ -170,14 +173,17 @@ struct reflection {
     float* _spyl_surfaceModel,
     float* _rfyl_surfaceModel,
     int _nE_sputtRefDistOut,
+    int _nE_sputtRefDistOutRef,
     int _nA_sputtRefDistOut,
     int _nE_sputtRefDistIn,
     int _nA_sputtRefDistIn,
     float* _E_sputtRefDistIn,
     float* _A_sputtRefDistIn,
     float* _E_sputtRefDistOut,
+    float* _E_sputtRefDistOutRef,
     float* _A_sputtRefDistOut,
     float* _energyDistGrid01,
+    float* _energyDistGrid01Ref,
     float* _angleDistGrid01,
     float* _EDist_CDF_Y_regrid,
     float* _ADist_CDF_Y_regrid, 
@@ -197,14 +203,17 @@ struct reflection {
     spyl_surfaceModel(_spyl_surfaceModel),
     rfyl_surfaceModel(_rfyl_surfaceModel),
     nE_sputtRefDistOut(_nE_sputtRefDistOut),
+    nE_sputtRefDistOutRef(_nE_sputtRefDistOutRef),
     nA_sputtRefDistOut(_nA_sputtRefDistOut),
     nE_sputtRefDistIn(_nE_sputtRefDistIn),
     nA_sputtRefDistIn(_nA_sputtRefDistIn),
     E_sputtRefDistIn(_E_sputtRefDistIn),
     A_sputtRefDistIn(_A_sputtRefDistIn),
     E_sputtRefDistOut(_E_sputtRefDistOut),
+    E_sputtRefDistOutRef(_E_sputtRefDistOutRef),
     A_sputtRefDistOut(_A_sputtRefDistOut),
     energyDistGrid01(_energyDistGrid01),
+    energyDistGrid01Ref(_energyDistGrid01Ref),
     angleDistGrid01(_angleDistGrid01),
     EDist_CDF_Y_regrid(_EDist_CDF_Y_regrid),
     ADist_CDF_Y_regrid(_ADist_CDF_Y_regrid),
@@ -341,11 +350,18 @@ void operator()(std::size_t indx) const {
                                     angleDistGrid01,A_sputtRefDistIn,
                                     E_sputtRefDistIn,ADist_CDF_R_regrid);
                    eInterpVal = interp3d ( r9,thetaImpact,log10(E0),
-                           nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
-                                         energyDistGrid01,A_sputtRefDistIn,
+                           nE_sputtRefDistOutRef,nA_sputtRefDistIn,nE_sputtRefDistIn,
+                                         energyDistGrid01Ref,A_sputtRefDistIn,
                                          E_sputtRefDistIn,EDist_CDF_R_regrid );
                    newWeight=(R0/(1.0f-sputtProb))*weight;
-                   //std::cout << " particle reflected with newWeight " << newWeight << std::endl;
+              EdistInd = floor((eInterpVal-E0dist)/dEdist);
+              AdistInd = floor((aInterpVal-A0dist)/dAdist);
+              if((EdistInd >= 0) && (EdistInd < nEdist) && 
+                 (AdistInd >= 0) && (AdistInd < nAdist))
+              {
+                  surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
+                    surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
+               }
             }
             else //sputters
             {
@@ -364,7 +380,17 @@ void operator()(std::size_t indx) const {
             //    particles->test2[indx] = r8;
             //    particles->test3[indx] = r9;
             //}            
+                //std::cout << " particle sputters with " << eInterpVal << aInterpVal <<  std::endl;
                   newWeight=(Y0/sputtProb)*weight;
+              EdistInd = floor((eInterpVal-E0dist)/dEdist);
+              AdistInd = floor((aInterpVal-A0dist)/dAdist);
+              if((EdistInd >= 0) && (EdistInd < nEdist) && 
+                 (AdistInd >= 0) && (AdistInd < nAdist))
+              {
+                //std::cout << " particle sputters with " << EdistInd << AdistInd <<  std::endl;
+                  surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
+                    surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
+               }
                   if(sputtProb == 0.0) newWeight = 0.0;
                    //std::cout << " particle sputtered with newWeight " << newWeight << std::endl;
                   if(surface > 0)
@@ -471,9 +497,9 @@ void operator()(std::size_t indx) const {
             //    particles->test3[indx] = vSampled[2];
             //}            
 
-    particles->xprevious[indx] = particles->x[indx] + -signPartDotNormal*surfaceNormalVector[0]*1e-6;
-    particles->yprevious[indx] = particles->y[indx] + -signPartDotNormal*surfaceNormalVector[1]*1e-6;
-    particles->zprevious[indx] = particles->z[indx] + -signPartDotNormal*surfaceNormalVector[2]*1e-6;
+    particles->xprevious[indx] = particles->x[indx] + -signPartDotNormal*surfaceNormalVector[0]*1e-5;
+    particles->yprevious[indx] = particles->y[indx] + -signPartDotNormal*surfaceNormalVector[1]*1e-5;
+    particles->zprevious[indx] = particles->z[indx] + -signPartDotNormal*surfaceNormalVector[2]*1e-5;
             //std::cout << "New vel " << particles->vx[indx] << " " << particles->vy[indx] << " " << particles->vz[indx] << std::endl;
             //std::cout << "New pos " << particles->xprevious[indx] << " " << particles->yprevious[indx] << " " << particles->zprevious[indx] << std::endl;
             //if(particles->test[indx] == 0.0)

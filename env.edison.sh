@@ -73,7 +73,7 @@ export ATOM=/project/projectdirs/atom
 
 export ATOM_EDISON=$ATOM/atom-install-edison
 export GITR_PATH=$ATOM/atom-install-edison/GITR
-export FTRIDYN_PATH=$ATOM/atom-install-cori/fractal-tridyn
+export FTRIDYN_PATH=$ATOM/atom-install-edison/fractal-tridyn_IO
 export PYTHONPATH=$GITR_PATH/ftridyn:/global/homes/t/tyounkin/code/mpi4pyBuild/lib.linux-x86_64-2.7:$PYTHONPATH:$FTRIDYN_PATH/utils:$GITR_PATH/python:/project/projectdirs/atom/users/tyounkin/libconfPython/lib/python2.7/site-packages/:/global/homes/t/tyounkin/code/netcdfPython/lib.linux-x86_64-2.7/
-export PYTHONPATH=/global/homes/t/tyounkin/code/libconfPython/lib/python2.7/site-packages/:$PYTHONPATH
+export PYTHONPATH=$PYTHONPATH:/global/homes/t/tyounkin/code/libconfPython/lib/python2.7/site-packages/
 #export PYTHONPATH=/global/homes/t/tyounkin/code/scipyBuild/lib/python2.7/site-packages:$PYTHONPATH

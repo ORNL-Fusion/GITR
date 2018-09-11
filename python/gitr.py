@@ -7,7 +7,7 @@ import netCDF4
 import numpy as np
 #import Tkinter
 import matplotlib
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 #matplotlib.use('agg')
 #import cv2
@@ -20,6 +20,8 @@ import math
 import os
 import shutil
 import math
+import scipy.interpolate as scii
+
 def copy_folder(from_folder, to_folder):
     copy_tree(from_folder, to_folder)
 
@@ -82,10 +84,11 @@ def writeEDfile(name,gridE,Edist):
     np.savetxt(datafile_id, data, fmt=['%.4f','%.4f'])
     #here the ascii file is populated. 
     datafile_id.close()
-def modifyInputParam(filename="input/gitrInput.cfg",nT=100):
+def modifyInputParam(filename="input/gitrInput.cfg",nT=100,nP=1000):
     with io.open(filename) as f:
         config = libconf.load(f)
     config['timeStep']['nT'] = nT    
+    config['impurityParticleSource']['nP'] = nP    
     with io.open(filename,'w') as f:
         libconf.dump(config,f)
     
@@ -318,6 +321,133 @@ def iter3dProcessing(path = '',loc = [-4.5020,   -4.4628,   -4.4237,   -4.3846, 
         file.write('gitrOutputDir_He='+os.getcwd()+'/'+'GITRoutput/'+'gitr'+str(i)+'\n') 
         file.write('gitrOutputDir_W='+os.getcwd()+'/'+gitrDir+'\n') 
         file.close() 
+
+        if(path != ''): 
+            shutil.copyfile('gitrOut.txt',path+'/'+gitrDir+'/gitrOut.txt')
+            #file = open(path+'/'+'gitrOut.txt','w') 
+            #
+            #file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
+            #file.write('flux='+str(backgroundFlux/1e18)+'\n') 
+            #file.write('gitrOutputDir='+os.getcwd()+'\n') 
+            #file.close() 
+
+        E0=0.0;
+        E1=1000.0;
+        nE=200;
+        dE = E1/nE;
+        Evec = np.linspace(0.5*dE,E1-0.5*dE,nE);
+        A0=0.0;
+        A1=90.0;
+        nA=30;
+        for j in range(0,nA):
+            #print('Evec size ', Evec.size)
+            #print('EAdist[:,i] size ', EAdist[:,i].size)
+            edOut = np.column_stack((Evec,EAdist[:,j]))
+            np.savetxt(gitrDir+'/dist'+str(j)+'.dat', edOut)
+    return nLocations
+def iter3dProcessingQ4(nParticles=1200000,totalParticleRate=1.0,path = '',locRmRs=[-0.1,0.02,0.09,0.2],flux_fracs = np.zeros((4,5)),locWidth = 0.02):
+    x1,x2,x3,y1,y2,y3,z1,z2,z3,area,Z,surfIndArray,surf,a,b,c,d,plane_norm = read3dGeom('input/iterRefinedTest.cfg')
+    plt.close()
+    grossDep,grossEro,sumWeightStrike,E,A,EAdist,surfaceNumbers,surfEdist = nc_readSurface()
+    SOLPS = np.loadtxt('solpsTarg.txt', dtype='float',skiprows=1,delimiter=' ')
+    rmrsSOLPS = SOLPS[:,0]
+    zSOLPS = SOLPS[:,2]
+    fi  = np.absolute(SOLPS[:,[21+6,21+6,29,30,32,33,34,35,37,38,39,40,41,42,43,44,45,46]]);
+    totalFluxRmRs = np.sum(fi,axis=1)
+    plt.close()
+    print('e', E)
+    surfInd = surf >0
+    z1= np.extract(surfInd,z1)
+    if os.path.isdir("GITRoutput_W"):
+        print('GITRoutput_W already exists')
+    else:
+        os.mkdir('GITRoutput_W')
+    frz = scii.interp1d(rmrsSOLPS,zSOLPS,fill_value=(zSOLPS[0],zSOLPS[-1]), bounds_error=False)
+    fluxRmRsInterp = scii.interp1d(rmrsSOLPS,totalFluxRmRs,fill_value=(totalFluxRmRs[0],totalFluxRmRs[-1]), bounds_error=False)
+    fluxes = fluxRmRsInterp(locRmRs)
+    loc = frz(locRmRs)
+    nLocations = len(loc)
+    for i in range(len(loc)):
+        condition = [(z1 < loc[i]+locWidth) & (z1 > loc[i]-locWidth)]
+	theseInd = np.where(condition)[1]
+	print('theseInd',theseInd)
+	print('condition',condition)
+	print('surfEdist Shape',surfEdist.shape)
+	print('theseInd',theseInd)
+	print('theseInd',theseInd.shape)
+	thisDist = surfEdist[theseInd,:,:]
+	print('size thisDist',thisDist.shape)
+	thisDist = np.sum(thisDist,axis=0)
+	print('size thisDist',thisDist.shape) 
+	#thisDist = np.sum(thisDist,axis=1)
+	print('size thisDist',thisDist.shape) 
+	print('thisDist',thisDist) 
+        dep = np.extract(condition,grossDep)
+        ero = np.extract(condition,grossEro)
+        strike = np.extract(condition,sumWeightStrike)
+        areas = np.extract(condition,area)
+        
+        #nParticles = float(config.impurityParticleSource.nP);
+        #erodedFlux = float(config.postProcessing.totalWFlux);
+        erodedFlux=totalParticleRate 
+        erodedFluxPerParticle = erodedFlux/nParticles;
+        netErosion = np.sum(ero - dep);
+        netStrike = np.sum(strike)
+        totalArea = np.sum(areas)
+        impurityFlux = netStrike/totalArea*erodedFluxPerParticle;
+        
+        heatFluxRmRs = [-0.109154550719626 , -9.653786554458987E-002 , -7.327382054436374E-002 , -5.340755520166962E-002 , -3.684860232274187E-002 , -2.359568221752333E-002 , -1.342808911941418E-002 , -6.074684322167428E-003 , -1.331154862563744E-003 , 1.331154862563730E-003 , 4.767247358658980E-003 , 1.153375963886041E-002 , 2.146828469948289E-002 , 3.446721044754836E-002 , 5.053455048502209E-002 , 6.969946162664536E-002 , 9.215179987578859E-002 , 0.118084582163366 , 0.147824629366545 , 0.181757787874304 , 0.220748070819577 , 0.266226319146929 , 0.314553760432419 , 0.362245819191070 , 0.427758324849402 , 0.544486523268327 , 0.688286110504397 , 0.830542303703098 , 0.957948318740153 , 1.05083628019670 , 1.11603260806660 , 1.16594128670273 , 1.20417900393696 , 1.23354012318983 , 1.26056203356870 , 1.28515695577904 , 1.30459260804867 , 1.31243123811648] 
+        heatFlux=[1.63487, 5377.34, 18518.8, 57355.4, 153011, 341486, 636782, 1.02231e+06, 1.4209e+06, 1.72315e+06, 2.17449e+06, 3.00281e+06, 3.84984e+06, 4.37564e+06, 5.56386e+06, 5.03941e+06, 3.6033e+06, 2.3909e+06, 1.59189e+06, 1.01545e+06, 595130, 335694, 226479, 144682, 52446.4, 18123.4, 12261.8, 6953.63, 5460.5, 4601.23, 3979.88, 2822.06, 2668.14, 1798.27, 1218.84, 750.364, 449.698, 4.43623]
+
+        hfInterp = scii.interp1d(heatFluxRmRs,heatFlux,fill_value=(heatFlux[0],heatFlux[-1]), bounds_error=False)
+        thisHeatFlux = hfInterp(locRmRs[i])
+        Wfrac = impurityFlux/fluxes[i];
+        Aweight = np.sum(thisDist,axis=1)
+        print('W impurity flux ', impurityFlux)
+        print('W impurity fraction ', Wfrac)
+        #for i in surfIndArray:
+	gitrDir = 'GITRoutput_W/'+'gitr'+str(i)
+        if os.path.isdir(gitrDir):
+            print(gitrDir+' already exists')
+        else:
+	    os.mkdir(gitrDir)
+        np.savetxt(gitrDir+'/gitrFluxE.dat', E)
+        np.savetxt(gitrDir+'/gitrFluxAweight.dat', Aweight)
+        np.savetxt(gitrDir+'/gitrFluxA.dat', A[:-1])
+        np.savetxt(gitrDir+'/gitrFluxEAdist.dat', thisDist)
+        
+        if(path != ''): 
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxE.dat', E)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxAweight.dat', Aweight)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxA.dat', A)
+            np.savetxt(path+'/'+gitrDir+'/gitrFluxEAdist.dat', thisDist)
+        
+        #Dfrac = float(config.postProcessing.Dfrac);
+        #Hefrac = float(config.postProcessing.Hefrac);
+        #Tfrac = float(config.postProcessing.Tfrac);
+        file = open('gitrOut'+str(i)+'.txt','w') 
+        file.write('plasmaSpecies=He W D T Ne\n') 
+        file.write('fluxFraction='+str(flux_fracs[0,i])+' '+str(Wfrac)+ ' '+str(flux_fracs[1,i])+ ' ' + str(flux_fracs[2,i])+' '+str(flux_fracs[3,i])+'\n') 
+        file.write('flux='+str(fluxes[i]/1e18)+'\n') 
+        file.write('heat='+str(thisHeatFlux/1e18)+' 343.0'+'\n') 
+        #file.write('gitrOutputDir_W='+os.getcwd()+'gitrOutput_W'+'\n') 
+        #file.write('gitrOutputDir_D='+os.getcwd()+'gitrOutput_D'+'\n') 
+        #file.write('gitrOutputDir_T='+os.getcwd()+'gitrOutput_T'+'\n') 
+        #file.write('gitrOutputDir_He='+os.getcwd()+'gitrOutput_He'+'\n') 
+        #file.write('gitrOutputDir_Ne='+os.getcwd()+'gitrOutput_Ne'+'\n') 
+        file.write('gitrOutputDir_W='+os.getcwd()+'/GITRoutput_W/gitr'+str(i)+'\n')
+        file.write('gitrOutputDir_D='+os.getcwd()+'/GITRoutput_D/gitr'+str(i)+'\n')
+        file.write('gitrOutputDir_T='+os.getcwd()+'/GITRoutput_T/gitr'+str(i)+'\n')
+        file.write('gitrOutputDir_He='+os.getcwd()+'/GITRoutput_He/gitr'+str(i)+'\n')
+        file.write('gitrOutputDir_Ne='+os.getcwd()+'/GITRoutput_Ne/gitr'+str(i)+'\n')
+        file.close() 
+	#file.write('inputEnergy=-1.0 -1.0 0.0 0.0\n')
+	#file.write('inputAngle=-1.0 -1.0 0.0 0.0\n')
+        #file.write('fluxFraction='+str(Hefrac)+' '+str(Wfrac)+ ' '+str(Dfrac)+ ' ' + str(Tfrac)+'\n') 
+        #file.write('flux='+str(heFlux[i]/1e18)+'\n') 
+        #file.write('gitrOutputDir_He='+os.getcwd()+'/'+'GITRoutput/'+'gitr'+str(i)+'\n') 
+        #file.write('gitrOutputDir_W='+os.getcwd()+'/'+gitrDir+'\n') 
+        #file.close() 
 
         if(path != ''): 
             shutil.copyfile('gitrOut.txt',path+'/'+gitrDir+'/gitrOut.txt')
@@ -697,6 +827,7 @@ def nc_plotVz(filename='history.nc'):
     plt.hist(pitchAngle,bins=30)
     plt.savefig('pa.png')
 def nc_readSurface(filename='output/surface.nc'):
+    import os
     ncFile = netCDF4.Dataset(filename,"r")
     nS = len(ncFile.dimensions['nSurfaces'])
     nE = len(ncFile.dimensions['nEnergies'])
@@ -749,7 +880,7 @@ if __name__ == "__main__":
     #if(os.path.exists('output/spec.nc')):
     #	nc_plotSpec('output/spec.nc')
     #iter2dProcessing()
-    iter3dProcessing()
+    iter3dProcessingQ4()
     #printHeDist()
     #nc_plotSpec3D()
     #nc_plotPositions()

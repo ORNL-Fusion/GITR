@@ -47,6 +47,8 @@ public:
   sim::Array<float> aveSputtYld;
   sim::Array<float> sputtYldCount;
   sim::Array<float> energyDistribution;
+  sim::Array<float> sputtDistribution;
+  sim::Array<float> reflDistribution;
 
   CUDA_CALLABLE_MEMBER
   
@@ -69,7 +71,8 @@ public:
 
   CUDA_CALLABLE_MEMBER
   Surfaces(std::size_t nS,std::size_t nE, std::size_t nA) :
-   energyDistribution{nS*nE*nA,0.0}, gridE{nE,0.0}, gridA{nA,0.0},
+   energyDistribution{nS*nE*nA,0.0},sputtDistribution{nS*nE*nA,0.0},
+   reflDistribution{nS*nE*nA,0.0}, gridE{nE,0.0}, gridA{nA,0.0},
  sumWeightStrike{nS,0.0}, sumParticlesStrike{nS,0}, grossDeposition{nS,0.0},
   grossErosion{nS,0.0}, aveSputtYld{nS,0.0}, sputtYldCount{nS,0} {};   
 

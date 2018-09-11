@@ -3,11 +3,11 @@ target W
 nH 1000
 energy_start 2
 energy_end 3
-nE 5
+nE 2
 Escale log 
 angle_start 0
 angle_end 89.9
-nA 4
+nA 2
 roughness_start 1.0
 roughness_end 1.0
 nR 1
