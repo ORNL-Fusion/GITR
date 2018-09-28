@@ -414,7 +414,7 @@ int main(int argc, char **argv)
   #if GEOM_HASH == 1
     if(world_rank == 0)
     {
-        importHashNs(cfg,input_path,nHashes,"geometry_hash",nR_closeGeom.front(), nY_closeGeom.front(),nZ_closeGeom.front(),n_closeGeomElements.front(),nR_closeGeomTotal,nY_closeGeomTotal,nZ_closeGeomTotal,nHashPoints, nHashPointsTotal,nGeomHash)
+        importHashNs(cfg,input_path,nHashes,"geometry_hash",nR_closeGeom.data(), nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),nR_closeGeomTotal,nY_closeGeomTotal,nZ_closeGeomTotal,nHashPoints.data(), nHashPointsTotal,nGeomHash);
       //Setting& geomHash = cfg.lookup("geometry_hash");
       //if(nHashes > 1)
       //{

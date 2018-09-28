@@ -566,9 +566,9 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
       }
       else
       {
-        getVariable(cfg,fieldCfgString+"nR",nR[0]);
-        getVariable(cfg,fieldCfgString+"nZ",nZ[0]);
-        getVariable(cfg,fieldCfgString+"n",n[0]);
+        getVariable(cfg,fieldCfgString+".nR_closeGeom",nR[0]);
+        getVariable(cfg,fieldCfgString+".nZ_closeGeom",nZ[0]);
+        getVariable(cfg,fieldCfgString+".n_closeGeomElements",n[0]);
       }
       for(int j=0;j<nHashes;j++)
       {
@@ -581,12 +581,12 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
       {
         for(int i=0; i<nHashes;i++)
         {   
-          nY[i] = geomHash["nY"][i];
+          nY[i] = geomHash["nY_closeGeom"][i];
         }
       }
       else
       {
-        getVariable(cfg,fieldCfgString+"nY",nY[0]);
+        getVariable(cfg,fieldCfgString+".nY_closeGeom",nY[0]);
       }
       #endif
       nGeomHash = 0;
@@ -596,14 +596,16 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
       nGeomHash = 0;
       for(int j=0;j<nHashes;j++)
       {
-        if(nHashes > 1)
-        {
+      #if USE3DTETGEOM > 0
+       // if(nHashes > 1)
+        //{
           nHashPoints[j] =nR[j]*nY[j]*nZ[j];
-        }
-        else
-        {
+        //}
+       #else //else
+        //{
           nHashPoints[j] =nR[j]*nZ[j];
-        } 
+        //} 
+	#endif
         nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
         nGeomHash = nGeomHash + nHashPoints[j]*n[j];
         nRTotal = nRTotal + nR[j];
