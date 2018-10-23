@@ -44,7 +44,7 @@ void getSlowDownFrequencies ( float& nu_friction, float& nu_deflection, float& n
                         int nR_Bfield, int nZ_Bfield,
                         float* BfieldGridR ,float* BfieldGridZ ,
                         float* BfieldR ,float* BfieldZ ,
-                 float* BfieldT 
+                 float* BfieldT,float &T_background 
                 ) {
         float Q = 1.60217662e-19;
         float EPS0 = 8.854187e-12;
@@ -53,6 +53,7 @@ float MI = 1.6737236e-27;
 float ME = 9.10938356e-31;
         float te_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te);
         float ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
+	T_background = ti_eV;
             float density = interp2dCombined(x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
             //std::cout << "ion t and n " << te_eV << "  " << density << std::endl;
     float flowVelocity[3]= {0.0f};
@@ -71,6 +72,8 @@ float ME = 9.10938356e-31;
 	float xx_e;
 	float psi_prime_e;
 	float psi_psiprime_e;
+	float psi_psiprime_psi2x = 0.0;
+	float psi_psiprime_psi2x_e = 0.0;
 	float psi_e;
 	float nu_0_i;
 	float nu_0_e;
@@ -116,34 +119,60 @@ float ME = 9.10938356e-31;
                 	a_electron = ME/(2*te_eV*Q);// %q is just to convert units - no z needed
                 
                 	xx = powf(velocityNorm,2)*a_ion;
-                	psi_prime = 2*sqrtf(xx/pi)*expf(-xx);
-                	psi_psiprime = erf(1.0*sqrtf(xx));
-                	psi = psi_psiprime - psi_prime;
-                    if(psi < 0.0) psi = 0.0;
+                	//psi_prime = 2*sqrtf(xx/pi)*expf(-xx);
+                	//psi_psiprime = erf(1.0*sqrtf(xx));
+                	//psi = psi_psiprime - psi_prime;
+                        //if(psi < 0.0) psi = 0.0;
+		        //psi_psiprime_psi2x = psi+psi_prime - psi/2.0/x;
+		        //if(xx<1.0e-3)
+		        //{
+                            psi_prime = 1.128379*sqrtf(xx);
+                            psi = 0.75225278*powf(xx,1.5);
+                            psi_psiprime = psi+psi_prime;
+                            psi_psiprime_psi2x = 1.128379*sqrtf(xx)*expf(-xx);
+		        //}
+                    //if(psi_prime/psi > 1.0e7) psi = psi_psiprime/1.0e7;
+                    //if(psi_prime < 0.0) psi_prime = 0.0;
+                    //if(psi_psiprime < 0.0) psi_psiprime = 0.0;
                 	xx_e = powf(velocityNorm,2)*a_electron;
-                	psi_prime_e = 2*sqrtf(xx_e/pi)*expf(-xx_e);
-                	psi_psiprime_e = erf(1.0*sqrtf(xx_e));
-                	psi_e = psi_psiprime_e - psi_prime_e;
-                    if(psi_e < 0.0) psi_e = 0.0;
+                	//psi_prime_e = 2*sqrtf(xx_e/pi)*expf(-xx_e);
+                	//psi_psiprime_e = erf(1.0*sqrtf(xx_e));
+                	//psi_e = psi_psiprime_e - psi_prime_e;
+                        //if(psi_e < 0.0) psi_e = 0.0;
+		        //psi_psiprime_psi2x_e = psi_e+psi_prime_e - psi_e/2.0/xx_e;
+		        //if(xx_e<1.0e-3)
+		        //{
+                            psi_prime_e = 1.128379*sqrtf(xx_e);
+                            psi_e = 0.75225278*powf(xx_e,1.5);
+                            psi_psiprime_e = psi_e+psi_prime_e;
+                            psi_psiprime_psi2x_e = 1.128379*sqrtf(xx_e)*expf(-xx_e);
+		        //}
+                    //if(psi_prime_e/psi_e > 1.0e7) psi_e = psi_psiprime_e/1.0e7;
+                    //if(psi_prime_e < 0.0) psi_prime_e = 0.0;
+                    //if(psi_psiprime_e < 0.0) psi_psiprime_e = 0.0;
                 	nu_0_i = gam_electron_background*density/powf(velocityNorm,3);
                 	nu_0_e = gam_ion_background*density/powf(velocityNorm,3);
                 	nu_friction_i = (1+amu/background_amu)*psi*nu_0_i;
-                	nu_deflection_i = 2*(psi_psiprime - psi/(2*xx))*nu_0_i;
+                	//nu_deflection_i = 2*(psi_psiprime - psi/(2*xx))*nu_0_i;
+                	nu_deflection_i = 2*(psi_psiprime_psi2x)*nu_0_i;
                 	nu_parallel_i = psi/xx*nu_0_i;
                 	nu_energy_i = 2*(amu/background_amu*psi - psi_prime)*nu_0_i;
                 	nu_friction_e = (1+amu/(ME/MI))*psi_e*nu_0_e;
-                	nu_deflection_e = 2*(psi_psiprime_e - psi_e/(2*xx_e))*nu_0_e;
+                	//nu_deflection_e = 2*(psi_psiprime_e - psi_e/(2*xx_e))*nu_0_e;
+                	nu_deflection_e = 2*(psi_psiprime_psi2x_e)*nu_0_e;
                 	nu_parallel_e = psi_e/xx_e*nu_0_e;
                 	nu_energy_e = 2*(amu/(ME/MI)*psi_e - psi_prime_e)*nu_0_e;
 
                     //std::cout << "lam_d lam gami game ai ae" << lam_d << " " << lam << " " << gam_ion_background << " " << gam_electron_background << " " << a_ion << " " << a_electron << std::endl;
-                    //std::cout << "x psi_prime psi_psiprime psi" << x << " " << psi_prime << " " << psi_psiprime << " " << psi << " " << nu_0_i << std::endl;
-                    //std::cout << "nu friction, parallel perp energy " << nu_friction << " " << nu_parallel << " " <<nu_deflection << " " << nu_energy << std::endl;
+                    //std::cout << "x psi_prime psi_psiprime psi" << xx << " " << xx_e << " " << psi_prime << " "<< psi_prime_e << " " << psi_psiprime<< " " << psi_psiprime_e << " " << psi<< " " << psi_e << " " << nu_0_i<< " " << nu_0_e << std::endl;
+                    //std::cout << "nu friction, parallel perp energy IONs" << nu_friction_i << " " << nu_parallel_i << " " <<nu_deflection_i << " " << nu_energy_i << std::endl;
+                    //std::cout << "nu friction, parallel perp energy ELECTRONs" << nu_friction_e << " " << nu_parallel_e << " " <<nu_deflection_e << " " << nu_energy_e << std::endl;
 	//	}
     nu_friction = nu_friction_i + nu_friction_e;
     nu_deflection = nu_deflection_i + nu_deflection_e;
     nu_parallel = nu_parallel_i + nu_parallel_e;
     nu_energy = nu_energy_i + nu_energy_e;
+                    //std::cout << "nu friction, parallel perp energy " << nu_friction << " " << nu_parallel << " " <<nu_deflection << " " << nu_energy << std::endl;
     if(te_eV == 0.0 || ti_eV == 0.0)
     {
         nu_friction = 0.0;
@@ -234,6 +263,7 @@ void getSlowDownDirections (float parallel_direction[], float perp_direction1[],
 
 		s1 = parallel_direction[0]*B_unit[0]+parallel_direction[1]*B_unit[1]+parallel_direction[2]*B_unit[2];
             	s2 = sqrt(1.0-s1*s1);
+		//std::cout << "s1 and s2 " << s1 << " " << s2 << std::endl;
            if(abs(s1) >=1.0) s2=0; 
             	perp_direction1[0] = 1.0/s2*(s1*parallel_direction[0] - B_unit[0]);
 		perp_direction1[1] = 1.0/s2*(s1*parallel_direction[1] - B_unit[1]);
@@ -242,13 +272,19 @@ void getSlowDownDirections (float parallel_direction[], float perp_direction1[],
                 perp_direction2[0] = 1.0/s2*(parallel_direction[1]*B_unit[2] - parallel_direction[2]*B_unit[1]);
                 perp_direction2[1] = 1.0/s2*(parallel_direction[2]*B_unit[0] - parallel_direction[0]*B_unit[2]);
                 perp_direction2[2] = 1.0/s2*(parallel_direction[0]*B_unit[1] - parallel_direction[1]*B_unit[0]);
-            perp_direction1[0] =  s1;
-            perp_direction1[1] =  s2;
+        //std::cout << "SlowdonwDir par" << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << " " << std::endl;
+        //std::cout << "SlowdonwDir perp" << perp_direction1[0] << " " <<perp_direction1[1] << " " << perp_direction1[2] << " " << std::endl;
+        //std::cout << "SlowdonwDir perp" << perp_direction2[0] << " " << perp_direction2[1] << " " << perp_direction2[2] << " " << std::endl;
+            //perp_direction1[0] =  s1;
+            //perp_direction1[1] =  s2;
             if (s2 == 0.0)
-		    {
-              perp_direction2[0] = parallel_direction[2];
-		      perp_direction2[1] = parallel_direction[0];
-		      perp_direction2[2] = parallel_direction[1];
+            {
+                perp_direction1[0] =  s1;
+                perp_direction1[1] =  s2;
+
+                perp_direction2[0] = parallel_direction[2];
+		perp_direction2[1] = parallel_direction[0];
+		perp_direction2[2] = parallel_direction[1];
 
                 s1 = parallel_direction[0]*perp_direction2[0]+parallel_direction[1]*perp_direction2[1]+parallel_direction[2]*perp_direction2[2];
                 s2 = sqrt(1.0-s1*s1);
@@ -256,6 +292,21 @@ void getSlowDownDirections (float parallel_direction[], float perp_direction1[],
                 perp_direction1[1] = -1.0/s2*(parallel_direction[2]*perp_direction2[0] - parallel_direction[0]*perp_direction2[2]);
                 perp_direction1[2] = -1.0/s2*(parallel_direction[0]*perp_direction2[1] - parallel_direction[1]*perp_direction2[0]);
             }
+	    //if(parallel_direction[0]*parallel_direction[0] + parallel_direction[1]*parallel_direction[1] + parallel_direction[2]*parallel_direction[2] - 1.0 > 1e-6) std::cout << " parallel direction not one " << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << std::endl;
+	    //if(perp_direction1[0]*perp_direction1[0] + perp_direction1[1]*perp_direction1[1] + perp_direction1[2]*perp_direction1[2] - 1.0 > 1e-6) std::cout << " perp direction1 not one" << perp_direction1[0] << " " << perp_direction1[1] << " " << perp_direction1[2] << std::endl;
+	    //if(perp_direction2[0]*perp_direction2[0] + perp_direction2[1]*perp_direction2[1] + perp_direction2[2]*perp_direction2[2] - 1.0 > 1e-6) std::cout << " perp direction2 not one" << perp_direction2[0] << " " << perp_direction2[1] << " " << perp_direction2[2] << std::endl;
+	    //if(vectorDotProduct(parallel_direction,perp_direction1)  > 1e-6)
+	    //{std::cout << "par dot perp1 " << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << std::endl;
+	    //std::cout << "par dot perp1 " << perp_direction1[0] << " " << perp_direction1[1] << " " << perp_direction1[2] << std::endl;
+	    //}
+	    //if(vectorDotProduct(parallel_direction,perp_direction2)  > 2e-6)
+	    //{std::cout << "par dot perp2 " << parallel_direction[0] << " " << parallel_direction[2] << " " << parallel_direction[2] << std::endl;
+	    //std::cout << "par dot perp2 " << perp_direction2[0] << " " << perp_direction2[2] << " " << perp_direction2[2] << std::endl;
+	    //}
+	    //if(vectorDotProduct(perp_direction1,perp_direction2)  > 2e-6)
+	    //{std::cout << "perp1 dot perp2 " << perp_direction1[0] << " " << perp_direction1[2] << " " << perp_direction1[2] << std::endl;
+	    //std::cout << "par dot perp2 " << perp_direction2[0] << " " << perp_direction2[2] << " " << perp_direction2[2] << std::endl;
+	    //}
 }
 
 struct coulombCollisions { 
@@ -328,7 +379,9 @@ void operator()(std::size_t indx)  {
 
 	    if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
         { 
-        float pi = 3.14159265;    
+        float pi = 3.14159265;   
+	float k_boltz = 1.38e-23*11604/1.66e-27;
+	float T_background = 0.0;
 		float nu_friction = 0.0;
 		float nu_deflection = 0.0;
 		float nu_parallel = 0.0;
@@ -373,6 +426,7 @@ void operator()(std::size_t indx)  {
             relativeVelocity[0] = vx - flowVelocity[0];
         	relativeVelocity[1] = vy - flowVelocity[1];
         	relativeVelocity[2] = vz - flowVelocity[2];
+		float vRel2 = relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2];
         	velocityRelativeNorm = vectorNorm(relativeVelocity);
             //std::cout << "particle velocity " << particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " << particlesPointer->vz[indx] << std::endl;
             //std::cout << "flow velocity " << flowVelocity[0] << " " << flowVelocity[1] << " " << flowVelocity[2] << std::endl;
@@ -394,7 +448,8 @@ void operator()(std::size_t indx)  {
             std::normal_distribution<double> distribution(0.0,1.0);
             std::uniform_real_distribution<float> dist(0.0, 1.0);
             float n1 = distribution(state[indx]);
-            float n2 = distribution(state[indx]);
+            float r1 = dist(state[indx]);
+            float r2 = dist(state[indx]);
             float xsi = dist(state[indx]);
 #endif
 #else
@@ -437,7 +492,7 @@ void operator()(std::size_t indx)  {
         BfieldGridZ,
         BfieldR,
         BfieldZ,
-        BfieldT);
+        BfieldT,T_background);
 
 		getSlowDownDirections(parallel_direction, perp_direction1,perp_direction2,
         x,y,z,
@@ -453,24 +508,53 @@ void operator()(std::size_t indx)  {
         BfieldR,
         BfieldZ,
         BfieldT);
-        float coeff_par = 1.0 + n1*sqrt(nu_parallel*dt) - nu_friction*dt;
-        //float coeff_par = 1.0 + n1*sqrt(nu_parallel*dt);
+       //std::cout << "SlowdonwDir par" << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << " " << std::endl;
+        //std::cout << "SlowdonwDir perp" << perp_direction1[0] << " " <<perp_direction1[1] << " " << perp_direction1[2] << " " << std::endl;
+        //std::cout << "SlowdonwDir perp" << perp_direction2[0] << " " << perp_direction2[1] << " " << perp_direction2[2] << " " << std::endl;
+        float drag = -1.4142*dt*nu_friction*velocityRelativeNorm;
+	float coeff_par = n1*sqrt(abs(nu_energy)*dt*vRel2);
+        //float coeff_par = 1.0;//+ n1*sqrt(nu_parallel*dt);
         //float coeff_par = 1.0 - nu_friction*dt;
-        float coeff_perp = abs(n2)*sqrt(nu_deflection*dt*0.5);
-        float coeff_Energy = 1.0-nu_energy*dt*0.5;
-        float cosXsi = cos(2.0*pi*xsi);
-        float sinXsi = sin(2.0*pi*xsi);
-		velocityCollisions[0] = coeff_par*parallel_direction[0] + coeff_perp*(perp_direction1[0]*cosXsi + perp_direction2[0]*sinXsi);
-		velocityCollisions[1] = coeff_par*parallel_direction[1] + coeff_perp*(perp_direction1[1]*cosXsi + perp_direction2[1]*sinXsi);
-		velocityCollisions[2] = coeff_par*parallel_direction[2] + coeff_perp*(perp_direction1[2]*cosXsi + perp_direction2[2]*sinXsi);
-float velocityCollisionsNorm = vectorNorm(velocityCollisions);
-        vUpdate[0] = velocityRelativeNorm*velocityCollisions[0] + flowVelocity[0];    
-        vUpdate[1] = velocityRelativeNorm*velocityCollisions[1] + flowVelocity[1];    
-        vUpdate[2] = velocityRelativeNorm*velocityCollisions[2] + flowVelocity[2];    
-float velocityColl = vectorNorm(vUpdate);
-        particlesPointer->vx[indx] = coeff_Energy*vPartNorm*vUpdate[0]/velocityColl; 
-		particlesPointer->vy[indx] = coeff_Energy*vPartNorm*vUpdate[1]/velocityColl;
-		particlesPointer->vz[indx] = coeff_Energy*vPartNorm*vUpdate[2]/velocityColl;   	
+	int plumin1 = 2*floor(r1+0.5) - 1;
+	int plumin2 = 2*floor(r2+0.5) - 1;
+	float cosXsi = cos(2.0*pi*xsi);
+	float sinXsi = sin(2.0*pi*xsi);
+        float coeff_perp1 = cosXsi*sqrt(nu_deflection*dt*0.5*vRel2);
+        float coeff_perp2 = sinXsi*sqrt(nu_deflection*dt*0.5*vRel2);
+	//std::cout << "cosXsi and sinXsi " << cosXsi << " " << sinXsi << std::endl;
+		velocityCollisions[0] = (drag + coeff_par)*parallel_direction[0] + coeff_perp1*perp_direction1[0] + coeff_perp2*perp_direction2[0];
+		velocityCollisions[1] = (drag + coeff_par)*parallel_direction[1] + coeff_perp1*perp_direction1[1] + coeff_perp2*perp_direction2[1];
+		velocityCollisions[2] = (drag + coeff_par)*parallel_direction[2] + coeff_perp1*perp_direction1[2] + coeff_perp2*perp_direction2[2];
+        //float velocityCollisionsNorm = vectorNorm(velocityCollisions);
+        //vUpdate[0] = velocityRelativeNorm*velocityCollisions[0] + flowVelocity[0];    
+        //vUpdate[1] = velocityRelativeNorm*velocityCollisions[1] + flowVelocity[1];    
+        //vUpdate[2] = velocityRelativeNorm*velocityCollisions[2] + flowVelocity[2];    
+        //float velocityColl = vectorNorm(vUpdate);
+
+                //particlesPointer->vx[indx] = coeff_Energy*vPartNorm*vUpdate[0]/velocityColl; 
+		//particlesPointer->vy[indx] = coeff_Energy*vPartNorm*vUpdate[1]/velocityColl;
+		//particlesPointer->vz[indx] = coeff_Energy*vPartNorm*vUpdate[2]/velocityColl;   
+		//vPartNorm = sqrt(vfx*vfx + vfy*vfy + vfz*vfz);
+                particlesPointer->vx[indx] = vx + velocityCollisions[0];///velocityCollisionsNorm; 
+		particlesPointer->vy[indx] = vy + velocityCollisions[1];///velocityCollisionsNorm;
+		particlesPointer->vz[indx] = vz + velocityCollisions[2];///velocityCollisionsNorm;   	
+       //if(isnan(particlesPointer->vx[indx]))
+       //{
+       //    std::cout << "nu_d " << nu_deflection<< std::endl;
+       //    std::cout << "vxvyvz" << vx<< " " << vy << " " << vz<< " "  << std::endl;
+       //    std::cout << "vf isnan" << vfx<< " " << vPartNorm << " " << vbx<< " " << coeff_perp << std::endl;
+       //     std::cout << "particle velocity " << particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " << particlesPointer->vz[indx] << std::endl;
+       //     std::cout << "velocityCollisions " << velocityCollisions[0] << " " << velocityCollisions[1] << " " << velocityCollisions[2] << std::endl;
+       // std::cout << "SlowdonwDir par" << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << " " << std::endl;
+       // std::cout << "SlowdonwDir perp" << perp_direction1[0] << " " <<perp_direction1[1] << " " << perp_direction1[2] << " " << std::endl;
+       // std::cout << "SlowdonwDir perpi2" << perp_direction2[0] << " " << perp_direction2[1] << " " << perp_direction2[2] << " " << std::endl;
+       //}
+                //particlesPointer->vx[indx] = vb;
+		//particlesPointer->vy[indx] = vf;
+		//particlesPointer->vz[indx] = vf; 	
+                //particlesPointer->vx[indx] = vPartNorm*velocityCollisions[0]; 
+		//particlesPointer->vy[indx] = vPartNorm*velocityCollisions[1];
+		//particlesPointer->vz[indx] = vPartNorm*velocityCollisions[2];   	
     
     this->dv[0] = velocityCollisions[0];
     this->dv[1] = velocityCollisions[1];

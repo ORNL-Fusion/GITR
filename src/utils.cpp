@@ -141,7 +141,7 @@ int make2dCDF(int nX, int nY, int nZ, float* distribution, float* cdf)
 }
 int regrid2dCDF(int nX, int nY, int nZ,float* xGrid,int nNew,float maxNew, float*cdf, float* cdf_regrid)
 {
-  std::cout << " inside regrid function "<<nX << " " << nY << " " << nZ << std::endl;
+  //std::cout << " inside regrid function "<<nX << " " << nY << " " << nZ << std::endl;
   int lowInd=0;
   int index=0;
   float spline = 0.0;
@@ -153,6 +153,7 @@ int regrid2dCDF(int nX, int nY, int nZ,float* xGrid,int nNew,float maxNew, float
       {
         index = i*nY*nZ + j*nZ + k;
         spline = interp1dUnstructured(xGrid[k],nNew,maxNew,&cdf[index-k],lowInd);
+	    //std::cout<< "index spline " << index << " " << spline << std::endl;
         if(std::isnan(spline) || std::isinf(spline)) spline = 0.0;
         cdf_regrid[index] = spline;  
         if(i==0 && j==0)
@@ -536,11 +537,12 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
           boundaries[i].x2 << ", " << boundaries[i].z2 << ", " <<
           boundaries[i].slope_dzdx << ", " << boundaries[i].intercept_z << ", " <<
           boundaries[i].length << ", " << boundaries[i].Z << "];" << std::endl;
-       if(boundaries[i].Z > 0.0)
+       boundaries[i].surface = geom["surface"][i];
+       if(boundaries[i].surface > 0)
        {
-       boundaries[i].surface = 1;
            boundaries[i].surfaceNumber = nZSurfs;
            nZSurfs = nZSurfs + 1;
+       //    std::cout << "abcd " << boundaries[i].a << " " << boundaries[i].b << " " << boundaries[i].c << " " << boundaries[i].d << std::endl; 
        }
     }   
 
