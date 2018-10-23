@@ -260,6 +260,7 @@ void operator()(std::size_t indx) const {
       int AdistInd=0;
       int EdistInd=0;
     #endif
+        particles->firstCollision[indx]=1;
     particleTrackVector[0] = vx;
     particleTrackVector[1] = vy;
     particleTrackVector[2] = vz;
@@ -353,15 +354,27 @@ void operator()(std::size_t indx) const {
                            nE_sputtRefDistOutRef,nA_sputtRefDistIn,nE_sputtRefDistIn,
                                          energyDistGrid01Ref,A_sputtRefDistIn,
                                          E_sputtRefDistIn,EDist_CDF_R_regrid );
-                   newWeight=(R0/(1.0f-sputtProb))*weight;
+                   //newWeight=(R0/(1.0f-sputtProb))*weight;
+		   newWeight = weight*(totalYR);
+    #if FLUX_EA > 0
               EdistInd = floor((eInterpVal-E0dist)/dEdist);
               AdistInd = floor((aInterpVal-A0dist)/dAdist);
               if((EdistInd >= 0) && (EdistInd < nEdist) && 
                  (AdistInd >= 0) && (AdistInd < nAdist))
               {
                   surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
-                    surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
+                    surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
                }
+	       #endif
+                  if(surface > 0)
+                {
+
+            #if USE_CUDA > 0
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
+            #else
+                    surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
+            #endif
+                }
             }
             else //sputters
             {
@@ -381,7 +394,9 @@ void operator()(std::size_t indx) const {
             //    particles->test3[indx] = r9;
             //}            
                 //std::cout << " particle sputters with " << eInterpVal << aInterpVal <<  std::endl;
-                  newWeight=(Y0/sputtProb)*weight;
+                  //newWeight=(Y0/sputtProb)*weight;
+		  newWeight=weight*totalYR;
+    #if FLUX_EA > 0
               EdistInd = floor((eInterpVal-E0dist)/dEdist);
               AdistInd = floor((aInterpVal-A0dist)/dAdist);
               if((EdistInd >= 0) && (EdistInd < nEdist) && 
@@ -389,15 +404,16 @@ void operator()(std::size_t indx) const {
               {
                 //std::cout << " particle sputters with " << EdistInd << AdistInd <<  std::endl;
                   surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
-                    surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
+                    surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
                }
+	       #endif
                   if(sputtProb == 0.0) newWeight = 0.0;
                    //std::cout << " particle sputtered with newWeight " << newWeight << std::endl;
                   if(surface > 0)
                 {
 
             #if USE_CUDA > 0
-                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
                     atomicAdd(&surfaces->grossErosion[surfaceHit],newWeight);
                     atomicAdd(&surfaces->aveSputtYld[surfaceHit],Y0);
                     if(weight > 0.0)
@@ -405,13 +421,14 @@ void operator()(std::size_t indx) const {
                         atomicAdd(&surfaces->sputtYldCount[surfaceHit],1);
                     }
             #else
-                    surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
+                    surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
                     surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit] + newWeight;
                     surfaces->aveSputtYld[surfaceHit] = surfaces->aveSputtYld[surfaceHit] + Y0;
                     surfaces->sputtYldCount[surfaceHit] = surfaces->sputtYldCount[surfaceHit] + 1;
             #endif
                 }
             }
+            //std::cout << "eInterpValYR " << eInterpVal << std::endl; 
             }
             else
             {       newWeight = 0.0;
@@ -424,8 +441,10 @@ void operator()(std::size_t indx) const {
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
             #endif
 	        }
+            //std::cout << "eInterpValYR_not " << eInterpVal << std::endl; 
             }
-            if(eInterpVal <= 0.0)
+            //std::cout << "eInterpVal " << eInterpVal << std::endl; 
+	    if(eInterpVal <= 0.0)
             {       newWeight = 0.0;
                     particles->hitWall[indx] = 2.0;
                   if(surface > 0)
@@ -438,7 +457,7 @@ void operator()(std::size_t indx) const {
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
             #endif
 	            }
-		    }
+		}
             }
             //if(particles->test[indx] == 1.0)
             //{
@@ -446,36 +465,38 @@ void operator()(std::size_t indx) const {
             //    particles->test[indx] = 2.0;
             //}
                 //deposit on surface
-                if(surface)
-                {
+            if(surface)
+            {
             #if USE_CUDA > 0
-              atomicAdd(&surfaces->sumWeightStrike[surfaceHit],weight);
-              atomicAdd(&surfaces->sumParticlesStrike[surfaceHit],1);
+                atomicAdd(&surfaces->sumWeightStrike[surfaceHit],weight);
+                atomicAdd(&surfaces->sumParticlesStrike[surfaceHit],1);
             #else
-              surfaces->sumWeightStrike[surfaceHit] =surfaces->sumWeightStrike[surfaceHit] +weight;
-              surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
+                surfaces->sumWeightStrike[surfaceHit] =surfaces->sumWeightStrike[surfaceHit] +weight;
+                surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
               //boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
             #endif
             #if FLUX_EA > 0
-              EdistInd = floor((E0-E0dist)/dEdist);
-              AdistInd = floor((thetaImpact-A0dist)/dAdist);
-              if((EdistInd >= 0) && (EdistInd < nEdist) && 
-                 (AdistInd >= 0) && (AdistInd < nAdist))
-              {
+                EdistInd = floor((E0-E0dist)/dEdist);
+                AdistInd = floor((thetaImpact-A0dist)/dAdist);
+              
+	        if((EdistInd >= 0) && (EdistInd < nEdist) && 
+                  (AdistInd >= 0) && (AdistInd < nAdist))
+                {
 #if USE_CUDA > 0
-                  atomicAdd(&surfaces->energyDistribution[surfaceHit*nEdist*nAdist + 
+                    atomicAdd(&surfaces->energyDistribution[surfaceHit*nEdist*nAdist + 
                                                EdistInd*nAdist + AdistInd], weight);
 #else
 
-                  surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
+                    surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
                     surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
 #endif
-               }
+                }
             #endif 
-                } 
+            } 
                 //reflect with weight and new initial conditions
-                if( boundaryVector[wallHit].Z > 0.0 && newWeight > 0.0)
-                {
+            //std::cout << "particle wall hit Z and nwweight " << boundaryVector[wallHit].Z << " " << newWeight << std::endl;
+	    if( boundaryVector[wallHit].Z > 0.0 && newWeight > 0.0)
+            {
                 particles->weight[indx] = newWeight;
                 particles->hitWall[indx] = 0.0;
                 particles->charge[indx] = 0.0;

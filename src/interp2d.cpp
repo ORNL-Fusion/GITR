@@ -58,6 +58,8 @@ float interp2d ( float x, float z,int nx, int nz,
       fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
       fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
       fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+      //std::cout << "fxz1,2,fxz" << fx_z1 << fx_z2 << fxz <<std::endl;
+      //std::cout << "gridz0,1 j dz" << gridz[0] <<gridz[1] << j << dz <<std::endl;
     }
     }
 
@@ -119,6 +121,8 @@ CUDA_CALLABLE_MEMBER
 
 float interp3d ( float x, float y, float z,int nx,int ny, int nz,
     float* gridx,float* gridy, float* gridz,float* data ) {
+    //std::cout << "xyz " << x << " "<<y << " " << z<< std::endl;
+    //std::cout << "nxyz " << nx << " "<<ny << " " << nz<< std::endl;
     
     float fxyz = 0.0;
 
@@ -130,7 +134,7 @@ float interp3d ( float x, float y, float z,int nx,int ny, int nz,
     int j = floor((y - gridy[0])/dy);
     int k = floor((z - gridz[0])/dz);
     //std::cout << "dxyz ijk " << dx << " "<<dy << " " << dz<< " " << i
-    //    << " " << j << " " << k << std::endl;
+      //  << " " << j << " " << k << std::endl;
     if(i <0 ) i=0;
     else if(i >=nx-1) i=nx-2;
     if(j <0 ) j=0;
@@ -139,11 +143,17 @@ float interp3d ( float x, float y, float z,int nx,int ny, int nz,
     else if(k >=nz-1) k=nz-2;
     if(ny <=1) j=0;
     if(nz <=1) k=0;
+    //std::cout << "dxyz ijk " << dx << " "<<dy << " " << dz<< " " << i
+      //  << " " << j << " " << k << std::endl;
     //if(j <0 || j>ny-1) j=0;
     //if(k <0 || k>nz-1) k=0;
     float fx_z0 = (data[i + j*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + k*nx*ny]*(x-gridx[i]))/dx;
     float fx_z1 = (data[i + j*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
+    //std::cout << "dataInd 1 2 3 4 " << i + j*nx + k*nx*ny << " "<<i+1 + j*nx + k*nx*ny << " " << i + j*nx + (k+1)*nx*ny<< " " << i +1 + j*nx + (k+1)*nx*ny
+    //    << std::endl;
 
+    //std::cout << "data 1 2 3 4 " << data[i + j*nx + k*nx*ny] << " "<<data[i+1 + j*nx + k*nx*ny] << " " << data[i + j*nx + (k+1)*nx*ny]<< " " << data[i +1 + j*nx + (k+1)*nx*ny]
+    //    << std::endl;
     
     //std::cout << "fxz0 fxz1 " << fx_z0 << " "<<fx_z1 << std::endl;
     float fxy_z0 = (data[i + (j+1)*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + (j+1)*nx + k*nx*ny]*(x-gridx[i]))/dx;
@@ -226,12 +236,15 @@ float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data,in
             }   
         }
     }
+
+    //std::cout << " smple point nx max_x " << samplePoint << " " << nx << " " << max_x << std::endl;
     //std::cout << " lowInd " << low_index << " " << data[low_index] << " " << data[low_index+1] <<
-        //std::endl;
+      //  std::endl;
     interpolated_value =
         ((data[low_index+1] - samplePoint)*low_index*max_x/nx
         + (samplePoint - data[low_index])*(low_index+1)*max_x/nx)/(data[low_index+1]- data[low_index]);
       //(low_index+1)*max_x/nx
+      //std::cout << "interpolated_value " << interpolated_value << std::endl;
     lowInd = low_index;
     if(low_index < 0)
     {
@@ -245,6 +258,13 @@ float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data,in
         else{
           interpolated_value = 0.0;
         }
+    }
+    if(low_index >= nx)
+    {
+        lowInd = nx-1;
+        //interpolated_value = samplePoint*data[0];
+          interpolated_value = max_x;
+        
     }
     return interpolated_value;
 }
@@ -266,8 +286,10 @@ float interp1dUnstructured2(float samplePoint,int nx, float *xdata, float* data)
             }   
         }
     }
+    //std::cout << " sample point low_index " << samplePoint<< " " << low_index << std::endl;
     interpolated_value =    xdata[low_index]  
         + (samplePoint - data[low_index])*(xdata[low_index + 1] - xdata[low_index])/(data[low_index+1]- data[low_index]);
+    //std::cout << " xdatas " << xdata[low_index] << " " << xdata[low_index+1] << std::endl;
     return interpolated_value;
 }
 CUDA_CALLABLE_MEMBER
