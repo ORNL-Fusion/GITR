@@ -115,7 +115,9 @@ float ME = 9.10938356e-31;
                 	gam_electron_background = 0.238762895*powf(charge,2)*logf(lam)/(amu*amu);//constant = Q^4/(MI^2*4*pi*EPS0^2)
                 	gam_ion_background = 0.238762895*powf(charge,2)*powf(background_Z,2)*logf(lam)/(amu*amu);//constant = Q^4/(MI^2*4*pi*EPS0^2)
                     //std::cout << "gam components " <<gam_electron_background << " " << pow(Q,4) << " " << " " << pow(background_Z,2) << " " << log(lam)<< std::endl; 
-                	a_ion = background_amu*MI/(2*ti_eV*Q);// %q is just to convert units - no z needed
+                if(gam_electron_background < 0.0) gam_electron_background=0.0;
+                if(gam_ion_background < 0.0) gam_ion_background=0.0;
+		       a_ion = background_amu*MI/(2*ti_eV*Q);// %q is just to convert units - no z needed
                 	a_electron = ME/(2*te_eV*Q);// %q is just to convert units - no z needed
                 
                 	xx = powf(velocityNorm,2)*a_ion;
@@ -162,7 +164,6 @@ float ME = 9.10938356e-31;
                 	nu_deflection_e = 2*(psi_psiprime_psi2x_e)*nu_0_e;
                 	nu_parallel_e = psi_e/xx_e*nu_0_e;
                 	nu_energy_e = 2*(amu/(ME/MI)*psi_e - psi_prime_e)*nu_0_e;
-
                     //std::cout << "lam_d lam gami game ai ae" << lam_d << " " << lam << " " << gam_ion_background << " " << gam_electron_background << " " << a_ion << " " << a_electron << std::endl;
                     //std::cout << "x psi_prime psi_psiprime psi" << xx << " " << xx_e << " " << psi_prime << " "<< psi_prime_e << " " << psi_psiprime<< " " << psi_psiprime_e << " " << psi<< " " << psi_e << " " << nu_0_i<< " " << nu_0_e << std::endl;
                     //std::cout << "nu friction, parallel perp energy IONs" << nu_friction_i << " " << nu_parallel_i << " " <<nu_deflection_i << " " << nu_energy_i << std::endl;
@@ -172,7 +173,11 @@ float ME = 9.10938356e-31;
     nu_deflection = nu_deflection_i + nu_deflection_e;
     nu_parallel = nu_parallel_i + nu_parallel_e;
     nu_energy = nu_energy_i + nu_energy_e;
-                    //std::cout << "nu friction, parallel perp energy " << nu_friction << " " << nu_parallel << " " <<nu_deflection << " " << nu_energy << std::endl;
+     //if(nu_deflection < 0.0){
+     //                std::cout << "nu0 "  << " " <<nu_0_i << " " << nu_0_e << " " << psi_psiprime_psi2x << " " << psi_psiprime_psi2x_e << std::endl;
+     //    	    std::cout << "gam_electron_background*density/powf(velocityNorm,3) " << gam_electron_background<< " " << density<< " " << velocityNorm << " " << lam_d<< std::endl;
+     //    	    }
+     //                //std::cout << "nu friction, parallel perp energy " << nu_friction << " " << nu_parallel << " " <<nu_deflection << " " << nu_energy << std::endl;
     if(te_eV == 0.0 || ti_eV == 0.0)
     {
         nu_friction = 0.0;
@@ -542,7 +547,7 @@ void operator()(std::size_t indx)  {
        //{
        //    std::cout << "nu_d " << nu_deflection<< std::endl;
        //    std::cout << "vxvyvz" << vx<< " " << vy << " " << vz<< " "  << std::endl;
-       //    std::cout << "vf isnan" << vfx<< " " << vPartNorm << " " << vbx<< " " << coeff_perp << std::endl;
+       //    //std::cout << "vf isnan" << vfx<< " " << vPartNorm << " " << vbx<< " " << coeff_perp << std::endl;
        //     std::cout << "particle velocity " << particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " << particlesPointer->vz[indx] << std::endl;
        //     std::cout << "velocityCollisions " << velocityCollisions[0] << " " << velocityCollisions[1] << " " << velocityCollisions[2] << std::endl;
        // std::cout << "SlowdonwDir par" << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << " " << std::endl;
