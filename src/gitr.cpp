@@ -24,6 +24,7 @@
 #include "BoundaryModifiable.h"
 #include "curandInitialize.h"
 #include "spectroscopy.h"
+#include "history.h"
 
 #if USE_BOOST
     #include <boost/timer/timer.hpp>
@@ -249,10 +250,20 @@ int main()
   #endif
     std::cout << "Finished checking input file" << std::endl; 
   // Background species info
+  float background_Z;
+  float background_amu;
+  if (cfg.lookupValue("backgroundPlasmaProfiles.Z",background_Z) &&  cfg.lookupValue("backgroundPlasmaProfiles.amu",background_amu))
+  {
   float background_Z = cfg.lookup("backgroundPlasmaProfiles.Z");
   float background_amu = cfg.lookup("backgroundPlasmaProfiles.amu");
-
+  }
+  else
+  {
+      std::cout << "config file read failed in background Plasma profiles Z or amu " << std::endl;
+  }
   //Bfield initialization
+  //if(cfg.lookup("backgroundPlasmaProfiles.Bfield.br"))
+  //{
   #if BFIELD_INTERP == 0
     int nR_Bfield = 1;
     int nZ_Bfield = 1;
@@ -299,7 +310,11 @@ int main()
   OUTPUT2d(profiles_folder,outnameBfieldR, nR_Bfield, nZ_Bfield, &br.front());
   OUTPUT2d(profiles_folder,outnameBfieldZ, nR_Bfield, nZ_Bfield, &bz.front());
   OUTPUT2d(profiles_folder,outnameBfieldT, nR_Bfield, nZ_Bfield, &bt.front());
-
+  //}
+  //else
+  //{
+  //    std::cout << "config file read failed in background Plasma profiles Bfield " << std::endl;
+  //}
 
   //Background Plasma Temperature Initialization    
   #if TEMP_INTERP == 0
@@ -790,6 +805,7 @@ std::cout << "3d tet geom hash " << nR_closeGeom << " " << nY_closeGeom << " "
    
     int gi6 = read_profile3d(cfg.lookup("geometry.fileString"),
                 cfg.lookup("geometry.closeGeomString"), closeGeom);
+    std::cout << " finished geometry hashing read in " << std::endl;
 #else
     int gi1 = read_profileNs(cfg.lookup("geometry.fileString"),
                 cfg.lookup("geometry.gridNrString"),
@@ -1096,6 +1112,15 @@ particleArray->setParticle((i * impuritiesPerBoundary + j),x, 0.0, z, Ex, Ey, Ez
 #if PARTICLE_TRACKS > 0
     int subSampleFac = 1;
     float subSampleFacf = 1.0;
+#if USE_CUDA > 0
+    sim::Array<float> positionHistoryX(nP*nT/subSampleFac);
+    sim::Array<float> positionHistoryY(nP*nT/subSampleFac);
+    sim::Array<float> positionHistoryZ(nP*nT/subSampleFac);
+    sim::Array<float> velocityHistoryX(nP*nT/subSampleFac);
+    sim::Array<float> velocityHistoryY(nP*nT/subSampleFac);
+    sim::Array<float> velocityHistoryZ(nP*nT/subSampleFac);
+    sim::Array<float> chargeHistory(nP*nT/subSampleFac);
+#else
     float **positionHistoryX;
     float **positionHistoryY;
     float **positionHistoryZ;
@@ -1137,6 +1162,7 @@ particleArray->setParticle((i * impuritiesPerBoundary + j),x, 0.0, z, Ex, Ey, Ez
             chargeHistory[i][j] = 0.0;
         }
     }
+#endif
 #endif 
 float* finalPosX = new float[nP];
 float* finalPosY = new float[nP];
@@ -1376,6 +1402,13 @@ state1[0] = s;
 #endif        
 
 #if PARTICLE_TRACKS >0
+#if USE_CUDA > 0
+            thrust::for_each(thrust::device, particleBegin,particleEnd,
+                    history(particleArray,tt,subSampleFac,nP,&positionHistoryX.front(),
+                                &positionHistoryY.front(),&positionHistoryZ.front(),
+                                &velocityHistoryX.front(),&velocityHistoryY.front(),
+                                &velocityHistoryZ.front(),&chargeHistory.front()) );
+#else
 if (tt % subSampleFac == 0)  
 {    
         for(int i=0;i<nP;i++)
@@ -1389,6 +1422,7 @@ if (tt % subSampleFac == 0)
             chargeHistory[i][tt/subSampleFac] = particleArray->charge[i];
         }
 }
+#endif
 #endif
 //#else
 /*
@@ -1640,9 +1674,13 @@ NcFile ncFile_hist("history.nc", NcFile::replace);
 NcDim nc_nT = ncFile_hist.addDim("nT",nT/subSampleFac);
 NcDim nc_nP = ncFile_hist.addDim("nP",nP);
 vector<NcDim> dims_hist;
+#if USE_CUDA
+NcDim nc_nPnT = ncFile_hist.addDim("nPnT",nP*nT/subSampleFac);
+dims_hist.push_back(nc_nPnT);
+#else
 dims_hist.push_back(nc_nP);
 dims_hist.push_back(nc_nT);
-
+#endif
 NcVar nc_x = ncFile_hist.addVar("x",ncDouble,dims_hist);
 NcVar nc_y = ncFile_hist.addVar("y",ncDouble,dims_hist);
 NcVar nc_z = ncFile_hist.addVar("z",ncDouble,dims_hist);
@@ -1652,7 +1690,24 @@ NcVar nc_vy = ncFile_hist.addVar("vy",ncDouble,dims_hist);
 NcVar nc_vz = ncFile_hist.addVar("vz",ncDouble,dims_hist);
 
 NcVar nc_charge = ncFile_hist.addVar("charge",ncDouble,dims_hist);
+#if USE_CUDA > 0
+float *xPointer = &positionHistoryX[0];
+float *yPointer = &positionHistoryY[0];
+float *zPointer = &positionHistoryZ[0];
+float *vxPointer = &velocityHistoryX[0];
+float *vyPointer = &velocityHistoryY[0];
+float *vzPointer = &velocityHistoryZ[0];
+float *chargePointer = &chargeHistory[0];
+nc_x.putVar(xPointer);
+nc_y.putVar(yPointer);
+nc_z.putVar(zPointer);
 
+nc_vx.putVar(vxPointer);
+nc_vy.putVar(vyPointer);
+nc_vz.putVar(vzPointer);
+
+nc_charge.putVar(chargePointer);
+#else
 nc_x.putVar(positionHistoryX[0]);
 nc_y.putVar(positionHistoryY[0]);
 nc_z.putVar(positionHistoryZ[0]);
@@ -1662,6 +1717,7 @@ nc_vy.putVar(velocityHistoryY[0]);
 nc_vz.putVar(velocityHistoryZ[0]);
 
 nc_charge.putVar(chargeHistory[0]);
+#endif
 #endif
 #if SPECTROSCOPY > 0
 // Write netCDF output for density data
