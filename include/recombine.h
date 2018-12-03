@@ -9,15 +9,18 @@
 #define CUDA_CALLABLE_MEMBER_HOST
 #endif
 
-#include "Particle.h"
+#include "Particles.h"
 #ifdef __CUDACC__
 #include <thrust/random.h>
+#include <curand_kernel.h>
 #endif
 
 #ifdef __GNUC__ 
 #include <random>
 #include <stdlib.h>
 #endif
+
+#include "interpRateCoeff.hpp"
 
 struct recombine { 
   Particles *particlesPointer;
@@ -48,7 +51,7 @@ struct recombine {
 #if __CUDACC__
       curandState *_state,
 #else
-    double r2 = 0.0;
+      std::mt19937 *_state,
 #endif
      int _nR_Dens,int _nZ_Dens,float* _DensGridr,
      float* _DensGridz,float* _ne,int _nR_Temp, int _nZ_Temp,
@@ -96,11 +99,12 @@ struct recombine {
 
 	if(r1 <= P1)
 	{
-		p.Z = p.Z-1;
+        particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;
+        particlesPointer->PrecombinationPrevious[indx] = 1.0;
 	}         
-	}	
+   }	
 
-	} 
+  } 
 };
 
 #endif

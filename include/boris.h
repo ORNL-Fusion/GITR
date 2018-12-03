@@ -97,7 +97,9 @@ void vectorCrossProduct(float A[], float B[], float C[])
 CUDA_CALLABLE_MEMBER
 
 float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, int nLines,
-       int nR_closeGeom, int nZ_closeGeom, int n_closeGeomElements, float *closeGeomGridr, float *closeGeomGridz, int *closeGeom ) {
+       int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
+       float *closeGeomGridr,float *closeGeomGridy, float *closeGeomGridz, int *closeGeom, 
+         int&  closestBoundaryIndex) {
 #if USE3DTETGEOM > 0
     float Emag = 0.0f;
     float Er = 0.0f;
@@ -173,11 +175,35 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
       float normals[21] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,
                            0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,
                            0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+#if GEOM_HASH_SHEATH > 0
+  float dr = closeGeomGridr[1] - closeGeomGridr[0];
+  float dy = closeGeomGridy[1] - closeGeomGridy[0];
+  float dz = closeGeomGridz[1] - closeGeomGridz[0];
+  int rInd = floor((x0 - closeGeomGridr[0])/dr + 0.5f);
+  int yInd = floor((y - closeGeomGridy[0])/dy + 0.5f);
+  int zInd = floor((z - closeGeomGridz[0])/dz + 0.5f);
+  int i;
+  if(rInd < 0 || rInd >= nR_closeGeom)
+    rInd =0;
+  if(yInd < 0 || yInd >= nY_closeGeom)
+    yInd =0;
+  if(zInd < 0 || zInd >= nZ_closeGeom)
+    zInd =0;
+
+  for (int k=0; k< n_closeGeomElements; k++) //n_closeGeomElements
+    {
+       i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements 
+                   + yInd*nR_closeGeom*n_closeGeomElements
+                   + rInd*n_closeGeomElements + k];
+       //closestBoundaryIndex = i;
+       //std::cout << "closest boundaries to check " << i << std::endl;
+#else
       for (int i=0; i<nLines; i++)
       {
+#endif
             //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
-        if (boundaryVector[i].Z != 0.0)
-        {
+        //if (boundaryVector[i].Z != 0.0)
+        //{
             //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
         a = boundaryVector[i].a;
         b = boundaryVector[i].b;
@@ -425,23 +451,26 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
              */
          }
          int index = 0;
-          for(int j = 0; j < 7; j++)
-            {
+         for(int j = 0; j < 7; j++)
+         {
             if(distances[j] < distances[index])
             index = j;              
-            }
+         }
 
-             if (distances[index] < minDistance)
-             {
+         if (distances[index] < minDistance)
+         {
                  minDistance = distances[index];
                  vectorAssign(normals[index*3], normals[index*3+1],normals[index*3+2], directionUnitVector);
                  //std::cout << "min dist " << minDistance << std::endl;
                  //std::cout << "min normal " << normals[index*3] << " " 
                  //   <<normals[index*3+1] << " " << normals[index*3+2] << std::endl;
-             }
+               //closestBoundaryIndex = i;
+          closestBoundaryIndex = i;
+          minIndex = i;
+         }
          //std::cout << "perp dist " << perpDist << std::endl;
          //std::cout << "point to AB BC CA " << p0ABdist << " " << p0BCdist << " " << p0CAdist << std::endl;
-        }
+        //}
        }
       //vectorScalarMult(-1.0,directionUnitVector,directionUnitVector);
       //std::cout << "min dist " << minDistance << std::endl;
@@ -529,6 +558,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
             {
                 minDistance = boundaryVector[j].distanceToParticle;
                 minIndex = j;
+                closestBoundaryIndex = j;
                 direction_type = boundaryVector[j].pointLine;
             }
         }
@@ -582,21 +612,26 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
 #endif   
-    
+#if BIASED_SURFACE > 0
+    pot = boundaryVector[minIndex].potential;
+    Emag = pot/(2.0f*boundaryVector[minIndex].ChildLangmuirDist)*expf(-minDistance/(2.0f*boundaryVector[minIndex].ChildLangmuirDist));
+#else 
     angle = boundaryVector[minIndex].angle;    
-    fd  =  0.996480862464192f +8.78424468259523e-04f  * angle     -
-           4.674013060191755e-4f  * powf(angle,2.0f) +
-           2.727826261148182e-5f  * powf(angle,3.0f) - 
-           7.141202673279612e-7f  * powf(angle,4.0f) +
-           8.56348440384227e-9f   * powf(angle,5.0f) -
-           3.91580557074662e-11f  * powf(angle,6.0f);
-    pot = 3.0f*boundaryVector[minIndex].ti;
+    fd  =  0.98992f + 5.1220E-03f * angle  -
+           7.0040E-04f  * powf(angle,2.0f) +
+           3.3591E-05f  * powf(angle,3.0f) -
+           8.2917E-07f  * powf(angle,4.0f) +
+           9.5856E-09f   * powf(angle,5.0f) -
+           4.2682E-11f  * powf(angle,6.0f);
+    pot = boundaryVector[minIndex].potential;
     //std::cout << "potential and debye length " << pot << " " << boundaryVector[minIndex].debyeLength << " " << pot/boundaryVector[minIndex].debyeLength << std::endl;
+    //std::cout << " larmorRad " << boundaryVector[minIndex].larmorRadius << std::endl;
         Emag = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength))+ (1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius) );
       //  std::cout << "Emag " << Emag << std::endl;
         //std::cout << "fd " << fd << std::endl;
-       // std::cout << "minDistance " << minDistance << std::endl;
-    if(minDistance == 0.0f)
+       //std::cout << "minDistance " << minDistance << std::endl;
+#endif
+    if(minDistance == 0.0f || boundaryVector[minIndex].larmorRadius == 0.0f)
     {
         Emag = 0.0f;
         directionUnitVector[0] = 0.0f;
@@ -608,12 +643,16 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
         Et = Emag*directionUnitVector[1];
         E[2] = Emag*directionUnitVector[2];
         //std::cout << "Emag " << Emag << std::endl;
-    //    std::cout << "Min dist " << minDistance << std::endl;
-       // std::cout << "r " << x << "z " << z << std::endl;
+        //std::cout << "Min dist " << minDistance << std::endl;
+        //std::cout << "r " << x << "z " << z << std::endl;
         //std::cout << "E components " << Er << " " << Et << " " << E[2] << std::endl;
        //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     
     //std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
+#if USE3DTETGEOM > 0
+            E[0] = Er;
+            E[1] = Et;
+#else
 #if USECYLSYMM > 0
             //if cylindrical geometry
             float theta = atan2f(y,x0);
@@ -623,6 +662,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
 #else
             E[0] = Er;
             E[1] = Et;
+#endif
 #endif
             //std::cout << "Ex and Ey and Ez " << E[0] << " " << E[1] << " " << E[2] << std::endl;
    
@@ -641,16 +681,20 @@ struct move_boris {
     float * BfieldZDevicePointer;
     float * BfieldTDevicePointer;
     int nR_Efield;
+    int nY_Efield;
     int nZ_Efield;
     float * EfieldGridRDevicePointer;
+    float * EfieldGridYDevicePointer;
     float * EfieldGridZDevicePointer;
     float * EfieldRDevicePointer;
     float * EfieldZDevicePointer;
     float * EfieldTDevicePointer;
     int nR_closeGeom_sheath;
+    int nY_closeGeom_sheath;
     int nZ_closeGeom_sheath;
     int n_closeGeomElements_sheath;
     float* closeGeomGridr_sheath;
+    float* closeGeomGridy_sheath;
     float* closeGeomGridz_sheath;
     int* closeGeom_sheath; 
     const float span;
@@ -664,28 +708,31 @@ struct move_boris {
             float * _BfieldRDevicePointer,
             float * _BfieldZDevicePointer,
             float * _BfieldTDevicePointer,
-            int _nR_Efield, int _nZ_Efield,
+            int _nR_Efield,int _nY_Efield, int _nZ_Efield,
             float * _EfieldGridRDevicePointer,
+            float * _EfieldGridYDevicePointer,
             float * _EfieldGridZDevicePointer,
             float * _EfieldRDevicePointer,
             float * _EfieldZDevicePointer,
             float * _EfieldTDevicePointer,
-            int _nR_closeGeom, int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridz, int *_closeGeom)
+            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr,float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom)
         
         : particlesPointer(_particlesPointer), span(_span), boundaryVector(_boundaryVector), nLines(_nLines), nR_Bfield(_nR_Bfield), 
         nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), 
         BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
         BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), 
         BfieldTDevicePointer(_BfieldTDevicePointer),
-        nR_Efield(_nR_Efield), nZ_Efield(_nZ_Efield), 
+        nR_Efield(_nR_Efield),nY_Efield(_nY_Efield), nZ_Efield(_nZ_Efield), 
         EfieldGridRDevicePointer(_EfieldGridRDevicePointer), 
+        EfieldGridYDevicePointer(_EfieldGridYDevicePointer), 
         EfieldGridZDevicePointer(_EfieldGridZDevicePointer),
         EfieldRDevicePointer(_EfieldRDevicePointer), EfieldZDevicePointer(_EfieldZDevicePointer),
         EfieldTDevicePointer(_EfieldTDevicePointer),
-   nR_closeGeom_sheath(_nR_closeGeom), nZ_closeGeom_sheath(_nZ_closeGeom), n_closeGeomElements_sheath(_n_closeGeomElements), closeGeomGridr_sheath(_closeGeomGridr), closeGeomGridz_sheath(_closeGeomGridz), closeGeom_sheath(_closeGeom) {}
+   nR_closeGeom_sheath(_nR_closeGeom),nY_closeGeom_sheath(_nY_closeGeom), nZ_closeGeom_sheath(_nZ_closeGeom), n_closeGeomElements_sheath(_n_closeGeomElements), 
+   closeGeomGridr_sheath(_closeGeomGridr),closeGeomGridy_sheath(_closeGeomGridy), closeGeomGridz_sheath(_closeGeomGridz), closeGeom_sheath(_closeGeom), magneticForce{0.0,0.0,0.0}, electricForce{0.0,0.0,0.0} {}
 
 CUDA_CALLABLE_MEMBER    
-void operator()(std::size_t indx) const { 
+void operator()(std::size_t indx) { 
 #ifdef __CUDACC__
 #else
 float initTime = 0.0f;
@@ -697,21 +744,24 @@ cpu_timer timer;
 cpu_times initTime0 = timer.elapsed();
 #endif
 #endif
-	    //if(particlesPointer->hitWall[indx] == 0.0)
-        //{
             float v_minus[3]= {0.0f, 0.0f, 0.0f};
             float v_prime[3]= {0.0f, 0.0f, 0.0f};
             float position[3]= {0.0f, 0.0f, 0.0f};
 	        float v[3]= {0.0f, 0.0f, 0.0f};
 	        float E[3] = {0.0f, 0.0f, 0.0f};
-	        float PSE[3] = {0.0f, 0.0f, 0.0f};
+#if USEPRESHEATHEFIELD > 0
+            float PSE[3] = {0.0f, 0.0f, 0.0f};
+#endif
 	        float B[3] = {0.0f,0.0f,0.0f};
 	        float dt = span;
 	        float Bmag = 0.0f;
 	        float q_prime = 0.0f;
             float coeff = 0.0f;
             int nSteps = floor( span / dt + 0.5f);
+#if USESHEATHEFIELD > 0
             float minDist = 0.0f;
+            int closestBoundaryIndex;
+#endif
 #if ODEINT ==	0  
 	        float qpE[3] = {0.0f,0.0f,0.0f};
 	        float vmxB[3] = {0.0f,0.0f,0.0f};
@@ -724,39 +774,64 @@ cpu_times initTime0 = timer.elapsed();
             {
 #if USESHEATHEFIELD > 0
 	          minDist = getE(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],E,boundaryVector,nLines,nR_closeGeom_sheath,
-                          nZ_closeGeom_sheath,
+                          nY_closeGeom_sheath,nZ_closeGeom_sheath,
                               n_closeGeomElements_sheath,closeGeomGridr_sheath,
-                                   closeGeomGridz_sheath,closeGeom_sheath);
-              //std::cout << "Efield in boris " << E[2] << std::endl;
+                              closeGeomGridy_sheath,
+                                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex);
+              //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
               //std::cout << "Charge and Hitwall " << particlesPointer->charge[indx] << " " <<
                // particlesPointer->hitWall[indx]  << std::endl;
 #endif
 
 #if USEPRESHEATHEFIELD > 0
+#if LC_INTERP==3
+              
+	        //float PSE2[3] = {0.0f, 0.0f, 0.0f};
+                 interp3dVector(PSE,position[0], position[1], position[2],nR_Efield,nY_Efield,nZ_Efield,
+                     EfieldGridRDevicePointer,EfieldGridYDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
+                     EfieldZDevicePointer,EfieldTDevicePointer);
+//E[0]= E[0] + PSE[0];
+//E[1]= E[1] + PSE[1];
+//E[2]= E[2] + PSE[2];
+                 vectorAdd(E,PSE,E);
+              //float a = interp3d(position[0], position[1], position[2],nR_Efield,nY_Efield,nZ_Efield,
+                //                EfieldGridRDevicePointer,EfieldGridYDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer);
+              //PSE[0] = 1.23;
+
+#else
                  interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer);
                  
                  vectorAdd(E,PSE,E);
+#endif
 #endif              
                 interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer);        
-                //std::cout << "Bfield and mass" << B[2] << " " << particlesPointer->amu[indx] << std::endl;    
+                //std::cout << "Bfield and mass" << B[1] << " " << particlesPointer->amu[indx] << std::endl;    
                 Bmag = vectorNorm(B);
 	            q_prime = particlesPointer->charge[indx]*1.60217662e-19f/(particlesPointer->amu[indx]*1.6737236e-27f)*dt*0.5f;
+                //std::cout << "charge, amu , dt " << particlesPointer->charge[indx] << " " << particlesPointer->amu[indx]<< " " << dt << std::endl;
                 coeff = 2.0f*q_prime/(1.0f+(q_prime*Bmag)*(q_prime*Bmag));
-            
+                //std::cout << " Bmag " << Bmag << std::endl;
+                //std::cout << " qprime coeff " << q_prime << " " << coeff << std::endl;
                 vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v);
-	            
+                //std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
                 //v_minus = v + q_prime*E;
                vectorScalarMult(q_prime,E,qpE);
                vectorAdd(v,qpE,v_minus);
-
+               this->electricForce[0] = 2.0*qpE[0];
+	       //std::cout << "e force " << q_prime << " " << PSE[0] << " " << PSE[1] << " " << PSE[2] << std::endl;
+               this->electricForce[1] = 2.0*qpE[1];
+               this->electricForce[2] = 2.0*qpE[2];
                //v_prime = v_minus + q_prime*(v_minus x B)
                 vectorCrossProduct(v_minus,B,vmxB);
                 vectorScalarMult(q_prime,vmxB,qp_vmxB);
                 vectorAdd(v_minus,qp_vmxB,v_prime);       
+               this->magneticForce[0] = qp_vmxB[0];
+               this->magneticForce[1] = qp_vmxB[1];
+               this->magneticForce[2] = qp_vmxB[2];
                 
                 //v = v_minus + coeff*(v_prime x B)
                 vectorCrossProduct(v_prime, B, vpxB);
@@ -775,7 +850,8 @@ cpu_times initTime0 = timer.elapsed();
                 particlesPointer->vx[indx] = v[0];
                 particlesPointer->vy[indx] = v[1];
                 particlesPointer->vz[indx] = v[2];    
-              //std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
+              
+//std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
     	    }
 #endif
 
