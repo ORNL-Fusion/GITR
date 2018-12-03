@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+#PBS -l walltime=00:05:00
+#PBS -l nodes=1
+#PBS -A fus049
+#PBS -j oe
+#PBS -e log.error
+#PBS -o log.output
+#PBS -N IPS_GITR
+
+source ${HOME}/code/gitr/env.eos.sh
+#cd $PBS_O_WORKDIR
+aprun -n 1 -d 32 /ccs/home/tyounkin/code/gitr/build/GITR > log.running 
