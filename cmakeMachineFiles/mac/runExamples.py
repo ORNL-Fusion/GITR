@@ -18,17 +18,17 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     USE_BOOST=1
     
     cmake_flags=".. -DTHRUST_INCLUDE_DIR=/Users/tyounkin/code/thrust/ \
-        -DCMAKE_C_COMPILER=gcc \
-        -DCMAKE_CXX_COMPILER=g++ \
+        -DCMAKE_C_COMPILER=clang \
+        -DCMAKE_CXX_COMPILER=clang++ \
         -DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE \
         -DNETCDF_CXX_LIBRARY=$NETCDFLIB_CPP \
         -DNETCDF_DIR=$NETCDFDIR \
         -DNETCDF_INCLUDE_DIR=$NETCDFINCLUDE \
         -DNETCDF_LIBRARY=$NETCDFLIB \
         -DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE \
-        -DLIBCONFIGPP_INCLUDE_DIR=/Users/tyounkin/Code/libconfigBuild/include \
-        -DBoost_DIR=/Users/tyounkin/Code/boostBuild \
-        -DBoost_INCLUDE_DIR=/Users/tyounkin/Code/boostBuild/include "
+        -DLIBCONFIGPP_INCLUDE_DIR=/usr/local/include \
+        -DBoost_DIR=/opt/local \
+        -DBoost_INCLUDE_DIR=/opt/local/include "
     
     with io.open(filename) as f:
         config = libconf.load(f)
