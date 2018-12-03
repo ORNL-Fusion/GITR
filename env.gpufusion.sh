@@ -2,6 +2,7 @@
 module load libconfig/gcc/64/1.5 
 module load git
 module load mpich
+#module load openmpi
 #module load cuda75/toolkit/7.5.18
 module load cuda91 
 module load slurm
