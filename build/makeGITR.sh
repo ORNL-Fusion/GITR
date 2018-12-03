@@ -1,0 +1,4 @@
+#!/bin/bash
+source ../env.gpufusion.sh
+
+~/cmake/cmake-3.7.0-rc1-Linux-x86_64/bin/cmake -DTHRUST_INCLUDE_DIR=$CUDA_PATH/include -DNETCDF_DIR=$NETCDF -DNETCDF_CXX_ROOT=$NETCDFCXX4 -DLIBCONFIGPP_LIBRARY=$LIBCONFIGDIR/$LIBCONFIGLIB  ..
