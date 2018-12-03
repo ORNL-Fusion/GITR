@@ -442,7 +442,7 @@ void operator()(std::size_t indx)  {
 		//int plus_minus2 = 1;//floor(curand_uniform(&particlesPointer->streams_collision2[indx]) + 0.5)*2 -1;
 		//int plus_minus3 = 1;//floor(curand_uniform(&particlesPointer->streams_collision3[indx]) + 0.5)*2 -1;
             float n1 = curand_normal(&state[indx]);
-            float n2 = curand_normal(&state[indx]);
+            //float r2 = curand_normal(&state[indx]);
             float xsi = curand_uniform(&state[indx]);
             //particlesPointer->test[indx] = xsi;
 #else
@@ -523,8 +523,8 @@ void operator()(std::size_t indx)  {
 	float coeff_par = plumin3*sqrt(0.5*abs(nu_energy)*dt*vRel2);
         //float coeff_par = 1.0;//+ n1*sqrt(nu_parallel*dt);
         //float coeff_par = 1.0 - nu_friction*dt;
-	int plumin1 = 2*floor(r1+0.5) - 1;
-	int plumin2 = 2*floor(r2+0.5) - 1;
+	//int plumin1 = 2*floor(r1+0.5) - 1;
+	//int plumin2 = 2*floor(r2+0.5) - 1;
 	float cosXsi = cos(2.0*pi*xsi);
 	float sinXsi = sin(2.0*pi*xsi);
         float coeff_perp1 = cosXsi*sqrt(nu_deflection*dt*0.5*vRel2);
