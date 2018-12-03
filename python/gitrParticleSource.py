@@ -9,7 +9,7 @@ import scipy.interpolate as scii
 import netCDF4
 import time
 
-def particleSource(geomFile='/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/iter/iter_milestone/3d/input/iterRefinedTest.cfg',spylFile = 'SpylPerSpecies.dat',solps_path='solpsTarg.txt',nParticles = 100000):
+def particleSource(geomFile='/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/iter/iter_milestone/3d/input/iterRefinedTest.cfg',spylFile = 'SpylPerSpecies.dat',solps_path='solpsTarg.txt',nParticles = 100000,generateFile=1):
     spyl = np.loadtxt(spylFile)
     print 'spyl',spyl.shape
     print 'spyl',spyl
@@ -92,201 +92,202 @@ def particleSource(geomFile='/global/homes/t/tyounkin/atomIPS/atom-install-ediso
     #print('particleCDFmat',particleCDFmat.shape)
     rand1 = np.random.rand(nParticles)
     mins = np.zeros(nParticles)
-
-    for i in range(nParticles):
-        diff = particleCDF - rand1[i]
-        diff[diff<0.0] = 100
-        mins[i] = int(np.argmin(diff))
-    print('mins',mins)
-    filename = 'input/angularDists.nc'
-    ncFile = netCDF4.Dataset(filename,"r")
-    nLoc = len(ncFile.dimensions['nLoc'])
-    nEgrid = len(ncFile.dimensions['nEgrid'])
-    nPhiGrid = len(ncFile.dimensions['nPhiGrid'])
-    nThetaGrid = len(ncFile.dimensions['nThetaGrid'])
-    Egrid = np.array(ncFile.variables['Egrid'])
-    phiGrid = np.array(ncFile.variables['phiGrid'])
-    thetaGrid = np.array(ncFile.variables['thetaGrid'])
-    Edist = np.reshape(np.array(ncFile.variables['Edist']),(nEgrid,nLoc))
-    phiDist = np.reshape(np.array(ncFile.variables['phiDist']),(nPhiGrid,nLoc))
-    thetaDist = np.reshape(np.array(ncFile.variables['thetaDist']),(nThetaGrid,nLoc))
-    #plt.plot(Egrid,Edist)
-    #plt.savefig('image1.png')
-    #plt.plot(thetaGrid,thetaDist)
-    #plt.savefig('image2.png')
-    #plt.plot(phiGrid,phiDist)
-    #plt.savefig('image3.png')
-    #plt.close()
-    eCDF = np.cumsum(Edist,axis=0)
-    eCDF = eCDF/eCDF[-1]
-    phiCDF = np.cumsum(phiDist,axis=0)
-    phiCDF = phiCDF/phiCDF[-1]
-    thetaCDF = np.cumsum(thetaDist,axis=0)
-    thetaCDF = thetaCDF/thetaCDF[-1]
-    print('ecdf sshape',eCDF.shape)
-    #plt.plot(Egrid,eCDF)
-    #plt.savefig('image12.png')
-    #plt.plot(thetaGrid,thetaCDF)
-    #plt.savefig('image22.png')
-    #plt.plot(phiGrid,phiCDF)
-    #plt.savefig('image32.png')
-    #plt.close()
-    rand2=np.random.rand(nParticles)
-    rand3=np.random.rand(nParticles)
-    rand4=np.random.rand(nParticles)
-    #plt.hist(pE)
-    #plt.savefig('image4.png')
-    #plt.close()
-    #plt.hist(pPhi)
-    #plt.savefig('image5.png')
-    #plt.close()
-    #plt.hist(pTheta)
-    #plt.savefig('image6.png')
-    xx = np.zeros(nParticles)
-    yy=np.zeros(nParticles)
-    zz=np.zeros(nParticles)
-    vx = np.zeros(nParticles)
-    vy=np.zeros(nParticles)
-    vz=np.zeros(nParticles)
-    buff=1e-5
-    pE = 4
-    pVel = np.sqrt(2*pE*1.602e-19/184/1.66e-27)
-    print('particle velocity is ',pVel)
-    pVel =np.zeros(nParticles,dtype=int)
-    pPhi =np.zeros(nParticles)
-    pTheta =np.zeros(nParticles)
-    start = time.time()
-    for i in range(nParticles):
-        #print('i',i)
-        #print('mins[i]',mins[i])
-        #print('erodedSurfs[mins[i]]',erodedSurfs[int(mins[i])])
-        minsi = int(mins[i])
-        xyz = sampleTriangle(x = np.array([x1[erodedSurfs[minsi]],x2[erodedSurfs[minsi]],x3[erodedSurfs[minsi]]]),
-	y = np.array([y1[erodedSurfs[minsi]],y2[erodedSurfs[minsi]],y3[erodedSurfs[minsi]]]),
-	z = np.array([z1[erodedSurfs[minsi]],z2[erodedSurfs[minsi]],z3[erodedSurfs[minsi]]]))
-	xx[i]=(xyz[0] - a[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*buff)
-	yy[i]=(xyz[1] - b[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*buff)
-	zz[i]=(xyz[2] - c[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*buff)
     
-        rzDiff = z-zz[i]
-        rmrsInd = int(np.argmin(abs(rzDiff)))
-        #pEint = scii.interp1d(eCDF[:,rmrsInd],Egrid,bounds_error=False,fill_value=4.0)
-        eCDFdiff = eCDF[:,rmrsInd] - rand2[i]
-        eCDFInd = int(np.argmin(abs(eCDFdiff)))
-        pE = Egrid[eCDFInd]
-        #pE = pEint(rand2[i])
-        if pE > 20.0:
-            pE = 6.0
-        #pE = 250.0
-        pVel[i] = np.sqrt(2*pE*1.602e-19/184/1.66e-27)
-        #pPhiint = scii.interp1d(phiCDF[:,rmrsInd],phiGrid,bounds_error=False,fill_value=0.0)
-        #pPhi = pPhiint(rand3[i])
-        phiCDFdiff = phiCDF[:,rmrsInd] - rand3[i]
-        phiCDFInd = int(np.argmin(abs(phiCDFdiff)))
-        pPhi[i] = phiGrid[phiCDFInd]
+    if generateFile:
+        for i in range(nParticles):
+            diff = particleCDF - rand1[i]
+            diff[diff<0.0] = 100
+            mins[i] = int(np.argmin(diff))
+        print('mins',mins)
+        filename = 'input/angularDists.nc'
+        ncFile = netCDF4.Dataset(filename,"r")
+        nLoc = len(ncFile.dimensions['nLoc'])
+        nEgrid = len(ncFile.dimensions['nEgrid'])
+        nPhiGrid = len(ncFile.dimensions['nPhiGrid'])
+        nThetaGrid = len(ncFile.dimensions['nThetaGrid'])
+        Egrid = np.array(ncFile.variables['Egrid'])
+        phiGrid = np.array(ncFile.variables['phiGrid'])
+        thetaGrid = np.array(ncFile.variables['thetaGrid'])
+        Edist = np.reshape(np.array(ncFile.variables['Edist']),(nEgrid,nLoc))
+        phiDist = np.reshape(np.array(ncFile.variables['phiDist']),(nPhiGrid,nLoc))
+        thetaDist = np.reshape(np.array(ncFile.variables['thetaDist']),(nThetaGrid,nLoc))
+        #plt.plot(Egrid,Edist)
+        #plt.savefig('image1.png')
+        #plt.plot(thetaGrid,thetaDist)
+        #plt.savefig('image2.png')
+        #plt.plot(phiGrid,phiDist)
+        #plt.savefig('image3.png')
+        #plt.close()
+        eCDF = np.cumsum(Edist,axis=0)
+        eCDF = eCDF/eCDF[-1]
+        phiCDF = np.cumsum(phiDist,axis=0)
+        phiCDF = phiCDF/phiCDF[-1]
+        thetaCDF = np.cumsum(thetaDist,axis=0)
+        thetaCDF = thetaCDF/thetaCDF[-1]
+        print('ecdf sshape',eCDF.shape)
+        #plt.plot(Egrid,eCDF)
+        #plt.savefig('image12.png')
+        #plt.plot(thetaGrid,thetaCDF)
+        #plt.savefig('image22.png')
+        #plt.plot(phiGrid,phiCDF)
+        #plt.savefig('image32.png')
+        #plt.close()
+        rand2=np.random.rand(nParticles)
+        rand3=np.random.rand(nParticles)
+        rand4=np.random.rand(nParticles)
+        #plt.hist(pE)
+        #plt.savefig('image4.png')
+        #plt.close()
+        #plt.hist(pPhi)
+        #plt.savefig('image5.png')
+        #plt.close()
+        #plt.hist(pTheta)
+        #plt.savefig('image6.png')
+        xx = np.zeros(nParticles)
+        yy=np.zeros(nParticles)
+        zz=np.zeros(nParticles)
+        vx = np.zeros(nParticles)
+        vy=np.zeros(nParticles)
+        vz=np.zeros(nParticles)
+        buff=1e-5
+        pE = 4
+        pVel = np.sqrt(2*pE*1.602e-19/184/1.66e-27)
+        print('particle velocity is ',pVel)
+        pVel =np.zeros(nParticles,dtype=int)
+        pPhi =np.zeros(nParticles)
+        pTheta =np.zeros(nParticles)
+        start = time.time()
+        for i in range(nParticles):
+            #print('i',i)
+            #print('mins[i]',mins[i])
+            #print('erodedSurfs[mins[i]]',erodedSurfs[int(mins[i])])
+            minsi = int(mins[i])
+            xyz = sampleTriangle(x = np.array([x1[erodedSurfs[minsi]],x2[erodedSurfs[minsi]],x3[erodedSurfs[minsi]]]),
+            y = np.array([y1[erodedSurfs[minsi]],y2[erodedSurfs[minsi]],y3[erodedSurfs[minsi]]]),
+            z = np.array([z1[erodedSurfs[minsi]],z2[erodedSurfs[minsi]],z3[erodedSurfs[minsi]]]))
+            xx[i]=(xyz[0] - a[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*buff)
+            yy[i]=(xyz[1] - b[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*buff)
+            zz[i]=(xyz[2] - c[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*buff)
+        
+            rzDiff = z-zz[i]
+            rmrsInd = int(np.argmin(abs(rzDiff)))
+            #pEint = scii.interp1d(eCDF[:,rmrsInd],Egrid,bounds_error=False,fill_value=4.0)
+            eCDFdiff = eCDF[:,rmrsInd] - rand2[i]
+            eCDFInd = int(np.argmin(abs(eCDFdiff)))
+            pE = Egrid[eCDFInd]
+            #pE = pEint(rand2[i])
+            if pE > 20.0:
+                pE = 6.0
+            #pE = 250.0
+            pVel[i] = np.sqrt(2*pE*1.602e-19/184/1.66e-27)
+            #pPhiint = scii.interp1d(phiCDF[:,rmrsInd],phiGrid,bounds_error=False,fill_value=0.0)
+            #pPhi = pPhiint(rand3[i])
+            phiCDFdiff = phiCDF[:,rmrsInd] - rand3[i]
+            phiCDFInd = int(np.argmin(abs(phiCDFdiff)))
+            pPhi[i] = phiGrid[phiCDFInd]
 
-        #pThetaint = scii.interp1d(thetaCDF[:,rmrsInd],thetaGrid,bounds_error=False,fill_value=90.0)
-        #pTheta = pThetaint(rand4[i])
-        thetaCDFdiff = thetaCDF[:,rmrsInd] - rand4[i]
-        thetaCDFInd = int(np.argmin(abs(thetaCDFdiff)))
-        pTheta[i] = thetaGrid[thetaCDFInd]
-        #pTheta = 90
-        #pPhi=0.0
-    vxSampled = pVel*np.sin(pPhi*3.1415/180)*np.cos(3.1415*pTheta/180.0);
-    vySampled = pVel*np.sin(pPhi*3.1415/180)*np.sin(3.1415*pTheta/180.0);
-    vzSampled = pVel*np.cos(pPhi*3.1415/180);
-    thisR = np.sqrt(xx*xx + yy*yy)
-    rzArray = np.zeros((nParticles,2))
-    rzArray[:,1] = thisR
-    rzArray[:,0] = zz
-    locBr = scii.interpn([zB,rB],br, rzArray)
-    locBt = scii.interpn([zB,rB],bt, rzArray)
-    locBz = scii.interpn([zB,rB],bz, rzArray)
-    theta = np.arctan2(yy,xx);   
-    localfield0 = np.cos(theta)*locBr - np.sin(theta)*locBt;
-    localfield1 = np.sin(theta)*locBr + np.cos(theta)*locBt;
-    for i in range(nParticles):
-        minsi = int(mins[i])
-	surfNormx = ( - a[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]])
-	surfNormy = ( - b[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]])
-	surfNormz = ( - c[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]])
-        bbb = [surfNormx, surfNormy, surfNormz]
-        #bbb = [-surfNormx, -surfNormy, -surfNormz]
-        aaa = [localfield0[i], localfield1[i], locBz[i]]
-        #bbb = [0, 0, 1]
-        #aaa = [0, 1, 0]
-        #print('aaa',aaa)
-        #print('bbb',bbb)
-        
-        #surfParallelX = x2[erodedSurfs[minsi]]-x1[erodedSurfs[minsi]] 
-        #surfParallelY = y2[erodedSurfs[minsi]]-y1[erodedSurfs[minsi]] 
-        #surfParallelZ = z2[erodedSurfs[minsi]]-z1[erodedSurfs[minsi]] 
-        #surfParallelNorm = sqrt(surfParallelX*surfParallelX + surfParallelY*surfParallelY + surfParallelZ*surfParallelZ)
-        #surfParallelX = surfParallelX/surfParallelNorm
-        #surfParallelY = surfParallelY/surfParallelNorm
-        #surfParallelZ = surfParallelZ/surfParallelNorm
-        surfPar = np.cross(bbb,np.cross(aaa,bbb))
-        surfParNorm = np.linalg.norm(surfPar)
-        surfPar = surfPar/surfParNorm
-        surfParX = np.cross(surfPar,bbb)
-        #print('surfParx',surfParX)
-        #print('surfPar',surfPar)
-	vx[i]=(surfParX[0]*vxSampled[i] + surfPar[0]*vySampled[i] + bbb[0]*vzSampled[i] )
-	vy[i]=(surfParX[1]*vxSampled[i] + surfPar[1]*vySampled[i] + bbb[1]*vzSampled[i])
-	vz[i]=(surfParX[2]*vxSampled[i] + surfPar[2]*vySampled[i] + bbb[2]*vzSampled[i])
-	#vx.append( - a[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*pVel)
-	#vy.append( - b[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*pVel)
-	#vz.append( - c[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*pVel)
-        
-    #xx = x1[erodedSurfs[mins]]
-    #yy = y1[erodedSurfs[mins]]
-    #zz = z1[erodedSurfs[mins]]
-    #print('xx',xx)
-    #print('yy',yy)
-    #print('zz',zz)
-    end = time.time()
-    print('Time in loop',end - start)
-    x = []
-    y = []
-    z = []
-    for j in range(len(erodedSurfs)):
-        i = erodedSurfs[j]
-        x.append(x1[i])
-        x.append(x2[i])
-        x.append(x3[i])
-        y.append(y1[i])
-        y.append(y2[i])
-        y.append(y3[i])
-        z.append(z1[i])
-        z.append(z2[i])
-        z.append(z3[i])
-    x=np.array(x)
-    y=np.array(y)
-    z=np.array(z)
-    print 'mininum z',z.min()
-    #fig = plt.figure()
-    #ax = fig.gca(projection='3d')
-    #ax.scatter(xc, yc, zc, c=surfaceParticleRate, marker='o')
-    #ax.scatter(xx, yy, zz, c='r', marker='o')
-    ##ax.plot_trisurf(x, y, z, linewidth=0.2, antialiased=True)
-    #plt.show()
-    #plt.savefig('surfaces.png')
-    #plt.close()
-    rootgrp = netCDF4.Dataset("particleSource.nc", "w", format="NETCDF4")
-    npp = rootgrp.createDimension("nP", nParticles)
-    xxx = rootgrp.createVariable("x","f8",("nP"))
-    yyy = rootgrp.createVariable("y","f8",("nP"))
-    zzz = rootgrp.createVariable("z","f8",("nP"))
-    vxx = rootgrp.createVariable("vx","f8",("nP"))
-    vyy = rootgrp.createVariable("vy","f8",("nP"))
-    vzz = rootgrp.createVariable("vz","f8",("nP"))
-    xxx[:] = xx
-    yyy[:] = yy
-    zzz[:] = zz
-    vxx[:] = vx
-    vyy[:] = vy
-    vzz[:] = vz
-    rootgrp.close()
+            #pThetaint = scii.interp1d(thetaCDF[:,rmrsInd],thetaGrid,bounds_error=False,fill_value=90.0)
+            #pTheta = pThetaint(rand4[i])
+            thetaCDFdiff = thetaCDF[:,rmrsInd] - rand4[i]
+            thetaCDFInd = int(np.argmin(abs(thetaCDFdiff)))
+            pTheta[i] = thetaGrid[thetaCDFInd]
+            #pTheta = 90
+            #pPhi=0.0
+        vxSampled = pVel*np.sin(pPhi*3.1415/180)*np.cos(3.1415*pTheta/180.0);
+        vySampled = pVel*np.sin(pPhi*3.1415/180)*np.sin(3.1415*pTheta/180.0);
+        vzSampled = pVel*np.cos(pPhi*3.1415/180);
+        thisR = np.sqrt(xx*xx + yy*yy)
+        rzArray = np.zeros((nParticles,2))
+        rzArray[:,1] = thisR
+        rzArray[:,0] = zz
+        locBr = scii.interpn([zB,rB],br, rzArray)
+        locBt = scii.interpn([zB,rB],bt, rzArray)
+        locBz = scii.interpn([zB,rB],bz, rzArray)
+        theta = np.arctan2(yy,xx);   
+        localfield0 = np.cos(theta)*locBr - np.sin(theta)*locBt;
+        localfield1 = np.sin(theta)*locBr + np.cos(theta)*locBt;
+        for i in range(nParticles):
+            minsi = int(mins[i])
+            surfNormx = ( - a[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]])
+            surfNormy = ( - b[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]])
+            surfNormz = ( - c[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]])
+            bbb = [surfNormx, surfNormy, surfNormz]
+            #bbb = [-surfNormx, -surfNormy, -surfNormz]
+            aaa = [localfield0[i], localfield1[i], locBz[i]]
+            #bbb = [0, 0, 1]
+            #aaa = [0, 1, 0]
+            #print('aaa',aaa)
+            #print('bbb',bbb)
+            
+            #surfParallelX = x2[erodedSurfs[minsi]]-x1[erodedSurfs[minsi]] 
+            #surfParallelY = y2[erodedSurfs[minsi]]-y1[erodedSurfs[minsi]] 
+            #surfParallelZ = z2[erodedSurfs[minsi]]-z1[erodedSurfs[minsi]] 
+            #surfParallelNorm = sqrt(surfParallelX*surfParallelX + surfParallelY*surfParallelY + surfParallelZ*surfParallelZ)
+            #surfParallelX = surfParallelX/surfParallelNorm
+            #surfParallelY = surfParallelY/surfParallelNorm
+            #surfParallelZ = surfParallelZ/surfParallelNorm
+            surfPar = np.cross(bbb,np.cross(aaa,bbb))
+            surfParNorm = np.linalg.norm(surfPar)
+            surfPar = surfPar/surfParNorm
+            surfParX = np.cross(surfPar,bbb)
+            #print('surfParx',surfParX)
+            #print('surfPar',surfPar)
+            vx[i]=(surfParX[0]*vxSampled[i] + surfPar[0]*vySampled[i] + bbb[0]*vzSampled[i] )
+            vy[i]=(surfParX[1]*vxSampled[i] + surfPar[1]*vySampled[i] + bbb[1]*vzSampled[i])
+            vz[i]=(surfParX[2]*vxSampled[i] + surfPar[2]*vySampled[i] + bbb[2]*vzSampled[i])
+            #vx.append( - a[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*pVel)
+            #vy.append( - b[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*pVel)
+            #vz.append( - c[erodedSurfs[minsi]]/plane_norm[erodedSurfs[minsi]]*pVel)
+            
+        #xx = x1[erodedSurfs[mins]]
+        #yy = y1[erodedSurfs[mins]]
+        #zz = z1[erodedSurfs[mins]]
+        #print('xx',xx)
+        #print('yy',yy)
+        #print('zz',zz)
+        end = time.time()
+        print('Time in loop',end - start)
+        x = []
+        y = []
+        z = []
+        for j in range(len(erodedSurfs)):
+            i = erodedSurfs[j]
+            x.append(x1[i])
+            x.append(x2[i])
+            x.append(x3[i])
+            y.append(y1[i])
+            y.append(y2[i])
+            y.append(y3[i])
+            z.append(z1[i])
+            z.append(z2[i])
+            z.append(z3[i])
+        x=np.array(x)
+        y=np.array(y)
+        z=np.array(z)
+        print 'mininum z',z.min()
+        #fig = plt.figure()
+        #ax = fig.gca(projection='3d')
+        #ax.scatter(xc, yc, zc, c=surfaceParticleRate, marker='o')
+        #ax.scatter(xx, yy, zz, c='r', marker='o')
+        ##ax.plot_trisurf(x, y, z, linewidth=0.2, antialiased=True)
+        #plt.show()
+        #plt.savefig('surfaces.png')
+        #plt.close()
+        rootgrp = netCDF4.Dataset("particleSource.nc", "w", format="NETCDF4")
+        npp = rootgrp.createDimension("nP", nParticles)
+        xxx = rootgrp.createVariable("x","f8",("nP"))
+        yyy = rootgrp.createVariable("y","f8",("nP"))
+        zzz = rootgrp.createVariable("z","f8",("nP"))
+        vxx = rootgrp.createVariable("vx","f8",("nP"))
+        vyy = rootgrp.createVariable("vy","f8",("nP"))
+        vzz = rootgrp.createVariable("vz","f8",("nP"))
+        xxx[:] = xx
+        yyy[:] = yy
+        zzz[:] = zz
+        vxx[:] = vx
+        vyy[:] = vy
+        vzz[:] = vz
+        rootgrp.close()
     return totalParticleRate 
 def sampleTriangle(x=np.array([1, 1.2, 1.3]),y=np.array([0, 0.1, -0.1]),z=np.array([1.1, 1.05, 0.92])):
     x_transform = x - x[0]

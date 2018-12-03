@@ -25,7 +25,13 @@
 #include "curandInitialize.h"
 #include "spectroscopy.h"
 #include "history.h"
-
+#include "hashGeom.h"
+#include "hashGeomSheath.h"
+#include "testRoutineP.h"
+#include "testRoutineCuda.h"
+#include "boundaryInit.h"
+#include "array.h"
+#include "ompPrint.h"
 #if USE_BOOST
     #include <boost/timer/timer.hpp>
     #include "boost/filesystem.hpp"
@@ -58,9 +64,82 @@ using namespace libconfig;
 
 using namespace netCDF;
 using namespace exceptions;
+using namespace netCDF::exceptions;
 
-int main()
+struct test_routinePp { 
+   Particles *particles;
+    test_routinePp(Particles *_particles) : particles(_particles) {}
+
+    __device__
+    void operator()(std::size_t indx) const { 
+    particles->x[indx] = 5.0;
+}
+};
+
+int main(int argc, char **argv)
 {
+  typedef std::chrono::high_resolution_clock Time;
+  typedef std::chrono::duration<float> fsec;
+  auto GITRstart_clock = Time::now();
+  int ppn=1; 
+  #if USE_MPI > 0
+    ppn = 4;
+    //int np = 1;
+    // Initialize the MPI environment
+    MPI_Init(&argc,&argv);
+  #endif
+  int counter;
+  printf("Program Name Is: %s",argv[0]);
+  if(argc==1)
+    printf("\nNo Extra Command Line Argument Passed Other Than Program Name");
+  if(argc>=2)
+  {
+    printf("\nNumber Of Arguments Passed: %d",argc);
+    printf("\n----Following Are The Command Line Arguments Passed----");
+    for(counter=0;counter<argc;counter++)
+    {
+      printf("\nargv[%d]: %s",counter,argv[counter]);
+      if(std::string(argv[counter]) == "-nGPUPerNode")
+      {
+        if (counter + 1 < argc) 
+	{ // Make sure we aren't at the end of argv!
+          ppn = std::stoi(argv[counter+1]);	  
+          printf("\nGITR set to use %d GPUs per node",ppn);
+	} else 
+	{ // Uh-oh, there was no argument to the destination option.
+	   std::cerr << "--nGPUPerNode option requires one argument." << std::endl;
+          return 1;
+	} 
+      }
+    }
+  }
+    
+  #if USE_MPI > 0
+    // Get the number of processes
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    
+    // Get the rank of the process
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    
+    // Get the name of the processor
+    char processor_name[MPI_MAX_PROCESSOR_NAME];
+    int name_len;
+    MPI_Get_processor_name(processor_name, &name_len);
+    
+    // Print off a hello world message
+    printf("Hello world from processor %s, rank %d"
+           " out of %d processors\n",
+           processor_name, world_rank, world_size);
+    #if USE_CUDA > 0
+      cudaSetDevice(world_rank%ppn);  
+    #endif
+  #else
+    int world_rank=0;
+    int world_size=1;
+  #endif
+  
   //Prepare config files for import
   Config cfg,cfg_geom;
   cfg.readFile("gitrInput.cfg");
@@ -71,21 +150,12 @@ int main()
   #if CHECK_COMPATIBILITY>0
     Setting& flags = cfg.lookup("flags");
     
-    int check1 = flags["USE_CUDA"];
-    std::cout << "check1 "<< typeid(check1).name() << check1 << "use cuda "<< typeid(USE_CUDA).name() << USE_CUDA << std::endl;    
-    std::cout << "subtract " << USE_CUDA - check1 << std::endl;
-    bool check0 = (USE_CUDA != check1);
-    std::cout << "bool " << check0 << std::endl;
-    if (USE_CUDA != check1)
-    { std::cout << "incompatibility in USE_CUDA between input file and binary" << std::endl;
-      exit(0);
-    }
-  
-    int check2 = flags["USEMPI"];      
-    if (USEMPI != check2)
-    { std::cout << "incompatibility in USEMPI between input file and binary" << std::endl;
-      exit(0);
-    }
+    // Parse and read geometry file
+    std::cout << "Open geometry file" << std::endl;
+    std::string geomFile; 
+    getVariable(cfg,"geometry.fileString",geomFile);
+    std::cout << "Open geometry file " << input_path+geomFile << std::endl; 
+    importLibConfig(cfg_geom,input_path+geomFile);
 
     int check3 = flags["USE_BOOST"];      
     if (USE_BOOST != check3)
@@ -98,16 +168,59 @@ int main()
       exit(0);
     }
     
-    int check5 = flags["USERECOMBINATION"];      
-    if (USERECOMBINATION != check5)
-    { std::cout << "incompatibility in USERECOMBINATION between input file and binary" << std::endl;
-      exit(0);
+    //check binary compatibility with input file
+    #if CHECK_COMPATIBILITY>0
+      checkFlags(cfg); 
+    #endif
+  }
+  // show memory usage of GPU
+  #if USE_CUDA 
+  if(world_rank == 0)
+  {
+    size_t free_byte ;
+    size_t total_byte ;
+    cudaError_t    cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
+  
+    if(cudaSuccess != cuda_status )
+    {
+  
+       printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status) );
+       exit(1);
     }
     
-    int check6 = flags["USEPERPDIFFUSION"];      
-    if (USEPERPDIFFUSION !=check6)
-    { std::cout << "incompatibility in USEPERPDIFFUSION between input file and binary" << std::endl;
-      exit(0);
+    printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
+      used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
+    int nDevices;
+    int nThreads;
+    cudaGetDeviceCount(&nDevices);
+    std::cout << "number of devices gotten " << nDevices << std::endl;
+    for (int i = 0; i < nDevices; i++) {
+      cudaDeviceProp prop;
+      cudaGetDeviceProperties(&prop, i);
+      printf("Device Number: %d\n", i);
+      printf("  Device name: %s\n", prop.name);
+      printf("  Memory Clock Rate (KHz): %d\n",
+                         prop.memoryClockRate);
+      printf("  Memory Bus Width (bits): %d\n",
+                         prop.memoryBusWidth);
+      printf("  Peak Memory Bandwidth (GB/s): %f\n\n",
+                         2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
+      printf("  Total number of threads: %d\n", prop.maxThreadsPerMultiProcessor);
+      nThreads = prop.maxThreadsPerMultiProcessor;
+      }
+  }  
+  #endif
+  #if USE_BOOST > 0
+    std::string output_folder="output";
+    //Output
+    boost::filesystem::path dir(output_folder); 
+    if(!(boost::filesystem::exists(dir)))
+    {
+      std::cout<<"Doesn't Exist in main"<<std::endl;
+      if (boost::filesystem::create_directory(dir))
+      {
+         std::cout << " Successfully Created " << std::endl;
+      }
     }
 
     int check7 = flags["USECOULOMBCOLLISIONS"];      
@@ -133,8 +246,55 @@ int main()
             std::cout << "incompatibility in USESHEATHEFIELD between input file and binary" << std::endl;
             exit(0);
     }
-    int check11 = flags["USEPRESHEATHFIELD"];      
-    if (USEPRESHEATHFIELD !=check11)
+    #if USE_MPI > 0
+      const int nSurfaceMembers = 18;
+      
+      int lengthsSurface[nSurfaceMembers] = {1,1,1,1,1,1,1,1,1,nEdist*nAdist,nEdist,nAdist,nEdist*nAdist,nEdist*nAdist,nEdist*nAdist,nEdist*nAdist,nEdist*nAdist,nSurfaces*nEdist*nAdist};
+      MPI_Aint offsetsSurface[nSurfaceMembers] = {offsetof(Surfaces, nSurfaces), offsetof(Surfaces, nE),offsetof(Surfaces,nA),offsetof(Surfaces,E0), offsetof(Surfaces, E),offsetof(Surfaces,A0),
+      offsetof(Surfaces, A), offsetof(Surfaces, dE),offsetof(Surfaces,dA),
+      offsetof(Surfaces,sumParticlesStrike), offsetof(Surfaces, gridE),offsetof(Surfaces,gridA),
+      offsetof(Surfaces,sumWeightStrike), offsetof(Surfaces, grossDeposition),offsetof(Surfaces,grossErosion),
+      offsetof(Surfaces,aveSputtYld), offsetof(Surfaces,sputtYldCount),offsetof(Surfaces,energyDistribution)};
+      MPI_Datatype typesSurface[nSurfaceMembers] = {MPI_INT,MPI_INT,MPI_INT,MPI_FLOAT,
+      MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_INT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT,MPI_FLOAT};
+      MPI_Datatype surface_type;
+      MPI_Type_create_struct(nSurfaceMembers, lengthsSurface, offsetsSurface, typesSurface,&surface_type);    
+      MPI_Type_commit(&surface_type);
+      MPI_Bcast(&nEdist,1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nAdist,1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&E0dist,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&Edist,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&A0dist,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&Adist,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+    #endif
+  #endif
+  auto surfaces = new Surfaces(nSurfaces,nEdist,nAdist);
+  surfaces->setSurface(nEdist,E0dist,Edist,nAdist,A0dist,Adist);
+  
+  //#if USE_MPI > 0
+    //Arrays used for reduction at end of sim
+    sim::Array<float> grossDeposition(nSurfaces,0.0);
+    sim::Array<float> grossErosion(nSurfaces,0.0);
+    sim::Array<float> sumWeightStrike(nSurfaces,0.0);
+    sim::Array<float> energyDistribution(nSurfaces*nEdist*nAdist,0.0);
+    sim::Array<float> reflDistribution(nSurfaces*nEdist*nAdist,0.0);
+    sim::Array<float> sputtDistribution(nSurfaces*nEdist*nAdist,0.0);
+    sim::Array<float> aveSputtYld(nSurfaces,0.0);
+    sim::Array<int> sputtYldCount(nSurfaces,0);
+    sim::Array<int> sumParticlesStrike(nSurfaces,0);
+  //#endif
+
+  int nHashes = 1;
+  int nR_closeGeomTotal = 0;
+  int nY_closeGeomTotal = 0;
+  int nZ_closeGeomTotal = 0;
+  int nHashPointsTotal = 0;
+  int nGeomHash = 0;
+  std::string geomHashCfg = "geometry_hash.";
+  std::cout << " node starting geomhash1 " << world_rank << std::endl;
+  #if GEOM_HASH == 1
+    if(world_rank == 0)
     {
             std::cout << "incompatibility in USEPRESHEATHFIELD between input file and binary" << std::endl;
             exit(0);
@@ -142,8 +302,65 @@ int main()
     int check12 = flags["BFIELD_INTERP"];      
     if (BFIELD_INTERP !=check12)
     {
-            std::cout << "incompatibility in BFIELD_INTERP between input file and binary" << std::endl;
-            exit(0);
+        importHashNs(cfg,input_path,nHashes,"geometry_hash",nR_closeGeom.data(), nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),nR_closeGeomTotal,nY_closeGeomTotal,nZ_closeGeomTotal,nHashPoints.data(), nHashPointsTotal,nGeomHash);
+      //Setting& geomHash = cfg.lookup("geometry_hash");
+      //if(nHashes > 1)
+      //{
+      //  for(int i=0; i<nHashes;i++)
+      //  {   
+      //    nR_closeGeom[i] = geomHash["nR_closeGeom"][i];
+      //    nZ_closeGeom[i] = geomHash["nZ_closeGeom"][i];
+      //    n_closeGeomElements[i] = geomHash["n_closeGeomElements"][i];
+      //    std::cout << "hash nr ny nz total " << n_closeGeomElements[i] << " " << nR_closeGeom[i]  << " " << nZ_closeGeom[i]<< std::endl;
+      //  }
+      //}
+      //else
+      //{
+      //  getVariable(cfg,geomHashCfg+"nR_closeGeom",nR_closeGeom[0]);
+      //  getVariable(cfg,geomHashCfg+"nZ_closeGeom",nZ_closeGeom[0]);
+      //  getVariable(cfg,geomHashCfg+"n_closeGeomElements",n_closeGeomElements[0]);
+      //}
+      //for(int j=0;j<nHashes;j++)
+      //{
+      //  nGeomHash = nGeomHash + nR_closeGeom[j]*nZ_closeGeom[j]*n_closeGeomElements[j];
+      //  nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
+      //  nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
+      //}
+      //#if USE3DTETGEOM > 0
+      //if(nHashes > 1)
+      //{
+      //  for(int i=0; i<nHashes;i++)
+      //  {   
+      //    nY_closeGeom[i] = geomHash["nY_closeGeom"][i];
+      //  }
+      //}
+      //else
+      //{
+      //  getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom[0]);
+      //}
+      //#endif
+      //nGeomHash = 0;
+      //nR_closeGeomTotal = 0;
+      //nY_closeGeomTotal = 0;
+      //nZ_closeGeomTotal = 0;
+      //nGeomHash = 0;
+      //for(int j=0;j<nHashes;j++)
+      //{
+      //  if(nHashes > 1)
+      //  {
+      //    nHashPoints[j] =nR_closeGeom[j]*nY_closeGeom[j]*nZ_closeGeom[j];
+      //  }
+      //  else
+      //  {
+      //    nHashPoints[j] =nR_closeGeom[j]*nZ_closeGeom[j];
+      //  } 
+      //  nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
+      //  nGeomHash = nGeomHash + nHashPoints[j]*n_closeGeomElements[j];
+      //  nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
+      //  nY_closeGeomTotal = nY_closeGeomTotal + nY_closeGeom[j];
+      //  nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
+      //}
+      //std::cout << "hhhash nr ny nz total " << nGeomHash << " " << nR_closeGeomTotal << " " << nY_closeGeomTotal << " " << nZ_closeGeomTotal<< std::endl;
     }
     int check13 = flags["EFIELD_INTERP"];      
     if (EFIELD_INTERP !=check13)
@@ -912,8 +1129,229 @@ std::cout << "3d tet geom hash " << nR_closeGeom << " " << nY_closeGeom << " "
   #endif    
 
   // Perp DiffusionCoeff initialization - only used when Diffusion interpolator is = 0
-  float perpDiffusionCoeff = cfg.lookup("backgroundPlasmaProfiles.Diffusion.Dperp");
-
+  float perpDiffusionCoeff=0.0;
+  if(world_rank ==0)
+  {
+  if (cfg.lookupValue("backgroundPlasmaProfiles.Diffusion.Dperp",perpDiffusionCoeff))
+  {}
+  else
+  {std::cout << "ERROR: could not get perpendicular diffusion coefficient from input file" << std::endl;}
+  }
+  #if USE_MPI > 0
+      MPI_Bcast(&perpDiffusionCoeff,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+  #endif
+//Surface model import
+  int nE_sputtRefCoeff = 1, nA_sputtRefCoeff=1;
+  int nE_sputtRefDistIn = 1, nA_sputtRefDistIn=1;
+  int nE_sputtRefDistOut = 1, nA_sputtRefDistOut = 1;
+  int nE_sputtRefDistOutRef = 1,nDistE_surfaceModelRef = 1;
+  int nDistE_surfaceModel = 1,nDistA_surfaceModel = 1;
+#if USESURFACEMODEL > 0
+  std::string surfaceModelCfg = "surfaceModel.";
+  std::string surfaceModelFile;
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
+  getVariable(cfg,surfaceModelCfg+"fileString",surfaceModelFile);
+  nE_sputtRefCoeff = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nEsputtRefCoeffString");
+  nA_sputtRefCoeff = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nAsputtRefCoeffString");
+  nE_sputtRefDistIn = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nEsputtRefDistInString");
+  nA_sputtRefDistIn = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nAsputtRefDistInString");
+  nE_sputtRefDistOut = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nEsputtRefDistOutString");
+  nE_sputtRefDistOutRef = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nEsputtRefDistOutStringRef");
+  nA_sputtRefDistOut = getDimFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"nAsputtRefDistOutString");
+  nDistE_surfaceModel = nE_sputtRefDistIn*nA_sputtRefDistIn*nE_sputtRefDistOut;
+  nDistE_surfaceModelRef = nE_sputtRefDistIn*nA_sputtRefDistIn*nE_sputtRefDistOutRef;
+  nDistA_surfaceModel = nE_sputtRefDistIn*nA_sputtRefDistIn*nA_sputtRefDistOut;
+  std::cout <<  " got dimensions of surface model " << std::endl;
+  #if USE_MPI > 0
+    }
+      MPI_Bcast(&nE_sputtRefCoeff, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nA_sputtRefCoeff, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nE_sputtRefDistIn, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nA_sputtRefDistIn, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nE_sputtRefDistOut, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nE_sputtRefDistOutRef, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nA_sputtRefDistOut, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nDistE_surfaceModel, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nDistE_surfaceModelRef, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nDistA_surfaceModel, 1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+  #endif
+#endif
+  sim::Array<float> E_sputtRefCoeff(nE_sputtRefCoeff), A_sputtRefCoeff(nA_sputtRefCoeff),
+                    Elog_sputtRefCoeff(nE_sputtRefCoeff),
+                    energyDistGrid01(nE_sputtRefDistOut),
+                    energyDistGrid01Ref(nE_sputtRefDistOutRef),
+                    angleDistGrid01(nA_sputtRefDistOut),
+                    spyl_surfaceModel(nE_sputtRefCoeff*nA_sputtRefCoeff),
+                    rfyl_surfaceModel(nE_sputtRefCoeff*nA_sputtRefCoeff),
+                    E_sputtRefDistIn(nE_sputtRefDistIn), A_sputtRefDistIn(nA_sputtRefDistIn),
+                    Elog_sputtRefDistIn(nE_sputtRefDistIn),
+                    E_sputtRefDistOut(nE_sputtRefDistOut), 
+                    E_sputtRefDistOutRef(nE_sputtRefDistOutRef),
+		    Aphi_sputtRefDistOut(nA_sputtRefDistOut),Atheta_sputtRefDistOut(nA_sputtRefDistOut),
+                    AphiDist_Y(nDistA_surfaceModel),AthetaDist_Y(nDistA_surfaceModel),
+		    EDist_Y(nDistE_surfaceModel),
+                    AphiDist_R(nDistA_surfaceModel),AthetaDist_R(nDistA_surfaceModel),
+		    EDist_R(nDistE_surfaceModelRef),
+                    AphiDist_CDF_Y(nDistA_surfaceModel),AthetaDist_CDF_Y(nDistA_surfaceModel),
+		    EDist_CDF_Y(nDistE_surfaceModel),
+                    AphiDist_CDF_R(nDistA_surfaceModel),AthetaDist_CDF_R(nDistA_surfaceModel),
+		    EDist_CDF_R(nDistE_surfaceModelRef),
+                    AphiDist_CDF_Y_regrid(nDistA_surfaceModel),AthetaDist_CDF_Y_regrid(nDistA_surfaceModel),
+		    EDist_CDF_Y_regrid(nDistE_surfaceModel),
+                    AphiDist_CDF_R_regrid(nDistA_surfaceModel),AthetaDist_CDF_R_regrid(nDistA_surfaceModel),
+		    EDist_CDF_R_regrid(nDistE_surfaceModelRef);
+#if USESURFACEMODEL > 0
+  #if USE_MPI > 0 
+    if(world_rank == 0)
+    {
+  #endif
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefCoeff",E_sputtRefCoeff[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefCoeff",A_sputtRefCoeff[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistIn",E_sputtRefDistIn[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"A_sputtRefDistIn",A_sputtRefDistIn[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistOut",E_sputtRefDistOut[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"E_sputtRefDistOutRef",E_sputtRefDistOutRef[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"Aphi_sputtRefDistOut",Aphi_sputtRefDistOut[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"Atheta_sputtRefDistOut",Atheta_sputtRefDistOut[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"sputtYldString",spyl_surfaceModel[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"reflYldString",rfyl_surfaceModel[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"EDist_Y",EDist_Y[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"AphiDist_Y",AphiDist_Y[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"AthetaDist_Y",AthetaDist_Y[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"EDist_R",EDist_R[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"AphiDist_R",AphiDist_R[0]);
+  getVarFromFile(cfg,input_path+surfaceModelFile,surfaceModelCfg,"AthetaDist_R",AthetaDist_R[0]);
+  //for(int i=0;i<nDistE_surfaceModel;i++)
+  //{
+  //    std::cout << " Edist diff Y " << EDist_Y[i] << " " << EDist_R[i] << std::endl;
+  //}
+  for(int i=0;i<nE_sputtRefCoeff;i++)
+  {
+      Elog_sputtRefCoeff[i] = log10(E_sputtRefCoeff[i]);
+      std::cout << " EsputtRefCoeff and Elog " << E_sputtRefCoeff[i] << " " << Elog_sputtRefCoeff[i] << std::endl;
+  }
+  for(int i=0;i<nE_sputtRefDistIn;i++)
+  {
+      Elog_sputtRefDistIn[i] = log10(E_sputtRefDistIn[i]);
+  }
+  for(int i=0;i<nE_sputtRefDistOut;i++)
+  {
+      energyDistGrid01[i] = i*1.0/nE_sputtRefDistOut;
+  }
+  for(int i=0;i<nE_sputtRefDistOutRef;i++)
+  {
+      energyDistGrid01Ref[i] = i*1.0/nE_sputtRefDistOutRef;
+  }
+  for(int i=0;i<nA_sputtRefDistOut;i++)
+  {
+     angleDistGrid01[i] = i*1.0/nA_sputtRefDistOut;
+     //std::cout << " angleDistGrid01[i] " << angleDistGrid01[i] << std::endl;
+  }
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,EDist_Y.data(),EDist_CDF_Y.data());
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,AphiDist_Y.data(),AphiDist_CDF_Y.data());
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,AthetaDist_Y.data(),AthetaDist_CDF_Y.data());
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOutRef,EDist_R.data(),EDist_CDF_R.data());
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,AphiDist_R.data(),AphiDist_CDF_R.data());
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,AthetaDist_R.data(),AthetaDist_CDF_R.data());
+  make2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,AthetaDist_R.data(),AthetaDist_CDF_R.data());
+  //for(int k=0;k<nE_sputtRefDistOut;k++)
+  //{
+  //      std::cout << "Edist_CDF_Y " << EDist_CDF_Y[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
+  ////      std::cout << "cosDist_CDFR " << EDist_CDF_R[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
+  //}
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,Aphi_sputtRefDistOut[nA_sputtRefDistOut-1],AphiDist_CDF_Y.data(),AphiDist_CDF_Y_regrid.data());
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,Atheta_sputtRefDistOut[nA_sputtRefDistOut-1],AthetaDist_CDF_Y.data(),AthetaDist_CDF_Y_regrid.data());
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOut,energyDistGrid01.data(),nE_sputtRefDistOut,E_sputtRefDistOut[nE_sputtRefDistOut-1],EDist_CDF_Y.data(),EDist_CDF_Y_regrid.data());
+ //std::cout << "max value " << E_sputtRefDistOut[nE_sputtRefDistOut-1] << std::endl;
+ //for(int k=0;k<60;k++)
+ // {
+ //     std::cout << "Edis amd cdf " << k << " " << EDist_CDF_Y[k] << " " <<EDist_CDF_Y_regrid[k] << std::endl; 
+ // }
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,Aphi_sputtRefDistOut[nA_sputtRefDistOut-1],AphiDist_CDF_R.data(),AphiDist_CDF_R_regrid.data());
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nA_sputtRefDistOut,angleDistGrid01.data(),nA_sputtRefDistOut,Atheta_sputtRefDistOut[nA_sputtRefDistOut-1],AthetaDist_CDF_R.data(),AthetaDist_CDF_R_regrid.data());
+ regrid2dCDF(nE_sputtRefDistIn,nA_sputtRefDistIn,nE_sputtRefDistOutRef,energyDistGrid01Ref.data(),nE_sputtRefDistOutRef,E_sputtRefDistOutRef[nE_sputtRefDistOutRef-1],EDist_CDF_R.data(),EDist_CDF_R_regrid.data());
+ // regrid2dCDF(nE_surfaceModel,nA_surfaceModel,nEdistBins_surfaceModel,energyDistGrid01.data(),nEdistBins_surfaceModel,100.0,energyDist_CDF.data(),energyDist_CDFregrid.data());
+ //for(int k=0;k<nE_sputtRefDistOut;k++)
+ // {
+ //       std::cout << "EDist_CDFregridY " << EDist_CDF_Y_regrid[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
+ ////       std::cout << "cosDist_CDFregridR " << EDist_CDF_R_regrid[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
+ // }
+ //for(int k=0;k<nA_sputtRefDistOut;k++)
+ // {
+ //       std::cout << "ADist_CDFregridY " << k << " " << AphiDist_Y[k]<< " " << AphiDist_CDF_Y[0*nA_sputtRefDistIn*nA_sputtRefDistOut + 0*nA_sputtRefDistOut+k]<< " " <<  AphiDist_CDF_Y_regrid[0*nA_sputtRefDistIn*nA_sputtRefDistOut + 0*nA_sputtRefDistOut+k] << std::endl;
+ ////       std::cout << "cosDist_CDFregridR " << EDist_CDF_R_regrid[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
+ // }
+ //for(int k=0;k<nA_sputtRefDistOut;k++)
+ // {
+ //       std::cout << "ADist_CDFregridR " << k << " " << AthetaDist_R[k]<< " " << AthetaDist_CDF_R[0*nA_sputtRefDistIn*nA_sputtRefDistOut + 0*nA_sputtRefDistOut+k]<< " " <<  AthetaDist_CDF_R_regrid[0*nA_sputtRefDistIn*nA_sputtRefDistOut + 0*nA_sputtRefDistOut+k] << std::endl;
+ ////       std::cout << "cosDist_CDFregridR " << EDist_CDF_R_regrid[0*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut+k] << std::endl;
+ // }
+  //float spylInterpVal = interp2d(5.0,log10(250.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
+    //                          Elog_sputtRefCoeff.data(),spyl_surfaceModel.data());
+  //float rfylInterpVal = interp2d(5.0,log10(250.0),nA_sputtRefCoeff, nE_sputtRefCoeff,A_sputtRefCoeff.data(),
+      //                        Elog_sputtRefCoeff.data(),rfyl_surfaceModel.data());
+  float spylAInterpVal = interp3d ( 0.44,5.0,log10(250.0),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+          angleDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,AphiDist_CDF_Y_regrid.data() );
+  float spylAthetaInterpVal = interp3d ( 0.44,5.0,log10(250.0),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+          angleDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,AthetaDist_CDF_Y_regrid.data() );
+ float sputEInterpVal = interp3d ( 0.44,63.0,log10(10.0),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+              energyDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,EDist_CDF_Y_regrid.data() );
+  float rfylAInterpVal = interp3d ( 0.44,5.0,log10(250.0),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+          angleDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,AphiDist_CDF_R_regrid.data() );
+  float rfylAthetaInterpVal = interp3d ( 0.44,5.0,log10(250.0),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+          angleDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,AthetaDist_CDF_R_regrid.data() );
+ float rflEInterpVal = interp3d ( 0.44,63.0,log10(10.0),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+              energyDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,EDist_CDF_R_regrid.data() );
+  //float rflAInterpVal = interp3d ( 0.44,5.0,log10(250.0),nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+   //       angleDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,ADist_CDF_R_regrid.data() );
+ //float rflEInterpVal = interp3d ( 0.44,5.0,log10(250.0),nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+     //         energyDistGrid01.data(),A_sputtRefDistIn.data(),Elog_sputtRefDistIn.data() ,EDist_CDF_R_regrid.data() );
+  //std::cout << "Finished surface model import " <<spylInterpVal << " " <<  spylAInterpVal << " " << sputEInterpVal << " "<< rfylInterpVal<< " " << rflAInterpVal << " " << rflEInterpVal <<  std::endl; 
+  std::cout << "Finished surface model import sputtering"  << spylAInterpVal << " " << spylAthetaInterpVal << " " << sputEInterpVal  <<  std::endl; 
+  std::cout << "Finished surface model import reflection"  << rfylAInterpVal << " " << rfylAthetaInterpVal << " " << rflEInterpVal  <<  std::endl; 
+  #if USE_MPI > 0
+    }
+      MPI_Bcast(E_sputtRefCoeff.data(), nE_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(A_sputtRefCoeff.data(), nA_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(Elog_sputtRefCoeff.data(), nE_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(energyDistGrid01.data(), nE_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(energyDistGrid01Ref.data(), nE_sputtRefDistOutRef,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(angleDistGrid01.data(), nA_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(spyl_surfaceModel.data(), nE_sputtRefCoeff*nA_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(rfyl_surfaceModel.data(), nE_sputtRefCoeff*nA_sputtRefCoeff,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(E_sputtRefDistIn.data(), nE_sputtRefDistIn,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(A_sputtRefDistIn.data(), nA_sputtRefDistIn,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(Elog_sputtRefDistIn.data(), nE_sputtRefDistIn,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(E_sputtRefDistOut.data(), nE_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(E_sputtRefDistOutRef.data(), nE_sputtRefDistOutRef,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(Aphi_sputtRefDistOut.data(), nA_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(Atheta_sputtRefDistOut.data(), nA_sputtRefDistOut,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AphiDist_Y.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AthetaDist_Y.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_Y.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AphiDist_R.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AthetaDist_R.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_R.data(), nDistE_surfaceModelRef,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AphiDist_CDF_Y.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AthetaDist_CDF_Y.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_CDF_Y.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AphiDist_CDF_R.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AthetaDist_CDF_R.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_CDF_R.data(), nDistE_surfaceModelRef,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AphiDist_CDF_Y_regrid.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AthetaDist_CDF_Y_regrid.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_CDF_Y_regrid.data(), nDistE_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AphiDist_CDF_R_regrid.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(AthetaDist_CDF_R_regrid.data(), nDistA_surfaceModel,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Bcast(EDist_CDF_R_regrid.data(), nDistE_surfaceModelRef,MPI_FLOAT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+  #endif
+#endif
   // Particle time stepping control
   int ionization_nDtPerApply  = cfg.lookup("timeStep.ionization_nDtPerApply");
   int collision_nDtPerApply  = cfg.lookup("timeStep.collision_nDtPerApply");
@@ -1162,18 +1600,60 @@ particleArray->setParticle((i * impuritiesPerBoundary + j),x, 0.0, z, Ex, Ey, Ez
             chargeHistory[i][j] = 0.0;
         }
     }
-#endif
-#endif 
-float* finalPosX = new float[nP];
-float* finalPosY = new float[nP];
-float* finalPosZ = new float[nP];
-float* finalVx = new float[nP];
-float* finalVy = new float[nP];
-float* finalVz = new float[nP];
-float* transitTime = new float[nP];
-#if USE_BOOST
-cpu_timer timer;
-#endif
+    const int* displ=&pDisplacement[0];
+    const int* phpn=&pHistPerNode[0];
+    std::cout << "history array length " << nHistories << std::endl;
+    #if USE_CUDA > 0
+      sim::Array<float> positionHistoryX(nHistories);
+      sim::Array<float> positionHistoryXgather(nHistories,0.0);
+      sim::Array<float> positionHistoryY(nHistories);
+      sim::Array<float> positionHistoryYgather(nHistories);
+      sim::Array<float> positionHistoryZ(nHistories);
+      sim::Array<float> positionHistoryZgather(nHistories);
+      sim::Array<float> velocityHistory(nHistories);
+      sim::Array<float> velocityHistoryX(nHistories);
+      sim::Array<float> velocityHistoryY(nHistories);
+      sim::Array<float> velocityHistoryZ(nHistories);
+      sim::Array<float> velocityHistorygather(nHistories);
+      sim::Array<float> velocityHistoryXgather(nHistories);
+      sim::Array<float> velocityHistoryYgather(nHistories);
+      sim::Array<float> velocityHistoryZgather(nHistories);
+      sim::Array<float> chargeHistory(nHistories);
+      sim::Array<float> chargeHistoryGather(nHistories);
+      sim::Array<float> weightHistory(nHistories);
+      sim::Array<float> weightHistoryGather(nHistories);
+    #else
+      std::vector<float> positionHistoryX(nHistories);
+      std::vector<float> positionHistoryXgather(nHistories,0.0);
+      std::vector<float> positionHistoryY(nHistories);
+      std::vector<float> positionHistoryYgather(nHistories);
+      std::vector<float> positionHistoryZ(nHistories);
+      std::vector<float> positionHistoryZgather(nHistories);
+      std::vector<float> velocityHistory(nHistories);
+      std::vector<float> velocityHistoryX(nHistories);
+      std::vector<float> velocityHistoryY(nHistories);
+      std::vector<float> velocityHistoryZ(nHistories);
+      std::vector<float> velocityHistorygather(nHistories);
+      std::vector<float> velocityHistoryXgather(nHistories);
+      std::vector<float> velocityHistoryYgather(nHistories);
+      std::vector<float> velocityHistoryZgather(nHistories);
+      std::vector<float> chargeHistory(nHistories);
+      std::vector<float> chargeHistoryGather(nHistories);
+      std::vector<float> weightHistory(nHistories);
+      std::vector<float> weightHistoryGather(nHistories);
+    #endif
+  #endif 
+  float* finalPosX = new float[nP];
+  float* finalPosY = new float[nP];
+  float* finalPosZ = new float[nP];
+  float* finalVx = new float[nP];
+  float* finalVy = new float[nP];
+  float* finalVz = new float[nP];
+  float* transitTime = new float[nP];
+  float* hitWall = new float[nP];
+  #if USE_BOOST
+    //cpu_timer timer;
+  #endif
 
 std::uniform_real_distribution<float> dist(0,1e6);
 
@@ -1181,173 +1661,65 @@ std::uniform_real_distribution<float> dist(0,1e6);
     std::random_device rd;
     std::default_random_engine generator(rd());
 #endif
-/*
-    sim::Array<Particle> particleArray(nParticles);
-    for(int i=0;i<nParticles; i++)
-    {
-        particleArray[i] = particleArray[i];
-    }
-
-    for(int i=0;i<nParticles; i++)
-    {
-        std::cout << particleArray[i].x << " " << particleArray[i].xprevious << std::endl;
-        std::cout << particleArray[i].y << " " << particleArray[i].yprevious << std::endl;
-        std::cout << particleArray[i].z << " " << particleArray[i].zprevious << std::endl;
-        std::cout << particleArray[i].vx << " " << particleArray[i].vy << " " << particleArray[i].vz << std::endl;
-        std::cout << particleArray[i].Z << " " << particleArray[i].amu << " " << particleArray[i].charge << std::endl;
-
-    }
-    */
-
-      thrust::counting_iterator<std::size_t> particleBegin(0);  
-        thrust::counting_iterator<std::size_t> particleEnd(nParticles);
-#if PARTICLESEEDS > 0
-#if USEIONIZATION > 0
-#if FIXEDSEEDS ==1
-    float ionization_seeds = cfg.lookup("operators.ionization.seed");
-    std::default_random_engine generator(ionization_seeds);
-#endif
-//#ifdef __CUDACC__
-    //sim::Array<Particle> particleArray(nParticles);
-    //for(int i=0;i<nParticles; i++)
-   // {
-   //     std::cout << particleArray[i].x << std::endl;
-   // }
-    std::cout << "fixed particle seeds " << std::endl;
-    sim::Array<float> seeds0(nP);
-    std::generate( seeds0.begin(), seeds0.end(), [&]() { return dist(generator); } );
-//    thrust::device_vector<float> deviceSeeds0 = seeds0;
-    thrust::transform(thrust::device, particleArray->streams.begin(), particleArray->streams.end(),
-                    seeds0.begin(), particleArray->streams.begin(), randInit(0) );
-/*
+  thrust::counting_iterator<std::size_t> particleBegin(0);  
+  thrust::counting_iterator<std::size_t> particleEnd(nParticles-1);
+  thrust::counting_iterator<std::size_t> particleOne(1);
+    auto randInitStart_clock = Time::now();
+    
+  #if PARTICLESEEDS > 0
+    #if USE_CUDA  
+      sim::Array<curandState> state1(nParticles);
+    #else
+      sim::Array<std::mt19937> state1(nParticles);
+    #endif
+    #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
+#if USE_CUDA
+      thrust::for_each(thrust::device, particleBegin,particleEnd,
+      curandInitialize(&state1[0],0));
 #else
-    std::vector<float> seeds0(nP);
-    std::generate( seeds0.begin(), seeds0.end(), [&]() { return dist(generator); } );
-    std::transform(particleArray.begin(), particleArray.end(),
-                    seeds0.begin(), particleArray.begin(), randInit(0) );
+      std::random_device randDeviceInit; 
+      std::cout << "Initializing curand seeds " << std::endl;
+      //thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,
+      //                     curandInitialize(&state1[0],randDeviceInit,0));
+       //std::mt19937 s0(randDeviceInit);
+       for(int i=world_rank*nP/world_size;i<(world_rank+1)*nP/world_size;i++)
+       {
+           std::mt19937 s0(randDeviceInit());
+           state1[i] = s0;
+       }
 #endif
-*/
-#endif
-
-#if USERECOMBINATION > 0
-        std::vector<float> seeds1(nP);
-        std::generate( seeds1.begin(), seeds1.end(), [&]() { return dist(generator); } );
-#ifdef __CUDACC__
-        thrust::device_vector<float> deviceSeeds1 = seeds1;
-        thrust::transform(particleArray.begin(), particleArray.end(),
-                    deviceSeeds1.begin(), particleArray.begin(), randInit(1) );
-#else
-        std::transform(particleArray.begin(), particleArray.end(),
-                    seeds1.begin(), particleArray.begin(), randInit(1) );
-#endif
-#endif
-
-#if USEPERPDIFFUSION > 0
-        std::vector<float> seeds2(nP);
-        std::generate( seeds2.begin(), seeds2.end(), [&]() { return dist(generator); } );
-#ifdef __CUDACC__
-        thrust::device_vector<float> deviceSeeds2 = seeds2;
-        thrust::transform(particleArray.begin(), particleArray.end(),
-                    deviceSeeds2.begin(), particleArray.begin(), randInit(2) );
-#else
-        std::transform(particleArray.begin(), particleArray.end(),
-                    seeds2.begin(), particleArray.begin(), randInit(2) );
-#endif
-#endif
-
-#if USECOULOMBCOLLISIONS > 0
-        std::vector<float> seeds3(nP),seeds4(nP),seeds5(nP);
-        std::generate( seeds3.begin(), seeds3.end(), [&]() { return dist(generator); } );
-    std::generate( seeds4.begin(), seeds4.end(), [&]() { return dist(generator); } );
-    std::generate( seeds5.begin(), seeds5.end(), [&]() { return dist(generator); } );
-#ifdef __CUDACC__
-        thrust::device_vector<float> deviceSeeds3 = seeds3,deviceSeeds4 = seeds4,deviceSeeds5 = seeds5;
-        thrust::transform(particleArray.begin(), particleArray.end(),
-                    deviceSeeds3.begin(), particleArray.begin(), randInit(3) );
-    thrust::transform(particleArray.begin(), particleArray.end(),
-                    deviceSeeds4.begin(), particleArray.begin(), randInit(4) );
-        thrust::transform(particleArray.begin(), particleArray.end(),
-                    deviceSeeds5.begin(), particleArray.begin(), randInit(5) );
-#else
-        std::transform(particleArray.begin(), particleArray.end(),
-                    seeds3.begin(), particleArray.begin(), randInit(3) );
-        std::transform(particleArray.begin(), particleArray.end(),
-                    seeds4.begin(), particleArray.begin(), randInit(4) );
-        std::transform(particleArray.begin(), particleArray.end(),
-                    seeds5.begin(), particleArray.begin(), randInit(5) );
-#endif
-#endif
-
-#if USESURFACEMODEL > 0
-        std::vector<float> seeds6(nP);
-        std::generate( seeds6.begin(), seeds6.end(), [&]() { return dist(generator); } );
-#ifdef __CUDACC__
-        thrust::device_vector<float> deviceSeeds6 = seeds6;
-        thrust::transform(particleArray.begin(), particleArray.end(),
-                    deviceSeeds6.begin(), particleArray.begin(), randInit(6) );
-#else
-        std::transform(particleArray.begin(), particleArray.end(),
-                    seeds6.begin(), particleArray.begin(), randInit(6) );
-#endif
-#endif
-
-#if __CUDACC__
-sim::Array<curandState> state1(7);
-#else
-sim::Array<std::mt19937> state1(7);
-#endif
-#else
-#if __CUDACC__
-sim::Array<curandState> state1(7);
-curandInitialize<<<1,1>>>(&state1[0],19);
-#else
-sim::Array<std::mt19937> state1(7);
-std::mt19937 s(348763);
-state1[0] = s;
-#endif
-#endif
+      #if USE_CUDA
+        cudaDeviceSynchronize();
+      #endif
+    #endif
+  #endif
+    auto randInitEnd_clock = Time::now();
+    fsec fsRandInit = randInitEnd_clock - randInitStart_clock;
+    printf("Random Number Initialize time for node %i          is %6.3f (secs) \n", world_rank,fsRandInit.count());
 
     float moveTime = 0.0;
     float geomCheckTime = 0.0;
     float ionizTime = 0.0;
-
-#if USE_BOOST
-    cpu_times copyToDeviceTime = timer.elapsed();
-    std::cout << "Initialize rand state and copyToDeviceTime: " << copyToDeviceTime.wall*1e-9 << '\n';
-#endif
-    typedef std::chrono::high_resolution_clock Time;
-    typedef std::chrono::duration<float> fsec;
-    auto start_clock = Time::now();
-    std::cout << "Starting main loop" << std::endl;
-//Main time loop
-    for(int tt=0; tt< nT; tt++)
-    {
-//#ifdef __CUDACC__
-        thrust::for_each(thrust::device, particleBegin,particleEnd, 
-                move_boris(particleArray,dt,boundaries.data(), nLines,
-                    nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
-                    &br.front(),&bz.front(),&bt.front(),
-                    nR_PreSheathEfield,nZ_PreSheathEfield,
-                    &preSheathEGridr.front(),&preSheathEGridz.front(),
-                    &PSEr.front(),&PSEz.front(),&PSEt.front(),
-                        nR_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
-                        &closeGeomGridr_sheath.front(),&closeGeomGridz_sheath.front(),
-                        &closeGeom_sheath.front()) );
-        
-        
-        //try {
-            thrust::for_each(thrust::device, particleBegin,particleEnd,
-                    geometry_check(particleArray,boundaryModArray,nLines,&boundaries[0],dt,tt,
-                        nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
+    int* dev_tt;
+    cudaMallocManaged(&dev_tt, sizeof(int));
+    int tt=0;
+    move_boris move_boris0(particleArray,dt,boundaries.data(), nLines,
+        nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
+        &br.front(),&bz.front(),&by.front(),
+        nR_PreSheathEfield,nY_PreSheathEfield,nZ_PreSheathEfield,
+        &preSheathEGridr.front(),&preSheathEGridy.front(),&preSheathEGridz.front(),
+        &PSEr.front(),&PSEz.front(),&PSEt.front(),
+            nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
+            &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
+            &closeGeom_sheath.front());
+     geometry_check geometry_check0(particleArray,nLines,&boundaries[0],surfaces,dt,
+                        nHashes,nR_closeGeom.data(),nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),
                         &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
-                        &closeGeom.front()) );
-       // }
-       /*
-            catch (thrust::system_error &e) {
-            std::cerr << "Thrust system error: " << e.what() << std::endl;
-            exit(-1);
-        }
-        */
+                        &closeGeom.front(),
+                        nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+      #if USE_SORT > 0
+        sortParticles sort0(particleArray,nP,0.001,dev_tt,10000,pStartIndx.data(),nActiveParticlesOnRank.data(),world_rank,&state1.front());
+      #endif
 #if SPECTROSCOPY > 0
             thrust::for_each(thrust::device, particleBegin,particleEnd,
                     spec_bin(particleArray,nBins,net_nX, net_nZ, &gridX_bins.front(),
@@ -1359,11 +1731,15 @@ state1[0] = s;
                     nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),  
                     nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
                     nTemperaturesIonize, nDensitiesIonize,&gridTemperature_Ionization.front(),
-                    &gridDensity_Ionization.front(), &rateCoeff_Ionization.front(),tt));
+                    &gridDensity_Ionization.front(), &rateCoeff_Ionization.front());
 #endif
 #if USERECOMBINATION > 0
-        thrust::for_each(particleArray.begin(), particleArray.end(),
-                recombine(dt) );
+                recombine recombine0(particleArray, dt,&state1.front(),
+                    nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),  
+                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
+                    nTemperaturesRecombine,nDensitiesRecombine,
+                    gridTemperature_Recombination.data(),gridDensity_Recombination.data(),
+                    rateCoeff_Recombination.data());
 #endif
 #if USEPERPDIFFUSION > 0
         thrust::for_each(particleArray.begin(), particleArray.end(),
@@ -1397,21 +1773,57 @@ state1[0] = s;
 #endif
 
 #if USESURFACEMODEL > 0
-        thrust::for_each(particleArray.begin(), particleArray.end(), 
-                reflection(dt,nLines,BoundaryDevicePointer) );
+                reflection reflection0(particleArray,dt,&state1.front(),nLines,&boundaries[0],surfaces,
+                    nE_sputtRefCoeff, nA_sputtRefCoeff,A_sputtRefCoeff.data(),
+                    Elog_sputtRefCoeff.data(),spyl_surfaceModel.data(), rfyl_surfaceModel.data(),
+                    nE_sputtRefDistOut,nE_sputtRefDistOutRef, nA_sputtRefDistOut,nE_sputtRefDistIn,nA_sputtRefDistIn,
+                    Elog_sputtRefDistIn.data(),A_sputtRefDistIn.data(),
+                    E_sputtRefDistOut.data(),E_sputtRefDistOutRef.data(),Aphi_sputtRefDistOut.data(),
+                    energyDistGrid01.data(),energyDistGrid01Ref.data(),angleDistGrid01.data(),
+                    EDist_CDF_Y_regrid.data(),AphiDist_CDF_Y_regrid.data(),
+                    EDist_CDF_R_regrid.data(),AphiDist_CDF_R_regrid.data(),
+                    nEdist, E0dist, Edist, nAdist, A0dist, Adist) ;
 #endif        
 
 #if PARTICLE_TRACKS >0
-#if USE_CUDA > 0
-            thrust::for_each(thrust::device, particleBegin,particleEnd,
-                    history(particleArray,tt,subSampleFac,nP,&positionHistoryX.front(),
-                                &positionHistoryY.front(),&positionHistoryZ.front(),
-                                &velocityHistoryX.front(),&velocityHistoryY.front(),
-                                &velocityHistoryZ.front(),&chargeHistory.front()) );
-#else
-if (tt % subSampleFac == 0)  
-{    
-        for(int i=0;i<nP;i++)
+      history history0(particleArray,tt,nT,subSampleFac,nP,&positionHistoryX.front(),
+      &positionHistoryY.front(),&positionHistoryZ.front(),&velocityHistory.front(),
+      &velocityHistoryX.front(),&velocityHistoryY.front(),
+      &velocityHistoryZ.front(),&chargeHistory.front(),
+      &weightHistory.front());
+#endif
+  #if FORCE_EVAL > 0
+    if(world_rank ==0)
+    {
+      int nR_force, nZ_force;
+      float forceX0, forceX1,forceZ0,forceZ1,testEnergy;
+      std::string forceCfg = "forceEvaluation.";
+      
+      getVariable(cfg,forceCfg+"nR",nR_force);
+      getVariable(cfg,forceCfg+"nZ",nZ_force);
+      std::vector<float> forceR(nR_force,0.0),forceZ(nZ_force,0.0);
+      std::vector<float> dvEr(nR_force*nZ_force,0.0),dvEz(nR_force*nZ_force,0.0),dvEt(nR_force*nZ_force,0.0);
+      std::vector<float> dvBr(nR_force*nZ_force,0.0),dvBz(nR_force*nZ_force,0.0),dvBt(nR_force*nZ_force,0.0);
+      std::vector<float> dvCollr(nR_force*nZ_force,0.0),dvCollz(nR_force*nZ_force,0.0),dvCollt(nR_force*nZ_force,0.0);
+      std::vector<float> dvITGr(nR_force*nZ_force,0.0),dvITGz(nR_force*nZ_force,0.0),dvITGt(nR_force*nZ_force,0.0);
+      std::vector<float> dvETGr(nR_force*nZ_force,0.0),dvETGz(nR_force*nZ_force,0.0),dvETGt(nR_force*nZ_force,0.0);
+      getVariable(cfg,forceCfg+"X0",forceX0);
+      getVariable(cfg,forceCfg+"X1",forceX1);
+      getVariable(cfg,forceCfg+"Z0",forceZ0);
+      getVariable(cfg,forceCfg+"Z1",forceZ1);
+      getVariable(cfg,forceCfg+"particleEnergy",testEnergy);
+      for(int i=0;i<nR_force;i++)
+      {
+        forceR[i] = forceX0 + (forceX1 - forceX0)*i/(nR_force-1);
+      }
+      for(int i=0;i<nZ_force;i++)
+      {
+        forceZ[i] = forceZ0 + (forceZ1 - forceZ0)*i/(nZ_force-1);
+      }
+      float Btotal = 0.0;
+      for(int i=0;i<nR_force;i++)
+      {
+        for(int j=0;j<nZ_force;j++)
         {
             positionHistoryX[i][tt/subSampleFac] = particleArray->xprevious[i];
             positionHistoryY[i][tt/subSampleFac] = particleArray->yprevious[i];
@@ -1451,67 +1863,180 @@ geomCheckTime = geomCheckTime + (geomTime1.wall - geomTime0.wall);
 #if USE_BOOST
 cpu_times ionizTime0 = timer.elapsed();
 #endif
-    std::for_each(particleArray.begin(), particleArray.end(),
-            ionize(dt,&state1.front(),
-                nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),
-                nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
-                nTemperaturesIonize, 
-                nDensitiesIonize, &gridTemperature_Ionization.front(),
-                &gridDensity_Ionization.front(), &rateCoeff_Ionization.front() ) );
-#if USE_BOOST
-cpu_times ionizTime1 = timer.elapsed();
-ionizTime = ionizTime + (ionizTime1.wall - ionizTime0.wall);
+std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << testFlowVec[2]  << std::endl;
+    std::cout << "Starting main loop" << particleArray->xprevious[0] << std::endl;
+    std::cout << "Starting main loop" << particleArray->xprevious[1] << std::endl;
+//Main time loop
+    #if __CUDACC__
+      cudaDeviceSynchronize();
+    #endif
+     //int nDevices=0;
+     //nDevices = omp_get_num_threads();
+     //    unsigned int cpu_thread_id = omp_get_thread_num();
+     //    unsigned int num_cpu_threads = omp_get_num_threads();
+     //    printf("Number of CPU threads %d (ID %d)\n", cpu_thread_id, num_cpu_threads);
+    #if USE_OPENMP
+    //for(int device=0;device <1;device++)
+//{ cudaSetDevice(device); 
+    //int nDevices=32;
+    //std::cout << "nDevices " << nDevices << std::endl;
+     //omp_set_num_threads(nDevices);  // create as many CPU threads as there are CUDA devices
+    //std::cout << "nDevices " << nDevices << std::endl;
+     int nDevices=0;
+     #pragma omp parallel
+     {
+        nDevices = omp_get_num_threads();
+        //tid = omp_get_thread_num();
+         unsigned int cpu_thread_id = omp_get_thread_num();
+         unsigned int num_cpu_threads = omp_get_num_threads();
+         //int gpu_id = -1;
+             //cudaSetDevice(cpu_thread_id);
+        //cudaSetDevice(cpu_thread_id % nDevices);        // "% num_gpus" allows more CPU threads than GPU devices
+        //if(cpu_thread_id ==0 ) cudaSetDevice(0); 
+        //if(cpu_thread_id ==1 ) cudaSetDevice(3); 
+        //cudaGetDevice(&gpu_id);
+         printf("CPU thread %d (of %d) uses CUDA device %d\n", cpu_thread_id, num_cpu_threads);
+#if USE_MPI > 0 
+    printf("Hello world from processor %s, rank %d"
+           " out of %d processors and cpu_thread_id %i \n",
+                      processor_name, world_rank, world_size,cpu_thread_id);
+    MPI_Barrier(MPI_COMM_WORLD);
 #endif
 #endif
 #if USERECOMBINATION > 0
     std::for_each(particleArray.begin(), particleArray.end(), 
             recombine(dt) );
 #endif
-#if USEPERPDIFFUSION > 0
-        std::for_each(particleArray.begin(), particleArray.end(), 
-                crossFieldDiffusion(dt,perpDiffusionCoeff,
-                    nR_Bfield,nZ_Bfield, &bfieldGridr.front(),&bfieldGridz.front(),
-                    &br.front(),&bz.front(),&bt.front()));
-        
-        std::for_each(particleArray.begin(), particleArray.end(), 
-                geometry_check(nLines,boundaries.data(),dt,tt) );
-#endif
-#if USECOULOMBCOLLISIONS > 0
-        std::for_each(particleArray.begin(), particleArray.end(), 
-                coulombCollisions(dt,
-                    nR_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridz.front(),
-                    &flowVr.front(),&flowVz.front(),&flowVt.front(),
-                    nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),
-                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
-                    background_Z,background_amu,
-                    nR_Bfield,nZ_Bfield, &bfieldGridr.front(),
-                    &bfieldGridz.front(),&br.front(),&bz.front(),&bt.front()));
-#endif
-#if USETHERMALFORCE > 0
-        std::for_each(particleArray.begin(), particleArray.end(), 
-                thermalForce(dt,background_amu,
-                    nR_gradT,nZ_gradT,&gradTGridr.front(),&gradTGridz.front(),
-                    &gradTiR.front(),&gradTiZ.front(),&gradTiT.front(),
-                    &gradTeR.front(),&gradTeZ.front(),&gradTeT.front(),
-                    nR_Bfield,nZ_Bfield, &bfieldGridr.front(),&bfieldGridz.front(),
-                    &br.front(),&bz.front(),&bt.front()));
-#endif
-#if USESURFACEMODEL > 0
-        std::for_each(particleArray.begin(), particleArray.end(), 
-                reflection(dt,nLines,boundaries.data()) );
-#endif        
-#if PARTICLE_TRACKS >0
-if (tt % subSampleFac == 0)  
-{    
-        for(int i=0;i<nP;i++)
-        {
-            positionHistoryX[i][tt/subSampleFac] = particleArray[i].xprevious;
-            positionHistoryY[i][tt/subSampleFac] = particleArray[i].yprevious;
-            positionHistoryZ[i][tt/subSampleFac] = particleArray[i].zprevious;
-            velocityHistoryX[i][tt/subSampleFac] = particleArray[i].vx;
-            velocityHistoryY[i][tt/subSampleFac] = particleArray[i].vy;
-            velocityHistoryZ[i][tt/subSampleFac] = particleArray[i].vz;
-        }
+sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
+   //int nN=10000;
+   //thrust::host_vector<int> h_vec(nN); 
+   //thrust::generate(h_vec.begin(), h_vec.end(), rand);
+   //// transfer data to the device
+   //thrust::device_vector<int> d_vec = h_vec;
+   //float *d_vec2;
+   //cudaMallocManaged(&d_vec2, 1000*sizeof(float));
+   //std::cout << "created d_vec and cmalloc, starting init " << std::endl; 
+   //for(int k=0;k<1000;k++)
+   //{   //std::cout << "k " << k << std::endl;
+   //    d_vec2[k] = 1.0f;
+   //}
+   //for(int k=0;k<1000;k++)
+   //{   //std::cout << "k " << k << std::endl;
+   //    //d_vec2[k] = 1.0f;
+   //thrust::sort(thrust::device,d_vec.begin()+world_rank*nN/world_size, d_vec.begin()+ (world_rank+1)*nN/world_size-1); // sort data on the device 
+   //}
+   //// transfer data back to host
+   //thrust::copy(d_vec.begin(), d_vec.end(), h_vec.begin());
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+    for(tt; tt< nT; tt++)
+    {
+     dev_tt[0] = tt;
+     std::cout << "beginning of loop tt " << tt << std::endl;
+      #if USE_SORT > 0
+        thrust::for_each(thrust::device,tmpInt.begin(),tmpInt.end(),sort0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+      #endif
+
+      #if PARTICLE_TRACKS >0
+     std::cout << "particle tracks" << std::endl;
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],history0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+      #endif
+      //std::cout << " world rank pstart nactive " << world_rank << " " << pStartIndx[world_rank] << "  " << nActiveParticlesOnRank[world_rank] << std::endl;
+      //thrust::for_each(thrust::device,particleBegin,particleOne,
+      //     test_routinePp(particleArray));
+     std::cout << "boris" << std::endl;
+
+      thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
+                move_boris0);
+      #ifdef __CUDACC__
+        cudaDeviceSynchronize();
+      #endif
+     std::cout << "check geom" << std::endl;
+      thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
+                    geometry_check0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+
+      #if SPECTROSCOPY > 0
+     std::cout << "spec" << std::endl;
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],spec_bin0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+      #endif  
+
+      #if USEIONIZATION > 0
+     std::cout << "ioni" << std::endl;
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
+                ionize0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+      #endif
+
+      #if USERECOMBINATION > 0
+     std::cout << "rec" << std::endl;
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],recombine0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+      #endif
+
+      #if USEPERPDIFFUSION > 0
+     std::cout << "diff" << std::endl;
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],crossFieldDiffusion0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+            
+     std::cout << "diff geom check" << std::endl;
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],geometry_check0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+      #endif
+
+      #if USECOULOMBCOLLISIONS > 0
+     std::cout << "coll" << std::endl;
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],coulombCollisions0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+      #endif
+      
+      #if USETHERMALFORCE > 0
+     std::cout << "therm" << std::endl;
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],thermalForce0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+      #endif
+
+      #if USESURFACEMODEL > 0
+     std::cout << "surf" << std::endl;
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],reflection0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+      #endif        
+
+    }
+   #if PARTICLE_TRACKS >0
+     tt = nT;
+     std::cout << " tt for final history " << tt << std::endl;
+     thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
+      history0);
+   #endif
+
+#if USE_OPENMP
 }
 #endif
 */
@@ -1539,8 +2064,169 @@ for(int i=0; i<nP ; i++)
          " trans " << particleArray->transitTime[i] << std::endl;
 }
 */
-#if USE3DTETGEOM > 0
-    float meanTransitTime0 = 0.0;
+    std::cout << "transit time counting "<< nP << " " << particleArray->x[0] <<  std::endl;
+    //float tmp202 =0.0;
+#if USE_CUDA
+    cudaDeviceSynchronize();
+#endif
+#if USE_MPI > 0
+    sim::Array<float> xGather(nP,0.0);
+    sim::Array<float> test0Gather(nP,0.0);
+    sim::Array<float> test1Gather(nP,0.0);
+    sim::Array<float> yGather(nP,0.0);
+    sim::Array<float> zGather(nP,0.0);
+    sim::Array<float> vGather(nP,0.0);
+    sim::Array<float> vxGather(nP,0.0);
+    sim::Array<float> vyGather(nP,0.0);
+    sim::Array<float> vzGather(nP,0.0);
+    sim::Array<float> hitWallGather(nP,0.0);
+    sim::Array<float> weightGather(nP,0.0);
+    sim::Array<float> chargeGather(nP,0.0);
+    sim::Array<float> firstIonizationTGather(nP,0.0);
+    sim::Array<float> firstIonizationZGather(nP,0.0);
+    //float *x_gather = NULL;
+    //if (world_rank == 0) {
+    //      x_gather = malloc(sizeof(float)*nP);
+    //}
+    std::cout << "reached gather barrier" << std::endl;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "started gather" << std::endl;
+    MPI_Gather(&particleArray->x[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &xGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->y[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &yGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->z[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &zGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->v[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &vGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->vx[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &vxGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->vy[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &vyGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->vz[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &vzGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->hitWall[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &hitWallGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->weight[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &weightGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->charge[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &chargeGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->firstIonizationT[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &firstIonizationTGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->firstIonizationZ[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &firstIonizationZGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->test0[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &test0Gather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->test1[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &test1Gather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    std::cout << "wating after gathers" << std::endl;
+MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "passed barrier after gather" << std::endl;
+#if PARTICLE_TRACKS >0
+   
+    std::vector<float> exampleArray(4,0.0);
+    std::vector<float> exampleArrayGather(4,0.0);
+    if(world_rank ==0)
+    {
+      exampleArray[0]=1;
+      exampleArray[1]=1;
+    }
+    if(world_rank ==1)
+    {
+      exampleArray[2]=2;
+      exampleArray[3]=2;
+    }
+    std::vector<int> exCount(2,2),exDispl(2,0);
+    exDispl[0] = 0;
+    exDispl[1] = 2;
+    const int* exdispl=&exDispl[0];
+    const int* excount = &exCount[0];
+
+    //MPI_Gatherv(&exampleArray[exDispl[world_rank]],2,MPI_FLOAT,&exampleArrayGather[0],excount,exdispl,MPI_FLOAT,0,MPI_COMM_WORLD);
+
+    //for(int i=0;i<4;i++)
+    //{
+    //  std::cout << "rank " << world_rank << " val " << exampleArrayGather[i] << std::endl; 
+    //}
+
+MPI_Barrier(MPI_COMM_WORLD);
+
+    //for(int i=pDisplacement[world_rank];i<pDisplacement[world_rank]+pHistPerNode[world_rank];i++)
+    //{
+    //  std::cout << "Rank i "<< i << " "  << world_rank << "z " << positionHistoryZ[i] << std::endl;
+    //}
+    //std::cout << "starting particle tracks gather "<< world_rank<< " pstart "<< pStartIndx[world_rank] << "nhist " << nHistoriesPerParticle << std::endl;
+    //std::cout << "start gather 2 "<< world_rank<< " nppr "<< nPPerRank[world_rank] << "nhist " << nHistoriesPerParticle << std::endl;
+    MPI_Gatherv(&positionHistoryX[pDisplacement[world_rank]], pHistPerNode[world_rank],MPI_FLOAT,&positionHistoryXgather[0],phpn,displ, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&positionHistoryY[pDisplacement[world_rank]], pHistPerNode[world_rank],MPI_FLOAT,&positionHistoryYgather[0],phpn,displ, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&positionHistoryZ[pDisplacement[world_rank]], pHistPerNode[world_rank], MPI_FLOAT, &positionHistoryZgather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&velocityHistory[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistorygather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&velocityHistoryX[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryXgather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&velocityHistoryY[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryYgather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&velocityHistoryZ[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryZgather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&chargeHistory[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &chargeHistoryGather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(&weightHistory[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &weightHistoryGather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    std::cout << "at barrier tracks gather" << std::endl;
+MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "finished particle tracks gather" << std::endl;
+    //if(world_rank ==0)
+    //{
+    //for(int i=0;i<401;i++)
+    //{
+    //  std::cout << "Rank " << world_rank << "z " << positionHistoryZgather[i] << std::endl;
+    //}
+    //}
+#endif
+
+#if SPECTROSCOPY > 0
+MPI_Barrier(MPI_COMM_WORLD);
+std::cout <<"Starting spectroscopy reduce " << world_rank<< std::endl;
+MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], (nBins+1)*net_nX*net_nY*net_nZ, 
+           MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+std::cout <<"Done with spectroscopy reduce " << world_rank<< std::endl;
+MPI_Barrier(MPI_COMM_WORLD);
+#endif
+#if (USESURFACEMODEL > 0 || FLUX_EA > 0)
+//MPI_Barrier(MPI_COMM_WORLD);
+std::cout <<"Starting surface reduce " << world_rank<< std::endl;
+//for(int i=0;i<nSurfaces;i++) std::cout << surfaces->grossDeposition[i]<<std::endl;
+MPI_Reduce(&surfaces->grossDeposition[0], &grossDeposition[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
+                   MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->grossErosion[0], &grossErosion[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
+                   MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->sumWeightStrike[0], &sumWeightStrike[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
+                   MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->aveSputtYld[0], &aveSputtYld[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
+                   MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->sputtYldCount[0], &sputtYldCount[0],nSurfaces, MPI_INT, MPI_SUM, 0,
+                   MPI_COMM_WORLD);
+//MPI_Barrier(MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->sumParticlesStrike[0], &sumParticlesStrike[0],nSurfaces, MPI_INT, MPI_SUM, 0,
+                   MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->energyDistribution[0], &energyDistribution[0],nSurfaces*nEdist*nAdist, 
+        MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->sputtDistribution[0], &sputtDistribution[0],nSurfaces*nEdist*nAdist, 
+        MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+MPI_Reduce(&surfaces->reflDistribution[0], &reflDistribution[0],nSurfaces*nEdist*nAdist, 
+        MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+MPI_Barrier(MPI_COMM_WORLD);
+#endif
+#endif
+    if(world_rank == 0)
+{
+    auto MPIfinish_clock = Time::now();
+    fsec fsmpi = MPIfinish_clock - finish_clock;
+    printf("Time taken for mpi reduction          is %6.3f (secs) \n", fsmpi.count());
+}
+//    tmp202 =  particleArray->vx[0];
+    //std::cout << "memory access hitwall " 
+    //<< particleArray->xprevious[0] << std::endl;
+    //std::cout << "transit time counting " << std::endl;
+  #if USE_MPI > 0
+    if(world_rank == 0)
+      {
+  #endif
+        int totalHitWall=0;
+        for(int i=0;i<nP;i++)
+        {
+          if(particleArray->hitWall[i] > 0.0) totalHitWall++;
+        }
+        std::cout << "Number and percent of particles that hit wall " << 
+        totalHitWall << " " << totalHitWall*1.0/(nP*1.0) << std::endl;
+        #if USE3DTETGEOM > 0
+          float meanTransitTime0 = 0.0;
+    /*
     for (int i=0; i<nP; i++)
     {
         if(particleArray->hitWall[i] == 1.0)
@@ -1665,8 +2351,49 @@ NcDim nc_nLines = ncFile1.addDim("nLines",nLines);
 vector<NcDim> dims1;
 dims1.push_back(nc_nLines);
 
-NcVar nc_surfImpacts = ncFile1.addVar("impacts",ncDouble,dims1);
-nc_surfImpacts.putVar(impacts);
+vector<NcDim> dimsSurfE;
+dimsSurfE.push_back(nc_nLines);
+NcDim nc_nEnergies = ncFile1.addDim("nEnergies",nEdist);
+NcDim nc_nAngles = ncFile1.addDim("nAngles",nAdist);
+dimsSurfE.push_back(nc_nAngles);
+dimsSurfE.push_back(nc_nEnergies);
+NcVar nc_grossDep = ncFile1.addVar("grossDeposition",ncFloat,nc_nLines);
+NcVar nc_grossEro = ncFile1.addVar("grossErosion",ncFloat,nc_nLines);
+NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl",ncFloat,nc_nLines);
+NcVar nc_spylCounts = ncFile1.addVar("spylCounts",ncInt,nc_nLines);
+NcVar nc_surfNum = ncFile1.addVar("surfaceNumber",ncInt,nc_nLines);
+NcVar nc_sumParticlesStrike = ncFile1.addVar("sumParticlesStrike",ncInt,nc_nLines);
+NcVar nc_sumWeightStrike = ncFile1.addVar("sumWeightStrike",ncFloat,nc_nLines);
+nc_grossDep.putVar(&grossDeposition[0]);
+nc_surfNum.putVar(&surfaceNumbers[0]);
+nc_grossEro.putVar(&grossErosion[0]);
+nc_aveSpyl.putVar(&aveSputtYld[0]);
+nc_spylCounts.putVar(&sputtYldCount[0]);
+nc_sumParticlesStrike.putVar(&sumParticlesStrike[0]);
+nc_sumWeightStrike.putVar(&sumWeightStrike[0]);
+//NcVar nc_surfImpacts = ncFile1.addVar("impacts",ncFloat,dims1);
+//NcVar nc_surfRedeposit = ncFile1.addVar("redeposit",ncFloat,dims1);
+//NcVar nc_surfStartingParticles = ncFile1.addVar("startingParticles",ncFloat,dims1);
+//NcVar nc_surfZ = ncFile1.addVar("Z",ncFloat,dims1);
+NcVar nc_surfEDist = ncFile1.addVar("surfEDist",ncFloat,dimsSurfE);
+NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist",ncFloat,dimsSurfE);
+NcVar nc_surfSputtDist = ncFile1.addVar("surfSputtDist",ncFloat,dimsSurfE);
+//nc_surfImpacts.putVar(impacts);
+//#if USE3DTETGEOM > 0
+//nc_surfRedeposit.putVar(redeposit);
+//#endif
+//nc_surfStartingParticles.putVar(startingParticles);
+//nc_surfZ.putVar(surfZ);
+std::cout << "writing energy distribution file " << std::endl;
+nc_surfEDist.putVar(&energyDistribution[0]);
+nc_surfReflDist.putVar(&reflDistribution[0]);
+nc_surfSputtDist.putVar(&sputtDistribution[0]);
+//NcVar nc_surfEDistGrid = ncFile1.addVar("gridE",ncDouble,nc_nEnergies);
+//nc_surfEDistGrid.putVar(&surfaces->gridE[0]);
+//NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
+//nc_surfADistGrid.putVar(&surfaces->gridA[0]);
+ncFile1.close();
+#endif
 #if PARTICLE_TRACKS > 0
 
 // Write netCDF output for histories
@@ -1685,28 +2412,33 @@ NcVar nc_x = ncFile_hist.addVar("x",ncDouble,dims_hist);
 NcVar nc_y = ncFile_hist.addVar("y",ncDouble,dims_hist);
 NcVar nc_z = ncFile_hist.addVar("z",ncDouble,dims_hist);
 
+NcVar nc_v = ncFile_hist.addVar("v",ncDouble,dims_hist);
 NcVar nc_vx = ncFile_hist.addVar("vx",ncDouble,dims_hist);
 NcVar nc_vy = ncFile_hist.addVar("vy",ncDouble,dims_hist);
 NcVar nc_vz = ncFile_hist.addVar("vz",ncDouble,dims_hist);
 
 NcVar nc_charge = ncFile_hist.addVar("charge",ncDouble,dims_hist);
-#if USE_CUDA > 0
-float *xPointer = &positionHistoryX[0];
-float *yPointer = &positionHistoryY[0];
-float *zPointer = &positionHistoryZ[0];
-float *vxPointer = &velocityHistoryX[0];
-float *vyPointer = &velocityHistoryY[0];
-float *vzPointer = &velocityHistoryZ[0];
-float *chargePointer = &chargeHistory[0];
-nc_x.putVar(xPointer);
-nc_y.putVar(yPointer);
-nc_z.putVar(zPointer);
+NcVar nc_weight = ncFile_hist.addVar("weight",ncDouble,dims_hist);
+#if USE_MPI > 0
+    //if(world_rank ==0)
+    //{
+    //for(int i=0;i<401;i++)
+    //{
+    //  std::cout << "Rank " << world_rank << "z " << positionHistoryZgather[i] << std::endl;
+    //}
+    //}
+std::cout << "printing gathered data" << std::endl;
+nc_x.putVar(&positionHistoryXgather[0]);
+nc_y.putVar(&positionHistoryYgather[0]);
+nc_z.putVar(&positionHistoryZgather[0]);
 
-nc_vx.putVar(vxPointer);
-nc_vy.putVar(vyPointer);
-nc_vz.putVar(vzPointer);
+nc_v.putVar(&velocityHistorygather[0]);
+nc_vx.putVar(&velocityHistoryXgather[0]);
+nc_vy.putVar(&velocityHistoryYgather[0]);
+nc_vz.putVar(&velocityHistoryZgather[0]);
 
-nc_charge.putVar(chargePointer);
+nc_charge.putVar(&chargeHistoryGather[0]);
+nc_weight.putVar(&weightHistoryGather[0]);
 #else
 nc_x.putVar(positionHistoryX[0]);
 nc_y.putVar(positionHistoryY[0]);
@@ -1747,10 +2479,43 @@ nc_n.putVar(binPointer);
     std::cout << "Total geometry checking time: " << geomCheckTime*1e-9 << '\n';
     std::cout << "Total ionization time: " << ionizTime*1e-9 << '\n';
 #endif
+#if USE_MPI > 0
+    std::cout << "sqrt 0 " << sqrt(-0.0) << std::endl;
+    for(int i=0;i<100;i++)
+{
+    //std::cout << "particle hitwall and Ez " << particleArray->hitWall[i] << " " << particleArray->test[i] << " "<< test0Gather[i] << " " << test1Gather[i]<< " "<<
+    //    particleArray->test2[i] << " " << particleArray->test3[i] << " " << particleArray->test4[i] << 
+    //    " " << particleArray->distTraveled[i] << std::endl;
+}
+    for(int i=0;i<100;i++)
+{
+    //std::cout << "particle ionization z and t " << firstIonizationZGather[i] << " " << firstIonizationTGather[i] << " " << xGather[i] << " " << 
+      //vxGather[i] << " " << chargeGather[i] << std::endl;
+}
+#endif
+//    for(int i=0;i<100;i++)
+//{
+//    std::cout << "reflected/sputtered energy " << particleArray->newVelocity[i]   << std::endl;
+//}
+//#endif
+#if USE_MPI > 0
+    }
+#endif
 
 #ifdef __CUDACC__
     cudaError_t err = cudaDeviceReset();
 //cudaProfilerStop();
 #endif
+#if USE_MPI > 0
+    // Finalize the MPI environment.
+    MPI_Finalize();
+#endif
+  if(world_rank == 0)
+  {
+    auto GITRfinish_clock = Time::now();
+    fsec fstotal = GITRfinish_clock - GITRstart_clock;
+    printf("Total runtime for GITR is %6.3f (secs) \n", fstotal.count());
+  }
+//#endif
     return 0;
     }

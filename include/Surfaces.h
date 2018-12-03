@@ -45,7 +45,7 @@ public:
   sim::Array<float> grossDeposition;
   sim::Array<float> grossErosion;
   sim::Array<float> aveSputtYld;
-  sim::Array<float> sputtYldCount;
+  sim::Array<int> sputtYldCount;
   sim::Array<float> energyDistribution;
   sim::Array<float> sputtDistribution;
   sim::Array<float> reflDistribution;

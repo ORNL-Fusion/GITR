@@ -141,7 +141,7 @@ int make2dCDF(int nX, int nY, int nZ, float* distribution, float* cdf)
 }
 int regrid2dCDF(int nX, int nY, int nZ,float* xGrid,int nNew,float maxNew, float*cdf, float* cdf_regrid)
 {
-  std::cout << " inside regrid function "<<nX << " " << nY << " " << nZ << std::endl;
+  //std::cout << " inside regrid function "<<nX << " " << nY << " " << nZ << std::endl;
   int lowInd=0;
   int index=0;
   float spline = 0.0;
@@ -153,6 +153,7 @@ int regrid2dCDF(int nX, int nY, int nZ,float* xGrid,int nNew,float maxNew, float
       {
         index = i*nY*nZ + j*nZ + k;
         spline = interp1dUnstructured(xGrid[k],nNew,maxNew,&cdf[index-k],lowInd);
+	    //std::cout<< "index spline " << index << " " << spline << std::endl;
         if(std::isnan(spline) || std::isinf(spline)) spline = 0.0;
         cdf_regrid[index] = spline;  
         if(i==0 && j==0)
@@ -379,6 +380,8 @@ int readFileDim(const std::string& fileName,const std::string& varName)
 }
 int importLibConfig(libconfig::Config &cfg, std::string filepath)
 {
+    std::cout << "In libconfig import "<< filepath << std::endl;
+    std::cout << "In libconfig import "<< filepath.c_str() << std::endl;
     try
     {
          cfg.readFile(filepath.c_str());
@@ -394,6 +397,8 @@ int importLibConfig(libconfig::Config &cfg, std::string filepath)
                    << " - " << pex.getError() << std::endl;
          return(EXIT_FAILURE);
     }
+    std::cout << "Finished libconfig import  "<< filepath.c_str() << std::endl;
+    return 0;
 }
 int importVectorFieldNs(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int &nR, int &nY,int &nZ,std::string &fileToRead)
 {
@@ -411,6 +416,7 @@ int importVectorFieldNs(libconfig::Config &cfg,std::string input_path,int interp
       nY = getDimFromFile(cfg,input_path+fileToRead,fieldCfgString,"gridNyString");
     } 
   }
+  return 0;
 }
 int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int nR, int nY,int nZ,float &gridR,float &gridY,float &gridZ,float &r, float &y,float &z,std::string &fileToRead)
 {
@@ -433,7 +439,8 @@ int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDi
       getVarFromFile(cfg,input_path+fileToRead,fieldCfgString,"rString",r);
       getVarFromFile(cfg,input_path+fileToRead,fieldCfgString,"yString",y);
       getVarFromFile(cfg,input_path+fileToRead,fieldCfgString,"zString",z);
-  } 
+  }
+  return 0;
 }
 int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries)
 {
@@ -536,11 +543,12 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
           boundaries[i].x2 << ", " << boundaries[i].z2 << ", " <<
           boundaries[i].slope_dzdx << ", " << boundaries[i].intercept_z << ", " <<
           boundaries[i].length << ", " << boundaries[i].Z << "];" << std::endl;
-       if(boundaries[i].Z > 0.0)
+       boundaries[i].surface = geom["surface"][i];
+       if(boundaries[i].surface > 0)
        {
-       boundaries[i].surface = 1;
            boundaries[i].surfaceNumber = nZSurfs;
            nZSurfs = nZSurfs + 1;
+       //    std::cout << "abcd " << boundaries[i].a << " " << boundaries[i].b << " " << boundaries[i].c << " " << boundaries[i].d << std::endl; 
        }
     }   
 
@@ -566,9 +574,9 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
       }
       else
       {
-        getVariable(cfg,fieldCfgString+"nR",nR[0]);
-        getVariable(cfg,fieldCfgString+"nZ",nZ[0]);
-        getVariable(cfg,fieldCfgString+"n",n[0]);
+        getVariable(cfg,fieldCfgString+".nR_closeGeom",nR[0]);
+        getVariable(cfg,fieldCfgString+".nZ_closeGeom",nZ[0]);
+        getVariable(cfg,fieldCfgString+".n_closeGeomElements",n[0]);
       }
       for(int j=0;j<nHashes;j++)
       {
@@ -581,12 +589,12 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
       {
         for(int i=0; i<nHashes;i++)
         {   
-          nY[i] = geomHash["nY"][i];
+          nY[i] = geomHash["nY_closeGeom"][i];
         }
       }
       else
       {
-        getVariable(cfg,fieldCfgString+"nY",nY[0]);
+        getVariable(cfg,fieldCfgString+".nY_closeGeom",nY[0]);
       }
       #endif
       nGeomHash = 0;
@@ -596,14 +604,16 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
       nGeomHash = 0;
       for(int j=0;j<nHashes;j++)
       {
-        if(nHashes > 1)
-        {
+      #if USE3DTETGEOM > 0
+       // if(nHashes > 1)
+        //{
           nHashPoints[j] =nR[j]*nY[j]*nZ[j];
-        }
-        else
-        {
+        //}
+       #else //else
+        //{
           nHashPoints[j] =nR[j]*nZ[j];
-        } 
+        //} 
+	#endif
         nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
         nGeomHash = nGeomHash + nHashPoints[j]*n[j];
         nRTotal = nRTotal + nR[j];
