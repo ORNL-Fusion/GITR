@@ -32,7 +32,7 @@
 #include "history.h"
 #include "hashGeom.h"
 #include "hashGeomSheath.h"
-#include "testRoutine.h"
+#include "testRoutineP.h"
 #include "testRoutineCuda.h"
 #include "boundaryInit.h"
 #include "array.h"
@@ -73,14 +73,25 @@ using namespace libconfig;
 using namespace netCDF;
 using namespace exceptions;
 using namespace netCDF::exceptions;
+
+struct test_routinePp { 
+   Particles *particles;
+    test_routinePp(Particles *_particles) : particles(_particles) {}
+
+    __device__
+    void operator()(std::size_t indx) const { 
+    particles->x[indx] = 5.0;
+}
+};
+
 int main(int argc, char **argv)
 {
   typedef std::chrono::high_resolution_clock Time;
   typedef std::chrono::duration<float> fsec;
   auto GITRstart_clock = Time::now();
- 
+  int ppn=1; 
   #if USE_MPI > 0
-    int ppn = 4;
+    ppn = 4;
     //int np = 1;
     // Initialize the MPI environment
     MPI_Init(&argc,&argv);
@@ -111,7 +122,7 @@ int main(int argc, char **argv)
     }
   }
     
-    #if USE_MPI > 0
+  #if USE_MPI > 0
     // Get the number of processes
     int world_size;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -161,6 +172,8 @@ int main(int argc, char **argv)
   }
   // show memory usage of GPU
   #if USE_CUDA 
+  if(world_rank == 0)
+  {
     size_t free_byte ;
     size_t total_byte ;
     cudaError_t    cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
@@ -181,6 +194,7 @@ int main(int argc, char **argv)
     int nDevices;
     int nThreads;
     cudaGetDeviceCount(&nDevices);
+    std::cout << "number of devices gotten " << nDevices << std::endl;
     for (int i = 0; i < nDevices; i++) {
       cudaDeviceProp prop;
       cudaGetDeviceProperties(&prop, i);
@@ -195,7 +209,8 @@ int main(int argc, char **argv)
       printf("  Total number of threads: %d\n", prop.maxThreadsPerMultiProcessor);
       nThreads = prop.maxThreadsPerMultiProcessor;
       }
-  #endif 
+  }  
+  #endif
   #if USE_BOOST > 0
     std::string output_folder="output";
     //Output
@@ -373,7 +388,7 @@ int main(int argc, char **argv)
   auto surfaces = new Surfaces(nSurfaces,nEdist,nAdist);
   surfaces->setSurface(nEdist,E0dist,Edist,nAdist,A0dist,Adist);
   
-  #if USE_MPI > 0
+  //#if USE_MPI > 0
     //Arrays used for reduction at end of sim
     sim::Array<float> grossDeposition(nSurfaces,0.0);
     sim::Array<float> grossErosion(nSurfaces,0.0);
@@ -384,7 +399,7 @@ int main(int argc, char **argv)
     sim::Array<float> aveSputtYld(nSurfaces,0.0);
     sim::Array<int> sputtYldCount(nSurfaces,0);
     sim::Array<int> sumParticlesStrike(nSurfaces,0);
-  #endif
+  //#endif
 
   int nHashes = 1;
   int nR_closeGeomTotal = 0;
@@ -3152,7 +3167,8 @@ std::cout <<" about to write ncFile_particles " << std::endl;
   #endif
 
   thrust::counting_iterator<std::size_t> particleBegin(0);  
-  thrust::counting_iterator<std::size_t> particleEnd(nParticles);
+  thrust::counting_iterator<std::size_t> particleEnd(nParticles-1);
+  thrust::counting_iterator<std::size_t> particleOne(1);
     auto randInitStart_clock = Time::now();
     
   #if PARTICLESEEDS > 0
@@ -3162,6 +3178,10 @@ std::cout <<" about to write ncFile_particles " << std::endl;
       sim::Array<std::mt19937> state1(nParticles);
     #endif
     #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
+#if USE_CUDA
+      thrust::for_each(thrust::device, particleBegin,particleEnd,
+      curandInitialize(&state1[0],0));
+#else
       std::random_device randDeviceInit; 
       std::cout << "Initializing curand seeds " << std::endl;
       //thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,
@@ -3172,6 +3192,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
            std::mt19937 s0(randDeviceInit());
            state1[i] = s0;
        }
+#endif
       #if USE_CUDA
         cudaDeviceSynchronize();
       #endif
@@ -3184,8 +3205,10 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     float moveTime = 0.0;
     float geomCheckTime = 0.0;
     float ionizTime = 0.0;
+    int* dev_tt;
+    cudaMallocManaged(&dev_tt, sizeof(int));
     int tt=0;
-    move_boris move_boris0(particleArray,tt,dt,boundaries.data(), nLines,
+    move_boris move_boris0(particleArray,dt,boundaries.data(), nLines,
         nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
         &br.front(),&bz.front(),&by.front(),
         nR_PreSheathEfield,nY_PreSheathEfield,nZ_PreSheathEfield,
@@ -3194,13 +3217,13 @@ std::cout <<" about to write ncFile_particles " << std::endl;
             nR_closeGeom_sheath,nY_closeGeom_sheath,nZ_closeGeom_sheath,n_closeGeomElements_sheath,
             &closeGeomGridr_sheath.front(),&closeGeomGridy_sheath.front(),&closeGeomGridz_sheath.front(),
             &closeGeom_sheath.front());
-     geometry_check geometry_check0(particleArray,nLines,&boundaries[0],surfaces,dt,tt,
+     geometry_check geometry_check0(particleArray,nLines,&boundaries[0],surfaces,dt,
                         nHashes,nR_closeGeom.data(),nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),
                         &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
                         &closeGeom.front(),
                         nEdist, E0dist, Edist, nAdist, A0dist, Adist);
       #if USE_SORT > 0
-        sortParticles sort0(particleArray,nP,0.001,tt,10000,pStartIndx.data(),nActiveParticlesOnRank.data(),world_rank,&state1.front());
+        sortParticles sort0(particleArray,nP,0.001,dev_tt,10000,pStartIndx.data(),nActiveParticlesOnRank.data(),world_rank,&state1.front());
       #endif
 #if SPECTROSCOPY > 0
                  spec_bin   spec_bin0(particleArray,nBins,net_nX,net_nY, net_nZ, &gridX_bins.front(),&gridY_bins.front(),
@@ -3211,7 +3234,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
                     nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),  
                     nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
                     nTemperaturesIonize, nDensitiesIonize,&gridTemperature_Ionization.front(),
-                    &gridDensity_Ionization.front(), &rateCoeff_Ionization.front(),tt);
+                    &gridDensity_Ionization.front(), &rateCoeff_Ionization.front());
 #endif
 #if USERECOMBINATION > 0
                 recombine recombine0(particleArray, dt,&state1.front(),
@@ -3219,7 +3242,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
                     nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),&te.front(),
                     nTemperaturesRecombine,nDensitiesRecombine,
                     gridTemperature_Recombination.data(),gridDensity_Recombination.data(),
-                    rateCoeff_Recombination.data(),tt);
+                    rateCoeff_Recombination.data());
 #endif
 #if USEPERPDIFFUSION > 0
                 crossFieldDiffusion crossFieldDiffusion0(particleArray,dt,&state1.front(),perpDiffusionCoeff,
@@ -3403,6 +3426,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
 #endif
 std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << testFlowVec[2]  << std::endl;
     std::cout << "Starting main loop" << particleArray->xprevious[0] << std::endl;
+    std::cout << "Starting main loop" << particleArray->xprevious[1] << std::endl;
 //Main time loop
     #if __CUDACC__
       cudaDeviceSynchronize();
@@ -3447,54 +3471,124 @@ std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << test
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
 sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
+   //int nN=10000;
+   //thrust::host_vector<int> h_vec(nN); 
+   //thrust::generate(h_vec.begin(), h_vec.end(), rand);
+   //// transfer data to the device
+   //thrust::device_vector<int> d_vec = h_vec;
+   //float *d_vec2;
+   //cudaMallocManaged(&d_vec2, 1000*sizeof(float));
+   //std::cout << "created d_vec and cmalloc, starting init " << std::endl; 
+   //for(int k=0;k<1000;k++)
+   //{   //std::cout << "k " << k << std::endl;
+   //    d_vec2[k] = 1.0f;
+   //}
+   //for(int k=0;k<1000;k++)
+   //{   //std::cout << "k " << k << std::endl;
+   //    //d_vec2[k] = 1.0f;
+   //thrust::sort(thrust::device,d_vec.begin()+world_rank*nN/world_size, d_vec.begin()+ (world_rank+1)*nN/world_size-1); // sort data on the device 
+   //}
+   //// transfer data back to host
+   //thrust::copy(d_vec.begin(), d_vec.end(), h_vec.begin());
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
     for(tt; tt< nT; tt++)
     {
+     dev_tt[0] = tt;
+     std::cout << "beginning of loop tt " << tt << std::endl;
       #if USE_SORT > 0
         thrust::for_each(thrust::device,tmpInt.begin(),tmpInt.end(),sort0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
       #endif
+      #endif
+
+      #if PARTICLE_TRACKS >0
+     std::cout << "particle tracks" << std::endl;
+        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],history0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
+      #endif
+      //std::cout << " world rank pstart nactive " << world_rank << " " << pStartIndx[world_rank] << "  " << nActiveParticlesOnRank[world_rank] << std::endl;
+      //thrust::for_each(thrust::device,particleBegin,particleOne,
+      //     test_routinePp(particleArray));
+     std::cout << "boris" << std::endl;
+
+      thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
+                move_boris0);
+      #ifdef __CUDACC__
+        cudaDeviceSynchronize();
+      #endif
+     std::cout << "check geom" << std::endl;
+      thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
+                    geometry_check0);
       #ifdef __CUDACC__
         cudaThreadSynchronize();
       #endif
 
-      #if PARTICLE_TRACKS >0
-        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],history0);
-      #endif
-
-      thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
-                move_boris0);
-            
-      thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
-                    geometry_check0);
-
       #if SPECTROSCOPY > 0
+     std::cout << "spec" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],spec_bin0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
       #endif  
 
       #if USEIONIZATION > 0
+     std::cout << "ioni" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
                 ionize0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
       #endif
 
       #if USERECOMBINATION > 0
+     std::cout << "rec" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],recombine0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
       #endif
 
       #if USEPERPDIFFUSION > 0
+     std::cout << "diff" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],crossFieldDiffusion0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
             
+     std::cout << "diff geom check" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],geometry_check0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
       #endif
 
       #if USECOULOMBCOLLISIONS > 0
+     std::cout << "coll" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],coulombCollisions0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
       #endif
       
       #if USETHERMALFORCE > 0
+     std::cout << "therm" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],thermalForce0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
       #endif
 
       #if USESURFACEMODEL > 0
+     std::cout << "surf" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],reflection0);
+      #ifdef __CUDACC__
+        cudaThreadSynchronize();
+      #endif
       #endif        
 
     }
@@ -4117,6 +4211,7 @@ ncFile.close();
 //{
 //    std::cout << "reflected/sputtered energy " << particleArray->newVelocity[i]   << std::endl;
 //}
+//#endif
 #if USE_MPI > 0
     }
 #endif
@@ -4134,5 +4229,6 @@ ncFile.close();
     fsec fstotal = GITRfinish_clock - GITRstart_clock;
     printf("Total runtime for GITR is %6.3f (secs) \n", fstotal.count());
   }
+//#endif
     return 0;
     }
