@@ -453,8 +453,9 @@ void operator()(std::size_t indx)  {
             std::normal_distribution<double> distribution(0.0,1.0);
             std::uniform_real_distribution<float> dist(0.0, 1.0);
             float n1 = distribution(state[indx]);
-            //float r1 = dist(state[indx]);
-            //float r2 = dist(state[indx]);
+            float r1 = dist(state[indx]);
+            float r2 = dist(state[indx]);
+            float r3 = dist(state[indx]);
             float xsi = dist(state[indx]);
 #endif
 #else
@@ -513,11 +514,13 @@ void operator()(std::size_t indx)  {
         BfieldR,
         BfieldZ,
         BfieldT);
-       //std::cout << "SlowdonwDir par" << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << " " << std::endl;
+        //std::cout << "SlowdonwDir par" << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << " " << std::endl;
         //std::cout << "SlowdonwDir perp" << perp_direction1[0] << " " <<perp_direction1[1] << " " << perp_direction1[2] << " " << std::endl;
         //std::cout << "SlowdonwDir perp" << perp_direction2[0] << " " << perp_direction2[1] << " " << perp_direction2[2] << " " << std::endl;
-        float drag = -1.4142*dt*nu_friction*velocityRelativeNorm;
-	float coeff_par = n1*sqrt(abs(nu_energy)*dt*vRel2);
+        float drag = -dt*nu_friction*velocityRelativeNorm;
+	//float coeff_par = n1*sqrt(0.5*abs(nu_energy)*dt*vRel2);
+	int plumin3 = 2*floor(r3+0.5) - 1;
+	float coeff_par = plumin3*sqrt(0.5*abs(nu_energy)*dt*vRel2);
         //float coeff_par = 1.0;//+ n1*sqrt(nu_parallel*dt);
         //float coeff_par = 1.0 - nu_friction*dt;
 	//int plumin1 = 2*floor(r1+0.5) - 1;
@@ -527,9 +530,22 @@ void operator()(std::size_t indx)  {
         float coeff_perp1 = cosXsi*sqrt(nu_deflection*dt*0.5*vRel2);
         float coeff_perp2 = sinXsi*sqrt(nu_deflection*dt*0.5*vRel2);
 	//std::cout << "cosXsi and sinXsi " << cosXsi << " " << sinXsi << std::endl;
-		velocityCollisions[0] = (drag + coeff_par)*parallel_direction[0] + coeff_perp1*perp_direction1[0] + coeff_perp2*perp_direction2[0];
-		velocityCollisions[1] = (drag + coeff_par)*parallel_direction[1] + coeff_perp1*perp_direction1[1] + coeff_perp2*perp_direction2[1];
-		velocityCollisions[2] = (drag + coeff_par)*parallel_direction[2] + coeff_perp1*perp_direction1[2] + coeff_perp2*perp_direction2[2];
+	////ALL COULOMB COLLISION OPERATORS///
+	velocityCollisions[0] = (drag + coeff_par)*parallel_direction[0] + coeff_perp1*perp_direction1[0] + coeff_perp2*perp_direction2[0];
+	velocityCollisions[1] = (drag + coeff_par)*parallel_direction[1] + coeff_perp1*perp_direction1[1] + coeff_perp2*perp_direction2[1];
+	velocityCollisions[2] = (drag + coeff_par)*parallel_direction[2] + coeff_perp1*perp_direction1[2] + coeff_perp2*perp_direction2[2];
+	////ALL COULOMB COLLISION OPERATORS///
+	//velocityCollisions[0] = (drag*parallel_direction[0] + coeff_perp1*perp_direction1[0] + coeff_perp2*perp_direction2[0]);
+	//velocityCollisions[1] = (drag*parallel_direction[1] + coeff_perp1*perp_direction1[1] + coeff_perp2*perp_direction2[1]);
+	//velocityCollisions[2] = (drag*parallel_direction[2] + coeff_perp1*perp_direction1[2] + coeff_perp2*perp_direction2[2]);
+        //float velocityColl = vectorNorm(velocityCollisions);
+	//velocityCollisions[0] = coeff_par*velocityCollisions[0]/velocityColl;
+	//velocityCollisions[1] = coeff_par*velocityCollisions[1]/velocityColl;
+	//velocityCollisions[2] = coeff_par*velocityCollisions[2]/velocityColl;
+        ////HEATING ONLY //////	
+	//velocityCollisions[0] = (coeff_par)*parallel_direction[0];
+	//velocityCollisions[1] = (coeff_par)*parallel_direction[1];
+	//velocityCollisions[2] = (coeff_par)*parallel_direction[2];
         //float velocityCollisionsNorm = vectorNorm(velocityCollisions);
         //vUpdate[0] = velocityRelativeNorm*velocityCollisions[0] + flowVelocity[0];    
         //vUpdate[1] = velocityRelativeNorm*velocityCollisions[1] + flowVelocity[1];    
