@@ -9,9 +9,12 @@
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
 
-#include "Particle.h"
-#include <cmath>
-#include <math.h>
+#include "Particles.h"
+#include "Boundary.h"
+#include "Surfaces.h"
+//#include <cmath>
+
+#include "math.h"
 
 #ifdef __CUDACC__
 #include <thrust/random.h>
@@ -19,7 +22,48 @@
 #include <random>
 #include <stdlib.h>
 #endif
-
+CUDA_CALLABLE_MEMBER
+void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNormalVector[],float x,float y){
+  #if USE3DTETGEOM > 0
+           float norm_normal = boundaryVector[wallIndex].plane_norm; 
+            surfaceNormalVector[0] = boundaryVector[wallIndex].a/norm_normal;
+            surfaceNormalVector[1] = boundaryVector[wallIndex].b/norm_normal;
+            
+            surfaceNormalVector[2] = boundaryVector[wallIndex].c/norm_normal;
+  #else
+            float tol = 1e12;
+            float norm_normal = 0.0f;
+            if (boundaryVector[wallIndex].slope_dzdx == 0.0)
+                {
+                 surfaceNormalVector[0] = 0.0f;
+                 surfaceNormalVector[1] = 0.0f;
+                 surfaceNormalVector[2] = 1.0f;
+                }
+            else if (fabsf(boundaryVector[wallIndex].slope_dzdx)>= 0.75f*tol)
+                {
+                    surfaceNormalVector[0] = 1.0f;
+                    surfaceNormalVector[1] = 0.0f;
+                    surfaceNormalVector[2] = 0.0f;
+                }
+            else
+                {
+                    surfaceNormalVector[0] = 1.0f;
+                    surfaceNormalVector[1] = 0.0f;
+                    surfaceNormalVector[2] = -1.0f / (boundaryVector[wallIndex].slope_dzdx);
+            norm_normal = sqrt(surfaceNormalVector[2]*surfaceNormalVector[2] + 1.0); 
+            surfaceNormalVector[0] = surfaceNormalVector[0]/norm_normal;
+            surfaceNormalVector[1] = surfaceNormalVector[1]/norm_normal;
+            
+            surfaceNormalVector[2] = surfaceNormalVector[2]/norm_normal;
+                }
+#if USECYLSYMM > 0 
+            float theta = atan2f(y,x);
+            float Sr = surfaceNormalVector[0];
+            surfaceNormalVector[0] = cosf(theta)*Sr;
+            surfaceNormalVector[1] = sinf(theta)*Sr;
+#endif            
+#endif
+}
 CUDA_CALLABLE_MEMBER
 double screeningLength ( double Zprojectile, double Ztarget ) {
 	double bohrRadius = 5.29177e-11;
@@ -31,33 +75,32 @@ double screeningLength ( double Zprojectile, double Ztarget ) {
 }
 
 CUDA_CALLABLE_MEMBER
-double stoppingPower (Particle p, double Mtarget, double Ztarget, double screenLength) {
+double stoppingPower (Particles * particles,int indx, double Mtarget, double Ztarget, double screenLength) {
 	        double E0;
-                double Q = 1.60217662e-19;
+            double Q = 1.60217662e-19;
 		double ke2 = 14.4e-10;
 		double reducedEnergy;
 	double stoppingPower;
 
-	E0 = 0.5*p.amu*1.6737236e-27*(p.vx*p.vx + p.vy*p.vy+ p.vz*p.vz)/1.60217662e-19;
-	reducedEnergy = E0*(Mtarget/(p.amu+Mtarget))*(screenLength/(p.Z*Ztarget*ke2));
+	E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/Q;
+	reducedEnergy = E0*(Mtarget/(particles->amu[indx]+Mtarget))*(screenLength/(particles->Z[indx]*Ztarget*ke2));
 	stoppingPower = 0.5*log(1.0 + 1.2288*reducedEnergy)/(reducedEnergy + 0.1728*sqrt(reducedEnergy) + 0.008*pow(reducedEnergy, 0.1504));
 
 	return stoppingPower;	
 }
 
 struct erosion { 
-
+    Particles *particles;
     const double dt;
 
-    erosion(double _dt) : dt(_dt) {} 
+    erosion(Particles *_particles, double _dt) : particles(_particles), dt(_dt) {} 
 
 CUDA_CALLABLE_MEMBER_DEVICE    
-void operator()(Particle &p) const { 
+void operator()(std::size_t indx) const { 
 	double screenLength;
 	double stopPower;
 	double q = 18.6006;
 	double lambda = 2.2697;
-    float eps =0.0; 
     double mu = 3.1273;
 	double Eth = 24.9885;
 	double Y0;
@@ -66,9 +109,9 @@ void operator()(Particle &p) const {
 	double term;
 	double E0;
 
-	screenLength = screeningLength(p.Z, Ztarget);
-	stopPower = stoppingPower(p, Mtarget, Ztarget, screenLength); 
-	E0 = 0.5*p.amu*1.6737236e-27*(p.vx*p.vx + p.vy*p.vy+ p.vz*p.vz)/1.60217662e-19;
+	screenLength = screeningLength(particles->Z[indx], Ztarget);
+	stopPower = stoppingPower(particles,indx, Mtarget, Ztarget, screenLength); 
+	E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/1.60217662e-19;
 	term = pow((E0/Eth - 1),mu);
 	Y0 = q*stopPower*term/(lambda + term);
     	}
@@ -76,56 +119,108 @@ void operator()(Particle &p) const {
 };
 
 struct reflection {
-
+    Particles * particles;
     const double dt;
     int nLines;
     Boundary * boundaryVector;
-
-    reflection(double _dt, int _nLines,Boundary * _boundaryVector) : dt(_dt),nLines(_nLines), boundaryVector(_boundaryVector) {}
-
-CUDA_CALLABLE_MEMBER_DEVICE
-void operator()(Particle &p) const {
-            if(p.hitWall == 1.0)
-        	{
-			float reducedEnergyMultiplier = 5e-7;//for W on W
-            float E0 = 0.0;
-            float reducedEnergy = 0.0;
-			float a1 = -3.685;
-			float a2 = 0.0278;
-			float a3 = 7.825e-5;
-			float a4 = -1.109;
-			float Rn = 0.0;
-			float Re = 0.0;
-            float thetaImpact = 0.0;
-            float thetaAzimuthal = 0.0;
-            float particleTrackVector[3] = {0.0,0.0,0.0};
-            float surfaceNormalVector[3] = {0.0,0.0,0.0};
-            float surfaceNormalVectorRotated[3] = {0.0,0.0,0.0};
-            float surfaceNormalVectorIn[3] = {0.0,0.0,0.0};
-            float norm_part = 0.0;
-            float norm_normal = 0.0;
-            float partDotNormal = 0.0;
-            float signPartDotNormal = 0.0;
-		
-		        E0 = 0.5*p.amu*1.6737236e-27*(p.vx*p.vx + p.vy*p.vy+ p.vz*p.vz)/1.60217662e-19;
-			reducedEnergy = E0*reducedEnergyMultiplier;
-            particleTrackVector[0] = p.vx;
-            particleTrackVector[1] = p.vy;
-            particleTrackVector[2] = p.vz;
-            //surfaceNormalVector[0] = -boundaryVector[p.wallIndex].slope_dzdx;
-            surfaceNormalVector[1] = 0.0;
-            surfaceNormalVector[2] = 1.0;
-            //std::cout << "velocities " << p.vx << " " << p.vy << " " << p.vz << std::endl;
-            //std::cout << "surface norm " << surfaceNormalVector[0] << " " << surfaceNormalVector[1] << " " << surfaceNormalVector[2] << std::endl;
-#if USECYLSYMM > 0
-            thetaAzimuthal = atan2(p.y,p.x);   
-            surfaceNormalVectorRotated[0] = cos(thetaAzimuthal)*surfaceNormalVector[0];
-            surfaceNormalVectorRotated[1] = sin(thetaAzimuthal)*surfaceNormalVector[0];
+    Surfaces * surfaces;
+    int nE_sputtRefCoeff;
+    int nA_sputtRefCoeff;
+    float* A_sputtRefCoeff;
+    float* Elog_sputtRefCoeff;
+    float* spyl_surfaceModel;
+    float* rfyl_surfaceModel;
+    int nE_sputtRefDistOut; 
+    int nE_sputtRefDistOutRef; 
+    int nA_sputtRefDistOut;
+    int nE_sputtRefDistIn;
+    int nA_sputtRefDistIn;
+    float* E_sputtRefDistIn;
+    float* A_sputtRefDistIn;
+    float* E_sputtRefDistOut;
+    float* E_sputtRefDistOutRef;
+    float* A_sputtRefDistOut;
+    float* energyDistGrid01;
+    float* energyDistGrid01Ref;
+    float* angleDistGrid01;
+    float* EDist_CDF_Y_regrid;
+    float* ADist_CDF_Y_regrid;
+    float* EDist_CDF_R_regrid;
+    float* ADist_CDF_R_regrid;
+    int nEdist;
+    float E0dist;
+    float Edist;
+    int nAdist;
+    float A0dist;
+    float Adist;
+#if __CUDACC__
+        curandState *state;
 #else
-            surfaceNormalVectorRotated[0] = surfaceNormalVector[0];
-            surfaceNormalVectorRotated[1] = surfaceNormalVector[1];
+        std::mt19937 *state;
 #endif
-            surfaceNormalVectorRotated[2] = surfaceNormalVector[2];
+    reflection(Particles* _particles, double _dt,
+#if __CUDACC__
+                            curandState *_state,
+#else
+                            std::mt19937 *_state,
+#endif
+            int _nLines,Boundary * _boundaryVector,
+            Surfaces * _surfaces,
+    int _nE_sputtRefCoeff,
+    int _nA_sputtRefCoeff,
+    float* _A_sputtRefCoeff,
+    float* _Elog_sputtRefCoeff,
+    float* _spyl_surfaceModel,
+    float* _rfyl_surfaceModel,
+    int _nE_sputtRefDistOut,
+    int _nE_sputtRefDistOutRef,
+    int _nA_sputtRefDistOut,
+    int _nE_sputtRefDistIn,
+    int _nA_sputtRefDistIn,
+    float* _E_sputtRefDistIn,
+    float* _A_sputtRefDistIn,
+    float* _E_sputtRefDistOut,
+    float* _E_sputtRefDistOutRef,
+    float* _A_sputtRefDistOut,
+    float* _energyDistGrid01,
+    float* _energyDistGrid01Ref,
+    float* _angleDistGrid01,
+    float* _EDist_CDF_Y_regrid,
+    float* _ADist_CDF_Y_regrid, 
+    float* _EDist_CDF_R_regrid,
+    float* _ADist_CDF_R_regrid,
+    int _nEdist,
+    float _E0dist,
+    float _Edist,
+    int _nAdist,
+    float _A0dist,
+    float _Adist) :
+    particles(_particles), dt(_dt), state(_state),nLines(_nLines),boundaryVector(_boundaryVector),
+    surfaces(_surfaces),
+    nE_sputtRefCoeff(_nE_sputtRefCoeff),nA_sputtRefCoeff(_nA_sputtRefCoeff),
+    A_sputtRefCoeff(_A_sputtRefCoeff),
+    Elog_sputtRefCoeff(_Elog_sputtRefCoeff),
+    spyl_surfaceModel(_spyl_surfaceModel),
+    rfyl_surfaceModel(_rfyl_surfaceModel),
+    nE_sputtRefDistOut(_nE_sputtRefDistOut),
+    nE_sputtRefDistOutRef(_nE_sputtRefDistOutRef),
+    nA_sputtRefDistOut(_nA_sputtRefDistOut),
+    nE_sputtRefDistIn(_nE_sputtRefDistIn),
+    nA_sputtRefDistIn(_nA_sputtRefDistIn),
+    E_sputtRefDistIn(_E_sputtRefDistIn),
+    A_sputtRefDistIn(_A_sputtRefDistIn),
+    E_sputtRefDistOut(_E_sputtRefDistOut),
+    E_sputtRefDistOutRef(_E_sputtRefDistOutRef),
+    A_sputtRefDistOut(_A_sputtRefDistOut),
+    energyDistGrid01(_energyDistGrid01),
+    energyDistGrid01Ref(_energyDistGrid01Ref),
+    angleDistGrid01(_angleDistGrid01),
+    EDist_CDF_Y_regrid(_EDist_CDF_Y_regrid),
+    ADist_CDF_Y_regrid(_ADist_CDF_Y_regrid),
+    EDist_CDF_R_regrid(_EDist_CDF_R_regrid),
+    ADist_CDF_R_regrid(_ADist_CDF_R_regrid),
+    nEdist(_nEdist), E0dist(_E0dist),Edist(_Edist),
+    nAdist(_nAdist), A0dist(_A0dist),Adist(_Adist) {}
 
 CUDA_CALLABLE_MEMBER_DEVICE
 void operator()(std::size_t indx) const {
@@ -180,21 +275,49 @@ void operator()(std::size_t indx) const {
             particleTrackVector[1] = particleTrackVector[1]/norm_part;
             particleTrackVector[2] = particleTrackVector[2]/norm_part;
 
-            partDotNormal = particleTrackVector[0]*surfaceNormalVectorRotated[0] + particleTrackVector[1]*surfaceNormalVectorRotated[1] + particleTrackVector[2]*surfaceNormalVectorRotated[2];
+            partDotNormal = vectorDotProduct(particleTrackVector,surfaceNormalVector);
             thetaImpact = acos(partDotNormal);
+            if (thetaImpact > 3.14159265359*0.5)
+            {
+              thetaImpact = abs(thetaImpact - (3.14159265359));
+            }
+            thetaImpact = thetaImpact*180.0/3.14159265359;
             signPartDotNormal = sgn(partDotNormal);
-            surfaceNormalVectorRotated[0] = -surfaceNormalVectorRotated[0]*signPartDotNormal;
-            surfaceNormalVectorRotated[1] = -surfaceNormalVectorRotated[1]*signPartDotNormal;
-            surfaceNormalVectorRotated[2] = -surfaceNormalVectorRotated[2]*signPartDotNormal;
-
-            Rn = exp(a1*pow(reducedEnergy,a2))/(1 + exp(a3*pow(reducedEnergy,a4)));
-            //std::cout << "calculated Rn " << Rn << std::endl;
-            Rn = 0.25;
-#if PARTICLESEEDS > 0
-#ifdef __CUDACC__
-                curandState tmpState;
-                float r7 = curand_uniform(&p.streams[6]);
-#else
+            if(E0 == 0.0)
+            { thetaImpact = 0.0;}
+            if( boundaryVector[wallHit].Z > 0.0)
+            {
+                Y0 = interp2d(thetaImpact,log10(E0),nA_sputtRefCoeff,
+                    nE_sputtRefCoeff,A_sputtRefCoeff,
+                    Elog_sputtRefCoeff,spyl_surfaceModel);
+                R0 = interp2d(thetaImpact,log10(E0),nA_sputtRefCoeff, 
+                    nE_sputtRefCoeff,A_sputtRefCoeff,
+                    Elog_sputtRefCoeff,rfyl_surfaceModel);
+            }
+            else
+            {
+                Y0 = 0.0;
+                R0 = 0.0;
+            }
+            //std::cout << "Particle " << indx << " struck surface with energy and angle " << E0 << " " << thetaImpact << std::endl;
+            //std::cout << " resulting in Y0 and R0 of " << Y0 << " " << R0 << std::endl;
+            totalYR=Y0+R0;
+            //if(particles->test[indx] == 0.0)
+            //{
+            //    particles->test[indx] = 1.0;
+            //    particles->test0[indx] = E0;
+            //    particles->test1[indx] = thetaImpact;
+            //    particles->test2[indx] = Y0;
+            //    particles->test3[indx] = R0;
+            //}
+            //std::cout << "Energy angle yield " << E0 << " " << thetaImpact << " " << Y0 << std::endl; 
+            #if PARTICLESEEDS > 0
+              #ifdef __CUDACC__
+                float r7 = curand_uniform(&state[indx]);
+                float r8 = curand_uniform(&state[indx]);
+                float r9 = curand_uniform(&state[indx]);
+                float r10 = curand_uniform(&state[indx]);
+              #else
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
                 float r7 = dist(state[indx]);
                 float r8 = dist(state[indx]);
@@ -415,10 +538,9 @@ void operator()(std::size_t indx) const {
             }
                 else
                 {
-                    //std::cout << " no reflection" << std::endl;
-                    p.hitWall = 2.0;
+                    particles->hitWall[indx] = 2.0;
                 }
-		}
-	}
+                  }
+}
 };
 #endif

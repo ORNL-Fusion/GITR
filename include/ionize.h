@@ -67,43 +67,61 @@ struct ionize {
 	//if(particlesPointer->hitWall[indx] == 0.0){        
         //std::cout << "interpolating rate coeff at "<< particlesPointer->x[indx] << " " << particlesPointer->y[indx] << " " << particlesPointer->z[indx] << std::endl;
         float tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesIonize,nDensitiesIonize,gridTemperature_Ionization,gridDensity_Ionization,rateCoeff_Ionization );	
-    float P1 = 1-expf(-dt/tion);
-    //std::cout << "tion " << tion << std::endl;
+    //float PiP = particlesPointer->PionizationPrevious[indx];
+    float P = expf(-dt/tion);
+    //particlesPointer->PionizationPrevious[indx] = PiP*P;
+    float P1 = 1.0-P;
+    //std::cout << "tion P P1 " << tion << " " << P << " " << P1 << " " << PiP<< std::endl;
     if(particlesPointer->hitWall[indx] == 0.0)
-                        {
+    {
         //std::cout << "calculating r1 " << std::endl;i
 #if PARTICLESEEDS > 0
 	#ifdef __CUDACC__
-	float r1 = curand_uniform(&particlesPointer->streams[indx]);
+	  //float r1 = 0.5;//curand_uniform(&particlesPointer->streams[indx]);
+      float r1 = curand_uniform(&state[indx]);
 	#else
 	std::uniform_real_distribution<float> dist(0.0, 1.0);
-	float r1=dist(particlesPointer->streams[indx]);
+	float r1=dist(state[indx]);
 	//particlesPointer->test[indx] = r1;
         //std::cout << " r1 " << r1 << std::endl;
     #endif
 #else
-#if __CUDACC__
-    float r1 = curand_uniform(state);
-#else
-        std::uniform_real_distribution<float> dist(0.0, 1.0);
-            float r1=dist(state[0]);
-#endif
+  #if __CUDACC__
+    curandState localState = state[thread_id];
+    float r1 = curand_uniform(&localState);
+    state[thread_id] = localState;
+  #else
+    std::uniform_real_distribution<float> dist(0.0, 1.0);
+    float r1=dist(state[0]);
+  #endif
 #endif
     //if(tt == 722)
     //{
-      //  std::cout << "ionization is being debugged at time step " << tt << std::endl;
+      //std::cout << "r1 " << r1 << " " << P1 << std::endl;
 		//particlesPointer->charge[indx] = particlesPointer->charge[indx]+1;
-        
+       particlesPointer->test[indx] = r1; 
+       //particlesPointer->test0[indx] = P1; 
+       //particlesPointer->test1[indx] = r1; 
 	    if(r1 <= P1)
 	    {
-		particlesPointer->charge[indx] = particlesPointer->charge[indx]+1;
+		  particlesPointer->charge[indx] = particlesPointer->charge[indx]+1;}
+          particlesPointer->PionizationPrevious[indx] = 1.0;
         //std::cout << "Particle " << indx << " ionized at step " << tt << std::endl;
+       if(particlesPointer->firstIonizationZ[indx] == 0.0)
+       {
+           particlesPointer->firstIonizationZ[indx] = particlesPointer->z[indx];
+       }
 	    }
-        
-        
+        else
+        {
+       if(particlesPointer->firstIonizationZ[indx] == 0.0)
+       {
+           particlesPointer->firstIonizationT[indx] = particlesPointer->firstIonizationT[indx] + dt;
+       }
+
+        } 
        
     //} 
-	}	
 
 	} 
 };

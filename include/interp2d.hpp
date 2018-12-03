@@ -11,80 +11,35 @@
 
 #include <thrust/device_vector.h>
 #include <vector>
-#include <math.h>
-using namespace std;
+#include "math.h"
+//using namespace std;
+CUDA_CALLABLE_MEMBER
+
+float interp2d ( float x, float z,int nx, int nz,
+    float* gridx,float* gridz,float* data );
 
 CUDA_CALLABLE_MEMBER
 
 float interp2dCombined ( float x, float y, float z,int nx, int nz,
-    float* gridx,float* gridz,float* data ) {
-    
-    float fxz = 0.0;
-    
-    if(nx*nz == 1)
-    {
-        fxz = data[0];
-    }
-    else{
-#if USECYLSYMM > 0
-    float dim1 = sqrt(x*x + y*y);
-#else
-    float dim1 = x;
-#endif    
-    float d_dim1 = gridx[1] - gridx[0];
-    float dz = gridz[1] - gridz[0];
-    int i = floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
-    int j = floor((z - gridz[0])/dz);
+    float* gridx,float* gridz,float* data );
+CUDA_CALLABLE_MEMBER
 
-    float interp_value = data[i + j*nx];
-
-    float fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
-    float fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
-    fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
-    }
-
-    return fxz;
-}
-
+float interp3d ( float x, float y, float z,int nx,int ny, int nz,
+    float* gridx,float* gridy, float* gridz,float* data );
+CUDA_CALLABLE_MEMBER
+void interp3dVector (float* field, float x, float y, float z,int nx,int ny, int nz,
+        float* gridx,float* gridy,float* gridz,float* datar, float* dataz, float* datat );
 CUDA_CALLABLE_MEMBER
 void interp2dVector (float* field, float x, float y, float z,int nx, int nz,
-float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {
-
-   float Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar);
-   float At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat);
-   field[2] = interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz);
-#if USECYLSYMM > 0
-            float theta = atan2f(y,x);   
-            field[0] = cosf(theta)*Ar - sinf(theta)*At;
-            field[1] = sinf(theta)*Ar + cosf(theta)*At;
-#else
-            field[0] = Ar;
-            field[1] = At;
+float* gridx,float* gridz,float* datar, float* dataz, float* datat );
+CUDA_CALLABLE_MEMBER
+void interpFieldAlignedVector (float* field, float x, float y, float z,int nx, int nz,
+        float* gridx,float* gridz,float* datar, float* dataz, float* datat,
+        int nxB, int nzB, float* gridxB,float* gridzB,float* datarB,float* datazB, float* datatB);
+CUDA_CALLABLE_MEMBER
+float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data,int &lowInd);
+CUDA_CALLABLE_MEMBER
+float interp1dUnstructured2(float samplePoint,int nx, float *xdata, float* data);
+CUDA_CALLABLE_MEMBER
+float interp2dUnstructured(float x,float y,int nx,int ny, float *xgrid,float *ygrid, float* data);
 #endif
-
-}
-
-float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data)
-{
-    int done = 0;
-    int low_index = 0;
-    float interpolated_value = 0.0;
-
-    for(int i=0;i<nx;i++)
-    {
-        if(done == 0)
-        {
-            if(samplePoint < data[i])
-            {
-                done = 1;
-                low_index = i-1;
-            }   
-        }
-    }
-    interpolated_value =
-        ((data[low_index+1] - samplePoint)*low_index*max_x/nx
-        + (samplePoint - data[low_index])*(low_index+1)*max_x/nx)/(data[low_index+1]- data[low_index]);
-    return interpolated_value;
-}
-#endif
-

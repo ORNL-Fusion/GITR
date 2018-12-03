@@ -9,12 +9,13 @@
 
 #include "Particles.h"
 #include "Boundary.h"
-#include <math.h>
+#include "math.h"
 #include <vector>
 
 struct history { 
     Particles *particlesPointer;
-    int tt;
+    int& tt;
+    int nT;
     int subSampleFac;
     int nP;
     float *histX;
@@ -25,6 +26,7 @@ struct history {
     float *histvy;
     float *histvz;
     float *histcharge;
+    float *histweight;
 
     history(Particles *_particlesPointer, int& _tt, int _nT,int _subSampleFac, int _nP, float *_histX,float *_histY,float *_histZ,
           float *_histv,float *_histvx,float *_histvy,float *_histvz, float * _histcharge, float * _histweight) : 
@@ -33,7 +35,8 @@ struct history {
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const 
-    {
+    {  
+       //std::cout << "tt subsamplefac indx, nT " << tt << " "<< subSampleFac << " " << indx << " " << nT << std::endl;
        if (tt % subSampleFac == 0)
        {
        int indexP = particlesPointer->index[indx];
