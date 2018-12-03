@@ -12,18 +12,35 @@
 #include "math.h"
 #include <vector>
 #if USE_CUDA >0
-__device__ double atomicAdd(double* address, double val)
+#if __CUDA_ARCH__ < 600
+__device__ double atomicAdd1(double* address, double val)
 {
-   unsigned long long int* address_as_ull =
-                                              (unsigned long long int*)address;
-   unsigned long long int old = *address_as_ull, assumed;
-   do {
-         assumed = old;
-         old = atomicCAS(address_as_ull, assumed, 
-               __double_as_longlong(val +                                                 __longlong_as_double(assumed)));
-      } while (assumed != old);
-            return __longlong_as_double(old);
-}
+    unsigned long long int* address_as_ull =
+                        (unsigned long long int*)address;
+    unsigned long long int old = *address_as_ull, assumed;
+      do {
+             assumed = old;
+             old = atomicCAS(address_as_ull, assumed,
+                            __double_as_longlong(val + 
+                                __longlong_as_double(assumed)));
+                 // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
+                      } while (assumed != old);
+                 
+                          return __longlong_as_double(old);
+                          }
+                          #endif
+//__device__ double atomicAdd(double* address, double val)
+//{
+//   unsigned long long int* address_as_ull =
+//                                              (unsigned long long int*)address;
+//   unsigned long long int old = *address_as_ull, assumed;
+//   do {
+//         assumed = old;
+//         old = atomicCAS(address_as_ull, assumed, 
+//               __double_as_longlong(val +                                                 __longlong_as_double(assumed)));
+//      } while (assumed != old);
+//            return __longlong_as_double(old);
+//}
 #endif
 
 struct spec_bin { 
@@ -102,10 +119,10 @@ void operator()(std::size_t indx) const {
               }
               */
                //for 3d
-              atomicAdd(&bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX+ indx_X], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
+              atomicAdd1(&bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX+ indx_X], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
               if(charge < nBins)
               {
-                atomicAdd(&bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY + indx_Y*nX+ indx_X], 1.0*specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
+                atomicAdd1(&bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY + indx_Y*nX+ indx_X], 1.0*specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
               }
 
 #else

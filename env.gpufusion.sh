@@ -1,9 +1,9 @@
 #!/bin/bash
 module load libconfig/gcc/64/1.5 
 module load git
-module load mpich/ge/gcc/64/3.1
+module load mpich
 #module load cuda75/toolkit/7.5.18
-module load cuda70/toolkit/7.0.28 
+module load cuda91 
 module load slurm
 #module load netcdf4
 PATH=$PATH:/home/tqd/code/netcdfBuild/bin:/home/tqd/code/netcdfcxx/bin
@@ -25,6 +25,7 @@ export Boost_LIBRARY_DIRS=~/code/boost/lib
 export BOOST_ROOT=~/code/boost
 export BOOST_INCLUDEDIR=~/code/boost/include
 export BOOST_LIBRARYDIR=~/code/boost/lib
+export MPI_C_LIBRARIES=/usr/mpi/gcc/openmpi-1.8.4/lib64
 
 PYTHONPATH=$PYTHONPATH:/home/tqd/gitr/python/
 export PYTHONPATH=$PYTHONPATH:/home/tqd/code/netcdf4-python/build
