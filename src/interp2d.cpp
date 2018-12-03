@@ -211,8 +211,8 @@ int nxB, int nzB, float* gridxB,float* gridzB,float* datarB,float* datazB, float
    B_unit[0] = B[0]/Bmag;
    B_unit[1] = B[1]/Bmag;
    B_unit[2] = B[2]/Bmag;
-   std::cout << " Ar and Bunit " << Ar << " " << B_unit[0] << " " <<
-                " " << B_unit[1] << " " << B_unit[2] << std::endl; 
+   //std::cout << " Ar and Bunit " << Ar << " " << B_unit[0] << " " <<
+   //             " " << B_unit[1] << " " << B_unit[2] << std::endl; 
    field[0] = Ar*B_unit[0];
    field[1] = Ar*B_unit[1];
    field[2] = Ar*B_unit[2];

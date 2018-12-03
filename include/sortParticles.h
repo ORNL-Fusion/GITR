@@ -22,7 +22,8 @@
 #ifdef __GNUC__ 
 #include <stdlib.h>
 #endif
-
+#ifdef USE_CUDA
+#else
 struct ordering {
     bool operator ()(thrust::pair<int, float> const& a,thrust::pair<int, float> const& b) {
             return (b.second) < (a.second);
@@ -142,5 +143,5 @@ struct sortParticles {
     }
     } 
 };
-
+#endif
 #endif
