@@ -380,6 +380,8 @@ int readFileDim(const std::string& fileName,const std::string& varName)
 }
 int importLibConfig(libconfig::Config &cfg, std::string filepath)
 {
+    std::cout << "In libconfig import "<< filepath << std::endl;
+    std::cout << "In libconfig import "<< filepath.c_str() << std::endl;
     try
     {
          cfg.readFile(filepath.c_str());
@@ -395,6 +397,8 @@ int importLibConfig(libconfig::Config &cfg, std::string filepath)
                    << " - " << pex.getError() << std::endl;
          return(EXIT_FAILURE);
     }
+    std::cout << "Finished libconfig import  "<< filepath.c_str() << std::endl;
+    return 0;
 }
 int importVectorFieldNs(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int &nR, int &nY,int &nZ,std::string &fileToRead)
 {
@@ -412,6 +416,7 @@ int importVectorFieldNs(libconfig::Config &cfg,std::string input_path,int interp
       nY = getDimFromFile(cfg,input_path+fileToRead,fieldCfgString,"gridNyString");
     } 
   }
+  return 0;
 }
 int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int nR, int nY,int nZ,float &gridR,float &gridY,float &gridZ,float &r, float &y,float &z,std::string &fileToRead)
 {
@@ -434,7 +439,8 @@ int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDi
       getVarFromFile(cfg,input_path+fileToRead,fieldCfgString,"rString",r);
       getVarFromFile(cfg,input_path+fileToRead,fieldCfgString,"yString",y);
       getVarFromFile(cfg,input_path+fileToRead,fieldCfgString,"zString",z);
-  } 
+  }
+  return 0;
 }
 int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries)
 {

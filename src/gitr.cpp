@@ -147,6 +147,7 @@ int main(int argc, char **argv)
     importLibConfig(cfg,input_path+"gitrInput.cfg");
     
     // Parse and read geometry file
+    std::cout << "Open geometry file" << std::endl;
     std::string geomFile; 
     getVariable(cfg,"geometry.fileString",geomFile);
     std::cout << "Open geometry file " << input_path+geomFile << std::endl; 
