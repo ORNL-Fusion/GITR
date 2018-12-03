@@ -1,0 +1,165 @@
+Program Name Is: /Users/tyounkin/Code/gitr2/build/GITR
+No Extra Command Line Argument Passed Other Than Program NameHello world from processor Timothys-MacBook-Pro.local, rank 0 out of 2 processors
+Program Name Is: /Users/tyounkin/Code/gitr2/build/GITR
+No Extra Command Line Argument Passed Other Than Program NameHello world from processor Timothys-MacBook-Pro.local, rank 1 out of 2 processors
+Open configuration file input/gitrInput.cfg 
+geometry.fileString = gitrGeometry.cfg
+Open geometry file input/gitrGeometry.cfg
+Successfully staged input and geometry file 
+Checking compatibility of compile flags with input file 
+flags.USEIONIZATION = 0
+flags.USERECOMBINATION = 0
+flags.USEPERPDIFFUSION = 0
+flags.USECOULOMBCOLLISIONS = 1
+flags.USETHERMALFORCE = 0
+flags.USESURFACEMODEL = 0
+flags.USESHEATHEFIELD = 0
+flags.BIASED_SURFACE = 0
+flags.USEPRESHEATHEFIELD = 0
+flags.BFIELD_INTERP = 0
+flags.LC_INTERP = 0
+flags.GENERATE_LC = 0
+flags.EFIELD_INTERP = 0
+flags.PRESHEATH_INTERP = 0
+flags.DENSITY_INTERP = 0
+flags.TEMP_INTERP = 0
+flags.FLOWV_INTERP = 0
+flags.GRADT_INTERP = 0
+flags.ODEINT = 0
+flags.FIXEDSEEDS = 0
+flags.PARTICLESEEDS = 1
+flags.GEOM_TRACE = 0
+flags.GEOM_HASH = 0
+flags.GEOM_HASH_SHEATH = 0
+flags.PARTICLE_TRACKS = 1
+flags.PARTICLE_SOURCE_SPACE = 0
+flags.PARTICLE_SOURCE_ENERGY = 0
+flags.PARTICLE_SOURCE_ANGLE = 0
+flags.PARTICLE_SOURCE_FILE = 0
+flags.SPECTROSCOPY = 0
+flags.USE3DTETGEOM = 0
+flags.USECYLSYMM = 0
+flags.FLUX_EA = 0
+flags.FORCE_EVAL = 0
+backgroundPlasmaProfiles.Z = 1
+backgroundPlasmaProfiles.amu = 2
+backgroundPlasmaProfiles.Bfield.r = 0
+backgroundPlasmaProfiles.Bfield.y = 0
+backgroundPlasmaProfiles.Bfield.z = 0
+node 0Bfield at 5.5 -4 0 0 0
+Just read nLines 4
+Number of Geometric Objects To Load: 4
+node 1Bfield at 5.5 -4 0 0 0
+Boundary import routine 5
+Starting Boundary Init... nSurfaces 4
+ node starting geomhash1 0
+ node and nHashes 0 1
+connectionLength.fileString = LcS.nc
+ node starting geomhash1 1
+ node and nHashes 1 1
+backgroundPlasmaProfiles.Temperature.ti = 20
+backgroundPlasmaProfiles.Temperature.te = 20
+Finished Temperature import 20
+Finished Temperature import 20
+backgroundPlasmaProfiles.Density.ni = 1e+19
+backgroundPlasmaProfiles.Density.ne = 1e+19
+Finished density import 1e+19 1e+19
+backgroundPlasmaProfiles.FlowVelocity.flowVr = 0
+backgroundPlasmaProfiles.FlowVelocity.flowVy = 0
+backgroundPlasmaProfiles.FlowVelocity.flowVz = 0
+backgroundPlasmaProfiles.gradT.gradTeR = 0
+backgroundPlasmaProfiles.gradT.gradTeY = 0
+backgroundPlasmaProfiles.gradT.gradTeZ = 0
+backgroundPlasmaProfiles.gradT.gradTiR = 0
+backgroundPlasmaProfiles.gradT.gradTiY = 0
+backgroundPlasmaProfiles.gradT.gradTiZ = 0
+thermal gradient interpolation gradTi 0 0 0 
+thermal gradient interpolation gradTi 0 0 0 
+Ionization rate coefficient file: ADAS_Rates_W.nc
+Recombination rate coefficient file: ADAS_Rates_W.nc
+Completed Boundary Init 
+Completed presheath Efield Init 
+Not using THRUST
+Number of time steps: 2 With dt = 1e-06
+Number of particles: 1000
+Completed Boundary Init 
+Completed presheath Efield Init 
+Not using THRUST
+countP 500
+countP 1000
+World rank 0 has 500 starting at 0
+countP 500
+countP 1000
+World rank 1 has 500 starting at 500
+Impurity amu Z charge: 184 74 1
+Impurity point source: 0 0 0
+Impurity point source E: 10
+Impurity point source angles phi theta: 0 0
+Starting psourcefile import 
+particle file import done
+ about to write ncFile_particles 
+Starting psourcefile import 
+particle file import done
+finished loading particle source
+ opened file 
+ added vars 
+finished loading particle source
+Tracks subsample factor imported
+pdispl and phispn 0 1500 0
+pdispl and phispn 1 1500 1500
+history array length 3000
+pdispl and phispn 0 1500 0
+pdispl and phispn 1 1500 1500
+history array length 3000
+beginning seeds
+beginning seeds
+Initializing curand seeds 
+Initializing curand seeds 
+Random Number Initialize time for node 1          is  0.012 (secs) 
+Initialize time for node 1          is  0.161 (secs) 
+Starting main loop
+Flow vNs 0 0 0
+Starting main loop0
+Random Number Initialize time for node 0          is  0.013 (secs) 
+Initialize time for node 0          is  0.162 (secs) 
+Starting main loop
+Flow vNs 0 0 0
+Starting main loop0
+ tt for final history 2
+Time taken          is  0.010 (secs) 
+Time taken per step is  0.005 (secs) 
+y pos right after loop 0.015057
+x position of first particle per node 0 0.00939291 21692.5 21692.5 21692.5 
+transit time counting 1000 0.015057
+reached gather barrier
+ tt for final history 2
+Time taken          is  0.012 (secs) 
+Time taken per step is  0.006 (secs) 
+y pos right after loop 0
+x position of first particle per node 1 0.0017141 67770.7 67770.7 67770.7 
+transit time counting 1000 0
+started gather
+reached gather barrier
+started gather
+wating after gathers
+passed barrier after gather
+wating after gathers
+passed barrier after gather
+at barrier tracks gather
+finished particle tracks gather
+Time taken for mpi reduction          is  0.003 (secs) 
+at barrier tracks gather
+finished particle tracks gather
+Number and percent of particles that hit wall 0 0
+Beginning erosion to surface counting 0
+positions.m writing 
+finished writing positions.m 
+created file 
+created dim nP 
+created dims Vector 
+added Vars 
+x0 0.015057
+closed positions opening surface 
+printing gathered data
+sqrt 0 -0
+Total runtime for GITR is  0.193 (secs) 

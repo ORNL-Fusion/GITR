@@ -127,14 +127,55 @@ void operator()(Particle &p) const {
 #endif
             surfaceNormalVectorRotated[2] = surfaceNormalVector[2];
 
-            norm_part = sqrt(particleTrackVector[0]*particleTrackVector[0] + particleTrackVector[1]*particleTrackVector[1] + particleTrackVector[2]*particleTrackVector[2]);
-            norm_normal = sqrt(surfaceNormalVectorRotated[0]*surfaceNormalVectorRotated[0] + surfaceNormalVectorRotated[1]*surfaceNormalVectorRotated[1] + surfaceNormalVectorRotated[2]*surfaceNormalVectorRotated[2]);
-    //        std::cout << "norm of particle track " << norm_part << std::endl;
-    //        std::cout << "norm of surface normal " << norm_normal << std::endl;
-
-            surfaceNormalVectorRotated[0] = surfaceNormalVectorRotated[0]/norm_normal;
-            surfaceNormalVectorRotated[1] = surfaceNormalVectorRotated[1]/norm_normal;
-            surfaceNormalVectorRotated[2] = surfaceNormalVectorRotated[2]/norm_normal;
+CUDA_CALLABLE_MEMBER_DEVICE
+void operator()(std::size_t indx) const {
+    
+  if(particles->hitWall[indx] == 1.0)
+  {   
+    float E0 = 0.0;
+    float thetaImpact = 0.0;
+    float particleTrackVector[3] = {0.0f};
+    float surfaceNormalVector[3] = {0.0f};
+    float vSampled[3] = {0.0f};
+    float norm_part = 0.0;
+    int signPartDotNormal=0; 
+    float partDotNormal = 0.0;
+    float Enew = 0.0f;
+    float angleSample = 0.0f;
+    int wallIndex = 0;
+    float tol = 1e12;
+    float Sr = 0.0;
+    float St = 0.0;
+    float Y0 = 0.0;
+    float R0 = 0.0;
+    float totalYR=0.0;
+    float newWeight=0.0;
+    int wallHit = particles->wallHit[indx];
+    int surfaceHit = boundaryVector[wallHit].surfaceNumber;
+    int surface = boundaryVector[wallHit].surface;
+    float eInterpVal=0.0;
+    float aInterpVal=0.0;
+    float weight = particles->weight[indx];
+    float vx = particles->vx[indx];
+    float vy = particles->vy[indx];
+    float vz = particles->vz[indx];
+    #if FLUX_EA > 0
+      float dEdist = (Edist - E0dist)/nEdist;
+      float dAdist = (Adist - A0dist)/nAdist;
+      int AdistInd=0;
+      int EdistInd=0;
+    #endif
+        particles->firstCollision[indx]=1;
+    particleTrackVector[0] = vx;
+    particleTrackVector[1] = vy;
+    particleTrackVector[2] = vz;
+    norm_part = sqrt(particleTrackVector[0]*particleTrackVector[0] + particleTrackVector[1]*particleTrackVector[1] + particleTrackVector[2]*particleTrackVector[2]);
+    E0 = 0.5*particles->amu[indx]*1.6737236e-27*(norm_part*norm_part)/1.60217662e-19;
+    //std::cout << "Particle hit wall with energy " << E0 << std::endl;
+    //std::cout << "Particle hit wall with v " << vx << " " << vy << " " << vz<< std::endl;
+    //std::cout << "Particle amu norm_part " << particles->amu[indx] << " " << vy << " " << vz<< std::endl;
+    wallIndex = particles->wallIndex[indx];
+    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector);
             particleTrackVector[0] = particleTrackVector[0]/norm_part;
             particleTrackVector[1] = particleTrackVector[1]/norm_part;
             particleTrackVector[2] = particleTrackVector[2]/norm_part;
@@ -155,40 +196,223 @@ void operator()(Particle &p) const {
                 float r7 = curand_uniform(&p.streams[6]);
 #else
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
-                float r7 = dist(p.streams[6]);
-#endif
+                float r7 = dist(state[indx]);
+                float r8 = dist(state[indx]);
+                float r9 = dist(state[indx]);
+                float r10 = dist(state[indx]);
+              #endif
 
+            #else
+              #if __CUDACC__
+                float r7 = curand_uniform(&state[6]);
+                float r8 = curand_uniform(&state[7]);
+                float r9 = curand_uniform(&state[8]);
+              #else
+                std::uniform_real_distribution<float> dist(0.0, 1.0);
+                float r7=dist(state[6]);
+                float r8=dist(state[7]);
+                float r9=dist(state[8]);
+              #endif
+                //float r7 = 0.0;
+            #endif
+            //particle either reflects or deposits
+            float sputtProb = Y0/totalYR;
+	    int didReflect = 0;
+            if(totalYR > 0.0)
+            {
+            if(r7 > sputtProb) //reflects
+            {
+	          didReflect = 1;
+                  aInterpVal = interp3d (r8,thetaImpact,log10(E0),
+                          nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+                                    angleDistGrid01,A_sputtRefDistIn,
+                                    E_sputtRefDistIn,ADist_CDF_R_regrid);
+                   eInterpVal = interp3d ( r9,thetaImpact,log10(E0),
+                           nE_sputtRefDistOutRef,nA_sputtRefDistIn,nE_sputtRefDistIn,
+                                         energyDistGrid01Ref,A_sputtRefDistIn,
+                                         E_sputtRefDistIn,EDist_CDF_R_regrid );
+                   //newWeight=(R0/(1.0f-sputtProb))*weight;
+		   newWeight = weight*(totalYR);
+    #if FLUX_EA > 0
+              EdistInd = floor((eInterpVal-E0dist)/dEdist);
+              AdistInd = floor((aInterpVal-A0dist)/dAdist);
+              if((EdistInd >= 0) && (EdistInd < nEdist) && 
+                 (AdistInd >= 0) && (AdistInd < nAdist))
+              {
+                  surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
+                    surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
+               }
+	       #endif
+                  if(surface > 0)
+                {
+
+            #if USE_CUDA > 0
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
+            #else
+                    surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
+            #endif
+                }
+            }
+            else //sputters
+            {
+                  aInterpVal = interp3d(r8,thetaImpact,log10(E0),
+                          nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+                          angleDistGrid01,A_sputtRefDistIn,
+                          E_sputtRefDistIn,ADist_CDF_Y_regrid);
+                  eInterpVal = interp3d(r9,thetaImpact,log10(E0),
+                           nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+                           energyDistGrid01,A_sputtRefDistIn,E_sputtRefDistIn,EDist_CDF_Y_regrid);
+            //if(particles->test[indx] == 0.0)
+            //{
+            //    particles->test[indx] = 1.0;
+            //    particles->test0[indx] = aInterpVal;
+            //    particles->test1[indx] = eInterpVal;
+            //    particles->test2[indx] = r8;
+            //    particles->test3[indx] = r9;
+            //}            
+                //std::cout << " particle sputters with " << eInterpVal << aInterpVal <<  std::endl;
+                  //newWeight=(Y0/sputtProb)*weight;
+		  newWeight=weight*totalYR;
+    #if FLUX_EA > 0
+              EdistInd = floor((eInterpVal-E0dist)/dEdist);
+              AdistInd = floor((aInterpVal-A0dist)/dAdist);
+              if((EdistInd >= 0) && (EdistInd < nEdist) && 
+                 (AdistInd >= 0) && (AdistInd < nAdist))
+              {
+                //std::cout << " particle sputters with " << EdistInd << AdistInd <<  std::endl;
+                  surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
+                    surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
+               }
+	       #endif
+                  if(sputtProb == 0.0) newWeight = 0.0;
+                   //std::cout << " particle sputtered with newWeight " << newWeight << std::endl;
+                  if(surface > 0)
+                {
+
+            #if USE_CUDA > 0
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
+                    atomicAdd(&surfaces->grossErosion[surfaceHit],newWeight);
+                    atomicAdd(&surfaces->aveSputtYld[surfaceHit],Y0);
+                    if(weight > 0.0)
+                    {
+                        atomicAdd(&surfaces->sputtYldCount[surfaceHit],1);
+                    }
+            #else
+                    surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
+                    surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit] + newWeight;
+                    surfaces->aveSputtYld[surfaceHit] = surfaces->aveSputtYld[surfaceHit] + Y0;
+                    surfaces->sputtYldCount[surfaceHit] = surfaces->sputtYldCount[surfaceHit] + 1;
+            #endif
+                }
+            }
+            //std::cout << "eInterpValYR " << eInterpVal << std::endl; 
+            }
+            else
+            {       newWeight = 0.0;
+                    particles->hitWall[indx] = 2.0;
+                  if(surface > 0)
+                {
+            #if USE_CUDA > 0
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
+            #else
+                    surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
+            #endif
+	        }
+            //std::cout << "eInterpValYR_not " << eInterpVal << std::endl; 
+            }
+            //std::cout << "eInterpVal " << eInterpVal << std::endl; 
+	    if(eInterpVal <= 0.0)
+            {       newWeight = 0.0;
+                    particles->hitWall[indx] = 2.0;
+                  if(surface > 0)
+                {
+		    if(didReflect)
+		    {
+            #if USE_CUDA > 0
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
+            #else
+                    surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
+            #endif
+	            }
+		}
+            }
+            //if(particles->test[indx] == 1.0)
+            //{
+            //    particles->test3[indx] = eInterpVal;
+            //    particles->test[indx] = 2.0;
+            //}
+                //deposit on surface
+            if(surface)
+            {
+            #if USE_CUDA > 0
+                atomicAdd(&surfaces->sumWeightStrike[surfaceHit],weight);
+                atomicAdd(&surfaces->sumParticlesStrike[surfaceHit],1);
+            #else
+                surfaces->sumWeightStrike[surfaceHit] =surfaces->sumWeightStrike[surfaceHit] +weight;
+                surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
+              //boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
+            #endif
+            #if FLUX_EA > 0
+                EdistInd = floor((E0-E0dist)/dEdist);
+                AdistInd = floor((thetaImpact-A0dist)/dAdist);
+              
+	        if((EdistInd >= 0) && (EdistInd < nEdist) && 
+                  (AdistInd >= 0) && (AdistInd < nAdist))
+                {
+#if USE_CUDA > 0
+                    atomicAdd(&surfaces->energyDistribution[surfaceHit*nEdist*nAdist + 
+                                               EdistInd*nAdist + AdistInd], weight);
 #else
-                float r7 = 0.0;
-#endif
-		        if(r7 <= Rn)
-        		{
-      //              std::cout << "particle reflected " << std::endl;
-		//		    std::cout << "from surface " << p.wallIndex << " material " <<boundaryVector[p.wallIndex].Z << std::endl;
-                float a1_e = -7.168;
-                float a2_e = 0.01685;
-                float a3_e = 7.005e-5;
-                float a4_e = -1.343;
-				float Re = exp(a1_e*pow(reducedEnergy,a2_e))/(1 + exp(a3_e*pow(reducedEnergy,a4_e))); 
-				float launch_unitVector[3] = {0, 0, 1.0};
-				float launchEnergy = E0*Re/Rn;
-                launchEnergy = 10.0;
-              //  std::cout << "Re, E0 and launch energy" << Re << " " << E0 << " " << launchEnergy << std::endl;
-                p.charge = 0.0;
-				p.vx = sqrt(2*launchEnergy*1.60217662e-19/(p.amu*1.6737236e-27))*surfaceNormalVectorRotated[0];//launchEnergy*launch_unitVector[0];
-				p.vy = sqrt(2*launchEnergy*1.60217662e-19/(p.amu*1.6737236e-27))*surfaceNormalVectorRotated[1];//launchEnergy*launch_unitVector[1];
-				p.vz = sqrt(2*launchEnergy*1.60217662e-19/(p.amu*1.6737236e-27))*surfaceNormalVectorRotated[2];
-                //p.x = 1.33;//p.xprevious;
-                //p.y = 0.0;
-                //p.z = 1.34;//boundaryVector[p.wallIndex].z1 + 0.01;
-                p.xprevious = p.xprevious + 0.0001*surfaceNormalVectorRotated[0];
-                p.yprevious = p.yprevious + 0.0001*surfaceNormalVectorRotated[1];
-                p.zprevious = p.zprevious + 0.0001*surfaceNormalVectorRotated[2];//boundaryVector[p.wallIndex].z1 + 0.01;
-                //std::cout << "particle launched from " << p.xprevious << p.yprevious << p.zprevious << std::endl;
-                //std::cout << "particle launched at velocity " << p.vx << p.vy << p.vz << std::endl;
 
-				p.hitWall = 0.0;
-        		}
+                    surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
+                    surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
+#endif
+                }
+            #endif 
+            } 
+                //reflect with weight and new initial conditions
+            //std::cout << "particle wall hit Z and nwweight " << boundaryVector[wallHit].Z << " " << newWeight << std::endl;
+	    if( boundaryVector[wallHit].Z > 0.0 && newWeight > 0.0)
+            {
+                particles->weight[indx] = newWeight;
+                particles->hitWall[indx] = 0.0;
+                particles->charge[indx] = 0.0;
+                float V0 = sqrt(2*eInterpVal*1.602e-19/(particles->amu[indx]*1.66e-27));
+                particles->newVelocity[indx] = V0;
+    vSampled[0] = V0*sin(aInterpVal*3.1415/180)*cos(2.0*3.1415*r10);
+    vSampled[1] = V0*sin(aInterpVal*3.1415/180)*sin(2.0*3.1415*r10);
+    vSampled[2] = V0*cos(aInterpVal*3.1415/180);
+    boundaryVector[wallHit].transformToSurface(vSampled);
+    particles->vx[indx] = -signPartDotNormal*vSampled[0];
+    particles->vy[indx] = -signPartDotNormal*vSampled[1];
+    particles->vz[indx] = -signPartDotNormal*vSampled[2];
+            //if(particles->test[indx] == 0.0)
+            //{
+            //    particles->test[indx] = 1.0;
+            //    particles->test0[indx] = aInterpVal;
+            //    particles->test1[indx] = eInterpVal;
+            //    particles->test2[indx] = V0;
+            //    particles->test3[indx] = vSampled[2];
+            //}            
+
+    particles->xprevious[indx] = particles->x[indx] + -signPartDotNormal*surfaceNormalVector[0]*1e-5;
+    particles->yprevious[indx] = particles->y[indx] + -signPartDotNormal*surfaceNormalVector[1]*1e-5;
+    particles->zprevious[indx] = particles->z[indx] + -signPartDotNormal*surfaceNormalVector[2]*1e-5;
+            //std::cout << "New vel " << particles->vx[indx] << " " << particles->vy[indx] << " " << particles->vz[indx] << std::endl;
+            //std::cout << "New pos " << particles->xprevious[indx] << " " << particles->yprevious[indx] << " " << particles->zprevious[indx] << std::endl;
+            //if(particles->test[indx] == 0.0)
+            //{
+            //    particles->test[indx] = 1.0;
+            //    particles->test0[indx] = particles->x[indx];
+            //    particles->test1[indx] = particles->y[indx];
+            //    particles->test2[indx] = particles->z[indx];
+            //    particles->test3[indx] = signPartDotNormal;
+            //}
+            //else
+            //{
+            //    particles->test[indx] = particles->test[indx] + 1.0;
+            //}            
+            }
                 else
                 {
                     //std::cout << " no reflection" << std::endl;

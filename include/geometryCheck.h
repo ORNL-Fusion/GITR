@@ -24,18 +24,27 @@ struct geometry_check {
     const int nLines;
     Boundary  *boundaryVector;
     float dt;
-    int tt;
-    int nR_closeGeom;
-    int nY_closeGeom;
-    int nZ_closeGeom;
-    int n_closeGeomElements;
+    //int& tt;
+    int nHashes;
+    int* nR_closeGeom;
+    int* nY_closeGeom;
+    int* nZ_closeGeom;
+    int* n_closeGeomElements;
     float* closeGeomGridr;
     float* closeGeomGridy;
     float* closeGeomGridz;
     int* closeGeom;
 
-    geometry_check(Particles *_particlesPointer, BoundaryModifiable *_boundaryMod, int _nLines,Boundary * _boundaryVector, float _dt, int _tt, int _nR_closeGeom, int _nY_closeGeom, int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom) : 
-        particlesPointer(_particlesPointer), boundaryMod(_boundaryMod), nLines(_nLines), boundaryVector(_boundaryVector), dt(_dt), tt(_tt), nR_closeGeom(_nR_closeGeom), nY_closeGeom(_nY_closeGeom), nZ_closeGeom(_nZ_closeGeom), n_closeGeomElements(_n_closeGeomElements), closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy), closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom) {}
+    geometry_check(Particles *_particlesPointer, int _nLines,Boundary * _boundaryVector,Surfaces * _surfaces, float _dt,int _nHashes, int* _nR_closeGeom, int* _nY_closeGeom, int* _nZ_closeGeom, int* _n_closeGeomElements, float *_closeGeomGridr, float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom,  int _nEdist,
+    float _E0dist,
+    float _Edist,
+    int _nAdist,
+    float _A0dist,
+    float _Adist) :
+    
+        particlesPointer(_particlesPointer), nLines(_nLines), boundaryVector(_boundaryVector), surfaces(_surfaces), dt(_dt),nHashes(_nHashes), nR_closeGeom(_nR_closeGeom), nY_closeGeom(_nY_closeGeom), nZ_closeGeom(_nZ_closeGeom), n_closeGeomElements(_n_closeGeomElements), closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy), closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom),
+    nEdist(_nEdist), E0dist(_E0dist),Edist(_Edist),
+    nAdist(_nAdist), A0dist(_A0dist),Adist(_Adist) {}
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const { 
@@ -403,10 +412,7 @@ void operator()(std::size_t indx) const {
                 }
             }
 #endif
-#endif        
-            if (particlesPointer->hitWall[indx] == 1.0)
-            {
-                particlesPointer->transitTime[indx] = tt*dt;
+                //particlesPointer->transitTime[indx] = tt*dt;
             }    
         }
 

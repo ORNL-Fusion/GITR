@@ -631,6 +631,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
 
 struct move_boris { 
     Particles *particlesPointer;
+    //int& tt;
     Boundary *boundaryVector;
     int nR_Bfield;
     int nZ_Bfield;
@@ -654,7 +655,8 @@ struct move_boris {
     int* closeGeom_sheath; 
     const float span;
     const int nLines;
-   
+    float magneticForce[3];
+    float electricForce[3];
     move_boris(Particles *_particlesPointer, float _span, Boundary *_boundaryVector,int _nLines,
             int _nR_Bfield, int _nZ_Bfield,
             float * _BfieldGridRDevicePointer,

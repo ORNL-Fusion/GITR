@@ -40,7 +40,7 @@ struct ionize {
     float* gridTemperature_Ionization;
     float* rateCoeff_Ionization;
     const float dt;
-    int tt;
+    //int& tt;
 #if __CUDACC__
     curandState *state;
 #else
@@ -57,10 +57,10 @@ struct ionize {
     float* _DensGridz,float* _ne,int _nR_Temp, int _nZ_Temp,
     float* _TempGridr, float* _TempGridz,float* _te,int _nTemperaturesIonize,
     int _nDensitiesIonize,float* _gridTemperature_Ionization,float* _gridDensity_Ionization,
-    float* _rateCoeff_Ionization, int _tt
+    float* _rateCoeff_Ionization
               ) : particlesPointer(_particlesPointer), dt(_dt), state(_state), nR_Dens(_nR_Dens), nZ_Dens(_nZ_Dens), DensGridr(_DensGridr), DensGridz(_DensGridz),ne(_ne),
         nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr), TempGridz(_TempGridz), te(_te),
-   nTemperaturesIonize(_nTemperaturesIonize), nDensitiesIonize(_nDensitiesIonize), gridTemperature_Ionization(_gridTemperature_Ionization), gridDensity_Ionization(_gridDensity_Ionization), rateCoeff_Ionization(_rateCoeff_Ionization), tt(_tt) {}
+   nTemperaturesIonize(_nTemperaturesIonize), nDensitiesIonize(_nDensitiesIonize), gridTemperature_Ionization(_gridTemperature_Ionization), gridDensity_Ionization(_gridDensity_Ionization), rateCoeff_Ionization(_rateCoeff_Ionization) {}
     
         CUDA_CALLABLE_MEMBER_DEVICE 
                 void operator()(std::size_t indx) const { 

@@ -117,6 +117,8 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     code_flags = code_flags+" -DFLUX_EA="+str(FLUX_EA)
     FORCE_EVAL=config.flags.FORCE_EVAL
     code_flags = code_flags+" -DFORCE_EVAL="+str(FORCE_EVAL)
+    USE_SORT=config.flags.USE_SORT
+    code_flags = code_flags+" -DUSE_SORT="+str(USE_SORT)
     CHECK_COMPATIBILITY=config.flags.CHECK_COMPATIBILITY
     code_flags = code_flags+" -DCHECK_COMPATIBILITY="+str(CHECK_COMPATIBILITY)
     
