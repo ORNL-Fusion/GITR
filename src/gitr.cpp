@@ -83,6 +83,7 @@ struct test_routinePp {
 }
 };
 
+
 int main(int argc, char **argv)
 {
   typedef std::chrono::high_resolution_clock Time;
@@ -366,6 +367,7 @@ int main(int argc, char **argv)
       const int nSurfaceMembers = 18;
       
       int lengthsSurface[nSurfaceMembers] = {1,1,1,1,1,1,1,1,1,nEdist*nAdist,nEdist,nAdist,nEdist*nAdist,nEdist*nAdist,nEdist*nAdist,nEdist*nAdist,nEdist*nAdist,nSurfaces*nEdist*nAdist};
+      
       MPI_Aint offsetsSurface[nSurfaceMembers] = {offsetof(Surfaces, nSurfaces), offsetof(Surfaces, nE),offsetof(Surfaces,nA),offsetof(Surfaces,E0), offsetof(Surfaces, E),offsetof(Surfaces,A0),
       offsetof(Surfaces, A), offsetof(Surfaces, dE),offsetof(Surfaces,dA),
       offsetof(Surfaces,sumParticlesStrike), offsetof(Surfaces, gridE),offsetof(Surfaces,gridA),
@@ -402,14 +404,19 @@ int main(int argc, char **argv)
   //#endif
 
   int nHashes = 1;
-  int nR_closeGeomTotal = 0;
-  int nY_closeGeomTotal = 0;
-  int nZ_closeGeomTotal = 0;
-  int nHashPointsTotal = 0;
-  int nGeomHash = 0;
+  int nR_closeGeomTotal = 1;
+  int nY_closeGeomTotal = 1;
+  int nZ_closeGeomTotal = 1;
+  int nHashPointsTotal = 1;
+  int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
   std::cout << " node starting geomhash1 " << world_rank << std::endl;
   #if GEOM_HASH == 1
+  nR_closeGeomTotal = 0;
+  nY_closeGeomTotal = 0;
+  nZ_closeGeomTotal = 0;
+  nHashPointsTotal = 0;
+  nGeomHash = 0;
     if(world_rank == 0)
     {
       getVariable(cfg,geomHashCfg+"nHashes",nHashes);
@@ -421,10 +428,15 @@ int main(int argc, char **argv)
   #endif
     std::cout << " node and nHashes " << world_rank << " " << nHashes << std::endl;
     sim::Array<int> nR_closeGeom(nHashes,0);
+    std::cout << "nr "<< nR_closeGeom[0] << std::endl;
     sim::Array<int> nY_closeGeom(nHashes,0);
+    std::cout << "ny " << std::endl;
     sim::Array<int> nZ_closeGeom(nHashes,0);
+    std::cout << "nz " << std::endl;
     sim::Array<int> nHashPoints(nHashes,0);
+    std::cout << "np " << std::endl;
     sim::Array<int> n_closeGeomElements(nHashes,0);
+    std::cout << "nc " << std::endl;
 
   #if GEOM_HASH == 1
     if(world_rank == 0)
@@ -558,9 +570,12 @@ int main(int argc, char **argv)
     #endif
   #endif
   
+    std::cout << "here now" << std::endl;
   sim::Array<float> closeGeomGridr(nR_closeGeomTotal), closeGeomGridy(nY_closeGeomTotal),
       closeGeomGridz(nZ_closeGeomTotal);
+    std::cout << "did i make it here" << std::endl;
   sim::Array<int> closeGeom(nGeomHash,0);
+    std::cout << "what about here" << std::endl;
   
   #if GEOM_HASH == 1
     sim::Array<float> hashX0(nHashes,0.0),hashX1(nHashes,0.0),hashY0(nHashes,0.0),hashY1(nHashes,0.0),hashZ0(nHashes,0.0),hashZ1(nHashes,0.0);
@@ -3179,8 +3194,21 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     #endif
     #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
 #if USE_CUDA
-      thrust::for_each(thrust::device, particleBegin,particleEnd,
-      curandInitialize(&state1[0],0));
+    //if(world_rank == 0)
+    //{
+            int *dev_i;
+                  cudaMallocManaged(&dev_i, sizeof(int));
+                        dev_i[0]=0;
+      std::cout <<" about to do curandInit" << std::endl;
+      thrust::for_each(thrust::device,particleBegin,particleEnd,
+      //thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size-10,
+                           //curandInitialize(&state1[0],randDeviceInit,0));
+      curandInitialize(&state1.front(),0));
+      std::cout <<" finished curandInit" << std::endl;
+      //curandInitialize cuIn(0);
+      //cuIn(0);
+      //}
+      //}
 #else
       std::random_device randDeviceInit; 
       std::cout << "Initializing curand seeds " << std::endl;
@@ -3283,7 +3311,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
 #endif        
 
 #if PARTICLE_TRACKS >0
-      history history0(particleArray,tt,nT,subSampleFac,nP,&positionHistoryX.front(),
+      history history0(particleArray,dev_tt,nT,subSampleFac,nP,&positionHistoryX.front(),
       &positionHistoryY.front(),&positionHistoryZ.front(),&velocityHistory.front(),
       &velocityHistoryX.front(),&velocityHistoryY.front(),
       &velocityHistoryZ.front(),&chargeHistory.front(),
@@ -3496,7 +3524,6 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
     for(tt; tt< nT; tt++)
     {
      dev_tt[0] = tt;
-     std::cout << "beginning of loop tt " << tt << std::endl;
       #if USE_SORT > 0
         thrust::for_each(thrust::device,tmpInt.begin(),tmpInt.end(),sort0);
       #ifdef __CUDACC__
@@ -3505,7 +3532,6 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #endif
 
       #if PARTICLE_TRACKS >0
-     std::cout << "particle tracks" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],history0);
       #ifdef __CUDACC__
         cudaThreadSynchronize();
@@ -3514,14 +3540,12 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       //std::cout << " world rank pstart nactive " << world_rank << " " << pStartIndx[world_rank] << "  " << nActiveParticlesOnRank[world_rank] << std::endl;
       //thrust::for_each(thrust::device,particleBegin,particleOne,
       //     test_routinePp(particleArray));
-     std::cout << "boris" << std::endl;
 
       thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
                 move_boris0);
       #ifdef __CUDACC__
         cudaDeviceSynchronize();
       #endif
-     std::cout << "check geom" << std::endl;
       thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
                     geometry_check0);
       #ifdef __CUDACC__
@@ -3529,7 +3553,6 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #endif
 
       #if SPECTROSCOPY > 0
-     std::cout << "spec" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],spec_bin0);
       #ifdef __CUDACC__
         cudaThreadSynchronize();
@@ -3537,7 +3560,6 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #endif  
 
       #if USEIONIZATION > 0
-     std::cout << "ioni" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
                 ionize0);
       #ifdef __CUDACC__
@@ -3546,7 +3568,6 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #endif
 
       #if USERECOMBINATION > 0
-     std::cout << "rec" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],recombine0);
       #ifdef __CUDACC__
         cudaThreadSynchronize();
@@ -3554,13 +3575,11 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #endif
 
       #if USEPERPDIFFUSION > 0
-     std::cout << "diff" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],crossFieldDiffusion0);
       #ifdef __CUDACC__
         cudaThreadSynchronize();
       #endif
             
-     std::cout << "diff geom check" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],geometry_check0);
       #ifdef __CUDACC__
         cudaThreadSynchronize();
@@ -3568,7 +3587,6 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #endif
 
       #if USECOULOMBCOLLISIONS > 0
-     std::cout << "coll" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],coulombCollisions0);
       #ifdef __CUDACC__
         cudaThreadSynchronize();
@@ -3576,7 +3594,6 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #endif
       
       #if USETHERMALFORCE > 0
-     std::cout << "therm" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],thermalForce0);
       #ifdef __CUDACC__
         cudaThreadSynchronize();
@@ -3584,7 +3601,6 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #endif
 
       #if USESURFACEMODEL > 0
-     std::cout << "surf" << std::endl;
         thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],reflection0);
       #ifdef __CUDACC__
         cudaThreadSynchronize();
