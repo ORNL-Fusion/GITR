@@ -73,6 +73,7 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DUSECYLSYMM=${USECYLSYMM}
         -DFLUX_EA=${FLUX_EA}
         -DUSEFIELDALIGNEDVALUES=${USEFIELDALIGNEDVALUES}
+        -DUSE_SORT=${USE_SORT}
         -DCHECK_COMPATIBILITY=${CHECK_COMPATIBILITY})
 
 # Setup for CUDA backend
@@ -81,7 +82,7 @@ if (${CUDA})
     find_package(CUDA REQUIRED)
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     set(CUDA_SEPARABLE_COMPILATION TRUE)
-    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA --std=c++11 -O3) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA --std=c++11 -g -G --cudart shared) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
 
     set_source_files_properties(${SRC_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
     cuda_add_executable(GITR ${SRC_FILES})

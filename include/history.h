@@ -14,7 +14,7 @@
 
 struct history { 
     Particles *particlesPointer;
-    int& tt;
+    int* tt;
     int nT;
     int subSampleFac;
     int nP;
@@ -28,7 +28,7 @@ struct history {
     float *histcharge;
     float *histweight;
 
-    history(Particles *_particlesPointer, int& _tt, int _nT,int _subSampleFac, int _nP, float *_histX,float *_histY,float *_histZ,
+    history(Particles *_particlesPointer, int* _tt, int _nT,int _subSampleFac, int _nP, float *_histX,float *_histY,float *_histZ,
           float *_histv,float *_histvx,float *_histvy,float *_histvz, float * _histcharge, float * _histweight) : 
         particlesPointer(_particlesPointer), tt(_tt),nT(_nT),subSampleFac(_subSampleFac), nP(_nP), 
         histX(_histX),histY(_histY),histZ(_histZ),histv(_histv),histvx(_histvx),histvy(_histvy),histvz(_histvz), histcharge(_histcharge), histweight(_histweight) {}
@@ -37,10 +37,11 @@ struct history {
 void operator()(std::size_t indx) const 
     {  
        //std::cout << "tt subsamplefac indx, nT " << tt << " "<< subSampleFac << " " << indx << " " << nT << std::endl;
-       if (tt % subSampleFac == 0)
+       int tt0=tt[0];
+       if (tt0 % subSampleFac == 0)
        {
        int indexP = particlesPointer->index[indx];
-        int histInd = indexP*(nT/subSampleFac+1) + tt/subSampleFac;
+        int histInd = indexP*(nT/subSampleFac+1) + tt0/subSampleFac;
        //std::cout << "histInd " << histInd << std::endl;
         if(histInd <= (nP*(nT/subSampleFac+1)) && histInd >= 0 && indexP < nP)
         {
