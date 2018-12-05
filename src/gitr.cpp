@@ -3233,8 +3233,12 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     float moveTime = 0.0;
     float geomCheckTime = 0.0;
     float ionizTime = 0.0;
+   #if USE_CUDA > 0
     int* dev_tt;
     cudaMallocManaged(&dev_tt, sizeof(int));
+    #else
+    int* dev_tt = new int[1];
+     #endif
     int tt=0;
     move_boris move_boris0(particleArray,dt,boundaries.data(), nLines,
         nR_Bfield,nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
@@ -3610,6 +3614,7 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
     }
    #if PARTICLE_TRACKS >0
      tt = nT;
+     dev_tt[0] = tt;
      std::cout << " tt for final history " << tt << std::endl;
      thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
       history0);

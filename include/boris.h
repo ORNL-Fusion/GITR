@@ -624,12 +624,12 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
            9.5856E-09f   * powf(angle,5.0f) -
            4.2682E-11f  * powf(angle,6.0f);
     pot = boundaryVector[minIndex].potential;
-    //std::cout << "potential and debye length " << pot << " " << boundaryVector[minIndex].debyeLength << " " << pot/boundaryVector[minIndex].debyeLength << std::endl;
+     //std::cout << "potential and debye length " << pot << " " << boundaryVector[minIndex].debyeLength << " " << pot/boundaryVector[minIndex].debyeLength << std::endl;
     //std::cout << " larmorRad " << boundaryVector[minIndex].larmorRadius << std::endl;
         Emag = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength))+ (1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius) );
-      //  std::cout << "Emag " << Emag << std::endl;
+        //std::cout << "Emag " << Emag << std::endl;
         //std::cout << "fd " << fd << std::endl;
-       //std::cout << "minDistance " << minDistance << std::endl;
+        //std::cout << "minDistance " << minDistance << std::endl;
 #endif
     if(minDistance == 0.0f || boundaryVector[minIndex].larmorRadius == 0.0f)
     {
@@ -646,7 +646,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
         //std::cout << "Min dist " << minDistance << std::endl;
         //std::cout << "r " << x << "z " << z << std::endl;
         //std::cout << "E components " << Er << " " << Et << " " << E[2] << std::endl;
-       //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
+        //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     
     //std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
 #if USE3DTETGEOM > 0

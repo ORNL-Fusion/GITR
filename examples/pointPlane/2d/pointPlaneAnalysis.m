@@ -1,6 +1,6 @@
 close all
 clear all
-
+cuda=1;
 file = 'positions.nc';
 x = ncread(file,'x');
 y = ncread(file,'y');
@@ -11,6 +11,7 @@ vz = ncread(file,'vz');
 charge = ncread(file,'charge');
 weight = ncread(file,'weight');
 hitWall =ncread(file,'hitWall');
+nP=length(x);
 hit = find(hitWall);
 notHit = find(hitWall==0);
 He_Wspyl = [4.07e-3 3.26e-3  3.02e-3];
@@ -83,6 +84,83 @@ ylabel('y [m]') % y-axis label
 zlabel('z [m]') % y-axis label
 set(gca,'fontsize',16)
 
+
+file = 'surface.nc';
+grossDep = ncread(file,'grossDeposition');
+grossEro = ncread(file,'grossErosion');
+edist = ncread(file,'surfEDist');
+spylDist = ncread(file,'surfSputtDist');
+rfylDist = ncread(file,'surfReflDist');
+sumWeightStrike = ncread(file,'sumWeightStrike');
+aveSpyl = ncread(file,'aveSpyl');
+spylCounts = ncread(file,'spylCounts');
+sumParticlesStrike = ncread(file,'sumParticlesStrike');
+
+grossDeposition = sum(grossDep)
+grossErosion = sum(grossEro)
+netEro = grossErosion - grossDeposition - nP
+averageY = sum(aveSpyl)/sum(spylCounts)
+sum(sumParticlesStrike)
+
+
+eDtotal = reshape(sum(edist,3),[30,200]);
+figure(18)
+p4 = pcolor(linspace(0,100,200),linspace(0,90,30),eDtotal);
+eaDist = sum(edist,3);
+sDist = sum(spylDist,3);
+rDist = sum(rfylDist,3);
+% eaDist(eaDist > 2e3) = 0;
+eaDist1 = reshape(eaDist,30,200);
+sputtDist1 = reshape(sDist,30,200);
+reflDist1 = reshape(rDist,30,200);
+energy = linspace(0,99.5,200);
+angle = linspace(0,87,30);
+figure(20)
+p1 = pcolor(energy,angle,sputtDist1)
+p1.EdgeColor = 'none';
+colorbar
+title({'ITER Full Power Operation', 'Summed Target W Ion Energy-Angle Distribution'})
+xlabel('E [eV]') % x-axis label
+ylabel('Angle [degrees]') % y-axis label
+figure(21)
+p1 = pcolor(energy,angle,reflDist1)
+p1.EdgeColor = 'none';
+colorbar
+title({'ITER Full Power Operation', 'Summed Target W Ion Energy-Angle Distribution'})
+xlabel('E [eV]') % x-axis label
+ylabel('Angle [degrees]') % y-axis label
+
+if (exist('x1') == 0)
+    fid = fopen('../input/gitrGeometryRev.cfg');
+    
+    tline = fgetl(fid);
+    tline = fgetl(fid);
+    for i=1:11
+        tline = fgetl(fid);
+        evalc(tline);
+    end
+length_line = length;
+surfaces=surface;
+clear length
+clear surface
+end
+
+figure(19)
+plot([x1 x1(1)],[z1 z1(1)])
+x = x1;
+y = z1;
+z = zeros(size(x));
+col = [grossDep; 0]';  % This is the color, vary with x in this case.
+
+hold on
+
+surface([x;x],[y;y],[z;z],[col;col],...
+        'facecol','no',...
+        'edgecol','interp',...
+        'linew',4);
+colorbar
+
+
 file = 'history.nc';
 x = ncread(file,'x');
 y = ncread(file,'y');
@@ -108,8 +186,13 @@ nP = sizeArray(2);
 
 r = sqrt(x.^2 + y.^2);
 figure(16)
-for i=1:100
+for i=1:1000
 plot3(x(:,i),y(:,i),z(:,i))
+hold on
+end
+figure(166)
+for i=1:1000
+plot3(x(i,:),y(i,:),z(i,:))
 hold on
 end
 sum_path = 0;
