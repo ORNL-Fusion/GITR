@@ -31,18 +31,24 @@ float rateCoeffInterp(int charge, float te, float ne,int nT, int nD, float* rate
     //std::cout << "Rategrid_temp in rateCoeffInterp " << rateGrid_Temp[1] << std::endl;
     float d_T = rateGrid_Tempp[1] - rateGrid_Tempp[0];
     float d_n = rateGrid_Densp[1] - rateGrid_Densp[0];
-    if (logT >= rateGrid_Tempp[0])
-    {
+   // if (logT >= rateGrid_Tempp[0] && logT <= rateGrid_Tempp[nT-2])
+   // {
         indT = floor((logT - rateGrid_Tempp[0])/d_T );//addition of 0.5 finds nearest gridpoint
-    }
-    if (logn >= rateGrid_Densp[0])
-    {
+    //}
+    //if (logn >= rateGrid_Densp[0] && logn <= rateGrid_Densp[nD-2])
+    //{
         indN = floor((logn - rateGrid_Densp[0])/d_n );
-    }
+    //}
     //std::cout << "Indices density, temp " << indN << " " <<indT<<std::endl;
     //std::cout << "charge " << charge << std::endl;
     //std::cout << "Lower value " << Ratesp[charge*nT*nD + indT*nD + indN] << std::endl;
-    float aT = powf(10.0f,rateGrid_Tempp[indT+1]) - te;
+if(indT < 0 || indT > nT-2)
+{indT = 0;}
+if(indN < 0 || indN > nD-2)
+{indN = 0;}
+if(charge > 74-1)
+{charge = 0;}
+        float aT = powf(10.0f,rateGrid_Tempp[indT+1]) - te;
     float bT = te - powf(10.0f,rateGrid_Tempp[indT]);
     float abT = aT+bT;
 
@@ -85,6 +91,7 @@ float interpRateCoeff2d ( int charge, float x, float y, float z,int nx, int nz, 
     //std::cout << "Interpolating RC " << std::endl;
     float RClocal = rateCoeffInterp(charge,tlocal,nlocal,nT_Rates,nD_Rates,rateGrid_Temp, rateGrid_Dens, Rates);
     float tion = 1/(RClocal*nlocal);
+    if(tlocal == 0.0 || nlocal == 0.0) tion=1.0e12;
     //std::cout << "Returning " << std::endl;
     return tion;
 }
