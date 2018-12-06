@@ -558,7 +558,10 @@ void operator()(std::size_t indx) const {
                     thetaNew = theta0 + (intersectiony[0] - particlesPointer->zprevious[indx])/(particlesPointer->z[indx] - particlesPointer->zprevious[indx])*(theta1 - theta0);
                    particlesPointer->y[indx] = intersectionx[0]*sinf(thetaNew);
   #else                    
-                    particlesPointer->y[indx] = particlesPointer->yprevious[indx] + (intersectiony[0] - particlesPointer->zprevious[indx])/(particlesPointer->z[indx] - particlesPointer->zprevious[indx])*(particlesPointer->y[indx] - particlesPointer->yprevious[indx]);
+                    //std::cout << "Particle index " << indx << " hit wall and is calculating y point " << particlesPointer->y[indx] << std::endl;
+		    particlesPointer->y[indx] = particlesPointer->yprevious[indx] + (intersectiony[0] - particlesPointer->zprevious[indx])/(particlesPointer->z[indx] - particlesPointer->zprevious[indx])*(particlesPointer->y[indx] - particlesPointer->yprevious[indx]);
+                    //std::cout << "yprev,intersectiony,zprevious,z,y " << particlesPointer->yprevious[indx] << " " << intersectiony[0] << " "<< particlesPointer->zprevious[indx] << " " << particlesPointer->z[indx] << " " << particlesPointer->y[indx] << std::endl;
+
   #endif     
                     }
                     else
@@ -567,8 +570,10 @@ void operator()(std::size_t indx) const {
                     //particlesPointer->test0[indx] = -200.0;
                        thetaNew = theta0 + (intersectionx[0] - pdim1previous)/(pdim1 - pdim1previous)*(theta1 - theta0);    
                        particlesPointer->yprevious[indx] = intersectionx[0]*sinf(thetaNew);             particlesPointer->y[indx] = particlesPointer->yprevious[indx];
-  #else                           
+  #else                 
+                    //std::cout << "Particle index " << indx << " hit wall and is calculating y point " << particlesPointer->y[indx] << std::endl;
                        particlesPointer->y[indx] = particlesPointer->yprevious[indx] + (intersectionx[0] - particlesPointer->xprevious[indx])/(particlesPointer->x[indx] - particlesPointer->xprevious[indx])*(particlesPointer->y[indx] - particlesPointer->yprevious[indx]);
+                    //std::cout << "yprev,intersectiony,zprevious,z,y " << particlesPointer->yprevious[indx] << " " << intersectiony[0] << " "<< particlesPointer->zprevious[indx] << " " << particlesPointer->z[indx] << " " << particlesPointer->y[indx] << std::endl;
   #endif                
                     }
   #if USECYLSYMM > 0
@@ -606,7 +611,11 @@ void operator()(std::size_t indx) const {
                  //particlesPointer->y[indx] = intersectionx[minDistInd]*cosf(thetaNew);
                  particlesPointer->x[indx] = intersectionx[minDistInd]*cosf(thetaNew);
   #else
-                 particlesPointer->y[indx] = particlesPointer->yprevious[indx] + (intersectionx[minDistInd] - pdim1previous)/(pdim1 - pdim1previous)*(particlesPointer->y[indx] - particlesPointer->yprevious[indx]);
+                    //std::cout << "Particle index " << indx << " hit wall and is calculating y point " << particlesPointer->yprevious[indx] << " " << particlesPointer->y[indx] << std::endl;
+                 //particlesPointer->y[indx] = particlesPointer->yprevious[indx] + (intersectionx[minDistInd] - pdim1previous)/(pdim1 - pdim1previous)*(particlesPointer->y[indx] - particlesPointer->yprevious[indx]);
+                    //std::cout << "intersectionx,pdp,pd,y " << intersectionx[0] << " "<< pdim1previous << " " << pdim1 << " " << particlesPointer->y[indx] << std::endl;
+		    particlesPointer->y[indx] = particlesPointer->yprevious[indx] + (intersectiony[0] - particlesPointer->zprevious[indx])/(particlesPointer->z[indx] - particlesPointer->zprevious[indx])*(particlesPointer->y[indx] - particlesPointer->yprevious[indx]);
+                    //std::cout << "yprev,intersectiony,zprevious,z,y " << particlesPointer->yprevious[indx] << " " << intersectiony[0] << " "<< particlesPointer->zprevious[indx] << " " << particlesPointer->z[indx] << " " << particlesPointer->y[indx] << std::endl;
                  particlesPointer->x[indx] = intersectionx[minDistInd];
   #endif                
                  particlesPointer->z[indx] = intersectiony[minDistInd];
