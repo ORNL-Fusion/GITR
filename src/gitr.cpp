@@ -4218,9 +4218,8 @@ ncFile.close();
     std::cout << "sqrt 0 " << sqrt(-0.0) << std::endl;
     for(int i=0;i<100;i++)
 {
-    //std::cout << "particle hitwall and Ez " << particleArray->hitWall[i] << " " << particleArray->test[i] << " "<< test0Gather[i] << " " << test1Gather[i]<< " "<<
-    //    particleArray->test2[i] << " " << particleArray->test3[i] << " " << particleArray->test4[i] << 
-    //    " " << particleArray->distTraveled[i] << std::endl;
+    std::cout << "tests " << particleArray->test[i] << " "<<  particleArray->test0[i] <<" "<< particleArray->test1[i] <<
+        " " << particleArray->test2[i] << " " << particleArray->test3[i] << " " << particleArray->test4[i] << std::endl;
 }
     for(int i=0;i<100;i++)
 {
