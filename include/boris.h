@@ -493,7 +493,9 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     float angle = 0.0f;
     float Er = 0.0f;
     float Et = 0.0f;
-
+    float Bfabsfperp = 0.0f;
+    float distanceToParticle = 0.0f;
+    int pointLine=0;
 //#if EFIELD_INTERP ==1
 #if USECYLSYMM > 0
     float x = sqrtf(x0*x0 + y*y);
@@ -538,34 +540,79 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
             if (boundaryVector[j].length*boundaryVector[j].length + perp_dist*perp_dist >=
                     max*max)
             {
-                boundaryVector[j].distanceToParticle =fabsf( perp_dist);
-                boundaryVector[j].pointLine = 1;
+                //boundaryVector[j].distanceToParticle =fabsf( perp_dist);
+                distanceToParticle = fabsf(perp_dist);
+                //boundaryVector[j].pointLine = 1;
+                pointLine = 1;
             }
             else
             {
-                boundaryVector[j].distanceToParticle = min;
+                //boundaryVector[j].distanceToParticle = min;
+                distanceToParticle = min;
                 if (boundaryVector[j].distanceToParticle == point1_dist)
                 {
-                    boundaryVector[j].pointLine = 2;
+                    pointLine = 2;
                 }
                 else
                 {
-                    boundaryVector[j].pointLine = 3;
+                    pointLine = 3;
                 }
             }
 
-            if (boundaryVector[j].distanceToParticle < minDistance)
+            if (distanceToParticle < minDistance)
             {
-                minDistance = boundaryVector[j].distanceToParticle;
+                minDistance = distanceToParticle;
                 minIndex = j;
                 closestBoundaryIndex = j;
-                direction_type = boundaryVector[j].pointLine;
+                direction_type = pointLine;
             }
         }
         else
         {
-            boundaryVector[j].distanceToParticle = tol;
+            distanceToParticle = tol;
         }
+    //int thisTmp=0;
+    //int Bperiodic = boundaryVector[minIndex].periodic;
+    //int BpointLine = boundaryVector[minIndex].pointLine;
+    //int BsurfaceNumber = boundaryVector[minIndex].surfaceNumber;
+    //int Bsurface = boundaryVector[minIndex].surface;
+    //float Bx1 = boundaryVector[minIndex].x1;
+    //float By1 = boundaryVector[minIndex].y1;
+    //float Bz1 = boundaryVector[minIndex].z1;
+    //float Bx2 = boundaryVector[minIndex].x2;
+    //float By2 = boundaryVector[minIndex].y2;
+    //float Bz2 = boundaryVector[minIndex].z2;
+    //float Ba = boundaryVector[minIndex].a;
+    //float Bb = boundaryVector[minIndex].b;
+    //float Bc = boundaryVector[minIndex].c;
+    //float Bd = boundaryVector[minIndex].d;
+    //float Bplane_norm = boundaryVector[minIndex].plane_norm;
+    //#if USE3DTETGEOM > 0
+    //  float Bx3 = boundaryVector[minIndex].x3;
+    //  float By3 = boundaryVector[minIndex].y3;
+    //  float Bz3 = boundaryVector[minIndex].z3;
+    //  float Barea = boundaryVector[minIndex].area;
+    //#else
+    //  float Bslope_dzdx = boundaryVector[minIndex].slope_dzdx;
+    //  float Bintercept_z = boundaryVector[minIndex].intercept_z;
+    //#endif     
+    //float BZ = boundaryVector[minIndex].Z;
+    //float Bamu = boundaryVector[minIndex].amu;
+    //float Bpotential = boundaryVector[minIndex].potential;
+	//
+    //float BhitWall = boundaryVector[minIndex].hitWall;
+    //float Blength = boundaryVector[minIndex].length;
+    //float BdistanceToParticle = boundaryVector[minIndex].distanceToParticle;
+    //float Bangle = boundaryVector[minIndex].angle;
+    //float Bfd = boundaryVector[minIndex].fd;
+    //float Bdensity = boundaryVector[minIndex].density;
+    //float Bti = boundaryVector[minIndex].ti;
+    //float Bne = boundaryVector[minIndex].ne;
+    //float Bte = boundaryVector[minIndex].te;
+    //float BdebyeLength = boundaryVector[minIndex].debyeLength;
+    //float BlarmorRadius = boundaryVector[minIndex].larmorRadius;
+    //   if(x0==0.0 && z > 1.0e-3 && minDistance<1.0e-9)
+    //       thisTmp=1;
     }
     if (direction_type == 1)
     {
@@ -626,7 +673,11 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     pot = boundaryVector[minIndex].potential;
      //std::cout << "potential and debye length " << pot << " " << boundaryVector[minIndex].debyeLength << " " << pot/boundaryVector[minIndex].debyeLength << std::endl;
     //std::cout << " larmorRad " << boundaryVector[minIndex].larmorRadius << std::endl;
+        float debyeLength = boundaryVector[minIndex].debyeLength;
+        float larmorRadius = boundaryVector[minIndex].larmorRadius;
         Emag = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength))+ (1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius) );
+        float part1 = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength)));
+        float part2 = pot*(1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius);
         //std::cout << "Emag " << Emag << std::endl;
         //std::cout << "fd " << fd << std::endl;
         //std::cout << "minDistance " << minDistance << std::endl;
@@ -840,6 +891,15 @@ cpu_times initTime0 = timer.elapsed();
                 
                 //v = v + q_prime*E
                 vectorAdd(v,qpE,v);
+       //particlesPointer->test[indx] = Bmag; 
+       //particlesPointer->test0[indx] = v[0]; 
+       //particlesPointer->test1[indx] = v[1]; 
+       //particlesPointer->test2[indx] = v[2];
+       int thisTmp=0;
+       if(particlesPointer->vx[indx]< 10.0 && v[0] > 4.0e3)
+           thisTmp=1;
+
+
 	       
            if(particlesPointer->hitWall[indx] == 0.0)
             {
