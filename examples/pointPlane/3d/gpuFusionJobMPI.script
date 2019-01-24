@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+#PBS -l walltime=48:00:00
+#PBS -l nodes=2:ppn=24
+#PBS -j oe
+#PBS -e log.error
+#PBS -o log.ouput
+#PBS -N gitrBE_PSE
+cd $PBS_O_WORKDIR
+source ${HOME}/gitr/env.gpufusion.sh
+mpirun -n 8 -ppn 4 ${HOME}/gitr/build/GITR -nGPUPerNode 4 > log.running

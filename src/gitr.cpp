@@ -84,7 +84,7 @@ struct test_routinePp {
 };
 
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, char **envp)
 {
   typedef std::chrono::high_resolution_clock Time;
   typedef std::chrono::duration<float> fsec;
@@ -147,7 +147,18 @@ int main(int argc, char **argv)
     int world_rank=0;
     int world_size=1;
   #endif
-  
+#if USE_CUDA > 0
+#else
+    omp_set_num_threads(24);
+    int num_threads = omp_get_max_threads();
+
+    std::cout << " rank and max num threads " << world_rank << " " << num_threads << std::endl; 
+      for (char **env = envp; *env != 0; env++)
+            {
+                    char *thisEnv = *env;
+                        printf("%s\n", thisEnv);    
+                          }
+#endif
   //Prepare config files for import
   Config cfg,cfg_geom;
   std::string input_path = "input/";
@@ -385,6 +396,7 @@ int main(int argc, char **argv)
       MPI_Bcast(&A0dist,1,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(&Adist,1,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
+      std::cout << "broadcasted distribution numbers " << world_rank << std::endl;
     #endif
   #endif
   auto surfaces = new Surfaces(nSurfaces,nEdist,nAdist);
@@ -684,21 +696,21 @@ int main(int argc, char **argv)
         << nGeomHash << " for the entire hash " <<  std::endl;
 
     #if USE_CUDA >0
-      cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
+      //cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
   
-      if(cudaSuccess != cuda_status )
-      {
+      //if(cudaSuccess != cuda_status )
+      //{
   
-        printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status) );
-        exit(1);
-      }
+      //  printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status) );
+      //  exit(1);
+      //}
   
-      free_db = (double)free_byte ;
-      total_db = (double)total_byte ;
-      used_db = total_db - free_db ;
+      //free_db = (double)free_byte ;
+      //total_db = (double)total_byte ;
+      //used_db = total_db - free_db ;
     
-      printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
-        used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
+      //printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
+      //  used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
     #endif
     std::cout << "starting geomhash" << std::endl;
     typedef std::chrono::high_resolution_clock Time0;
@@ -3181,8 +3193,8 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     std::default_random_engine generator6(rd());
   #endif
 
-  thrust::counting_iterator<std::size_t> particleBegin(0);  
-  thrust::counting_iterator<std::size_t> particleEnd(nParticles-1);
+  thrust::counting_iterator<std::size_t> particleBegin(pStartIndx[world_rank]);  
+  thrust::counting_iterator<std::size_t> particleEnd(pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank]-1);
   thrust::counting_iterator<std::size_t> particleOne(1);
     auto randInitStart_clock = Time::now();
     
@@ -3527,7 +3539,7 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #endif
     for(tt; tt< nT; tt++)
     {
-     dev_tt[0] = tt;
+     //dev_tt[0] = tt;
       #if USE_SORT > 0
         thrust::for_each(thrust::device,tmpInt.begin(),tmpInt.end(),sort0);
       #ifdef __CUDACC__
@@ -3536,87 +3548,87 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #endif
 
       #if PARTICLE_TRACKS >0
-        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],history0);
+        thrust::for_each(thrust::device,particleBegin,particleEnd,history0);
       #ifdef __CUDACC__
-        cudaThreadSynchronize();
+        //cudaThreadSynchronize();
       #endif
       #endif
       //std::cout << " world rank pstart nactive " << world_rank << " " << pStartIndx[world_rank] << "  " << nActiveParticlesOnRank[world_rank] << std::endl;
       //thrust::for_each(thrust::device,particleBegin,particleOne,
       //     test_routinePp(particleArray));
 
-      thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
+      thrust::for_each(thrust::device,particleBegin,particleEnd,
                 move_boris0);
       #ifdef __CUDACC__
-        cudaDeviceSynchronize();
+        //cudaThreadSynchronize();
       #endif
-      thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
+      thrust::for_each(thrust::device,particleBegin,particleEnd,
                     geometry_check0);
       #ifdef __CUDACC__
-        cudaThreadSynchronize();
+        //cudaThreadSynchronize();
       #endif
 
       #if SPECTROSCOPY > 0
-        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],spec_bin0);
+        thrust::for_each(thrust::device,particleBegin,particleEnd,spec_bin0);
       #ifdef __CUDACC__
-        cudaThreadSynchronize();
+        //cudaThreadSynchronize();
       #endif
       #endif  
 
       #if USEIONIZATION > 0
-        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
+        thrust::for_each(thrust::device,particleBegin,particleEnd,
                 ionize0);
       #ifdef __CUDACC__
-        cudaThreadSynchronize();
+        //cudaThreadSynchronize();
       #endif
       #endif
 
       #if USERECOMBINATION > 0
-        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],recombine0);
+        thrust::for_each(thrust::device,particleBegin,particleEnd,recombine0);
       #ifdef __CUDACC__
-        cudaThreadSynchronize();
+        //cudaThreadSynchronize();
       #endif
       #endif
 
       #if USEPERPDIFFUSION > 0
-        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],crossFieldDiffusion0);
+        thrust::for_each(thrust::device,particleBegin,particleEnd,crossFieldDiffusion0);
       #ifdef __CUDACC__
-        cudaThreadSynchronize();
+        //cudaThreadSynchronize();
       #endif
             
-        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],geometry_check0);
+        thrust::for_each(thrust::device,particleBegin,particleEnd,geometry_check0);
       #ifdef __CUDACC__
-        cudaThreadSynchronize();
+        //cudaThreadSynchronize();
       #endif
       #endif
 
       #if USECOULOMBCOLLISIONS > 0
-        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],coulombCollisions0);
+        thrust::for_each(thrust::device,particleBegin,particleEnd,coulombCollisions0);
       #ifdef __CUDACC__
-        cudaThreadSynchronize();
+        //cudaThreadSynchronize();
       #endif
       #endif
       
       #if USETHERMALFORCE > 0
-        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],thermalForce0);
+        thrust::for_each(thrust::device,particleBegin,particleEnd,thermalForce0);
       #ifdef __CUDACC__
-        cudaThreadSynchronize();
+        //cudaThreadSynchronize();
       #endif
       #endif
 
       #if USESURFACEMODEL > 0
-        thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],reflection0);
+        thrust::for_each(thrust::device,particleBegin,particleEnd,reflection0);
       #ifdef __CUDACC__
-        cudaThreadSynchronize();
+        //cudaThreadSynchronize();
       #endif
       #endif        
 
     }
    #if PARTICLE_TRACKS >0
      tt = nT;
-     dev_tt[0] = tt;
-     std::cout << " tt for final history " << tt << std::endl;
-     thrust::for_each(thrust::device,particleBegin+pStartIndx[world_rank],particleBegin+pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank],
+     //dev_tt[0] = tt;
+     //std::cout << " tt for final history " << tt << std::endl;
+     thrust::for_each(thrust::device,particleBegin,particleEnd,
       history0);
    #endif
 

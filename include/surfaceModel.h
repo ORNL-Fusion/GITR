@@ -362,8 +362,12 @@ void operator()(std::size_t indx) const {
               if((EdistInd >= 0) && (EdistInd < nEdist) && 
                  (AdistInd >= 0) && (AdistInd < nAdist))
               {
+            #if USE_CUDA > 0
+                  atomicAdd(&surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd],newWeight);
+            #else      
                   surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
                     surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
+            #endif
                }
 	       #endif
                   if(surface > 0)
@@ -403,9 +407,13 @@ void operator()(std::size_t indx) const {
                  (AdistInd >= 0) && (AdistInd < nAdist))
               {
                 //std::cout << " particle sputters with " << EdistInd << AdistInd <<  std::endl;
+            #if USE_CUDA > 0
+                  atomicAdd(&surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd],newWeight);
+            #else      
                   surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
                     surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
-               }
+              #endif 
+              }
 	       #endif
                   if(sputtProb == 0.0) newWeight = 0.0;
                    //std::cout << " particle sputtered with newWeight " << newWeight << std::endl;

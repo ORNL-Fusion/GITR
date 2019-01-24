@@ -38,6 +38,7 @@ void operator()(std::size_t indx) const
     {  
        //std::cout << "tt subsamplefac indx, nT " << tt << " "<< subSampleFac << " " << indx << " " << nT << std::endl;
        int tt0=tt[0];
+       tt[0] = tt[0]+1;
        if (tt0 % subSampleFac == 0)
        {
        int indexP = particlesPointer->index[indx];
