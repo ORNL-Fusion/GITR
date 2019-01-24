@@ -351,38 +351,38 @@ void operator()(std::size_t indx) const {
               particlesPointer->y[indx] = p[1];
               particlesPointer->z[indx] = p[2];
               particlesPointer->wallHit[indx] = i;
-              #if USESURFACEMODEL == 0 
-                #if USE_CUDA > 0
-                  atomicAdd(&boundaryVector[i].impacts, particlesPointer->weight[indx]);
-                #else
-                  boundaryVector[i].impacts = boundaryVector[i].impacts +  particlesPointer->weight[indx];
-                #endif
-              #endif
+              //#if USESURFACEMODEL == 0 
+              //  #if USE_CUDA > 0
+              //    atomicAdd(&boundaryVector[i].impacts, particlesPointer->weight[indx]);
+              //  #else
+              //    boundaryVector[i].impacts = boundaryVector[i].impacts +  particlesPointer->weight[indx];
+              //  #endif
+              //#endif
               float E0 = 0.5*particlesPointer->amu[indx]*1.66e-27
                          *(particlesPointer->vx[indx]*particlesPointer->vx[indx] + 
                          particlesPointer->vy[indx]*particlesPointer->vy[indx] + 
                          particlesPointer->vz[indx]*particlesPointer->vz[indx])/1.602e-19;
                             //std::cout << "Energy of particle that hit surface " << E0 << std::endl;
               #if USE_CUDA > 0
-                float surfNormal[3] = {0.0f};
-                float partNormal[3] = {0.0f};
-                float partDotNormal = 0.0f;
-                partNormal[0] = particlesPointer->vx[indx];
-                partNormal[1] = particlesPointer->vy[indx];
-                partNormal[2] = particlesPointer->vz[indx];
-                getBoundaryNormal(boundaryVector,i,surfNormal,particlesPointer->x[indx],particlesPointer->y[indx]);
-                vectorNormalize(partNormal,partNormal);
-                partDotNormal = vectorDotProduct(partNormal,surfNormal);
-                float thetaImpact = acos(partDotNormal)*180.0/3.1415;
-                if(E0 < surfaces->E && E0> surfaces->E0)
-                {
-                    int tally_index = floor((E0-surfaces->E0)/surfaces->dE);
-                    if(thetaImpact > surfaces->A0 && thetaImpact < surfaces->A)
-                    {
-                        int aTally = floor((thetaImpact-surfaces->A0)/surfaces->dA);
-                        atomicAdd(&surfaces->energyDistribution[i*surfaces->nE*surfaces->nA+ aTally*surfaces->nE + tally_index], particlesPointer->weight[indx]);
-                    }
-                }
+                //float surfNormal[3] = {0.0f};
+                //float partNormal[3] = {0.0f};
+                //float partDotNormal = 0.0f;
+                //partNormal[0] = particlesPointer->vx[indx];
+                //partNormal[1] = particlesPointer->vy[indx];
+                //partNormal[2] = particlesPointer->vz[indx];
+                //getBoundaryNormal(boundaryVector,i,surfNormal,particlesPointer->x[indx],particlesPointer->y[indx]);
+                //vectorNormalize(partNormal,partNormal);
+                //partDotNormal = vectorDotProduct(partNormal,surfNormal);
+                //float thetaImpact = acos(partDotNormal)*180.0/3.1415;
+                //if(E0 < surfaces->E && E0> surfaces->E0)
+                //{
+                //    int tally_index = floor((E0-surfaces->E0)/surfaces->dE);
+                //    if(thetaImpact > surfaces->A0 && thetaImpact < surfaces->A)
+                //    {
+                //        int aTally = floor((thetaImpact-surfaces->A0)/surfaces->dA);
+                //        atomicAdd(&surfaces->energyDistribution[i*surfaces->nE*surfaces->nA+ aTally*surfaces->nE + tally_index], particlesPointer->weight[indx]);
+                //    }
+                //}
               #else
               #endif
            }   
@@ -635,6 +635,7 @@ void operator()(std::size_t indx) const {
 #endif        
             if (particlesPointer->hitWall[indx] == 1.0)
             {
+                
             #if (FLUX_EA > 0 && USESURFACEMODEL == 0 )
     float E0 = 0.0;
     float thetaImpact = 0.0;
@@ -664,6 +665,12 @@ void operator()(std::size_t indx) const {
     int surfaceHit = boundaryVector[particlesPointer->wallHit[indx]].surfaceNumber;
     int surface = boundaryVector[particlesPointer->wallHit[indx]].surface;
     float weight = particlesPointer->weight[indx];
+       //particlesPointer->test[indx] = norm_part; 
+       //particlesPointer->test0[indx] = partDotNormal; 
+       //particlesPointer->test1[indx] = particleTrackVector[0]; 
+       //particlesPointer->test2[indx] = particleTrackVector[1]; 
+       //particlesPointer->test3[indx] = particleTrackVector[2]; 
+       //particlesPointer->test4[indx] = particles; 
     //std::cout << "impact energy and angle " << E0 << " " << thetaImpact << std::endl;
     //std::cout << "surface EAinds " <<surface<< " " <<  EdistInd << " " << AdistInd << std::endl;
     if(surface){
