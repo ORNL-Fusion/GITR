@@ -2182,6 +2182,7 @@ int main(int argc, char **argv, char **envp)
     float netX0=0.0,netX1=0.0,netY0=0.0,netY1=0.0,netZ0=0.0,netZ1=0.0;
     int net_nX=0,net_nY=0,net_nZ=0;
     int nBins=0;
+    int nSpec=0;
     if(world_rank == 0)
 {
     if(cfg.lookupValue("diagnostics.netx0", netX0) && 
@@ -2198,6 +2199,11 @@ int main(int argc, char **argv, char **envp)
     else
     { std::cout << "ERROR: Could not get spectroscopy net string info from input file " << std::endl;}
 }
+    #if SPECTROSCOPY < 3
+      nSpec = (nBins+1)*net_nX*net_nZ;
+    #else
+      nSpec = (nBins+1)*net_nX*net_nY*net_nZ;
+    #endif
   #if USE_MPI > 0
       MPI_Bcast(&netX0,1,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(&netX1,1,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -2209,12 +2215,12 @@ int main(int argc, char **argv, char **envp)
       MPI_Bcast(&net_nY,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&net_nZ,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nBins,1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Bcast(&nSpec,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
   #endif
 
     std::cout << "spec bin Ns " << nBins << " " << net_nX << " " << net_nY << " " << net_nZ << std::endl; 
     #if SPECTROSCOPY < 3
-
       sim::Array<double> net_Bins((nBins+1)*net_nX*net_nZ,0.0);
       sim::Array<double> net_BinsTotal((nBins+1)*net_nX*net_nZ,0.0);
     #else
@@ -3194,7 +3200,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
   #endif
 
   thrust::counting_iterator<std::size_t> particleBegin(pStartIndx[world_rank]);  
-  thrust::counting_iterator<std::size_t> particleEnd(pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank]-1);
+  thrust::counting_iterator<std::size_t> particleEnd(pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank]);
   thrust::counting_iterator<std::size_t> particleOne(1);
     auto randInitStart_clock = Time::now();
     
@@ -3250,6 +3256,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     cudaMallocManaged(&dev_tt, sizeof(int));
     #else
     int* dev_tt = new int[1];
+     *dev_tt=0;
      #endif
     int tt=0;
     move_boris move_boris0(particleArray,dt,boundaries.data(), nLines,
@@ -3764,15 +3771,13 @@ MPI_Barrier(MPI_COMM_WORLD);
     //{
     //for(int i=0;i<401;i++)
     //{
-    //  std::cout << "Rank " << world_rank << "z " << positionHistoryZgather[i] << std::endl;
-    //}
-    //}
-#endif
+    //  std::cout << "Rank " << world_rank << "z " << positionHistoryZgather[i] << nSpec,
+    #endif
 
 #if SPECTROSCOPY > 0
 MPI_Barrier(MPI_COMM_WORLD);
 std::cout <<"Starting spectroscopy reduce " << world_rank<< std::endl;
-MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], (nBins+1)*net_nX*net_nY*net_nZ, 
+MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], nSpec,
            MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 std::cout <<"Done with spectroscopy reduce " << world_rank<< std::endl;
 MPI_Barrier(MPI_COMM_WORLD);
