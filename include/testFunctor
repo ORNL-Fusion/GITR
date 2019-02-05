@@ -1,0 +1,8 @@
+thrust::counting_iterator<std::size_t> particleBegin(0);  
+thrust::counting_iterator<std::size_t> particleEnd(1000);
+
+ionize ionize0(particles, dt,ionTemperature,
+               electronDensity,ionizationRates,...);
+
+thrust::for_each(thrust::device,particleBegin,particleEnd,
+                ionize0);
