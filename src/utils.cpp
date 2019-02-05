@@ -523,16 +523,19 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
     //std::cout << "nmat " << nMaterials << std::endl;
     for(int i=0 ; i<nLines ; i++)
     {
+       std::cout << "i " << i << std::endl;
        boundaries[i].x1 = geom["x1"][i];
        boundaries[i].y1 = 0.0;
        boundaries[i].z1 = geom["z1"][i];
        boundaries[i].x2 = geom["x2"][i];
        boundaries[i].y2 = 0.0;
        boundaries[i].z2 = geom["z2"][i];
+       std::cout << "got positions " << std::endl;
        boundaries[i].Z = geom["Z"][i];
        boundaries[i].slope_dzdx = geom["slope"][i];
        boundaries[i].intercept_z = geom["intercept"][i];
        boundaries[i].length = geom["length"][i];
+       std::cout << "got Z slope length " << std::endl;
 
     boundaries[i].a = boundaries[i].z2 - boundaries[i].z1;
     boundaries[i].b = 0.0;
@@ -543,7 +546,9 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
           boundaries[i].x2 << ", " << boundaries[i].z2 << ", " <<
           boundaries[i].slope_dzdx << ", " << boundaries[i].intercept_z << ", " <<
           boundaries[i].length << ", " << boundaries[i].Z << "];" << std::endl;
+       std::cout << "trying surface" << std::endl;
        boundaries[i].surface = geom["surface"][i];
+       std::cout << "got surface " << std::endl;
        if(boundaries[i].surface > 0)
        {
            boundaries[i].surfaceNumber = nZSurfs;
