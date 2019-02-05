@@ -7,5 +7,8 @@ struct ionize {
     float P = expf(-dt/ionTemperature);
     float P1 = 1.0-P;
     float r1 = rand()
+    float chargeAdd = 0.0;
     if(r1 <= P1){
-      particles->charge[indx] = particles->charge[indx]+1;}
+      chargeAdd = 1.0;}
+    particles->charge[indx] = particles->charge[indx]+chargeAdd;
+  }
