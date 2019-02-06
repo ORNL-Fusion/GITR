@@ -153,11 +153,6 @@ int main(int argc, char **argv, char **envp)
     int num_threads = omp_get_max_threads();
 
     std::cout << " rank and max num threads " << world_rank << " " << num_threads << std::endl; 
-      for (char **env = envp; *env != 0; env++)
-            {
-                    char *thisEnv = *env;
-                        printf("%s\n", thisEnv);    
-                          }
 #endif
   //Prepare config files for import
   Config cfg,cfg_geom;
@@ -396,7 +391,6 @@ int main(int argc, char **argv, char **envp)
       MPI_Bcast(&A0dist,1,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Bcast(&Adist,1,MPI_FLOAT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
-      std::cout << "broadcasted distribution numbers " << world_rank << std::endl;
     #endif
   #endif
   auto surfaces = new Surfaces(nSurfaces,nEdist,nAdist);
@@ -422,7 +416,6 @@ int main(int argc, char **argv, char **envp)
   int nHashPointsTotal = 1;
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
-  std::cout << " node starting geomhash1 " << world_rank << std::endl;
   #if GEOM_HASH == 1
   nR_closeGeomTotal = 0;
   nY_closeGeomTotal = 0;
@@ -438,17 +431,11 @@ int main(int argc, char **argv, char **envp)
       MPI_Barrier(MPI_COMM_WORLD);
     #endif
   #endif
-    std::cout << " node and nHashes " << world_rank << " " << nHashes << std::endl;
     sim::Array<int> nR_closeGeom(nHashes,0);
-    std::cout << "nr "<< nR_closeGeom[0] << std::endl;
     sim::Array<int> nY_closeGeom(nHashes,0);
-    std::cout << "ny " << std::endl;
     sim::Array<int> nZ_closeGeom(nHashes,0);
-    std::cout << "nz " << std::endl;
     sim::Array<int> nHashPoints(nHashes,0);
-    std::cout << "np " << std::endl;
     sim::Array<int> n_closeGeomElements(nHashes,0);
-    std::cout << "nc " << std::endl;
 
   #if GEOM_HASH == 1
     if(world_rank == 0)
@@ -535,7 +522,6 @@ int main(int argc, char **argv, char **envp)
     #if USE_MPI > 0 
       MPI_Bcast(&nHashes,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
-    std::cout << "finished mpibacast" << std::endl;
     #endif
     std::vector<std::string> hashFile;
     if(world_rank == 0)
@@ -582,12 +568,9 @@ int main(int argc, char **argv, char **envp)
     #endif
   #endif
   
-    std::cout << "here now" << std::endl;
   sim::Array<float> closeGeomGridr(nR_closeGeomTotal), closeGeomGridy(nY_closeGeomTotal),
       closeGeomGridz(nZ_closeGeomTotal);
-    std::cout << "did i make it here" << std::endl;
   sim::Array<int> closeGeom(nGeomHash,0);
-    std::cout << "what about here" << std::endl;
   
   #if GEOM_HASH == 1
     sim::Array<float> hashX0(nHashes,0.0),hashX1(nHashes,0.0),hashY0(nHashes,0.0),hashY1(nHashes,0.0),hashZ0(nHashes,0.0),hashZ1(nHashes,0.0);
@@ -1059,8 +1042,8 @@ int main(int argc, char **argv, char **envp)
   std::string lcFile;
   if(world_rank ==0)
   {
-    getVariable(cfg,connLengthCfg+"fileString",lcFile);
     #if GENERATE_LC > 0
+      getVariable(cfg,connLengthCfg+"fileString",lcFile);
       getVariable(cfg,connLengthCfg+"nX",nR_Lc);
       getVariable(cfg,connLengthCfg+"nY",nY_Lc);
       getVariable(cfg,connLengthCfg+"nZ",nZ_Lc);
@@ -3062,9 +3045,7 @@ std::cout << "closed ncp " << std::endl;
   if(world_rank==0)
   { 
 #endif
-std::cout <<" about to write ncFile_particles " << std::endl;
     NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
-    std::cout <<" opened file " << std::endl;
     NcDim pNP = ncFile_particles.addDim("nP",nP);
     NcVar p_surfNormx = ncFile_particles.addVar("surfNormX",ncFloat,pNP);
     NcVar p_surfNormy = ncFile_particles.addVar("surfNormY",ncFloat,pNP);
@@ -3075,7 +3056,6 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     NcVar p_x = ncFile_particles.addVar("x",ncFloat,pNP);
     NcVar p_y = ncFile_particles.addVar("y",ncFloat,pNP);
     NcVar p_z = ncFile_particles.addVar("z",ncFloat,pNP);
-    std::cout <<" added vars " << std::endl;
     p_surfNormx.putVar(&pSurfNormX[0]);
     p_surfNormy.putVar(&pSurfNormY[0]);
     p_surfNormz.putVar(&pSurfNormZ[0]);
@@ -3090,7 +3070,6 @@ std::cout <<" about to write ncFile_particles " << std::endl;
   }
 #endif
 
-  std::cout << "finished loading particle source" << std::endl;
   #if GEOM_TRACE > 0       
     std::uniform_real_distribution<float> dist2(0,1);
     //std::random_device rd2;
@@ -3114,7 +3093,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     if(world_rank ==0)
     {
     if(cfg.lookupValue("diagnostics.trackSubSampleFactor", subSampleFac))
-       {std::cout << "Tracks subsample factor imported" << std::endl;}
+       {std::cout << "Tracks subsample factor imported "<< subSampleFac << std::endl;}
     else
     { std::cout << "ERROR: Could not get tracks sub sample info from input file " << std::endl;}
     }
@@ -3128,11 +3107,10 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     {
       pDisplacement[i]=pStartIndx[i]*nHistoriesPerParticle;
       pHistPerNode[i]=nPPerRank[i]*nHistoriesPerParticle;
-      std::cout << "pdispl and phispn " << i <<  " " << pHistPerNode[i] << " " << pDisplacement[i] << std::endl; 
     }
     const int* displ=&pDisplacement[0];
     const int* phpn=&pHistPerNode[0];
-    std::cout << "history array length " << nHistories << std::endl;
+    std::cout << "History array length " << nHistories << std::endl;
     #if USE_CUDA > 0
       sim::Array<float> positionHistoryX(nHistories);
       sim::Array<float> positionHistoryXgather(nHistories,0.0);
@@ -3185,7 +3163,7 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     //cpu_timer timer;
   #endif
 
-  std::cout << "beginning seeds" << std::endl;
+  std::cout << "Beginning random number seeds" << std::endl;
   std::uniform_real_distribution<float> dist(0,1e6);
 
   #if FIXEDSEEDS == 0
@@ -3229,7 +3207,6 @@ std::cout <<" about to write ncFile_particles " << std::endl;
       //}
 #else
       std::random_device randDeviceInit; 
-      std::cout << "Initializing curand seeds " << std::endl;
       //thrust::for_each(thrust::device,particleBegin+ world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,
       //                     curandInitialize(&state1[0],randDeviceInit,0));
        //std::mt19937 s0(randDeviceInit);
@@ -3461,7 +3438,6 @@ std::cout <<" about to write ncFile_particles " << std::endl;
     auto start_clock = Time::now();
     fsec fs1 = start_clock - GITRstart_clock;
     printf("Initialize time for node %i          is %6.3f (secs) \n", world_rank,fs1.count());
-    std::cout << "Starting main loop"  << std::endl;
     float testFlowVec[3] = {0.0f};
 #if USEFIELDALIGNEDVALUES > 0
     interpFieldAlignedVector(&testFlowVec[0],1.4981,0.0,
@@ -3475,9 +3451,8 @@ std::cout <<" about to write ncFile_particles " << std::endl;
                                      flowVGridr.data(),flowVGridz.data(),
                                      flowVr.data(),flowVz.data(),flowVt.data());   
 #endif
-std::cout << "Flow vNs "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << testFlowVec[2]  << std::endl;
-    std::cout << "Starting main loop" << particleArray->xprevious[0] << std::endl;
-    std::cout << "Starting main loop" << particleArray->xprevious[1] << std::endl;
+std::cout << "Flow velocities "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << testFlowVec[2]  << std::endl;
+    std::cout << "Starting main loop" <<  std::endl;
 //Main time loop
     #if __CUDACC__
       cudaDeviceSynchronize();
@@ -3651,12 +3626,6 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
     fsec fs = finish_clock - start_clock;
     printf("Time taken          is %6.3f (secs) \n", fs.count());
     printf("Time taken per step is %6.3f (secs) \n", fs.count() / (float) nT);
-std::cout << "y pos right after loop " << particleArray->y[0] << std::endl;    
-std::cout << "x position of first particle per node " << world_rank << " " << particleArray->xprevious[world_rank*nP/world_size+1] << " " <<
-   particleArray->vx[world_rank*nP/world_size] << " " << 
-   particleArray->vy[world_rank*nP/world_size] << " " << 
-   particleArray->vz[world_rank*nP/world_size] << " " << 
-   std::endl;
 #if USE_BOOST
     //cpu_times ionizeTimeGPU = timer.elapsed();
     //std::cout << "Particle Moving Time: " << ionizeTimeGPU.wall*1e-9 << '\n';
@@ -3675,7 +3644,6 @@ for(int i=0; i<nP ; i++)
          " trans " << particleArray->transitTime[i] << std::endl;
 }
 */
-    std::cout << "transit time counting "<< nP << " " << particleArray->x[0] <<  std::endl;
     //float tmp202 =0.0;
 #if USE_CUDA
     cudaDeviceSynchronize();
@@ -3699,10 +3667,9 @@ for(int i=0; i<nP ; i++)
     //if (world_rank == 0) {
     //      x_gather = malloc(sizeof(float)*nP);
     //}
-    std::cout << "reached gather barrier" << std::endl;
+    std::cout << "Reached MPI barrier for gather" << std::endl;
 
     MPI_Barrier(MPI_COMM_WORLD);
-    std::cout << "started gather" << std::endl;
     MPI_Gather(&particleArray->x[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &xGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->y[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &yGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->z[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &zGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -3717,9 +3684,7 @@ for(int i=0; i<nP ; i++)
     MPI_Gather(&particleArray->firstIonizationZ[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &firstIonizationZGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->test0[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &test0Gather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->test1[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &test1Gather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    std::cout << "wating after gathers" << std::endl;
 MPI_Barrier(MPI_COMM_WORLD);
-    std::cout << "passed barrier after gather" << std::endl;
 #if PARTICLE_TRACKS >0
    
     std::vector<float> exampleArray(4,0.0);
@@ -3764,9 +3729,7 @@ MPI_Barrier(MPI_COMM_WORLD);
     MPI_Gatherv(&velocityHistoryZ[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &velocityHistoryZgather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gatherv(&chargeHistory[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &chargeHistoryGather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gatherv(&weightHistory[pStartIndx[world_rank]*nHistoriesPerParticle], nPPerRank[world_rank]*nHistoriesPerParticle, MPI_FLOAT, &weightHistoryGather[0], phpn,displ,MPI_FLOAT, 0, MPI_COMM_WORLD);
-    std::cout << "at barrier tracks gather" << std::endl;
 MPI_Barrier(MPI_COMM_WORLD);
-    std::cout << "finished particle tracks gather" << std::endl;
     //if(world_rank ==0)
     //{
     //for(int i=0;i<401;i++)
@@ -3776,15 +3739,13 @@ MPI_Barrier(MPI_COMM_WORLD);
 
 #if SPECTROSCOPY > 0
 MPI_Barrier(MPI_COMM_WORLD);
-std::cout <<"Starting spectroscopy reduce " << world_rank<< std::endl;
 MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], nSpec,
            MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-std::cout <<"Done with spectroscopy reduce " << world_rank<< std::endl;
 MPI_Barrier(MPI_COMM_WORLD);
 #endif
 #if (USESURFACEMODEL > 0 || FLUX_EA > 0)
 //MPI_Barrier(MPI_COMM_WORLD);
-std::cout <<"Starting surface reduce " << world_rank<< std::endl;
+std::cout <<"Starting surface reduce " << std::endl;
 //for(int i=0;i<nSurfaces;i++) std::cout << surfaces->grossDeposition[i]<<std::endl;
 MPI_Reduce(&surfaces->grossDeposition[0], &grossDeposition[0],nSurfaces, MPI_FLOAT, MPI_SUM, 0,
                    MPI_COMM_WORLD);
@@ -3810,6 +3771,7 @@ MPI_Reduce(&surfaces->sputtDistribution[0], &sputtDistribution[0],nSurfaces*nEdi
 MPI_Reduce(&surfaces->reflDistribution[0], &reflDistribution[0],nSurfaces*nEdist*nAdist, 
         MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
 MPI_Barrier(MPI_COMM_WORLD);
+std::cout <<"Finished surface reduce " << std::endl;
 #endif
 #endif
     if(world_rank == 0)
@@ -3831,8 +3793,6 @@ MPI_Barrier(MPI_COMM_WORLD);
         {
           if(particleArray->hitWall[i] > 0.0) totalHitWall++;
         }
-        std::cout << "Number and percent of particles that hit wall " << 
-        totalHitWall << " " << totalHitWall*1.0/(nP*1.0) << std::endl;
         #if USE3DTETGEOM > 0
           float meanTransitTime0 = 0.0;
     /*
@@ -3846,23 +3806,18 @@ MPI_Barrier(MPI_COMM_WORLD);
     }
     */
           meanTransitTime0 = meanTransitTime0/nP;
-          std::cout << " mean transit time " << meanTransitTime0 << std::endl;
           int max_boundary = 0;
           float max_impacts = 0.0;
           int max_boundary1 = 0;
           float max_impacts1 = 0.0;
-          std::cout << " new pointers with nLines " << nLines << std::endl;
           float* impacts = new float[nLines];
           float* xOut = new float[nP];
-          std::cout << " first one worked "  << std::endl;
           float* redeposit = new float[nLines];
           float* startingParticles = new float[nLines];
           float* surfZ = new float[nLines];
           //int nA = 90;
           //int nE = 1000;
           //float* impactEnergy = new float[nLines*nA*nE];
-          std::cout << "before starting loop "<< particleArray->xprevious[0]  << std::endl;
-          std::cout << " starting loop "  << std::endl;
           for (int i=0; i<nLines; i++)
           {
               impacts[i] = boundaries[i].impacts;
@@ -3881,8 +3836,6 @@ MPI_Barrier(MPI_COMM_WORLD);
 xOut[i] = particleArray->x[i];
 }
 
-std::cout << "maximum boundary " << max_boundary << std::endl;
-std::cout << "number of counts " << max_impacts << std::endl;
 /*
 sim::Array<float> tally00(nLines,0);
 for (int j=0; j<nP; j++)
@@ -3908,7 +3861,6 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
         surfZ[i] = boundaries[i].Z;
     }
 #endif
-std::cout << "Beginning erosion to surface counting "<<px[0] << std::endl;
  //add initial particle erosion to surface counting
  int closestBoundaryIndex=0;
  int surfIndex=0;
@@ -3964,7 +3916,6 @@ std::cout << "Beginning erosion to surface counting "<<px[0] << std::endl;
 //std::cout << "Number of impurity particles not deposited " << noWall << std::endl;
 //std::cout << "Mean transit time of deposited particles " << meanTransitTime << std::endl;
 //#endif
-    std::cout << "positions.m writing " << std::endl;
     ofstream outfile2;
     outfile2.open ("output/positions.m");
     for(int i=1 ; i<nP+1 ; i++)
@@ -3974,15 +3925,11 @@ std::cout << "Beginning erosion to surface counting "<<px[0] << std::endl;
             << " " << particleArray->z[i-1] << " ];" << std::endl;
       }
        outfile2.close();
-       std::cout << "finished writing positions.m " << std::endl;
 // Write netCDF output for positions
 NcFile ncFile0("output/positions.nc", NcFile::replace);
-       std::cout << "created file " << std::endl;
 NcDim nc_nP0 = ncFile0.addDim("nP",nP);
-       std::cout << "created dim nP " << std::endl;
 vector<NcDim> dims0;
 dims0.push_back(nc_nP0);
-       std::cout << "created dims Vector " << std::endl;
 
 NcVar nc_x0 = ncFile0.addVar("x",ncFloat,dims0);
 NcVar nc_y0 = ncFile0.addVar("y",ncFloat,dims0);
@@ -3994,8 +3941,6 @@ NcVar nc_trans0 = ncFile0.addVar("transitTime",ncFloat,dims0);
 NcVar nc_impact0 = ncFile0.addVar("hitWall",ncFloat,dims0);
 NcVar nc_weight0 = ncFile0.addVar("weight",ncFloat,dims0);
 NcVar nc_charge0 = ncFile0.addVar("charge",ncFloat,dims0);
-       std::cout << "added Vars " << std::endl;
-       std::cout << "x0 "<< particleArray->x[0] << std::endl;
 #if USE_MPI > 0
 nc_x0.putVar(&xGather[0]);
 nc_y0.putVar(&yGather[0]);
@@ -4009,7 +3954,6 @@ nc_weight0.putVar(&weightGather[0]);
 nc_charge0.putVar(&chargeGather[0]);
 #else
 nc_x0.putVar(&particleArray->xprevious[0]);
-       std::cout << "added x "<< particleArray->x[0] << " " <<particleArray->y[0] << std::endl;
 nc_y0.putVar(&particleArray->yprevious[0]);
 nc_z0.putVar(&particleArray->zprevious[0]);
 nc_vx0.putVar(&particleArray->vx[0]);
@@ -4021,7 +3965,6 @@ nc_weight0.putVar(&particleArray->weight[0]);
 nc_charge0.putVar(&particleArray->charge[0]);
 #endif
 ncFile0.close();
-       std::cout << "closed positions opening surface " << std::endl;
        //auto particleArray2 = new Particles(1);
        //std::cout << "particleArray2 z weight"<<particleArray2->z[0] << " " << particleArray2->weight[0] << std::endl;
       //particleArray2->setP(particleArray,0,0);
@@ -4122,7 +4065,6 @@ NcVar nc_surfSputtDist = ncFile1.addVar("surfSputtDist",ncFloat,dimsSurfE);
 //#endif
 //nc_surfStartingParticles.putVar(startingParticles);
 //nc_surfZ.putVar(surfZ);
-std::cout << "writing energy distribution file " << std::endl;
 nc_surfEDist.putVar(&energyDistribution[0]);
 nc_surfReflDist.putVar(&reflDistribution[0]);
 nc_surfSputtDist.putVar(&sputtDistribution[0]);
@@ -4162,7 +4104,6 @@ NcVar nc_weight = ncFile_hist.addVar("weight",ncDouble,dims_hist);
     //  std::cout << "Rank " << world_rank << "z " << positionHistoryZgather[i] << std::endl;
     //}
     //}
-std::cout << "printing gathered data" << std::endl;
 nc_x.putVar(&positionHistoryXgather[0]);
 nc_y.putVar(&positionHistoryYgather[0]);
 nc_z.putVar(&positionHistoryZgather[0]);
@@ -4175,7 +4116,6 @@ nc_vz.putVar(&velocityHistoryZgather[0]);
 nc_charge.putVar(&chargeHistoryGather[0]);
 nc_weight.putVar(&weightHistoryGather[0]);
 #else
-std::cout << "printing NOT gathered data" << std::endl;
 nc_x.putVar(positionHistoryX[0]);
 nc_y.putVar(positionHistoryY[0]);
 nc_z.putVar(positionHistoryZ[0]);
@@ -4232,7 +4172,7 @@ ncFile.close();
     */
 #endif
 #if USE_MPI > 0
-    std::cout << "sqrt 0 " << sqrt(-0.0) << std::endl;
+/*
     for(int i=0;i<100;i++)
 {
     std::cout << "tests " << particleArray->test[i] << " "<<  particleArray->test0[i] <<" "<< particleArray->test1[i] <<
@@ -4243,6 +4183,7 @@ ncFile.close();
     //std::cout << "particle ionization z and t " << firstIonizationZGather[i] << " " << firstIonizationTGather[i] << " " << xGather[i] << " " << 
       //vxGather[i] << " " << chargeGather[i] << std::endl;
 }
+*/
 #endif
 //    for(int i=0;i<100;i++)
 //{
