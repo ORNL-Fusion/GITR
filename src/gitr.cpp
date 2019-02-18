@@ -32,6 +32,7 @@
 #include "history.h"
 #include "hashGeom.h"
 #include "hashGeomSheath.h"
+#include "parDiffusion.h"
 #include "testRoutineCuda.h"
 #include "boundaryInit.h"
 #include "array.h"
@@ -3277,6 +3278,17 @@ std::cout << "closed ncp " << std::endl;
                     nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
                                         &br.front(),&bz.front(),&by.front());
  #endif           
+#if USEPARDIFFUSION > 0
+                parDiffusion parDiffusion0(particleArray,dt,&state1.front(),
+                    nR_flowV,nY_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridy.front(),&flowVGridz.front(),
+                    &flowVr.front(),&flowVz.front(),&flowVt.front(),
+                    nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),    
+                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),ti.data(),&te.front(),
+                    background_Z,background_amu, 
+                    nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
+                                        &br.front(),&bz.front(),&by.front());
+
+#endif
 #if USECOULOMBCOLLISIONS > 0
                 coulombCollisions coulombCollisions0(particleArray,dt,&state1.front(),
                     nR_flowV,nY_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridy.front(),&flowVGridz.front(),
@@ -3582,6 +3594,10 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       #ifdef __CUDACC__
         //cudaThreadSynchronize();
       #endif
+      #endif
+      
+      #if USEPARDIFFUSION > 0
+        thrust::for_each(thrust::device,particleBegin,particleEnd,parDiffusion0);
       #endif
 
       #if USECOULOMBCOLLISIONS > 0
