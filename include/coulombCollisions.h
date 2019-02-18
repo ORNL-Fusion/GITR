@@ -164,7 +164,17 @@ float ME = 9.10938356e-31;
                 	nu_deflection_e = 2*(psi_psiprime_psi2x_e)*nu_0_e;
                 	nu_parallel_e = psi_e/xx_e*nu_0_e;
                 	nu_energy_e = 2*(amu/(ME/MI)*psi_e - psi_prime_e)*nu_0_e;
-                    //std::cout << "lam_d lam gami game ai ae" << lam_d << " " << lam << " " << gam_ion_background << " " << gam_electron_background << " " << a_ion << " " << a_electron << std::endl;
+                    
+       //if(isnan(nu_friction_i)){
+       //std::cout << "nu_f_i " << nu_friction_i << std::endl;
+       //std::cout << " psi " << psi;
+       //std::cout << " xx " << xx;
+       //std::cout << " ti_eV " << ti_eV;
+       //std::cout << " a_ion " << a_ion << std::endl;
+       //std::cout << "nu_0_i " << nu_0_i << std::endl;
+       //}
+       //if(isnan(nu_friction_e)) std::cout << "nu_f_e " << nu_friction_e << std::endl;
+		    //std::cout << "lam_d lam gami game ai ae" << lam_d << " " << lam << " " << gam_ion_background << " " << gam_electron_background << " " << a_ion << " " << a_electron << std::endl;
                     //std::cout << "x psi_prime psi_psiprime psi" << xx << " " << xx_e << " " << psi_prime << " "<< psi_prime_e << " " << psi_psiprime<< " " << psi_psiprime_e << " " << psi<< " " << psi_e << " " << nu_0_i<< " " << nu_0_e << std::endl;
                     //std::cout << "nu friction, parallel perp energy IONs" << nu_friction_i << " " << nu_parallel_i << " " <<nu_deflection_i << " " << nu_energy_i << std::endl;
                     //std::cout << "nu friction, parallel perp energy ELECTRONs" << nu_friction_e << " " << nu_parallel_e << " " <<nu_deflection_e << " " << nu_energy_e << std::endl;
@@ -178,14 +188,15 @@ float ME = 9.10938356e-31;
      //    	    std::cout << "gam_electron_background*density/powf(velocityNorm,3) " << gam_electron_background<< " " << density<< " " << velocityNorm << " " << lam_d<< std::endl;
      //    	    }
      //                //std::cout << "nu friction, parallel perp energy " << nu_friction << " " << nu_parallel << " " <<nu_deflection << " " << nu_energy << std::endl;
-    if(te_eV == 0.0 || ti_eV == 0.0)
+    if(te_eV <= 0.0 || ti_eV <= 0.0)
     {
         nu_friction = 0.0;
         nu_deflection = 0.0;
         nu_parallel = 0.0;
         nu_energy = 0.0;
+       //std::cout << " ti_eV and nu_friction " << ti_eV<< " " << nu_friction << std::endl;
     }
-    if(density == 0.0)
+    if(density <= 0.0)
     {
         nu_friction = 0.0;
         nu_deflection = 0.0;
