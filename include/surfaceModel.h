@@ -270,7 +270,7 @@ void operator()(std::size_t indx) const {
     //std::cout << "Particle hit wall with v " << vx << " " << vy << " " << vz<< std::endl;
     //std::cout << "Particle amu norm_part " << particles->amu[indx] << " " << vy << " " << vz<< std::endl;
     wallIndex = particles->wallIndex[indx];
-    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector);
+    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector,particles->y[indx],particles->x[indx]);
             particleTrackVector[0] = particleTrackVector[0]/norm_part;
             particleTrackVector[1] = particleTrackVector[1]/norm_part;
             particleTrackVector[2] = particleTrackVector[2]/norm_part;
@@ -513,7 +513,7 @@ void operator()(std::size_t indx) const {
     vSampled[0] = V0*sin(aInterpVal*3.1415/180)*cos(2.0*3.1415*r10);
     vSampled[1] = V0*sin(aInterpVal*3.1415/180)*sin(2.0*3.1415*r10);
     vSampled[2] = V0*cos(aInterpVal*3.1415/180);
-    boundaryVector[wallHit].transformToSurface(vSampled);
+    boundaryVector[wallHit].transformToSurface(vSampled,particles->y[indx],particles->x[indx]);
     particles->vx[indx] = -signPartDotNormal*vSampled[0];
     particles->vy[indx] = -signPartDotNormal*vSampled[1];
     particles->vz[indx] = -signPartDotNormal*vSampled[2];

@@ -18,11 +18,11 @@
 #include <boost/timer/timer.hpp>
 using namespace boost::timer;
 #endif
-template <typename T>
-CUDA_CALLABLE_MEMBER
-int sgn(T val) {
-            return (T(0) < val) - (val < T(0));
-}
+//template <typename T>
+//CUDA_CALLABLE_MEMBER
+//int sgn(T val) {
+//            return (T(0) < val) - (val < T(0));
+//}
 
 CUDA_CALLABLE_MEMBER
 void vectorAdd(float A[], float B[],float C[])

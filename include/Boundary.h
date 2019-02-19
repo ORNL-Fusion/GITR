@@ -22,6 +22,11 @@
 #else
 #include <random>
 #endif
+template <typename T>
+CUDA_CALLABLE_MEMBER
+int sgn(T val) {
+            return (T(0) < val) - (val < T(0));
+}
 
 class Boundary 
 {
@@ -93,32 +98,40 @@ class Boundary
     }
     
     CUDA_CALLABLE_MEMBER
-    void getSurfaceNormal(float B[])
+    void getSurfaceNormal(float B[],float y,float x)
     {
 #if USE3DTETGEOM > 0
         B[0] = -a/plane_norm;
         B[1] = -b/plane_norm;
         B[2] = -c/plane_norm;
 #else
-        //float perpSlope = -1.0/slope_dzdx;
-        //B[0] = 1.0/sqrt(perpSlope*perpSlope+1.0);
-        //B[1] = 0.0;
-        //B[2] = sqrt(1-B[0]*B[0]);
-        B[0] = -a/plane_norm;
-        B[1] = -b/plane_norm;
-        B[2] = -c/plane_norm;
+        float perpSlope = -1.0/slope_dzdx;
+        float Br = 1.0/sqrt(perpSlope*perpSlope+1.0);
+        float Bt = 0.0;
+        B[2] = sgn(perpSlope)*sqrt(1-B[0]*B[0]);
+	#if USECYLSYMM > 0
+	    float theta = atan2f(y,x);
+            B[0] = cosf(theta)*Br - sinf(theta)*Bt;
+            B[1] = sinf(theta)*Br + cosf(theta)*Bt;
+            #else
+            B[0] = Br;
+            B[1] = Bt;
+	#endif
+        //B[0] = -a/plane_norm;
+        //B[1] = -b/plane_norm;
+        //B[2] = -c/plane_norm;
         //std::cout << "perp x and z comp " << B[0] << " " << B[2] << std::endl;
 #endif
     }
     CUDA_CALLABLE_MEMBER
-        void transformToSurface(float C[])
+        void transformToSurface(float C[],float y, float x)
         {
             float X[3] = {0.0f};
             float Y[3] = {0.0f};
             float Z[3] = {0.0f};
             float tmp[3] = {0.0f};
             getSurfaceParallel(X);
-            getSurfaceNormal(Z);
+            getSurfaceNormal(Z,y,x);
             Y[0] = Z[1]*X[2] - Z[2]*X[1]; 
             Y[1] = Z[2]*X[0] - Z[0]*X[2]; 
             Y[2] = Z[0]*X[1] - Z[1]*X[0];
