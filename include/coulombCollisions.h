@@ -543,6 +543,16 @@ void operator()(std::size_t indx)  {
         float coeff_perp1 = cosXsi*sqrt(nu_deflection*dt*0.5*vRel2);
         float coeff_perp2 = sinXsi*sqrt(nu_deflection*dt*0.5*vRel2);
 	//std::cout << "cosXsi and sinXsi " << cosXsi << " " << sinXsi << std::endl;
+	#if USEFRICTION == 0
+	  drag=0.0;
+	#endif
+	#if USEANGLESCATTERING == 0
+	  coeff_perp1=0.0;
+	  coeff_perp2=0.0;
+	#endif
+	#if USEHEATING == 0
+	  coeff_par=0.0;
+	#endif
 	////ALL COULOMB COLLISION OPERATORS///
 	velocityCollisions[0] = (drag + coeff_par)*parallel_direction[0] + coeff_perp1*perp_direction1[0] + coeff_perp2*perp_direction2[0];
 	velocityCollisions[1] = (drag + coeff_par)*parallel_direction[1] + coeff_perp1*perp_direction1[1] + coeff_perp2*perp_direction2[1];
@@ -559,7 +569,7 @@ void operator()(std::size_t indx)  {
 	//velocityCollisions[0] = (coeff_par)*parallel_direction[0];
 	//velocityCollisions[1] = (coeff_par)*parallel_direction[1];
 	//velocityCollisions[2] = (coeff_par)*parallel_direction[2];
-        //float velocityCollisionsNorm = vectorNorm(velocityCollisions);
+        float velocityCollisionsNorm = vectorNorm(velocityCollisions);
         //vUpdate[0] = velocityRelativeNorm*velocityCollisions[0] + flowVelocity[0];    
         //vUpdate[1] = velocityRelativeNorm*velocityCollisions[1] + flowVelocity[1];    
         //vUpdate[2] = velocityRelativeNorm*velocityCollisions[2] + flowVelocity[2];    
