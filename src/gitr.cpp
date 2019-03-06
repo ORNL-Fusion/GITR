@@ -287,14 +287,22 @@ int main(int argc, char **argv, char **envp)
   std::string profiles_folder = "output/profiles";  
   
   //Geometry Definition
+  std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;
   if(world_rank == 0)
   {
-    Setting& geom = cfg_geom.lookup("geom");
+    try{  
+      Setting &geom = cfg_geom.lookup("geom");
+    std::cout << "Got geom setting" << std::endl;
     nLines = geom["x1"].getLength();
     std::cout << "Just read nLines " << nLines << std::endl;
     std::cout << "Number of Geometric Objects To Load: " << nLines << std::endl;
+    }
+    catch(const SettingNotFoundException &nfex)
+    {
+      std::cerr << "No 'geom' setting in configuration file." << std::endl;
+    }
   }
   #if USE_MPI > 0
     MPI_Bcast(&nLines,1,MPI_INT,0,MPI_COMM_WORLD);
