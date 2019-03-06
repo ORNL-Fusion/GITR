@@ -1808,6 +1808,7 @@ int main(int argc, char **argv, char **envp)
   int nTemperaturesIonize, nDensitiesIonize;
   int i0,i1,i2,i3,i4;
   int nTemperaturesRecombine, nDensitiesRecombine;
+  #if USEIONIZATION > 0
   if(world_rank == 0)
   {
   if(cfg.lookupValue("impurityParticleSource.ionization.fileString", ionizeFile) &&
@@ -1820,6 +1821,8 @@ int main(int argc, char **argv, char **envp)
   { std::cout << "Ionization rate coefficient file: " << ionizeFile << std::endl;}
   else
   { std::cout << "ERROR: Could not get ionization string info from input file " << std::endl;}
+  #endif
+  #if USERECOMBINATION > 0
   if(cfg.lookupValue("impurityParticleSource.recombination.fileString", recombFile) &&
      cfg.lookupValue("impurityParticleSource.recombination.nChargeStateString",recombNcs) &&
      cfg.lookupValue("impurityParticleSource.recombination.DensGridString",recombNDens) &&
@@ -1830,6 +1833,8 @@ int main(int argc, char **argv, char **envp)
   { std::cout << "Recombination rate coefficient file: " << recombFile << std::endl;}
   else
   { std::cout << "ERROR: Could not get ionization string info from input file " << std::endl;}
+  #endif
+  #if USEIONIZATION > 0
   i0 = read_profileNs(input_path+ionizeFile,ionizeNcs,recombNcs,nCS_Ionize, nCS_Recombine);
 
   i1 = read_profileNs(input_path+ionizeFile,ionizeNDens,ionizeNTemp,nDensitiesIonize,nTemperaturesIonize);
@@ -1847,6 +1852,7 @@ int main(int argc, char **argv, char **envp)
       MPI_Bcast(&nDensitiesRecombine,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
     #endif
+  #endif  
   sim::Array<float> rateCoeff_Ionization(nCS_Ionize*nTemperaturesIonize*nDensitiesIonize);
   sim::Array<float> gridTemperature_Ionization(nTemperaturesIonize),
                         gridDensity_Ionization(nDensitiesIonize);
@@ -1855,13 +1861,17 @@ int main(int argc, char **argv, char **envp)
                     gridDensity_Recombination(nDensitiesRecombine);
   if(world_rank ==0)
   {
+  #if USEIONIZATION > 0
   i2 = read_profiles(input_path+ionizeFile,nTemperaturesIonize,nDensitiesIonize,ionizeTempGrid, 
                          gridTemperature_Ionization,ionizeDensGrid,gridDensity_Ionization,
                          ionizeRCvarChar,rateCoeff_Ionization);
+  #endif
+  #if USERECOMBINATION > 0
   i4 = read_profiles(input_path+recombFile,nTemperaturesRecombine,nDensitiesRecombine,
              recombTempGrid,gridTemperature_Recombination,recombDensGrid,
              gridDensity_Recombination,
              recombRCvarChar,rateCoeff_Recombination);
+   #endif
   }
     #if USE_MPI > 0 
       MPI_Bcast(&rateCoeff_Ionization[0],nCS_Ionize*nTemperaturesIonize*nDensitiesIonize,MPI_FLOAT,0,MPI_COMM_WORLD);
