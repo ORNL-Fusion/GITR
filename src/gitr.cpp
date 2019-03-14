@@ -160,8 +160,8 @@ int main(int argc, char **argv, char **envp)
   //Prepare config files for import
   Config cfg,cfg_geom;
   std::string input_path = "input/";
-  //if(world_rank == 0)
-  //{
+  if(world_rank == 0)
+  {
     //Parse and read input file
     std::cout << "Open configuration file "<<input_path<< inputFile << std::endl;
     importLibConfig(cfg,input_path+inputFile);
@@ -179,7 +179,7 @@ int main(int argc, char **argv, char **envp)
     #if CHECK_COMPATIBILITY>0
       checkFlags(cfg); 
     #endif
-  //}
+  }
   // show memory usage of GPU
   #if USE_CUDA 
   if(world_rank == 0)
@@ -1507,6 +1507,7 @@ int main(int argc, char **argv, char **envp)
     MPI_Barrier(MPI_COMM_WORLD);
   #endif
   //Background Plasma flow velocity initialization    
+  std::cout << "Starting flow import "<< endl;
   int nR_flowV = 1;
   int nY_flowV = 1;
   int nZ_flowV = 1;
@@ -1826,15 +1827,15 @@ int main(int argc, char **argv, char **envp)
      gradTi[1] << " " << gradTi[2] << " " << std::endl; 
 
   //Initialization of ionization and recombination coefficients    
-  int nCS_Ionize, nCS_Recombine;
+  int nCS_Ionize=1, nCS_Recombine=1;
   const char *ionizeNcs,*ionizeNDens,*ionizeNTemp,
              *ionizeDensGrid,*ionizeTempGrid,*ionizeRCvarChar,
              *recombNcs,*recombNDens,*recombNTemp,
              *recombDensGrid,*recombTempGrid,*recombRCvarChar;
   std::string ionizeFile,recombFile;
-  int nTemperaturesIonize, nDensitiesIonize;
+  int nTemperaturesIonize=1, nDensitiesIonize=1;
   int i0,i1,i2,i3,i4;
-  int nTemperaturesRecombine, nDensitiesRecombine;
+  int nTemperaturesRecombine=1, nDensitiesRecombine=1;
   #if USEIONIZATION > 0
   if(world_rank == 0)
   {
