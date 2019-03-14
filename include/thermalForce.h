@@ -78,18 +78,19 @@ void operator()(std::size_t indx) const {
 		mu = p->amu[indx]/(background_amu + p->amu[indx]);
 		alpha = p->charge[indx]*p->charge[indx]*0.71;
 		beta =  3*(mu + 5*sqrtf(2.0)*p->charge[indx]*p->charge[indx]*(1.1*powf(mu,(5/2))- 0.35*powf(mu,(3/2))) - 1)/(2.6 - 2*mu+ 5.4*powf(mu,2));
-	dv_ETG[0] = dt/(p->amu[indx]*MI)*(alpha*(gradTe[0]));
-	dv_ETG[1] = dt/(p->amu[indx]*MI)*(alpha*(gradTe[1]));
-	dv_ETG[2] = dt/(p->amu[indx]*MI)*(alpha*(gradTe[2]));
+	dv_ETG[0] = 1.602e-19*dt/(p->amu[indx]*MI)*(alpha*(gradTe[0]));
+	dv_ETG[1] = 1.602e-19*dt/(p->amu[indx]*MI)*(alpha*(gradTe[1]));
+	dv_ETG[2] = 1.602e-19*dt/(p->amu[indx]*MI)*(alpha*(gradTe[2]));
 
-	dv_ITG[0] = dt/(p->amu[indx]*MI)*(beta*(gradTi[0]));
-	dv_ITG[1] = dt/(p->amu[indx]*MI)*(beta*(gradTi[1]));
-	dv_ITG[2] = dt/(p->amu[indx]*MI)*(beta*(gradTi[2]));
-   // std::cout << "mu " << mu << std::endl;
-   // std::cout << "alpha beta " << alpha << " " << beta << std::endl;
-   // std::cout << "ITG " << dv_ITG[0] << " " << dv_ITG[1] << " " << dv_ITG[2] << std::endl;
-   // std::cout << "ETG " << dv_ETG[0] << " " << dv_ETG[1] << " " << dv_ETG[2] << std::endl;
-   // std::cout << "v before thermal force " << p->vx << " " << p->vy << " " << p->vz << std::endl;
+	dv_ITG[0] = 1.602e-19*dt/(p->amu[indx]*MI)*(beta*(gradTi[0]));
+	dv_ITG[1] = 1.602e-19*dt/(p->amu[indx]*MI)*(beta*(gradTi[1]));
+	dv_ITG[2] = 1.602e-19*dt/(p->amu[indx]*MI)*(beta*(gradTi[2]));
+    //std::cout << "mu " << mu << std::endl;
+    //std::cout << "alpha beta " << alpha << " " << beta << std::endl;
+    //std::cout << "ITG " << dv_ITG[0] << " " << dv_ITG[1] << " " << dv_ITG[2] << std::endl;
+    //std::cout << "gradTi " << gradTi[0] << " " << gradTi[1] << " " << gradTi[2] << std::endl;
+    //std::cout << "ETG " << dv_ETG[0] << " " << dv_ETG[1] << " " << dv_ETG[2] << std::endl;
+    //std::cout << "v before thermal force " << p->vx[indx] << " " << p->vy[indx] << " " << p->vz[indx] << std::endl;
     /*
     float theta = atan2(p->yprevious,p->xprevious);
     float Ar = -1;

@@ -531,6 +531,9 @@ void operator()(std::size_t indx)  {
         //std::cout << "SlowdonwDir perp" << perp_direction1[0] << " " <<perp_direction1[1] << " " << perp_direction1[2] << " " << std::endl;
         //std::cout << "SlowdonwDir perp" << perp_direction2[0] << " " << perp_direction2[1] << " " << perp_direction2[2] << " " << std::endl;
         float drag = -dt*nu_friction*velocityRelativeNorm;
+	//std::cout << "nu_friction " << nu_friction << std::endl;
+	//std::cout << "vrelative " << velocityRelativeNorm << std::endl;
+	//std::cout << "drag " << drag << std::endl;
 	//float coeff_par = n1*sqrt(0.5*abs(nu_energy)*dt*vRel2);
 	int plumin3 = 2*floor(r3+0.5) - 1;
 	float coeff_par = plumin3*sqrt(0.5*abs(nu_energy)*dt*vRel2);

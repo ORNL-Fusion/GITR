@@ -16,7 +16,7 @@ vB = -0.1*sqrt((2*1.602e-19*Ti0)/2/1.66e-27);
 mz=12;
 mi=2;
 Z=4;
-
+sinj = 1.15;
 mu = mz/(mz+mi);
 Beta_i = 3*(mu+5*sqrt(2)*Z^2*(1.1*mu^(5/2) - 0.35*mu^(3/2)) - 1)/(2.6-2*mu + 5.4*mu^2)
 s=sinj;
@@ -33,13 +33,13 @@ dTids = Ti0.*(2*a./7./(a*s+1).^(5/7));
 vTi = 1.602e-19/1.66e-27/m*Beta_i*tau_s.*dTids;
 vpl = vdiff - vB - vTi;
 figure(1)
-plot(Ti0,phi_in./vTh,'lineWidth',2)
+plot(Ti0,phi_in./vTh./1e20,'lineWidth',2)
 hold on
-plot(Ti0,phi_in./vpl,'lineWidth',2)
+plot(Ti0,phi_in./vpl./1e20,'lineWidth',2)
 title('Case B Peak Impurity Density')
 xlabel('T_{i0} [eV]')
 ylabel('n_p [10^{20} m^{-3}]')
-axis([0 150 0 1e20])
+axis([0 150 0 1])
 set(gca,'fontsize',16)
 legend('\phi_{in}/v_{prompt loss}','\phi_{in}/v_{thermal}')
 np=phi_in./vpl;

@@ -11,7 +11,8 @@ z = (z1-z0)*rand(1,nP)+z0;
 y = 0.0*ones(1,nP);
 T=10;
 m=12;
-vTh = sqrt(T*1.602e-19/m/1.66e-27);
+vTh = sqrt(2*T*1.602e-19/m/1.66e-27);
+0.5*12*1.66e-27*vTh*vTh/1.602e-19
 vx = vTh*ones(1,nP);
 vy = zeros(1,nP);
 vz = zeros(1,nP);

@@ -37,7 +37,8 @@ gridR = ncread(specFile,'gridR');
 % gridY = ncread(specFile,'gridY');
 gridZ = ncread(specFile,'gridZ');
 figure(2)
-pcolor(gridR,gridZ,dens(:,:,5)')
+h=pcolor(gridR,gridZ,dens(:,:,5)')
+h.EdgeColor = 'none';
 figure(21)
 plot(gridZ,sum(dens(:,:,5),1))
 
@@ -142,8 +143,11 @@ histogram(vy(end,:))
 % ylabel('y [m]') % y-axis label
 % zlabel('z [m]') % y-axis label
 % set(gca,'fontsize',16)
-
-
+maxDens = max(max(dens(:,:,5)));
+Abin = (gridR(2)-gridR(1))*(gridZ(2)-gridZ(1));
+A0 = 0.1*0.04;
+dt = 5e-8;
+np = maxDens*A0*dt/nP/Abin
 file = 'surface.nc';
 grossDep = ncread(file,'grossDeposition');
 grossEro = ncread(file,'grossErosion');

@@ -37,6 +37,8 @@
 #include "boundaryInit.h"
 #include "array.h"
 #include "ompPrint.h"
+#include "interpolate.h"
+#include "Fields.h"
 #if USE_BOOST
     #include <boost/timer/timer.hpp>
     #include "boost/filesystem.hpp"
@@ -74,26 +76,14 @@ using namespace netCDF;
 using namespace exceptions;
 using namespace netCDF::exceptions;
 
-struct test_routinePp { 
-   Particles *particles;
-    test_routinePp(Particles *_particles) : particles(_particles) {}
-
-    __device__
-    void operator()(std::size_t indx) const { 
-    particles->x[indx] = 5.0;
-}
-};
-
-
 int main(int argc, char **argv, char **envp)
 {
   typedef std::chrono::high_resolution_clock Time;
   typedef std::chrono::duration<float> fsec;
   auto GITRstart_clock = Time::now();
-  int ppn=1; 
+  int ppn=1;
+  std::string inputFile = "gitrInput.cfg";
   #if USE_MPI > 0
-    ppn = 4;
-    //int np = 1;
     // Initialize the MPI environment
     MPI_Init(&argc,&argv);
   #endif
@@ -117,6 +107,18 @@ int main(int argc, char **argv, char **envp)
 	} else 
 	{ // Uh-oh, there was no argument to the destination option.
 	   std::cerr << "--nGPUPerNode option requires one argument." << std::endl;
+          return 1;
+	} 
+      }
+      if(std::string(argv[counter]) == "-i")
+      {
+        if (counter + 1 < argc) 
+	{ // Make sure we aren't at the end of argv!
+          inputFile = argv[counter+1];	  
+          printf("\nGITR input file set to %s",inputFile.c_str());
+	} else 
+	{ // Uh-oh, there was no argument to the destination option.
+	   std::cerr << "-i option requires one argument" << std::endl;
           return 1;
 	} 
       }
@@ -148,21 +150,21 @@ int main(int argc, char **argv, char **envp)
     int world_rank=0;
     int world_size=1;
   #endif
-#if USE_CUDA > 0
-#else
-    omp_set_num_threads(24);
-    int num_threads = omp_get_max_threads();
-
-    std::cout << " rank and max num threads " << world_rank << " " << num_threads << std::endl; 
-#endif
+//#if USE_CUDA > 0
+//#else
+//    omp_set_num_threads(24);
+//    int num_threads = omp_get_max_threads();
+//
+//    std::cout << " rank and max num threads " << world_rank << " " << num_threads << std::endl; 
+//#endif
   //Prepare config files for import
   Config cfg,cfg_geom;
   std::string input_path = "input/";
-  if(world_rank == 0)
-  {
+  //if(world_rank == 0)
+  //{
     //Parse and read input file
-    std::cout << "Open configuration file input/gitrInput.cfg " << std::endl;
-    importLibConfig(cfg,input_path+"gitrInput.cfg");
+    std::cout << "Open configuration file "<<input_path<< inputFile << std::endl;
+    importLibConfig(cfg,input_path+inputFile);
     
     // Parse and read geometry file
     std::cout << "Open geometry file" << std::endl;
@@ -177,7 +179,7 @@ int main(int argc, char **argv, char **envp)
     #if CHECK_COMPATIBILITY>0
       checkFlags(cfg); 
     #endif
-  }
+  //}
   // show memory usage of GPU
   #if USE_CUDA 
   if(world_rank == 0)
@@ -247,6 +249,22 @@ int main(int argc, char **argv, char **envp)
   #endif
 
   //Bfield initialization
+  //if(world_rank == 0)
+  //{
+  //Field blankField;
+  //Field bfield(BFIELD_INTERP,input_path,cfg,"backgroundPlasmaProfiles.Bfield.");
+  //bfield(0,input_path,cfg,"backgroundPlasmaProfiles.Bfield.");
+  //}
+  //blankField(1,3,5);
+  //std::cout << "called operator" << endl;
+  sim::Array<float> testArray1(100);
+  testArray1.resize(10);
+    auto finish_clock0nc = Time::now();
+    typedef std::chrono::duration<float> fsec0nc;
+    fsec0nc fs0nc = finish_clock0nc - GITRstart_clock;
+    printf("Time taken          is %6.3f (secs) \n", fs0nc.count());
+  std::cout << "rank " << world_rank << "finished" << endl;
+  //bfield.values.print("Bfield");
   int nR_Bfield = 1,nY_Bfield = 1,nZ_Bfield = 1,n_Bfield = 1;
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   std::string bfieldFile;
@@ -3481,6 +3499,19 @@ std::cout << "closed ncp " << std::endl;
                                      flowVGridr.data(),flowVGridz.data(),
                                      flowVr.data(),flowVz.data(),flowVt.data());   
 #endif
+    
+    float leakZ=0.0;
+    if(world_rank ==0)
+    {
+      
+      std::string diagnosticCfg = "diagnostics.";
+      
+      getVariable(cfg,diagnosticCfg+"leakZ",leakZ);
+    }
+    MPI_Bcast(&leakZ, 1,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    for(int i=0;i<nP;i++) particleArray->leakZ[i] = leakZ;
+
 std::cout << "Flow velocities "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << testFlowVec[2]  << std::endl;
     std::cout << "Starting main loop" <<  std::endl;
 //Main time loop
@@ -3697,6 +3728,7 @@ for(int i=0; i<nP ; i++)
     sim::Array<float> chargeGather(nP,0.0);
     sim::Array<float> firstIonizationTGather(nP,0.0);
     sim::Array<float> firstIonizationZGather(nP,0.0);
+    sim::Array<int> hasLeakedGather(nP,0);
     //float *x_gather = NULL;
     //if (world_rank == 0) {
     //      x_gather = malloc(sizeof(float)*nP);
@@ -3714,6 +3746,7 @@ for(int i=0; i<nP ; i++)
     MPI_Gather(&particleArray->hitWall[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &hitWallGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->weight[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &weightGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->charge[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &chargeGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->hasLeaked[world_rank*nP/world_size], nP/world_size, MPI_INT, &hasLeakedGather[0], nP/world_size,MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->firstIonizationT[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &firstIonizationTGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->firstIonizationZ[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &firstIonizationZGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->test0[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &test0Gather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -3975,6 +4008,7 @@ NcVar nc_trans0 = ncFile0.addVar("transitTime",ncFloat,dims0);
 NcVar nc_impact0 = ncFile0.addVar("hitWall",ncFloat,dims0);
 NcVar nc_weight0 = ncFile0.addVar("weight",ncFloat,dims0);
 NcVar nc_charge0 = ncFile0.addVar("charge",ncFloat,dims0);
+NcVar nc_leak0 = ncFile0.addVar("hasLeaked",ncInt,dims0);
 #if USE_MPI > 0
 nc_x0.putVar(&xGather[0]);
 nc_y0.putVar(&yGather[0]);
@@ -3986,6 +4020,7 @@ nc_trans0.putVar(&particleArray->transitTime[0]);
 nc_impact0.putVar(&hitWallGather[0]);
 nc_weight0.putVar(&weightGather[0]);
 nc_charge0.putVar(&chargeGather[0]);
+nc_leak0.putVar(&hasLeakedGather[0]);
 #else
 nc_x0.putVar(&particleArray->xprevious[0]);
 nc_y0.putVar(&particleArray->yprevious[0]);
@@ -3997,6 +4032,7 @@ nc_trans0.putVar(&particleArray->transitTime[0]);
 nc_impact0.putVar(&particleArray->hitWall[0]);
 nc_weight0.putVar(&particleArray->weight[0]);
 nc_charge0.putVar(&particleArray->charge[0]);
+nc_leak0.putVar(&particleArray->hasLeaked[0]);
 #endif
 ncFile0.close();
        //auto particleArray2 = new Particles(1);

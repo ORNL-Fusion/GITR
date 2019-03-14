@@ -75,6 +75,9 @@ int readFileVar(const std::string& fileName,const std::string& section,const std
          cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
          exit(1);
        }
+       else{
+         std::cout << "reading " <<" "  << fileName << std::endl;
+       }
  
        NcFile nc(fileName, NcFile::read);
 
@@ -102,15 +105,15 @@ int readFileVar(const std::string& fileName,const std::string& section,const std
            xx.getVar(&x);
            if(numberOfDimensions == 2)
            {
-            OUTPUT2d(profiles_folder,section+varName+".m",
-                    (xx.getDim(0)).getSize(), (xx.getDim(1)).getSize(),
-                     &x);
+            //OUTPUT2d(profiles_folder,section+varName+".m",
+            //        (xx.getDim(0)).getSize(), (xx.getDim(1)).getSize(),
+            //         &x[0]);
            }
            else if(numberOfDimensions ==3)
            {
-            OUTPUT3d(profiles_folder,section+varName+".m",
-                    (xx.getDim(0)).getSize(), (xx.getDim(1)).getSize(), 
-                    (xx.getDim(2)).getSize(), &x);
+            //OUTPUT3d(profiles_folder,section+varName+".m",
+            //        (xx.getDim(0)).getSize(), (xx.getDim(1)).getSize(), 
+            //        (xx.getDim(2)).getSize(), &x[0]);
            }
            return nTotal;
        }
@@ -128,7 +131,7 @@ int readFileVar(const std::string& fileName,const std::string& section,const std
 
        xx.getVar(&x);
        std::string fullName = section+varName;
-       OUTPUT1d(profiles_folder,fullName+".m", xlength, &x);
+       //OUTPUT1d(profiles_folder,fullName+".m", xlength, &x[0]);
        nc.close();
        return xlength;
        } 

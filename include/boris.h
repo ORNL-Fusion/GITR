@@ -813,7 +813,14 @@ cpu_times initTime0 = timer.elapsed();
             float minDist = 0.0f;
             int closestBoundaryIndex;
 #endif
-#if ODEINT ==	0  
+#if ODEINT ==	0 
+        if(particlesPointer->hasLeaked[indx] == 0)
+	{
+	  if(particlesPointer->zprevious[indx] > particlesPointer->leakZ[indx])
+	  {
+	    particlesPointer->hasLeaked[indx] = 1;
+	  }
+	}
 	        float qpE[3] = {0.0f,0.0f,0.0f};
 	        float vmxB[3] = {0.0f,0.0f,0.0f};
 	        float vpxB[3] = {0.0f,0.0f,0.0f};
