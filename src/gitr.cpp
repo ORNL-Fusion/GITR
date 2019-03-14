@@ -1409,6 +1409,15 @@ int main(int argc, char **argv, char **envp)
   #endif
   #if USE_MPI > 0 
     }
+
+    for(int i=0; i< nR_Temp;i++)
+    std::cout << TempGridr[i] << endl;
+    for(int i=0; i< nY_Temp;i++)
+    std::cout << TempGridy[i] << endl;
+    for(int i=0; i< nZ_Temp;i++)
+    std::cout << TempGridz[i] << endl;
+    for(int i=0; i< nZ_Temp*nR_Temp;i++)
+    std::cout << te[i] << " " << ti[i]<< endl;
     MPI_Bcast(TempGridr.data(), nR_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Bcast(TempGridy.data(), nY_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Bcast(TempGridz.data(), nZ_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -1418,7 +1427,7 @@ int main(int argc, char **argv, char **envp)
   #endif
 
   float testVec = 0.0;
-  testVec = interp2dCombined(5.5,0.0,-4.4,nR_Temp,
+  testVec = interp2dCombined(0.0,0.1,0.0,nR_Temp,
                     nZ_Temp,TempGridr.data(),TempGridz.data(),ti.data());
   std::cout << "Finished Temperature import "<< testVec << std::endl; 
   
@@ -1475,7 +1484,7 @@ int main(int argc, char **argv, char **envp)
   #endif
   std::cout << "Finished density import "<< interp2dCombined(5.5,0.0,-4.4,nR_Dens,nZ_Dens,
                          &DensGridr.front(),&DensGridz.front(),&ne.front())
-   <<" " << interp2dCombined(5.5,0.0,-4.4,nR_Dens,nZ_Dens,
+   <<" " << interp2dCombined(0.0,0.1,0.0,nR_Dens,nZ_Dens,
    &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
   //for(int i=0;i<100;i++)
   //{
@@ -1490,11 +1499,11 @@ int main(int argc, char **argv, char **envp)
   //}
   #if USE_MPI > 0 
     }
-    MPI_Bcast(DensGridr.data(), nR_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(DensGridy.data(), nY_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(DensGridz.data(), nZ_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(ni.data(), n_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(ne.data(), n_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(DensGridr.data(), nR_Dens,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(DensGridy.data(), nY_Dens,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(DensGridz.data(), nZ_Dens,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(ni.data(), n_Dens,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(ne.data(), n_Dens,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
   #endif
   //Background Plasma flow velocity initialization    
