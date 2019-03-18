@@ -527,7 +527,8 @@ void operator()(std::size_t indx)  {
         BfieldR,
         BfieldZ,
         BfieldT);
-        //std::cout << "SlowdonwDir par" << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << " " << std::endl;
+        //std::cout << "Velocity z " << particlesPointer->vz[indx] << endl;
+	//std::cout << "SlowdonwDir par" << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << " " << std::endl;
         //std::cout << "SlowdonwDir perp" << perp_direction1[0] << " " <<perp_direction1[1] << " " << perp_direction1[2] << " " << std::endl;
         //std::cout << "SlowdonwDir perp" << perp_direction2[0] << " " << perp_direction2[1] << " " << perp_direction2[2] << " " << std::endl;
         float drag = -dt*nu_friction*velocityRelativeNorm;
