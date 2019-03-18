@@ -147,10 +147,10 @@
 
         #if PARTICLESEEDS > 0
           #ifdef __CUDACC__
-            float r1 = (curand_uniform(&state[indx]) - 0.5);
+            float r1 = 2.0*floor(curand_uniform(&state[indx]) + 0.5) - 1.0;
           #else
             std::uniform_real_distribution<float> dist(0.0, 1.0);
-            float r1 = (dist(state[indx]) - 0.5);
+            float r1 = 2.0*floor(dist(state[indx]) + 0.5)-1.0;
           #endif
           #else
           #if __CUDACC__

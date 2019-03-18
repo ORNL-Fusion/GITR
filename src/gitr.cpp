@@ -3645,11 +3645,11 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
 
       #if USEPERPDIFFUSION > 0
         thrust::for_each(thrust::device,particleBegin,particleEnd,crossFieldDiffusion0);
+        thrust::for_each(thrust::device,particleBegin,particleEnd,geometry_check0);
       #ifdef __CUDACC__
         //cudaThreadSynchronize();
       #endif
             
-        thrust::for_each(thrust::device,particleBegin,particleEnd,geometry_check0);
       #ifdef __CUDACC__
         //cudaThreadSynchronize();
       #endif
@@ -3657,6 +3657,7 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
       
       #if USEPARDIFFUSION > 0
         thrust::for_each(thrust::device,particleBegin,particleEnd,parDiffusion0);
+        thrust::for_each(thrust::device,particleBegin,particleEnd,geometry_check0);
       #endif
 
       #if USECOULOMBCOLLISIONS > 0
