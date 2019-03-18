@@ -38,9 +38,10 @@ gridR = ncread(specFile,'gridR');
 % gridY = ncread(specFile,'gridY');
 gridZ = ncread(specFile,'gridZ');
 figure(2)
-pcolor(gridR,gridZ,dens(:,:,5)')
+h=pcolor(gridR,gridZ,dens(:,:,5)')
+h.EdgeColor = 'none';
 figure(21)
-plot(gridZ,sum(dens(:,:,5),1))
+semilogy(gridZ,sum(dens(:,:,5),1))
 
 
 file = 'history.nc';

@@ -7,7 +7,6 @@ for i=1:length(Temp)
     TD0 = Temp(i);
     L = 10;
     cs0 = sqrt((2*1.602e-19*TD0)/2/1.66e-27);
-    dT_ds = 1.38;
     
     nR = 10;
     r = linspace(-3,3,nR);
@@ -20,7 +19,7 @@ for i=1:length(Temp)
     flowVz = -0.1*cs0;
     vz = zeros(1,nZ);
     vz(find(z<=1.2)) = flowVz;
-    vz(find(z>=2*L-1.2)) = flowVz;
+    vz(find(z>=2*L-1.2)) = -flowVz;
     vz2D = repmat(vz,nR,1);
     
     gamma = 7;
@@ -30,8 +29,9 @@ for i=1:length(Temp)
     P=gamma*n0*cs0.*TD0.*1.602e-19;
     a = 7/2*fcond*P/k0e./TD0.^(7/2);
     dTids = TD0.*(2*a./7./(a*z+1).^(5/7));
-    
+    dTids((nZ-1)/2 + 2:end) = -fliplr(dTids(1:(nZ-1)/2));
     Ti = TD0*(1+7/2*fcond*P/k0e/TD0^(7/2)*z).^(2/7);
+    Ti((nZ-1)/2 + 2:end) = fliplr(Ti(1:(nZ-1)/2));
     Ti2D = repmat(Ti,nR,1);
     gradTi = repmat(dTids,nR,1);
     

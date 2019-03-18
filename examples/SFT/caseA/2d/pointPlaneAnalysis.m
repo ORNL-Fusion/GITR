@@ -40,9 +40,9 @@ figure(2)
 h=pcolor(gridR,gridZ,dens(:,:,5)')
 h.EdgeColor = 'none';
 figure(21)
-plot(gridZ,sum(dens(:,:,5),1))
+semilogy(gridZ,sum(dens(:,:,5),1))
 
-
+maxDens = max(max(dens(:,:,5)));
 file = 'history.nc';
 x = ncread(file,'x');
 y = ncread(file,'y');

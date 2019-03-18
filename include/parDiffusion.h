@@ -150,7 +150,7 @@
             float r1 = (curand_uniform(&state[indx]) - 0.5);
           #else
             std::uniform_real_distribution<float> dist(0.0, 1.0);
-            float r1 = (dist(state[indx]) - 0.5);
+            float r1 = 2.0*floor(dist(state[indx]) + 0.5)-1.0;
           #endif
           #else
           #if __CUDACC__
@@ -179,7 +179,10 @@
             interp2dVector(parallel_direction,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_Bfield,nZ_Bfield,
                         BfieldGridR,BfieldGridZ,BfieldR,BfieldZ,BfieldT);
-	    float Dpar = vPartNorm/nu_friction;
+	    float Dpar = vPartNorm*vPartNorm/nu_friction;
+	    //std::cout << "vPartNorm " << vPartNorm << endl;
+	    //std::cout << "nu_friction " << nu_friction << endl;
+	    //std::cout << "Dpar " << Dpar << endl;
 	    vectorNormalize(parallel_direction,parallel_direction);
             if(vectorNorm(parallel_direction) == 0.0){
 	      Dpar=0.0;
