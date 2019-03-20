@@ -3235,7 +3235,7 @@ std::cout << "closed ncp " << std::endl;
     #else
       sim::Array<std::mt19937> state1(nParticles);
     #endif
-    #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
+    #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 || USEPARDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
 #if USE_CUDA
     //if(world_rank == 0)
     //{

@@ -120,7 +120,7 @@ void operator()(std::size_t indx) const {
         //vNorm2 = sqrt(p->vx[indx]*p->vx[indx] + p->vy[indx]*p->vy[indx] + p->vz[indx]*p->vz[indx]);
     //SFT
 		float vzNew = vz + dv_ITG[2];///velocityCollisionsNorm;   	
-		std::cout << "dv_ITG2 " << dv_ITG[2] << endl;
+		//std::cout << "dv_ITG2 " << dv_ITG[2] << endl;
 
                 float vxy0 = sqrt(vx*vx + vy*vy);
                 float vxy = sqrt(vNorm*vNorm - vzNew*vzNew);
