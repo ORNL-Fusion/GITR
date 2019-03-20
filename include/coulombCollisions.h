@@ -446,7 +446,7 @@ void operator()(std::size_t indx)  {
         	relativeVelocity[2] = vz - flowVelocity[2];
 		float vRel2 = relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2];
         	velocityRelativeNorm = vectorNorm(relativeVelocity);
-            std::cout << "particle velocity " << particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " << particlesPointer->vz[indx] << std::endl;
+            //std::cout << "particle velocity " << particlesPointer->vx[indx] << " " << particlesPointer->vy[indx] << " " << particlesPointer->vz[indx] << std::endl;
             //std::cout << "flow velocity " << flowVelocity[0] << " " << flowVelocity[1] << " " << flowVelocity[2] << std::endl;
             //std::cout << "relative velocity and norm " << relativeVelocity[0] << " " << relativeVelocity[1] << " " << relativeVelocity[2]<< " " << velocityRelativeNorm << std::endl;
 #if PARTICLESEEDS > 0
@@ -536,8 +536,8 @@ void operator()(std::size_t indx)  {
         float drag = -dt*nu_friction*velocityRelativeNorm;
 	//std::cout << "nu_friction " << nu_friction << std::endl;
 	//std::cout << "vrelative " << velocityRelativeNorm << std::endl;
-	std::cout << "particle z " << particlesPointer->z[indx] << std::endl;
-	std::cout << "drag " << drag*sgn(parallel_direction[2]) << std::endl;
+	//std::cout << "particle z " << particlesPointer->z[indx] << std::endl;
+	//std::cout << "drag " << drag*sgn(parallel_direction[2]) << std::endl;
 	//float coeff_par = n1*sqrt(0.5*abs(nu_energy)*dt*vRel2);
 	int plumin3 = 2*floor(r3+0.5) - 1;
 	float coeff_par = plumin3*sqrt(0.5*abs(nu_energy)*dt*vRel2);
