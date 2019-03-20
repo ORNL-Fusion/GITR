@@ -193,7 +193,8 @@
             if(nu_friction == 0.0){Dpar=0.0;}
 	    particlesPointer->xprevious[indx] = particlesPointer->xprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[0];
 	    particlesPointer->yprevious[indx] = particlesPointer->yprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[1];
-	    particlesPointer->zprevious[indx] = particlesPointer->zprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[2];
+	    particlesPointer->z[indx] = particlesPointer->zprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[2];
+	    //std::cout << "Dpar distance " << r1*sqrt(Dpar*dt) << endl;
 
 	}
     }
