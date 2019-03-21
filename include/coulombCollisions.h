@@ -533,6 +533,10 @@ void operator()(std::size_t indx)  {
 	//std::cout << "SlowdonwDir par" << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << " " << std::endl;
         //std::cout << "SlowdonwDir perp" << perp_direction1[0] << " " <<perp_direction1[1] << " " << perp_direction1[2] << " " << std::endl;
         //std::cout << "SlowdonwDir perp" << perp_direction2[0] << " " << perp_direction2[1] << " " << perp_direction2[2] << " " << std::endl;
+        float ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
+        float density = interp2dCombined(x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
+	float tau_s = particlesPointer->amu[indx]*ti_eV*sqrt(ti_eV/background_amu)/(6.84e4*(1.0+background_amu/particlesPointer->amu[indx])*density/1.0e18*particlesPointer->charge[indx]*particlesPointer->charge[indx]*15);
+	//std::cout << "ti dens tau_s " << ti_eV << " " << density << " " << tau_s << endl;
         float drag = -dt*nu_friction*velocityRelativeNorm;
 	//std::cout << "nu_friction " << nu_friction << std::endl;
 	//std::cout << "vrelative " << velocityRelativeNorm << std::endl;

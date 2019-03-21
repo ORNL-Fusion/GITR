@@ -180,8 +180,10 @@
             interp2dVector(parallel_direction,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_Bfield,nZ_Bfield,
                         BfieldGridR,BfieldGridZ,BfieldR,BfieldZ,BfieldT);
-	    float Dpar = vPartNorm*vPartNorm/nu_friction;
-	    //std::cout << "vPartNorm " << vPartNorm << endl;
+        float ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
+	float vTherm = sqrt(ti_eV*1.602e-19/particlesPointer->amu[indx]/1.66e-27);
+	    float Dpar = vTherm*vTherm/nu_friction;
+	    //std::cout << "vTherm " << vTherm << endl;
 	    //std::cout << "nu_friction " << nu_friction << endl;
 	    //std::cout << "Dpar " << Dpar << endl;
 	    vectorNormalize(parallel_direction,parallel_direction);
@@ -192,8 +194,8 @@
 	      parallel_direction[2]=0.0;
 	    }
             if(nu_friction == 0.0){Dpar=0.0;}
-	    particlesPointer->xprevious[indx] = particlesPointer->xprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[0];
-	    particlesPointer->yprevious[indx] = particlesPointer->yprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[1];
+	    particlesPointer->x[indx] = particlesPointer->xprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[0];
+	    particlesPointer->y[indx] = particlesPointer->yprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[1];
 	    particlesPointer->z[indx] = particlesPointer->zprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[2];
 	    //std::cout << "Dpar distance " << r1*sqrt(Dpar*dt) << endl;
 
