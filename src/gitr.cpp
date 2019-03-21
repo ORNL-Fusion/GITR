@@ -1410,14 +1410,6 @@ int main(int argc, char **argv, char **envp)
   #if USE_MPI > 0 
     }
 
-    for(int i=0; i< nR_Temp;i++)
-    std::cout << TempGridr[i] << endl;
-    for(int i=0; i< nY_Temp;i++)
-    std::cout << TempGridy[i] << endl;
-    for(int i=0; i< nZ_Temp;i++)
-    std::cout << TempGridz[i] << endl;
-    for(int i=0; i< nZ_Temp*nR_Temp;i++)
-    std::cout << te[i] << " " << ti[i]<< endl;
     MPI_Bcast(TempGridr.data(), nR_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Bcast(TempGridy.data(), nY_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Bcast(TempGridz.data(), nZ_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
