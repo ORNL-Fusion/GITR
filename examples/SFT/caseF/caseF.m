@@ -63,10 +63,10 @@ FiGf=0*Ti0;
 FFf0 = mz*1.66e-27*(0.1*cs0)./Ti0./1.602e-19./tau_s.*(sv-sinj);
 Ts_sv0 =   Ti0.*(1+7/2*fcond*P*sv/k0e./Ti0.^(7/2)).^(2/7);
 Ts_sinj0 = Ti0.*(1+7/2*fcond*P*sinj/k0e./Ti0.^(7/2)).^(2/7);
-FiGf0 = (Beta_i-1)*log(Ts_sv0/Ts_sinj0);
+FiGf0 = (Beta_i-1)*log(Ts_sv0./Ts_sinj0);
 nz_np0 = exp(-FFf0+FiGf0);
 figure(2)
-semilogy(1./(Ti0.^2)*1e3,nz_np0.*np.*vTi./1.73e23)
+semilogy(1./(Ti0.^2)*1e3,nz_np0.*np.*vTi./1.73e23,'lineWidth',2)
 hold on
 
 for i=1:nS
@@ -80,7 +80,18 @@ end
 
 nz_np = exp(-FFf+FiGf0);
 figure(2)
-semilogy(1./(Ti0.^2)*1e3,nz_np.*np.*vTi./1.73e23)
+semilogy(1./(Ti0.^2)*1e3,nz_np.*np.*vTi./1.73e23,'lineWidth',2)
 % semilogy(1./(Ti0.^2)*1e4,exp(-40000./(Ti0.^2)))
-axis([0 8 1e-5 1])
+axis([0 7 1e-5 1])
 nz_np.*np.*vTi./1.73e23;
+xlabel('(T_0 [eV])^{-2} x 10^{-3}')
+ylabel('\phi_{leak}/\phi_{in}')
+title('Divertor Leakage as a Function of T^{-2}')
+set(gca,'fontsize',16)
+pbaspect([1 1.25 1])
+M = csvread('../SFT-2/sheet 3-Table 1.csv',1,0)
+Tgitr = M(:,1);
+LeakGitr = M(:,6);
+hold on
+scatter(1./(Tgitr.*Tgitr)*1e3,LeakGitr,'k')
+legend('SFT - No Temp. Variation','SFT - With Temp. Variation', 'GITR')

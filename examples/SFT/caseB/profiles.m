@@ -1,7 +1,7 @@
 close all
 clear all
 
-Temp = linspace(10,130,13);
+Temp = 90;%linspace(10,130,13);
 for i=1:length(Temp)
     
     TD0 = Temp(i);

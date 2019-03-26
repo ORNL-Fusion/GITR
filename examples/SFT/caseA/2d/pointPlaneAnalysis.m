@@ -16,7 +16,7 @@ hit = find(hitWall);
 notHit = find(hitWall==0);
 He_Wspyl = [4.07e-3 3.26e-3  3.02e-3];
 He_Wroughness = [1.0 1.1 1.2];
-E = 0.5*184*1.66e-27*(vx.^2 + vy.^2 + vz.^2)/1.602e-19;
+E = 0.5*12*1.66e-27*(vx.^2 + vy.^2 + vz.^2)/1.602e-19;
 Ehit = E(hit);
 chargeHit = charge(hit);
 r = sqrt(x.^2 + y.^2);
@@ -41,9 +41,14 @@ h=pcolor(gridR,gridZ,dens(:,:,5)')
 h.EdgeColor = 'none';
 figure(21)
 semilogy(gridZ,sum(dens(:,:,5),1))
-
+hold on
+histogram(z(notHit))
 maxDens = max(max(dens(:,:,5)));
-file = 'history.nc';
+ figure(21)
+hold on
+s = linspace(0,1.5);
+plot(s,1e5*exp(-1*s))
+casfile = 'history.nc';
 x = ncread(file,'x');
 y = ncread(file,'y');
 z = ncread(file,'z');
