@@ -862,6 +862,7 @@ cpu_times initTime0 = timer.elapsed();
                      EfieldZDevicePointer,EfieldTDevicePointer);
                  
                  vectorAdd(E,PSE,E);
+              //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
 #endif
 #endif              
                 interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
@@ -902,7 +903,7 @@ cpu_times initTime0 = timer.elapsed();
        //particlesPointer->test0[indx] = v[0]; 
        //particlesPointer->test1[indx] = v[1]; 
        //particlesPointer->test2[indx] = v[2];
-        float ti_eV = 50.0;
+       /* float ti_eV = 50.0;
 	//std::cout << "ti dens tau_s " << ti_eV << " " << density << " " << tau_s << endl;
 	float vTherm = sqrt(2*ti_eV*1.602e-19/particlesPointer->amu[indx]/1.66e-27);
 
@@ -918,7 +919,7 @@ cpu_times initTime0 = timer.elapsed();
                v[0] = v[0]/vxy01*vxy00;///velocityCollisionsNorm; 
 		       v[1] = v[1]/vxy01*vxy00;///velocityCollisionsNorm;
 
-
+          */
 	       
            if(particlesPointer->hitWall[indx] == 0.0)
             {
