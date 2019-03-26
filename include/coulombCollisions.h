@@ -537,7 +537,7 @@ void operator()(std::size_t indx)  {
         float density = interp2dCombined(x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
 	float tau_s = particlesPointer->amu[indx]*ti_eV*sqrt(ti_eV/background_amu)/(6.84e4*(1.0+background_amu/particlesPointer->amu[indx])*density/1.0e18*particlesPointer->charge[indx]*particlesPointer->charge[indx]*15);
 	//std::cout << "ti dens tau_s " << ti_eV << " " << density << " " << tau_s << endl;
-	float vTherm = sqrt(ti_eV*1.602e-19/particlesPointer->amu[indx]/1.66e-27);
+	float vTherm = sqrt(2*ti_eV*1.602e-19/particlesPointer->amu[indx]/1.66e-27);
 
                 float vxy00 = sqrt(vTherm*vTherm - vz*vz);
                 float vxy01 = sqrt(vx*vx + vy*vy);
