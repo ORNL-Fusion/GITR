@@ -1,25 +1,34 @@
 makeCommand = "./makeGITRmac.sh"
 import subprocess
-#from termcolor import colored
+from termcolor import colored
 import io,libconf
 import numpy as np
 import os
 from subprocess import check_output
+import gitr
 
 def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     env_file = "../env.mac.sh"
     filename = examplePath+"/input/gitrInput.cfg"
     ##Machine specific flags
-    USE_CUDA=1
+    USE_CUDA=0
     USE_MPI=1
-    USEMPI=1
+    USEMPI=0
     USE_OPENMP=0
     USE_BOOST=1
     
-    cmake_flags=".. -DTHRUST_INCLUDE_DIR=$CUDA_PATH/include \
-                -DNETCDF_DIR=$NETCDF \
-                    -DNETCDF_CXX_ROOT=$NETCDFCXX4 \
-                        -DLIBCONFIGPP_LIBRARY=$LIBCONFIGDIR/$LIBCONFIGLIB "
+    cmake_flags=".. -DTHRUST_INCLUDE_DIR=/Users/tyounkin/code/thrust/ \
+        -DCMAKE_C_COMPILER=clang \
+        -DCMAKE_CXX_COMPILER=clang++ \
+        -DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE \
+        -DNETCDF_CXX_LIBRARY=$NETCDFLIB_CPP \
+        -DNETCDF_DIR=$NETCDFDIR \
+        -DNETCDF_INCLUDE_DIR=$NETCDFINCLUDE \
+        -DNETCDF_LIBRARY=$NETCDFLIB \
+        -DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE \
+        -DLIBCONFIGPP_INCLUDE_DIR=/usr/local/include \
+        -DBoost_DIR=/opt/local \
+        -DBoost_INCLUDE_DIR=/opt/local/include "
     
     with io.open(filename) as f:
         config = libconf.load(f)
@@ -45,8 +54,16 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     code_flags = code_flags+" -DUSERECOMBINATION="+str(USERECOMBINATION)
     USEPERPDIFFUSION=config.flags.USEPERPDIFFUSION
     code_flags = code_flags+" -DUSEPERPDIFFUSION="+str(USEPERPDIFFUSION)
+    USEPARDIFFUSION=config.flags.USEPARDIFFUSION
+    code_flags = code_flags+" -DUSEPARDIFFUSION="+str(USEPARDIFFUSION)
     USECOULOMBCOLLISIONS=config.flags.USECOULOMBCOLLISIONS
     code_flags = code_flags+" -DUSECOULOMBCOLLISIONS="+str(USECOULOMBCOLLISIONS)
+    USEFRICTION=config.flags.USEFRICTION
+    code_flags = code_flags+" -DUSEFRICTION="+str(USEFRICTION)
+    USEANGLESCATTERING=config.flags.USEANGLESCATTERING
+    code_flags = code_flags+" -DUSEANGLESCATTERING="+str(USEANGLESCATTERING)
+    USEHEATING=config.flags.USEHEATING
+    code_flags = code_flags+" -DUSEHEATING="+str(USEHEATING)
     USETHERMALFORCE=config.flags.USETHERMALFORCE
     code_flags = code_flags+" -DUSETHERMALFORCE="+str(USETHERMALFORCE)
     USESURFACEMODEL=config.flags.USESURFACEMODEL
@@ -105,10 +122,12 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     code_flags = code_flags+" -DUSECYLSYMM="+str(USECYLSYMM)
     USEFIELDALIGNEDVALUES=config.flags.USEFIELDALIGNEDVALUES
     code_flags = code_flags+" -DUSEFIELDALIGNEDVALUES="+str(USEFIELDALIGNEDVALUES)
-    FORCE_EVAL=config.flags.FORCE_EVAL
-    code_flags = code_flags+" -DFORCE_EVAL="+str(FORCE_EVAL)
     FLUX_EA=config.flags.FLUX_EA
     code_flags = code_flags+" -DFLUX_EA="+str(FLUX_EA)
+    FORCE_EVAL=config.flags.FORCE_EVAL
+    code_flags = code_flags+" -DFORCE_EVAL="+str(FORCE_EVAL)
+    USE_SORT=config.flags.USE_SORT
+    code_flags = code_flags+" -DUSE_SORT="+str(USE_SORT)
     CHECK_COMPATIBILITY=config.flags.CHECK_COMPATIBILITY
     code_flags = code_flags+" -DCHECK_COMPATIBILITY="+str(CHECK_COMPATIBILITY)
     
@@ -126,7 +145,8 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     env.update(os.environ)
     print(env)
     #print colored('Completed clean','green')
-    cmake_command = "~/cmake/cmake-3.7.0-rc1-Linux-x86_64/bin/cmake " +cmake_flags+code_flags
+    cmake_command = "cmake " +cmake_flags+code_flags
+    print cmake_command
     p1 = subprocess.Popen(cmake_command,shell=True,env=env, stdout=subprocess.PIPE)
     output, error = p1.communicate()
     p1.wait()
@@ -138,6 +158,80 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     output, error = p3.communicate()
     p3.wait()
     #print colored('GITR successfully built','green')
-if __name__ == "__main__":
-    buildGITR('../iter/iter_milestone/3d')
 
+def runGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
+    os.chdir(examplePath)
+    os.system('/Users/tyounkin/Code/gitr2/build/runGITR.sh')
+def getAnswer(filename,x,y,r,z,charge):
+    with io.open(filename) as f:
+        config = libconf.load(f)
+    relTol=1e-4	
+    if(np.isclose(x,float(config.answer.x),rtol=relTol) and np.isclose(y,float(config.answer.y),rtol=relTol)	and np.isclose(z,float(config.answer.z),rtol=relTol) and np.isclose(r,float(config.answer.r),rtol=relTol) and np.isclose(charge,float(config.answer.charge),rtol=relTol)):
+        print colored('Test passed','green')
+	passed=1
+    else:
+        print colored('Test failed','red')
+        print('x xAns',x,config.answer.x,np.isclose(x,float(config.answer.x),rtol=1e-04))
+        print('y yAns',y,config.answer.y,y==float(config.answer.y))
+        print('z zAns',z,config.answer.z,z==float(config.answer.z))
+        print('r rAns',r,config.answer.r,r==float(config.answer.r))
+        print('charge chargeAns',charge,config.answer.charge,charge==float(config.answer.charge))
+	passed=0
+	
+    return passed	
+if __name__ == "__main__":
+    cwd = os.getcwd()
+    #buildGITR('../examples/operatorTests/straightLine/2Dgeom')
+    #runGITR()
+    #x,y,r,z,charge = gitr.nc_plotPositions('output/positions.nc')
+
+    #print('x ',x[0])
+    #getAnswer('input/answer.cfg',x[0],y[0],r[0],z[0],charge[0])
+    #os.chdir(cwd)
+    #buildGITR('../examples/operatorTests/straightLine/2DgeomCyl')
+    #runGITR('../examples/operatorTests/straightLine/2DgeomCyl')
+    #x,y,r,z,charge = gitr.nc_plotPositions('output/positions.nc')
+
+    #print('x ',x[0])
+    #getAnswer('input/answer.cfg',x[0],y[0],r[0],z[0],charge[0])
+    #os.chdir(cwd)
+    #buildGITR('../examples/operatorTests/straightLine/2DgeomPeriodic')
+    #runGITR('../examples/operatorTests/straightLine/2DgeomPeriodic')
+    #x,y,r,z,charge = gitr.nc_plotPositions('output/positions.nc')
+
+    #print('x ',x[0])
+    #getAnswer('input/answer.cfg',x[0],y[0],r[0],z[0],charge[0])
+    #os.chdir(cwd)
+    #buildGITR('../examples/operatorTests/straightLine/2DgeomCylPeriodic')
+    #runGITR('../examples/operatorTests/straightLine/2DgeomCylPeriodic')
+    #x,y,r,z,charge = gitr.nc_plotPositions('output/positions.nc')
+
+    #print('x ',x[0])
+    #getAnswer('input/answer.cfg',x[0],y[0],r[0],z[0],charge[0])
+    #os.chdir(cwd)
+    #buildGITR('../examples/operatorTests/straightLine/3Dgeom')
+    #runGITR('../examples/operatorTests/straightLine/3Dgeom')
+    #x,y,r,z,charge = gitr.nc_plotPositions('output/positions.nc')
+
+    #print('x ',x[0])
+    #getAnswer('input/answer.cfg',x[0],y[0],r[0],z[0],charge[0])
+    #os.chdir(cwd)
+    buildGITR('../examples/operatorTests/singleParticleMotion/gyroMotion')
+    runGITR('../examples/operatorTests/singleParticleMotion/gyroMotion')
+    x,y,z,r = gitr.nc_plotHist('output/history.nc')
+
+    print('x ',np.min(x))
+    print('y ',np.min(y))
+    getAnswer('input/answer.cfg',np.min(x),np.min(y),0,0,0)
+    os.chdir(cwd)
+    buildGITR('../examples/operatorTests/singleParticleMotion/eCrossBdrift')
+    runGITR('../examples/operatorTests/singleParticleMotion/eCrossBdrift')
+    x,y,z,r = gitr.nc_plotHist('output/history.nc')
+    x = x[0][:]
+    y = y[0][:]
+    z = z[0][:]
+    print('x ',x.shape,x[-1])
+    print('y ',y[-1])
+    getAnswer('input/answer.cfg',float(x[-1]),float(y[-1]),0.0,float(z[-1]),1.0)
+    os.chdir(cwd)
+    #buildGITR('../iter/iter_milestone/3d')
