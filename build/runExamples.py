@@ -1,4 +1,4 @@
-makeCommand = "./makeGITRmac.sh"
+makeCommand = "./makeGITR.sh"
 import subprocess
 #from termcolor import colored
 import io,libconf
@@ -7,7 +7,7 @@ import os
 from subprocess import check_output
 
 def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
-    env_file = "../env.mac.sh"
+    env_file = "../env.gpufusion.sh"
     filename = examplePath+"/input/gitrInput.cfg"
     ##Machine specific flags
     USE_CUDA=1
@@ -45,9 +45,18 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     code_flags = code_flags+" -DUSERECOMBINATION="+str(USERECOMBINATION)
     USEPERPDIFFUSION=config.flags.USEPERPDIFFUSION
     code_flags = code_flags+" -DUSEPERPDIFFUSION="+str(USEPERPDIFFUSION)
+    USEPARDIFFUSION=config.flags.USEPARDIFFUSION
+    code_flags = code_flags+" -DUSEPARDIFFUSION="+str(USEPARDIFFUSION)
     USECOULOMBCOLLISIONS=config.flags.USECOULOMBCOLLISIONS
     code_flags = code_flags+" -DUSECOULOMBCOLLISIONS="+str(USECOULOMBCOLLISIONS)
     USETHERMALFORCE=config.flags.USETHERMALFORCE
+    USEFRICTION=config.flags.USEFRICTION
+    code_flags = code_flags+" -DUSEFRICTION="+str(USEFRICTION)
+    USEANGLESCATTERING=config.flags.USEANGLESCATTERING
+    code_flags = code_flags+" -DUSEANGLESCATTERING="+str(USEANGLESCATTERING)
+    USEHEATING=config.flags.USEHEATING
+    code_flags = code_flags+" -DUSEHEATING="+str(USEHEATING)
+    USETHERMALFORCE=config.flags.USETHERMALFORCE    
     code_flags = code_flags+" -DUSETHERMALFORCE="+str(USETHERMALFORCE)
     USESURFACEMODEL=config.flags.USESURFACEMODEL
     code_flags = code_flags+" -DUSESURFACEMODEL="+str(USESURFACEMODEL)
@@ -109,6 +118,8 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     code_flags = code_flags+" -DFORCE_EVAL="+str(FORCE_EVAL)
     FLUX_EA=config.flags.FLUX_EA
     code_flags = code_flags+" -DFLUX_EA="+str(FLUX_EA)
+    USE_SORT=config.flags.USE_SORT
+    code_flags = code_flags+" -DUSE_SORT="+str(USE_SORT)
     CHECK_COMPATIBILITY=config.flags.CHECK_COMPATIBILITY
     code_flags = code_flags+" -DCHECK_COMPATIBILITY="+str(CHECK_COMPATIBILITY)
     
@@ -122,7 +133,7 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     output, error = p0.communicate()
     p0.wait()
     env = {}
-    output = check_output("source ../env.mac.sh", shell=True,executable="/bin/bash")
+    output = check_output("source ../env.gpufusion.sh", shell=True,executable="/bin/bash")
     env.update(os.environ)
     print(env)
     #print colored('Completed clean','green')

@@ -902,9 +902,21 @@ cpu_times initTime0 = timer.elapsed();
        //particlesPointer->test0[indx] = v[0]; 
        //particlesPointer->test1[indx] = v[1]; 
        //particlesPointer->test2[indx] = v[2];
-       int thisTmp=0;
-       if(particlesPointer->vx[indx]< 10.0 && v[0] > 4.0e3)
-           thisTmp=1;
+        float ti_eV = 50.0;
+	//std::cout << "ti dens tau_s " << ti_eV << " " << density << " " << tau_s << endl;
+	float vTherm = sqrt(2*ti_eV*1.602e-19/particlesPointer->amu[indx]/1.66e-27);
+
+      if(abs(v[2]) > vTherm)
+      {
+          v[2] = sgn(v[2])*vTherm;
+          v[0] = 0.0;
+          v[1] = 0.0;
+      }
+                float vxy00 = sqrt(vTherm*vTherm - v[2]*v[2]);
+                float vxy01 = sqrt(v[1]*v[1]+ v[0]*v[0]);
+		//std::cout << "vzNew vxy0 vxy " << vzNew << " " << vxy0 << " " << vxy << endl;
+               v[0] = v[0]/vxy01*vxy00;///velocityCollisionsNorm; 
+		       v[1] = v[1]/vxy01*vxy00;///velocityCollisionsNorm;
 
 
 	       
