@@ -646,13 +646,13 @@ void operator()(std::size_t indx)  {
 		//}
 		float nuEdt = nu_energy*dt;
 		if(nuEdt < -1.0) nuEdt = -1.0;
-		//particlesPointer->vx[indx] = vPartNorm*(1.0-0.5*nuEdt)*(1+coeff_par )*parallel_direction[0] + velocityCollisions[0];
-		//particlesPointer->vy[indx] = vPartNorm*(1.0-0.5*nuEdt)*(1+coeff_par )*parallel_direction[1] + velocityCollisions[1];
-		//particlesPointer->vz[indx] = vPartNorm*(1.0-0.5*nuEdt)*(1+coeff_par )*parallel_direction[2] + velocityCollisions[2];
+		particlesPointer->vx[indx] = vPartNorm*(1.0-0.5*nuEdt)*(1+coeff_par )*parallel_direction[0] + velocityCollisions[0];
+		particlesPointer->vy[indx] = vPartNorm*(1.0-0.5*nuEdt)*(1+coeff_par )*parallel_direction[1] + velocityCollisions[1];
+		particlesPointer->vz[indx] = vPartNorm*(1.0-0.5*nuEdt)*(1+coeff_par )*parallel_direction[2] + velocityCollisions[2];
 		//SFT
-		particlesPointer->vx[indx] = vTherm*(1+coeff_par )*parallel_direction[0] + velocityCollisions[0];
-		particlesPointer->vy[indx] = vTherm*(1+coeff_par )*parallel_direction[1] + velocityCollisions[1];
-		particlesPointer->vz[indx] = vTherm*(1+coeff_par )*parallel_direction[2] + velocityCollisions[2];
+		//particlesPointer->vx[indx] = vTherm*(1+coeff_par )*parallel_direction[0] + velocityCollisions[0];
+		//particlesPointer->vy[indx] = vTherm*(1+coeff_par )*parallel_direction[1] + velocityCollisions[1];
+		//particlesPointer->vz[indx] = vTherm*(1+coeff_par )*parallel_direction[2] + velocityCollisions[2];
                 
 		vx = particlesPointer->vx[indx];
 		vy = particlesPointer->vy[indx];
