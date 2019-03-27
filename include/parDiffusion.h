@@ -147,8 +147,11 @@
 
         #if PARTICLESEEDS > 0
           #ifdef __CUDACC__
+            float n1 = curand_normal(&state[indx]);
             float r1 = 2.0*floor(curand_uniform(&state[indx]) + 0.5) - 1.0;
           #else
+            std::normal_distribution<double> distribution(0.0,1.0);
+            float n1 = distribution(state[indx]);
             std::uniform_real_distribution<float> dist(0.0, 1.0);
             float r1 = 2.0*floor(dist(state[indx]) + 0.5)-1.0;
             //float r1 = dist(state[indx]) - 0.5;
@@ -194,9 +197,12 @@
 	      parallel_direction[2]=0.0;
 	    }
             if(nu_friction == 0.0){Dpar=0.0;}
-	    particlesPointer->x[indx] = particlesPointer->xprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[0];
-	    particlesPointer->y[indx] = particlesPointer->yprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[1];
-	    particlesPointer->z[indx] = particlesPointer->zprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[2];
+	    //particlesPointer->x[indx] = particlesPointer->xprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[0];
+	    //particlesPointer->y[indx] = particlesPointer->yprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[1];
+	    //particlesPointer->z[indx] = particlesPointer->zprevious[indx] + r1*sqrt(Dpar*dt)*parallel_direction[2];
+	    particlesPointer->x[indx] = particlesPointer->xprevious[indx] + n1*1.4142*vTherm*dt*parallel_direction[0];
+	    particlesPointer->y[indx] = particlesPointer->yprevious[indx] + n1*1.4142*vTherm*dt*parallel_direction[1];
+	    particlesPointer->z[indx] = particlesPointer->zprevious[indx] + n1*1.4142*vTherm*dt*parallel_direction[2];
 	    //std::cout << "Dpar distance " << r1*sqrt(Dpar*dt) << endl;
 
 	}
