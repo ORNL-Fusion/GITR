@@ -463,6 +463,7 @@ void operator()(std::size_t indx)  {
 		//int plus_minus2 = 1;//floor(curand_uniform(&particlesPointer->streams_collision2[indx]) + 0.5)*2 -1;
 		//int plus_minus3 = 1;//floor(curand_uniform(&particlesPointer->streams_collision3[indx]) + 0.5)*2 -1;
             float n1 = curand_normal(&state[indx]);
+            float n2 = curand_normal(&state[indx]);
             float r1 = curand_uniform(&state[indx]);
             float r2 = curand_uniform(&state[indx]);
             float r3 = curand_uniform(&state[indx]);
