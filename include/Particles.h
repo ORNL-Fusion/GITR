@@ -45,7 +45,8 @@ public:
   sim::Array<float> amu;
   sim::Array<float> charge;
   sim::Array<float> newVelocity;
-  sim::Array<float> nu_E0;
+  sim::Array<float> nu_s;
+  sim::Array<float> vD;
   sim::Array<int> tt;
   sim::Array<int> hasLeaked;
   sim::Array<float> leakZ;
@@ -213,7 +214,7 @@ public:
   CUDA_CALLABLE_MEMBER
   Particles(std::size_t nP) :
    nParticles{nP}, index{nP,0}, x{nP}, y{nP}, z{nP}, xprevious{nP}, yprevious{nP}, zprevious{nP},
-   vx{nP}, vy{nP}, vz{nP},v{nP,0.0},Z{nP}, amu{nP}, charge{nP}, newVelocity{nP},nu_E0{nP},
+   vx{nP}, vy{nP}, vz{nP},v{nP,0.0},Z{nP}, amu{nP}, charge{nP}, newVelocity{nP},nu_s{nP},vD{nP,0.0},
 #if PARTICLESEEDS > 0
   //    streams{nP},streams_rec{nP},streams_collision1{nP},streams_collision2{nP},
   //    streams_collision3{nP},streams_diff{nP},streams_surf{nP},

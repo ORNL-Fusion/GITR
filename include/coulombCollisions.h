@@ -103,9 +103,9 @@ float ME = 9.10938356e-31;
                         flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
 #endif
 #endif
-	relativeVelocity[0] = vx;// - flowVelocity[0];
-	relativeVelocity[1] = vy;// - flowVelocity[1];
-	relativeVelocity[2] = vz;// - flowVelocity[2];
+	relativeVelocity[0] = vx - flowVelocity[0];
+	relativeVelocity[1] = vy - flowVelocity[1];
+	relativeVelocity[2] = vz - flowVelocity[2];
 	velocityNorm = sqrt( relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2]);                
 	    //std::cout << "velocity norm " << velocityNorm << std::endl;	
     //for(int i=1; i < nSpecies; i++)
@@ -561,8 +561,10 @@ void operator()(std::size_t indx)  {
         //        particlesPointer->vx[indx] = vx/vxy01*vxy00;///velocityCollisionsNorm; 
 	//	particlesPointer->vy[indx] = vy/vxy01*vxy00;///velocityCollisionsNorm;
 		//particlesPointer->vz[indx] = vzNew;///velocityCollisionsNorm;   	
-        float drag = -dt*nu_friction*velocityRelativeNorm;
+        float drag = -dt*nu_friction*velocityRelativeNorm/1.2;
 	//SFT
+    //particlesPointer->nu_s[indx]=nu_friction;
+    //particlesPointer->vD[indx]=flowVelocity[2];
         //drag = -dt/tau_s*velocityRelativeNorm;
 	//std::cout << "nu_friction " << nu_friction << std::endl;
 	//std::cout << "nu_paralel " << nu_parallel << std::endl;

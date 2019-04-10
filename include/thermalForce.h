@@ -112,22 +112,20 @@ void operator()(std::size_t indx) const {
     float vy = p->vy[indx];
     float vz = p->vz[indx];
         vNorm = sqrt(vx*vx + vy*vy + vz*vz);
+    p->vD[indx] = dv_ITG[2];    
 	//std::cout << "gradTi Parallel " << gradTiPar << std::endl;
         //std::cout << "gradTi Parallel " << gradTi[0]<<gradTi[1]<<gradTi[2] << std::endl;
         //p->vx[indx] = p->vx[indx] +dv_ITG[0];//alpha*(gradTe[0])   
 	//p->vy[indx] = p->vy[indx] +dv_ITG[1];//alpha*(gradTe[1])
 	//p->vz[indx] = p->vz[indx] +dv_ITG[2];//alpha*(gradTe[2])		
         //vNorm2 = sqrt(p->vx[indx]*p->vx[indx] + p->vy[indx]*p->vy[indx] + p->vz[indx]*p->vz[indx]);
-    //SFT
-		float vzNew = vz + dv_ITG[2];///velocityCollisionsNorm;   	
-		//std::cout << "dv_ITG2 " << dv_ITG[2] << endl;
-
-                float vxy0 = sqrt(vx*vx + vy*vy);
-                float vxy = sqrt(vNorm*vNorm - vzNew*vzNew);
-		//std::cout << "vzNew vxy0 vxy " << vzNew << " " << vxy0 << " " << vxy << endl;
-                p->vx[indx] = vx/vxy0*vxy;
-		p->vy[indx] = vy/vxy0*vxy;
-		p->vz[indx] = vzNew;	
+		//SFT
+        float k1 = dv_ITG[2] - dt*p->nu_s[indx]
+                    *(dv_ITG[2]);
+        p->vx[indx] = vx + dv_ITG[0];///velocityCollisionsNorm;   	
+		p->vy[indx] = vy + dv_ITG[1];///velocityCollisionsNorm;   	
+		p->vz[indx] = vz + dv_ITG[2];// - dt*p->nu_s[indx]
+                         //*(0.5*k1);///velocityCollisionsNorm;   	
         //p.vx = p.vx + (dt/(p.amu*MI))*(  beta*(gradTi[0]));//alpha*(gradTe[0])
 		//p.vy = p.vy + (dt/(p.amu*MI))*(  beta*(gradTi[1]));//alpha*(gradTe[1])
 		//p.vz = p.vz + (dt/(p.amu*MI))*(  beta*(gradTi[2]));//alpha*(gradTe[2])		
