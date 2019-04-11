@@ -18,11 +18,11 @@
 #include <boost/timer/timer.hpp>
 using namespace boost::timer;
 #endif
-template <typename T>
-CUDA_CALLABLE_MEMBER
-int sgn(T val) {
-            return (T(0) < val) - (val < T(0));
-}
+//template <typename T>
+//CUDA_CALLABLE_MEMBER
+//int sgn(T val) {
+//            return (T(0) < val) - (val < T(0));
+//}
 
 CUDA_CALLABLE_MEMBER
 void vectorAdd(float A[], float B[],float C[])
@@ -813,7 +813,14 @@ cpu_times initTime0 = timer.elapsed();
             float minDist = 0.0f;
             int closestBoundaryIndex;
 #endif
-#if ODEINT ==	0  
+#if ODEINT ==	0 
+        if(particlesPointer->hasLeaked[indx] == 0)
+	{
+	  if(particlesPointer->zprevious[indx] > particlesPointer->leakZ[indx])
+	  {
+	    particlesPointer->hasLeaked[indx] = 1;
+	  }
+	}
 	        float qpE[3] = {0.0f,0.0f,0.0f};
 	        float vmxB[3] = {0.0f,0.0f,0.0f};
 	        float vpxB[3] = {0.0f,0.0f,0.0f};
@@ -855,6 +862,7 @@ cpu_times initTime0 = timer.elapsed();
                      EfieldZDevicePointer,EfieldTDevicePointer);
                  
                  vectorAdd(E,PSE,E);
+              //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
 #endif
 #endif              
                 interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
@@ -895,11 +903,23 @@ cpu_times initTime0 = timer.elapsed();
        //particlesPointer->test0[indx] = v[0]; 
        //particlesPointer->test1[indx] = v[1]; 
        //particlesPointer->test2[indx] = v[2];
-       int thisTmp=0;
-       if(particlesPointer->vx[indx]< 10.0 && v[0] > 4.0e3)
-           thisTmp=1;
+       /* float ti_eV = 50.0;
+	//std::cout << "ti dens tau_s " << ti_eV << " " << density << " " << tau_s << endl;
+	float vTherm = sqrt(2*ti_eV*1.602e-19/particlesPointer->amu[indx]/1.66e-27);
 
+      if(abs(v[2]) > vTherm)
+      {
+          v[2] = sgn(v[2])*vTherm;
+          v[0] = 0.0;
+          v[1] = 0.0;
+      }
+                float vxy00 = sqrt(vTherm*vTherm - v[2]*v[2]);
+                float vxy01 = sqrt(v[1]*v[1]+ v[0]*v[0]);
+		//std::cout << "vzNew vxy0 vxy " << vzNew << " " << vxy0 << " " << vxy << endl;
+               v[0] = v[0]/vxy01*vxy00;///velocityCollisionsNorm; 
+		       v[1] = v[1]/vxy01*vxy00;///velocityCollisionsNorm;
 
+          */
 	       
            if(particlesPointer->hitWall[indx] == 0.0)
             {

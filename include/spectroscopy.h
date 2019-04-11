@@ -73,7 +73,11 @@ void operator()(std::size_t indx) const {
 #if SPECTROSCOPY > 2
     float dim1 = particlesPointer->xprevious[indx];
 #else
+  #if USECYLSYMM > 0
     float dim1 = sqrtf(x*x + y*y);
+    #else
+    float dim1 = x;
+    #endif
 #endif
 
     if ((z > gridZ[0]) && (z < gridZ[nZ-1]))

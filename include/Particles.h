@@ -45,8 +45,11 @@ public:
   sim::Array<float> amu;
   sim::Array<float> charge;
   sim::Array<float> newVelocity;
-  sim::Array<float> nu_E0;
+  sim::Array<float> nu_s;
+  sim::Array<float> vD;
   sim::Array<int> tt;
+  sim::Array<int> hasLeaked;
+  sim::Array<float> leakZ;
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
   //sim::Array<curandState> streams;
@@ -211,7 +214,7 @@ public:
   CUDA_CALLABLE_MEMBER
   Particles(std::size_t nP) :
    nParticles{nP}, index{nP,0}, x{nP}, y{nP}, z{nP}, xprevious{nP}, yprevious{nP}, zprevious{nP},
-   vx{nP}, vy{nP}, vz{nP},v{nP,0.0},Z{nP}, amu{nP}, charge{nP}, newVelocity{nP},nu_E0{nP},
+   vx{nP}, vy{nP}, vz{nP},v{nP,0.0},Z{nP}, amu{nP}, charge{nP}, newVelocity{nP},nu_s{nP},vD{nP,0.0},
 #if PARTICLESEEDS > 0
   //    streams{nP},streams_rec{nP},streams_collision1{nP},streams_collision2{nP},
   //    streams_collision3{nP},streams_diff{nP},streams_surf{nP},
@@ -220,7 +223,7 @@ public:
    transitTime{nP,0.0},distTraveled{nP,0.0},
       wallHit{nP,0},firstCollision{nP,1}, wallIndex{nP}, perpDistanceToSurface{nP}, 
       test{nP,0.0},test0{nP,0.0},test1{nP,0.0},test2{nP,0.0},test3{nP,0.0},test4{nP,0.0},distanceTraveled{nP},weight{nP,1.0}, PionizationPrevious{nP,1.0},
-    PrecombinationPrevious{nP,1.0}, firstIonizationZ{nP,0.0},firstIonizationT{nP,0.0}, tt{nP,0} {};   
+    PrecombinationPrevious{nP,1.0}, firstIonizationZ{nP,0.0},firstIonizationT{nP,0.0}, tt{nP,0},hasLeaked{nP,0},leakZ{nP,0.0} {};   
 
 };
 

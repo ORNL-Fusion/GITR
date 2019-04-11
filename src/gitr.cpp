@@ -32,10 +32,13 @@
 #include "history.h"
 #include "hashGeom.h"
 #include "hashGeomSheath.h"
+#include "parDiffusion.h"
 #include "testRoutineCuda.h"
 #include "boundaryInit.h"
 #include "array.h"
 #include "ompPrint.h"
+#include "interpolate.h"
+#include "Fields.h"
 #if USE_BOOST
     #include <boost/timer/timer.hpp>
     #include "boost/filesystem.hpp"
@@ -73,26 +76,14 @@ using namespace netCDF;
 using namespace exceptions;
 using namespace netCDF::exceptions;
 
-struct test_routinePp { 
-   Particles *particles;
-    test_routinePp(Particles *_particles) : particles(_particles) {}
-
-    __device__
-    void operator()(std::size_t indx) const { 
-    particles->x[indx] = 5.0;
-}
-};
-
-
 int main(int argc, char **argv, char **envp)
 {
   typedef std::chrono::high_resolution_clock Time;
   typedef std::chrono::duration<float> fsec;
   auto GITRstart_clock = Time::now();
-  int ppn=1; 
+  int ppn=1;
+  std::string inputFile = "gitrInput.cfg";
   #if USE_MPI > 0
-    ppn = 4;
-    //int np = 1;
     // Initialize the MPI environment
     MPI_Init(&argc,&argv);
   #endif
@@ -116,6 +107,18 @@ int main(int argc, char **argv, char **envp)
 	} else 
 	{ // Uh-oh, there was no argument to the destination option.
 	   std::cerr << "--nGPUPerNode option requires one argument." << std::endl;
+          return 1;
+	} 
+      }
+      if(std::string(argv[counter]) == "-i")
+      {
+        if (counter + 1 < argc) 
+	{ // Make sure we aren't at the end of argv!
+          inputFile = argv[counter+1];	  
+          printf("\nGITR input file set to %s",inputFile.c_str());
+	} else 
+	{ // Uh-oh, there was no argument to the destination option.
+	   std::cerr << "-i option requires one argument" << std::endl;
           return 1;
 	} 
       }
@@ -147,21 +150,21 @@ int main(int argc, char **argv, char **envp)
     int world_rank=0;
     int world_size=1;
   #endif
-#if USE_CUDA > 0
-#else
-    omp_set_num_threads(24);
-    int num_threads = omp_get_max_threads();
-
-    std::cout << " rank and max num threads " << world_rank << " " << num_threads << std::endl; 
-#endif
+//#if USE_CUDA > 0
+//#else
+//    omp_set_num_threads(24);
+//    int num_threads = omp_get_max_threads();
+//
+//    std::cout << " rank and max num threads " << world_rank << " " << num_threads << std::endl; 
+//#endif
   //Prepare config files for import
   Config cfg,cfg_geom;
   std::string input_path = "input/";
   if(world_rank == 0)
   {
     //Parse and read input file
-    std::cout << "Open configuration file input/gitrInput.cfg " << std::endl;
-    importLibConfig(cfg,input_path+"gitrInput.cfg");
+    std::cout << "Open configuration file "<<input_path<< inputFile << std::endl;
+    importLibConfig(cfg,input_path+inputFile);
     
     // Parse and read geometry file
     std::cout << "Open geometry file" << std::endl;
@@ -246,6 +249,22 @@ int main(int argc, char **argv, char **envp)
   #endif
 
   //Bfield initialization
+  //if(world_rank == 0)
+  //{
+  //Field blankField;
+  //Field bfield(BFIELD_INTERP,input_path,cfg,"backgroundPlasmaProfiles.Bfield.");
+  //bfield(0,input_path,cfg,"backgroundPlasmaProfiles.Bfield.");
+  //}
+  //blankField(1,3,5);
+  //std::cout << "called operator" << endl;
+  sim::Array<float> testArray1(100);
+  testArray1.resize(10);
+    auto finish_clock0nc = Time::now();
+    typedef std::chrono::duration<float> fsec0nc;
+    fsec0nc fs0nc = finish_clock0nc - GITRstart_clock;
+    printf("Time taken          is %6.3f (secs) \n", fs0nc.count());
+  std::cout << "rank " << world_rank << "finished" << endl;
+  //bfield.values.print("Bfield");
   int nR_Bfield = 1,nY_Bfield = 1,nZ_Bfield = 1,n_Bfield = 1;
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   std::string bfieldFile;
@@ -286,14 +305,22 @@ int main(int argc, char **argv, char **envp)
   std::string profiles_folder = "output/profiles";  
   
   //Geometry Definition
+  std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;
   if(world_rank == 0)
   {
-    Setting& geom = cfg_geom.lookup("geom");
+    try{  
+      Setting &geom = cfg_geom.lookup("geom");
+    std::cout << "Got geom setting" << std::endl;
     nLines = geom["x1"].getLength();
     std::cout << "Just read nLines " << nLines << std::endl;
     std::cout << "Number of Geometric Objects To Load: " << nLines << std::endl;
+    }
+    catch(const SettingNotFoundException &nfex)
+    {
+      std::cerr << "No 'geom' setting in configuration file." << std::endl;
+    }
   }
   #if USE_MPI > 0
     MPI_Bcast(&nLines,1,MPI_INT,0,MPI_COMM_WORLD);
@@ -1382,6 +1409,7 @@ int main(int argc, char **argv, char **envp)
   #endif
   #if USE_MPI > 0 
     }
+
     MPI_Bcast(TempGridr.data(), nR_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Bcast(TempGridy.data(), nY_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Bcast(TempGridz.data(), nZ_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -1391,7 +1419,7 @@ int main(int argc, char **argv, char **envp)
   #endif
 
   float testVec = 0.0;
-  testVec = interp2dCombined(5.5,0.0,-4.4,nR_Temp,
+  testVec = interp2dCombined(0.0,0.1,0.0,nR_Temp,
                     nZ_Temp,TempGridr.data(),TempGridz.data(),ti.data());
   std::cout << "Finished Temperature import "<< testVec << std::endl; 
   
@@ -1448,7 +1476,7 @@ int main(int argc, char **argv, char **envp)
   #endif
   std::cout << "Finished density import "<< interp2dCombined(5.5,0.0,-4.4,nR_Dens,nZ_Dens,
                          &DensGridr.front(),&DensGridz.front(),&ne.front())
-   <<" " << interp2dCombined(5.5,0.0,-4.4,nR_Dens,nZ_Dens,
+   <<" " << interp2dCombined(0.0,0.1,0.0,nR_Dens,nZ_Dens,
    &DensGridr.front(),&DensGridz.front(),&ne.front()) << std::endl;
   //for(int i=0;i<100;i++)
   //{
@@ -1463,14 +1491,15 @@ int main(int argc, char **argv, char **envp)
   //}
   #if USE_MPI > 0 
     }
-    MPI_Bcast(DensGridr.data(), nR_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(DensGridy.data(), nY_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(DensGridz.data(), nZ_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(ni.data(), n_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
-    MPI_Bcast(ne.data(), n_Temp,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(DensGridr.data(), nR_Dens,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(DensGridy.data(), nY_Dens,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(DensGridz.data(), nZ_Dens,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(ni.data(), n_Dens,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(ne.data(), n_Dens,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
   #endif
   //Background Plasma flow velocity initialization    
+  std::cout << "Starting flow import "<< endl;
   int nR_flowV = 1;
   int nY_flowV = 1;
   int nZ_flowV = 1;
@@ -1790,15 +1819,16 @@ int main(int argc, char **argv, char **envp)
      gradTi[1] << " " << gradTi[2] << " " << std::endl; 
 
   //Initialization of ionization and recombination coefficients    
-  int nCS_Ionize, nCS_Recombine;
+  int nCS_Ionize=1, nCS_Recombine=1;
   const char *ionizeNcs,*ionizeNDens,*ionizeNTemp,
              *ionizeDensGrid,*ionizeTempGrid,*ionizeRCvarChar,
              *recombNcs,*recombNDens,*recombNTemp,
              *recombDensGrid,*recombTempGrid,*recombRCvarChar;
   std::string ionizeFile,recombFile;
-  int nTemperaturesIonize, nDensitiesIonize;
+  int nTemperaturesIonize=1, nDensitiesIonize=1;
   int i0,i1,i2,i3,i4;
-  int nTemperaturesRecombine, nDensitiesRecombine;
+  int nTemperaturesRecombine=1, nDensitiesRecombine=1;
+  #if USEIONIZATION > 0
   if(world_rank == 0)
   {
   if(cfg.lookupValue("impurityParticleSource.ionization.fileString", ionizeFile) &&
@@ -1811,6 +1841,8 @@ int main(int argc, char **argv, char **envp)
   { std::cout << "Ionization rate coefficient file: " << ionizeFile << std::endl;}
   else
   { std::cout << "ERROR: Could not get ionization string info from input file " << std::endl;}
+  #endif
+  #if USERECOMBINATION > 0
   if(cfg.lookupValue("impurityParticleSource.recombination.fileString", recombFile) &&
      cfg.lookupValue("impurityParticleSource.recombination.nChargeStateString",recombNcs) &&
      cfg.lookupValue("impurityParticleSource.recombination.DensGridString",recombNDens) &&
@@ -1821,6 +1853,8 @@ int main(int argc, char **argv, char **envp)
   { std::cout << "Recombination rate coefficient file: " << recombFile << std::endl;}
   else
   { std::cout << "ERROR: Could not get ionization string info from input file " << std::endl;}
+  #endif
+  #if USEIONIZATION > 0
   i0 = read_profileNs(input_path+ionizeFile,ionizeNcs,recombNcs,nCS_Ionize, nCS_Recombine);
 
   i1 = read_profileNs(input_path+ionizeFile,ionizeNDens,ionizeNTemp,nDensitiesIonize,nTemperaturesIonize);
@@ -1838,6 +1872,7 @@ int main(int argc, char **argv, char **envp)
       MPI_Bcast(&nDensitiesRecombine,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
     #endif
+  #endif  
   sim::Array<float> rateCoeff_Ionization(nCS_Ionize*nTemperaturesIonize*nDensitiesIonize);
   sim::Array<float> gridTemperature_Ionization(nTemperaturesIonize),
                         gridDensity_Ionization(nDensitiesIonize);
@@ -1846,13 +1881,17 @@ int main(int argc, char **argv, char **envp)
                     gridDensity_Recombination(nDensitiesRecombine);
   if(world_rank ==0)
   {
+  #if USEIONIZATION > 0
   i2 = read_profiles(input_path+ionizeFile,nTemperaturesIonize,nDensitiesIonize,ionizeTempGrid, 
                          gridTemperature_Ionization,ionizeDensGrid,gridDensity_Ionization,
                          ionizeRCvarChar,rateCoeff_Ionization);
+  #endif
+  #if USERECOMBINATION > 0
   i4 = read_profiles(input_path+recombFile,nTemperaturesRecombine,nDensitiesRecombine,
              recombTempGrid,gridTemperature_Recombination,recombDensGrid,
              gridDensity_Recombination,
              recombRCvarChar,rateCoeff_Recombination);
+   #endif
   }
     #if USE_MPI > 0 
       MPI_Bcast(&rateCoeff_Ionization[0],nCS_Ionize*nTemperaturesIonize*nDensitiesIonize,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -3188,7 +3227,7 @@ std::cout << "closed ncp " << std::endl;
     #else
       sim::Array<std::mt19937> state1(nParticles);
     #endif
-    #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
+    #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 || USEPARDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
 #if USE_CUDA
     //if(world_rank == 0)
     //{
@@ -3277,6 +3316,17 @@ std::cout << "closed ncp " << std::endl;
                     nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
                                         &br.front(),&bz.front(),&by.front());
  #endif           
+#if USEPARDIFFUSION > 0
+                parDiffusion parDiffusion0(particleArray,dt,&state1.front(),
+                    nR_flowV,nY_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridy.front(),&flowVGridz.front(),
+                    &flowVr.front(),&flowVz.front(),&flowVt.front(),
+                    nR_Dens,nZ_Dens,&DensGridr.front(),&DensGridz.front(),&ne.front(),    
+                    nR_Temp,nZ_Temp,&TempGridr.front(),&TempGridz.front(),ti.data(),&te.front(),
+                    background_Z,background_amu, 
+                    nR_Bfield,nZ_Bfield,bfieldGridr.data(),&bfieldGridz.front(),
+                                        &br.front(),&bz.front(),&by.front());
+
+#endif
 #if USECOULOMBCOLLISIONS > 0
                 coulombCollisions coulombCollisions0(particleArray,dt,&state1.front(),
                     nR_flowV,nY_flowV,nZ_flowV,&flowVGridr.front(),&flowVGridy.front(),&flowVGridz.front(),
@@ -3451,6 +3501,19 @@ std::cout << "closed ncp " << std::endl;
                                      flowVGridr.data(),flowVGridz.data(),
                                      flowVr.data(),flowVz.data(),flowVt.data());   
 #endif
+    
+    float leakZ=0.0;
+    if(world_rank ==0)
+    {
+      
+      std::string diagnosticCfg = "diagnostics.";
+      
+      getVariable(cfg,diagnosticCfg+"leakZ",leakZ);
+    }
+    MPI_Bcast(&leakZ, 1,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    for(int i=0;i<nP;i++) particleArray->leakZ[i] = leakZ;
+
 std::cout << "Flow velocities "<< testFlowVec[0] << " " <<testFlowVec[1] << " " << testFlowVec[2]  << std::endl;
     std::cout << "Starting main loop" <<  std::endl;
 //Main time loop
@@ -3574,14 +3637,19 @@ sim::Array<int> tmpInt(1,1),tmpInt2(1,1);
 
       #if USEPERPDIFFUSION > 0
         thrust::for_each(thrust::device,particleBegin,particleEnd,crossFieldDiffusion0);
-      #ifdef __CUDACC__
-        //cudaThreadSynchronize();
-      #endif
-            
         thrust::for_each(thrust::device,particleBegin,particleEnd,geometry_check0);
       #ifdef __CUDACC__
         //cudaThreadSynchronize();
       #endif
+            
+      #ifdef __CUDACC__
+        //cudaThreadSynchronize();
+      #endif
+      #endif
+      
+      #if USEPARDIFFUSION > 0
+        thrust::for_each(thrust::device,particleBegin,particleEnd,parDiffusion0);
+        thrust::for_each(thrust::device,particleBegin,particleEnd,geometry_check0);
       #endif
 
       #if USECOULOMBCOLLISIONS > 0
@@ -3663,6 +3731,7 @@ for(int i=0; i<nP ; i++)
     sim::Array<float> chargeGather(nP,0.0);
     sim::Array<float> firstIonizationTGather(nP,0.0);
     sim::Array<float> firstIonizationZGather(nP,0.0);
+    sim::Array<int> hasLeakedGather(nP,0);
     //float *x_gather = NULL;
     //if (world_rank == 0) {
     //      x_gather = malloc(sizeof(float)*nP);
@@ -3680,6 +3749,7 @@ for(int i=0; i<nP ; i++)
     MPI_Gather(&particleArray->hitWall[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &hitWallGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->weight[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &weightGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->charge[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &chargeGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&particleArray->hasLeaked[world_rank*nP/world_size], nP/world_size, MPI_INT, &hasLeakedGather[0], nP/world_size,MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->firstIonizationT[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &firstIonizationTGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->firstIonizationZ[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &firstIonizationZGather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&particleArray->test0[world_rank*nP/world_size], nP/world_size, MPI_FLOAT, &test0Gather[0], nP/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -3941,6 +4011,7 @@ NcVar nc_trans0 = ncFile0.addVar("transitTime",ncFloat,dims0);
 NcVar nc_impact0 = ncFile0.addVar("hitWall",ncFloat,dims0);
 NcVar nc_weight0 = ncFile0.addVar("weight",ncFloat,dims0);
 NcVar nc_charge0 = ncFile0.addVar("charge",ncFloat,dims0);
+NcVar nc_leak0 = ncFile0.addVar("hasLeaked",ncInt,dims0);
 #if USE_MPI > 0
 nc_x0.putVar(&xGather[0]);
 nc_y0.putVar(&yGather[0]);
@@ -3952,6 +4023,7 @@ nc_trans0.putVar(&particleArray->transitTime[0]);
 nc_impact0.putVar(&hitWallGather[0]);
 nc_weight0.putVar(&weightGather[0]);
 nc_charge0.putVar(&chargeGather[0]);
+nc_leak0.putVar(&hasLeakedGather[0]);
 #else
 nc_x0.putVar(&particleArray->xprevious[0]);
 nc_y0.putVar(&particleArray->yprevious[0]);
@@ -3963,6 +4035,7 @@ nc_trans0.putVar(&particleArray->transitTime[0]);
 nc_impact0.putVar(&particleArray->hitWall[0]);
 nc_weight0.putVar(&particleArray->weight[0]);
 nc_charge0.putVar(&particleArray->charge[0]);
+nc_leak0.putVar(&particleArray->hasLeaked[0]);
 #endif
 ncFile0.close();
        //auto particleArray2 = new Particles(1);
