@@ -1,0 +1,13 @@
+Ti0=100;
+fcond=0.1;
+gamma=7;
+n0=1e20;
+mz=12;
+mD=2
+cs0=sqrt(2*Ti0*1.602e-19/mD/1.66e-27);
+P=gamma*n0*cs0*Ti0*1.602e-19;
+k0e=2000;
+s = 1.2;
+sinj=0.15;
+sv=1.2;
+Tss = Ti0*(1+7/2*fcond*P*s/k0e/Ti0^(7/2))^(2/7)

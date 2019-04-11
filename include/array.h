@@ -35,7 +35,8 @@ THE SOFTWARE.
 #include <stdexcept>
 #include "Boundary.h"
 #include <boost/type_index.hpp>
-
+#include <iomanip>
+#include <iostream>
 namespace sim {
 
 
@@ -80,6 +81,12 @@ namespace sim {
     Array(const std::size_t capacity, T initial_value) : capacity_{capacity}, size_{capacity}, data_{alloc_data()} {
         for (std::size_t i = 0; i < size_; i++) {
         data_[i] = initial_value;
+      }
+    }
+    
+    Array(const std::vector<T> initial_vector) : capacity_{initial_vector.size()}, size_{initial_vector.size()}, data_{alloc_data()} {
+        for (std::size_t i = 0; i < size_; i++) {
+        data_[i] = initial_vector[i];
       }
     }
 
@@ -289,6 +296,23 @@ namespace sim {
     std::size_t capacity_;
     std::size_t size_;
     T *data_;
+
+void print(std::string const label)
+{
+  std::cout << label << '\n';
+  //if constexpr (std::is_floating_point<P>::value)
+  //{
+    for (auto i = 0; i < size_; ++i)
+      std::cout << std::setw(12) << std::setprecision(4) << std::scientific
+                << std::right << data_[i];
+  //}
+  //else
+  //{
+  //  for (auto i = 0; i < size(); ++i)
+  //    std::cout << std::right << (*this)(i) << " ";
+  //}
+  std::cout << '\n';
+}
   };
 
   /*! begin iterator for range based for loops
@@ -306,5 +330,8 @@ namespace sim {
   const T *end(const Array<T> &array) {
     return array.data() + array.size();
   }
+
+
+
 
 }

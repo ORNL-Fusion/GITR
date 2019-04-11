@@ -1,0 +1,36 @@
+clear all
+close all
+M = csvread('iterGeom.csv');
+r = M(:,1);
+z = M(:,2);
+Z = zeros(1,length(r));
+boundaryInd = [1:6,92:97,115:116];
+Wind = [7:24,74:91];
+BeInd= [25:73,98:114];
+Z(boundaryInd) = 0;
+Z(Wind) = 74;
+Z(BeInd) = 4;
+
+figure(1)
+for i=1:length(boundaryInd)
+    ind=boundaryInd(i);
+    indPlus1 = ind+1;
+    if ind > length(r)
+        ind=1;
+    end
+    plot([r(ind),r(ind+1)],[z(ind),z(ind+1)],'g','lineWidth',2)
+end
+plot(r,z)
+hold on
+scatter(r,z)
+axis equal
+a = [1:length(r)]'; b = num2str(a); c = cellstr(b);
+dx = 0.01; dy = 0.01; % displacement so the text does not overlay the data points
+text(r+dx, z+dy, c);
+
+surface = ones(1,length(Z));
+% surface(find(Z>0))=1;
+
+lines = GITR_LinesFromPoints(r,z, 'closed');
+% Z = ones(1,length(r))*6.0;
+GITR_writeGeomCFG_fromLines(lines,surface,'iterGeom2D.cfg',Z,0,0,0)

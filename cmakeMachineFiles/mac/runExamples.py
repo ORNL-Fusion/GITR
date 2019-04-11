@@ -54,8 +54,16 @@ def buildGITR(examplePath="../examples/operatorTests/straightLine/2Dgeom"):
     code_flags = code_flags+" -DUSERECOMBINATION="+str(USERECOMBINATION)
     USEPERPDIFFUSION=config.flags.USEPERPDIFFUSION
     code_flags = code_flags+" -DUSEPERPDIFFUSION="+str(USEPERPDIFFUSION)
+    USEPARDIFFUSION=config.flags.USEPARDIFFUSION
+    code_flags = code_flags+" -DUSEPARDIFFUSION="+str(USEPARDIFFUSION)
     USECOULOMBCOLLISIONS=config.flags.USECOULOMBCOLLISIONS
     code_flags = code_flags+" -DUSECOULOMBCOLLISIONS="+str(USECOULOMBCOLLISIONS)
+    USEFRICTION=config.flags.USEFRICTION
+    code_flags = code_flags+" -DUSEFRICTION="+str(USEFRICTION)
+    USEANGLESCATTERING=config.flags.USEANGLESCATTERING
+    code_flags = code_flags+" -DUSEANGLESCATTERING="+str(USEANGLESCATTERING)
+    USEHEATING=config.flags.USEHEATING
+    code_flags = code_flags+" -DUSEHEATING="+str(USEHEATING)
     USETHERMALFORCE=config.flags.USETHERMALFORCE
     code_flags = code_flags+" -DUSETHERMALFORCE="+str(USETHERMALFORCE)
     USESURFACEMODEL=config.flags.USESURFACEMODEL
