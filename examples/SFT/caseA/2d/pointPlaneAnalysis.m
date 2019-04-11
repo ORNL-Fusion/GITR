@@ -39,16 +39,30 @@ gridZ = ncread(specFile,'gridZ');
 figure(2)
 h=pcolor(gridR,gridZ,dens(:,:,5)')
 h.EdgeColor = 'none';
+densSum=sum(dens(:,:,5),1);
+maxDensSum = max(densSum(1:40));
 figure(21)
-semilogy(gridZ,sum(dens(:,:,5),1))
+hold on
+semilogy(gridZ,6.317e18*sum(dens(:,:,5),1)/maxDensSum)
+title({'Carbon Impurity Density Build-Up','For 1 Second GITR Simulation'})
+xlabel('s [m]')
+ylabel('Density [m^{-3}]')
+set(gca,'fontsize',16)
+
 hold on
 histogram(z(notHit))
+set(gca, 'YScale', 'log')
 maxDens = max(max(dens(:,:,5)));
  figure(21)
 hold on
 s = linspace(0,1.5);
 plot(s,1e5*exp(-1*s))
-casfile = 'history.nc';
+oddHit = hit(find(mod(hit,2)==1));
+evenHit = hit(find(mod(hit,2)==0));
+oddNotHit = notHit(find(mod(notHit,2)==1));
+evenNotHit = notHit(find(mod(notHit,2)==0));
+
+file = 'history.nc';
 x = ncread(file,'x');
 y = ncread(file,'y');
 z = ncread(file,'z');

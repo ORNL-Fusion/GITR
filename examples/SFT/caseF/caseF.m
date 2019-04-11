@@ -89,9 +89,12 @@ ylabel('\phi_{leak}/\phi_{in}')
 title('Divertor Leakage as a Function of T^{-2}')
 set(gca,'fontsize',16)
 pbaspect([1 1.25 1])
-M = csvread('../SFT-2/sheet 3-Table 1.csv',1,0)
-Tgitr = M(:,1);
-LeakGitr = M(:,6);
+% M = csvread('../SFT-2/sheet 3-Table 1.csv',1,0)
+% Tgitr = M(:,1);
+% LeakGitr = M(:,6);
+caseFleakage
 hold on
-scatter(1./(Tgitr.*Tgitr)*1e3,LeakGitr,'k')
-legend('SFT - No Temp. Variation','SFT - With Temp. Variation', 'GITR')
+scatter(1./(TGITR.*TGITR)*1e3,leakage,'k')
+caseFleakaget0
+scatter(1./(TGITR.*TGITR)*1e3,leakage,'dk')
+legend('SFT - No Temp. Variation','SFT - With Temp. Variation', 'GITR - No Temp. Variation','GITR - With Temp. Variation')

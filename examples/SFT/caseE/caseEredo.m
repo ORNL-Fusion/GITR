@@ -93,20 +93,24 @@ figure(3)
 
 hold on
 axis([0 3.5 1e-4 1e-1])
-semilogy(1./(TD0.^2)*1e4,nz_np.*np_th.*vTh./1.73e23)
+% semilogy(1./(TD0.^2)*1e4,nz_np.*np_th.*vTh./1.73e23)
 xlabel('(T_0 [eV])^{-2} x 10^{-4}')
 ylabel('\phi_{leak}/\phi_{in}')
 title('Divertor Leakage as a Function of T^{-2}')
 set(gca,'fontsize',16)
 pbaspect([1 1.25 1])
-legend('Simple Fluid Theory','GITR')
+
 %semilogy(1./(TD0.^2)*1e4,nz_np.*np_th.*vTh./1.73e23)
-M = csvread('../SFT-2/caseE-2-Table 1.csv',1,0)
-Tgitr = M(:,1);
-LeakGitr = M(:,6);
+% M = csvread('../SFT-2/caseE-2-Table 1.csv',1,0)
+% Tgitr = M(:,1);
+% LeakGitr = M(:,6);
+x = linspace(0,5e-4);
+semilogy(1e4*x,0.32*exp(-2.65e4*x),'lineWidth',2)
+caseEleakage
 hold on 
-scatter(1./(Tgitr.*Tgitr)*1e4,LeakGitr,'k')
+scatter(1./(TGITR.*TGITR)*1e4,leakage,'k')
 set(gca, 'YScale', 'log')
+legend('Simple Fluid Theory','GITR')
 % 
 % ca = 2.76e-15;
 % cb = 1.75e-16;

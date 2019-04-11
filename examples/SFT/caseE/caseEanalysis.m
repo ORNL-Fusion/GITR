@@ -56,3 +56,14 @@ npMiddle = max(max(totDens(area2)));
 
 leakage = npMiddle/np;
 
+file = 'history.nc';
+x = ncread(file,'x');
+y = ncread(file,'y');
+z = ncread(file,'z');
+vx = ncread(file,'vx');
+vy = ncread(file,'vy');
+vz = ncread(file,'vz');
+
+leftSv = find(z>1 & z<1.2);
+figure(101)
+histogram(vz(leftSv))
