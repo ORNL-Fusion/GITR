@@ -72,7 +72,7 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         float norm_B = vectorNorm(B);
 #if USE3DTETGEOM
         float surfNorm[3] = {0.0,0.0,0.0};
-        b.getSurfaceNormal(surfNorm);
+        b.getSurfaceNormal(surfNorm,0.0,0.0);
         float theta = acos(vectorDotProduct(B,surfNorm)/(vectorNorm(B)*vectorNorm(surfNorm)));
         if (theta > 3.14159265359*0.5)
         {

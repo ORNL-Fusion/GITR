@@ -1,15 +1,15 @@
 #!/bin/bash
+#SBATCH --account=m1709
 #SBATCH -N 1
-#SBATCH -C haswell
+#SBATCH -C knl
 #SBATCH -q debug
 #SBATCH -J GITR_test
 #SBATCH -t 00:10:00
-
 #OpenMP settings:
-export OMP_NUM_THREADS=1
+export OMP_NUM_THREADS=24
 export OMP_PLACES=threads
 export OMP_PROC_BIND=spread
 
-source /global/homes/t/tyounkin/code/gitr/env.cori.sh
+source /global/homes/t/tyounkin/code/gitr2/env.cori.sh
 #run the application:
-srun -n 1 -c 1 --cpu_bind=cores /project/projectdirs/atom/atom-install-cori/GITR/build/GITR
+srun -n 1 -c 24 --cpu_bind=cores /global/homes/t/tyounkin/code/gitr2/build/GITR
