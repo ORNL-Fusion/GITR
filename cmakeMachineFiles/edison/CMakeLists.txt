@@ -14,7 +14,7 @@ find_package(Thrust REQUIRED)
 find_package(NetCDF COMPONENTS CXX REQUIRED)
 find_package(LibConfig)
 #find_package (Boost COMPONENTS REQUIRED filesystem timer type_index)
-find_package(Boost 1.61.0 COMPONENTS REQUIRED filesystem timer)
+find_package(Boost 1.61.0 COMPONENTS REQUIRED system filesystem timer)
 IF (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIR})
     include_directories(${Boost_LIBRARY_DIR})
@@ -30,6 +30,7 @@ find_package(OpenMP REQUIRED)
 include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
 include_directories(${THRUST_INCLUDE_DIRS})
 include_directories(${NETCDF_INCLUDE_DIRS})
+include_directories(${NETCDF_CXX_INCLUDE_DIRS})
 include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 # Simulation defines
 add_definitions(-DUSE_CUDA=${USE_CUDA}
@@ -40,7 +41,11 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DUSEIONIZATION=${USEIONIZATION}
         -DUSERECOMBINATION=${USERECOMBINATION}
         -DUSEPERPDIFFUSION=${USEPERPDIFFUSION}
+        -DUSEPARDIFFUSION=${USEPARDIFFUSION}
         -DUSECOULOMBCOLLISIONS=${USECOULOMBCOLLISIONS}
+        -DUSEFRICTION=${USEFRICTION}
+        -DUSEANGLESCATTERING=${USEANGLESCATTERING}
+        -DUSEHEATING=${USEHEATING}
         -DUSETHERMALFORCE=${USETHERMALFORCE}
         -DUSESURFACEMODEL=${USESURFACEMODEL}
         -DUSESHEATHEFIELD=${USESHEATHEFIELD}
@@ -113,11 +118,14 @@ if (${CUDA_DEBUG})
 endif ()
 
 # Add libraries
+message( STATUS "netcdf cxx lib: " ${NETCDF_CXX_LIBRARIES} )
+message( STATUS "netcdf c lib: " ${NETCDF_C_LIBRARIES} )
 target_link_libraries(GITR ${NETCDF_CXX_LIBRARIES})
 target_link_libraries(GITR ${NETCDF_C_LIBRARIES})
 #target_link_libraries(GITR /home/tqd/code/netcdfBuild/lib/libnetcdf.so.11)
 target_link_libraries(GITR ${LIBCONFIGPP_LIBRARIES})
-target_link_libraries(GITR Boost::system Boost::filesystem Boost::timer)
+target_link_libraries(GITR ${Boost_LIBRARIES})
+#target_link_libraries(GITR Boost::system Boost::filesystem Boost::timer)
 target_link_libraries(GITR ${MPI_C_LIBRARIES})
     #libboost_system};${lboost_timer};${lboost_filesystem})
 # Install binaries

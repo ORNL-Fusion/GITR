@@ -1,8 +1,12 @@
 #!/bin/bash
 module swap PrgEnv-intel/6.0.4 PrgEnv-gnu
+#module load cray-parallel-netcdf
 module load cray-netcdf
+#module load netcdf
+#module load netcdf-cxx
 module unload boost/1.63
-module load boost/1.61
+module load boost
+module load cray-mpich
 #module load libconfig/gcc/64/1.5 
 #module load git
 #module load mpich/ge/gcc/64/3.1
@@ -24,8 +28,9 @@ export LIBCONFIGPP_INCLUDE_DIR=$LIBCONFIGDIR/include
 export LIBCONFIG_LIBRARY=lconfig
 #LD_LIBRARY_PATH=LD_RUN_PATH
 export THRUST_INCLUDE_DIRS=/global/homes/t/tyounkin/code/thrust/include
-export NETCDF_CXX_INCLUDE_DIR=$NETCDF_DIR/include
-export NETCDF_CXX_LIBRARY=$NETCDF_DIR/lib
+export NETCDF_CXX_BASEDIR=/usr/common/software/netcdf-cxx/4.2/
+export NETCDF_CXX_INCLUDE_DIR=/opt/cray/pe/netcdf/4.6.1.3/GNU/7.1/include
+export NETCDF_CXX_LIBRARY=$NETCDF_CXX_BASEDIR/lib
 export NETCDF_INCLUDE_DIR=$NETCDF_DIR/lib
 export NETCDF_INCLUDE_DIRS=$NETCDF_DIR/include
 export NETCDF_LIBRARIES=$NETCDF_DIR/lib
