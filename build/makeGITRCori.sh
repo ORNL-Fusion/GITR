@@ -1,18 +1,20 @@
-source /project/projectdirs/atom/atom-install-cori/GITR/env.cori.sh
+source ../env.cori.sh
 
 cmake -DTHRUST_INCLUDE_DIR=/global/homes/t/tyounkin/code/thrust/ \
--DNETCDF_DIR=/opt/cray/pe/netcdf/4.4.1.1.3/GNU/5.1/ \
 -DLIBCONFIGPP_INCLUDE_DIR=/global/homes/t/tyounkin/code/libconfigBuild/gnu/include \
 -DLIBCONFIGPP_LIBRARY=/global/homes/t/tyounkin/code/libconfigBuild/gnu/lib/libconfig++.so \
 -DCMAKE_C_COMPILER=gcc \
 -DCMAKE_CXX_COMPILER=g++ \
--DMPI_C_LIBRARIES=/opt/cray/pe/mpt/7.6.2/gni/mpich-gnu/5.1/lib/libmpich.so \
--DMPI_C_INCLUDE_PATH=/opt/cray/pe/mpt/7.6.2/gni/mpich-gnu/5.1/include \
+-DMPI_C_LIBRARIES=/opt/cray/pe/mpt/7.7.3/gni/mpich-gnu/7.1/lib/libmpich.so \
+-DMPI_C_INCLUDE_PATH=/opt/cray/pe/mpt/7.7.3/gni/mpich-intel/16.0/include \
 -DMPI_CXX_LIBRARIES=mpichcxx \
--DMPI_CXX_INCLUDE_PATH=/opt/cray/pe/mpt/7.6.2/gni/mpich-gnu/5.1/include \
+-DMPI_CXX_INCLUDE_PATH=/opt/cray/pe/mpt/7.7.3/gni/mpich-intel/16.0/include \
 -DMPI_C_COMPILER=mpich \
 -DMPI_CXX_COMPILER=mpichcxx \
-    -DUSE_CUDA=0 \
+-DNETCDF_LIBRARY=$NETCDF_DIR/lib/libnetcdf.so \
+-DNETCDF_CXX_INCLUDE_DIR=/opt/cray/pe/netcdf/4.6.1.3/GNU/7.1/include \
+-DNETCDF_CXX_LIBRARY=$NETCDF_DIR/lib/libnetcdf_c++4_gnu_71.so \
+-DUSE_CUDA=0 \
     -DUSEMPI=0 \
     -DUSE_MPI=1 \
     -DUSE_OPENMP=0 \
@@ -20,7 +22,11 @@ cmake -DTHRUST_INCLUDE_DIR=/global/homes/t/tyounkin/code/thrust/ \
     -DUSEIONIZATION=1 \
     -DUSERECOMBINATION=1 \
     -DUSEPERPDIFFUSION=1 \
+    -DUSEPARDIFFUSION=1 \
     -DUSECOULOMBCOLLISIONS=1 \
+    -DUSEFRICTION=1 \
+    -DUSEANGLESCATTERING=1 \
+    -DUSEHEATING=1 \
     -DUSETHERMALFORCE=0 \
     -DUSESURFACEMODEL=1 \
     -DUSESHEATHEFIELD=1 \
@@ -50,5 +56,8 @@ cmake -DTHRUST_INCLUDE_DIR=/global/homes/t/tyounkin/code/thrust/ \
     -DUSE3DTETGEOM=1 \
     -DUSECYLSYMM=1 \
     -DFLUX_EA=1 \
+    -DUSEFIELDALIGNEDVALUES=0 \
+    -DUSE_SORT=0 \
+    -DFORCE_EVAL=0 \
     -DCHECK_COMPATIBILITY=1 \
 ..
