@@ -1,6 +1,6 @@
 beam D He
 target W
-nH 1000
+nH 100
 energy_start 2
 energy_end 3
 nE 2
@@ -13,5 +13,8 @@ roughness_end 1.0
 nR 1
 nEdist 100
 maxEdist 20.0
+nEdist_ref 120
+maxEdist_ref 1000
 nAdist 50
 exe /Users/tyounkin/Code/gitr2/ftridyn/ft.sh
+data /Users/tyounkin/Code/gitr2/ftridyn/table1.txt
