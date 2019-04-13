@@ -38,9 +38,10 @@ class species:
 #end class species
 
 class species_lookup_table:
-	def __init__(self):
-		cwd = os.path.dirname(os.path.realpath(__file__))
-		self.table1 = open(cwd+'/'+'table1.txt','r').readlines()[11:130]
+	def __init__(self,dataFile):
+		#cwd = os.path.dirname(os.path.realpath(__file__))
+		print('dataFile',dataFile)
+		self.table1 = open(dataFile[0],'r').readlines()[11:130]
 		self.species_name = []
 		self.ZZ = []
 		self.M = []
@@ -337,9 +338,9 @@ def Prj_Tg_xolotl(sim_number=1, number_histories=1000000,
 
 def beam_and_target(name,beam_species,target_species,sim_number=1,
 	number_histories=1E5,incident_energy=100.0,incident_angle=0.0,
-	fractal_dimension=1.0,width=200.0,depth=200.0,fluence = 100.0):
+	fractal_dimension=1.0,width=200.0,depth=200.0,fluence = 100.0,dataFile='table1.txt'):
 
-	lookup_table = species_lookup_table()
+	lookup_table = species_lookup_table(dataFile)
 	beam = lookup_table.find_species(beam_species, E0=incident_energy, ALPHA0=incident_angle, QUBEAM=1.0, QUMAX=0.0)
 	target = lookup_table.find_species(target_species, QU=1.0, QUMAX=1.0)
 	species_list = [beam,target]
@@ -579,6 +580,7 @@ def plot_reflected_energy_distributions(simulation_name,nEbins=500,maxE=1000.0, 
         en = splst[:,2]
         plt.close()    
         plt.figure(1)
+	print('en bins range',en, nEbins, maxE)
         n,bins,patches = plt.hist(en,bins=nEbins,range=(0.0,maxE))
         if plotsOn :
             plt.title(simulation_name+' Energy Distribution')
@@ -641,7 +643,7 @@ def func1(path,E,a,r,d,specNum):
     else:
         name2 = '_'+d['target']
 
-    beam_and_target(name1+name2,beam,d['target'],sim_number=1,number_histories=d['nH'], incident_energy=E,depth=200.0,incident_angle=a,fluence=1.0E-16)
+    beam_and_target(name1+name2,beam,d['target'],sim_number=1,number_histories=d['nH'], incident_energy=E,depth=200.0,incident_angle=a,fluence=1.0E-16,dataFile=d['data'])
     #p = subprocess.Popen([d['exe'],name1+name2+'0001.IN'],cwd=cwd+'/'+path,stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     #stdoutdata, stderrdata = p.communicate()
     #returnCode = p.wait()
@@ -852,7 +854,7 @@ def main(func,argv):
             with open("ftMPI.in") as f:
                 for line in f:
                     split = line.split()
-                    if(split[0] == 'beam' or split[0]=='target' or split[0]=='Escale' or split[0]=='exe'):
+                    if(split[0] == 'beam' or split[0]=='target' or split[0]=='Escale' or split[0]=='exe' or split[0]=='data'):
 		        for j in range(1,len(split)):
                             d[split[0]].append(split[j])
                     elif(split[0] == 'nE' or split[0] == 'nA' or split[0]=='nR' or split[0]=='nEdist' or split[0]=='nEdist_ref' or split[0]=='nAdist' or split[0]=='nH'):
