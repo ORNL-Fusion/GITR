@@ -468,6 +468,7 @@ int main(int argc, char **argv, char **envp)
     if(world_rank == 0)
     {
         importHashNs(cfg,input_path,nHashes,"geometry_hash",nR_closeGeom.data(), nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),nR_closeGeomTotal,nY_closeGeomTotal,nZ_closeGeomTotal,nHashPoints.data(), nHashPointsTotal,nGeomHash);
+       std::cout << "made it here" << std::endl;	
       //Setting& geomHash = cfg.lookup("geometry_hash");
       //if(nHashes > 1)
       //{

@@ -18,7 +18,39 @@ CUDA_CALLABLE_MEMBER_DEVICE
 int sgn(T val) {
         return (T(0) < val) - (val < T(0));
 }*/
+float findT(float x0, float x1, float y0, float y1, float intersectionx) {
 
+    float a, b, c, a1, a2, t, discriminant, realPart, imaginaryPart;
+    a = (x1 - x0)*(x1 - x0) + (y1-y0)*(y1-y0);
+    b = 2.0*x0*(x1-x0) + 2.0*y0*(y1-y0);
+    c = x0*x0 + y0*y0 - intersectionx*intersectionx;
+    discriminant = b*b - 4*a*c;
+    
+    if (discriminant > 0) {
+        a1 = (-b + sqrt(discriminant)) / (2*a);
+        a2 = (-b - sqrt(discriminant)) / (2*a);
+        //cout << "Roots are real and different." << endl;
+        //cout << "a1 = " << a1 << endl;
+        //cout << "a2 = " << a2 << endl;
+	t = a1;
+    }
+    
+    else if (discriminant == 0) {
+        //cout << "Roots are real and same." << endl;
+        a1 = (-b + sqrt(discriminant)) / (2*a);
+        //cout << "a1 = a2 =" << a1 << endl;
+    }
+
+    else {
+        realPart = -b/(2*a);
+        imaginaryPart =sqrt(-discriminant)/(2*a);
+        //cout << "Roots are complex and different."  << endl;
+        //cout << "a1 = " << realPart << "+" << imaginaryPart << "i" << endl;
+        //cout << "a2 = " << realPart << "-" << imaginaryPart << "i" << endl;
+    }
+
+    return t;
+}
 struct geometry_check { 
     Particles *particlesPointer;
     const int nLines;
@@ -401,6 +433,9 @@ void operator()(std::size_t indx) const {
         float theta0 = atan2f(particlesPointer->yprevious[indx],particlesPointer->xprevious[indx]);
         float theta1 = atan2f(particlesPointer->y[indx],particlesPointer->x[indx]);
         float thetaNew = 0;
+        float rNew = 0;
+        float xNew = 0;
+        float yNew = 0;
       #else   
         float pdim1 = particlesPointer->x[indx];
         float pdim1previous = particlesPointer->xprevious[indx];
@@ -555,8 +590,17 @@ void operator()(std::size_t indx) const {
                     if (particle_slope >= tol*0.75f)
                     {
   #if USECYLSYMM > 0
+		 float x0  = particlesPointer->xprevious[indx];
+		 float x1  = particlesPointer->x[indx];
+		 float y0  = particlesPointer->yprevious[indx];
+		 float y1  = particlesPointer->y[indx];
+		 float tt = findT(x0, x1, y0, y1, intersectionx[0]);
+ xNew = x0 + (x1-x0)*tt;
+ yNew = y0 + (y1-y0)*tt;
+ rNew = sqrt(xNew*xNew + yNew*yNew);
                     thetaNew = theta0 + (intersectiony[0] - particlesPointer->zprevious[indx])/(particlesPointer->z[indx] - particlesPointer->zprevious[indx])*(theta1 - theta0);
-                   particlesPointer->y[indx] = intersectionx[0]*sinf(thetaNew);
+                   particlesPointer->y[indx] = yNew;
+                   particlesPointer->yprevious[indx] = yNew;
   #else                    
                     //std::cout << "Particle index " << indx << " hit wall and is calculating y point " << particlesPointer->y[indx] << std::endl;
 		    particlesPointer->y[indx] = particlesPointer->yprevious[indx] + (intersectiony[0] - particlesPointer->zprevious[indx])/(particlesPointer->z[indx] - particlesPointer->zprevious[indx])*(particlesPointer->y[indx] - particlesPointer->yprevious[indx]);
@@ -567,9 +611,27 @@ void operator()(std::size_t indx) const {
                     else
                     {
   #if USECYLSYMM > 0
+		 float x0  = particlesPointer->xprevious[indx];
+		 float x1  = particlesPointer->x[indx];
+		 float y0  = particlesPointer->yprevious[indx];
+		 float y1  = particlesPointer->y[indx];
+		 float tt = findT(x0, x1, y0, y1, intersectionx[0]);
+ xNew = x0 + (x1-x0)*tt;
+ yNew = y0 + (y1-y0)*tt;
+ rNew = sqrt(xNew*xNew + yNew*yNew);
                     //particlesPointer->test0[indx] = -200.0;
                        thetaNew = theta0 + (intersectionx[0] - pdim1previous)/(pdim1 - pdim1previous)*(theta1 - theta0);    
-                       particlesPointer->yprevious[indx] = intersectionx[0]*sinf(thetaNew);             particlesPointer->y[indx] = particlesPointer->yprevious[indx];
+                       particlesPointer->yprevious[indx] = yNew;
+		       particlesPointer->y[indx] = yNew;
+		 //float rrr  = sqrt(particlesPointer->x[indx]*particlesPointer->x[indx] + particlesPointer->y[indx]*particlesPointer->y[indx]);
+		 //if(particlesPointer->z[indx]< -4.1 & rrr > 5.5543)
+		 //{
+		 //  std::cout <<" positions of intersection 2" << particlesPointer->x[indx] << " " << particlesPointer->y[indx]<< std::endl;
+		 //  std::cout <<" r " << rrr << " " << boundaryVector[particlesPointer->wallHit[indx]].x1 << " " << boundaryVector[particlesPointer->wallHit[indx]].x2<< std::endl;
+		 //std::cout << "x0 x1 y0 y1 rNew "  << " "<< x0 << " " << x1 << " " << y0 << " " << y1 << " " << rNew << std::endl;
+		 //std::cout << "xNew yNew " << xNew << " " << yNew << std::endl;
+		 //std::cout << "intersectionx " << intersectionx[0] << std::endl;
+		 //}
   #else                 
                     //std::cout << "Particle index " << indx << " hit wall and is calculating y point " << particlesPointer->y[indx] << std::endl;
                        particlesPointer->y[indx] = particlesPointer->yprevious[indx] + (intersectionx[0] - particlesPointer->xprevious[indx])/(particlesPointer->x[indx] - particlesPointer->xprevious[indx])*(particlesPointer->y[indx] - particlesPointer->yprevious[indx]);
@@ -577,7 +639,7 @@ void operator()(std::size_t indx) const {
   #endif                
                     }
   #if USECYLSYMM > 0
-                particlesPointer->xprevious[indx] = intersectionx[0]*cosf(thetaNew);
+                particlesPointer->xprevious[indx] = xNew;
                 particlesPointer->x[indx] = particlesPointer->xprevious[indx];
   #else                
                 particlesPointer->x[indx] = intersectionx[0];

@@ -54,6 +54,7 @@ class Boundary
     #else
       float slope_dzdx;
       float intercept_z;
+      int inDir;
     #endif     
     float Z;
     float amu;
@@ -82,7 +83,7 @@ class Boundary
     float redeposit;
 
     CUDA_CALLABLE_MEMBER
-    void getSurfaceParallel(float A[])
+    void getSurfaceParallel(float A[],float y,float x)
     {
 #if USE3DTETGEOM > 0
         float norm = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
@@ -94,6 +95,17 @@ class Boundary
         //std::cout << "surf par calc " << x2 << " " << x1 << " " << norm << std::endl;
         A[0] = (x2-x1)/norm;
         A[2] = (z2-z1)/norm;
+#if USE3DTETGEOM > 0
+#else
+#if USECYLSYMM > 0
+	    float theta = atan2f(y,x);
+	    float B[3] = {0.0f};
+            B[0] = cosf(theta)*A[0] - sinf(theta)*A[1];
+            B[1] = sinf(theta)*A[0] + cosf(theta)*A[1];
+	    A[0] = B[0];
+	    A[1] = B[1];
+#endif
+#endif
 
     }
     
@@ -105,10 +117,10 @@ class Boundary
         B[1] = -b/plane_norm;
         B[2] = -c/plane_norm;
 #else
-        float perpSlope = -1.0/slope_dzdx;
+        float perpSlope = -sgn(slope_dzdx)/slope_dzdx;
         float Br = 1.0/sqrt(perpSlope*perpSlope+1.0);
         float Bt = 0.0;
-        B[2] = sgn(perpSlope)*sqrt(1-B[0]*B[0]);
+        B[2] = sgn(perpSlope)*sqrt(1-Br*Br);
 	#if USECYLSYMM > 0
 	    float theta = atan2f(y,x);
             B[0] = cosf(theta)*Br - sinf(theta)*Bt;
@@ -130,7 +142,7 @@ class Boundary
             float Y[3] = {0.0f};
             float Z[3] = {0.0f};
             float tmp[3] = {0.0f};
-            getSurfaceParallel(X);
+            getSurfaceParallel(X,y,x);
             getSurfaceNormal(Z,y,x);
             Y[0] = Z[1]*X[2] - Z[2]*X[1]; 
             Y[1] = Z[2]*X[0] - Z[0]*X[2]; 

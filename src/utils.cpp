@@ -548,6 +548,7 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
           boundaries[i].length << ", " << boundaries[i].Z << "];" << std::endl;
        //std::cout << "trying surface" << std::endl;
        boundaries[i].surface = geom["surface"][i];
+       boundaries[i].inDir = geom["inDir"][i];
        //std::cout << "got surface " << std::endl;
        if(boundaries[i].surface > 0)
        {
@@ -626,6 +627,7 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
         nZTotal = nZTotal + nZ[j];
       }
       std::cout << "hhhash nr ny nz total " << nGeomHash << " " << nRTotal << " " << nYTotal << " " << nZTotal<< std::endl;
+  return 0;
 }
 int read_ar2Input( string fileName, float *Bfield[]) {
 

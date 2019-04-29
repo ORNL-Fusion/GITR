@@ -1,10 +1,10 @@
 clear all
 close all
-M = csvread('iterGeom.csv');
-r = M(:,1);
-z = M(:,2);
-rGeom = r;
-zGeom = z;
+% M = csvread('iterGeom.csv');
+% r = M(:,1);
+% z = M(:,2);
+% rGeom = r;
+% zGeom = z;
 
 
 file = 'output/history.nc';
@@ -21,8 +21,10 @@ nP = sizeArray(2);
 
 
 r = sqrt(x.^2 + y.^2);
-figure(16)
+figure(1)
 hold on
+% i=581
+% plot(r(:,i),z(:,i))
 for i=1:100
 plot(r(:,i),z(:,i))
 % plot3(x(:,i),y(:,i),z(:,i))
@@ -30,7 +32,8 @@ end
 xlabel('X')
 ylabel('Y')
 zlabel('Z')
-plot(rGeom,zGeom)
-hold on
-scatter(rGeom,zGeom)
+% plot(rGeom,zGeom)
+% hold on
+% scatter(rGeom,zGeom)
 axis equal
+readIterGeom
