@@ -514,9 +514,22 @@ void operator()(std::size_t indx) const {
     vSampled[1] = V0*sin(aInterpVal*3.1415/180)*sin(2.0*3.1415*r10);
     vSampled[2] = V0*cos(aInterpVal*3.1415/180);
     boundaryVector[wallHit].transformToSurface(vSampled,particles->y[indx],particles->x[indx]);
-    particles->vx[indx] = -signPartDotNormal*vSampled[0];
-    particles->vy[indx] = -signPartDotNormal*vSampled[1];
-    particles->vz[indx] = -signPartDotNormal*vSampled[2];
+    //float rr = sqrt(particles->x[indx]*particles->x[indx] + particles->y[indx]*particles->y[indx]);
+    //if (particles->z[indx] < -4.1 && -signPartDotNormal*vSampled[0] > 0.0)
+    //{
+    //  std::cout << "particle index " << indx  << std::endl;
+    //  std::cout << "aInterpVal" << aInterpVal  << std::endl;
+    //  std::cout << "Surface Normal" << surfaceNormalVector[0] << " " << surfaceNormalVector[1] << " " << surfaceNormalVector[2] << std::endl;
+    //  std::cout << "signPartDotNormal " << signPartDotNormal << std::endl;
+    //  std::cout << "Particle hit wall with v " << vx << " " << vy << " " << vz<< std::endl;
+    //  std::cout << "vSampled " << vSampled[0] << " " << vSampled[1] << " " << vSampled[2] << std::endl;
+    //  std::cout << "Final transform" << -signPartDotNormal*vSampled[0] << " " << -signPartDotNormal*vSampled[1] << " " << -signPartDotNormal*vSampled[2] << std::endl;
+    //  std::cout << "Position of particle0 " << particles->xprevious[indx] << " " << particles->yprevious[indx] << " " << particles->zprevious[indx] << std::endl;
+    //  std::cout << "Position of particle " << particles->x[indx] << " " << particles->y[indx] << " " << particles->z[indx] << std::endl;
+    //  }
+    particles->vx[indx] = -boundaryVector[wallHit].inDir*surfaceNormalVector[0]*vSampled[0];
+    particles->vy[indx] = -boundaryVector[wallHit].inDir*surfaceNormalVector[1]*vSampled[1];
+    particles->vz[indx] = -boundaryVector[wallHit].inDir*surfaceNormalVector[2]*vSampled[2];
             //if(particles->test[indx] == 0.0)
             //{
             //    particles->test[indx] = 1.0;
@@ -526,9 +539,9 @@ void operator()(std::size_t indx) const {
             //    particles->test3[indx] = vSampled[2];
             //}            
 
-    particles->xprevious[indx] = particles->x[indx] + -signPartDotNormal*surfaceNormalVector[0]*1e-5;
-    particles->yprevious[indx] = particles->y[indx] + -signPartDotNormal*surfaceNormalVector[1]*1e-5;
-    particles->zprevious[indx] = particles->z[indx] + -signPartDotNormal*surfaceNormalVector[2]*1e-5;
+    particles->xprevious[indx] = particles->x[indx] - boundaryVector[wallHit].inDir*surfaceNormalVector[0]*1e-6;
+    particles->yprevious[indx] = particles->y[indx] - boundaryVector[wallHit].inDir*surfaceNormalVector[1]*1e-6;
+    particles->zprevious[indx] = particles->z[indx] - boundaryVector[wallHit].inDir*surfaceNormalVector[2]*1e-6;
             //std::cout << "New vel " << particles->vx[indx] << " " << particles->vy[indx] << " " << particles->vz[indx] << std::endl;
             //std::cout << "New pos " << particles->xprevious[indx] << " " << particles->yprevious[indx] << " " << particles->zprevious[indx] << std::endl;
             //if(particles->test[indx] == 0.0)
