@@ -474,7 +474,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
        }
       //vectorScalarMult(-1.0,directionUnitVector,directionUnitVector);
       //std::cout << "min dist " << minDistance << std::endl;
-#else      
+#else //2dGeom     
                 
     float Emag = 0.0f;
 	float fd = 0.0f;
@@ -515,7 +515,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
 
 #else
     for (int j=0; j< nLines; j++)
-    {
+    {  //std::cout << " surface check " << j << std::endl;
 #endif
         if (boundaryVector[j].Z != 0.0)
         {
@@ -525,7 +525,16 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
                                         (z - boundaryVector[j].z2)*(z - boundaryVector[j].z2));
             perp_dist = (boundaryVector[j].slope_dzdx*x - z + boundaryVector[j].intercept_z)/
                 sqrtf(boundaryVector[j].slope_dzdx*boundaryVector[j].slope_dzdx + 1.0f);   
-
+	
+	
+          if (fabsf(boundaryVector[j].slope_dzdx) >= tol*0.75f)
+	  {
+	   perp_dist = x0 - boundaryVector[j].x1;
+	  }
+	//std::cout << " x0 z " << x0 << " " << z << " slope " << boundaryVector[j].slope_dzdx << " intercept " << boundaryVector[j].intercept_z << std::endl;
+        
+	//std::cout << " surface check " << j << " point1dist " << point1_dist << " point2_dist " << point2_dist <<  
+	   //           " perp_dist " << perp_dist << std::endl;
             if (point1_dist > point2_dist)
             {
                 max = point1_dist;
@@ -613,6 +622,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     //float BlarmorRadius = boundaryVector[minIndex].larmorRadius;
     //   if(x0==0.0 && z > 1.0e-3 && minDistance<1.0e-9)
     //       thisTmp=1;
+    //std::cout << "min distance " << j << " " << minDistance << std::endl;
     }
     if (direction_type == 1)
     {
@@ -653,6 +663,16 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
         //std::cout << "direction_type 3 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     }
 
+    vectorMagnitude = sqrtf(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
+                                + directionUnitVector[2]*directionUnitVector[2]);
+    directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
+    directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
+    directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
+    float surfaceNormalVector[3] = {0.0f};
+    boundaryVector[minIndex].getSurfaceNormal(surfaceNormalVector,y,x);
+    directionUnitVector[0]= boundaryVector[minIndex].inDir*surfaceNormalVector[0];
+    directionUnitVector[1]= boundaryVector[minIndex].inDir*surfaceNormalVector[1];
+    directionUnitVector[2]= boundaryVector[minIndex].inDir*surfaceNormalVector[2];
     vectorMagnitude = sqrtf(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
                                 + directionUnitVector[2]*directionUnitVector[2]);
     directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;

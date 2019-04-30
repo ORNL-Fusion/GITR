@@ -3948,10 +3948,12 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
             closestBoundaryIndex);
       //std::cout << "Starting surf minDistance and closestBoundaryIndex " << closestBoundaryIndex << " " <<
       //    minDistance << std::endl;
+      //std::cout << "Particle starting z and boundary z " << pz[j] << " " <<
+      //    boundaries[closestBoundaryIndex].z1 << std::endl;
     if(boundaries[closestBoundaryIndex].Z > 0.0)
     {
-      //std::cout << "Starting surf Z " << closestBoundaryIndex << " " <<
-        //  boundaries[closestBoundaryIndex].Z << std::endl;
+      //std::cout << "Starting surfNumber and Z " << boundaries[closestBoundaryIndex].surfaceNumber << " " <<
+      //    boundaries[closestBoundaryIndex].Z << std::endl;
       surfIndex = boundaries[closestBoundaryIndex].surfaceNumber;
       grossErosion[surfIndex] = grossErosion[surfIndex] + 1.0;
     }
