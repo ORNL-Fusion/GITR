@@ -11,14 +11,47 @@ z = (z1-z0)*rand(1,nP)+z0;
 y = 0.0*ones(1,nP);
 T=100;
 m=12;
+
+vTh = sqrt(2*T*1.602e-19/m/1.66e-27);
+k = 1.38e-23*11604; 
+B = m*1.66e-27/(2*T*k);
+vgrid = linspace(-3*vTh,3*vTh);
+fv1 = sqrt(B/pi)*exp(-B*vgrid.^2);
+fv1CDF = cumsum(fv1);
+fv1CDF = fv1CDF./fv1CDF(end);
+fvb = (B/pi)^(3/2)*4*pi*vgrid.*vgrid.*exp(-B*vgrid.^2);
+fvbCDF = cumsum(fvb);
+fvbCDF = fvbCDF./fvbCDF(end);
+figure(9)
+plot(vgrid,fvb)
+vx = interp1(fv1CDF,vgrid,rand(1,nP),'pchip',0);
+vy = interp1(fv1CDF,vgrid,rand(1,nP),'pchip',0);
+vz = interp1(fv1CDF,vgrid,rand(1,nP),'pchip',0);
+hold on
+histogram(vx)
+% phi  = rand(1,nP)*pi;
+% theta = rand(1,nP)*2*pi;
+% vz = vbx.*cos(phi);
+% vx = vbx.*sin(phi).*cos(theta);
+% vy = vbx.*sin(phi).*sin(theta);
+
+vtot = sqrt(vx.^2 + vy.^2 + vz.^2);
+histogram(vtot)
+figure(10)
+plot(vgrid,fv1)
+figure(11)
+histogram(vx)
+hold on
+histogram(vy)
+histogram(vz)
 vTh = sqrt(2*T*1.602e-19/m/1.66e-27);
 0.5*12*1.66e-27*vTh*vTh/1.602e-19
 
-phi  = rand(1,nP)*pi;
-theta = rand(1,nP)*2*pi;
-vz = vTh*cos(phi);
-vx = vTh*sin(phi).*cos(theta);
-vy = vTh*sin(phi).*sin(theta);
+% phi  = rand(1,nP)*pi;
+% theta = rand(1,nP)*2*pi;
+% vz = vTh*cos(phi);
+% vx = vTh*sin(phi).*cos(theta);
+% vy = vTh*sin(phi).*sin(theta);
 
 
 
@@ -28,7 +61,7 @@ vy = vTh*sin(phi).*sin(theta);
 
 scatter(x,z)
 
-ncid = netcdf.create(['./particleSourceD100.nc'],'NC_WRITE')
+ncid = netcdf.create(['./particleSourceD100Gauss.nc'],'NC_WRITE')
  
 dimP = netcdf.defDim(ncid,'nP',nP);
 

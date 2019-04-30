@@ -62,17 +62,26 @@ figure(1)
 
 vtot = sign(vz).*sqrt(vz.*vz + vx.*vx + vy.*vy);
 figure(2)
-h1 = histogram(vz);
+h1 = histogram(vz,[vgrid, vgrid(end) + (vgrid(2)-vgrid(1))]-0.5*(vgrid(2)-vgrid(1)));
 h1binAve = mean([h1.BinEdges(1:end-1);h1.BinEdges(2:end)]);
 h1Vals = h1.Values;
 hold on
-semilogy(vgrid,fv1*max(h1Vals)/max(fv1))
+semilogy(vgrid,1.05*fv1*max(h1Vals)/max(fv1))
+title({'Impurity Velocity (z-component) Distribution','In D plasma T=50 eV, n=1e19 m-3'})
+xlabel('v_z [m/s]')
+ylabel('Counts')
+set(gca,'fontsize',16)
+axis([vgrid(1) vgrid(end) 0 max(h1Vals)])
 figure(1)
 hold on
-semilogy(sign(h1binAve).*(h1binAve./vTh).^2,h1Vals)
-semilogy(sign(vgrid).*(vgrid./vTh).^2,fv1*max(h1Vals)/max(fv1))
+semilogy(sign(h1binAve).*(h1binAve./vTh).^2,h1Vals./sum(h1Vals))
+semilogy(sign(vgrid).*(vgrid./vTh).^2,2000*fv1)
 set(gca, 'YScale', 'log')
-axis([-(vgrid(1)/vTh)^2 (vgrid(1)/vTh)^2 min(h1Vals) 1.2*max(h1Vals)])
+% axis([-(vgrid(1)/vTh)^2 (vgrid(1)/vTh)^2 min(h1Vals) 1.2*max(h1Vals)])
+title({'Impurity Velocity (z-component) Distribution','In D plasma T=50 eV, n=1e19 m-3'})
+xlabel('(v_z/v_{Th})^2')
+ylabel('Counts')
+set(gca,'fontsize',16)
 file = 'history.nc';
 x = ncread(file,'x');
 y = ncread(file,'y');
@@ -82,6 +91,23 @@ vy = ncread(file,'vy');
 vz = ncread(file,'vz');
 charge = ncread(file,'charge');
 E = 0.5*12*1.66e-27*(vx.^2 + vy.^2 + vz.^2)/1.602e-19;
+figure(19)
+hold on
+subX=5;
+subY=5;
+size_hist = size(vz);
+time_snap = 1:(size_hist(1)-1)/subX/subY:size_hist(1);
+% time_snap = 1:1:25;
+dt = 1e-7;
+for i=1:subY
+    for j=1:subX
+subplot(subX,subY,subX*(i-1) + j)
+histogram(vz(time_snap(subX*(i-1) + j),:))
+title(['t=', num2str(time_snap(subX*(i-1) + j)*dt),'s'])
+axis([-1e5 1e5 0 10000])
+    end
+
+end
 figure(20)
 Eend = 0.5*12*1.66e-27*(vx(end,:).^2 + vy(end,:).^2 + vz(end,:).^2)/1.602e-19;
 plot(mean(E'))

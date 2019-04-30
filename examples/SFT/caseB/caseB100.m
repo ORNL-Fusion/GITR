@@ -1,7 +1,7 @@
-clear all
-close all
-T=100;
-n = 1e18;
+% clear all
+% close all
+T=10;
+n = 1e19;
 dt=1e-7
 tau1 = drag_tau(12,4,2,T,n)
 vTh = sqrt(T*1.602e-19/12/1.66e-27);
@@ -9,6 +9,9 @@ vTh = sqrt(T*1.602e-19/12/1.66e-27);
 D_par = vTh^2*tau1
 tau_par = par_diff(12,T,4,2,T,n)
 coeff_par = vTh*sqrt(2*dt/tau_par)
+mfp = vTh*tau1
+ds = vTh*tau1*dt
+dfriction
 TD = 100;
 nD = 1e20;
 mD = 2;

@@ -1,7 +1,7 @@
 close all
 clear all
 
-Temps = 90;%linspace(10,130,13)
+Temps = linspace(10,130,13)
 for i=1:length(Temps)
 T=Temps(i);
 nP=1e6;
@@ -17,13 +17,22 @@ z(odds) = z(odds) +2*L-2*z0 - 2*(z1-z0);
 y = 0.0*ones(1,nP);
 
 m=12;
-vTh = sqrt(2*T*1.602e-19/m/1.66e-27);
-0.5*12*1.66e-27*vTh*vTh/1.602e-19
-vx = vTh*ones(1,nP);
-vy = zeros(1,nP);
-vz = zeros(1,nP);
 
-scatter(x,z)
+vTh = sqrt(2*T*1.602e-19/m/1.66e-27);
+k = 1.38e-23*11604; 
+B = m*1.66e-27/(2*T*k);
+vgrid = linspace(-3*vTh,3*vTh);
+fv1 = sqrt(B/pi)*exp(-B*vgrid.^2);
+fv1CDF = cumsum(fv1);
+fv1CDF = fv1CDF./fv1CDF(end);
+fvb = (B/pi)^(3/2)*4*pi*vgrid.*vgrid.*exp(-B*vgrid.^2);
+fvbCDF = cumsum(fvb);
+fvbCDF = fvbCDF./fvbCDF(end);
+figure(9)
+plot(vgrid,fvb)
+vx = interp1(fv1CDF,vgrid,rand(1,nP),'pchip',0);
+vy = interp1(fv1CDF,vgrid,rand(1,nP),'pchip',0);
+vz = interp1(fv1CDF,vgrid,rand(1,nP),'pchip',0);
 
 ncid = netcdf.create(['./particleSource',num2str(T),'.nc'],'NC_WRITE')
  

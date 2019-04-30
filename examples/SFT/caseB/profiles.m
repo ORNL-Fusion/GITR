@@ -1,11 +1,11 @@
 close all
 clear all
 
-Temp = 90;%linspace(10,130,13);
+Temp = 100;%90;%linspace(10,130,13);
 for i=1:length(Temp)
     
     TD0 = Temp(i);
-    L = 10;
+    L = 30;
     cs0 = sqrt((2*1.602e-19*TD0)/2/1.66e-27);
     
     nR = 10;

@@ -49,10 +49,10 @@ gridZ = ncread(specFile,'gridZ');
 % h.EdgeColor = 'none';
 % figure(21)
 hold on
-semilogy(gridZ,1.5e12*sum(dens(:,:,5),1))
+semilogy(gridZ,2e13*sum(dens(:,:,5),1))
 end
 legend('Simple Fluid Theory','n_e = 10^{18} m^{-3}','n_e = 10^{19} m^{-3}','n_e = 10^{20} m^{-3}')
-
+axis([0 6 1e13 1e20])
 function tau_s = drag_tau(mi,Zi,mD,TD,nD)
 nD = nD/1e18;
 lnGam = 15;

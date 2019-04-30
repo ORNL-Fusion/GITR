@@ -2,9 +2,9 @@ clear all
 close all
 TD=50;
 vTh = sqrt(50*1.602e-19/12/1.66e-27);
-nP = 10000;
-nT = 100000;
-dt = 1e-7;
+nP = 1000;
+nT = 10000;
+dt = 1e-8;
 
 L=10;
 sv = 1.2;
@@ -14,6 +14,7 @@ z1=0.2;
 z = (z1-z0)*rand(1,nP)+z0;
 % z(odds) = z(odds) - 2*(z1-z0)+2*L-z0;
 vz = zeros(1,nP);
+vr = ones(1,nP);
 % vz = normrnd(0,vTh/4,1,nP);
 Dpar = 6.3357e3;
 tau_s = 1.5756e-6;
@@ -32,12 +33,13 @@ spec = zeros(1,nZ);
 inInd = 1:1:nP;
 tic
 for i=1:nT
+    vtot = sqrt(vr.*vr + vz.*vz);
     outInds = find(z(inInd) < 0 | z(inInd)> 2*L);
     inInd(outInds) = [];
     %Diffusion
     r1 = normrnd(0,1,1,nP);
 %     par = coeff_par./sqrt(abs(vTh*vTh - vz.*vz)).*r1.*abs(vz);
-par = coeff_par*r1;
+     par = coeff_par*r1;
 %     %Drag
       drag = dt/tau_s*vz;
 %     dragL = find(z < sv);
@@ -49,9 +51,14 @@ par = coeff_par*r1;
 %      thermR = find(z > L);
 %      vz(thermL) = vz(thermL) + v_therm;
 %      vz(thermR) = vz(thermR) - v_therm;
-    vz = vz -vE-drag+par;
-    fast = find(abs(vz) > vTh);
-    vz(fast) = sign(vz(fast))*vTh;
+    diffz = abs(vz)./vtot.*par;
+    diffz(find(vtot==0)) = 0;
+    diffr = abs(vr)./vtot.*par;
+    diffr(find(vtot==0)) = 0;
+    vz = vz -vE-drag + diffz;
+     vr = vr + diffr;
+%     fast = find(abs(vz) > vTh);
+%     vz(fast) = sign(vz(fast))*vTh;
     z(inInd) = z(inInd)+ vz(inInd)*dt;
     zinds = floor(z(inInd)./dZ)+1;
     zinds(find(zinds < 1)) = [];

@@ -64,23 +64,40 @@ figure(1)
 plot(TD0,np_pl./1e20,'lineWidth',2)
 hold on
 plot(TD0,np_th./1e20,'lineWidth',2)
-title('Case B Peak Impurity Density')
+% title('Case B Peak Impurity Density')
 xlabel('T_{i0} [eV]')
 ylabel('n_p [10^{20} m^{-3}]')
 axis([0 150 0 1])
 set(gca,'fontsize',16)
-M = csvread('../SFT-2/caseB-2-Table 1.csv',1,0)
-TGITR = M(:,1);
-nGITR = M(:,5);
-% nGITR_Scatt = M(:,5);
-zeroVal = find(nGITR == 0);
-% nGITR_noScatt(zeroVal) = [];
-nGITR(zeroVal) = [];
-TGITR(zeroVal) = [];
+% M = csvread('../SFT-2/caseB-2-Table 1.csv',1,0)
+% TGITR = M(:,1);
+% nGITR = M(:,5);
+% % nGITR_Scatt = M(:,5);
+% zeroVal = find(nGITR == 0);
+% % nGITR_noScatt(zeroVal) = [];
+% nGITR(zeroVal) = [];
+% TGITR(zeroVal) = [];
+caseBnp
+npGITR(1:2) = npGITR(1:2)/10;
 hold on
-s1=scatter(TGITR,nGITR/nGITR(1)*.4)
+s1=scatter(TGITR,npGITR/npGITR(1)*.4)
 s1.MarkerEdgeColor = 'k';
 legend('\phi_{in}/v_{prompt loss}','\phi_{in}/v_{thermal}','GITR')
+tickT = linspace(0,150,7);
+tau_sTick = mz*tickT.*(tickT/2).^0.5./(6.8e4*(1+mD/mz)*n0/1e18*(Z^2)*15);
+vThTick = sqrt(tickT*1.602e-19./mz./1.66e-27);
+xticks(tickT);
+ax1 = gca;
+ax1_pos = ax1.Position; % position of first axes
+ax2 = axes('Position',ax1_pos,...
+    'XAxisLocation','top',...
+    'YAxisLocation','right',...
+    'Color','none','YColor','none','fontsize',16);
+ax2.XLabel.String = '\lambda_{mfp}/s_{inj}';
+% line(vTh,0*vTh,'Parent',ax2,'Color','k')
+ax2.XLim = [0 tickT(end)]
+% ax2.YLim = [-2 -1]
+set(ax2,'XTick',tickT,'XTickLabel',round(vThTick.*tau_sTick./sinj,2))
 
 pbaspect([1 1.25 1])
 tau_sv = zeros(1,nT);
@@ -107,7 +124,7 @@ FFf_s0 = mz*1.66e-27*(-Mi*cs0)./TD0./1.602e-19./tau_s0.*(sv-sinj);
 FiGf = (Beta_i-1)*log(Ts_sv./Ts_sinj);
 nz_np = exp(FFf_s0+FiGf);
 figure(2)
-semilogy(1./(TD0.^2)*1e4,nz_np.*np_pl.*vTi./1.73e23)
+% semilogy(1./(TD0.^2)*1e4,nz_np.*np_pl.*vTi./1.73e23)
 hold on
 % semilogy(1./(TD0.^2)*1e4,nz_np.*np_pl.*vTh./1.73e23)
 axis([0 3.5 1e-5 1e-2])
@@ -129,15 +146,21 @@ FiGf0 = (Beta_i-1)*dTids(i,intInds)./T_s(i,intInds);
 FiGfI(i) = sum(FiGf0)*ds;
 end
 nz_np = exp(FFfI+FiGfI);
-semilogy(1./(TD0.^2)*1e4,nz_np.*np_pl.*vTi./1.73e23)
+% semilogy(1./(TD0.^2)*1e4,nz_np.*np_pl.*vTi./1.73e23)
 
-GITR_leak = M(:,7);
-TGITR = M(:,1);
-zeroVal = find(GITR_leak == 0);
-GITR_leak(zeroVal) = [];
-TGITR(zeroVal) = [];
-hold on
-s1=scatter(1./TGITR./TGITR*1e4,GITR_leak)
+% GITR_leak = M(:,7);
+% TGITR = M(:,1);
+% zeroVal = find(GITR_leak == 0);
+% GITR_leak(zeroVal) = [];
+% TGITR(zeroVal) = [];
+% hold on
+x = linspace(0,5e-4);
+semilogy(1e4*x,0.03*exp(-2.65e4*x),'lineWidth',2)
+set(gca, 'YScale', 'log')
+caseBleakage
+s1=scatter(1./TGITR./TGITR*1e4,leakage)
 s1.MarkerEdgeColor = 'k';
 x = linspace(0,5e-4);
-semilogy(1e4*x,0.03*exp(-2.65e4*x))
+% semilogy(1e4*x,0.03*exp(-2.65e4*x))
+% set(gca, 'YScale', 'log')
+legend('Simple Fluid Theory','GITR')

@@ -1,7 +1,7 @@
 close all
 clear all
-flowSpeed = [750 900 1000 1200 1400];
-
+flowSpeed = [750 900 1000 1200 1400 1500];
+L=10;
 for i=1:length(flowSpeed)
     flowVz = -flowSpeed(i);
     
@@ -9,20 +9,27 @@ for i=1:length(flowSpeed)
     dT_ds = 1.38;
     
     nR = 10;
-    r = linspace(-3,3,nR);
+    r = linspace(-300,300,nR);
     
     
     
     nZ = 101;
-    z = linspace(0.0,20.0,nZ);
+    z = linspace(0.0,2*L,nZ);
     
     vz = zeros(1,nZ);
     vz(find(z<=1.2)) = flowVz;
+    vz(find(z>=2*L-1.2)) = -flowVz;
     vz2D = repmat(vz,nR,1);
     
-    Ti = 10+dT_ds*z;
+    middle = ceil(nZ/2);
+    Ti = zeros(1,nZ);
+    Ti(1:middle) = 10+dT_ds*z(1:middle);
+    Ti(middle+1:end) = 10+dT_ds*z(middle) + dT_ds*(L-z(middle+1:end));
     Ti2D = repmat(Ti,nR,1);
-    ncid = netcdf.create(['./profiles'+num2str(flowSpeed(i))+'.nc'],'NC_WRITE')
+    
+    gradTi = zeros(1,nZ);
+    
+    ncid = netcdf.create(['./profiles',num2str(flowSpeed(i)),'.nc'],'NC_WRITE')
     
     dimR = netcdf.defDim(ncid,'nR',nR);
     dimZ = netcdf.defDim(ncid,'nZ',nZ);
