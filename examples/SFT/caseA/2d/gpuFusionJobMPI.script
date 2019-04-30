@@ -6,6 +6,10 @@
 #PBS -e log.error
 #PBS -o log.ouput
 #PBS -N gitrBE_PSE
+### Send email on abort, begin and end
+#PBS -m abe
+### Specify mail recipient
+#PBS -M tyounkin@utk.edu
 cd $PBS_O_WORKDIR
 #export OMP_NUM_THREADS=24
 source ${HOME}/gitr/env.gpufusion.sh
