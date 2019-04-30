@@ -602,6 +602,8 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
       {
         getVariable(cfg,fieldCfgString+".nY_closeGeom",nY[0]);
       }
+#else
+      nY[0] = 1;
       #endif
       nGeomHash = 0;
       nRTotal = 0;

@@ -18,6 +18,7 @@ CUDA_CALLABLE_MEMBER_DEVICE
 int sgn(T val) {
         return (T(0) < val) - (val < T(0));
 }*/
+CUDA_CALLABLE_MEMBER_DEVICE
 float findT(float x0, float x1, float y0, float y1, float intersectionx) {
 
     float a, b, c, a1, a2, t, discriminant, realPart, imaginaryPart;
