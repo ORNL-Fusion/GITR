@@ -470,7 +470,7 @@ int main(int argc, char **argv, char **envp)
         importHashNs(cfg,input_path,nHashes,"geometry_hash",nR_closeGeom.data(), nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),nR_closeGeomTotal,nY_closeGeomTotal,nZ_closeGeomTotal,nHashPoints.data(), nHashPointsTotal,nGeomHash);
        std::cout << "made it here" << std::endl;	
       //Setting& geomHash = cfg.lookup("geometry_hash");
-      //if(nHashes > 1)
+      //if(nHashes > 1)u
       //{
       //  for(int i=0; i<nHashes;i++)
       //  {   
@@ -528,7 +528,8 @@ int main(int argc, char **argv, char **envp)
       //}
       //std::cout << "hhhash nr ny nz total " << nGeomHash << " " << nR_closeGeomTotal << " " << nY_closeGeomTotal << " " << nZ_closeGeomTotal<< std::endl;
     }
-    #if USE_MPI > 0 
+    #if USE_MPI > 0
+      std::cout << " mpi broadcast hash " << std::endl; 
       MPI_Bcast(&nR_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nY_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nZ_closeGeom[0],nHashes,MPI_INT,0,MPI_COMM_WORLD);
@@ -539,6 +540,7 @@ int main(int argc, char **argv, char **envp)
       MPI_Bcast(&nZ_closeGeomTotal,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Bcast(&nHashPointsTotal,1,MPI_INT,0,MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
+      std::cout << " mpi broadcast hash finished" << std::endl; 
     #endif
   #endif
 
@@ -596,9 +598,12 @@ int main(int argc, char **argv, char **envp)
     #endif
   #endif
   
+    std::cout << "allocating closGeomGrids " << nR_closeGeomTotal << " " << nY_closeGeomTotal << " " << nZ_closeGeomTotal
+        << " " << nGeomHash <<std::endl;
   sim::Array<float> closeGeomGridr(nR_closeGeomTotal), closeGeomGridy(nY_closeGeomTotal),
       closeGeomGridz(nZ_closeGeomTotal);
   sim::Array<int> closeGeom(nGeomHash,0);
+    std::cout << "allocating closGeomGrids finished" << std::endl;
   
   #if GEOM_HASH == 1
     sim::Array<float> hashX0(nHashes,0.0),hashX1(nHashes,0.0),hashY0(nHashes,0.0),hashY1(nHashes,0.0),hashZ0(nHashes,0.0),hashZ1(nHashes,0.0);
