@@ -324,6 +324,7 @@ int main(int argc, char **argv, char **envp)
   }
   #if USE_MPI > 0
     MPI_Bcast(&nLines,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nSurfaces,1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
   #endif
   
@@ -1106,6 +1107,8 @@ int main(int argc, char **argv, char **envp)
     MPI_Bcast(&y1_Lc,1,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Bcast(&z0_Lc,1,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Bcast(&z1_Lc,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&nTraceSteps,1,MPI_FLOAT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&dr,1,MPI_FLOAT,0,MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
   #endif
   
@@ -1208,15 +1211,17 @@ int main(int argc, char **argv, char **envp)
             
         thrust::for_each(thrust::device, lcBegin,lcEnd,
                   geometry_check(forwardTracerParticles,nLines,&boundaries[0], dummy_surfaces,dr,ii,
-                      nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
+                      nR_closeGeom.data(),nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),
                       &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
-                      &closeGeom.front()) );
+                      &closeGeom.front(),
+                      0, 0.0, 0.0, 0, 0.0, 0.0) );
         
         thrust::for_each(thrust::device, lcBegin,lcEnd,
                   geometry_check(backwardTracerParticles,nLines,&boundaries[0],dummy_surfaces,dr,ii,
-                      nR_closeGeom,nY_closeGeom,nZ_closeGeom,n_closeGeomElements,
+                      nR_closeGeom.data(),nY_closeGeom.data(),nZ_closeGeom.data(),n_closeGeomElements.data(),
                       &closeGeomGridr.front(),&closeGeomGridy.front(),&closeGeomGridz.front(),
-                      &closeGeom.front()) );
+                      &closeGeom.front(),
+                      0, 0.0, 0.0, 0, 0.0, 0.0) );
       }
       auto finish_clock_trace = Time_trace::now();
       fsec_trace fstrace = finish_clock_trace - start_clock_trace;
@@ -1226,13 +1231,21 @@ int main(int argc, char **argv, char **envp)
          cudaDeviceSynchronize();
       #endif
 #if USE_MPI > 0
-    sim::Array<float> forwardHitWall(nTracers,0.0),backwardHitWall(nTracers,0.0);
+    sim::Array<float> forwardHitWall(nTracers,0.0),backwardHitWall(nTracers,0.0),forwardTracerX(nTracers,0.0),backwardTracerX(nTracers,0.0);
+    sim::Array<float> forwardTracerY(nTracers,0.0),backwardTracerY(nTracers,0.0);
+    sim::Array<float> forwardTracerZ(nTracers,0.0),backwardTracerZ(nTracers,0.0);
     sim::Array<float> forwardDistanceTraveled(nTracers,0.0),backwardDistanceTraveled(nTracers,0.0);
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Gather(&forwardTracerParticles->hitWall[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &forwardHitWall[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&backwardTracerParticles->hitWall[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &backwardHitWall[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&forwardTracerParticles->distanceTraveled[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &forwardDistanceTraveled[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gather(&backwardTracerParticles->distanceTraveled[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &backwardDistanceTraveled[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&forwardTracerParticles->x[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &forwardTracerX[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&backwardTracerParticles->x[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &backwardTracerX[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&forwardTracerParticles->y[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &forwardTracerY[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&backwardTracerParticles->y[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &backwardTracerY[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&forwardTracerParticles->z[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &forwardTracerZ[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(&backwardTracerParticles->z[world_rank*nTracers/world_size], nTracers/world_size, MPI_FLOAT, &backwardTracerZ[0], nTracers/world_size,MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
     for(int i=0; i<nTracers; i++)
     {
@@ -1320,24 +1333,44 @@ int main(int argc, char **argv, char **envp)
       vector<NcDim> dims_lc;
       NcDim nc_nTracers = ncFileLC.addDim("nTracers",nTracers);
       NcDim nc_nRLc = ncFileLC.addDim("nR",nR_Lc);
-      NcDim nc_nYLc = ncFileLC.addDim("nY",nY_Lc);
-      NcDim nc_nZLc = ncFileLC.addDim("nZ",nZ_Lc);
       dims_lc.push_back(nc_nRLc);
-      dims_lc.push_back(nc_nYLc);
+      
+      #if USE3DTETGEOM
+        NcDim nc_nYLc = ncFileLC.addDim("nY",nY_Lc);
+        dims_lc.push_back(nc_nYLc);
+      #endif
+      
+        NcDim nc_nZLc = ncFileLC.addDim("nZ",nZ_Lc);
       dims_lc.push_back(nc_nZLc);
       
       NcVar nc_Lc = ncFileLC.addVar("Lc",ncFloat,dims_lc);
       NcVar nc_s = ncFileLC.addVar("s",ncFloat,dims_lc);
+      NcVar nc_ftx = ncFileLC.addVar("fx",ncFloat,dims_lc);
+      NcVar nc_fty = ncFileLC.addVar("fy",ncFloat,dims_lc);
+      NcVar nc_ftz = ncFileLC.addVar("fz",ncFloat,dims_lc);
+      NcVar nc_btx = ncFileLC.addVar("bx",ncFloat,dims_lc);
+      NcVar nc_bty = ncFileLC.addVar("by",ncFloat,dims_lc);
+      NcVar nc_btz = ncFileLC.addVar("bz",ncFloat,dims_lc);
       NcVar nc_nI = ncFileLC.addVar("noIntersection",ncFloat,dims_lc);
       NcVar nc_gridRLc = ncFileLC.addVar("gridR",ncFloat,nc_nRLc);
+      #if USE3DTETGEOM
       NcVar nc_gridYLc = ncFileLC.addVar("gridY",ncFloat,nc_nYLc);
+      #endif
       NcVar nc_gridZLc = ncFileLC.addVar("gridZ",ncFloat,nc_nZLc);
       
       nc_Lc.putVar(&Lc[0]);
       nc_s.putVar(&s[0]);
+      nc_ftx.putVar(&forwardTracerX[0]);
+      nc_fty.putVar(&forwardTracerY[0]);
+      nc_ftz.putVar(&forwardTracerZ[0]);
+      nc_btx.putVar(&backwardTracerX[0]);
+      nc_bty.putVar(&backwardTracerY[0]);
+      nc_btz.putVar(&backwardTracerZ[0]);
       nc_nI.putVar(&noIntersectionNodes[0]);
       nc_gridRLc.putVar(&gridRLc[0]);
+      #if USE3DTETGEOM
       nc_gridYLc.putVar(&gridYLc[0]);
+      #endif
       nc_gridZLc.putVar(&gridZLc[0]);
       ncFileLC.close();
 #if USE_MPI > 0
