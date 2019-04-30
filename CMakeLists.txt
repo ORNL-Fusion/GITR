@@ -97,7 +97,7 @@ if (${OPENMP})
     Message("Enabling OpenMP backend")
     find_package(OpenMP REQUIRED)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -O3 -Wno-c++11-narrowing") #-O3 -g -G
     set_source_files_properties(${SRC_FILES} PROPERTIES LANGUAGE CXX)
     add_executable(GITR ${SRC_FILES})
     add_definitions("-x c++ -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP")
