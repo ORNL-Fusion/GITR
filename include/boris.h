@@ -508,6 +508,10 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
   float dz = closeGeomGridz[1] - closeGeomGridz[0];
   int rInd = floor((x - closeGeomGridr[0])/dr + 0.5f);
   int zInd = floor((z - closeGeomGridz[0])/dz + 0.5f);
+  if(rInd > nR_closeGeom) rInd = nR_closeGeom -1;
+  if(zInd > nZ_closeGeom) zInd = nZ_closeGeom -1;
+  if(rInd < 0) rInd = 0;
+  if(zInd < 0) zInd = 0;
   int j;
   for (int k=0; k< n_closeGeomElements; k++) //n_closeGeomElements
     {
