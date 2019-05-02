@@ -338,10 +338,11 @@ int main(int argc, char **argv, char **envp)
   MPI_Bcast(&nSurfaces,1,MPI_INT,0,MPI_COMM_WORLD);
     #if USE3DTETGEOM > 0
       const int nBoundaryMembers = 38;
-    #else
-      const int nBoundaryMembers = 36;
-    #endif
     int nIntMembers = 4;
+    #else
+      const int nBoundaryMembers = 37;
+    int nIntMembers = 5;
+    #endif
     int lengths[nBoundaryMembers] = {0};
     MPI_Aint offsets[nBoundaryMembers] = {};
     MPI_Datatype types[nBoundaryMembers] = {};
