@@ -35,6 +35,10 @@ class Boundary
     int pointLine;
     int surfaceNumber;
     int surface;
+    #if USE3DTETGEOM > 0
+    #else
+    int inDir;
+    #endif
     float x1;
     float y1;
     float z1;
@@ -54,7 +58,6 @@ class Boundary
     #else
       float slope_dzdx;
       float intercept_z;
-      int inDir;
     #endif     
     float Z;
     float amu;
