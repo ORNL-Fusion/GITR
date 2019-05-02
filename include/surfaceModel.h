@@ -248,6 +248,12 @@ void operator()(std::size_t indx) const {
     int wallHit = particles->wallHit[indx];
     int surfaceHit = boundaryVector[wallHit].surfaceNumber;
     int surface = boundaryVector[wallHit].surface;
+    if(wallHit > 260) wallHit = 260;
+    if(wallHit < 0) wallHit = 0;
+    if(surfaceHit > 260) surfaceHit = 260;
+    if(surfaceHit < 0) surfaceHit = 0;
+    if(surface > 260) surface = 260;
+    if(surface < 0) surface = 0;
     float eInterpVal=0.0;
     float aInterpVal=0.0;
     float weight = particles->weight[indx];
@@ -266,6 +272,7 @@ void operator()(std::size_t indx) const {
     particleTrackVector[2] = vz;
     norm_part = sqrt(particleTrackVector[0]*particleTrackVector[0] + particleTrackVector[1]*particleTrackVector[1] + particleTrackVector[2]*particleTrackVector[2]);
     E0 = 0.5*particles->amu[indx]*1.6737236e-27*(norm_part*norm_part)/1.60217662e-19;
+    if(E0 > 1000.0) E0 = 990.0;
     //std::cout << "Particle hit wall with energy " << E0 << std::endl;
     //std::cout << "Particle hit wall with v " << vx << " " << vy << " " << vz<< std::endl;
     //std::cout << "Particle amu norm_part " << particles->amu[indx] << " " << vy << " " << vz<< std::endl;
@@ -282,6 +289,7 @@ void operator()(std::size_t indx) const {
               thetaImpact = abs(thetaImpact - (3.14159265359));
             }
             thetaImpact = thetaImpact*180.0/3.14159265359;
+	    if(thetaImpact < 0.0) thetaImpact = 0.0;
             signPartDotNormal = sgn(partDotNormal);
             if(E0 == 0.0)
             { thetaImpact = 0.0;}
