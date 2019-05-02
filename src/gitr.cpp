@@ -3757,6 +3757,48 @@ for(int i=0; i<nP ; i++)
     cudaDeviceSynchronize();
 #endif
 #if USE_MPI > 0
+  // show memory usage of GPU
+  #if USE_CUDA 
+  if(world_rank == 0)
+  {
+    size_t free_byte ;
+    size_t total_byte ;
+    cudaError_t    cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
+  
+    if(cudaSuccess != cuda_status )
+    {
+  
+       printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status) );
+       exit(1);
+    }
+  
+    double free_db = (double)free_byte ;
+    double total_db = (double)total_byte ;
+    double used_db = total_db - free_db ;
+    
+    printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
+      used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0); 
+    int nDevices;
+    int nThreads;
+    cudaGetDeviceCount(&nDevices);
+    std::cout << "number of devices gotten " << nDevices << std::endl;
+    for (int i = 0; i < nDevices; i++) {
+      cudaDeviceProp prop;
+      cudaGetDeviceProperties(&prop, i);
+      printf("Device Number: %d\n", i);
+      printf("  Device name: %s\n", prop.name);
+      printf("  Memory Clock Rate (KHz): %d\n",
+                         prop.memoryClockRate);
+      printf("  Memory Bus Width (bits): %d\n",
+                         prop.memoryBusWidth);
+      printf("  Peak Memory Bandwidth (GB/s): %f\n\n",
+                         2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
+      printf("  Total number of threads: %d\n", prop.maxThreadsPerMultiProcessor);
+      nThreads = prop.maxThreadsPerMultiProcessor;
+      }
+  }  
+  #endif
+    std::cout << "reached gather initialization "<< nP << std::endl;
     sim::Array<float> xGather(nP,0.0);
     sim::Array<float> test0Gather(nP,0.0);
     sim::Array<float> test1Gather(nP,0.0);
