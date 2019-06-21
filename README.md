@@ -64,7 +64,7 @@ and then editing the resulting file appropriately. Then we want to copy and modi
 ```
 cp cmakeMachineFiles/mac/makeGITR.sh build/
 cd build
-./makeGITR.sh
+./makeGITRmac.sh
 make
 ```
 Inputs to the code are set up in the input folder of an example run case controlled by the gitrInput.cfg file.
