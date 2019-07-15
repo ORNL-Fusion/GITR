@@ -40,6 +40,7 @@ struct ionize {
     float* gridTemperature_Ionization;
     float* rateCoeff_Ionization;
     const float dt;
+    float tion;
     //int& tt;
 #if __CUDACC__
     curandState *state;
@@ -63,10 +64,10 @@ struct ionize {
    nTemperaturesIonize(_nTemperaturesIonize), nDensitiesIonize(_nDensitiesIonize), gridTemperature_Ionization(_gridTemperature_Ionization), gridDensity_Ionization(_gridDensity_Ionization), rateCoeff_Ionization(_rateCoeff_Ionization) {}
     
         CUDA_CALLABLE_MEMBER_DEVICE 
-                void operator()(std::size_t indx) const { 
+                void operator()(std::size_t indx)  { 
 	//if(particlesPointer->hitWall[indx] == 0.0){        
         //std::cout << "interpolating rate coeff at "<< particlesPointer->x[indx] << " " << particlesPointer->y[indx] << " " << particlesPointer->z[indx] << std::endl;
-        float tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesIonize,nDensitiesIonize,gridTemperature_Ionization,gridDensity_Ionization,rateCoeff_Ionization );	
+       tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesIonize,nDensitiesIonize,gridTemperature_Ionization,gridDensity_Ionization,rateCoeff_Ionization );	
     //float PiP = particlesPointer->PionizationPrevious[indx];
     float P = expf(-dt/tion);
     //particlesPointer->PionizationPrevious[indx] = PiP*P;
