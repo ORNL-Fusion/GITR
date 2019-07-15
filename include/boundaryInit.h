@@ -109,7 +109,8 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         { b.ChildLangmuirDist = 1e12;
         }
 #else
-        b.potential = 3.0*b.te;    
+        b.potential = 3.0*b.te;
+        //std::cout << "Surface number " << b.surfaceNumber << " has te and potential " << b.te << " " << b.potential << std::endl; 
 #endif        
         //if(b.Z > 0.0)
         //{
