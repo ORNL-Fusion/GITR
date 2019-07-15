@@ -337,8 +337,8 @@ int main(int argc, char **argv, char **envp)
   #if USE_MPI > 0
   MPI_Bcast(&nSurfaces,1,MPI_INT,0,MPI_COMM_WORLD);
     #if USE3DTETGEOM > 0
-      const int nBoundaryMembers = 38;
-    int nIntMembers = 4;
+      const int nBoundaryMembers = 39;
+    int nIntMembers = 5;
     #else
       const int nBoundaryMembers = 37;
     int nIntMembers = 5;
@@ -3257,7 +3257,7 @@ std::cout << "closed ncp " << std::endl;
   #endif
 
   thrust::counting_iterator<std::size_t> particleBegin(pStartIndx[world_rank]);  
-  thrust::counting_iterator<std::size_t> particleEnd(pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank]);
+  thrust::counting_iterator<std::size_t> particleEnd(pStartIndx[world_rank]+nActiveParticlesOnRank[world_rank]-1);
   thrust::counting_iterator<std::size_t> particleOne(1);
     auto randInitStart_clock = Time::now();
     
@@ -4302,13 +4302,13 @@ dims.push_back(nc_nY);
 #endif
 dims.push_back(nc_nR);
 
-NcVar nc_n = ncFile.addVar("n",ncDouble,dims);
-NcVar nc_gridR = ncFile.addVar("gridR",ncDouble,nc_nR);
-NcVar nc_gridZ = ncFile.addVar("gridZ",ncDouble,nc_nZ);
+NcVar nc_n = ncFile.addVar("n",ncFloat,dims);
+NcVar nc_gridR = ncFile.addVar("gridR",ncFloat,nc_nR);
+NcVar nc_gridZ = ncFile.addVar("gridZ",ncFloat,nc_nZ);
 nc_gridR.putVar(&gridX_bins[0]);
 nc_gridZ.putVar(&gridZ_bins[0]);
 #if SPECTROSCOPY > 2
-NcVar nc_gridY = ncFile.addVar("gridY",ncDouble,nc_nY);
+NcVar nc_gridY = ncFile.addVar("gridY",ncFloat,nc_nY);
 nc_gridY.putVar(&gridY_bins[0]);
 #endif
 nc_n.putVar(&net_BinsTotal[0]);
