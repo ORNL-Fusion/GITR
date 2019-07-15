@@ -33,6 +33,12 @@ struct thermalForce {
             float * BfieldRDevicePointer;
             float * BfieldZDevicePointer;
             float * BfieldTDevicePointer;
+	    float dv_ITGx=0.0;
+	    float dv_ITGy=0.0;
+	    float dv_ITGz=0.0;
+	    float dv_ETGx=0.0;
+	    float dv_ETGy=0.0;
+	    float dv_ETGz=0.0;
             
     thermalForce(Particles *_p,float _dt, float _background_amu,int _nR_gradT, int _nZ_gradT, float* _gradTGridr, float* _gradTGridz,
             float* _gradTiR, float* _gradTiZ, float* _gradTiT, float* _gradTeR, float* _gradTeZ,float* _gradTeT,
@@ -50,7 +56,7 @@ struct thermalForce {
     BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer) {}
 
 CUDA_CALLABLE_MEMBER    
-void operator()(std::size_t indx) const { 
+void operator()(std::size_t indx)  { 
 
 	    if((p->hitWall[indx] == 0.0) && (p->charge[indx] > 0.0))
         {
@@ -93,6 +99,10 @@ void operator()(std::size_t indx) const {
 	dv_ITG[0] = 1.602e-19*dt/(p->amu[indx]*MI)*(beta*(gradTi[0]))*B_unit[0];
 	dv_ITG[1] = 1.602e-19*dt/(p->amu[indx]*MI)*(beta*(gradTi[1]))*B_unit[1];
 	dv_ITG[2] = 1.602e-19*dt/(p->amu[indx]*MI)*(beta*(gradTi[2]))*B_unit[2];
+	dv_ITGx = dv_ITG[0];
+	dv_ITGy = dv_ITG[1];
+	dv_ITGz = dv_ITG[2];
+
     //std::cout << "mu " << mu << std::endl;
     //std::cout << "alpha beta " << alpha << " " << beta << std::endl;
     //std::cout << "ITG " << dv_ITG[0] << " " << dv_ITG[1] << " " << dv_ITG[2] << std::endl;

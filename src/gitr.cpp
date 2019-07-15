@@ -3417,6 +3417,7 @@ std::cout << "closed ncp " << std::endl;
       getVariable(cfg,forceCfg+"nR",nR_force);
       getVariable(cfg,forceCfg+"nZ",nZ_force);
       std::vector<float> forceR(nR_force,0.0),forceZ(nZ_force,0.0);
+      std::vector<float> tIon(nR_force*nZ_force,0.0),tRecomb(nR_force*nZ_force,0.0);
       std::vector<float> dvEr(nR_force*nZ_force,0.0),dvEz(nR_force*nZ_force,0.0),dvEt(nR_force*nZ_force,0.0);
       std::vector<float> dvBr(nR_force*nZ_force,0.0),dvBz(nR_force*nZ_force,0.0),dvBt(nR_force*nZ_force,0.0);
       std::vector<float> dvCollr(nR_force*nZ_force,0.0),dvCollz(nR_force*nZ_force,0.0),dvCollt(nR_force*nZ_force,0.0);
@@ -3445,9 +3446,18 @@ std::cout << "closed ncp " << std::endl;
                  br.data(),bz.data(),by.data());
           Btotal = vectorNorm(Btest);
           //std::cout << "node " << world_rank << "Bfield at  "<< forceR[i] << " " << forceZ[j]<< " " << Btest[0] << " " << Btest[1] << 
+          float testTi = interp2dCombined(0.0,0.1,0.0,nR_Temp,
+                    nZ_Temp,TempGridr.data(),TempGridz.data(),ti.data());
+  std::cout << "Finished Temperature import "<< testVec << std::endl; 
                //" " << Btest[2] << " " << Btotal << std::endl; 
-          particleArray->setParticle(0,forceR[i],0.0,forceZ[j],testEnergy, 0.0,0.0,Z,amu,charge+1.0);  
+          particleArray->setParticle(0,forceR[i],0.0,forceZ[j],testTi, 0.0,0.0,Z,amu,charge+1.0);  
 	  move_boris0(0);
+#if USEIONIZATION > 0
+          ionize0(0);
+#endif
+#if USERECOMBINATION > 0
+          recombine0(0);
+#endif
 #if USECOULOMBCOLLISIONS > 0
 	  coulombCollisions0(0);
 #endif
@@ -3460,6 +3470,12 @@ std::cout << "closed ncp " << std::endl;
           dvBr[j*nR_force + i] = move_boris0.magneticForce[0];
           dvBz[j*nR_force + i] = move_boris0.magneticForce[2];
           dvBt[j*nR_force + i] = move_boris0.magneticForce[1];
+#if USEIONIZATION > 0
+          tIon[j*nR_force + i] = ionize0.tion;
+#endif
+#if USERECOMBINATION > 0
+          tRecomb[j*nR_force + i] = recombine0.tion;
+#endif
 #if USECOULOMBCOLLISIONS > 0
           dvCollr[j*nR_force + i] = coulombCollisions0.dv[0];
           dvCollz[j*nR_force + i] = coulombCollisions0.dv[2];
@@ -3484,6 +3500,8 @@ std::cout << "closed ncp " << std::endl;
     forceDims.push_back(nc_nRf);
     NcVar forceRf = ncFile_force.addVar("r",ncFloat,nc_nRf);
     NcVar forceZf = ncFile_force.addVar("z",ncFloat,nc_nZf);
+    NcVar nction = ncFile_force.addVar("tIon",ncFloat,forceDims);
+    NcVar nctrec = ncFile_force.addVar("tRec",ncFloat,forceDims);
     NcVar dvErf = ncFile_force.addVar("dvEr",ncFloat,forceDims);
     NcVar dvEzf = ncFile_force.addVar("dvEz",ncFloat,forceDims);
     NcVar dvEtf = ncFile_force.addVar("dvEt",ncFloat,forceDims);
@@ -3501,6 +3519,8 @@ std::cout << "closed ncp " << std::endl;
     NcVar dvETGtf = ncFile_force.addVar("dvETGt",ncFloat,forceDims);
     forceRf.putVar(&forceR[0]);
     forceZf.putVar(&forceZ[0]);
+    nction.putVar(&tIon[0]);
+    nctrec.putVar(&tRecomb[0]);
     dvErf.putVar(&dvEr[0]);
     dvEzf.putVar(&dvEz[0]);
     dvEtf.putVar(&dvEt[0]);
