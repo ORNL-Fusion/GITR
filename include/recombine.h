@@ -40,6 +40,7 @@ struct recombine {
   float* gridTemperature_Recombination;
   float* rateCoeff_Recombination;
   const float dt;
+  float tion;
   //int& tt;
 #if __CUDACC__
       curandState *state;
@@ -68,11 +69,11 @@ struct recombine {
      
   
   CUDA_CALLABLE_MEMBER_DEVICE 
-  void operator()(std::size_t indx) const { 
+  void operator()(std::size_t indx) { 
   float P1 = 0.0f;
       if(particlesPointer->charge[indx] > 0)
     {
-       float tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
+       tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
        //float PrP = particlesPointer->PrecombinationPrevious[indx];
        float P = expf(-dt/tion);
        //particlesPointer->PrecombinationPrevious[indx] = PrP*P;
