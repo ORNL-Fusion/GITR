@@ -502,6 +502,8 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[i].plane_norm = geom["plane_norm"][i];
        boundaries[i].area = geom["area"][i];
        boundaries[i].surface = geom["surface"][i];
+       boundaries[i].inDir = geom["inDir"][i];
+       //std::cout << "inDir " << i << " " << boundaries[i].inDir << std::endl;
        if(boundaries[i].surface > 0)
        {
            boundaries[i].surfaceNumber = nZSurfs;
@@ -546,10 +548,10 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
           boundaries[i].x2 << ", " << boundaries[i].z2 << ", " <<
           boundaries[i].slope_dzdx << ", " << boundaries[i].intercept_z << ", " <<
           boundaries[i].length << ", " << boundaries[i].Z << "];" << std::endl;
-       //std::cout << "trying surface" << std::endl;
+       std::cout << "trying surface" << std::endl;
        boundaries[i].surface = geom["surface"][i];
        boundaries[i].inDir = geom["inDir"][i];
-       //std::cout << "got surface " << std::endl;
+       std::cout << "got surface " << std::endl;
        if(boundaries[i].surface > 0)
        {
            boundaries[i].surfaceNumber = nZSurfs;
