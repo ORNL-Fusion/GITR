@@ -8,4 +8,4 @@
 #PBS -N gitrBE_PSE
 cd $PBS_O_WORKDIR
 source ${HOME}/gitr/env.gpufusion.sh
-mpirun -n 2 -ppn 1 ${HOME}/gitr/build/GITR -nGPUPerNode 1 > log.running
+mpirun -n 8 -ppn 4 ${HOME}/gitr/build/GITR -nGPUPerNode 4 > log.running

@@ -337,8 +337,8 @@ int main(int argc, char **argv, char **envp)
   #if USE_MPI > 0
   MPI_Bcast(&nSurfaces,1,MPI_INT,0,MPI_COMM_WORLD);
     #if USE3DTETGEOM > 0
-      const int nBoundaryMembers = 38;
-    int nIntMembers = 4;
+      const int nBoundaryMembers = 39;
+    int nIntMembers = 5;
     #else
       const int nBoundaryMembers = 37;
     int nIntMembers = 5;

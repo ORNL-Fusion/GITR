@@ -21,6 +21,10 @@ def makeGeom(inFile='d3drzZ.csv',filename="gitrD3DGeometry2DWringsPy.cfg"):
     slope[vertical_lines] = np.sign(z2[vertical_lines]-z1[vertical_lines])*1.0e12;
     intercept[vertical_lines] = 1.0e12;
     slope[horizontal_lines]=0;
+
+    inDir = np.ones(x1.size+1)
+    reverseDir = range(13)+[17,31,49,63,64]
+    inDir[reverseDir] = -1;
     intercept[horizontal_lines] = z1[horizontal_lines];
     
     line_length = np.sqrt(np.multiply(x2-x1,x2-x1) + np.multiply(z2-z1,z2-z1))
@@ -45,6 +49,7 @@ def makeGeom(inFile='d3drzZ.csv',filename="gitrD3DGeometry2DWringsPy.cfg"):
     config['geom']['length'] = line_length.tolist()
     config['geom']['Z'] = Z.tolist()
     config['geom']['surface'] = ['%i' % elem for elem in surface.tolist()]
+    config['geom']['inDir'] = ['%i' % elem for elem in inDir.tolist()]
     config['geom']['y1'] = 0.0
     config['geom']['y2'] = 0.0
     config['geom']['periodic'] = 0
