@@ -35,10 +35,7 @@ class Boundary
     int pointLine;
     int surfaceNumber;
     int surface;
-    #if USE3DTETGEOM > 0
-    #else
     int inDir;
-    #endif
     float x1;
     float y1;
     float z1;
@@ -49,7 +46,7 @@ class Boundary
     float b;
     float c;
     float d;
-    float plane_norm;
+    float plane_norm; //16
     #if USE3DTETGEOM > 0
       float x3;
       float y3;
@@ -120,7 +117,7 @@ class Boundary
         B[1] = -b/plane_norm;
         B[2] = -c/plane_norm;
 #else
-        float perpSlope = -sgn(slope_dzdx)/slope_dzdx;
+        float perpSlope = -sgn(slope_dzdx)/abs(slope_dzdx);
         float Br = 1.0/sqrt(perpSlope*perpSlope+1.0);
         float Bt = 0.0;
         B[2] = sgn(perpSlope)*sqrt(1-Br*Br);

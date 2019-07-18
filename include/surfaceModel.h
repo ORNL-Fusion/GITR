@@ -512,6 +512,7 @@ void operator()(std::size_t indx) const {
                 //reflect with weight and new initial conditions
             //std::cout << "particle wall hit Z and nwweight " << boundaryVector[wallHit].Z << " " << newWeight << std::endl;
 	    if( boundaryVector[wallHit].Z > 0.0 && newWeight > 0.0)
+	    //if(newWeight > 0.0)
             {
                 particles->weight[indx] = newWeight;
                 particles->hitWall[indx] = 0.0;
@@ -538,18 +539,18 @@ void operator()(std::size_t indx) const {
     particles->vx[indx] = -boundaryVector[wallHit].inDir*surfaceNormalVector[0]*vSampled[0];
     particles->vy[indx] = -boundaryVector[wallHit].inDir*surfaceNormalVector[1]*vSampled[1];
     particles->vz[indx] = -boundaryVector[wallHit].inDir*surfaceNormalVector[2]*vSampled[2];
-            //if(particles->test[indx] == 0.0)
-            //{
-            //    particles->test[indx] = 1.0;
-            //    particles->test0[indx] = aInterpVal;
-            //    particles->test1[indx] = eInterpVal;
-            //    particles->test2[indx] = V0;
-            //    particles->test3[indx] = vSampled[2];
-            //}            
+    //        //if(particles->test[indx] == 0.0)
+    //        //{
+    //        //    particles->test[indx] = 1.0;
+    //        //    particles->test0[indx] = aInterpVal;
+    //        //    particles->test1[indx] = eInterpVal;
+    //        //    particles->test2[indx] = V0;
+    //        //    particles->test3[indx] = vSampled[2];
+    //        //}            
 
-    particles->xprevious[indx] = particles->x[indx] - boundaryVector[wallHit].inDir*surfaceNormalVector[0]*1e-6;
-    particles->yprevious[indx] = particles->y[indx] - boundaryVector[wallHit].inDir*surfaceNormalVector[1]*1e-6;
-    particles->zprevious[indx] = particles->z[indx] - boundaryVector[wallHit].inDir*surfaceNormalVector[2]*1e-6;
+    particles->xprevious[indx] = particles->x[indx] - boundaryVector[wallHit].inDir*surfaceNormalVector[0]*1e-4;
+    particles->yprevious[indx] = particles->y[indx] - boundaryVector[wallHit].inDir*surfaceNormalVector[1]*1e-4;
+    particles->zprevious[indx] = particles->z[indx] - boundaryVector[wallHit].inDir*surfaceNormalVector[2]*1e-4;
             //std::cout << "New vel " << particles->vx[indx] << " " << particles->vy[indx] << " " << particles->vz[indx] << std::endl;
             //std::cout << "New pos " << particles->xprevious[indx] << " " << particles->yprevious[indx] << " " << particles->zprevious[indx] << std::endl;
             //if(particles->test[indx] == 0.0)
