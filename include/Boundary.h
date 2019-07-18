@@ -117,7 +117,10 @@ class Boundary
         B[1] = -b/plane_norm;
         B[2] = -c/plane_norm;
 #else
-        float perpSlope = -sgn(slope_dzdx)/abs(slope_dzdx);
+        float perpSlope = 0.0;
+        if(slope_dzdx == 0.0){perpSlope = 1.0e12;}
+        else{
+          perpSlope = -sgn(slope_dzdx)/abs(slope_dzdx);}
         float Br = 1.0/sqrt(perpSlope*perpSlope+1.0);
         float Bt = 0.0;
         B[2] = sgn(perpSlope)*sqrt(1-Br*Br);
