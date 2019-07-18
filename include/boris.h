@@ -508,8 +508,8 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
   float dz = closeGeomGridz[1] - closeGeomGridz[0];
   int rInd = floor((x - closeGeomGridr[0])/dr + 0.5f);
   int zInd = floor((z - closeGeomGridz[0])/dz + 0.5f);
-  if(rInd > nR_closeGeom) rInd = nR_closeGeom -1;
-  if(zInd > nZ_closeGeom) zInd = nZ_closeGeom -1;
+  if(rInd >= nR_closeGeom) rInd = nR_closeGeom -1;
+  if(zInd >= nZ_closeGeom) zInd = nZ_closeGeom -1;
   if(rInd < 0) rInd = 0;
   if(zInd < 0) zInd = 0;
   int j;
@@ -521,7 +521,13 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     for (int j=0; j< nLines; j++)
     {  //std::cout << " surface check " << j << std::endl;
 #endif
-        if (boundaryVector[j].Z != 0.0)
+        //if(j > nLines)
+        //{
+        //    j = 0;
+        //}
+       float boundZhere = boundaryVector[j].Z;
+       
+        if (boundZhere != 0.0)
         {
             point1_dist = sqrtf((x - boundaryVector[j].x1)*(x - boundaryVector[j].x1) + 
                     (z - boundaryVector[j].z1)*(z - boundaryVector[j].z1));
@@ -672,16 +678,16 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
-    float surfaceNormalVector[3] = {0.0f};
-    boundaryVector[minIndex].getSurfaceNormal(surfaceNormalVector,y,x);
-    directionUnitVector[0]= boundaryVector[minIndex].inDir*surfaceNormalVector[0];
-    directionUnitVector[1]= boundaryVector[minIndex].inDir*surfaceNormalVector[1];
-    directionUnitVector[2]= boundaryVector[minIndex].inDir*surfaceNormalVector[2];
-    vectorMagnitude = sqrtf(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
-                                + directionUnitVector[2]*directionUnitVector[2]);
-    directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
-    directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
-    directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
+    //float surfaceNormalVector[3] = {0.0f};
+    //boundaryVector[minIndex].getSurfaceNormal(surfaceNormalVector,y,x);
+    //directionUnitVector[0]= boundaryVector[minIndex].inDir*surfaceNormalVector[0];
+    //directionUnitVector[1]= boundaryVector[minIndex].inDir*surfaceNormalVector[1];
+    //directionUnitVector[2]= boundaryVector[minIndex].inDir*surfaceNormalVector[2];
+    //vectorMagnitude = sqrtf(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
+    //                            + directionUnitVector[2]*directionUnitVector[2]);
+    //directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
+    //directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
+    //directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
 #endif   
 #if BIASED_SURFACE > 0
     pot = boundaryVector[minIndex].potential;
