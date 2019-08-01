@@ -37,6 +37,7 @@ THE SOFTWARE.
 #include <boost/type_index.hpp>
 #include <iomanip>
 #include <iostream>
+#include <vector>
 namespace sim {
 
 

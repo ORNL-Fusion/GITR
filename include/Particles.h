@@ -11,9 +11,9 @@
 //#include <cmath>
 #include "math.h"
 #include <stdio.h>
-#include <vector>
+//#include <vector>
 #include "array.h"
-#include "managed_allocation.h"
+//#include "managed_allocation.h"
 
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
