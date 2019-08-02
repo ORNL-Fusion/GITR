@@ -57,33 +57,31 @@ struct thermalForce {
 
 CUDA_CALLABLE_MEMBER    
 void operator()(std::size_t indx)  { 
-
-	    if((p->hitWall[indx] == 0.0) && (p->charge[indx] > 0.0))
-        {
-		float MI = 1.6737236e-27;
-		float alpha;
-		float beta;
-		float mu;
-		float gradTe[3] = {0.0,0.0,0.0};
-		float gradTi[3] = {0.0,0.0,0.0};
-		float B[3] = {0.0,0.0,0.0};
-		float B_unit[3] = {0.0,0.0,0.0};
-        float Bmag = 0.0;
-        float gradTiPar = 0.0;
-        float dv_ITG[3] = {};
-        float dv_ETG[3] = {};
-	float vNorm = 0.0;
-	float vNorm2 = 0.0;
-               // std:cout << " grad Ti interp " << std::endl;
-                interp2dVector(&gradTi[0],p->xprevious[indx],p->yprevious[indx],p->zprevious[indx],nR_gradT,nZ_gradT,
-                    gradTGridr ,gradTGridz ,gradTiR,gradTiZ, gradTiT );
-                //std::cout << "Position r z" << sqrt(p->xprevious*p->xprevious + p->yprevious*p->yprevious) << " " << p->zprevious << std::endl;            
-                //std::cout << "grad Ti " << sgn(gradTi[0])*sqrt(gradTi[0]*gradTi[0] + gradTi[1]*gradTi[1]) << " " << gradTi[2] << std::endl;            
-                interp2dVector(&gradTe[0],p->xprevious[indx],p->yprevious[indx],p->zprevious[indx],nR_gradT,nZ_gradT,
-                    gradTGridr ,gradTGridz ,gradTeR,gradTeZ, gradTeT );
-		mu = p->amu[indx]/(background_amu + p->amu[indx]);
-		alpha = p->charge[indx]*p->charge[indx]*0.71;
-		beta =  3*(mu + 5*sqrtf(2.0)*p->charge[indx]*p->charge[indx]*(1.1*powf(mu,(5/2))- 0.35*powf(mu,(3/2))) - 1)/(2.6 - 2*mu+ 5.4*powf(mu,2));
+    if ((p->hitWall[indx] == 0.0) && (p->charge[indx] > 0.0)) {
+      float MI = 1.6737236e-27;
+      float alpha;
+      float beta;
+      float mu;
+      float gradTe[3] = {0.0, 0.0, 0.0};
+      float gradTi[3] = {0.0, 0.0, 0.0};
+      float B[3] = {0.0, 0.0, 0.0};
+      float B_unit[3] = {0.0, 0.0, 0.0};
+      float Bmag = 0.0;
+      float gradTiPar = 0.0;
+      float dv_ITG[3] = {};
+      float dv_ETG[3] = {};
+      float vNorm = 0.0;
+      float vNorm2 = 0.0;
+      // std:cout << " grad Ti interp " << std::endl;
+      interp2dVector(&gradTi[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,
+                     gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT);
+      //std::cout << "Position r z" << sqrt(p->xprevious*p->xprevious + p->yprevious*p->yprevious) << " " << p->zprevious << std::endl;
+      //std::cout << "grad Ti " << std::copysign(1.0,gradTi[0])*sqrt(gradTi[0]*gradTi[0] + gradTi[1]*gradTi[1]) << " " << gradTi[2] << std::endl;
+      interp2dVector(&gradTe[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,
+                     gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT);
+      mu = p->amu[indx] / (background_amu + p->amu[indx]);
+      alpha = p->charge[indx] * p->charge[indx] * 0.71;
+      beta = 3 * (mu + 5 * sqrtf(2.0) * p->charge[indx] * p->charge[indx] * (1.1 * powf(mu, (5 / 2)) - 0.35 * powf(mu, (3 / 2))) - 1) / (2.6 - 2 * mu + 5.4 * powf(mu, 2));
        
        interp2dVector(&B[0],p->xprevious[indx],p->yprevious[indx],p->zprevious[indx],nR_Bfield,nZ_Bfield,
              BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);    

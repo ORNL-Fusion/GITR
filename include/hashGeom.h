@@ -222,9 +222,9 @@ struct hashGeom {
       vectorCrossProduct(BC,Bp,crossBCBp);
       vectorCrossProduct(CA,Cp,crossCACp);
 
-      signDot0 = sgn(vectorDotProduct(crossABAp,normalVector));
-      signDot1 = sgn(vectorDotProduct(crossBCBp,normalVector));
-      signDot2 = sgn(vectorDotProduct(crossCACp,normalVector));
+      signDot0 = std::copysign(1.0,vectorDotProduct(crossABAp, normalVector));
+      signDot1 = std::copysign(1.0,vectorDotProduct(crossBCBp, normalVector));
+      signDot2 = std::copysign(1.0,vectorDotProduct(crossCACp, normalVector));
       totalSigns = abs(signDot0 + signDot1 + signDot2);
 
       if (totalSigns == 3.0)

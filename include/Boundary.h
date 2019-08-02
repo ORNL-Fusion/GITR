@@ -111,12 +111,10 @@ class Boundary
     if (slope_dzdx == 0.0) {
       perpSlope = 1.0e12;
     } else {
-      //perpSlope = -sgn(slope_dzdx) / std::abs(slope_dzdx);
       perpSlope = -std::copysign(1.0, slope_dzdx) / std::abs(slope_dzdx);
     }
     float Br = 1.0f / std::sqrt(perpSlope * perpSlope + 1.0);
     float Bt = 0.0;
-    //    B[2] = sgn(perpSlope) * std::sqrt(1 - Br * Br);
     B[2] = copysign(1.0,perpSlope) * std::sqrt(1 - Br * Br);
 #if USECYLSYMM > 0
     float theta = std::atan2(y, x);
