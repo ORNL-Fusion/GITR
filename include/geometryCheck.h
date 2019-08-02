@@ -315,8 +315,8 @@ void operator()(std::size_t indx) const {
         pointToPlaneDistance1 = (a*p1[0] + b*p1[1] + c*p1[2] + d)/plane_norm;
         //std::cout << "plane coeffs "<< i << " " << a << " " << b << " " << c << " " << d << " " << plane_norm << std::endl;         
         //std::cout << "point to plane dists "<< i << " " << pointToPlaneDistance0 << " " << pointToPlaneDistance1 << std::endl;         
-        signPoint0 = sgn(pointToPlaneDistance0);
-        signPoint1 = sgn(pointToPlaneDistance1);
+        signPoint0 = std::copysign(1.0,pointToPlaneDistance0);
+        signPoint1 = std::copysign(1.0,pointToPlaneDistance1);
 
         if (signPoint0 != signPoint1)
         {
@@ -352,9 +352,9 @@ void operator()(std::size_t indx) const {
           //std::cout << "Bp " << Bp[0] << " " << Bp[1] << " " << Bp[2] << std::endl;
           //std::cout << "CA " << CA[0] << " " << CA[1] << " " << CA[2] << std::endl;
           //std::cout << "Cp " << Cp[0] << " " << Cp[1] << " " << Cp[2] << std::endl;
-          signDot0 = sgn(vectorDotProduct(crossABAp,normalVector));
-          signDot1 = sgn(vectorDotProduct(crossBCBp,normalVector));
-          signDot2 = sgn(vectorDotProduct(crossCACp,normalVector));
+          signDot0 = std::copysign(1.0,vectorDotProduct(crossABAp,normalVector));
+          signDot1 = std::copysign(1.0,vectorDotProduct(crossBCBp,normalVector));
+          signDot2 = std::copysign(1.0,vectorDotProduct(crossCACp,normalVector));
           totalSigns = 1.0*abs(signDot0 + signDot1 + signDot2);
           //std::cout << "signdots " << signDot0 << " " << signDot1 << " " << signDot2 << " " << totalSigns << " " << (totalSigns == 3.0)<<std::endl;
 
@@ -501,14 +501,14 @@ void operator()(std::size_t indx) const {
                //std::cout << "vert geom " << i << "  " << fabs(boundaryVector[i].slope_dzdx) << " " << tol << std::endl;
           if (fabsf(boundaryVector[i].slope_dzdx) >= tol*0.75f)
           {
-            signPoint = sgn(pdim1 - boundaryVector[i].x1);
-            signPoint0 = sgn(pdim1previous - boundaryVector[i].x1);
+            signPoint = std::copysign(1.0,pdim1 - boundaryVector[i].x1);
+            signPoint0 = std::copysign(1.0,pdim1previous - boundaryVector[i].x1);
             //std::cout << "signpoint1 " << signPoint << " " << signPoint0 << std::endl;
           }
           else
           {
-            signPoint = sgn(particlesPointer->z[indx] - pdim1*boundaryVector[i].slope_dzdx - boundaryVector[i].intercept_z);
-            signPoint0 = sgn(particlesPointer->zprevious[indx] - pdim1previous*boundaryVector[i].slope_dzdx - boundaryVector[i].intercept_z);
+            signPoint = std::copysign(1.0,particlesPointer->z[indx] - pdim1*boundaryVector[i].slope_dzdx - boundaryVector[i].intercept_z);
+            signPoint0 = std::copysign(1.0,particlesPointer->zprevious[indx] - pdim1previous*boundaryVector[i].slope_dzdx - boundaryVector[i].intercept_z);
             //std::cout << "signpoint2 " << signPoint << " " << signPoint0 << std::endl;
           }
 
@@ -521,14 +521,14 @@ void operator()(std::size_t indx) const {
              } 
              if(fabsf(particle_slope) >= tol*0.75f)
              {
-               signLine1 = sgn(boundaryVector[i].x1 - pdim1);
-               signLine2 = sgn(boundaryVector[i].x2 - pdim1);
+               signLine1 = std::copysign(1.0,boundaryVector[i].x1 - pdim1);
+               signLine2 = std::copysign(1.0,boundaryVector[i].x2 - pdim1);
                  //std::cout << "signlines3 " << signLine1 << " " << signLine2 << std::endl;
              }
              else
              {
-              signLine1 = sgn(boundaryVector[i].z1 - boundaryVector[i].x1*particle_slope - particle_intercept);
-              signLine2 = sgn(boundaryVector[i].z2 - boundaryVector[i].x2*particle_slope - particle_intercept);
+              signLine1 = std::copysign(1.0,boundaryVector[i].z1 - boundaryVector[i].x1*particle_slope - particle_intercept);
+              signLine2 = std::copysign(1.0,boundaryVector[i].z2 - boundaryVector[i].x2*particle_slope - particle_intercept);
              }
               //std::cout << "signLines " << signLine1 << " " << signLine2 << std::endl;
               //std::cout << "bound vec points " << boundaryVector[i].z1 << " " << boundaryVector[i].x1 << 
