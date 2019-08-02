@@ -296,7 +296,7 @@ void operator()(std::size_t indx) const {
       thetaImpact = thetaImpact * 180.0 / 3.14159265359;
       if (thetaImpact < 0.0)
         thetaImpact = 0.0;
-      signPartDotNormal = std::copysign(1.0, partDotNormal);
+      signPartDotNormal = std::copysign(1.0,partDotNormal);
       if (E0 == 0.0) {
         thetaImpact = 0.0;
       }

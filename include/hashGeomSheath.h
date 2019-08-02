@@ -139,57 +139,53 @@ struct hashGeom_sheath {
       vectorCrossProduct(BC,Bp,crossBCBp);
       vectorCrossProduct(CA,Cp,crossCACp);
 
-      signDot0 = sgn(vectorDotProduct(crossABAp,normalVector));
-      signDot1 = sgn(vectorDotProduct(crossBCBp,normalVector));
-      signDot2 = sgn(vectorDotProduct(crossCACp,normalVector));
-      totalSigns = abs(signDot0 + signDot1 + signDot2);
-      if (totalSigns == 3.0)
-      {
-      }
-      else perpDist = 1.0e6;
-    #endif
-   p[0] = x0;
-   p[1] = y0;
-   p[2] = z0;
-   float pA[3] = {0.0};
-   float cEdge1[3] = {0.0};
-   float dEdge1[3] = {0.0};
-   vectorSubtract(A,p,pA);
-   float cEdge1mag = vectorDotProduct(pA,AB)/vectorDotProduct(AB,AB);
-   float distE1 = 1.0e6;
-   if(cEdge1mag < 0.0 && cEdge1mag > -1.0)
-   {
-    vectorScalarMult(cEdge1mag,AB,cEdge1);
-    vectorSubtract(pA,cEdge1,dEdge1);
-    distE1 = sqrt(vectorDotProduct(dEdge1,dEdge1));
-   }
- #if USE3DTETGEOM > 0
-   float pB[3] = {0.0};
-   float cEdge2[3] = {0.0};
-   float dEdge2[3] = {0.0};
-   vectorSubtract(B,p,pB);
-   float cEdge2mag = vectorDotProduct(pB,BC)/vectorDotProduct(BC,BC);
-   float distE2 = 1.0e6;
-   if(cEdge2mag < 0.0 && cEdge2mag > -1.0)
-   {
-    vectorScalarMult(cEdge2mag,BC,cEdge2);
-    vectorSubtract(pB,cEdge2,dEdge2);
-    distE2 = sqrt(vectorDotProduct(dEdge2,dEdge2));
-   }
-   float pC[3] = {0.0};
-   float cEdge3[3] = {0.0};
-   float dEdge3[3] = {0.0};
-   vectorSubtract(C,p,pC);
-   float cEdge3mag = vectorDotProduct(pC,CA)/vectorDotProduct(CA,CA);
-   float distE3 = 1.0e6;
-   if(cEdge3mag < 0.0 && cEdge3mag > -1.0)
-   {
-    vectorScalarMult(cEdge3mag,CA,cEdge3);
-    vectorSubtract(pC,cEdge3,dEdge3);
-    distE3 = sqrt(vectorDotProduct(dEdge3,dEdge3));
-   }
-          float minEdge = min(distE1,distE2);
-          minEdge = min(distE3,minEdge);
+        signDot0 = std::copysign(1.0,vectorDotProduct(crossABAp, normalVector));
+        signDot1 = std::copysign(1.0,vectorDotProduct(crossBCBp, normalVector));
+        signDot2 = std::copysign(1.0,vectorDotProduct(crossCACp, normalVector));
+        totalSigns = abs(signDot0 + signDot1 + signDot2);
+        if (totalSigns == 3.0) {
+        } else
+          perpDist = 1.0e6;
+#endif
+        p[0] = x0;
+        p[1] = y0;
+        p[2] = z0;
+        float pA[3] = {0.0};
+        float cEdge1[3] = {0.0};
+        float dEdge1[3] = {0.0};
+        vectorSubtract(A, p, pA);
+        float cEdge1mag = vectorDotProduct(pA, AB) / vectorDotProduct(AB, AB);
+        float distE1 = 1.0e6;
+        if (cEdge1mag < 0.0 && cEdge1mag > -1.0) {
+          vectorScalarMult(cEdge1mag, AB, cEdge1);
+          vectorSubtract(pA, cEdge1, dEdge1);
+          distE1 = sqrt(vectorDotProduct(dEdge1, dEdge1));
+        }
+#if USE3DTETGEOM > 0
+        float pB[3] = {0.0};
+        float cEdge2[3] = {0.0};
+        float dEdge2[3] = {0.0};
+        vectorSubtract(B, p, pB);
+        float cEdge2mag = vectorDotProduct(pB, BC) / vectorDotProduct(BC, BC);
+        float distE2 = 1.0e6;
+        if (cEdge2mag < 0.0 && cEdge2mag > -1.0) {
+          vectorScalarMult(cEdge2mag, BC, cEdge2);
+          vectorSubtract(pB, cEdge2, dEdge2);
+          distE2 = sqrt(vectorDotProduct(dEdge2, dEdge2));
+        }
+        float pC[3] = {0.0};
+        float cEdge3[3] = {0.0};
+        float dEdge3[3] = {0.0};
+        vectorSubtract(C, p, pC);
+        float cEdge3mag = vectorDotProduct(pC, CA) / vectorDotProduct(CA, CA);
+        float distE3 = 1.0e6;
+        if (cEdge3mag < 0.0 && cEdge3mag > -1.0) {
+          vectorScalarMult(cEdge3mag, CA, cEdge3);
+          vectorSubtract(pC, cEdge3, dEdge3);
+          distE3 = sqrt(vectorDotProduct(dEdge3, dEdge3));
+        }
+        float minEdge = min(distE1, distE2);
+        minEdge = min(distE3, minEdge);
 #else
           //
           float minEdge = distE1;

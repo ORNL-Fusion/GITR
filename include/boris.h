@@ -14,11 +14,7 @@
 #include "Particles.h"
 #include "Boundary.h"
 #include "interp2d.hpp"
-//template <typename T>
-//CUDA_CALLABLE_MEMBER
-//int sgn(T val) {
-//            return (T(0) < val) - (val < T(0));
-//}
+#include <algorithm>
 
 CUDA_CALLABLE_MEMBER
 void vectorAdd(float A[], float B[],float C[])
@@ -197,56 +193,56 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
       for (int i=0; i<nLines; i++)
       {
 #endif
-            //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
-        //if (boundaryVector[i].Z != 0.0)
-        //{
-            //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
-        a = boundaryVector[i].a;
-        b = boundaryVector[i].b;
-        c = boundaryVector[i].c;
-        d = boundaryVector[i].d;
-        plane_norm = boundaryVector[i].plane_norm;
-        pointToPlaneDistance0 = (a*p0[0] + b*p0[1] + c*p0[2] + d)/plane_norm;
-        //std::cout << "abcd plane_norm "<< a  << " " << b << " " << c << " " << d << " " << plane_norm << std::endl;
-        //std::cout << i << std::endl;// " point to plane dist "  << pointToPlaneDistance0 << std::endl;
-        //pointToPlaneDistance1 = (a*p1[0] + b*p1[1] + c*p1[2] + d)/plane_norm;    
-        //signPoint0 = sgn(pointToPlaneDistance0);
-        //signPoint1 = sgn(pointToPlaneDistance1);
-        vectorAssign(a/plane_norm,b/plane_norm,c/plane_norm,normalVector);
-                //vectorNormalize(normalVector,normalVector);
-                //std::cout << "normal " << normalVector[0] << " " << normalVector[1] << " " << normalVector[2] << std::endl;
-          vectorAssign(p0[0] - pointToPlaneDistance0*normalVector[0],
-                       p0[1] - pointToPlaneDistance0*normalVector[1],
-                       p0[2] - pointToPlaneDistance0*normalVector[2], p);
-        
-         vectorAssign(boundaryVector[i].x1, boundaryVector[i].y1,
-                     boundaryVector[i].z1, A);
-         vectorAssign(boundaryVector[i].x2, boundaryVector[i].y2,
-                      boundaryVector[i].z2, B);
-         vectorAssign(boundaryVector[i].x3, boundaryVector[i].y3,
-                     boundaryVector[i].z3, C);
+    //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
+    //if (boundaryVector[i].Z != 0.0)
+    //{
+    //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
+    a = boundaryVector[i].a;
+    b = boundaryVector[i].b;
+    c = boundaryVector[i].c;
+    d = boundaryVector[i].d;
+    plane_norm = boundaryVector[i].plane_norm;
+    pointToPlaneDistance0 = (a * p0[0] + b * p0[1] + c * p0[2] + d) / plane_norm;
+    //std::cout << "abcd plane_norm "<< a  << " " << b << " " << c << " " << d << " " << plane_norm << std::endl;
+    //std::cout << i << std::endl;// " point to plane dist "  << pointToPlaneDistance0 << std::endl;
+    //pointToPlaneDistance1 = (a*p1[0] + b*p1[1] + c*p1[2] + d)/plane_norm;
+    //signPoint0 = std::copysign(1.0,pointToPlaneDistance0);
+    //signPoint1 = std::copysign(1.0,pointToPlaneDistance1);
+    vectorAssign(a / plane_norm, b / plane_norm, c / plane_norm, normalVector);
+    //vectorNormalize(normalVector,normalVector);
+    //std::cout << "normal " << normalVector[0] << " " << normalVector[1] << " " << normalVector[2] << std::endl;
+    vectorAssign(p0[0] - pointToPlaneDistance0 * normalVector[0],
+                 p0[1] - pointToPlaneDistance0 * normalVector[1],
+                 p0[2] - pointToPlaneDistance0 * normalVector[2], p);
 
-         vectorSubtract(B,A,AB);
-         vectorSubtract(C,A,AC);
-         vectorSubtract(C,B,BC);
-         vectorSubtract(A,C,CA);
+    vectorAssign(boundaryVector[i].x1, boundaryVector[i].y1,
+                 boundaryVector[i].z1, A);
+    vectorAssign(boundaryVector[i].x2, boundaryVector[i].y2,
+                 boundaryVector[i].z2, B);
+    vectorAssign(boundaryVector[i].x3, boundaryVector[i].y3,
+                 boundaryVector[i].z3, C);
 
-         vectorSubtract(p,A,Ap);
-         vectorSubtract(p,B,Bp);
-         vectorSubtract(p,C,Cp);
-         vectorCrossProduct(AB,AC,normalVector);
-         vectorCrossProduct(AB,Ap,crossABAp);
-         vectorCrossProduct(BC,Bp,crossBCBp);
-         vectorCrossProduct(CA,Cp,crossCACp);
-       /*  
+    vectorSubtract(B, A, AB);
+    vectorSubtract(C, A, AC);
+    vectorSubtract(C, B, BC);
+    vectorSubtract(A, C, CA);
+
+    vectorSubtract(p, A, Ap);
+    vectorSubtract(p, B, Bp);
+    vectorSubtract(p, C, Cp);
+    vectorCrossProduct(AB, AC, normalVector);
+    vectorCrossProduct(AB, Ap, crossABAp);
+    vectorCrossProduct(BC, Bp, crossBCBp);
+    vectorCrossProduct(CA, Cp, crossCACp);
+    /*  
          dot0 = vectorDotProduct(crossABAp,normalVector);
             dot1 = vectorDotProduct(crossBCBp,normalVector);
             dot2 = vectorDotProduct(crossCACp,normalVector);
          */
-            signDot0 = std::copysign(1.0,vectorDotProduct(crossABAp,normalVector));
-         signDot1 = std::copysign(1.0,vectorDotProduct(crossBCBp,normalVector));
-         signDot2 = std::copysign(1.0,vectorDotProduct(crossCACp,normalVector));
-        /*  
+    signDot0 = std::copysign(1.0,vectorDotProduct(crossABAp, normalVector));
+    signDot1 = std::copysign(1.0,vectorDotProduct(crossBCBp, normalVector));
+    signDot2 = std::copysign(1.0,vectorDotProduct(crossCACp, normalVector));
+    /*  
          if(dot0 == 0.0) signDot0 = 1;
          if(dot1 == 0.0) signDot1 = 1;
          if(dot2 == 0.0) signDot2 = 1;
@@ -931,7 +927,7 @@ float operationsTime = 0.0f;
 
       if(abs(v[2]) > vTherm)
       {
-          v[2] = sgn(v[2])*vTherm;
+          v[2] = std::copysign(1.0,v[2])*vTherm;
           v[0] = 0.0;
           v[1] = 0.0;
       }
