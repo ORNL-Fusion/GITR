@@ -20,9 +20,8 @@
 #include <random>
 #endif
 template <typename T>
-CUDA_CALLABLE_MEMBER
-int sgn(T val) {
-            return (T(0) < val) - (val < T(0));
+CUDA_CALLABLE_MEMBER T sgn(T val) {
+  return (T(0) < val) - (val < T(0));
 }
 
 class Boundary 
@@ -103,6 +102,7 @@ class Boundary
     A[1] = B[1];
 #endif
 #endif
+    }
 
   CUDA_CALLABLE_MEMBER
   void getSurfaceNormal(float B[], float y, float x) {
@@ -110,20 +110,6 @@ class Boundary
     B[0] = -a / plane_norm;
     B[1] = -b / plane_norm;
     B[2] = -c / plane_norm;
-#else
-    float perpSlope = 0.0;
-    if (slope_dzdx == 0.0) {
-      perpSlope = 1.0e12;
-    } else {
-      perpSlope = -sgn(slope_dzdx) / std::abs(slope_dzdx);
-    }
-    float Br = 1.0 / std::sqrt(perpSlope * perpSlope + 1.0);
-    float Bt = 0.0;
-    B[2] = sgn(perpSlope) * std::sqrt(1 - Br * Br);
-#if USECYLSYMM > 0
-    float theta = std::atan2(y, x);
-    B[0] = std::cos(theta) * Br - std::sin(theta) * Bt;
-    B[1] = std::sin(theta) * Br + std::cos(theta) * Bt;
 #else
         float perpSlope = 0.0;
         if(slope_dzdx == 0.0){perpSlope = 1.0e12;}
