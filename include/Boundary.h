@@ -19,10 +19,6 @@
 #else
 #include <random>
 #endif
-template <typename T>
-CUDA_CALLABLE_MEMBER T sgn(T val) {
-  return (T(0) < val) - (val < T(0));
-}
 
 class Boundary 
 {
@@ -111,25 +107,29 @@ class Boundary
     B[1] = -b / plane_norm;
     B[2] = -c / plane_norm;
 #else
-        float perpSlope = 0.0;
-        if(slope_dzdx == 0.0){perpSlope = 1.0e12;}
-        else{
-          perpSlope = -sgn(slope_dzdx)/abs(slope_dzdx);}
-        float Br = 1.0/sqrt(perpSlope*perpSlope+1.0);
-        float Bt = 0.0;
-        B[2] = sgn(perpSlope)*sqrt(1-Br*Br);
-	#if USECYLSYMM > 0
-	    float theta = atan2f(y,x);
-            B[0] = cosf(theta)*Br - sinf(theta)*Bt;
-            B[1] = sinf(theta)*Br + cosf(theta)*Bt;
-            #else
-            B[0] = Br;
-            B[1] = Bt;
-	#endif
-        //B[0] = -a/plane_norm;
-        //B[1] = -b/plane_norm;
-        //B[2] = -c/plane_norm;
-        //std::cout << "perp x and z comp " << B[0] << " " << B[2] << std::endl;
+    float perpSlope = 0.0;
+    if (slope_dzdx == 0.0) {
+      perpSlope = 1.0e12;
+    } else {
+      //perpSlope = -sgn(slope_dzdx) / std::abs(slope_dzdx);
+      perpSlope = -std::copysign(1.0, slope_dzdx) / std::abs(slope_dzdx);
+    }
+    float Br = 1.0f / std::sqrt(perpSlope * perpSlope + 1.0);
+    float Bt = 0.0;
+    //    B[2] = sgn(perpSlope) * std::sqrt(1 - Br * Br);
+    B[2] = copysign(1.0,perpSlope) * std::sqrt(1 - Br * Br);
+#if USECYLSYMM > 0
+    float theta = std::atan2(y, x);
+    B[0] = std::cos(theta) * Br - std::sin(theta) * Bt;
+    B[1] = std::sin(theta) * Br + std::cos(theta) * Bt;
+#else
+    B[0] = Br;
+    B[1] = Bt;
+#endif
+//B[0] = -a/plane_norm;
+//B[1] = -b/plane_norm;
+//B[2] = -c/plane_norm;
+//std::cout << "perp x and z comp " << B[0] << " " << B[2] << std::endl;
 #endif
     }
     CUDA_CALLABLE_MEMBER
