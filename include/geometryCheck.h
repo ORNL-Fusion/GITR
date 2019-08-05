@@ -92,22 +92,21 @@ void operator()(std::size_t indx) const {
     //std::cout << "geometry check particle y" << particlesPointer->y[indx] << particlesPointer->y[indx]previous <<std::endl;
     //std::cout << "geometry check particle z" << particlesPointer->z[indx] << particlesPointer->z[indx]previous <<std::endl;
     //std::cout << "geometry check particle hitwall" << p.hitWall <<std::endl;
-  if(particlesPointer->hitWall[indx] == 0.0)
-  {
-     int hitSurface=0;
-     float x = particlesPointer->x[indx]; 
-     float y = particlesPointer->y[indx]; 
-     float z = particlesPointer->z[indx]; 
-     float xprev = particlesPointer->xprevious[indx]; 
-     float yprev = particlesPointer->yprevious[indx]; 
-     float zprev = particlesPointer->zprevious[indx]; 
-     float dpath = sqrt((x-xprev)*(x-xprev) + (y-yprev)*(y-yprev) + (z-zprev)*(z-zprev));
-    #if FLUX_EA > 0
-      float dEdist = (Edist - E0dist)/nEdist;
-      float dAdist = (Adist - A0dist)/nAdist;
-      int AdistInd=0;
-      int EdistInd=0;
-    #endif
+    if (particlesPointer->hitWall[indx] == 0.0) {
+      int hitSurface = 0;
+      float x = particlesPointer->x[indx];
+      float y = particlesPointer->y[indx];
+      float z = particlesPointer->z[indx];
+      float xprev = particlesPointer->xprevious[indx];
+      float yprev = particlesPointer->yprevious[indx];
+      float zprev = particlesPointer->zprevious[indx];
+      float dpath = std::sqrt((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev) + (z - zprev) * (z - zprev));
+#if FLUX_EA > 0
+      float dEdist = (Edist - E0dist) / static_cast<float>(nEdist);
+      float dAdist = (Adist - A0dist) / static_cast<float>(nAdist);
+      int AdistInd = 0;
+      int EdistInd = 0;
+#endif
       float vxy[3] = {0.0f};
       float vtheta[3] = {0.0f};
    #if USECYLSYMM > 0
