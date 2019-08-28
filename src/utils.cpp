@@ -12,10 +12,6 @@
 #include "Particle.h"
 #include "libconfig.h++"
 
-#if USE_BOOST
-	#include "boost/multi_array.hpp"
-	#include "boost/filesystem.hpp"
-#endif
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
 #endif
@@ -32,6 +28,40 @@ using namespace netCDF;
 using namespace exceptions;
 using namespace netCDF::exceptions;
 using namespace libconfig;
+void  read_comand_line_args(const int argc,char** argv,int& ppn,std::string& inputFile)
+{
+
+  int counter;
+  printf("Program Name Is: %s", argv[0]);
+  if (argc == 1)
+    printf("\nNo Extra Command Line Argument Passed Other Than Program Name");
+  if (argc >= 2) {
+    printf("\nNumber Of Arguments Passed: %d", argc);
+    printf("\n----Following Are The Command Line Arguments Passed----");
+    for (counter = 0; counter < argc; counter++) {
+      printf("\nargv[%d]: %s", counter, argv[counter]);
+      if (std::string(argv[counter]) == "-nGPUPerNode") {
+        if (counter + 1 < argc) { // Make sure we aren't at the end of argv!
+          ppn = std::stoi(argv[counter + 1]);
+          printf("\nGITR set to use %d GPUs per node", ppn);
+        } else { // Uh-oh, there was no argument to the destination option.
+          std::cerr << "--nGPUPerNode option requires one argument."
+                    << std::endl;
+          exit(0);
+        }
+      }
+      if (std::string(argv[counter]) == "-i") {
+        if (counter + 1 < argc) { // Make sure we aren't at the end of argv!
+          inputFile = argv[counter + 1];
+          printf("\nGITR input file set to %s", inputFile.c_str());
+        } else { // Uh-oh, there was no argument to the destination option.
+          std::cerr << "-i option requires one argument" << std::endl;
+          exit(0);
+        }
+      }
+    }
+  }
+}
 void checkFlags(libconfig::Config &cfg)
 {
     std::cout << "Checking compatibility of compile flags with input file "
@@ -92,7 +122,48 @@ void checkFlags(libconfig::Config &cfg)
                   }
               }
 }
+void print_gpu_memory_usage(const int world_rank)
+{
+#if USE_CUDA
+  if (world_rank == 0) {
+    size_t free_byte;
+    size_t total_byte;
+    cudaError_t cuda_status = cudaMemGetInfo(&free_byte, &total_byte);
 
+    if (cudaSuccess != cuda_status) {
+
+      printf("Error: cudaMemGetInfo fails, %s \n",
+             cudaGetErrorString(cuda_status));
+      exit(1);
+    }
+
+    double free_db = (double)free_byte;
+    double total_db = (double)total_byte;
+    double used_db = total_db - free_db;
+
+    printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
+           used_db / 1024.0 / 1024.0, free_db / 1024.0 / 1024.0,
+           total_db / 1024.0 / 1024.0);
+    int nDevices;
+    int nThreads;
+    cudaGetDeviceCount(&nDevices);
+    std::cout << "number of devices gotten " << nDevices << std::endl;
+    for (int i = 0; i < nDevices; i++) {
+      cudaDeviceProp prop;
+      cudaGetDeviceProperties(&prop, i);
+      printf("Device Number: %d\n", i);
+      printf("  Device name: %s\n", prop.name);
+      printf("  Memory Clock Rate (KHz): %d\n", prop.memoryClockRate);
+      printf("  Memory Bus Width (bits): %d\n", prop.memoryBusWidth);
+      printf("  Peak Memory Bandwidth (GB/s): %f\n\n",
+             2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6);
+      printf("  Total number of threads: %d\n",
+             prop.maxThreadsPerMultiProcessor);
+      nThreads = prop.maxThreadsPerMultiProcessor;
+    }
+  }
+#endif
+}
 int getDimFromFile (libconfig::Config &cfg,const std::string& file,const std::string& section,
         const std::string& s)
 {
@@ -169,19 +240,6 @@ int regrid2dCDF(int nX, int nY, int nZ,float* xGrid,int nNew,float maxNew, float
 void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, float *array2d)
 {
        ofstream outfile;
-#if USE_BOOST	
-			//Output
-        boost::filesystem::path dir(folder);
-
-            if(!(boost::filesystem::exists(dir)))
-            {
-              std::cout<<"Doesn't Exists"<<std::endl;
-              if (boost::filesystem::create_directory(dir))
-              {
-              std::cout << " Successfully Created " << std::endl;
-              }
-            }
-#endif
             std::string full_path = folder + "/" + outname;
 			outfile.open (full_path );
 			
@@ -203,19 +261,6 @@ void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, float *arra
 void OUTPUT1d(std::string folder,std::string outname,int nX, float *array2d)
 {
        ofstream outfile;
-#if USE_BOOST
-				//Output
-        boost::filesystem::path dir(folder);
-
-            if(!(boost::filesystem::exists(dir)))
-            {
-             // std::cout<<"Doesn't Exists"<<std::endl;
-              if (boost::filesystem::create_directory(dir))
-              {
-              //std::cout << " Successfully Created " << std::endl;
-              }
-            }
-#endif
             std::string full_path = folder + "/" + outname;
 			outfile.open (full_path );
 			
@@ -233,19 +278,6 @@ void OUTPUT1d(std::string folder,std::string outname,int nX, float *array2d)
 void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, float *array3d)
 {
        ofstream outfile;
-#if USE_BOOST	
-			//Output
-        boost::filesystem::path dir(folder);
-
-            if(!(boost::filesystem::exists(dir)))
-            {
-              std::cout<<"Doesn't Exists"<<std::endl;
-              if (boost::filesystem::create_directory(dir))
-              {
-              std::cout << " Successfully Created " << std::endl;
-              }
-            }
-#endif
             std::string full_path = folder + "/" + outname;
 			outfile.open (full_path );
 			for(int k=1; k<=nZ; k++)
@@ -268,19 +300,6 @@ void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, flo
 void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, int *array2d)
 {
        ofstream outfile;
-#if USE_BOOST	
-			//Output
-        boost::filesystem::path dir(folder);
-
-            if(!(boost::filesystem::exists(dir)))
-            {
-              std::cout<<"Doesn't Exists"<<std::endl;
-              if (boost::filesystem::create_directory(dir))
-              {
-              std::cout << " Successfully Created " << std::endl;
-              }
-            }
-#endif
             std::string full_path = folder + "/" + outname;
 			outfile.open (full_path );
 			
@@ -302,19 +321,6 @@ void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, int *array2
 void OUTPUT1d(std::string folder,std::string outname,int nX, int *array2d)
 {
        ofstream outfile;
-#if USE_BOOST
-				//Output
-        boost::filesystem::path dir(folder);
-
-            if(!(boost::filesystem::exists(dir)))
-            {
-             // std::cout<<"Doesn't Exists"<<std::endl;
-              if (boost::filesystem::create_directory(dir))
-              {
-              //std::cout << " Successfully Created " << std::endl;
-              }
-            }
-#endif
             std::string full_path = folder + "/" + outname;
 			outfile.open (full_path );
 			
@@ -332,19 +338,6 @@ void OUTPUT1d(std::string folder,std::string outname,int nX, int *array2d)
 void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, int *array3d)
 {
        ofstream outfile;
-#if USE_BOOST	
-			//Output
-        boost::filesystem::path dir(folder);
-
-            if(!(boost::filesystem::exists(dir)))
-            {
-              std::cout<<"Doesn't Exists"<<std::endl;
-              if (boost::filesystem::create_directory(dir))
-              {
-              std::cout << " Successfully Created " << std::endl;
-              }
-            }
-#endif
             std::string full_path = folder + "/" + outname;
 			outfile.open (full_path );
 			for(int k=1; k<=nZ; k++)
@@ -452,31 +445,6 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
   std::string geom_folder = "output/geometry";
   ofstream outfile;
 
-  #if USE_BOOST
-    boost::filesystem::path dirOut("output");
-    
-    if(!(boost::filesystem::exists(dirOut)))
-    {
-       std::cout<<"Doesn't Exists"<<std::endl;
-
-       if (boost::filesystem::create_directory(dirOut))
-       {
-          std::cout << " Successfully Created " << std::endl;
-       }
-    }
-    //Output
-    boost::filesystem::path dir(geom_folder);
-    
-    if(!(boost::filesystem::exists(dir)))
-    {
-       std::cout<<"Doesn't Exists"<<std::endl;
-
-       if (boost::filesystem::create_directory(dir))
-       {
-          std::cout << " Successfully Created " << std::endl;
-       }
-    }
-  #endif
 
   std::string full_path = geom_folder + "/" + geom_outname;
   outfile.open (full_path );
@@ -860,218 +828,6 @@ void OUTPUT(char outname[],int nX, int nY, float **array2d)
 		
 }
 
-//void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, float *array2d)
-//{
-//       ofstream outfile;
-//#if USE_BOOST	
-//			//Output
-//        boost::filesystem::path dir(folder);
-//
-//            if(!(boost::filesystem::exists(dir)))
-//            {
-//              std::cout<<"Doesn't Exists"<<std::endl;
-//              if (boost::filesystem::create_directory(dir))
-//              {
-//              std::cout << " Successfully Created " << std::endl;
-//              }
-//            }
-//#endif
-//            std::string full_path = folder + "/" + outname;
-//			outfile.open (full_path );
-//			
-//				 for(int i=1 ; i<=nY ; i++)
-//				{
-//				outfile << "val2d( :," << i<< ") = [ " ;
-//					for(int j=0 ; j<nX ; j++)
-//					{
-//					outfile << array2d[(i-1)*nX + j] << "  " ;
-//					//std::cout << r[i] << std::endl;
-//					}
-//					outfile << "  ];" << std::endl;
-//				}
-//			outfile.close();	
-//		
-//		
-//}
-
-//void OUTPUT1d(std::string folder,std::string outname,int nX, float *array2d)
-//{
-//       ofstream outfile;
-//#if USE_BOOST
-//				//Output
-//        boost::filesystem::path dir(folder);
-//
-//            if(!(boost::filesystem::exists(dir)))
-//            {
-//             // std::cout<<"Doesn't Exists"<<std::endl;
-//              if (boost::filesystem::create_directory(dir))
-//              {
-//              //std::cout << " Successfully Created " << std::endl;
-//              }
-//            }
-//#endif
-//            std::string full_path = folder + "/" + outname;
-//			outfile.open (full_path );
-//			
-//				outfile << "val1d " << "  = [ " ;
-//				 for(int i=0 ; i<nX ; i++)
-//				{
-//					outfile << array2d[i] << "  " ;
-//				}
-//					outfile << "  ];" << std::endl;
-//			outfile.close();	
-//		
-//		
-//}
-//
-//void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, float *array3d)
-//{
-//       ofstream outfile;
-//#if USE_BOOST	
-//			//Output
-//        boost::filesystem::path dir(folder);
-//
-//            if(!(boost::filesystem::exists(dir)))
-//            {
-//              std::cout<<"Doesn't Exists"<<std::endl;
-//              if (boost::filesystem::create_directory(dir))
-//              {
-//              std::cout << " Successfully Created " << std::endl;
-//              }
-//            }
-//#endif
-//            std::string full_path = folder + "/" + outname;
-//			outfile.open (full_path );
-//			for(int k=1; k<=nZ; k++)
-//            {
-//				 for(int i=1 ; i<=nY ; i++)
-//				{
-//				outfile << "val3d( :," << i<< "," << k << ") = [ " ;
-//					for(int j=0 ; j<nX ; j++)
-//					{
-//					outfile << array3d[(k-1)*nX*nY + (i-1)*nX + j] << "  " ;
-//					//std::cout << r[i] << std::endl;
-//					}
-//					outfile << "  ];" << std::endl;
-//				}
-//            }
-//			outfile.close();	
-//		
-//		
-//}
-//void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, int *array2d)
-//{
-//       ofstream outfile;
-//#if USE_BOOST	
-//			//Output
-//        boost::filesystem::path dir(folder);
-//
-//            if(!(boost::filesystem::exists(dir)))
-//            {
-//              std::cout<<"Doesn't Exists"<<std::endl;
-//              if (boost::filesystem::create_directory(dir))
-//              {
-//              std::cout << " Successfully Created " << std::endl;
-//              }
-//            }
-//#endif
-//            std::string full_path = folder + "/" + outname;
-//			outfile.open (full_path );
-//			
-//				 for(int i=1 ; i<=nY ; i++)
-//				{
-//				outfile << "val2d( :," << i<< ") = [ " ;
-//					for(int j=0 ; j<nX ; j++)
-//					{
-//					outfile << array2d[(i-1)*nX + j] << "  " ;
-//					//std::cout << r[i] << std::endl;
-//					}
-//					outfile << "  ];" << std::endl;
-//				}
-//			outfile.close();	
-//		
-//		
-//}
-//
-//void OUTPUT1d(std::string folder,std::string outname,int nX, int *array2d)
-//{
-//       ofstream outfile;
-//#if USE_BOOST
-//				//Output
-//        boost::filesystem::path dir(folder);
-//
-//            if(!(boost::filesystem::exists(dir)))
-//            {
-//             // std::cout<<"Doesn't Exists"<<std::endl;
-//              if (boost::filesystem::create_directory(dir))
-//              {
-//              //std::cout << " Successfully Created " << std::endl;
-//              }
-//            }
-//#endif
-//            std::string full_path = folder + "/" + outname;
-//			outfile.open (full_path );
-//			
-//				outfile << "val1d " << "  = [ " ;
-//				 for(int i=0 ; i<nX ; i++)
-//				{
-//					outfile << array2d[i] << "  " ;
-//				}
-//					outfile << "  ];" << std::endl;
-//			outfile.close();	
-//		
-//		
-//}
-//
-//void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, int *array3d)
-//{
-//       ofstream outfile;
-//#if USE_BOOST	
-//			//Output
-//        boost::filesystem::path dir(folder);
-//
-//            if(!(boost::filesystem::exists(dir)))
-//            {
-//              std::cout<<"Doesn't Exists"<<std::endl;
-//              if (boost::filesystem::create_directory(dir))
-//              {
-//              std::cout << " Successfully Created " << std::endl;
-//              }
-//            }
-//#endif
-//            std::string full_path = folder + "/" + outname;
-//			outfile.open (full_path );
-//			for(int k=1; k<=nZ; k++)
-//            {
-//				 for(int i=1 ; i<=nY ; i++)
-//				{
-//				outfile << "val3d( :," << i<< "," << k << ") = [ " ;
-//					for(int j=0 ; j<nX ; j++)
-//					{
-//					outfile << array3d[(k-1)*nX*nY + (i-1)*nX + j] << "  " ;
-//					//std::cout << r[i] << std::endl;
-//					}
-//					outfile << "  ];" << std::endl;
-//				}
-//            }
-//			outfile.close();	
-//		
-//		
-//}
-//int readFileDim(const std::string& fileName,const std::string& varName)
-//{
-//           NcFile nc(fileName, NcFile::read);
-//
-//                  if(nc.isNull()){
-//                             std::cout << "ERROR: Failed to open " << fileName << std::endl;
-//                                    }
-//                         NcDim nc_nx(nc.getDim(varName));
-//
-//                                int n_x = nc_nx.getSize();
-//                                nc.close();
-//                                       return n_x;
-//
-//}
 int ncdfIO(int rwCode,const std::string& fileName,vector< std::string> dimNames,vector<int> dims,
         vector< std::string> gridNames,vector<int> gridMapToDims,
          vector<float*> pointers,vector< std::string> intVarNames,vector<vector<int>> intVarDimMap, vector<int*> intVarPointers)

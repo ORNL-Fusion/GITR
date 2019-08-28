@@ -14,10 +14,6 @@
 #include "Particles.h"
 #include "Boundary.h"
 #include "interp2d.hpp"
-#if USE_BOOST
-#include <boost/timer/timer.hpp>
-using namespace boost::timer;
-#endif
 //template <typename T>
 //CUDA_CALLABLE_MEMBER
 //int sgn(T val) {
@@ -820,10 +816,6 @@ float initTime = 0.0f;
 float interpETime = 0.0f;
 float interpBTime = 0.0f;
 float operationsTime = 0.0f;
-#if USE_BOOST
-cpu_timer timer;
-cpu_times initTime0 = timer.elapsed();
-#endif
 #endif
             float v_minus[3]= {0.0f, 0.0f, 0.0f};
             float v_prime[3]= {0.0f, 0.0f, 0.0f};
@@ -998,19 +990,11 @@ cpu_times initTime0 = timer.elapsed();
 	            r[2] = p.zprevious;
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-cpu_times initTime1 = timer.elapsed();
-initTime = initTime + (initTime1.wall - initTime0.wall);
-#endif
 #endif
 for ( int s=0; s<nSteps; s++ ) 
     {
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    cpu_times operationsTime0 = timer.elapsed();
-    cpu_times interpETime0 = timer.elapsed();
-#endif
 #endif
 #if USESHEATHEFIELD > 0
     minDist = getE(r[0],r[1],r[2],E,boundaryVector,nLines);
@@ -1024,20 +1008,12 @@ for ( int s=0; s<nSteps; s++ )
 #endif              
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    cpu_times interpBTime0 = timer.elapsed();
-#endif     
 #endif
     interp2dVector(&B[0],r[0],r[1],r[2],nR_Bfield,nZ_Bfield,
                BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                BfieldZDevicePointer,BfieldTDevicePointer);        
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    cpu_times interpBTime1 = timer.elapsed();
-    interpETime = interpETime + (interpBTime0.wall - interpETime0.wall);
-    interpBTime = interpBTime + (interpBTime1.wall - interpBTime0.wall);
-#endif
 #endif
     //k1r = dt*v
     vectorScalarMult(dt,v,k1r);
@@ -1074,9 +1050,6 @@ for ( int s=0; s<nSteps; s++ )
     */
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    interpETime0 = timer.elapsed();
-#endif
 #endif
 
 #if USESHEATHEFIELD > 0	  
@@ -1090,9 +1063,6 @@ for ( int s=0; s<nSteps; s++ )
 #endif              
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    interpBTime0 = timer.elapsed();
-#endif
 #endif
 
 
@@ -1101,11 +1071,6 @@ for ( int s=0; s<nSteps; s++ )
              BfieldZDevicePointer,BfieldTDevicePointer);        
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    interpBTime1 = timer.elapsed();
-    interpETime = interpETime + (interpBTime0.wall - interpETime0.wall);
-    interpBTime = interpBTime + (interpBTime1.wall - interpBTime0.wall);
-#endif
 #endif
     //k2r = dt*v2
     vectorScalarMult(dt,v2,k2r);
@@ -1141,9 +1106,6 @@ for ( int s=0; s<nSteps; s++ )
     */
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    interpETime0 = timer.elapsed();
-#endif
 #endif
 
 #if USESHEATHEFIELD > 0	  
@@ -1158,9 +1120,6 @@ for ( int s=0; s<nSteps; s++ )
 
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    interpBTime0 = timer.elapsed();
-#endif
 #endif
     interp2dVector(&B[0],r3[0],r3[1],r3[2],nR_Bfield,nZ_Bfield,
                  BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
@@ -1168,11 +1127,6 @@ for ( int s=0; s<nSteps; s++ )
                 
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    interpBTime1 = timer.elapsed();
-    interpETime = interpETime + (interpBTime0.wall - interpETime0.wall);
-    interpBTime = interpBTime + (interpBTime1.wall - interpBTime0.wall);
-#endif
 #endif
     //k3r = dt*v3
     vectorScalarMult(dt,v3,k3r);
@@ -1206,9 +1160,6 @@ for ( int s=0; s<nSteps; s++ )
     */
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    interpETime0 = timer.elapsed();
-#endif
 #endif
 
 #if USESHEATHEFIELD > 0            
@@ -1222,9 +1173,6 @@ for ( int s=0; s<nSteps; s++ )
 #endif              
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    interpBTime0 = timer.elapsed();
-#endif
 #endif
 
     interp2dVector(&B[0],r4[0],r4[1],r4[2],nR_Bfield,nZ_Bfield,
@@ -1232,11 +1180,6 @@ for ( int s=0; s<nSteps; s++ )
                         BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);        
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    interpBTime1 = timer.elapsed();
-    interpETime = interpETime + (interpBTime0.wall - interpETime0.wall);
-    interpBTime = interpBTime + (interpBTime1.wall - interpBTime0.wall);
-#endif
 #endif
 
     //k4r = dt*v4
@@ -1263,10 +1206,6 @@ for ( int s=0; s<nSteps; s++ )
    p.vz = v[2] + (k1v[2] + 2*k2v[2] + 2*k3v[2] + k4v[2])/6;
 #ifdef __CUDACC__
 #else
-#if USE_BOOST
-    cpu_times operationsTime1 = timer.elapsed();
-    operationsTime = operationsTime1.wall - operationsTime0.wall;
-#endif
 #endif
 //std::cout << "Operations Time: " << operationsTime <<std::endl;
 //std::cout << "Efield Interpolation Time: " << interpETime <<std::endl;
