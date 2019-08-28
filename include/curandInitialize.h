@@ -11,7 +11,6 @@
 #include <iostream>
 #include "Particles.h"
 #include "libconfig.h++"
-#include <boost/random.hpp>
 
 
 struct curandInitialize{
@@ -46,7 +45,6 @@ struct curandInitialize{
 
         curand_init(indx, 0, 0, &s[indx]);
 #else
-        //boost::random::mt19937 ss;
         std::random_device randDevice;
         std::mt19937 s0(randDevice());
         s[indx] = s0;

@@ -39,11 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#if USE_BOOST
-#include "boost/filesystem.hpp"
-#include <boost/random.hpp>
-#include <boost/timer/timer.hpp>
-#endif
+//#include <experimental/filesystem>
 
 #ifdef __CUDACC__
 #include <curand.h>
@@ -65,57 +61,26 @@
 #include <thrust/sequence.h>
 #include <thrust/sort.h>
 #include <thrust/transform.h>
-using namespace std;
-using namespace libconfig;
-
-#if USE_BOOST
-using namespace boost::timer;
-#endif
-
-using namespace netCDF;
-using namespace exceptions;
-using namespace netCDF::exceptions;
 
 int main(int argc, char **argv, char **envp) {
-  typedef std::chrono::high_resolution_clock Time;
-  typedef std::chrono::duration<float> fsec;
-  auto GITRstart_clock = Time::now();
+  typedef std::chrono::high_resolution_clock gitr_time;
+  auto gitr_start_clock = gitr_time::now();
+
+  //Set default processes per node to 1
   int ppn = 1;
+
+  //Set default input file string
   std::string inputFile = "gitrInput.cfg";
+
 #if USE_MPI > 0
   // Initialize the MPI environment
   MPI_Init(&argc, &argv);
 #endif
-  int counter;
-  printf("Program Name Is: %s", argv[0]);
-  if (argc == 1)
-    printf("\nNo Extra Command Line Argument Passed Other Than Program Name");
-  if (argc >= 2) {
-    printf("\nNumber Of Arguments Passed: %d", argc);
-    printf("\n----Following Are The Command Line Arguments Passed----");
-    for (counter = 0; counter < argc; counter++) {
-      printf("\nargv[%d]: %s", counter, argv[counter]);
-      if (std::string(argv[counter]) == "-nGPUPerNode") {
-        if (counter + 1 < argc) { // Make sure we aren't at the end of argv!
-          ppn = std::stoi(argv[counter + 1]);
-          printf("\nGITR set to use %d GPUs per node", ppn);
-        } else { // Uh-oh, there was no argument to the destination option.
-          std::cerr << "--nGPUPerNode option requires one argument."
-                    << std::endl;
-          return 1;
-        }
-      }
-      if (std::string(argv[counter]) == "-i") {
-        if (counter + 1 < argc) { // Make sure we aren't at the end of argv!
-          inputFile = argv[counter + 1];
-          printf("\nGITR input file set to %s", inputFile.c_str());
-        } else { // Uh-oh, there was no argument to the destination option.
-          std::cerr << "-i option requires one argument" << std::endl;
-          return 1;
-        }
-      }
-    }
-  }
+ 
+  // read comand line arguments for specifying number of ppn (or gpus per node)
+  // and specify input file if different than default
+  // -nGPUPerNode and -i respectively
+  read_comand_line_args(argc,argv,ppn,inputFile);
 
 #if USE_MPI > 0
   // Get the number of processes
@@ -142,17 +107,11 @@ int main(int argc, char **argv, char **envp) {
   int world_rank = 0;
   int world_size = 1;
 #endif
-  //#if USE_CUDA > 0
-  //#else
-  //    omp_set_num_threads(24);
-  //    int num_threads = omp_get_max_threads();
-  //
-  //    std::cout << " rank and max num threads " << world_rank << " " <<
-  //    num_threads << std::endl;
-  //#endif
+  
   // Prepare config files for import
-  Config cfg, cfg_geom;
+  libconfig::Config cfg, cfg_geom;
   std::string input_path = "input/";
+  
   if (world_rank == 0) {
     // Parse and read input file
     std::cout << "Open configuration file " << input_path << inputFile
@@ -172,57 +131,20 @@ int main(int argc, char **argv, char **envp) {
     checkFlags(cfg);
 #endif
   }
+
 // show memory usage of GPU
-#if USE_CUDA
-  if (world_rank == 0) {
-    size_t free_byte;
-    size_t total_byte;
-    cudaError_t cuda_status = cudaMemGetInfo(&free_byte, &total_byte);
+print_gpu_memory_usage(world_rank);
 
-    if (cudaSuccess != cuda_status) {
-
-      printf("Error: cudaMemGetInfo fails, %s \n",
-             cudaGetErrorString(cuda_status));
-      exit(1);
-    }
-
-    double free_db = (double)free_byte;
-    double total_db = (double)total_byte;
-    double used_db = total_db - free_db;
-
-    printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
-           used_db / 1024.0 / 1024.0, free_db / 1024.0 / 1024.0,
-           total_db / 1024.0 / 1024.0);
-    int nDevices;
-    int nThreads;
-    cudaGetDeviceCount(&nDevices);
-    std::cout << "number of devices gotten " << nDevices << std::endl;
-    for (int i = 0; i < nDevices; i++) {
-      cudaDeviceProp prop;
-      cudaGetDeviceProperties(&prop, i);
-      printf("Device Number: %d\n", i);
-      printf("  Device name: %s\n", prop.name);
-      printf("  Memory Clock Rate (KHz): %d\n", prop.memoryClockRate);
-      printf("  Memory Bus Width (bits): %d\n", prop.memoryBusWidth);
-      printf("  Peak Memory Bandwidth (GB/s): %f\n\n",
-             2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6);
-      printf("  Total number of threads: %d\n",
-             prop.maxThreadsPerMultiProcessor);
-      nThreads = prop.maxThreadsPerMultiProcessor;
-    }
-  }
-#endif
-#if USE_BOOST > 0
-  std::string output_folder = "output";
-  // Output
-  boost::filesystem::path dir(output_folder);
-  if (!(boost::filesystem::exists(dir))) {
-    std::cout << "Doesn't Exist in main" << std::endl;
-    if (boost::filesystem::create_directory(dir)) {
-      std::cout << " Successfully Created " << std::endl;
-    }
-  }
-#endif
+//  std::experimental::filesystem::path output_folder = "output";
+//  // Output
+//
+//  //boost::filesystem::path dir(output_folder);
+//  if (!(std::experimental::filesystem::exists(output_folder))) {
+//    std::cout << "Doesn't Exist in main" << std::endl;
+//    if (std::experimental::filesystem::create_directory(output_folder)) {
+//      std::cout << " Successfully Created " << std::endl;
+//    }
+//  }
 
   // Background species info
   float background_Z = 0.0, background_amu = 0.0;
@@ -248,9 +170,9 @@ int main(int argc, char **argv, char **envp) {
   // std::cout << "called operator" << endl;
   sim::Array<float> testArray1(100);
   testArray1.resize(10);
-  auto finish_clock0nc = Time::now();
+  auto finish_clock0nc = gitr_time::now();
   typedef std::chrono::duration<float> fsec0nc;
-  fsec0nc fs0nc = finish_clock0nc - GITRstart_clock;
+  fsec0nc fs0nc = finish_clock0nc - gitr_start_clock;
   //printf("Time taken for geometry import is %6.3f (secs) \n", fs0nc.count());
   
   
@@ -302,13 +224,13 @@ int main(int argc, char **argv, char **envp) {
   int nSurfaces = 0;
   if (world_rank == 0) {
     try {
-      Setting &geom = cfg_geom.lookup("geom");
+      libconfig::Setting &geom = cfg_geom.lookup("geom");
       std::cout << "Got geom setting" << std::endl;
       nLines = geom["x1"].getLength();
       std::cout << "Just read nLines " << nLines << std::endl;
       std::cout << "Number of Geometric Objects To Load: " << nLines
                 << std::endl;
-    } catch (const SettingNotFoundException &nfex) {
+    } catch (const libconfig::SettingNotFoundException &nfex) {
       std::cerr << "No 'geom' setting in configuration file." << std::endl;
     }
   }
@@ -3144,9 +3066,9 @@ int main(int argc, char **argv, char **envp) {
               << particleSourceZ[i] << particleSourceSpaceCDF[i] << std::endl;
   }
   std::random_device randDevice;
-  boost::random::mt19937 s0;
+  //boost::random::mt19937 s0;
   s0.seed(123456);
-  boost::random::uniform_01<> dist01;
+  //boost::random::uniform_01<> dist01;
   float rand0 = 0.0;
   int lowInd = 0;
   int currentSegment = 0;
@@ -3208,8 +3130,8 @@ int main(int argc, char **argv, char **envp) {
   }
 #elif PARTICLE_SOURCE_ENERGY == 2
 #endif
-  boost::random::mt19937 sE;
-  boost::random::uniform_01<> dist01E;
+  //boost::random::mt19937 sE;
+  //boost::random::uniform_01<> dist01E;
   float randE = 0.0;
   int lowIndE = 0;
 #endif
@@ -3657,9 +3579,6 @@ int main(int argc, char **argv, char **envp) {
   float *finalVz = new float[nP];
   float *transitTime = new float[nP];
   float *hitWall = new float[nP];
-#if USE_BOOST
-  // cpu_timer timer;
-#endif
 
   std::cout << "Beginning random number seeds" << std::endl;
   std::uniform_real_distribution<float> dist(0, 1e6);
@@ -3679,7 +3598,7 @@ int main(int argc, char **argv, char **envp) {
   thrust::counting_iterator<std::size_t> particleEnd(
       pStartIndx[world_rank] + nActiveParticlesOnRank[world_rank] - 1);
   thrust::counting_iterator<std::size_t> particleOne(1);
-  auto randInitStart_clock = Time::now();
+  auto randInitStart_clock = gitr_time::now();
 
 #if PARTICLESEEDS > 0
 #if USE_CUDA
@@ -3724,8 +3643,8 @@ int main(int argc, char **argv, char **envp) {
 #endif
 #endif
 #endif
-  auto randInitEnd_clock = Time::now();
-  fsec fsRandInit = randInitEnd_clock - randInitStart_clock;
+  auto randInitEnd_clock = gitr_time::now();
+  std::chrono::duration<float> fsRandInit = randInitEnd_clock - randInitStart_clock;
   printf(
       "Random Number Initialize time for node %i          is %6.3f (secs) \n",
       world_rank, fsRandInit.count());
@@ -3983,13 +3902,8 @@ int main(int argc, char **argv, char **envp) {
   }
 #endif
 
-#if USE_BOOST
-  // cpu_times copyToDeviceTime = timer.elapsed();
-  // std::cout << "Initialize rand state and copyToDeviceTime: " <<
-  // copyToDeviceTime.wall*1e-9 << '\n';
-#endif
-  auto start_clock = Time::now();
-  fsec fs1 = start_clock - GITRstart_clock;
+  auto start_clock = gitr_time::now();
+  std::chrono::duration<float> fs1 = start_clock - gitr_start_clock;
   printf("Initialize time for node %i          is %6.3f (secs) \n", world_rank,
          fs1.count());
   float testFlowVec[3] = {0.0f};
@@ -4203,14 +4117,10 @@ int main(int argc, char **argv, char **envp) {
   cudaDeviceSynchronize();
 #endif
 
-  auto finish_clock = Time::now();
-  fsec fs = finish_clock - start_clock;
+  auto finish_clock = gitr_time::now();
+  std::chrono::duration<float> fs = finish_clock - start_clock;
   printf("Time taken          is %6.3f (secs) \n", fs.count());
   printf("Time taken per step is %6.3f (secs) \n", fs.count() / (float)nT);
-#if USE_BOOST
-  // cpu_times ionizeTimeGPU = timer.elapsed();
-  // std::cout << "Particle Moving Time: " << ionizeTimeGPU.wall*1e-9 << '\n';
-#endif
   // for(int i=0; i<nP;i++)
   //{
   //    std::cout << "Particle test value r1: " << i << " " <<
@@ -4462,8 +4372,8 @@ for(int i=0; i<nP ; i++)
 #endif
 #endif
   if (world_rank == 0) {
-    auto MPIfinish_clock = Time::now();
-    fsec fsmpi = MPIfinish_clock - finish_clock;
+    auto MPIfinish_clock = gitr_time::now();
+    std::chrono::duration<float> fsmpi = MPIfinish_clock - finish_clock;
     printf("Time taken for mpi reduction          is %6.3f (secs) \n",
            fsmpi.count());
   }
@@ -4855,18 +4765,6 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 #ifdef __CUDACC__
     cudaThreadSynchronize();
 #endif
-#if USE_BOOST
-    /*
-    cpu_times copyToHostTime = timer.elapsed();
-
-    cpu_times createParticlesTimeCPU = timer.elapsed();
-    std::cout << "Copy to host, bin and output time: " <<
-    (createParticlesTimeCPU.wall-copyToHostTime.wall)*1e-9 << '\n'; std::cout <<
-    "Total ODE integration time: " << moveTime*1e-9 << '\n'; std::cout << "Total
-    geometry checking time: " << geomCheckTime*1e-9 << '\n'; std::cout << "Total
-    ionization time: " << ionizTime*1e-9 << '\n';
-    */
-#endif
 #if USE_MPI > 0
 /*
     for(int i=0;i<100;i++)
@@ -4902,8 +4800,8 @@ particleArray->test4[i] << std::endl;
   MPI_Finalize();
 #endif
   if (world_rank == 0) {
-    auto GITRfinish_clock = Time::now();
-    fsec fstotal = GITRfinish_clock - GITRstart_clock;
+    auto gitr_finish_clock = gitr_time::now();
+    std::chrono::duration<float> fstotal = gitr_finish_clock - gitr_start_clock;
     printf("Total runtime for GITR is %6.3f (secs) \n", fstotal.count());
   }
   //#endif
