@@ -504,7 +504,7 @@ print_gpu_memory_usage(world_rank);
 #endif
   std::vector<std::string> hashFile;
   if (world_rank == 0) {
-    Setting &geomHash = cfg.lookup("geometry_hash");
+	  libconfig::Setting &geomHash = cfg.lookup("geometry_hash");
     for (int i = 0; i < nHashes; i++) {
       if (nHashes > 1) {
         hashFile.push_back(geomHash["fileString"][i]);
@@ -3189,7 +3189,7 @@ print_gpu_memory_usage(world_rank);
 #endif
   std::cout << "Starting psourcefile import " << std::endl;
 #if PARTICLE_SOURCE_FILE > 0 // File source
-  Config cfg_particles;
+  libconfig::Config cfg_particles;
   vector<float> xpfile(nP), ypfile(nP), zpfile(nP), vxpfile(nP), vypfile(nP),
       vzpfile(nP);
   std::string ncParticleSourceFile;
