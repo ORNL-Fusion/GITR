@@ -488,7 +488,7 @@ print_gpu_memory_usage(world_rank);
 #endif
   std::vector<std::string> hashFile;
   if (world_rank == 0) {
-    Setting &geomHash = cfg.lookup("geometry_hash");
+	  libconfig::Setting &geomHash = cfg.lookup("geometry_hash");
     for (int i = 0; i < nHashes; i++) {
       if (nHashes > 1) {
         hashFile.push_back(geomHash["fileString"][i]);

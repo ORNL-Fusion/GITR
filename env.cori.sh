@@ -1,12 +1,12 @@
 #!/bin/bash
-module swap PrgEnv-intel/6.0.4 PrgEnv-gnu
+module swap PrgEnv-intel/6.0.5 PrgEnv-gnu/6.0.5
 #module load cray-parallel-netcdf
 module load cray-netcdf
 #module load netcdf
 #module load netcdf-cxx
 module unload boost/1.63
 module load boost
-module load cray-mpich
+module load openmpi
 #module load libconfig/gcc/64/1.5 
 #module load git
 #module load mpich/ge/gcc/64/3.1
@@ -28,8 +28,8 @@ export LIBCONFIGPP_INCLUDE_DIR=$LIBCONFIGDIR/include
 export LIBCONFIG_LIBRARY=lconfig
 #LD_LIBRARY_PATH=LD_RUN_PATH
 export THRUST_INCLUDE_DIRS=/global/homes/t/tyounkin/code/thrust/include
-export NETCDF_CXX_BASEDIR=/usr/common/software/netcdf-cxx/4.2/
-export NETCDF_CXX_INCLUDE_DIR=/opt/cray/pe/netcdf/4.6.1.3/GNU/7.1/include
+export NETCDF_CXX_BASEDIR=/opt/cray/pe/netcdf/4.6.1.3/GNU/8.2
+export NETCDF_CXX_INCLUDE_DIR=$NETCDF_CXX_BASEDIR/include
 export NETCDF_CXX_LIBRARY=$NETCDF_CXX_BASEDIR/lib
 export NETCDF_INCLUDE_DIR=$NETCDF_DIR/lib
 export NETCDF_INCLUDE_DIRS=$NETCDF_DIR/include
@@ -62,9 +62,9 @@ export PYTHONPATH=/global/homes/t/tyounkin/code/libconfPython/lib/python2.7/site
 export PYTHONPATH=/global/homes/t/tyounkin/code/scipyBuild/lib/python2.7/site-packages:$PYTHONPATH
 export PYTHONPATH=/global/homes/t/tyounkin/atomIPS/atom-install-cori/GITR/python:$PYTHONPATH
 export PYTHONPATH=/global/homes/t/tyounkin/code/netcdfPython/lib.linux-x86_64-2.7:$PYTHONPATH
-export MPI_C_LIBRARIES=mpich
-export MPI_C_INCLUDE_PATH=/opt/cray/pe/mpt/7.6.2/gni/mpich-gnu/5.1/include
-export MPI_CXX_LIBRARIES=mpichcxx
-export MPI_CXX_INCLUDE_PATH=/opt/cray/pe/mpt/7.6.2/gni/mpich-gnu/5.1/include
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LIBCONFIGLIB:/opt/cray/pe/mpt/7.6.2/gni/mpich-gnu/5.1/lib
+#export MPI_C_LIBRARIES=mpicc
+#export MPI_C_INCLUDE_PATH=/opt/cray/pe/mpt/7.7.6/gni/mpich-gnu/8.2/include
+#export MPI_CXX_LIBRARIES=mpichcxx
+#export MPI_CXX_INCLUDE_PATH=/opt/cray/pe/mpt/7.7.6/gni/mpich-gnu/8.2/include
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LIBCONFIGLIB
 export LD_LIBRARY_PATH
