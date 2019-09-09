@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-//#include <experimental/filesystem>
+#include <filesystem>
 
 #ifdef __CUDACC__
 #include <curand.h>
@@ -135,16 +135,16 @@ int main(int argc, char **argv, char **envp) {
 // show memory usage of GPU
 print_gpu_memory_usage(world_rank);
 
-//  std::experimental::filesystem::path output_folder = "output";
-//  // Output
-//
-//  //boost::filesystem::path dir(output_folder);
-//  if (!(std::experimental::filesystem::exists(output_folder))) {
-//    std::cout << "Doesn't Exist in main" << std::endl;
-//    if (std::experimental::filesystem::create_directory(output_folder)) {
-//      std::cout << " Successfully Created " << std::endl;
-//    }
-//  }
+  std::filesystem::path output_folder = "output";
+  // Output
+
+  //boost::filesystem::path dir(output_folder);
+  if (!(std::filesystem::exists(output_folder))) {
+    std::cout << "Doesn't Exist in main" << std::endl;
+    if (std::filesystem::create_directory(output_folder)) {
+      std::cout << " Successfully Created " << std::endl;
+    }
+  }
 
   // Background species info
   float background_Z = 0.0, background_amu = 0.0;
@@ -158,18 +158,6 @@ print_gpu_memory_usage(world_rank);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-  // Bfield initialization
-  // if(world_rank == 0)
-  //{
-  // Field blankField;
-  // Field
-  // bfield(BFIELD_INTERP,input_path,cfg,"backgroundPlasmaProfiles.Bfield.");
-  // bfield(0,input_path,cfg,"backgroundPlasmaProfiles.Bfield.");
-  //}
-  // blankField(1,3,5);
-  // std::cout << "called operator" << endl;
-  sim::Array<float> testArray1(100);
-  testArray1.resize(10);
   auto finish_clock0nc = gitr_time::now();
   typedef std::chrono::duration<float> fsec0nc;
   fsec0nc fs0nc = finish_clock0nc - gitr_start_clock;
@@ -301,10 +289,6 @@ print_gpu_memory_usage(world_rank);
     getVariable(cfg, "surfaces.flux.nA", nAdist);
     getVariable(cfg, "surfaces.flux.A0", A0dist);
     getVariable(cfg, "surfaces.flux.A", Adist);
-    //std::cout << "dist nE E0 E nA A0 A" << nEdist << " " << E0dist << " "
-    //          << Edist << " " << nAdist << " " << A0dist << " " << Adist
-    //          << std::endl;
-    //std::cout << "nLines before surfaces " << nLines << std::endl;
   }
 #if USE_MPI > 0
   const int nSurfaceMembers = 18;
@@ -415,68 +399,68 @@ print_gpu_memory_usage(world_rank);
                  nY_closeGeomTotal, nZ_closeGeomTotal, nHashPoints.data(),
                  nHashPointsTotal, nGeomHash);
     std::cout << "made it here" << std::endl;
-    // Setting& geomHash = cfg.lookup("geometry_hash");
-    // if(nHashes > 1)u
-    //{
-    //  for(int i=0; i<nHashes;i++)
-    //  {
-    //    nR_closeGeom[i] = geomHash["nR_closeGeom"][i];
-    //    nZ_closeGeom[i] = geomHash["nZ_closeGeom"][i];
-    //    n_closeGeomElements[i] = geomHash["n_closeGeomElements"][i];
-    //    std::cout << "hash nr ny nz total " << n_closeGeomElements[i] << " "
-    //    << nR_closeGeom[i]  << " " << nZ_closeGeom[i]<< std::endl;
-    //  }
-    //}
-    // else
-    //{
-    //  getVariable(cfg,geomHashCfg+"nR_closeGeom",nR_closeGeom[0]);
-    //  getVariable(cfg,geomHashCfg+"nZ_closeGeom",nZ_closeGeom[0]);
-    //  getVariable(cfg,geomHashCfg+"n_closeGeomElements",n_closeGeomElements[0]);
-    //}
-    // for(int j=0;j<nHashes;j++)
-    //{
-    //  nGeomHash = nGeomHash +
-    //  nR_closeGeom[j]*nZ_closeGeom[j]*n_closeGeomElements[j];
-    //  nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
-    //  nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
-    //}
-    //#if USE3DTETGEOM > 0
-    // if(nHashes > 1)
-    //{
-    //  for(int i=0; i<nHashes;i++)
-    //  {
-    //    nY_closeGeom[i] = geomHash["nY_closeGeom"][i];
-    //  }
-    //}
-    // else
-    //{
-    //  getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom[0]);
-    //}
-    //#endif
-    // nGeomHash = 0;
-    // nR_closeGeomTotal = 0;
-    // nY_closeGeomTotal = 0;
-    // nZ_closeGeomTotal = 0;
-    // nGeomHash = 0;
-    // for(int j=0;j<nHashes;j++)
-    //{
-    //  if(nHashes > 1)
-    //  {
-    //    nHashPoints[j] =nR_closeGeom[j]*nY_closeGeom[j]*nZ_closeGeom[j];
-    //  }
-    //  else
-    //  {
-    //    nHashPoints[j] =nR_closeGeom[j]*nZ_closeGeom[j];
-    //  }
-    //  nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
-    //  nGeomHash = nGeomHash + nHashPoints[j]*n_closeGeomElements[j];
-    //  nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
-    //  nY_closeGeomTotal = nY_closeGeomTotal + nY_closeGeom[j];
-    //  nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
-    //}
-    // std::cout << "hhhash nr ny nz total " << nGeomHash << " " <<
-    // nR_closeGeomTotal << " " << nY_closeGeomTotal << " " <<
-    // nZ_closeGeomTotal<< std::endl;
+     Setting& geomHash = cfg.lookup("geometry_hash");
+     if(nHashes > 1)
+    {
+      for(int i=0; i<nHashes;i++)
+      {
+        nR_closeGeom[i] = geomHash["nR_closeGeom"][i];
+        nZ_closeGeom[i] = geomHash["nZ_closeGeom"][i];
+        n_closeGeomElements[i] = geomHash["n_closeGeomElements"][i];
+        std::cout << "hash nr ny nz total " << n_closeGeomElements[i] << " "
+        << nR_closeGeom[i]  << " " << nZ_closeGeom[i]<< std::endl;
+      }
+    }
+     else
+    {
+      getVariable(cfg,geomHashCfg+"nR_closeGeom",nR_closeGeom[0]);
+      getVariable(cfg,geomHashCfg+"nZ_closeGeom",nZ_closeGeom[0]);
+      getVariable(cfg,geomHashCfg+"n_closeGeomElements",n_closeGeomElements[0]);
+    }
+     for(int j=0;j<nHashes;j++)
+    {
+      nGeomHash = nGeomHash +
+      nR_closeGeom[j]*nZ_closeGeom[j]*n_closeGeomElements[j];
+      nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
+      nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
+    }
+    #if USE3DTETGEOM > 0
+     if(nHashes > 1)
+    {
+      for(int i=0; i<nHashes;i++)
+      {
+        nY_closeGeom[i] = geomHash["nY_closeGeom"][i];
+      }
+    }
+     else
+    {
+      getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom[0]);
+    }
+    #endif
+     nGeomHash = 0;
+     nR_closeGeomTotal = 0;
+     nY_closeGeomTotal = 0;
+     nZ_closeGeomTotal = 0;
+     nGeomHash = 0;
+     for(int j=0;j<nHashes;j++)
+    {
+      if(nHashes > 1)
+      {
+        nHashPoints[j] =nR_closeGeom[j]*nY_closeGeom[j]*nZ_closeGeom[j];
+      }
+      else
+      {
+        nHashPoints[j] =nR_closeGeom[j]*nZ_closeGeom[j];
+      }
+      nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
+      nGeomHash = nGeomHash + nHashPoints[j]*n_closeGeomElements[j];
+      nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
+      nY_closeGeomTotal = nY_closeGeomTotal + nY_closeGeom[j];
+      nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
+    }
+     std::cout << "hhhash nr ny nz total " << nGeomHash << " " <<
+     nR_closeGeomTotal << " " << nY_closeGeomTotal << " " <<
+     nZ_closeGeomTotal<< std::endl;
   }
 #if USE_MPI > 0
   std::cout << " mpi broadcast hash " << std::endl;
@@ -3189,7 +3173,7 @@ print_gpu_memory_usage(world_rank);
 #endif
   std::cout << "Starting psourcefile import " << std::endl;
 #if PARTICLE_SOURCE_FILE > 0 // File source
-  Config cfg_particles;
+  libconfig::Config cfg_particles;
   vector<float> xpfile(nP), ypfile(nP), zpfile(nP), vxpfile(nP), vypfile(nP),
       vzpfile(nP);
   std::string ncParticleSourceFile;
@@ -3271,7 +3255,7 @@ print_gpu_memory_usage(world_rank);
   int surfIndexMod = 0;
   float eVec[3] = {0.0};
   for (int i = 0; i < nP; i++) {
-// std::cout<< "setting particle " << i << std::endl;
+  //std::cout<< "setting particle " << i << std::endl;
 #if PARTICLE_SOURCE_SPACE > 0 // File source
 #if USE3DTETGEOM > 0
     surfIndexMod = i % nSourceSurfaces;
@@ -3463,6 +3447,7 @@ print_gpu_memory_usage(world_rank);
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
+    std::cout << "writing particles out file" << std::endl;
     NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
     NcDim pNP = ncFile_particles.addDim("nP", nP);
     NcVar p_surfNormx = ncFile_particles.addVar("surfNormX", ncFloat, pNP);
@@ -3484,6 +3469,7 @@ print_gpu_memory_usage(world_rank);
     p_y.putVar(&py[0]);
     p_z.putVar(&pz[0]);
     ncFile_particles.close();
+    std::cout << "finished writing particles out file" << std::endl;
 #if USE_MPI > 0
   }
 #endif
