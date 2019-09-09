@@ -1,8 +1,7 @@
 #!/bin/bash
 source ../env.mac.sh
 
-cmake -DCMAKE_CXX_FLAGS="-g" -DCMAKE_C_FLAGS="-g" \
-    -DTHRUST_INCLUDE_DIR=$THRUST_DIR \
+cmake -DTHRUST_INCLUDE_DIR=$THRUST_DIR \
     -DCMAKE_C_COMPILER=clang \
     -DCMAKE_CXX_COMPILER=clang++ \
     -DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE \
