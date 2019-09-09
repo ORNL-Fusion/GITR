@@ -14,7 +14,7 @@ find_package(Thrust REQUIRED)
 find_package(NetCDF COMPONENTS CXX REQUIRED)
 find_package(LibConfig)
 #find_package (Boost COMPONENTS REQUIRED filesystem timer type_index)
-find_package(Boost 1.61.0 COMPONENTS REQUIRED filesystem timer)
+find_package(Boost 1.65.1 COMPONENTS REQUIRED chrono system filesystem timer)
 IF (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIR})
     include_directories(${Boost_LIBRARY_DIR})
@@ -27,9 +27,12 @@ IF (MPI_FOUND)
 endif()
 find_package(OpenMP REQUIRED)
 # Add includes
+message( STATUS "cmake source dir " ${CMAKE_SOURCE_DIR})
+include_directories(${NETCDF_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
 include_directories(${THRUST_INCLUDE_DIRS})
-include_directories(${NETCDF_INCLUDE_DIRS})
+message(" netcdf include dirs ${NETCDF_INCLUDE_DIRS}")
+#include_directories(/opt/local/include)
 include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 # Simulation defines
 add_definitions(-DUSE_CUDA=${USE_CUDA}
@@ -40,7 +43,11 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DUSEIONIZATION=${USEIONIZATION}
         -DUSERECOMBINATION=${USERECOMBINATION}
         -DUSEPERPDIFFUSION=${USEPERPDIFFUSION}
+        -DUSEPARDIFFUSION=${USEPARDIFFUSION}
         -DUSECOULOMBCOLLISIONS=${USECOULOMBCOLLISIONS}
+        -DUSEFRICTION=${USEFRICTION}
+        -DUSEANGLESCATTERING=${USEANGLESCATTERING}
+        -DUSEHEATING=${USEHEATING}
         -DUSETHERMALFORCE=${USETHERMALFORCE}
         -DUSESURFACEMODEL=${USESURFACEMODEL}
         -DUSESHEATHEFIELD=${USESHEATHEFIELD}
@@ -73,6 +80,7 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DUSEFIELDALIGNEDVALUES=${USEFIELDALIGNEDVALUES}
         -DFLUX_EA=${FLUX_EA}
         -DFORCE_EVAL=${FORCE_EVAL}
+        -DUSE_SORT=${USE_SORT}
         -DCHECK_COMPATIBILITY=${CHECK_COMPATIBILITY})
 
 # Setup for CUDA backend
@@ -92,7 +100,7 @@ if (${OPENMP})
     Message("Enabling OpenMP backend")
     find_package(OpenMP REQUIRED)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -Wno-c++11-narrowing -O3")#-g -G -Wno-c++11-narrowing -fstack-protector-all -fstack-check -W -Wall") #-O3 -g -G
     set_source_files_properties(${SRC_FILES} PROPERTIES LANGUAGE CXX)
     add_executable(GITR ${SRC_FILES})
     add_definitions("-x c++ -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP")
@@ -112,13 +120,16 @@ if (${CUDA_DEBUG})
 endif ()
 
 # Add libraries
-target_link_libraries(GITR ${NETCDF_CXX_LIBRARIES})
+message(" netcdf libs ${NETCDF_C_LIBRARIES}")
+message(" netcdf libs ${NETCDF_CXX_LIBRARIES}")
 target_link_libraries(GITR ${NETCDF_C_LIBRARIES})
-#target_link_libraries(GITR /home/tqd/code/netcdfBuild/lib/libnetcdf.so.11)
+target_link_libraries(GITR ${NETCDF_CXX_LIBRARIES})
 target_link_libraries(GITR ${LIBCONFIGPP_LIBRARIES})
-target_link_libraries(GITR Boost::system Boost::filesystem Boost::timer)
+#target_link_libraries(GITR Boost::system Boost::filesystem Boost::timer)
 target_link_libraries(GITR ${MPI_C_LIBRARIES})
-    #libboost_system};${lboost_timer};${lboost_filesystem})
+target_link_libraries(GITR ${MPI_CXX_LIBRARIES})
+target_link_libraries(GITR ${Boost_LIBRARIES})
+#target_link_libraries(GITR ${/Users/tyounkin/Code/boostBuild/lib/libboost_system.a /Users/tyounkin/Code/boostBuild/lib/libboost_timer.a /Users/tyounkin/Code/boostBuild/lib/libboost_filesystem.a})
 # Install binaries
 install(TARGETS GITR DESTINATION bin)
 get_directory_property( DirDefs DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS )
