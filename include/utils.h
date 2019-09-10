@@ -53,21 +53,12 @@ void OUTPUT1d(std::string folder,std::string outname,int nX, int *array2d);
 void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, int *array3d);
 
 template <typename T>
-T getVariable (libconfig::Config &cfg,const std::string& s, T &a)
-{
-  T tmp;
-  if(cfg.lookupValue(s, tmp))
-    {
-      std::cout << s << " = " << tmp << std::endl;
-    }
-  else
-    {
-      std::cout << "ERROR: Failed importing " << s << std:: endl;
-      exit(0);
-    }
-  a = tmp;
-  return a;
-}
+T getVariable (libconfig::Config &cfg,const std::string& s, T &a);
+
+extern template int getVariable(libconfig::Config &cfg,const std::string& s, int &a);
+extern template float getVariable(libconfig::Config &cfg,const std::string& s, float &a);
+extern template double getVariable(libconfig::Config &cfg,const std::string& s, double &a);
+extern template std::string getVariable(libconfig::Config &cfg,const std::string& s, std::string &a);
 template <typename T>
 int readFileVar(const std::string& fileName,const std::string& section,const std::string& varName,T &x ) {
        std::string profiles_folder = "output/profiles";
