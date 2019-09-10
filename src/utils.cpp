@@ -66,9 +66,8 @@ void checkFlags(libconfig::Config &cfg)
 {
     std::cout << "Checking compatibility of compile flags with input file "
                       << std::endl;
-    const char *flags0[] = {//"flags.USE_CUDA","flags.USEMPI",
-                            //"flags.USE_MPI","flags.USE_OPENMP",
-                            //"flags.USE_BOOST",
+    const char *flags0[] = {//"flags.USE_CUDA",
+                            //"flags.USE_MPI",
                             "flags.USEIONIZATION",
                             "flags.USERECOMBINATION","flags.USEPERPDIFFUSION",
                             "flags.USECOULOMBCOLLISIONS",
@@ -88,7 +87,7 @@ void checkFlags(libconfig::Config &cfg)
                             "flags.PARTICLE_SOURCE_FILE",
                             "flags.SPECTROSCOPY","flags.USE3DTETGEOM","flags.USECYLSYMM",
                             "flags.FLUX_EA","flags.FORCE_EVAL"};
-        int flagValues[] =  {//USE_CUDA, USEMPI,USE_MPI,USE_OPENMP, USE_BOOST,
+        int flagValues[] =  {//USE_CUDA, USE_MPI,
                              USEIONIZATION,
                              USERECOMBINATION,USEPERPDIFFUSION,USECOULOMBCOLLISIONS,
                              USETHERMALFORCE,USESURFACEMODEL,USESHEATHEFIELD,BIASED_SURFACE,

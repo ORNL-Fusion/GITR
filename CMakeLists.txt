@@ -14,37 +14,22 @@ add_library(YourLib ${SRC_FILES} ${HEADER_FILES} )
 find_package(Thrust REQUIRED)
 find_package(NetCDF COMPONENTS CXX REQUIRED)
 find_package(LibConfig)
-#find_package (Boost COMPONENTS REQUIRED filesystem timer type_index)
-#find_package(Boost 1.65.1 COMPONENTS REQUIRED chrono system filesystem timer)
-#IF (Boost_FOUND)
-#    include_directories(${Boost_INCLUDE_DIR})
-#    include_directories(${Boost_LIBRARY_DIR})
-#    message( STATUS "Boost lib: " ${Boost_LIBRARY_DIR} )
-#endif()
-#message( STATUS "Boost lib: " ${Boost_LIBRARY_DIR} )
 find_package(MPI)
 IF (MPI_FOUND)
     include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 endif()
 find_package(OpenMP REQUIRED)
 # Add includes
-message( STATUS "cmake source dir " ${CMAKE_SOURCE_DIR})
 include_directories(${NETCDF_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
 include_directories(${THRUST_INCLUDE_DIRS})
-message(" netcdf include dirs ${NETCDF_INCLUDE_DIRS}")
-#include_directories(/opt/local/include)
 include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 # Simulation defines
 add_definitions(-DUSE_CUDA=${USE_CUDA}
-        -DUSEMPI=${USEMPI}
         -DUSE_MPI=${USE_MPI}
-        -DUSE_OPENMP=${USE_OPENMP}
-        -DUSE_BOOST=${USE_BOOST}
         -DUSEIONIZATION=${USEIONIZATION}
         -DUSERECOMBINATION=${USERECOMBINATION}
         -DUSEPERPDIFFUSION=${USEPERPDIFFUSION}
-        -DUSEPARDIFFUSION=${USEPARDIFFUSION}
         -DUSECOULOMBCOLLISIONS=${USECOULOMBCOLLISIONS}
         -DUSEFRICTION=${USEFRICTION}
         -DUSEANGLESCATTERING=${USEANGLESCATTERING}
@@ -122,25 +107,20 @@ if (${CUDA_DEBUG})
 endif ()
 
 # Add libraries
-message(" netcdf libs ${NETCDF_C_LIBRARIES}")
-message(" netcdf libs ${NETCDF_CXX_LIBRARIES}")
 target_link_libraries(GITR ${NETCDF_C_LIBRARIES})
 target_link_libraries(GITR ${NETCDF_CXX_LIBRARIES})
 target_link_libraries(tests ${NETCDF_C_LIBRARIES})
 target_link_libraries(tests ${NETCDF_CXX_LIBRARIES})
-#target_link_libraries(GITR /usr/local/lib/libnetcdf_c++4.dylib)
-#target_link_libraries(GITR /usr/local/lib/libnetcdf.dylib)
 target_link_libraries(GITR ${LIBCONFIGPP_LIBRARIES})
 target_link_libraries(tests ${LIBCONFIGPP_LIBRARIES})
-#target_link_libraries(GITR Boost::system Boost::filesystem Boost::timer)
 target_link_libraries(GITR ${MPI_C_LIBRARIES})
 target_link_libraries(GITR ${MPI_CXX_LIBRARIES})
 target_link_libraries(tests ${MPI_C_LIBRARIES})
 target_link_libraries(tests ${MPI_CXX_LIBRARIES})
-#target_link_libraries(GITR ${Boost_LIBRARIES})
 target_link_libraries(GITR YourLib)
 target_link_libraries(tests YourLib)
-#target_link_libraries(GITR ${/Users/tyounkin/Code/boostBuild/lib/libboost_system.a /Users/tyounkin/Code/boostBuild/lib/libboost_timer.a /Users/tyounkin/Code/boostBuild/lib/libboost_filesystem.a})
+enable_testing()
+add_test(TestName tests)
 # Install binaries
 install(TARGETS GITR DESTINATION bin)
 get_directory_property( DirDefs DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS )
