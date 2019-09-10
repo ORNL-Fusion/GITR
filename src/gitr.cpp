@@ -20,7 +20,6 @@
 #include "math.h"
 #include "ncFile.h"
 #include "ompPrint.h"
-#include "parDiffusion.h"
 #include "recombine.h"
 #include "spectroscopy.h"
 #include "surfaceModel.h"
@@ -50,9 +49,7 @@
 #include <mpi.h>
 #endif
 
-#if USE_OPENMP
 #include <omp.h>
-#endif
 
 #include "sortParticles.h"
 #include <thrust/binary_search.h>
@@ -3593,7 +3590,7 @@ print_gpu_memory_usage(world_rank);
   sim::Array<std::mt19937> state1(nParticles);
 #endif
 #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 ||       \
-    USEPARDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
+    USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
 #if USE_CUDA
   // if(world_rank == 0)
   //{
@@ -3693,17 +3690,6 @@ print_gpu_memory_usage(world_rank);
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
       &bz.front(), &by.front());
-#endif
-#if USEPARDIFFUSION > 0
-  parDiffusion parDiffusion0(
-      particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
-      &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),
-      &flowVr.front(), &flowVz.front(), &flowVt.front(), nR_Dens, nZ_Dens,
-      &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
-      &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
-      background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-      &bfieldGridz.front(), &br.front(), &bz.front(), &by.front());
-
 #endif
 #if USECOULOMBCOLLISIONS > 0
   coulombCollisions coulombCollisions0(
@@ -3930,42 +3916,6 @@ print_gpu_memory_usage(world_rank);
   //    unsigned int num_cpu_threads = omp_get_num_threads();
   //    printf("Number of CPU threads %d (ID %d)\n", cpu_thread_id,
   //    num_cpu_threads);
-#if USE_OPENMP
-  // for(int device=0;device <1;device++)
-  //{ cudaSetDevice(device);
-  // int nDevices=32;
-  // std::cout << "nDevices " << nDevices << std::endl;
-  // omp_set_num_threads(nDevices);  // create as many CPU threads as there are
-  // CUDA devices
-  // std::cout << "nDevices " << nDevices << std::endl;
-  int nDevices = 0;
-#pragma omp parallel
-  {
-    nDevices = omp_get_num_threads();
-    // tid = omp_get_thread_num();
-    unsigned int cpu_thread_id = omp_get_thread_num();
-    unsigned int num_cpu_threads = omp_get_num_threads();
-    // int gpu_id = -1;
-    // cudaSetDevice(cpu_thread_id);
-    // cudaSetDevice(cpu_thread_id % nDevices);        // "% num_gpus" allows
-    // more CPU threads than GPU devices if(cpu_thread_id ==0 ) cudaSetDevice(0);
-    // if(cpu_thread_id ==1 ) cudaSetDevice(3);
-    // cudaGetDevice(&gpu_id);
-    printf("CPU thread %d (of %d) uses CUDA device %d\n", cpu_thread_id,
-           num_cpu_threads);
-#if USE_MPI > 0
-    printf("Hello world from processor %s, rank %d"
-           " out of %d processors and cpu_thread_id %i \n",
-           processor_name, world_rank, world_size, cpu_thread_id);
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
-    std::cout << "nDevices " << nDevices << "  " << cpu_thread_id << " "
-              << num_cpu_threads << " particle index "
-              << cpu_thread_id * nP / nDevices << " "
-              << (cpu_thread_id + 1) * nP / nDevices - 1 << std::endl;
-// int cpu_thread_id = 0;
-// nDevices = 2;
-#endif
 #if USE_MPI > 0
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -4058,13 +4008,6 @@ print_gpu_memory_usage(world_rank);
 #endif
 #endif
 
-#if USEPARDIFFUSION > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd,
-                       parDiffusion0);
-      thrust::for_each(thrust::device, particleBegin, particleEnd,
-                       geometry_check0);
-#endif
-
 #if USECOULOMBCOLLISIONS > 0
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        coulombCollisions0);
@@ -4095,9 +4038,6 @@ print_gpu_memory_usage(world_rank);
     thrust::for_each(thrust::device, particleBegin, particleEnd, history0);
 #endif
 
-#if USE_OPENMP
-  }
-#endif
   // Ensure that all time step loop GPU kernels are complete before proceeding
 #ifdef __CUDACC__
   cudaDeviceSynchronize();
