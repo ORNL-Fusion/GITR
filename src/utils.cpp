@@ -164,6 +164,29 @@ void print_gpu_memory_usage(const int world_rank)
   }
 #endif
 }
+
+template <typename T>
+T getVariable (libconfig::Config &cfg,const std::string& s, T &a)
+{
+  T tmp;
+  if(cfg.lookupValue(s, tmp))
+    {
+      std::cout << s << " = " << tmp << std::endl;
+    }
+  else
+    {
+      std::cout << "ERROR: Failed importing " << s << std:: endl;
+      exit(0);
+    }
+  a = tmp;
+  return a;
+}
+
+template int getVariable(libconfig::Config &cfg,const std::string& s, int &a);
+template float getVariable(libconfig::Config &cfg,const std::string& s, float &a);
+template double getVariable(libconfig::Config &cfg,const std::string& s, double &a);
+template std::string getVariable(libconfig::Config &cfg,const std::string& s, std::string &a);
+
 int getDimFromFile (libconfig::Config &cfg,const std::string& file,const std::string& section,
         const std::string& s)
 {
