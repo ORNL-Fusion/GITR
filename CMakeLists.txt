@@ -83,6 +83,7 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DUSE_SORT=${USE_SORT}
         -DCHECK_COMPATIBILITY=${CHECK_COMPATIBILITY})
 
+ADD_EXECUTABLE(tests test/file_io_tests.cpp)
 # Setup for CUDA backend
 if (${CUDA})
     Message("Enabling CUDA backend")
