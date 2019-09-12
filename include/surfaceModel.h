@@ -37,7 +37,7 @@ void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNorma
                  surfaceNormalVector[1] = 0.0f;
                  surfaceNormalVector[2] = 1.0f;
                 }
-            else if (fabsf(boundaryVector[wallIndex].slope_dzdx)>= 0.75f*tol)
+            else if (std::abs(boundaryVector[wallIndex].slope_dzdx)>= 0.75f*tol)
                 {
                     surfaceNormalVector[0] = 1.0f;
                     surfaceNormalVector[1] = 0.0f;
@@ -57,8 +57,8 @@ void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNorma
 #if USECYLSYMM > 0 
             float theta = std::atan2f(y,x);
             float Sr = surfaceNormalVector[0];
-            surfaceNormalVector[0] = cosf(theta)*Sr;
-            surfaceNormalVector[1] = sinf(theta)*Sr;
+            surfaceNormalVector[0] = std::cos(theta)*Sr;
+            surfaceNormalVector[1] = std::sin(theta)*Sr;
 #endif            
 #endif
 }
@@ -82,7 +82,7 @@ double stoppingPower (Particles * particles,int indx, double Mtarget, double Zta
 
 	E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/Q;
 	reducedEnergy = E0*(Mtarget/(particles->amu[indx]+Mtarget))*(screenLength/(particles->Z[indx]*Ztarget*ke2));
-	stoppingPower = 0.5*log(1.0 + 1.2288*reducedEnergy)/(reducedEnergy + 0.1728*std::sqrt(reducedEnergy) + 0.008*std::pow(reducedEnergy, 0.1504));
+	stoppingPower = 0.5*std::log(1.0 + 1.2288*reducedEnergy)/(reducedEnergy + 0.1728*std::sqrt(reducedEnergy) + 0.008*std::pow(reducedEnergy, 0.1504));
 
 	return stoppingPower;	
 }
@@ -356,19 +356,19 @@ void operator()(std::size_t indx) const {
             if(r7 > sputtProb) //reflects
             {
 	          didReflect = 1;
-                  aInterpVal = interp3d (r8,thetaImpact,log10(E0),
+                  aInterpVal = interp3d (r8,thetaImpact,std::log10(E0),
                           nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                                     angleDistGrid01,A_sputtRefDistIn,
                                     E_sputtRefDistIn,ADist_CDF_R_regrid);
-                   eInterpVal = interp3d ( r9,thetaImpact,log10(E0),
+                   eInterpVal = interp3d ( r9,thetaImpact,std::log10(E0),
                            nE_sputtRefDistOutRef,nA_sputtRefDistIn,nE_sputtRefDistIn,
                                          energyDistGrid01Ref,A_sputtRefDistIn,
                                          E_sputtRefDistIn,EDist_CDF_R_regrid );
                    //newWeight=(R0/(1.0f-sputtProb))*weight;
 		   newWeight = weight*(totalYR);
     #if FLUX_EA > 0
-              EdistInd = floor((eInterpVal-E0dist)/dEdist);
-              AdistInd = floor((aInterpVal-A0dist)/dAdist);
+              EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
+              AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
               if((EdistInd >= 0) && (EdistInd < nEdist) && 
                  (AdistInd >= 0) && (AdistInd < nAdist))
               {
@@ -392,11 +392,11 @@ void operator()(std::size_t indx) const {
             }
             else //sputters
             {
-                  aInterpVal = interp3d(r8,thetaImpact,log10(E0),
+                  aInterpVal = interp3d(r8,thetaImpact,std::log10(E0),
                           nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                           angleDistGrid01,A_sputtRefDistIn,
                           E_sputtRefDistIn,ADist_CDF_Y_regrid);
-                  eInterpVal = interp3d(r9,thetaImpact,log10(E0),
+                  eInterpVal = interp3d(r9,thetaImpact,std::log10(E0),
                            nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                            energyDistGrid01,A_sputtRefDistIn,E_sputtRefDistIn,EDist_CDF_Y_regrid);
             //if(particles->test[indx] == 0.0)
@@ -411,8 +411,8 @@ void operator()(std::size_t indx) const {
                   //newWeight=(Y0/sputtProb)*weight;
 		  newWeight=weight*totalYR;
     #if FLUX_EA > 0
-              EdistInd = floor((eInterpVal-E0dist)/dEdist);
-              AdistInd = floor((aInterpVal-A0dist)/dAdist);
+              EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
+              AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
               if((EdistInd >= 0) && (EdistInd < nEdist) && 
                  (AdistInd >= 0) && (AdistInd < nAdist))
               {
@@ -494,8 +494,8 @@ void operator()(std::size_t indx) const {
               //boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
             #endif
             #if FLUX_EA > 0
-                EdistInd = floor((E0-E0dist)/dEdist);
-                AdistInd = floor((thetaImpact-A0dist)/dAdist);
+                EdistInd = std::floor((E0-E0dist)/dEdist);
+                AdistInd = std::floor((thetaImpact-A0dist)/dAdist);
               
 	        if((EdistInd >= 0) && (EdistInd < nEdist) && 
                   (AdistInd >= 0) && (AdistInd < nAdist))

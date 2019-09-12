@@ -55,10 +55,10 @@ struct hashGeom_sheath {
     void operator()(std::size_t indx) const { 
       #if USE3DTETGEOM > 0
        float kk = indx/(nR*nY);
-       int k = floor(kk);
+       int k = std::floor(kk);
        int jjj = indx - k*nR*nY;
        float jj = 1.0*jjj/nR;
-       int j = floor(jj);
+       int j = std::floor(jj);
        int i = indx - j*nR - k*(nR*nY);
        int xyzIndx = indx;
        float x0 = x[i];
@@ -66,7 +66,7 @@ struct hashGeom_sheath {
        float z0 = z[k];
       #else
        float kk = indx/(nR);
-       int k = floor(kk);
+       int k = std::floor(kk);
        int i = indx - k*(nR);
        float x0 = x[i];
        float y0 = 0.0;
@@ -142,7 +142,7 @@ struct hashGeom_sheath {
         signDot0 = std::copysign(1.0,vectorDotProduct(crossABAp, normalVector));
         signDot1 = std::copysign(1.0,vectorDotProduct(crossBCBp, normalVector));
         signDot2 = std::copysign(1.0,vectorDotProduct(crossCACp, normalVector));
-        totalSigns = abs(signDot0 + signDot1 + signDot2);
+        totalSigns = std::abs(signDot0 + signDot1 + signDot2);
         if (totalSigns == 3.0) {
         } else
           perpDist = 1.0e6;

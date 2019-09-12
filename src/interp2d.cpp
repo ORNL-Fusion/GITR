@@ -186,7 +186,7 @@ float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {
    float At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat);
    field[2] = interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz);
 #if USECYLSYMM > 0
-            float theta = atan2f(y,x);   
+            float theta = std::atan2(y,x);   
             field[0] = std::cos(theta)*Ar - std::sin(theta)*At;
             field[1] = std::sin(theta)*Ar + std::cos(theta)*At;
 #else

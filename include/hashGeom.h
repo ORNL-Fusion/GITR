@@ -97,13 +97,13 @@ struct hashGeom {
        float kk = (indx-nHashPoints)/(nR[nHash]*nY[nHash]);
     //std::cout << "kk " << kk << std::endl;
         
-       int k = floor(kk);
+       int k = std::floor(kk);
     //std::cout << "k " << k << std::endl;
        int jjj = (indx-nHashPoints) - k*nR[nHash]*nY[nHash];
     //std::cout << "jjj " << jjj << std::endl;
        float jj = 1.0*jjj/nR[nHash];
     //std::cout << "jj " << jj << std::endl;
-       int j = floor(jj);
+       int j = std::floor(jj);
     //std::cout << "j " << j << std::endl;
        int i = (indx-nHashPoints)- j*nR[nHash] - k*(nR[nHash]*nY[nHash]);
     //std::cout << "i " << i << std::endl;
@@ -131,7 +131,7 @@ struct hashGeom {
       nZhashSum=0;
       nHashPoints=0;
        float kk = indx/(nR[0]);
-       int k = floor(kk);
+       int k = std::floor(kk);
        int i = indx - k*(nR[0]);
        float x0 = x[i];
        float y0 = 0.0;
@@ -225,7 +225,7 @@ struct hashGeom {
       signDot0 = std::copysign(1.0,vectorDotProduct(crossABAp, normalVector));
       signDot1 = std::copysign(1.0,vectorDotProduct(crossBCBp, normalVector));
       signDot2 = std::copysign(1.0,vectorDotProduct(crossCACp, normalVector));
-      totalSigns = abs(signDot0 + signDot1 + signDot2);
+      totalSigns = std::abs(signDot0 + signDot1 + signDot2);
 
       if (totalSigns == 3.0)
       {
