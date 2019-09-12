@@ -18,10 +18,10 @@
 
 #ifdef __GNUC__ 
 #include <random>
-#include <stdlib.h>
 #endif
 
 #include "interpRateCoeff.hpp"
+#include <cmath>
 
 struct hashGeom_sheath {
    //int k;
@@ -114,7 +114,7 @@ struct hashGeom_sheath {
       p[0] = a*t + x0;
       p[1] = b*t + y0;
       p[2] = c*t + z0;
-      float perpDist = sqrt((x0-p[0])*(x0-p[0]) + (y0-p[1])*(y0-p[1]) + (z0-p[2])*(z0-p[2]));
+      float perpDist = std::sqrt((x0-p[0])*(x0-p[0]) + (y0-p[1])*(y0-p[1]) + (z0-p[2])*(z0-p[2]));
     #endif
       vectorAssign(boundary[l].x1, boundary[l].y1, 
           boundary[l].z1, A);    
@@ -159,7 +159,7 @@ struct hashGeom_sheath {
         if (cEdge1mag < 0.0 && cEdge1mag > -1.0) {
           vectorScalarMult(cEdge1mag, AB, cEdge1);
           vectorSubtract(pA, cEdge1, dEdge1);
-          distE1 = sqrt(vectorDotProduct(dEdge1, dEdge1));
+          distE1 = std::sqrt(vectorDotProduct(dEdge1, dEdge1));
         }
 #if USE3DTETGEOM > 0
         float pB[3] = {0.0};
@@ -171,7 +171,7 @@ struct hashGeom_sheath {
         if (cEdge2mag < 0.0 && cEdge2mag > -1.0) {
           vectorScalarMult(cEdge2mag, BC, cEdge2);
           vectorSubtract(pB, cEdge2, dEdge2);
-          distE2 = sqrt(vectorDotProduct(dEdge2, dEdge2));
+          distE2 = std::sqrt(vectorDotProduct(dEdge2, dEdge2));
         }
         float pC[3] = {0.0};
         float cEdge3[3] = {0.0};
@@ -182,31 +182,31 @@ struct hashGeom_sheath {
         if (cEdge3mag < 0.0 && cEdge3mag > -1.0) {
           vectorScalarMult(cEdge3mag, CA, cEdge3);
           vectorSubtract(pC, cEdge3, dEdge3);
-          distE3 = sqrt(vectorDotProduct(dEdge3, dEdge3));
+          distE3 = std::sqrt(vectorDotProduct(dEdge3, dEdge3));
         }
-        float minEdge = min(distE1, distE2);
-        minEdge = min(distE3, minEdge);
+        float minEdge = std::min(distE1, distE2);
+        minEdge = std::min(distE3, minEdge);
 #else
           //
           float minEdge = distE1;
 #endif
-        float d1 =sqrt((x0 - boundary[l].x1)*(x0 - boundary[l].x1)
+        float d1 =std::sqrt((x0 - boundary[l].x1)*(x0 - boundary[l].x1)
                 +  (y0 - boundary[l].y1)*(y0 - boundary[l].y1)
                 +  (z0 - boundary[l].z1)*(z0 - boundary[l].z1));
-        float d2 =sqrt((x0 - boundary[l].x2)*(x0 - boundary[l].x2)
+        float d2 =std::sqrt((x0 - boundary[l].x2)*(x0 - boundary[l].x2)
                 +  (y0 - boundary[l].y2)*(y0 - boundary[l].y2)
                 +  (z0 - boundary[l].z2)*(z0 - boundary[l].z2));
           #if USE3DTETGEOM > 0
-            float d3 =sqrt((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
+            float d3 =std::sqrt((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
                     +  (y0 - boundary[l].y3)*(y0 - boundary[l].y3)
                     +  (z0 - boundary[l].z3)*(z0 - boundary[l].z3));
           #endif
-          float minOf3 = min(d1,d2);
-          minOf3 = min(minOf3,minEdge);
+          float minOf3 = std::min(d1,d2);
+          minOf3 = std::min(minOf3,minEdge);
         //std::cout << "min of two " << minOf3 << std::endl;
           #if USE3DTETGEOM > 0
-          minOf3 = min(minOf3,perpDist);
-            minOf3 = min(minOf3,d3);
+          minOf3 = std::min(minOf3,perpDist);
+            minOf3 = std::min(minOf3,d3);
           #endif
           int minIndClose = n_closeGeomElements;
            for(int m=0; m< n_closeGeomElements; m++)

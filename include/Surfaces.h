@@ -7,13 +7,8 @@
 #define CUDA_CALLABLE_MEMBER
 #endif
 
-#include <cstdlib>
-//#include <cmath>
-#include "math.h"
-#include <stdio.h>
-//#include <vector>
 #include "array.h"
-//#include "managed_allocation.h"
+#include <cstdlib>
 
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>

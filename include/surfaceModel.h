@@ -12,15 +12,13 @@
 #include "Particles.h"
 #include "Boundary.h"
 #include "Surfaces.h"
-//#include <cmath>
+#include <cmath>
 
-#include "math.h"
 
 #ifdef __CUDACC__
 #include <thrust/random.h>
 #else
 #include <random>
-#include <stdlib.h>
 #endif
 CUDA_CALLABLE_MEMBER
 void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNormalVector[],float x,float y){
@@ -50,14 +48,14 @@ void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNorma
                     surfaceNormalVector[0] = 1.0f;
                     surfaceNormalVector[1] = 0.0f;
                     surfaceNormalVector[2] = -1.0f / (boundaryVector[wallIndex].slope_dzdx);
-            norm_normal = sqrt(surfaceNormalVector[2]*surfaceNormalVector[2] + 1.0); 
+            norm_normal = std::sqrt(surfaceNormalVector[2]*surfaceNormalVector[2] + 1.0); 
             surfaceNormalVector[0] = surfaceNormalVector[0]/norm_normal;
             surfaceNormalVector[1] = surfaceNormalVector[1]/norm_normal;
             
             surfaceNormalVector[2] = surfaceNormalVector[2]/norm_normal;
                 }
 #if USECYLSYMM > 0 
-            float theta = atan2f(y,x);
+            float theta = std::atan2f(y,x);
             float Sr = surfaceNormalVector[0];
             surfaceNormalVector[0] = cosf(theta)*Sr;
             surfaceNormalVector[1] = sinf(theta)*Sr;
@@ -69,7 +67,7 @@ double screeningLength ( double Zprojectile, double Ztarget ) {
 	double bohrRadius = 5.29177e-11;
 	double screenLength;
 
-	screenLength = 0.885341*bohrRadius*powf(powf(Zprojectile,(2/3)) + powf(Ztarget,(2/3)),(-1/2));
+	screenLength = 0.885341*bohrRadius*std::pow(std::pow(Zprojectile,(2/3)) + std::pow(Ztarget,(2/3)),(-1/2));
 
 	return screenLength;
 }
@@ -84,7 +82,7 @@ double stoppingPower (Particles * particles,int indx, double Mtarget, double Zta
 
 	E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/Q;
 	reducedEnergy = E0*(Mtarget/(particles->amu[indx]+Mtarget))*(screenLength/(particles->Z[indx]*Ztarget*ke2));
-	stoppingPower = 0.5*log(1.0 + 1.2288*reducedEnergy)/(reducedEnergy + 0.1728*sqrt(reducedEnergy) + 0.008*pow(reducedEnergy, 0.1504));
+	stoppingPower = 0.5*log(1.0 + 1.2288*reducedEnergy)/(reducedEnergy + 0.1728*std::sqrt(reducedEnergy) + 0.008*std::pow(reducedEnergy, 0.1504));
 
 	return stoppingPower;	
 }
@@ -112,7 +110,7 @@ void operator()(std::size_t indx) const {
 	screenLength = screeningLength(particles->Z[indx], Ztarget);
 	stopPower = stoppingPower(particles,indx, Mtarget, Ztarget, screenLength); 
 	E0 = 0.5*particles->amu[indx]*1.6737236e-27*(particles->vx[indx]*particles->vx[indx] + particles->vy[indx]*particles->vy[indx]+ particles->vz[indx]*particles->vz[indx])/1.60217662e-19;
-	term = pow((E0/Eth - 1),mu);
+	term = std::pow((E0/Eth - 1),mu);
 	Y0 = q*stopPower*term/(lambda + term);
     	}
      

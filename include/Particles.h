@@ -7,13 +7,9 @@
 #define CUDA_CALLABLE_MEMBER
 #endif
 
-#include <cstdlib>
-//#include <cmath>
-#include "math.h"
-#include <stdio.h>
-//#include <vector>
 #include "array.h"
-//#include "managed_allocation.h"
+#include <cstdlib>
+#include <stdio.h>
 
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
@@ -112,9 +108,9 @@ public:
 //        Ex = E*cos(theta)*sin(phi);
 //        Ey = E*sin(theta)*sin(phi);
 //        Ez = E*cos(phi);
-        this->vx[indx] = Ex / fabs(Ex) * sqrt(2.0 * fabs(Ex) * 1.60217662e-19 / (amu * 1.6737236e-27));
-        this->vy[indx] = Ey / fabs(Ey) * sqrt(2.0 * fabs(Ey) * 1.60217662e-19 / (amu * 1.6737236e-27));
-        this->vz[indx] = Ez / fabs(Ez) * sqrt(2.0 * fabs(Ez) * 1.60217662e-19 / (amu * 1.6737236e-27));
+        this->vx[indx] = Ex / std::abs(Ex) * std::sqrt(2.0 * std::abs(Ex) * 1.60217662e-19 / (amu * 1.6737236e-27));
+        this->vy[indx] = Ey / std::abs(Ey) * std::sqrt(2.0 * std::abs(Ey) * 1.60217662e-19 / (amu * 1.6737236e-27));
+        this->vz[indx] = Ez / std::abs(Ez) * std::sqrt(2.0 * std::abs(Ez) * 1.60217662e-19 / (amu * 1.6737236e-27));
 
         if (Ex == 0.0) this->vx[indx] = 0.0;
         if (Ey == 0.0) this->vy[indx] = 0.0;
@@ -140,7 +136,7 @@ public:
         this->vx[indx] = Vx;
         this->vy[indx] = Vy;
         this->vz[indx] = Vz;
-        this->v[indx] = sqrt(Vx*Vx + Vy*Vy + Vz*Vz);
+        this->v[indx] = std::sqrt(Vx*Vx + Vy*Vy + Vz*Vz);
 
       };    
   CUDA_CALLABLE_MEMBER
