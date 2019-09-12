@@ -57,7 +57,7 @@ void operator()(std::size_t indx) const {
 		float step;
         interp2dVector(&B[0],particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_Bfield,nZ_Bfield,
                                BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
-        Bmag = sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
+        Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
         B_unit[0] = B[0]/Bmag;
         B_unit[1] = B[1]/Bmag;
         B_unit[2] = B[2]/Bmag;
@@ -77,8 +77,8 @@ void operator()(std::size_t indx) const {
 #endif
 #endif
 		phi_random = 2*3.14159265*r3;
-		perpVector[0] = cos(phi_random);
-		perpVector[1] = sin(phi_random);
+		perpVector[0] = std::cos(phi_random);
+		perpVector[1] = std::sin(phi_random);
 		perpVector[2] = (-perpVector[0]*B_unit[0] - perpVector[1]*B_unit[1])/B_unit[2];
                 //std::cout << "perp Vector " << perpVector[0] << " " << perpVector[1] << " " << perpVector[2]<<std::endl;
 		if (B_unit[2] == 0){
@@ -103,13 +103,13 @@ void operator()(std::size_t indx) const {
 			perpVector[2] = 0;
 		}
 		
-		norm = sqrt(perpVector[0]*perpVector[0] + perpVector[1]*perpVector[1] + perpVector[2]*perpVector[2]);
+		norm = std::sqrt(perpVector[0]*perpVector[0] + perpVector[1]*perpVector[1] + perpVector[2]*perpVector[2]);
 		perpVector[0] = perpVector[0]/norm;
 		perpVector[1] = perpVector[1]/norm;
 		perpVector[2] = perpVector[2]/norm;
                 //std::cout << "perp Vector " << perpVector[0] << " " << perpVector[1] << " " << perpVector[2]<<std::endl;
 		
-		step = sqrt(6*diffusionCoefficient*dt);
+		step = std::sqrt(6*diffusionCoefficient*dt);
 
 		particlesPointer->x[indx] = particlesPointer->xprevious[indx] + step*perpVector[0];
 		particlesPointer->y[indx] = particlesPointer->yprevious[indx] + step*perpVector[1];

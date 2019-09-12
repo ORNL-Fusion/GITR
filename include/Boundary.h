@@ -115,7 +115,7 @@ class Boundary
     }
     float Br = 1.0f / std::sqrt(perpSlope * perpSlope + 1.0);
     float Bt = 0.0;
-    B[2] = copysign(1.0,perpSlope) * std::sqrt(1 - Br * Br);
+    B[2] = std::copysign(1.0,perpSlope) * std::sqrt(1 - Br * Br);
 #if USECYLSYMM > 0
     float theta = std::atan2(y, x);
     B[0] = std::cos(theta) * Br - std::sin(theta) * Bt;

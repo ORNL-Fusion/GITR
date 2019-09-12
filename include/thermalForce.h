@@ -80,11 +80,11 @@ void operator()(std::size_t indx)  {
                      gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT);
       mu = p->amu[indx] / (background_amu + p->amu[indx]);
       alpha = p->charge[indx] * p->charge[indx] * 0.71;
-      beta = 3 * (mu + 5 * sqrtf(2.0) * p->charge[indx] * p->charge[indx] * (1.1 * powf(mu, (5 / 2)) - 0.35 * powf(mu, (3 / 2))) - 1) / (2.6 - 2 * mu + 5.4 * powf(mu, 2));
+      beta = 3 * (mu + 5 * std::sqrt(2.0) * p->charge[indx] * p->charge[indx] * (1.1 * std::pow(mu, (5 / 2)) - 0.35 * std::pow(mu, (3 / 2))) - 1) / (2.6 - 2 * mu + 5.4 * std::pow(mu, 2));
        
        interp2dVector(&B[0],p->xprevious[indx],p->yprevious[indx],p->zprevious[indx],nR_Bfield,nZ_Bfield,
              BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);    
-        Bmag = sqrtf(B[0]*B[0] + B[1]*B[1]+ B[2]*B[2]);
+        Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1]+ B[2]*B[2]);
         B_unit[0] = B[0]/Bmag;
         B_unit[1] = B[1]/Bmag;
         B_unit[2] = B[2]/Bmag;
@@ -118,7 +118,7 @@ void operator()(std::size_t indx)  {
     float vx = p->vx[indx];
     float vy = p->vy[indx];
     float vz = p->vz[indx];
-        vNorm = sqrt(vx*vx + vy*vy + vz*vz);
+        vNorm = std::sqrt(vx*vx + vy*vy + vz*vz);
     p->vD[indx] = dv_ITG[2];    
 	//std::cout << "gradTi Parallel " << gradTiPar << std::endl;
         //std::cout << "gradTi Parallel " << gradTi[0]<<gradTi[1]<<gradTi[2] << std::endl;
