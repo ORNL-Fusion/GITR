@@ -9,7 +9,6 @@
 
 #include "Particle.h"
 #include <cmath>
-#include <math.h>
 
 struct thermalForce { 
 

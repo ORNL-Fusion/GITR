@@ -10,14 +10,11 @@
 #endif
 
 #include "Particles.h"
-//#include <cmath>
-//#include <math.h>
-#include "math.h"
+#include <cmath>
 #ifdef __CUDACC__
 #include <thrust/random.h>
 #else
 #include <random>
-#include <stdlib.h>
 #endif
 
 CUDA_CALLABLE_MEMBER
