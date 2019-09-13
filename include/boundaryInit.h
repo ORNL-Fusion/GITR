@@ -43,12 +43,28 @@ struct boundary_init {
           float* _bfieldZ,float* _bfieldT,int _nR_Temp, int _nZ_Temp,
           float* _TempGridr, float* _TempGridz, float* _ti, float* _te, float _potential)
 
-      : background_Z(_background_Z), background_amu(_background_amu), nx(_nx), nz(_nz), 
-        densityGridx(_densityGridx), densityGridz(_densityGridz),density(_density),ne(_ne),
-        nxB(_nxB),nzB(_nzB), bfieldGridr(_bfieldGridr), bfieldGridz(_bfieldGridz), 
-        bfieldR(_bfieldR), bfieldZ(_bfieldZ), bfieldT(_bfieldT),
-        nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr), 
-        TempGridz(_TempGridz), ti(_ti),te(_te), potential(_potential) {}
+     : background_Z(_background_Z),
+        background_amu(_background_amu),
+        nR_Temp(_nR_Temp),
+        nZ_Temp(_nZ_Temp),
+        TempGridr(_TempGridr),
+        TempGridz(_TempGridz),
+        ti(_ti),
+        te(_te),
+        nx(_nx),
+        nz(_nz),
+        densityGridx(_densityGridx),
+        densityGridz(_densityGridz),
+        density(_density),
+        ne(_ne),
+        nxB(_nxB),
+        nzB(_nzB),
+        bfieldGridr(_bfieldGridr),
+        bfieldGridz(_bfieldGridz),
+        bfieldR(_bfieldR),
+        bfieldZ(_bfieldZ),
+        bfieldT(_bfieldT),
+        potential(_potential) {}
 
     void operator()(Boundary &b) const {
 #if USE3DTETGEOM

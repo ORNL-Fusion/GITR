@@ -4,6 +4,7 @@ source ../env.mac.sh
 cmake -DTHRUST_INCLUDE_DIR=$THRUST_DIR \
     -DCMAKE_C_COMPILER=clang \
     -DCMAKE_CXX_COMPILER=clang++ \
+    -DCMAKE_CXX_FLAGS="-g -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-float-conversion -Wno-unused-variable -Wno-unused-but-set-variable" \
     -DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE \
     -DNETCDF_CXX_LIBRARY=$NETCDFLIB_CPP \
     -DNETCDF_DIR=$NETCDFDIR \
@@ -54,3 +55,4 @@ cmake -DTHRUST_INCLUDE_DIR=$THRUST_DIR \
     -DUSE_SORT=0 \
     -DCHECK_COMPATIBILITY=1 \
     ..
+    #-DCMAKE_CXX_FLAGS="-g -Wall -Wextra -Wpedantic -Wconversion -Wno-unused-parameter -Wno-float-conversion -Wno-unused-variable -Wno-unused-but-set-variable" \

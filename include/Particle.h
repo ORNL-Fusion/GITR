@@ -77,9 +77,9 @@ class Particle  {
         this->amu = amu;
 		this->hitWall = 0.0;
         this->wallIndex = 0;
-		this->vx = Ex/fabs(Ex)*sqrt(2.0*fabs(Ex)*1.60217662e-19/(amu*1.6737236e-27));
-		this->vy = Ey/fabs(Ey)*sqrt(2.0*fabs(Ey)*1.60217662e-19/(amu*1.6737236e-27));
-		this->vz = Ez/fabs(Ez)*sqrt(2.0*fabs(Ez)*1.60217662e-19/(amu*1.6737236e-27));
+		this->vx = Ex/std::abs(Ex)*sqrt(2.0*std::abs(Ex)*1.60217662e-19/(amu*1.6737236e-27));
+		this->vy = Ey/std::abs(Ey)*sqrt(2.0*std::abs(Ey)*1.60217662e-19/(amu*1.6737236e-27));
+		this->vz = Ez/std::abs(Ez)*sqrt(2.0*std::abs(Ez)*1.60217662e-19/(amu*1.6737236e-27));
 		    
 		if(Ex == 0.0) this->vx = 0.0;
 		if(Ey == 0.0) this->vy = 0.0;
