@@ -16,7 +16,7 @@
 CUDA_CALLABLE_MEMBER_DEVICE
 float findT(float x0, float x1, float y0, float y1, float intersectionx) {
 
-  float a, b, c, a1, a2, t, discriminant, realPart, imaginaryPart;
+  float a, b, c, a1, a2, t=0, discriminant, realPart, imaginaryPart;
   a = (x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0);
   b = 2.0 * x0 * (x1 - x0) + 2.0 * y0 * (y1 - y0);
   c = x0 * x0 + y0 * y0 - intersectionx * intersectionx;

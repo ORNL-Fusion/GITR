@@ -37,8 +37,18 @@ struct crossFieldDiffusion {
             float * _BfieldGridRDevicePointer,float * _BfieldGridZDevicePointer,
             float * _BfieldRDevicePointer,float * _BfieldZDevicePointer,
             float * _BfieldTDevicePointer)
-        : particlesPointer(_particlesPointer), dt(_dt),state(_state), diffusionCoefficient(_diffusionCoefficient),nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
-       BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer) {} 
+      : particlesPointer(_particlesPointer),
+        dt(_dt),
+        diffusionCoefficient(_diffusionCoefficient),
+        nR_Bfield(_nR_Bfield),
+        nZ_Bfield(_nZ_Bfield),
+        BfieldGridRDevicePointer(_BfieldGridRDevicePointer),
+        BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
+        BfieldRDevicePointer(_BfieldRDevicePointer),
+        BfieldZDevicePointer(_BfieldZDevicePointer),
+        BfieldTDevicePointer(_BfieldTDevicePointer),
+        state(_state) {
+  }
 
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const { 
