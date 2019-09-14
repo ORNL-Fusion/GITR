@@ -14,11 +14,7 @@
 #include "Particles.h"
 #include "Boundary.h"
 #include "interp2d.hpp"
-//template <typename T>
-//CUDA_CALLABLE_MEMBER
-//int sgn(T val) {
-//            return (T(0) < val) - (val < T(0));
-//}
+#include <algorithm>
 
 CUDA_CALLABLE_MEMBER
 void vectorAdd(float A[], float B[],float C[])
@@ -56,7 +52,7 @@ CUDA_CALLABLE_MEMBER
 float vectorNorm(float A[])
 {
     float norm = 0.0f;
-    norm = sqrtf(A[0]*A[0] + A[1]*A[1] + A[2]*A[2]);
+    norm = std::sqrt(A[0]*A[0] + A[1]*A[1] + A[2]*A[2]);
 
         return norm;
 }
@@ -64,7 +60,7 @@ CUDA_CALLABLE_MEMBER
 void vectorNormalize(float A[],float B[])
 {
     float norm = 0.0f;
-    norm = sqrtf(A[0]*A[0] + A[1]*A[1] + A[2]*A[2]);
+    norm = std::sqrt(A[0]*A[0] + A[1]*A[1] + A[2]*A[2]);
     B[0] = A[0]/norm;
     B[1] = A[1]/norm;
     B[2] = A[2]/norm;
@@ -175,9 +171,9 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
   float dr = closeGeomGridr[1] - closeGeomGridr[0];
   float dy = closeGeomGridy[1] - closeGeomGridy[0];
   float dz = closeGeomGridz[1] - closeGeomGridz[0];
-  int rInd = floor((x0 - closeGeomGridr[0])/dr + 0.5f);
-  int yInd = floor((y - closeGeomGridy[0])/dy + 0.5f);
-  int zInd = floor((z - closeGeomGridz[0])/dz + 0.5f);
+  int rInd = std::floor((x0 - closeGeomGridr[0])/dr + 0.5f);
+  int yInd = std::floor((y - closeGeomGridy[0])/dy + 0.5f);
+  int zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5f);
   int i;
   if(rInd < 0 || rInd >= nR_closeGeom)
     rInd =0;
@@ -197,56 +193,56 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
       for (int i=0; i<nLines; i++)
       {
 #endif
-            //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
-        //if (boundaryVector[i].Z != 0.0)
-        //{
-            //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
-        a = boundaryVector[i].a;
-        b = boundaryVector[i].b;
-        c = boundaryVector[i].c;
-        d = boundaryVector[i].d;
-        plane_norm = boundaryVector[i].plane_norm;
-        pointToPlaneDistance0 = (a*p0[0] + b*p0[1] + c*p0[2] + d)/plane_norm;
-        //std::cout << "abcd plane_norm "<< a  << " " << b << " " << c << " " << d << " " << plane_norm << std::endl;
-        //std::cout << i << std::endl;// " point to plane dist "  << pointToPlaneDistance0 << std::endl;
-        //pointToPlaneDistance1 = (a*p1[0] + b*p1[1] + c*p1[2] + d)/plane_norm;    
-        //signPoint0 = sgn(pointToPlaneDistance0);
-        //signPoint1 = sgn(pointToPlaneDistance1);
-        vectorAssign(a/plane_norm,b/plane_norm,c/plane_norm,normalVector);
-                //vectorNormalize(normalVector,normalVector);
-                //std::cout << "normal " << normalVector[0] << " " << normalVector[1] << " " << normalVector[2] << std::endl;
-          vectorAssign(p0[0] - pointToPlaneDistance0*normalVector[0],
-                       p0[1] - pointToPlaneDistance0*normalVector[1],
-                       p0[2] - pointToPlaneDistance0*normalVector[2], p);
-        
-         vectorAssign(boundaryVector[i].x1, boundaryVector[i].y1,
-                     boundaryVector[i].z1, A);
-         vectorAssign(boundaryVector[i].x2, boundaryVector[i].y2,
-                      boundaryVector[i].z2, B);
-         vectorAssign(boundaryVector[i].x3, boundaryVector[i].y3,
-                     boundaryVector[i].z3, C);
+    //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
+    //if (boundaryVector[i].Z != 0.0)
+    //{
+    //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
+    a = boundaryVector[i].a;
+    b = boundaryVector[i].b;
+    c = boundaryVector[i].c;
+    d = boundaryVector[i].d;
+    plane_norm = boundaryVector[i].plane_norm;
+    pointToPlaneDistance0 = (a * p0[0] + b * p0[1] + c * p0[2] + d) / plane_norm;
+    //std::cout << "abcd plane_norm "<< a  << " " << b << " " << c << " " << d << " " << plane_norm << std::endl;
+    //std::cout << i << std::endl;// " point to plane dist "  << pointToPlaneDistance0 << std::endl;
+    //pointToPlaneDistance1 = (a*p1[0] + b*p1[1] + c*p1[2] + d)/plane_norm;
+    //signPoint0 = std::copysign(1.0,pointToPlaneDistance0);
+    //signPoint1 = std::copysign(1.0,pointToPlaneDistance1);
+    vectorAssign(a / plane_norm, b / plane_norm, c / plane_norm, normalVector);
+    //vectorNormalize(normalVector,normalVector);
+    //std::cout << "normal " << normalVector[0] << " " << normalVector[1] << " " << normalVector[2] << std::endl;
+    vectorAssign(p0[0] - pointToPlaneDistance0 * normalVector[0],
+                 p0[1] - pointToPlaneDistance0 * normalVector[1],
+                 p0[2] - pointToPlaneDistance0 * normalVector[2], p);
 
-         vectorSubtract(B,A,AB);
-         vectorSubtract(C,A,AC);
-         vectorSubtract(C,B,BC);
-         vectorSubtract(A,C,CA);
+    vectorAssign(boundaryVector[i].x1, boundaryVector[i].y1,
+                 boundaryVector[i].z1, A);
+    vectorAssign(boundaryVector[i].x2, boundaryVector[i].y2,
+                 boundaryVector[i].z2, B);
+    vectorAssign(boundaryVector[i].x3, boundaryVector[i].y3,
+                 boundaryVector[i].z3, C);
 
-         vectorSubtract(p,A,Ap);
-         vectorSubtract(p,B,Bp);
-         vectorSubtract(p,C,Cp);
-         vectorCrossProduct(AB,AC,normalVector);
-         vectorCrossProduct(AB,Ap,crossABAp);
-         vectorCrossProduct(BC,Bp,crossBCBp);
-         vectorCrossProduct(CA,Cp,crossCACp);
-       /*  
+    vectorSubtract(B, A, AB);
+    vectorSubtract(C, A, AC);
+    vectorSubtract(C, B, BC);
+    vectorSubtract(A, C, CA);
+
+    vectorSubtract(p, A, Ap);
+    vectorSubtract(p, B, Bp);
+    vectorSubtract(p, C, Cp);
+    vectorCrossProduct(AB, AC, normalVector);
+    vectorCrossProduct(AB, Ap, crossABAp);
+    vectorCrossProduct(BC, Bp, crossBCBp);
+    vectorCrossProduct(CA, Cp, crossCACp);
+    /*  
          dot0 = vectorDotProduct(crossABAp,normalVector);
             dot1 = vectorDotProduct(crossBCBp,normalVector);
             dot2 = vectorDotProduct(crossCACp,normalVector);
          */
-            signDot0 = sgn(vectorDotProduct(crossABAp,normalVector));
-         signDot1 = sgn(vectorDotProduct(crossBCBp,normalVector));
-         signDot2 = sgn(vectorDotProduct(crossCACp,normalVector));
-        /*  
+    signDot0 = std::copysign(1.0,vectorDotProduct(crossABAp, normalVector));
+    signDot1 = std::copysign(1.0,vectorDotProduct(crossBCBp, normalVector));
+    signDot2 = std::copysign(1.0,vectorDotProduct(crossCACp, normalVector));
+    /*  
          if(dot0 == 0.0) signDot0 = 1;
          if(dot1 == 0.0) signDot1 = 1;
          if(dot2 == 0.0) signDot2 = 1;
@@ -255,7 +251,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
          if(vectorNorm(crossBCBp) == 0.0) signDot1 = 1;
          if(vectorNorm(crossCACp) == 0.0) signDot2 = 1;
          */
-         totalSigns = abs(signDot0 + signDot1 + signDot2);
+         totalSigns = std::abs(signDot0 + signDot1 + signDot2);
          /*
          if(vectorNorm(crossABAp) == 0.0) totalSigns = 3;
          if(vectorNorm(crossBCBp) == 0.0) totalSigns = 3;
@@ -371,7 +367,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
          {
              //if (fabs(pointToPlaneDistance0) < minDistance)
              //{
-                perpDist = fabs(pointToPlaneDistance0); 
+                perpDist = std::abs(pointToPlaneDistance0); 
                 //minDistance = fabs(pointToPlaneDistance0);
                 //std::cout << "p " << p[0] << " " << p[1] << " " << p[2] << std::endl;
                 //std::cout << "p0 " << p0[0] << " " << p0[1] << " " << p0[2] << std::endl;
@@ -494,7 +490,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     int pointLine=0;
 //#if EFIELD_INTERP ==1
 #if USECYLSYMM > 0
-    float x = sqrtf(x0*x0 + y*y);
+    float x = std::sqrt(x0*x0 + y*y);
 #else
     float x = x0;
 #endif 
@@ -502,8 +498,8 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
 #if GEOM_HASH_SHEATH > 0
   float dr = closeGeomGridr[1] - closeGeomGridr[0];
   float dz = closeGeomGridz[1] - closeGeomGridz[0];
-  int rInd = floor((x - closeGeomGridr[0])/dr + 0.5f);
-  int zInd = floor((z - closeGeomGridz[0])/dz + 0.5f);
+  int rInd = std::floor((x - closeGeomGridr[0])/dr + 0.5f);
+  int zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5f);
   if(rInd >= nR_closeGeom) rInd = nR_closeGeom -1;
   if(zInd >= nZ_closeGeom) zInd = nZ_closeGeom -1;
   if(rInd < 0) rInd = 0;
@@ -525,15 +521,15 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
        
         if (boundZhere != 0.0)
         {
-            point1_dist = sqrtf((x - boundaryVector[j].x1)*(x - boundaryVector[j].x1) + 
+            point1_dist = std::sqrt((x - boundaryVector[j].x1)*(x - boundaryVector[j].x1) + 
                     (z - boundaryVector[j].z1)*(z - boundaryVector[j].z1));
-            point2_dist = sqrtf((x - boundaryVector[j].x2)*(x - boundaryVector[j].x2) + 
+            point2_dist = std::sqrt((x - boundaryVector[j].x2)*(x - boundaryVector[j].x2) + 
                                         (z - boundaryVector[j].z2)*(z - boundaryVector[j].z2));
             perp_dist = (boundaryVector[j].slope_dzdx*x - z + boundaryVector[j].intercept_z)/
-                sqrtf(boundaryVector[j].slope_dzdx*boundaryVector[j].slope_dzdx + 1.0f);   
+                std::sqrt(boundaryVector[j].slope_dzdx*boundaryVector[j].slope_dzdx + 1.0f);   
 	
 	
-          if (fabsf(boundaryVector[j].slope_dzdx) >= tol*0.75f)
+          if (std::abs(boundaryVector[j].slope_dzdx) >= tol*0.75f)
 	  {
 	   perp_dist = x0 - boundaryVector[j].x1;
 	  }
@@ -556,7 +552,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
                     max*max)
             {
                 //boundaryVector[j].distanceToParticle =fabsf( perp_dist);
-                distanceToParticle = fabsf(perp_dist);
+                distanceToParticle = std::abs(perp_dist);
                 //boundaryVector[j].pointLine = 1;
                 pointLine = 1;
             }
@@ -636,9 +632,9 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
         {
             directionUnitVector[0] = 0.0f;
             directionUnitVector[1] = 0.0f;
-            directionUnitVector[2] = 1.0f * sgn(boundaryVector[minIndex].z1 - z);
+            directionUnitVector[2] = 1.0f * std::copysign(1.0,boundaryVector[minIndex].z1 - z);
         }
-        else if (fabsf(boundaryVector[minIndex].slope_dzdx)>= 0.75f*tol)
+        else if (std::abs(boundaryVector[minIndex].slope_dzdx)>= 0.75f*tol)
         {
             
             directionUnitVector[0] = boundaryVector[minIndex].x1 - x;
@@ -647,9 +643,9 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
         }
         else
         {
-            directionUnitVector[0] = 1.0f * sgn((z - boundaryVector[minIndex].intercept_z)/(boundaryVector[minIndex].slope_dzdx) - x0);
+            directionUnitVector[0] = 1.0f * std::copysign(1.0,(z - boundaryVector[minIndex].intercept_z)/(boundaryVector[minIndex].slope_dzdx) - x0);
             directionUnitVector[1] = 0.0f;
-            directionUnitVector[2] = 1.0f * sgn(perp_dist)/(boundaryVector[minIndex].slope_dzdx);
+            directionUnitVector[2] = 1.0f * std::copysign(1.0,perp_dist)/(boundaryVector[minIndex].slope_dzdx);
         //std::cout << "sign boundarVec.slope  sign perp_dist " << sgn(boundaryVector[minIndex].slope_dzdx) << " " << sgn(perp_dist) << std::endl;
         }
         //std::cout << "direction_type 1 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
@@ -669,7 +665,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
         //std::cout << "direction_type 3 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     }
 
-    vectorMagnitude = sqrtf(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
+    vectorMagnitude = std::sqrt(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
                                 + directionUnitVector[2]*directionUnitVector[2]);
     directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
@@ -679,7 +675,7 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
     //directionUnitVector[0]= boundaryVector[minIndex].inDir*surfaceNormalVector[0];
     //directionUnitVector[1]= boundaryVector[minIndex].inDir*surfaceNormalVector[1];
     //directionUnitVector[2]= boundaryVector[minIndex].inDir*surfaceNormalVector[2];
-    //vectorMagnitude = sqrtf(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
+    //vectorMagnitude = std::sqrt(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
     //                            + directionUnitVector[2]*directionUnitVector[2]);
     //directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
     //directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
@@ -691,11 +687,11 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
 #else 
     angle = boundaryVector[minIndex].angle;    
     fd  =  0.98992f + 5.1220E-03f * angle  -
-           7.0040E-04f  * powf(angle,2.0f) +
-           3.3591E-05f  * powf(angle,3.0f) -
-           8.2917E-07f  * powf(angle,4.0f) +
-           9.5856E-09f   * powf(angle,5.0f) -
-           4.2682E-11f  * powf(angle,6.0f);
+           7.0040E-04f  * std::pow(angle,2.0f) +
+           3.3591E-05f  * std::pow(angle,3.0f) -
+           8.2917E-07f  * std::pow(angle,4.0f) +
+           9.5856E-09f  * std::pow(angle,5.0f) -
+           4.2682E-11f  * std::pow(angle,6.0f);
     pot = boundaryVector[minIndex].potential;
      //std::cout << "potential and debye length " << pot << " " << boundaryVector[minIndex].debyeLength << " " << pot/boundaryVector[minIndex].debyeLength << std::endl;
     //std::cout << " larmorRad " << boundaryVector[minIndex].larmorRadius << std::endl;
@@ -732,10 +728,10 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
 #else
 #if USECYLSYMM > 0
             //if cylindrical geometry
-            float theta = atan2f(y,x0);
+            float theta = std::atan2(y,x0);
   
-            E[0] = cosf(theta)*Er - sinf(theta)*Et;
-            E[1] = sinf(theta)*Er + cosf(theta)*Et;
+            E[0] = std::cos(theta)*Er - std::sin(theta)*Et;
+            E[1] = std::sin(theta)*Er + std::cos(theta)*Et;
 #else
             E[0] = Er;
             E[1] = Et;
@@ -794,19 +790,36 @@ struct move_boris {
             float * _EfieldTDevicePointer,
             int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr,float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom)
         
-        : particlesPointer(_particlesPointer), span(_span), boundaryVector(_boundaryVector), nLines(_nLines), nR_Bfield(_nR_Bfield), 
-        nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), 
+: particlesPointer(_particlesPointer),
+        boundaryVector(_boundaryVector),
+        nR_Bfield(_nR_Bfield),
+        nZ_Bfield(_nZ_Bfield),
+        BfieldGridRDevicePointer(_BfieldGridRDevicePointer),
         BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
-        BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), 
+        BfieldRDevicePointer(_BfieldRDevicePointer),
+        BfieldZDevicePointer(_BfieldZDevicePointer),
         BfieldTDevicePointer(_BfieldTDevicePointer),
-        nR_Efield(_nR_Efield),nY_Efield(_nY_Efield), nZ_Efield(_nZ_Efield), 
-        EfieldGridRDevicePointer(_EfieldGridRDevicePointer), 
-        EfieldGridYDevicePointer(_EfieldGridYDevicePointer), 
+        nR_Efield(_nR_Efield),
+        nY_Efield(_nY_Efield),
+        nZ_Efield(_nZ_Efield),
+        EfieldGridRDevicePointer(_EfieldGridRDevicePointer),
+        EfieldGridYDevicePointer(_EfieldGridYDevicePointer),
         EfieldGridZDevicePointer(_EfieldGridZDevicePointer),
-        EfieldRDevicePointer(_EfieldRDevicePointer), EfieldZDevicePointer(_EfieldZDevicePointer),
+        EfieldRDevicePointer(_EfieldRDevicePointer),
+        EfieldZDevicePointer(_EfieldZDevicePointer),
         EfieldTDevicePointer(_EfieldTDevicePointer),
-   nR_closeGeom_sheath(_nR_closeGeom),nY_closeGeom_sheath(_nY_closeGeom), nZ_closeGeom_sheath(_nZ_closeGeom), n_closeGeomElements_sheath(_n_closeGeomElements), 
-   closeGeomGridr_sheath(_closeGeomGridr),closeGeomGridy_sheath(_closeGeomGridy), closeGeomGridz_sheath(_closeGeomGridz), closeGeom_sheath(_closeGeom), magneticForce{0.0,0.0,0.0}, electricForce{0.0,0.0,0.0} {}
+        nR_closeGeom_sheath(_nR_closeGeom),
+        nY_closeGeom_sheath(_nY_closeGeom),
+        nZ_closeGeom_sheath(_nZ_closeGeom),
+        n_closeGeomElements_sheath(_n_closeGeomElements),
+        closeGeomGridr_sheath(_closeGeomGridr),
+        closeGeomGridy_sheath(_closeGeomGridy),
+        closeGeomGridz_sheath(_closeGeomGridz),
+        closeGeom_sheath(_closeGeom),
+        span(_span),
+        nLines(_nLines),
+        magneticForce{0.0, 0.0, 0.0},
+        electricForce{0.0, 0.0, 0.0} {}
 
 CUDA_CALLABLE_MEMBER    
 void operator()(std::size_t indx) { 
@@ -830,7 +843,7 @@ float operationsTime = 0.0f;
 	        float Bmag = 0.0f;
 	        float q_prime = 0.0f;
             float coeff = 0.0f;
-            int nSteps = floor( span / dt + 0.5f);
+            int nSteps = std::floor( span / dt + 0.5f);
 #if USESHEATHEFIELD > 0
             float minDist = 0.0f;
             int closestBoundaryIndex;
@@ -931,7 +944,7 @@ float operationsTime = 0.0f;
 
       if(abs(v[2]) > vTherm)
       {
-          v[2] = sgn(v[2])*vTherm;
+          v[2] = std::copysign(1.0,v[2])*vTherm;
           v[0] = 0.0;
           v[1] = 0.0;
       }
