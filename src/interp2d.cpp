@@ -11,7 +11,8 @@
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
 
-using namespace std;
+#include <cmath>
+
 CUDA_CALLABLE_MEMBER
 
 float interp2d ( float x, float z,int nx, int nz,
@@ -28,8 +29,8 @@ float interp2d ( float x, float z,int nx, int nz,
     float dim1 = x;
     float d_dim1 = gridx[1] - gridx[0];
     float dz = gridz[1] - gridz[0];
-    int i = floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
-    int j = floor((z - gridz[0])/dz);
+    int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
+    int j = std::floor((z - gridz[0])/dz);
     
     //float interp_value = data[i + j*nx];
     if (i < 0) i =0;
@@ -75,14 +76,14 @@ float interp2dCombined ( float x, float y, float z,int nx, int nz,
     }
     else{
 #if USECYLSYMM > 0
-    float dim1 = sqrt(x*x + y*y);
+    float dim1 = std::sqrt(x*x + y*y);
 #else
     float dim1 = x;
 #endif    
     float d_dim1 = gridx[1] - gridx[0];
     float dz = gridz[1] - gridz[0];
-    int i = floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
-    int j = floor((z - gridz[0])/dz);
+    int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
+    int j = std::floor((z - gridz[0])/dz);
     
     //float interp_value = data[i + j*nx];
     if (i < 0) i=0;
@@ -128,9 +129,9 @@ float interp3d ( float x, float y, float z,int nx,int ny, int nz,
     float dy = gridy[1] - gridy[0];
     float dz = gridz[1] - gridz[0];
     
-    int i = floor((x - gridx[0])/dx);//addition of 0.5 finds nearest gridpoint
-    int j = floor((y - gridy[0])/dy);
-    int k = floor((z - gridz[0])/dz);
+    int i = std::floor((x - gridx[0])/dx);//addition of 0.5 finds nearest gridpoint
+    int j = std::floor((y - gridy[0])/dy);
+    int k = std::floor((z - gridz[0])/dz);
     //std::cout << "dxyz ijk " << dx << " "<<dy << " " << dz<< " " << i
       //  << " " << j << " " << k << std::endl;
     if(i <0 ) i=0;
@@ -185,9 +186,9 @@ float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {
    float At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat);
    field[2] = interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz);
 #if USECYLSYMM > 0
-            float theta = atan2f(y,x);   
-            field[0] = cosf(theta)*Ar - sinf(theta)*At;
-            field[1] = sinf(theta)*Ar + cosf(theta)*At;
+            float theta = std::atan2(y,x);   
+            field[0] = std::cos(theta)*Ar - std::sin(theta)*At;
+            field[1] = std::sin(theta)*Ar + std::cos(theta)*At;
 #else
             field[0] = Ar;
             field[1] = At;
@@ -205,7 +206,7 @@ int nxB, int nzB, float* gridxB,float* gridzB,float* datarB,float* datazB, float
    float Bmag = 0.0;
    interp2dVector (&B[0],x,y,z,nxB,nzB,
                    gridxB,gridzB,datarB,datazB,datatB);
-   Bmag = sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
+   Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
    B_unit[0] = B[0]/Bmag;
    B_unit[1] = B[1]/Bmag;
    B_unit[2] = B[2]/Bmag;
