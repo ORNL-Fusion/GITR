@@ -59,14 +59,27 @@ struct recombine {
      float* _TempGridr, float* _TempGridz,float* _te,int _nTemperaturesRecomb,
      int _nDensitiesRecomb,float* _gridTemperature_Recombination,float* _gridDensity_Recombination,
      float* _rateCoeff_Recombination) : 
-      particlesPointer(_particlesPointer), dt(_dt), state(_state), 
-      nR_Dens(_nR_Dens), nZ_Dens(_nZ_Dens), DensGridr(_DensGridr), DensGridz(_DensGridz),ne(_ne),
-      nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr), TempGridz(_TempGridz), te(_te),
-      nTemperaturesRecomb(_nTemperaturesRecomb), nDensitiesRecomb(_nDensitiesRecomb), 
-      gridTemperature_Recombination(_gridTemperature_Recombination), 
-      gridDensity_Recombination(_gridDensity_Recombination), 
-      rateCoeff_Recombination(_rateCoeff_Recombination) {}
-     
+    particlesPointer(_particlesPointer),
+
+                                               nR_Dens(_nR_Dens),
+                                               nZ_Dens(_nZ_Dens),
+                                               DensGridr(_DensGridr),
+                                               DensGridz(_DensGridz),
+                                               ne(_ne),
+                                               nR_Temp(_nR_Temp),
+                                               nZ_Temp(_nZ_Temp),
+                                               TempGridr(_TempGridr),
+                                               TempGridz(_TempGridz),
+                                               te(_te),
+                                               nTemperaturesRecomb(_nTemperaturesRecomb),
+                                               nDensitiesRecomb(_nDensitiesRecomb),
+                                               gridDensity_Recombination(_gridDensity_Recombination),
+                                               gridTemperature_Recombination(_gridTemperature_Recombination),
+                                               rateCoeff_Recombination(_rateCoeff_Recombination),
+                                               dt(_dt), // JDL missing tion?
+                                               state(_state) {
+  }
+ 
   
   CUDA_CALLABLE_MEMBER_DEVICE 
   void operator()(std::size_t indx) { 

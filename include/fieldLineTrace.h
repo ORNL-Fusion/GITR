@@ -8,8 +8,7 @@
 #endif
 #include "Particles.h"
 #include "Boundary.h"
-//#include <cmath>
-#include "math.h"
+#include <cmath>
 
 struct field_line_trace {
     float BfieldFactor; 
@@ -75,7 +74,7 @@ if(particles->hitWall[indx] == 0.0)
             BfieldR,BfieldZ,BfieldT);
     //std::cout << "Bfield interp " << B[0] << " " << B[1] << " " << B[2] << std::endl;
     vectorNormalize(B,B);
-    //Bmag = sqrtf(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
+    //Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
     //Bnorm[0] = B[0]/Bmag;
     //Bnorm[1] = B[1]/Bmag;
     //Bnorm[2] = B[2]/Bmag;
@@ -114,7 +113,7 @@ if(particles->hitWall[indx] == 0.0)
 }
 else if(particles->hitWall[indx] == 1.0)
 {
-    particleDistance = sqrtf((particles->x[indx] - particles->xprevious[indx])*
+    particleDistance = std::sqrt((particles->x[indx] - particles->xprevious[indx])*
                              (particles->x[indx] - particles->xprevious[indx]) 
                            + (particles->y[indx] - particles->yprevious[indx])*
                              (particles->y[indx] - particles->yprevious[indx])
