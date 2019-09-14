@@ -38,11 +38,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#include <filesystem>
 
 #ifdef __CUDACC__
 #include <curand.h>
 #include <curand_kernel.h>
+#include <experimental/filesystem>
+#else
+#include <experimental/filesystem>
 #endif
 
 #if USE_MPI
@@ -130,15 +132,21 @@ int main(int argc, char **argv, char **envp) {
   }
 
 // show memory usage of GPU
+#if __CUDACC__
+  namespace fsn = std::experimental::filesystem;
+#else
+  namespace fsn = std::experimental::filesystem;
+#endif
+
 print_gpu_memory_usage(world_rank);
 
-  std::filesystem::path output_folder = "output";
+  fsn::path output_folder = "output";
   // Output
 
   //boost::filesystem::path dir(output_folder);
-  if (!(std::filesystem::exists(output_folder))) {
+  if (!(fsn::exists(output_folder))) {
     std::cout << "Doesn't Exist in main" << std::endl;
-    if (std::filesystem::create_directory(output_folder)) {
+    if (fsn::create_directory(output_folder)) {
       std::cout << " Successfully Created " << std::endl;
     }
   }
@@ -3898,8 +3906,10 @@ print_gpu_memory_usage(world_rank);
 
     getVariable(cfg, diagnosticCfg + "leakZ", leakZ);
   }
+#if USE_MPI > 0
   MPI_Bcast(&leakZ, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
+#endif
   for (int i = 0; i < nP; i++)
     particleArray->leakZ[i] = leakZ;
 
@@ -4607,25 +4617,25 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 #if PARTICLE_TRACKS > 0
 
     // Write netCDF output for histories
-    NcFile ncFile_hist("output/history.nc", NcFile::replace);
-    NcDim nc_nT = ncFile_hist.addDim("nT", nHistoriesPerParticle);
-    NcDim nc_nP = ncFile_hist.addDim("nP", nP);
+    netCDF::NcFile ncFile_hist("output/history.nc", NcFile::replace);
+    netCDF::NcDim nc_nT = ncFile_hist.addDim("nT", nHistoriesPerParticle);
+    netCDF::NcDim nc_nP = ncFile_hist.addDim("nP", nP);
     vector<NcDim> dims_hist;
     dims_hist.push_back(nc_nP);
     dims_hist.push_back(nc_nT);
     // NcDim nc_nPnT = ncFile_hist.addDim("nPnT",nP*nT/subSampleFac);
     // dims_hist.push_back(nc_nPnT);
-    NcVar nc_x = ncFile_hist.addVar("x", ncDouble, dims_hist);
-    NcVar nc_y = ncFile_hist.addVar("y", ncDouble, dims_hist);
-    NcVar nc_z = ncFile_hist.addVar("z", ncDouble, dims_hist);
+    netCDF::NcVar nc_x = ncFile_hist.addVar("x", ncDouble, dims_hist);
+    netCDF::NcVar nc_y = ncFile_hist.addVar("y", ncDouble, dims_hist);
+    netCDF::NcVar nc_z = ncFile_hist.addVar("z", ncDouble, dims_hist);
 
-    NcVar nc_v = ncFile_hist.addVar("v", ncDouble, dims_hist);
-    NcVar nc_vx = ncFile_hist.addVar("vx", ncDouble, dims_hist);
-    NcVar nc_vy = ncFile_hist.addVar("vy", ncDouble, dims_hist);
-    NcVar nc_vz = ncFile_hist.addVar("vz", ncDouble, dims_hist);
+    netCDF::NcVar nc_v = ncFile_hist.addVar("v", ncDouble, dims_hist);
+    netCDF::NcVar nc_vx = ncFile_hist.addVar("vx", ncDouble, dims_hist);
+    netCDF::NcVar nc_vy = ncFile_hist.addVar("vy", ncDouble, dims_hist);
+    netCDF::NcVar nc_vz = ncFile_hist.addVar("vz", ncDouble, dims_hist);
 
-    NcVar nc_charge = ncFile_hist.addVar("charge", ncDouble, dims_hist);
-    NcVar nc_weight = ncFile_hist.addVar("weight", ncDouble, dims_hist);
+    netCDF::NcVar nc_charge = ncFile_hist.addVar("charge", ncDouble, dims_hist);
+    netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", ncDouble, dims_hist);
 #if USE_MPI > 0
     // if(world_rank ==0)
     //{
@@ -4647,15 +4657,15 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_charge.putVar(&chargeHistoryGather[0]);
     nc_weight.putVar(&weightHistoryGather[0]);
 #else
-    nc_x.putVar(positionHistoryX[0]);
-    nc_y.putVar(positionHistoryY[0]);
-    nc_z.putVar(positionHistoryZ[0]);
+    nc_x.putVar(&positionHistoryX[0]);
+    nc_y.putVar(&positionHistoryY[0]);
+    nc_z.putVar(&positionHistoryZ[0]);
 
-    nc_vx.putVar(velocityHistoryX[0]);
-    nc_vy.putVar(velocityHistoryY[0]);
-    nc_vz.putVar(velocityHistoryZ[0]);
+    nc_vx.putVar(&velocityHistoryX[0]);
+    nc_vy.putVar(&velocityHistoryY[0]);
+    nc_vz.putVar(&velocityHistoryZ[0]);
 
-    nc_charge.putVar(chargeHistory[0]);
+    nc_charge.putVar(&chargeHistory[0]);
 #endif
     ncFile_hist.close();
 #endif
