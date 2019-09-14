@@ -10,9 +10,8 @@
 
 #ifdef __GNUC__ 
 #include <random>
-#include <stdlib.h>
 #endif
-#include "math.h"
+#include <cmath>
 
 struct boundary_init {
     float background_Z;
@@ -44,12 +43,28 @@ struct boundary_init {
           float* _bfieldZ,float* _bfieldT,int _nR_Temp, int _nZ_Temp,
           float* _TempGridr, float* _TempGridz, float* _ti, float* _te, float _potential)
 
-      : background_Z(_background_Z), background_amu(_background_amu), nx(_nx), nz(_nz), 
-        densityGridx(_densityGridx), densityGridz(_densityGridz),density(_density),ne(_ne),
-        nxB(_nxB),nzB(_nzB), bfieldGridr(_bfieldGridr), bfieldGridz(_bfieldGridz), 
-        bfieldR(_bfieldR), bfieldZ(_bfieldZ), bfieldT(_bfieldT),
-        nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr), 
-        TempGridz(_TempGridz), ti(_ti),te(_te), potential(_potential) {}
+     : background_Z(_background_Z),
+        background_amu(_background_amu),
+        nR_Temp(_nR_Temp),
+        nZ_Temp(_nZ_Temp),
+        TempGridr(_TempGridr),
+        TempGridz(_TempGridz),
+        ti(_ti),
+        te(_te),
+        nx(_nx),
+        nz(_nz),
+        densityGridx(_densityGridx),
+        densityGridz(_densityGridz),
+        density(_density),
+        ne(_ne),
+        nxB(_nxB),
+        nzB(_nzB),
+        bfieldGridr(_bfieldGridr),
+        bfieldGridz(_bfieldGridz),
+        bfieldR(_bfieldR),
+        bfieldZ(_bfieldZ),
+        bfieldT(_bfieldT),
+        potential(_potential) {}
 
     void operator()(Boundary &b) const {
 #if USE3DTETGEOM
@@ -73,37 +88,37 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
 #if USE3DTETGEOM
         float surfNorm[3] = {0.0,0.0,0.0};
         b.getSurfaceNormal(surfNorm,0.0,0.0);
-        float theta = acos(vectorDotProduct(B,surfNorm)/(vectorNorm(B)*vectorNorm(surfNorm)));
+        float theta = std::acos(vectorDotProduct(B,surfNorm)/(vectorNorm(B)*vectorNorm(surfNorm)));
         if (theta > 3.14159265359*0.5)
         {
-          theta = abs(theta - (3.14159265359));
+          theta = std::abs(theta - (3.14159265359));
         }
 #else
         float br = B[0];
         float bt = B[1];
         float bz = B[2];
-        float theta = acos((-br*b.slope_dzdx + bz)/(sqrt(br*br+bz*bz+bt*bt)*sqrt(b.slope_dzdx*b.slope_dzdx + 1.0)));
+        float theta = std::acos((-br*b.slope_dzdx + bz)/(std::sqrt(br*br+bz*bz+bt*bt)*std::sqrt(b.slope_dzdx*b.slope_dzdx + 1.0)));
  
         if (theta > 3.14159265359*0.5)
         {
-            theta = acos((br*b.slope_dzdx - bz)/(sqrt(br*br+bz*bz+bt*bt)*sqrt(b.slope_dzdx*b.slope_dzdx + 1.0)));
+            theta = std::acos((br*b.slope_dzdx - bz)/(std::sqrt(br*br+bz*bz+bt*bt)*std::sqrt(b.slope_dzdx*b.slope_dzdx + 1.0)));
         }
 #endif        
         b.angle = theta*180.0/3.14159265359;
-        b.debyeLength = sqrt(8.854187e-12*b.te/(b.ne*pow(background_Z,2)*1.60217662e-19));
+        b.debyeLength = std::sqrt(8.854187e-12*b.te/(b.ne*std::pow(background_Z,2)*1.60217662e-19));
 	if(b.ne == 0.0) b.debyeLength = 1e12f;
-        b.larmorRadius = 1.44e-4*sqrt(background_amu*b.ti/2)/(background_Z*norm_B);
-        b.flux = 0.25*b.density*sqrt(8.0*b.ti*1.602e-19/(3.1415*background_amu));
+        b.larmorRadius = 1.44e-4*std::sqrt(background_amu*b.ti/2)/(background_Z*norm_B);
+        b.flux = 0.25*b.density*std::sqrt(8.0*b.ti*1.602e-19/(3.1415*background_amu));
         b.impacts = 0.0;
 #if BIASED_SURFACE
         b.potential = potential;
-        //float cs = sqrt(2*b.ti*1.602e-19/(1.66e-27*background_amu));
+        //float cs = std::sqrt(2*b.ti*1.602e-19/(1.66e-27*background_amu));
         //float jsat_ion = 1.602e-19*b.density*cs;
-        //b.ChildLangmuirDist = 2.0/3.0*pow(2*1.602e-19/(background_amu*1.66e-27),0.25)
-        //*pow(potential,0.75)/(2.0*sqrt(3.1415*jsat_ion))*1.055e-5;
+        //b.ChildLangmuirDist = 2.0/3.0*std::pow(2*1.602e-19/(background_amu*1.66e-27),0.25)
+        //*std::pow(potential,0.75)/(2.0*std::sqrt(3.1415*jsat_ion))*1.055e-5;
         if(b.te > 0.0)
         {
-          b.ChildLangmuirDist = b.debyeLength*pow(abs(b.potential)/b.te,0.75);
+          b.ChildLangmuirDist = b.debyeLength*std::pow(std::abs(b.potential)/b.te,0.75);
         }
         else
         { b.ChildLangmuirDist = 1e12;

@@ -1,16 +1,10 @@
 #include "h1.cuh"
-#include <math.h>
 #include <iostream>
 
 #include <iomanip>
 #include <cstdlib>
 #include <libconfig.h++>
 #include <cmath>
-
-using namespace std;
-using namespace libconfig;
-
-
 
 
 //INIT
@@ -28,9 +22,9 @@ double energy_eV_z_start = cfg.lookup("impurityParticleSource.initialConditions.
 double impurity_amu = cfg.lookup("impurityParticleSource.initialConditions.impurity_amu");
 double impurity_Z = cfg.lookup("impurityParticleSource.initialConditions.impurity_Z");
 
-double vx = energy_eV_x_start/fabs(energy_eV_x_start)*sqrt(2.0*fabs(energy_eV_x_start)*1.60217662e-19/(impurity_amu*1.6737236e-27));
-double vy = energy_eV_y_start/fabs(energy_eV_y_start)*sqrt(2.0*fabs(energy_eV_y_start)*1.60217662e-19/(impurity_amu*1.6737236e-27));
-double vz = energy_eV_z_start/fabs(energy_eV_z_start)*sqrt(2.0*fabs(energy_eV_z_start)*1.60217662e-19/(impurity_amu*1.6737236e-27));
+double vx = energy_eV_x_start/std::abs(energy_eV_x_start)*sqrt(2.0*std::abs(energy_eV_x_start)*1.60217662e-19/(impurity_amu*1.6737236e-27));
+double vy = energy_eV_y_start/std::abs(energy_eV_y_start)*sqrt(2.0*std::abs(energy_eV_y_start)*1.60217662e-19/(impurity_amu*1.6737236e-27));
+double vz = energy_eV_z_start/std::abs(energy_eV_z_start)*sqrt(2.0*std::abs(energy_eV_z_start)*1.60217662e-19/(impurity_amu*1.6737236e-27));
 
 if(energy_eV_x_start == 0.0) vx = 0.0;
 if(energy_eV_y_start == 0.0) vy = 0.0;

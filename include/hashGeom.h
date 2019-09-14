@@ -19,10 +19,10 @@
 
 #ifdef __GNUC__ 
 #include <random>
-#include <stdlib.h>
 #endif
 
 #include "interpRateCoeff.hpp"
+#include <cmath>
 
 struct hashGeom {
    //int k;
@@ -97,13 +97,13 @@ struct hashGeom {
        float kk = (indx-nHashPoints)/(nR[nHash]*nY[nHash]);
     //std::cout << "kk " << kk << std::endl;
         
-       int k = floor(kk);
+       int k = std::floor(kk);
     //std::cout << "k " << k << std::endl;
        int jjj = (indx-nHashPoints) - k*nR[nHash]*nY[nHash];
     //std::cout << "jjj " << jjj << std::endl;
        float jj = 1.0*jjj/nR[nHash];
     //std::cout << "jj " << jj << std::endl;
-       int j = floor(jj);
+       int j = std::floor(jj);
     //std::cout << "j " << j << std::endl;
        int i = (indx-nHashPoints)- j*nR[nHash] - k*(nR[nHash]*nY[nHash]);
     //std::cout << "i " << i << std::endl;
@@ -131,7 +131,7 @@ struct hashGeom {
       nZhashSum=0;
       nHashPoints=0;
        float kk = indx/(nR[0]);
-       int k = floor(kk);
+       int k = std::floor(kk);
        int i = indx - k*(nR[0]);
        float x0 = x[i];
        float y0 = 0.0;
@@ -196,7 +196,7 @@ struct hashGeom {
       p[0] = a*t + x0;
       p[1] = b*t + y0;
       p[2] = c*t + z0;
-      float perpDist = sqrt((x0-p[0])*(x0-p[0]) + (y0-p[1])*(y0-p[1]) + (z0-p[2])*(z0-p[2]));
+      float perpDist = std::sqrt((x0-p[0])*(x0-p[0]) + (y0-p[1])*(y0-p[1]) + (z0-p[2])*(z0-p[2]));
     #endif
 
       vectorAssign(boundary[l].x1, boundary[l].y1, 
@@ -222,10 +222,10 @@ struct hashGeom {
       vectorCrossProduct(BC,Bp,crossBCBp);
       vectorCrossProduct(CA,Cp,crossCACp);
 
-      signDot0 = sgn(vectorDotProduct(crossABAp,normalVector));
-      signDot1 = sgn(vectorDotProduct(crossBCBp,normalVector));
-      signDot2 = sgn(vectorDotProduct(crossCACp,normalVector));
-      totalSigns = abs(signDot0 + signDot1 + signDot2);
+      signDot0 = std::copysign(1.0,vectorDotProduct(crossABAp, normalVector));
+      signDot1 = std::copysign(1.0,vectorDotProduct(crossBCBp, normalVector));
+      signDot2 = std::copysign(1.0,vectorDotProduct(crossCACp, normalVector));
+      totalSigns = std::abs(signDot0 + signDot1 + signDot2);
 
       if (totalSigns == 3.0)
       {
@@ -247,7 +247,7 @@ struct hashGeom {
    {
     vectorScalarMult(cEdge1mag,AB,cEdge1);
     vectorSubtract(pA,cEdge1,dEdge1);
-    distE1 = sqrt(vectorDotProduct(dEdge1,dEdge1));
+    distE1 = std::sqrt(vectorDotProduct(dEdge1,dEdge1));
    }
    //std::cout << "edge1 comp " << pA[0] << " " << pA[1] << " " << pA[2] <<
     //   " " << cEdge1mag << " " << cEdge1[0] << " " << cEdge1[1] << " " << cEdge1[2] << " "
@@ -263,7 +263,7 @@ struct hashGeom {
    {
     vectorScalarMult(cEdge2mag,BC,cEdge2);
     vectorSubtract(pB,cEdge2,dEdge2);
-    distE2 = sqrt(vectorDotProduct(dEdge2,dEdge2));
+    distE2 = std::sqrt(vectorDotProduct(dEdge2,dEdge2));
    }
    float pC[3] = {0.0};
    float cEdge3[3] = {0.0};
@@ -275,33 +275,33 @@ struct hashGeom {
    {
     vectorScalarMult(cEdge3mag,CA,cEdge3);
     vectorSubtract(pC,cEdge3,dEdge3);
-    distE3 = sqrt(vectorDotProduct(dEdge3,dEdge3));
+    distE3 = std::sqrt(vectorDotProduct(dEdge3,dEdge3));
    }
-          float minEdge = min(distE1,distE2);
-          minEdge = min(distE3,minEdge);
+          float minEdge = std::min(distE1,distE2);
+          minEdge = std::min(distE3,minEdge);
 #else
           //
           float minEdge = distE1;
 #endif
       //std::cout << "edgeDistances " << distE1 << " " << distE2 << " " << distE3 << std::endl;
-        float d1 =sqrt((x0 - boundary[l].x1)*(x0 - boundary[l].x1)
+        float d1 =std::sqrt((x0 - boundary[l].x1)*(x0 - boundary[l].x1)
                 +  (y0 - boundary[l].y1)*(y0 - boundary[l].y1)
                 +  (z0 - boundary[l].z1)*(z0 - boundary[l].z1));
-        float d2 =sqrt((x0 - boundary[l].x2)*(x0 - boundary[l].x2)
+        float d2 =std::sqrt((x0 - boundary[l].x2)*(x0 - boundary[l].x2)
                 +  (y0 - boundary[l].y2)*(y0 - boundary[l].y2)
                 +  (z0 - boundary[l].z2)*(z0 - boundary[l].z2));
           #if USE3DTETGEOM > 0
-            float d3 =sqrt((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
+            float d3 =std::sqrt((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
                     +  (y0 - boundary[l].y3)*(y0 - boundary[l].y3)
                     +  (z0 - boundary[l].z3)*(z0 - boundary[l].z3));
           #endif
       //std::cout << " point Distances " << d3 << " " << d2 << " " << d1 << std::endl;
-          float minOf3 = min(d1,d2);
-          minOf3 = min(minOf3,minEdge);
+          float minOf3 = std::min(d1,d2);
+          minOf3 = std::min(minOf3,minEdge);
         //std::cout << "min of two " << minOf3 << std::endl;
           #if USE3DTETGEOM > 0
-          minOf3 = min(minOf3,perpDist);
-            minOf3 = min(minOf3,d3);
+          minOf3 = std::min(minOf3,perpDist);
+            minOf3 = std::min(minOf3,d3);
           #endif
       //std::cout << "mindist "  << minOf3 << " " <<  std::endl;
        //  if(indx ==1)
