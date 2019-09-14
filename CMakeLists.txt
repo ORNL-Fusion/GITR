@@ -9,8 +9,11 @@ set(CXX_STANDARD_REQUIRED TRUE)
 
 # Set source files
 file(GLOB SRC_FILES src/*.cpp)
+file(GLOB TEST_FILES src/*.cpp)
+list (REMOVE_ITEM TEST_FILES /home/tqd/Code/GITR-1/src/gitr.cpp)
+message("${TEST_FILES}")
 file( GLOB HEADER_FILES include/*.h )
-add_library(YourLib ${SRC_FILES} ${HEADER_FILES} )
+add_library(YourLib ${TEST_FILES})
 find_package(Thrust REQUIRED)
 find_package(NetCDF COMPONENTS CXX REQUIRED)
 find_package(LibConfig)
@@ -78,8 +81,8 @@ if (${CUDA})
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA --std=c++14 -O3) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
 
     set_source_files_properties(${SRC_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
+    CUDA_ADD_EXECUTABLE(tests test/file_io_tests.cpp ${TEST_FILES})
     cuda_add_executable(GITR ${SRC_FILES})
-    #CUDA_ADD_EXECUTABLE(tests test/file_io_tests.cpp)
 endif ()
 
 # setup for OpenMP backend
@@ -123,6 +126,7 @@ target_link_libraries(tests ${NETCDF_C_LIBRARIES})
 target_link_libraries(tests ${LIBCONFIGPP_LIBRARIES})
 target_link_libraries(tests ${MPI_C_LIBRARIES})
 target_link_libraries(tests ${MPI_CXX_LIBRARIES})
+target_link_libraries(tests "-lstdc++fs")
 enable_testing()
 add_test(TestName tests)
 # Install binaries
