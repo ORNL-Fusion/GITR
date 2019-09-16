@@ -13,7 +13,7 @@
 #include "Boundary.h"
 #include "Surfaces.h"
 #include <cmath>
-
+#include "boris.h"
 
 #ifdef __CUDACC__
 #include <thrust/random.h>

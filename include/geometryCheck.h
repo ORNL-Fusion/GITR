@@ -25,10 +25,10 @@ float findT(float x0, float x1, float y0, float y1, float intersectionx) {
   if (discriminant > 0) {
     a1 = (-b + std::sqrt(discriminant)) / (2 * a);
     a2 = (-b - std::sqrt(discriminant)) / (2 * a);
-    // cout << "Roots are real and different." << endl;
-    // cout << "a1 = " << a1 << endl;
-    // cout << "a2 = " << a2 << endl;
-    t = a1;
+    //std::cout << "Roots are real and different." << std::endl;
+    //std::cout << "a1 = " << a1 << std::endl;
+    //std::cout << "a2 = " << a2 << std::endl;
+    t = std::min(std::abs(a1),std::abs(a2));
   }
 
   else if (discriminant == 0) {
@@ -527,12 +527,12 @@ struct geometry_check {
       float signLine2;
       float minDist = 1e12f;
       int minDistInd = 0;
-// std::cout << "particle slope " << particle_slope << " " << particle_intercept
-// << std::endl; std::cout << "r " << boundaryVector[0].x1 << " " <<
-// boundaryVector[0].x1 << " " << boundaryVector[0].slope_dzdx << std::endl;
-// std::cout << "r0 " << particlesPointer->x[indx]previous << " " <<
-// particlesPointer->y[indx]previous << " " <<
-// particlesPointer->z[indx]previous<< std::endl;
+ //std::cout << "particle slope " << particle_slope << " " << particle_intercept
+ //<< std::endl; std::cout << "r " << boundaryVector[0].x1 << " " <<
+ //boundaryVector[0].x1 << " " << boundaryVector[0].slope_dzdx << std::endl;
+ //std::cout << "r0 " << particlesPointer->x[indx] << " " <<
+ //particlesPointer->y[indx] << " " <<
+ //particlesPointer->z[indx]<< std::endl;
 #if GEOM_HASH > 0
 #if USECYLSYMM > 0
       float r_position = std::sqrtf(particlesPointer->xprevious[indx] *
@@ -583,12 +583,15 @@ struct geometry_check {
 #endif
         // std::cout << "vert geom " << i << "  " <<
         // fabs(boundaryVector[i].slope_dzdx) << " " << tol << std::endl;
-        if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75f) {
+        if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75f) 
+        {
           signPoint = std::copysign(1.0, pdim1 - boundaryVector[i].x1);
           signPoint0 = std::copysign(1.0, pdim1previous - boundaryVector[i].x1);
           // std::cout << "signpoint1 " << signPoint << " " << signPoint0 <<
           // std::endl;
-        } else {
+        } 
+        else 
+        {
           signPoint =
               std::copysign(1.0, particlesPointer->z[indx] -
                                      pdim1 * boundaryVector[i].slope_dzdx -
@@ -597,21 +600,26 @@ struct geometry_check {
                                               pdim1previous *
                                                   boundaryVector[i].slope_dzdx -
                                               boundaryVector[i].intercept_z);
-          // std::cout << "signpoint2 " << signPoint << " " << signPoint0 <<
-          // std::endl;
+           //std::cout << "signpoint2 " << signPoint << " " << signPoint0 <<
+           //std::endl;
         }
 
-        if (signPoint != signPoint0) {
-          if (std::abs(particle_slope) >= tol * 0.75f) {
+        if (signPoint != signPoint0) 
+        {
+          if (std::abs(particle_slope) >= tol * 0.75f) 
+          {
             // std::cout << " isinf catch " << std::endl;
             particle_slope = tol;
           }
-          if (std::abs(particle_slope) >= tol * 0.75f) {
+          if (std::abs(particle_slope) >= tol * 0.75f) 
+          {
             signLine1 = std::copysign(1.0, boundaryVector[i].x1 - pdim1);
             signLine2 = std::copysign(1.0, boundaryVector[i].x2 - pdim1);
             // std::cout << "signlines3 " << signLine1 << " " << signLine2 <<
             // std::endl;
-          } else {
+          }
+          else 
+          {
             signLine1 =
                 std::copysign(1.0, boundaryVector[i].z1 -
                                        boundaryVector[i].x1 * particle_slope -
@@ -620,56 +628,69 @@ struct geometry_check {
                 std::copysign(1.0, boundaryVector[i].z2 -
                                        boundaryVector[i].x2 * particle_slope -
                                        particle_intercept);
+            //std::cout << "signline 1 and 2 " << signLine1 << " " << signLine2 << std::endl;
           }
 
-          if (signPoint != signPoint0) {
-            if (std::abs(particle_slope) >= tol * 0.75f) {
-              // std::cout << " isinf catch " << std::endl;
-              particle_slope = tol;
-            }
-            if (std::abs(particle_slope) >= tol * 0.75f) {
-              signLine1 = std::copysign(1.0, boundaryVector[i].x1 - pdim1);
-              signLine2 = std::copysign(1.0, boundaryVector[i].x2 - pdim1);
-              // std::cout << "signlines3 " << signLine1 << " " << signLine2 <<
-              // std::endl;
-            } else {
-              signLine1 =
-                  std::copysign(1.0, boundaryVector[i].z1 -
-                                         boundaryVector[i].x1 * particle_slope -
-                                         particle_intercept);
-              signLine2 =
-                  std::copysign(1.0, boundaryVector[i].z2 -
-                                         boundaryVector[i].x2 * particle_slope -
-                                         particle_intercept);
-            }
+          ////if (signPoint != signPoint0) 
+          ////{
+          ////  if (std::abs(particle_slope) >= tol * 0.75f) 
+          ////  {
+          ////    // std::cout << " isinf catch " << std::endl;
+          ////    particle_slope = tol;
+          ////  }
+          ////  if (std::abs(particle_slope) >= tol * 0.75f) 
+          ////  {
+          ////    signLine1 = std::copysign(1.0, boundaryVector[i].x1 - pdim1);
+          ////    signLine2 = std::copysign(1.0, boundaryVector[i].x2 - pdim1);
+          ////    // std::cout << "signlines3 " << signLine1 << " " << signLine2 <<
+          ////    // std::endl;
+          ////  } 
+          ////  else 
+          ////  {
+          ////    signLine1 =
+          ////        std::copysign(1.0, boundaryVector[i].z1 -
+          ////                               boundaryVector[i].x1 * particle_slope -
+          ////                               particle_intercept);
+          ////    signLine2 =
+          ////        std::copysign(1.0, boundaryVector[i].z2 -
+          ////                               boundaryVector[i].x2 * particle_slope -
+          ////                               particle_intercept);
+          ////  }
             // std::cout << "signLines " << signLine1 << " " << signLine2 <<
             // std::endl; std::cout << "bound vec points " <<
             // boundaryVector[i].z1 << " " << boundaryVector[i].x1 <<
             // " " << boundaryVector[i].z2 << " " << boundaryVector[i].x2 <<
             // std::endl;
-            if (signLine1 != signLine2) {
+            if (signLine1 != signLine2) 
+            {
               intersectionIndices[nIntersections] = i;
               nIntersections++;
 
               // std::cout << "nintersections " << nIntersections << std::endl;
               // std::cout << fabs(particlesPointer->x[indx] -
               // particlesPointer->xprevious[indx]) << tol_small << std::endl;
-              if (std::abs(pdim1 - pdim1previous) < tol_small) {
+              if (std::abs(pdim1 - pdim1previous) < tol_small) 
+              {
                 //  std::cout << "vertical line" << std::cout;
                 intersectionx[nIntersections - 1] = pdim1previous;
                 intersectiony[nIntersections - 1] =
                     intersectionx[nIntersections - 1] *
                         boundaryVector[i].slope_dzdx +
                     boundaryVector[i].intercept_z;
-              } else {
+              } 
+              else 
+              {
                 // std::cout << "not vertical line" << std::endl;
                 // std::cout << 0.0*7.0 << " " << i << " " << nParam << " " <<
                 // lines[i*nParam+4] << "  " <<tol << std::endl; std::cout <<
                 // "boundaryVector slope " << boundaryVector[i].slope_dzdx << " "
                 // << tol*0.75 <<std::endl;
-                if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75f) {
+                if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75f) 
+                {
                   intersectionx[nIntersections - 1] = boundaryVector[i].x1;
-                } else {
+                } 
+                else 
+                {
                   intersectionx[nIntersections - 1] =
                       (boundaryVector[i].intercept_z - particle_intercept) /
                       (particle_slope - boundaryVector[i].slope_dzdx);
@@ -679,13 +700,18 @@ struct geometry_check {
                 intersectiony[nIntersections - 1] =
                     intersectionx[nIntersections - 1] * particle_slope +
                     particle_intercept;
+                    //std::cout << "intersectionx and y"<<
+                    //intersectionx[nIntersections -1] << " " << intersectiony[0] << std::endl;
               }
             }
-          }
+          ////}
         }
+      }
+      //std::cout << " nIntersections " << nIntersections << std::endl;
         // if(particlesPointer->hitWall[indx] == 0.0)
         // {
-        if (nIntersections == 0) {
+        if (nIntersections == 0) 
+        {
           particlesPointer->distTraveled[indx] =
               particlesPointer->distTraveled[indx] + dpath;
           particlesPointer->xprevious[indx] = particlesPointer->x[indx];
@@ -698,12 +724,15 @@ struct geometry_check {
           // std::endl; std::cout << "r0 " << particlesPointer->xprevious[indx]
           // << " " << particlesPointer->yprevious[indx] << " " <<
           // particlesPointer->zprevious[indx] << std::endl;
-        } else if (nIntersections == 1) {
+        } 
+        else if (nIntersections == 1) 
+        {
           particlesPointer->hitWall[indx] = 1.0f;
           particlesPointer->wallIndex[indx] = intersectionIndices[0];
           particlesPointer->wallHit[indx] = intersectionIndices[0];
           // particlesPointer->test0[indx] = -100.0;
-          if (particle_slope >= tol * 0.75f) {
+          if (particle_slope >= tol * 0.75f) 
+          {
 #if USECYLSYMM > 0
             float x0 = particlesPointer->xprevious[indx];
             float x1 = particlesPointer->x[indx];
@@ -737,7 +766,9 @@ struct geometry_check {
             // std::endl;
 
 #endif
-          } else {
+          } 
+          else 
+          {
 #if USECYLSYMM > 0
             float x0 = particlesPointer->xprevious[indx];
             float x1 = particlesPointer->x[indx];
@@ -750,6 +781,7 @@ struct geometry_check {
             // particlesPointer->test0[indx] = -200.0;
             thetaNew = theta0 + (intersectionx[0] - pdim1previous) /
                                     (pdim1 - pdim1previous) * (theta1 - theta0);
+            //std::cout << " tt xnew ynew " << tt << " " << xNew << " " << yNew << std::endl;
             particlesPointer->yprevious[indx] = yNew;
             particlesPointer->y[indx] = yNew;
             // float rrr  =
@@ -795,7 +827,9 @@ struct geometry_check {
           particlesPointer->z[indx] = intersectiony[0];
           // std::cout << "nInt = 1 position " << intersectionx[0] << " " <<
           // intersectiony[0]  << std::endl;
-        } else {
+        } 
+        else 
+        {
           // std::cout << "nInts greater than 1 " << nIntersections <<
           // std::endl;
           for (int i = 0; i < nIntersections; i++) {
@@ -849,7 +883,7 @@ struct geometry_check {
 #endif
           particlesPointer->z[indx] = intersectiony[minDistInd];
         }
-      }
+      ////}
         // else
         //{
         //    if (particlesPointer->y[indx] < boundaryVector[nLines].y1)

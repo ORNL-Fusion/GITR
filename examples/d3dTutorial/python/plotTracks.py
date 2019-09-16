@@ -30,8 +30,8 @@ def plotTracks(filename='output/history.nc',geomFile='input/gitrGeometry.cfg',pl
             for i in range(nP):
               plt.plot(r[i,:],z[i,:],linewidth=0.5)
         
-	plt.autoscale(enable=True, axis='x', tight=True)
-	plt.plot(r_geom,z_geom)
+        plt.autoscale(enable=True, axis='x', tight=True)
+        plt.plot(r_geom,z_geom)
         plt.title('DIII-D W Impurity Simulation',fontsize=20)
         plt.xlabel('r [m]',fontsize=16)
         plt.ylabel('z [m]',fontsize=16)
@@ -39,4 +39,4 @@ def plotTracks(filename='output/history.nc',geomFile='input/gitrGeometry.cfg',pl
         plt.savefig('tracksRZ.png')
         plt.show()
 if __name__ == "__main__":
-    plotTracks(filename='output/history.nc',geomFile='gitrD3DGeometry2DWringsPy.cfg',plot=1)
+    plotTracks(filename='output/history.nc',geomFile='input/gitrD3DGeometry2DWringsPy.cfg',plot=1)
