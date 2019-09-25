@@ -31,7 +31,9 @@ def plotTracks(filename='output/history.nc',geomFile='input/gitrGeometry.cfg',pl
               plt.plot(r[i,:],z[i,:],linewidth=0.5)
         
         plt.autoscale(enable=True, axis='x', tight=True)
-        plt.plot(r_geom,z_geom)
+        r_geom = np.array(r_geom)
+        z_geom = np.array(z_geom)
+        plt.plot(np.append(r_geom,r_geom[0]),np.append(z_geom,z_geom[0]))
         plt.title('DIII-D W Impurity Simulation',fontsize=20)
         plt.xlabel('r [m]',fontsize=16)
         plt.ylabel('z [m]',fontsize=16)
