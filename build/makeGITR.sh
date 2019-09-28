@@ -38,7 +38,7 @@ source ../env.gpufusion.sh
     -DGEOM_TRACE=0 \
     -DGEOM_HASH=0 \
     -DGEOM_HASH_SHEATH=0 \
-    -DPARTICLE_TRACKS=1 \
+    -DPARTICLE_TRACKS=0 \
     -DSPECTROSCOPY=3 \
     -DUSE3DTETGEOM=1 \
     -DUSECYLSYMM=0 \
