@@ -18,7 +18,7 @@
 #include "interpolate.h"
 #include "ionize.h"
 #include <cmath>
-#include "ncFile.h"
+//#include "ncFile.h"
 #include "ompPrint.h"
 #include "recombine.h"
 #include "spectroscopy.h"
@@ -404,7 +404,7 @@ print_gpu_memory_usage(world_rank);
                  nY_closeGeomTotal, nZ_closeGeomTotal, nHashPoints.data(),
                  nHashPointsTotal, nGeomHash);
     std::cout << "made it here" << std::endl;
-     Setting& geomHash = cfg.lookup("geometry_hash");
+    libconfig::Setting& geomHash = cfg.lookup("geometry_hash");
      if(nHashes > 1)
     {
       for(int i=0; i<nHashes;i++)
@@ -446,7 +446,7 @@ print_gpu_memory_usage(world_rank);
      nR_closeGeomTotal = 0;
      nY_closeGeomTotal = 0;
      nZ_closeGeomTotal = 0;
-     nGeomHash = 0;
+     nHashPointsTotal = 0;
      for(int j=0;j<nHashes;j++)
     {
       if(nHashes > 1)
@@ -551,7 +551,7 @@ print_gpu_memory_usage(world_rank);
       hashY0(nHashes, 0.0), hashY1(nHashes, 0.0), hashZ0(nHashes, 0.0),
       hashZ1(nHashes, 0.0);
   if (world_rank == 0) {
-    Setting &geomHash = cfg.lookup("geometry_hash");
+    libconfig::Setting &geomHash = cfg.lookup("geometry_hash");
     if (nHashes > 1) {
       for (int i = 0; i < nHashes; i++) {
         hashX0[i] = geomHash["hashX0"][i];
