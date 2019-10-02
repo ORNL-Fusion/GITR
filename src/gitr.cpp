@@ -2850,7 +2850,8 @@ print_gpu_memory_usage(world_rank);
     nActiveParticlesOnRank[i] = nPPerRank[i];
   }
   std::cout << "World rank " << world_rank << " has " << nPPerRank[world_rank]
-            << " starting at " << pStartIndx[world_rank] << std::endl;
+            << " starting at " << pStartIndx[world_rank] 
+            << " ending at " << pStartIndx[world_rank]+nPPerRank[world_rank] << std::endl;
   auto particleArray = new Particles(nParticles);
   // auto particleArray2 = new Particles(nParticles);
 
@@ -3587,7 +3588,7 @@ print_gpu_memory_usage(world_rank);
 
   thrust::counting_iterator<std::size_t> particleBegin(pStartIndx[world_rank]);
   thrust::counting_iterator<std::size_t> particleEnd(
-      pStartIndx[world_rank] + nActiveParticlesOnRank[world_rank] - 1);
+      pStartIndx[world_rank] + nActiveParticlesOnRank[world_rank] );
   thrust::counting_iterator<std::size_t> particleOne(1);
   auto randInitStart_clock = gitr_time::now();
 
@@ -4138,11 +4139,12 @@ for(int i=0; i<nP ; i++)
   //      x_gather = malloc(sizeof(float)*nP);
   //}
   std::cout << "Reached MPI barrier for gather" << std::endl;
-
+  std::cout << "gather pstart and npperrank " << pStartIndx[world_rank] << " " << nPPerRank[world_rank] << std::endl;
   MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Gather(&particleArray->x[world_rank * nP / world_size], nP / world_size,
-             MPI_FLOAT, &xGather[0], nP / world_size, MPI_FLOAT, 0,
+  MPI_Gather(&particleArray->x[pStartIndx[world_rank]],nPPerRank[world_rank],
+             MPI_FLOAT, &xGather[0], nPPerRank[world_rank], MPI_FLOAT, 0,
              MPI_COMM_WORLD);
+  std::cout << "Passed x"<< world_rank << std::endl;
   MPI_Gather(&particleArray->y[world_rank * nP / world_size], nP / world_size,
              MPI_FLOAT, &yGather[0], nP / world_size, MPI_FLOAT, 0,
              MPI_COMM_WORLD);
@@ -4483,6 +4485,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_charge0.putVar(&chargeGather[0]);
     nc_leak0.putVar(&hasLeakedGather[0]);
 #else
+  std::cout << "not using mpi output" << std::endl;
   nc_x0.putVar(&particleArray->xprevious[0]);
   nc_y0.putVar(&particleArray->yprevious[0]);
   nc_z0.putVar(&particleArray->zprevious[0]);
@@ -4731,15 +4734,16 @@ particleArray->test4[i] << std::endl;
   cudaError_t err = cudaDeviceReset();
 // cudaProfilerStop();
 #endif
-#if USE_MPI > 0
-  // Finalize the MPI environment.
-  MPI_Finalize();
-#endif
   if (world_rank == 0) {
     auto gitr_finish_clock = gitr_time::now();
     std::chrono::duration<float> fstotal = gitr_finish_clock - gitr_start_clock;
     printf("Total runtime for GITR is %6.3f (secs) \n", fstotal.count());
   }
+#if USE_MPI > 0
+  // Finalize the MPI environment.
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Finalize();
+#endif
   //#endif
   return 0;
 }
