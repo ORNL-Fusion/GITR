@@ -922,4 +922,5 @@ int ncdfIO(int rwCode,const std::string& fileName,vector< std::string> dimNames,
     {
        std::cout << "dimension " <<i << " " <<  dims[i] << std::endl;
     }
+    return 0;
 }

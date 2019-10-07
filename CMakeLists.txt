@@ -14,7 +14,7 @@ list (REMOVE_ITEM TEST_FILES /Users/tyounkin/Code/gitr_repo/src/gitr.cpp)
 message("${TEST_FILES}")
 file( GLOB HEADER_FILES include/*.h )
 add_library(YourLib ${TEST_FILES})
-include_directories( ${HEADER_FILES})
+include_directories( include)
 find_package(Thrust REQUIRED)
 find_package(NetCDF COMPONENTS CXX REQUIRED)
 find_package(LibConfig)
@@ -31,6 +31,7 @@ include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 # Simulation defines
 add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DUSE_MPI=${USE_MPI}
+	-DUSE_FILESYSTEM=${USE_FILESYSTEM}
         -DUSEIONIZATION=${USEIONIZATION}
         -DUSERECOMBINATION=${USERECOMBINATION}
         -DUSEPERPDIFFUSION=${USEPERPDIFFUSION}
@@ -93,7 +94,7 @@ if (${OPENMP})
     Message("Enabling OpenMP backend")
     find_package(OpenMP REQUIRED)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -O3 -std=c++1z")#-g -G -Wno-c++11-narrowing -fstack-protector-all -fstack-check -W -Wall") #-O3 -g -G
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -O3 -std=c++17")#-g -G -Wno-c++11-narrowing -fstack-protector-all -fstack-check -W -Wall") #-O3 -g -G
     set_source_files_properties(${SRC_FILES} PROPERTIES LANGUAGE CXX)
     add_executable(GITR ${SRC_FILES})
     add_definitions("-x c++ -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP")

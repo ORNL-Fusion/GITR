@@ -42,8 +42,10 @@
 #ifdef __CUDACC__
 #include <curand.h>
 #include <curand_kernel.h>
-#include <experimental/filesystem>
 #else
+#endif
+
+#if USE_FILESYSTEM > 0
 #include <experimental/filesystem>
 #endif
 
@@ -132,6 +134,7 @@ int main(int argc, char **argv, char **envp) {
   }
 
 // show memory usage of GPU
+#if USE_FILESYSTEM > 0
 #if __CUDACC__
   namespace fsn = std::experimental::filesystem;
 #else
@@ -150,7 +153,7 @@ print_gpu_memory_usage(world_rank);
       std::cout << " Successfully Created " << std::endl;
     }
   }
-
+#endif
   // Background species info
   float background_Z = 0.0, background_amu = 0.0;
   if (world_rank == 0) {
@@ -449,14 +452,8 @@ print_gpu_memory_usage(world_rank);
      nHashPointsTotal = 0;
      for(int j=0;j<nHashes;j++)
     {
-      if(nHashes > 1)
-      {
         nHashPoints[j] =nR_closeGeom[j]*nY_closeGeom[j]*nZ_closeGeom[j];
-      }
-      else
-      {
-        nHashPoints[j] =nR_closeGeom[j]*nZ_closeGeom[j];
-      }
+      
       nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
       nGeomHash = nGeomHash + nHashPoints[j]*n_closeGeomElements[j];
       nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
@@ -762,7 +759,9 @@ print_gpu_memory_usage(world_rank);
     for (int i = 0; i < nHashes; i++) {
       NcFile ncFile_hash("output/geomHash" + std::to_string(i) + ".nc",
                          NcFile::replace);
+  std::cout << "opened GeomHash file " << std::endl;
       NcDim hashNR = ncFile_hash.addDim("nR", nR_closeGeom[i]);
+  std::cout << "added first dimension nR " << std::endl;
 #if USE3DTETGEOM > 0
       NcDim hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
 #endif
@@ -775,32 +774,43 @@ print_gpu_memory_usage(world_rank);
 #endif
       geomHashDim.push_back(hashNZ);
       geomHashDim.push_back(hashN);
+  std::cout << "added all dimensions " << std::endl;
       NcVar hash_gridR = ncFile_hash.addVar("gridR", ncFloat, hashNR);
+  std::cout << "added first variable " << std::endl;
 #if USE3DTETGEOM > 0
       NcVar hash_gridY = ncFile_hash.addVar("gridY", ncFloat, hashNY);
 #endif
       NcVar hash_gridZ = ncFile_hash.addVar("gridZ", ncFloat, hashNZ);
+  std::cout << "added gridZ variable " << std::endl;
       NcVar hash = ncFile_hash.addVar("hash", ncInt, geomHashDim);
+  std::cout << "added hash variable " << std::endl;
       int ncIndex = 0;
       if (i > 0)
         ncIndex = nR_closeGeom[i - 1];
       hash_gridR.putVar(&closeGeomGridr[ncIndex]);
+  std::cout << "put gridr variable " << std::endl;
 #if USE3DTETGEOM > 0
       if (i > 0)
         ncIndex = nY_closeGeom[i - 1];
       hash_gridY.putVar(&closeGeomGridy[ncIndex]);
+  std::cout << "put gridy variable " << std::endl;
 #endif
 
       if (i > 0)
         ncIndex = nZ_closeGeom[i - 1];
       hash_gridZ.putVar(&closeGeomGridz[ncIndex]);
+  std::cout << "put gridz variable " << std::endl;
       if (i > 0)
         ncIndex = nR_closeGeom[i - 1] * nY_closeGeom[i - 1] *
                   nZ_closeGeom[i - 1] * n_closeGeomElements[i - 1];
+  std::cout << "ncIndex "<<ncIndex << std::endl;
       hash.putVar(&closeGeom[ncIndex]);
+  std::cout << "put hash variable " << std::endl;
       ncFile_hash.close();
+  std::cout << "closed file " << std::endl;
     }
   }
+  std::cout << "finished GeomHash file " << std::endl;
 #elif GEOM_HASH > 1
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
