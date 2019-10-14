@@ -36,6 +36,7 @@ THE SOFTWARE.
 #include "Boundary.h"
 #include <iomanip>
 #include <iostream>
+#include <vector>
 namespace sim {
 
 

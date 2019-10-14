@@ -6,7 +6,6 @@
 #else
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
-#include <stdlib.h>
 #include <cstdlib>
 #include <iostream>
 #include "Particles.h"
