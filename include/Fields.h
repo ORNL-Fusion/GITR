@@ -8,8 +8,6 @@
 //#endif
 //
 //#include "array.h"
-//#include "managed_allocation.h"
-//#include "math.h"
 //#include <cstdlib>
 //#include <stdio.h>
 //#include <vector>

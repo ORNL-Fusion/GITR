@@ -11,7 +11,6 @@
 
 #include <thrust/device_vector.h>
 #include <vector>
-#include <math.h>
 #include <cmath>
 using namespace std;
 
@@ -26,18 +25,18 @@ float rateCoeffInterp(int charge, float te, float ne,int nT, int nD, float* rate
   */  
     int indT = 0;
     int indN = 0;
-    float logT = log10(te);
-    float logn = log10(ne);
+    float logT = std::log10(te);
+    float logn = std::log10(ne);
     //std::cout << "Rategrid_temp in rateCoeffInterp " << rateGrid_Temp[1] << std::endl;
     float d_T = rateGrid_Tempp[1] - rateGrid_Tempp[0];
     float d_n = rateGrid_Densp[1] - rateGrid_Densp[0];
    // if (logT >= rateGrid_Tempp[0] && logT <= rateGrid_Tempp[nT-2])
    // {
-        indT = floor((logT - rateGrid_Tempp[0])/d_T );//addition of 0.5 finds nearest gridpoint
+        indT = std::floor((logT - rateGrid_Tempp[0])/d_T );//addition of 0.5 finds nearest gridpoint
     //}
     //if (logn >= rateGrid_Densp[0] && logn <= rateGrid_Densp[nD-2])
     //{
-        indN = floor((logn - rateGrid_Densp[0])/d_n );
+        indN = std::floor((logn - rateGrid_Densp[0])/d_n );
     //}
     //std::cout << "Indices density, temp " << indN << " " <<indT<<std::endl;
     //std::cout << "charge " << charge << std::endl;
@@ -48,21 +47,21 @@ if(indN < 0 || indN > nD-2)
 {indN = 0;}
 if(charge > 74-1)
 {charge = 0;}
-        float aT = powf(10.0f,rateGrid_Tempp[indT+1]) - te;
-    float bT = te - powf(10.0f,rateGrid_Tempp[indT]);
+        float aT = std::pow(10.0f,rateGrid_Tempp[indT+1]) - te;
+    float bT = te - std::pow(10.0f,rateGrid_Tempp[indT]);
     float abT = aT+bT;
 
-    float aN = powf(10.0f,rateGrid_Densp[indN+1]) - ne;
-    float bN = ne - powf(10.0f, rateGrid_Densp[indN]);
+    float aN = std::pow(10.0f,rateGrid_Densp[indN+1]) - ne;
+    float bN = ne - std::pow(10.0f, rateGrid_Densp[indN]);
     float abN = aN + bN;
 
     //float interp_value = Rates[charge*rateGrid_Temp.size()*rateGrid_Dens.size()            + indT*rateGrid_Dens.size() + indN];
 
-    float fx_z1 = (aN*powf(10.0f,Ratesp[charge*nT*nD + indT*nD + indN]) 
-            + bN*powf(10.0f,Ratesp[charge*nT*nD            + indT*nD + indN + 1]))/abN;
+    float fx_z1 = (aN*std::pow(10.0f,Ratesp[charge*nT*nD + indT*nD + indN]) 
+            + bN*std::pow(10.0f,Ratesp[charge*nT*nD            + indT*nD + indN + 1]))/abN;
     
-    float fx_z2 = (aN*powf(10.0f,Ratesp[charge*nT*nD            + (indT+1)*nD + indN]) 
-            + bN*powf(10.0f,Ratesp[charge*nT*nD            + (indT+1)*nD + indN+1]))/abN;
+    float fx_z2 = (aN*std::pow(10.0f,Ratesp[charge*nT*nD            + (indT+1)*nD + indN]) 
+            + bN*std::pow(10.0f,Ratesp[charge*nT*nD            + (indT+1)*nD + indN+1]))/abN;
     float fxz = (aT*fx_z1+bT*fx_z2)/abT;
     //std::cout << "fxz1 and 2 " << fx_z1 << " " << fx_z2<< " "<< fxz << std::endl;
     return fxz;    
