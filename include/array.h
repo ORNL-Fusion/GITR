@@ -34,7 +34,6 @@ THE SOFTWARE.
 #include <cstddef>
 #include <stdexcept>
 #include "Boundary.h"
-#include <boost/type_index.hpp>
 #include <iomanip>
 #include <iostream>
 namespace sim {
