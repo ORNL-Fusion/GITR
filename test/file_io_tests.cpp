@@ -182,6 +182,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
 
     geometry_check0(0);
     std::cout << "particle x and z " << particleArray->x[0] << " " <<  particleArray->z[0] << std::endl;
+    std::cout << "particle hitWall " << particleArray->hitWall[0] << std::endl;
     REQUIRE(particleArray->hitWall[0] == 1);
     
     particleArray->x[0] = 1.0;
