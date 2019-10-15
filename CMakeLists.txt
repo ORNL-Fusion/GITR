@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(gitr)
 
-set(CUDA 1)
+set(OPENMP 1)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
@@ -139,6 +139,10 @@ target_link_libraries(tests ${MPI_CXX_LIBRARIES})
 #target_link_libraries(tests "-lstdc++fs")
 enable_testing()
 add_test(TestName tests)
+
+find_package (Python3 COMPONENTS Interpreter)
+message( STATUS "python stuff " ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR} ${EXECUTABLE_OUTPUT_PATH})
+add_test(NAME sample_test COMMAND ${PYTHON_EXECUTABLE} /Users/tyounkin/Code/GITR-1/test/sample_test.py WORKING_DIRECTORY /Users/tyounkin/Code/GITR-1/test )
 #add_test(TestName geom_test)
 # Install binaries
 install(TARGETS GITR DESTINATION bin)
