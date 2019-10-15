@@ -3956,6 +3956,7 @@ print_gpu_memory_usage(world_rank);
 #endif
     for (tt; tt < nT; tt++) {
       // dev_tt[0] = tt;
+      //std::cout << " tt " << tt << std::endl;
 #if USE_SORT > 0
       thrust::for_each(thrust::device, tmpInt.begin(), tmpInt.end(), sort0);
 #ifdef __CUDACC__
