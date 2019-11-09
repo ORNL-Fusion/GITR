@@ -1,10 +1,9 @@
-#define CATCH_CONFIG_MAIN
 //#include "file_io.hpp"
 #include <iostream>
 #include <libconfig.h++>
 #include <stdio.h>
 #include "utils.h"
-#include "catch.hpp"
+#include "tests_general.hpp"
 #include "Particles.h"
 #include "geometryCheck.h"
 TEST_CASE("Factorials are computed", "[factorial]") {
