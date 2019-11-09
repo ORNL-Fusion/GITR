@@ -1,2 +1,11 @@
 name: A workflow for my Hello World file
 on: push
+jobs:
+  build:
+    name: Hello world action
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@testing/python_heating
+    - uses: ./action-dependency
+      env:
+        MY_NAME: "Mona"
