@@ -1,7 +1,7 @@
 #!/bin/bash
-source ../env.gpufusion.sh
+source env.gpufusion.sh
 
-~/cmake/cmake-3.7.0-rc1-Linux-x86_64/bin/cmake -DTHRUST_INCLUDE_DIR=$CUDA_PATH/include \
+cmake -DTHRUST_INCLUDE_DIR=$CUDA_PATH/include \
     -DNETCDF_DIR=$NETCDF \
     -DNETCDF_CXX_ROOT=$NETCDFCXX4 \
     -DLIBCONFIGPP_LIBRARY=$LIBCONFIGDIR/$LIBCONFIGLIB \
@@ -51,7 +51,7 @@ source ../env.gpufusion.sh
     -DUSEFIELDALIGNEDVALUES=0 \
     -DUSE_OPENMP=0 \
     -DUSE_SORT=0 \
-    ..
+#    ..
     #-DMANUAL_FLAGS={$USECUDA_ $USEMPI_ $USEBOOST_ $USEIONIZATION_} \
     #-DMANUAL_FLAGS="-DUSEIONIZATION=1" \
 #~/cmake/cmake-3.7.0-rc1-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DTHRUST_INCLUDE_DIR=$CUDA_PATH/include -DNETCDF_DIR=$NETCDF -DNETCDF_CXX_ROOT=$NETCDFCXX4 -DLIBCONFIGPP_LIBRARY=$LIBCONFIGDIR/$LIBCONFIGLIB  ..
