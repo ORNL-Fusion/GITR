@@ -7,6 +7,6 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - uses: ./action-dependency
-    - uses: ./action-build
+    - uses: cmake
       env:
         MY_NAME: "Tim"
