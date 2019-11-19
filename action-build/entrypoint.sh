@@ -1,8 +1,8 @@
 #!/bin/sh -l
 
-sh -c "directory $PWD"
+sh -c "echo directory $PWD"
 
-cd build
-sh -c "now directory $PWD"
+cd GITR-1/build
+sh -c "echo now directory $PWD"
 
 ./makeGITR.sh
