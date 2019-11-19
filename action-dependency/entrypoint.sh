@@ -2,7 +2,6 @@
 
 sh -c "echo Hello world my name is $MY_NAME"
 
-apt-get update
+apt-get -y update
 sh -c "updated tree"
-apt-get install libnetcdf-dev
-Y
+apt-get -y install libnetcdf-dev
