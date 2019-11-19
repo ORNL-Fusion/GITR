@@ -6,4 +6,4 @@ sh -c "cd build"
 sh -c "echo now directory $PWD"
 sh -c "ls /github/workspace"
 
-sh -c "./makeGITR.sh"
+sh -c "build/makeGITR.sh"
