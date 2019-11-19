@@ -7,5 +7,6 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - uses: ./action-dependency
+    - uses: ./action-build
       env:
-        MY_NAME: "Mona"
+        MY_NAME: "Tim"
