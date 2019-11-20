@@ -7,6 +7,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - uses: ./action-dependency
+    - run: git clone https://github.com/thrust/thrust.git
     - run: cd build && cmake -DTHRUST_INCLUDE_DIR=$GITHUB_WORKSPACE/thrust ..
       env:
         MY_NAME: "Tim"
