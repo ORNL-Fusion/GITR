@@ -8,6 +8,9 @@ jobs:
     - uses: actions/checkout@master
     - uses: ./action-dependency
     - run: sudo apt-get -y install libnetcdf-dev
+    - run: wget https://github.com/Unidata/netcdf-cxx4/archive/v4.3.1.tar.gz
+    - run: tar -xvzf v4.3.1.tar.gz
+    - run: ls 
     - run: git clone https://github.com/thrust/thrust.git
     - run: dpkg -L libnetcdf-dev
     - run: export NETCDF_DIR_LIB=$(eval nc-config --libdir)
