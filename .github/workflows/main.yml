@@ -7,6 +7,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - uses: ./action-dependency
+    - run: apt-get -y install libnetcdf-dev
     - run: git clone https://github.com/thrust/thrust.git
     - run: dpkg -L libnetcdf-dev
     - run: export NETCDF_DIR_LIB=$(eval nc-config --libdir)
