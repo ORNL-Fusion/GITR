@@ -8,7 +8,7 @@ jobs:
     - uses: actions/checkout@master
     - uses: ./action-dependency
     - run: git clone https://github.com/thrust/thrust.git
-    - run: nc-config
+    - run: dpkg -L libnetcdf-dev
     - run: export NETCDF_DIR_LIB=$(eval nc-config --libdir)
     - run: export NETCDF_DIR_INC=$(eval nc-config --includedir)
     - run: cd build && cmake -DTHRUST_INCLUDE_DIR=$GITHUB_WORKSPACE/thrust -DNETCDF_LIBRARIES=$NETCDF_DIR_LIB -DNETCDF_INCLUDE_DIRS=$NETCDF_DIR_INC ..
