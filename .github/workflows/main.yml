@@ -10,11 +10,16 @@ jobs:
     - run: sudo apt-get -y install libnetcdf-dev
     - run: wget https://github.com/Unidata/netcdf-cxx4/archive/v4.3.1.tar.gz
     - run: tar -xvzf v4.3.1.tar.gz
-    - run: ls 
+    - run: ls
+    - run: mkdir netcdfcxxbuild  
+    - run: cd netcdf-cxx4-4.3.1
+    - run: ./configure --prefix=$GITHUB_WORKSPACE/netcdfcxxbuild
+    - run: make
+    - run: make install  
     - run: git clone https://github.com/thrust/thrust.git
     - run: dpkg -L libnetcdf-dev
-    - run: export NETCDF_DIR_LIB=$(eval nc-config --libdir)
-    - run: export NETCDF_DIR_INC=$(eval nc-config --includedir)
+    - run: export NETCDF_DIR_LIB=$GITHUB_WORKSPACE/netcdfcxxbuild/lib
+    - run: export NETCDF_DIR_INC=$GITHUB_WORKSPACE/netcdfcxxbuild/include
     - run: cd build && cmake -DTHRUST_INCLUDE_DIR=$GITHUB_WORKSPACE/thrust -DNETCDF_LIBRARIES=$NETCDF_DIR_LIB -DNETCDF_INCLUDE_DIRS=$NETCDF_DIR_INC ..
       env:
         MY_NAME: "Tim"
