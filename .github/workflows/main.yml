@@ -13,7 +13,7 @@ jobs:
     - run: ls
     - run: mkdir netcdfcxxbuild  
     - run: cd netcdf-cxx4-4.3.1
-    - run: autoconf -if
+    - run: autoreconf -if
     - run: ./configure --prefix=$GITHUB_WORKSPACE/netcdfcxxbuild
     - run: make
     - run: make install
