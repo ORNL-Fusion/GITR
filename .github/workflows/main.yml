@@ -78,6 +78,8 @@ jobs:
         -DFORCE_EVAL=0
         -DUSE_SORT=0
         -DCHECK_COMPATIBILITY=1
-        ..
+        .. &&
+        make
+    - run: ls build  
       env:
         MY_NAME: "Tim"
