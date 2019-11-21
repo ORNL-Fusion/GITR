@@ -13,11 +13,13 @@ jobs:
     - run: ls
     - run: mkdir netcdfcxxbuild  
     - run: cd netcdf-cxx4-4.3.1
-    - run: autoconf
-    - run: ./configure --prefix=$GITHUB_WORKSPACE/netcdfcxxbuild
+    - run: mkdir build
+    - run: cd build
+    - run: cmake ..
     - run: make
+    - run: ctest
     - run: make install
-    - run: cd ..  
+    - run: cd ../..
     - run: git clone https://github.com/thrust/thrust.git
     - run: dpkg -L libnetcdf-dev
     - run: export NETCDF_DIR_LIB=$GITHUB_WORKSPACE/netcdfcxxbuild/lib
