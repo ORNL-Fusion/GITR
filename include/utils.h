@@ -6,7 +6,7 @@
 #else
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
-#include <netcdf.h>
+#include <netcdf>
 //#include "ncFile.h"
 #include "Boundary.h"
 #include <vector>
@@ -18,10 +18,6 @@
 #include <libconfig.h++>
 #include "interp2d.hpp"
 #include <fstream>
-using namespace std;
-using namespace netCDF;
-using namespace exceptions;
-using namespace netCDF::exceptions;
 void  read_comand_line_args(const int argc,char** argv,int& ppn,std::string& inputFile);
 void checkFlags(libconfig::Config &cfg);
 void print_gpu_memory_usage(const int world_rank);
@@ -63,29 +59,29 @@ template <typename T>
 int readFileVar(const std::string& fileName,const std::string& section,const std::string& varName,T &x ) {
        std::string profiles_folder = "output/profiles";
         // Check input file exists
-       ifstream file(fileName);
+       std::ifstream file(fileName);
        if(!file.good()) {
-         cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
+         std::cout<<"ERROR: Cannot file input file ... "<<fileName<<std::endl;
          exit(1);
        }
        else{
          std::cout << "reading " <<" "  << fileName << std::endl;
        }
  
-       NcFile nc(fileName, NcFile::read);
+       netCDF::NcFile nc(fileName, netCDF::NcFile::read);
 
        if(nc.isNull()){
        std::cout << "ERROR: Failed to open " << fileName << std::endl; 
        }
 
-       NcVar xx;
+       netCDF::NcVar xx;
 
        try{
            xx = nc.getVar(varName);
            if(xx.isNull()){std::cout << "ERROR: could not find variable "<<
               varName << " in " << fileName << std::endl;}
        }
-       catch(NcException& e){}
+       catch(netCDF::exceptions::NcException& e){}
        
        int numberOfDimensions = xx.getDimCount();
        if(numberOfDimensions >1)
@@ -112,13 +108,13 @@ int readFileVar(const std::string& fileName,const std::string& section,const std
        }
        else
        {
-       NcDim xdim;
+         netCDF::NcDim xdim;
        try{
            xdim = xx.getDim(0);
            if(xdim.isNull()){std::cout << "ERROR: could not get dimension of variable "<<
               varName << " in " << fileName << std::endl;}
        }
-       catch(NcException& e){}
+       catch(netCDF::exceptions::NcException& e){}
        int xlength;
        xlength = xdim.getSize();
 
@@ -150,9 +146,9 @@ int read_ar2Input( std::string fileName, float *Bfield[]);
 
 int read_profileNs( std::string fileName,std::string nzName,std::string nxName,int &n_x,int &n_z );
 int read_profileNsChar(const char *fileName,const char *nxName,const char *nzName,int &n_x,int &n_z );
-int read_profile2d( string fileName,string dataName, sim::Array<float>& data);
-int read_profile1d( string fileName,string gridxName, sim::Array<float>& gridx);
-int read_profile3d( string fileName,string dataName, sim::Array<int>& data);
+int read_profile2d( std::string fileName,std::string dataName, sim::Array<float>& data);
+int read_profile1d( std::string fileName,std::string gridxName, sim::Array<float>& gridx);
+int read_profile3d( std::string fileName,std::string dataName, sim::Array<int>& data);
 
 int read_profiles( std::string fileName, int &n_x, int &n_z,std::string gridxName, sim::Array<float>& gridx,std::string gridzName,
                             sim::Array<float>& gridz, std::string dataName, sim::Array<float>& data);
@@ -167,8 +163,8 @@ int read_profiles( std::string fileName, int &n_x, int &n_z,std::string gridxNam
 
 
 int readFileDim(const std::string& fileName,const std::string& varName);
-int ncdfIO(int rwCode,const std::string& fileName,vector< std::string> dimNames,vector<int> dims,
-        vector< std::string> gridNames,vector<int> gridMapToDims,vector<float*> pointers,
-        vector< std::string> intVarNames,vector<vector<int>> intVarDimMap, vector<int*> intVarPointers);
+int ncdfIO(int rwCode,const std::string& fileName,std::vector< std::string> dimNames,std::vector<int> dims,
+        std::vector< std::string> gridNames,std::vector<int> gridMapToDims,std::vector<float*> pointers,
+        std::vector< std::string> intVarNames,std::vector<std::vector<int>> intVarDimMap, std::vector<int*> intVarPointers);
 int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::string fieldCfgString,int *nR, int *nY,int *nZ,int *n,int &nRTotal,int &nYTotal,int &nZTotal,int *nHashPoints, int &nHashPointsTotal,int &nGeomHash);
 #endif

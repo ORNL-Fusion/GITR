@@ -760,27 +760,27 @@ print_gpu_memory_usage(world_rank);
   printf("Time taken          is %6.3f (secs) \n", fs0.count());
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
-      NcFile ncFile_hash("output/geomHash" + std::to_string(i) + ".nc",
-                         NcFile::replace);
-      NcDim hashNR = ncFile_hash.addDim("nR", nR_closeGeom[i]);
+      netCDF::NcFile ncFile_hash("output/geomHash" + std::to_string(i) + ".nc",
+                         netCDF::NcFile::replace);
+      netCDF::NcDim hashNR = ncFile_hash.addDim("nR", nR_closeGeom[i]);
 #if USE3DTETGEOM > 0
-      NcDim hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
+      netCDF::NcDim hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
 #endif
-      NcDim hashNZ = ncFile_hash.addDim("nZ", nZ_closeGeom[i]);
-      NcDim hashN = ncFile_hash.addDim("n", n_closeGeomElements[i]);
-      vector<NcDim> geomHashDim;
+      netCDF::NcDim hashNZ = ncFile_hash.addDim("nZ", nZ_closeGeom[i]);
+      netCDF::NcDim hashN = ncFile_hash.addDim("n", n_closeGeomElements[i]);
+      vector<netCDF::NcDim> geomHashDim;
       geomHashDim.push_back(hashNR);
 #if USE3DTETGEOM > 0
       geomHashDim.push_back(hashNY);
 #endif
       geomHashDim.push_back(hashNZ);
       geomHashDim.push_back(hashN);
-      NcVar hash_gridR = ncFile_hash.addVar("gridR", ncFloat, hashNR);
+      netCDF::NcVar hash_gridR = ncFile_hash.addVar("gridR", netCDF::ncFloat, hashNR);
 #if USE3DTETGEOM > 0
-      NcVar hash_gridY = ncFile_hash.addVar("gridY", ncFloat, hashNY);
+      netCDF::NcVar hash_gridY = ncFile_hash.addVar("gridY", netCDF::ncFloat, hashNY);
 #endif
-      NcVar hash_gridZ = ncFile_hash.addVar("gridZ", ncFloat, hashNZ);
-      NcVar hash = ncFile_hash.addVar("hash", ncInt, geomHashDim);
+      netCDF::NcVar hash_gridZ = ncFile_hash.addVar("gridZ", netCDF::ncFloat, hashNZ);
+      netCDF::NcVar hash = ncFile_hash.addVar("hash", netCDF::ncInt, geomHashDim);
       int ncIndex = 0;
       if (i > 0)
         ncIndex = nR_closeGeom[i - 1];
@@ -3454,17 +3454,17 @@ print_gpu_memory_usage(world_rank);
   if (world_rank == 0) {
 #endif
     std::cout << "writing particles out file" << std::endl;
-    NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
-    NcDim pNP = ncFile_particles.addDim("nP", nP);
-    NcVar p_surfNormx = ncFile_particles.addVar("surfNormX", ncFloat, pNP);
-    NcVar p_surfNormy = ncFile_particles.addVar("surfNormY", ncFloat, pNP);
-    NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ", ncFloat, pNP);
-    NcVar p_vx = ncFile_particles.addVar("vx", ncFloat, pNP);
-    NcVar p_vy = ncFile_particles.addVar("vy", ncFloat, pNP);
-    NcVar p_vz = ncFile_particles.addVar("vz", ncFloat, pNP);
-    NcVar p_x = ncFile_particles.addVar("x", ncFloat, pNP);
-    NcVar p_y = ncFile_particles.addVar("y", ncFloat, pNP);
-    NcVar p_z = ncFile_particles.addVar("z", ncFloat, pNP);
+    netCDF::NcFile ncFile_particles("output/particleSource.nc", netCDF::NcFile::replace);
+    netCDF::NcDim pNP = ncFile_particles.addDim("nP", nP);
+    netCDF::NcVar p_surfNormx = ncFile_particles.addVar("surfNormX", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_surfNormy = ncFile_particles.addVar("surfNormY", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_vx = ncFile_particles.addVar("vx", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_vy = ncFile_particles.addVar("vy", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_vz = ncFile_particles.addVar("vz", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_x = ncFile_particles.addVar("x", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_y = ncFile_particles.addVar("y", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_z = ncFile_particles.addVar("z", netCDF::ncFloat, pNP);
     p_surfNormx.putVar(&pSurfNormX[0]);
     p_surfNormy.putVar(&pSurfNormY[0]);
     p_surfNormz.putVar(&pSurfNormZ[0]);
@@ -4457,22 +4457,22 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     }
     outfile2.close();
     // Write netCDF output for positions
-    NcFile ncFile0("output/positions.nc", NcFile::replace);
-    NcDim nc_nP0 = ncFile0.addDim("nP", nP);
-    vector<NcDim> dims0;
+    netCDF::NcFile ncFile0("output/positions.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nP0 = ncFile0.addDim("nP", nP);
+    vector<netCDF::NcDim> dims0;
     dims0.push_back(nc_nP0);
 
-    NcVar nc_x0 = ncFile0.addVar("x", ncFloat, dims0);
-    NcVar nc_y0 = ncFile0.addVar("y", ncFloat, dims0);
-    NcVar nc_z0 = ncFile0.addVar("z", ncFloat, dims0);
-    NcVar nc_vx0 = ncFile0.addVar("vx", ncFloat, dims0);
-    NcVar nc_vy0 = ncFile0.addVar("vy", ncFloat, dims0);
-    NcVar nc_vz0 = ncFile0.addVar("vz", ncFloat, dims0);
-    NcVar nc_trans0 = ncFile0.addVar("transitTime", ncFloat, dims0);
-    NcVar nc_impact0 = ncFile0.addVar("hitWall", ncFloat, dims0);
-    NcVar nc_weight0 = ncFile0.addVar("weight", ncFloat, dims0);
-    NcVar nc_charge0 = ncFile0.addVar("charge", ncFloat, dims0);
-    NcVar nc_leak0 = ncFile0.addVar("hasLeaked", ncInt, dims0);
+    netCDF::NcVar nc_x0 = ncFile0.addVar("x", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_y0 = ncFile0.addVar("y", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_z0 = ncFile0.addVar("z", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_vx0 = ncFile0.addVar("vx", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_vy0 = ncFile0.addVar("vy", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_vz0 = ncFile0.addVar("vz", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_trans0 = ncFile0.addVar("transitTime", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_impact0 = ncFile0.addVar("hitWall", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_weight0 = ncFile0.addVar("weight", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_charge0 = ncFile0.addVar("charge", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_leak0 = ncFile0.addVar("hasLeaked", netCDF::ncInt, dims0);
 #if USE_MPI > 0
     nc_x0.putVar(&xGather[0]);
     nc_y0.putVar(&yGather[0]);
@@ -4621,25 +4621,25 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 #if PARTICLE_TRACKS > 0
 
     // Write netCDF output for histories
-    netCDF::NcFile ncFile_hist("output/history.nc", NcFile::replace);
+    netCDF::NcFile ncFile_hist("output/history.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nT = ncFile_hist.addDim("nT", nHistoriesPerParticle);
     netCDF::NcDim nc_nP = ncFile_hist.addDim("nP", nP);
-    vector<NcDim> dims_hist;
+    vector<netCDF::NcDim> dims_hist;
     dims_hist.push_back(nc_nP);
     dims_hist.push_back(nc_nT);
     // NcDim nc_nPnT = ncFile_hist.addDim("nPnT",nP*nT/subSampleFac);
     // dims_hist.push_back(nc_nPnT);
-    netCDF::NcVar nc_x = ncFile_hist.addVar("x", ncDouble, dims_hist);
-    netCDF::NcVar nc_y = ncFile_hist.addVar("y", ncDouble, dims_hist);
-    netCDF::NcVar nc_z = ncFile_hist.addVar("z", ncDouble, dims_hist);
+    netCDF::NcVar nc_x = ncFile_hist.addVar("x", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_y = ncFile_hist.addVar("y", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_z = ncFile_hist.addVar("z", netCDF::ncDouble, dims_hist);
 
-    netCDF::NcVar nc_v = ncFile_hist.addVar("v", ncDouble, dims_hist);
-    netCDF::NcVar nc_vx = ncFile_hist.addVar("vx", ncDouble, dims_hist);
-    netCDF::NcVar nc_vy = ncFile_hist.addVar("vy", ncDouble, dims_hist);
-    netCDF::NcVar nc_vz = ncFile_hist.addVar("vz", ncDouble, dims_hist);
+    netCDF::NcVar nc_v = ncFile_hist.addVar("v", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_vx = ncFile_hist.addVar("vx", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_vy = ncFile_hist.addVar("vy", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_vz = ncFile_hist.addVar("vz", netCDF::ncDouble, dims_hist);
 
-    netCDF::NcVar nc_charge = ncFile_hist.addVar("charge", ncDouble, dims_hist);
-    netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", ncDouble, dims_hist);
+    netCDF::NcVar nc_charge = ncFile_hist.addVar("charge", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", netCDF::ncDouble, dims_hist);
 #if USE_MPI > 0
     // if(world_rank ==0)
     //{
@@ -4675,14 +4675,14 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 #endif
 #if SPECTROSCOPY > 0
     // Write netCDF output for density data
-    NcFile ncFile("output/spec.nc", NcFile::replace);
-    NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
-    NcDim nc_nR = ncFile.addDim("nR", net_nX);
+    netCDF::NcFile ncFile("output/spec.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
+    netCDF::NcDim nc_nR = ncFile.addDim("nR", net_nX);
 #if SPECTROSCOPY > 2
-    NcDim nc_nY = ncFile.addDim("nY", net_nY);
+    netCDF::NcDim nc_nY = ncFile.addDim("nY", net_nY);
 #endif
-    NcDim nc_nZ = ncFile.addDim("nZ", net_nZ);
-    vector<NcDim> dims;
+    netCDF::NcDim nc_nZ = ncFile.addDim("nZ", net_nZ);
+    vector<netCDF::NcDim> dims;
     dims.push_back(nc_nBins);
     dims.push_back(nc_nZ);
 #if SPECTROSCOPY > 2
@@ -4690,9 +4690,9 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 #endif
     dims.push_back(nc_nR);
 
-    NcVar nc_n = ncFile.addVar("n", ncFloat, dims);
-    NcVar nc_gridR = ncFile.addVar("gridR", ncFloat, nc_nR);
-    NcVar nc_gridZ = ncFile.addVar("gridZ", ncFloat, nc_nZ);
+    netCDF::NcVar nc_n = ncFile.addVar("n", netCDF::ncFloat, dims);
+    netCDF::NcVar nc_gridR = ncFile.addVar("gridR", netCDF::ncFloat, nc_nR);
+    netCDF::NcVar nc_gridZ = ncFile.addVar("gridZ", netCDF::ncFloat, nc_nZ);
     nc_gridR.putVar(&gridX_bins[0]);
     nc_gridZ.putVar(&gridZ_bins[0]);
 #if SPECTROSCOPY > 2
