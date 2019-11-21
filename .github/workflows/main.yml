@@ -25,7 +25,7 @@ jobs:
     - run: ls netcdfcxxbuild/lib
     - run: echo $NETCDF_DIR_LIB
     - run: echo $NETCDF_DIR_INC
-    - run: cd build && cmake -DTHRUST_INCLUDE_DIR=$GITHUB_WORKSPACE/thrust -DNETCDF_CXX_INCLUDE_DIR=$NETCDF_DIR_INC -DNETCDF_CXX_LIBRARY=$NETCDF_DIR_LIB/libnetcdf_c++4.dylib -DNETCDF_LIBRARIES=$NETCDF_DIR_LIB/libnetcdf.dylib -DNETCDF_INCLUDE_DIRS=$NETCDF_DIR_INC  ..
+    - run: cd build && cmake -DTHRUST_INCLUDE_DIR=$GITHUB_WORKSPACE/thrust -DNETCDF_CXX_INCLUDE_DIR=$$GITHUB_WORKSPACE/netcdfcxxbuild/include -DNETCDF_CXX_LIBRARY=$GITHUB_WORKSPACE/netcdfcxxbuild/lib/libnetcdf-cxx4.so -DNETCDF_LIBRARIES=$NETCDF_DIR_LIB/libnetcdf.dylib -DNETCDF_INCLUDE_DIRS=$NETCDF_DIR_INC  ..
       env:
         MY_NAME: "Tim"
 
