@@ -8,6 +8,7 @@ jobs:
     - uses: actions/checkout@master
     - uses: ./action-dependency
     - run: sudo apt-get -y install libnetcdf-dev
+    - run: dpkg -L libnetcdf-dev
     - run: wget https://github.com/Unidata/netcdf-cxx4/archive/v4.3.1.tar.gz
     - run: tar -xvzf v4.3.1.tar.gz
     - run: ls
@@ -23,6 +24,8 @@ jobs:
     - run: export NETCDF_DIR_INC=$GITHUB_WORKSPACE/netcdfcxxbuild/include
     - run: ls netcdfcxxbuild
     - run: ls netcdfcxxbuild/lib
+    - run: ls netcdfcxxbuild/include
+    - run: ls netcdfcxxbuild/bin
     - run: echo $NETCDF_DIR_LIB
     - run: echo $NETCDF_DIR_INC
     - run: sudo apt-get -y install libconfig++-dev
