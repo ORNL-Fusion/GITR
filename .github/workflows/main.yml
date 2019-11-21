@@ -39,7 +39,7 @@ jobs:
         -DNETCDF_LIBRARIES=$NETCDF_DIR_LIB/libnetcdf.dylib
         -DNETCDF_INCLUDE_DIRS=$NETCDF_DIR_INC
         -DLIBCONFIGPP_INCLUDE_DIR=/usr/include
-        -DCMAKE_CPP_FLAGS=-I$GITHUB_WORKSPACE/netcdfcxxbuild/include
+        -DCMAKE_CPP_FLAGS=-I/home/runner/work/GITR-1/GITR-1/build/netcdfcxxbuild/include
         -DUSE_CUDA=0
         -DUSE_MPI=0
         -DUSEIONIZATION=0
