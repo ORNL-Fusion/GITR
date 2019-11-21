@@ -10,7 +10,7 @@ set(CXX_STANDARD_REQUIRED TRUE)
 # Set source files
 file(GLOB SRC_FILES src/*.cpp)
 file(GLOB TEST_FILES src/*.cpp test/tests_general.cpp)
-list (REMOVE_ITEM TEST_FILES /Users/tyounkin/Code/gitr_repo/src/gitr.cpp)
+list (REMOVE_ITEM TEST_FILES /home/runner/work/GITR-1/GITR-1/src/gitr.cpp)
 message("${TEST_FILES}")
 file( GLOB HEADER_FILES include/*.h test/tests_general.hpp)
 add_library(YourLib ${TEST_FILES})
