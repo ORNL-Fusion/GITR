@@ -6,7 +6,7 @@
 #else
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
-#include <netcdf>
+#include <netcdf.h>
 //#include "ncFile.h"
 #include "Boundary.h"
 #include <vector>
