@@ -25,8 +25,8 @@ jobs:
     - run: ls netcdfcxxbuild/lib
     - run: echo $NETCDF_DIR_LIB
     - run: echo $NETCDF_DIR_INC
-    - run: sudo apt-get -y install libconfig-dev
-    - run: dpkg -L libconfig-dev
+    - run: sudo apt-get -y install libconfig++-dev
+    - run: dpkg -L libconfig++-dev
     - run: >
         cd build && 
         cmake 
