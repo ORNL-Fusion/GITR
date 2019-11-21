@@ -83,7 +83,8 @@ jobs:
         -DUSE_SORT=0
         -DCHECK_COMPATIBILITY=1
         .. &&
-        make VERBOSE=1
+        make VERBOSE=1 &&
+        ctest
     - run: ls build  
       env:
         MY_NAME: "Tim"
