@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string>
 #include <cstring>
-#include <netcdf>
+#include <netcdf.h>
 #include "Boundary.h"
 #include "Particle.h"
 #include "libconfig.h++"
