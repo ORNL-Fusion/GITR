@@ -11,7 +11,8 @@ jobs:
     - run: wget https://github.com/Unidata/netcdf-cxx4/archive/v4.3.1.tar.gz
     - run: tar -xvzf v4.3.1.tar.gz
     - run: ls
-    - run: mkdir netcdfcxxbuild  
+    - run: mkdir netcdfcxxbuild
+    - run: h5cc -showconfig
     - run: mkdir netcdf-cxx4-4.3.1/build && cd netcdf-cxx4-4.3.1/build && cmake .. && make && ctest && make install
     - run: git clone https://github.com/thrust/thrust.git
     - run: dpkg -L libnetcdf-dev
