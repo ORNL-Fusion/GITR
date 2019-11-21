@@ -15,7 +15,8 @@ jobs:
     - run: h5cc -showconfig
     - run: dpkg -L libhdf5-dev
     - run: export CPPFLAGS="-I/usr/include/hdf5/serial"
-    - run: mkdir netcdf-cxx4-4.3.1/build && cd netcdf-cxx4-4.3.1/build && cmake .. && make VERBOSE=1 && ctest && make install
+    - run: export CFLAGS="-I/usr/include/hdf5/serial"
+    - run: mkdir netcdf-cxx4-4.3.1/build && cd netcdf-cxx4-4.3.1/build && cmake -DCMAKE_CPP_FLAGS=-I/usr/include/hdf5/serial -DCMAKE_C_FLAGS=-I/usr/include/hdf5/serial .. && make VERBOSE=1 && ctest && make install
     - run: git clone https://github.com/thrust/thrust.git
     - run: dpkg -L libnetcdf-dev
     - run: export NETCDF_DIR_LIB=$GITHUB_WORKSPACE/netcdfcxxbuild/lib
