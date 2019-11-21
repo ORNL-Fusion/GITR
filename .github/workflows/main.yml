@@ -25,6 +25,8 @@ jobs:
     - run: ls netcdfcxxbuild/lib
     - run: echo $NETCDF_DIR_LIB
     - run: echo $NETCDF_DIR_INC
+    - run: sudo apt-get -y install libconfig-dev
+    - run: dpkg -L libconfig-dev
     - run: >
         cd build && 
         cmake 
@@ -33,6 +35,7 @@ jobs:
         -DNETCDF_CXX_LIBRARY=$GITHUB_WORKSPACE/netcdfcxxbuild/lib/libnetcdf-cxx4.so
         -DNETCDF_LIBRARIES=$NETCDF_DIR_LIB/libnetcdf.dylib
         -DNETCDF_INCLUDE_DIRS=$NETCDF_DIR_INC
+        -DLIBCONFIGPP_INCLUDE_DIR=/usr/include
         -DUSE_CUDA=0
         -DUSE_MPI=1
         -DUSEIONIZATION=0
