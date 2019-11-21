@@ -33,7 +33,7 @@ jobs:
     - run: >
         cd build && 
         cmake 
-        -DCMAKE_CPP_FLAGS=-I/home/runner/work/GITR-1/GITR-1/netcdfcxxbuild/include
+        -DCMAKE_CPP_FLAGS=-I
         -DTHRUST_INCLUDE_DIR=$GITHUB_WORKSPACE/thrust
         -DNETCDF_CXX_INCLUDE_DIR=$$GITHUB_WORKSPACE/netcdfcxxbuild/include
         -DNETCDF_CXX_LIBRARY=$GITHUB_WORKSPACE/netcdfcxxbuild/lib/libnetcdf-cxx4.so
