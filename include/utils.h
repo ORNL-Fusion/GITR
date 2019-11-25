@@ -50,6 +50,8 @@ void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, int
 
 template <typename T>
 T getVariable (libconfig::Config &cfg,const std::string& s, T &a);
+template <typename T>
+T getVariable_cfg (libconfig::Config &cfg,const std::string& s);
 
 extern template int getVariable(libconfig::Config &cfg,const std::string& s, int &a);
 extern template float getVariable(libconfig::Config &cfg,const std::string& s, float &a);
