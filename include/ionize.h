@@ -41,6 +41,7 @@ struct ionize {
     float* rateCoeff_Ionization;
     const float dt;
     float tion;
+    void (ionize::*func)(std::size_t);
     //int& tt;
 #if __CUDACC__
     curandState *state;
@@ -80,9 +81,11 @@ struct ionize {
                                          dt(_dt), // JDL missing tion here?
                                          state(_state) {
   }
+        CUDA_CALLABLE_MEMBER_DEVICE
+        void operator1(std::size_t indx) {}
 
         CUDA_CALLABLE_MEMBER_DEVICE 
-                void operator()(std::size_t indx)  { 
+        void operator()(std::size_t indx)  { 
 	//if(particlesPointer->hitWall[indx] == 0.0){        
         //std::cout << "interpolating rate coeff at "<< particlesPointer->x[indx] << " " << particlesPointer->y[indx] << " " << particlesPointer->z[indx] << std::endl;
        tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesIonize,nDensitiesIonize,gridTemperature_Ionization,gridDensity_Ionization,rateCoeff_Ionization );	
