@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
+#include "flags.hpp"
 
 #ifdef __CUDACC__
 #include <curand.h>
@@ -111,6 +112,7 @@ int main(int argc, char **argv, char **envp) {
   libconfig::Config cfg, cfg_geom;
   std::string input_path = "input/";
   
+  Flags gitr_flags;
   if (world_rank == 0) {
     // Parse and read input file
     std::cout << "Open configuration file " << input_path << inputFile
@@ -128,6 +130,8 @@ int main(int argc, char **argv, char **envp) {
 // check binary compatibility with input file
 #if CHECK_COMPATIBILITY > 0
     checkFlags(cfg);
+    gitr_flags.initialize_flags(cfg);
+    std::cout << "gitr flags " << gitr_flags.USE_IONIZATION << std::endl;
 #endif
   }
 
@@ -3662,6 +3666,8 @@ int main(int argc, char **argv, char **envp) {
       n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
       &closeGeom_sheath.front());
+  //void (*bor)(std::size_t) = &move_boris::operator2;
+  //auto bor1 = *bor;
   geometry_check geometry_check0(
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
@@ -3685,6 +3691,14 @@ int main(int argc, char **argv, char **envp) {
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
       &rateCoeff_Ionization.front());
+  if(gitr_flags.USE_IONIZATION > 0) ionize0.func = &ionize::operator();
+  else ionize0.func = &ionize::operator1;
+  //void (ionize::*func)(std::size_t) = &ionize::operator();
+  //ionize * ionize_ptr = &ionize0;
+  //void (*func11)(std::size_t)  = &ionize0.operator();
+  //if(gitr_flags.USE_IONIZATION > 0) &func = &ionize::operator1;
+  //else func = NULL;
+  //auto func1 = *func;
 #endif
 #if USERECOMBINATION > 0
   recombine recombine0(
@@ -3993,7 +4007,7 @@ int main(int argc, char **argv, char **envp) {
 #endif
 
 #if USEIONIZATION > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd, ionize0);
+      thrust::for_each(thrust::device, particleBegin, particleEnd, [&ionize0](std::size_t indx){(ionize0.*(ionize0.func))(indx);});
 #ifdef __CUDACC__
       // cudaThreadSynchronize();
 #endif

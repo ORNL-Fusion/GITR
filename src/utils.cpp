@@ -180,11 +180,31 @@ T getVariable (libconfig::Config &cfg,const std::string& s, T &a)
   a = tmp;
   return a;
 }
-
 template int getVariable(libconfig::Config &cfg,const std::string& s, int &a);
 template float getVariable(libconfig::Config &cfg,const std::string& s, float &a);
 template double getVariable(libconfig::Config &cfg,const std::string& s, double &a);
 template std::string getVariable(libconfig::Config &cfg,const std::string& s, std::string &a);
+
+template <typename T=float>
+T getVariable_cfg (libconfig::Config &cfg,const std::string& s)
+{
+  T tmp;
+  if(cfg.lookupValue(s, tmp))
+    {
+      std::cout << s << " = " << tmp << std::endl;
+    }
+  else
+    {
+      std::cout << "ERROR: Failed importing " << s << std:: endl;
+      exit(0);
+    }
+  return tmp;
+}
+
+template int getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+template float getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+template double getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+template std::string getVariable_cfg(libconfig::Config &cfg,const std::string& s);
 
 int getDimFromFile (libconfig::Config &cfg,const std::string& file,const std::string& section,
         const std::string& s)
