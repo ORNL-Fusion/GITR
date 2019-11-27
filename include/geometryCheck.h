@@ -11,6 +11,7 @@
 #include "Particles.h"
 #include "Surfaces.h"
 #include "surfaceModel.h"
+#include "boris.h"
 #include <cmath>
 
 CUDA_CALLABLE_MEMBER_DEVICE
@@ -47,6 +48,7 @@ float findT(float x0, float x1, float y0, float y1, float intersectionx) {
 
   return t;
 }
+  //template<int HOST=1>
 struct geometry_check {
   Particles *particlesPointer;
   const int nLines;
@@ -89,9 +91,9 @@ struct geometry_check {
         closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
         E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
         Adist(_Adist) {}
-
-  CUDA_CALLABLE_MEMBER_DEVICE
-  void operator()(std::size_t indx) const {
+  //CUDA_CALLABLE_MEMBER_DEVICE
+  __host__ __device__
+  void operator()(std::size_t indx) const  {
     // std::cout << "geometry check particle x" << particlesPointer->x[indx] <<
     // particlesPointer->x[indx]previous <<std::endl; std::cout << "geometry
     // check particle y" << particlesPointer->y[indx] <<
@@ -484,6 +486,8 @@ struct geometry_check {
           particlesPointer->xprevious[indx] = particlesPointer->x[indx];
           particlesPointer->yprevious[indx] = particlesPointer->y[indx];
           particlesPointer->zprevious[indx] = particlesPointer->z[indx];
+          particlesPointer->distTraveled[indx] =
+              particlesPointer->distTraveled[indx] + dpath;
         }
       }
 #else // 2D geometry
@@ -947,6 +951,7 @@ struct geometry_check {
           if ((EdistInd >= 0) && (EdistInd < nEdist) && (AdistInd >= 0) &&
               (AdistInd < nAdist)) {
 #if USE_CUDA > 0
+#if __CUDA_ARCH__		  
             atomicAdd(
                 &surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                               EdistInd * nAdist + AdistInd],
@@ -956,6 +961,9 @@ struct geometry_check {
             atomicAdd(&surfaces->sumWeightStrike[surfaceHit],
                       particlesPointer->weight[indx]);
             atomicAdd(&surfaces->sumParticlesStrike[surfaceHit], 1);
+#else
+#endif
+		  
 #else
 
             surfaces->energyDistribution[surfaceHit * nEdist * nAdist +

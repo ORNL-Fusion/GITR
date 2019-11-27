@@ -1,3 +1,4 @@
+export PATH=$PATH:/$HOME/Code/cmakebuild/bin
 export CMAKE_SOURCE_DIR=../
 export  NETCDF=$HOME/Code/netcdfcbuild 
 export  NETCDFCXX4=$HOME/Code/netcdfcxxbuild  
@@ -7,8 +8,9 @@ export  NETCDFINCLUDE=$NETCDF/include
 export  NETCDFCXX4INCLUDE=$NETCDFCXX4/include 
 export  NETCDFLIB=$NETCDFDIR/libnetcdf.so 
 export  NETCDFLIB_CPP=$NETCDFCXX4DIR/libnetcdf_c++4.so
+export PATH=$PATH:/$NETCDF/bin
 
-export LIBCONFIGDIR=$HOME/Code/libconfig/libconfigBuild
+export LIBCONFIGDIR=$HOME/Code/libconfigbuild
 export LIBCONFIGLIB=$LIBCONFIGDIR/lib/libconfig++.so
 export LIBCONFIGPP_LIBRARIES=lconfig++
 export LIBCONFIGPP_LIBRARY=lconfig++
