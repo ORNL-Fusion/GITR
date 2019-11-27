@@ -42,9 +42,9 @@
 #ifdef __CUDACC__
 #include <curand.h>
 #include <curand_kernel.h>
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 #else
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 #endif
 
 #if USE_MPI
@@ -132,24 +132,24 @@ int main(int argc, char **argv, char **envp) {
   }
 
 // show memory usage of GPU
-#if __CUDACC__
-  namespace fsn = std::experimental::filesystem;
-#else
-  namespace fsn = std::experimental::filesystem;
-#endif
-
-print_gpu_memory_usage(world_rank);
-
-  fsn::path output_folder = "output";
-  // Output
-
-  //boost::filesystem::path dir(output_folder);
-  if (!(fsn::exists(output_folder))) {
-    std::cout << "Doesn't Exist in main" << std::endl;
-    if (fsn::create_directory(output_folder)) {
-      std::cout << " Successfully Created " << std::endl;
-    }
-  }
+//#if __CUDACC__
+//  namespace fsn = std::experimental::filesystem;
+//#else
+//  namespace fsn = std::experimental::filesystem;
+//#endif
+//
+//print_gpu_memory_usage(world_rank);
+//
+//  fsn::path output_folder = "output";
+//  // Output
+//
+//  //boost::filesystem::path dir(output_folder);
+//  if (!(fsn::exists(output_folder))) {
+//    std::cout << "Doesn't Exist in main" << std::endl;
+//    if (fsn::create_directory(output_folder)) {
+//      std::cout << " Successfully Created " << std::endl;
+//    }
+//  }
 
   // Background species info
   float background_Z = 0.0, background_amu = 0.0;
@@ -4473,6 +4473,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     NcVar nc_weight0 = ncFile0.addVar("weight", ncFloat, dims0);
     NcVar nc_charge0 = ncFile0.addVar("charge", ncFloat, dims0);
     NcVar nc_leak0 = ncFile0.addVar("hasLeaked", ncInt, dims0);
+    NcVar nc_dist0 = ncFile0.addVar("distTraveled", ncFloat, dims0);
 #if USE_MPI > 0
     nc_x0.putVar(&xGather[0]);
     nc_y0.putVar(&yGather[0]);
@@ -4498,6 +4499,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
   nc_weight0.putVar(&particleArray->weight[0]);
   nc_charge0.putVar(&particleArray->charge[0]);
   nc_leak0.putVar(&particleArray->hasLeaked[0]);
+  nc_dist0.putVar(&particleArray->distTraveled[0]);
 #endif
     ncFile0.close();
     // auto particleArray2 = new Particles(1);
@@ -4558,6 +4560,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // weightThreshold[0] << std::endl;
     //}
 #if (USESURFACEMODEL > 0 || FLUX_EA > 0)
+#if USE_MPI > 0
     std::vector<int> surfaceNumbers(nSurfaces, 0);
     int srf = 0;
     for (int i = 0; i < nLines; i++) {
@@ -4617,6 +4620,67 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
     // nc_surfADistGrid.putVar(&surfaces->gridA[0]);
     ncFile1.close();
+#else
+    std::vector<int> surfaceNumbers(nSurfaces, 0);
+    int srf = 0;
+    for (int i = 0; i < nLines; i++) {
+      if (boundaries[i].surface) {
+        surfaceNumbers[srf] = i;
+
+        srf = srf + 1;
+      }
+    }
+    NcFile ncFile1("output/surface.nc", NcFile::replace);
+    NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
+    vector<NcDim> dims1;
+    dims1.push_back(nc_nLines);
+
+    vector<NcDim> dimsSurfE;
+    dimsSurfE.push_back(nc_nLines);
+    NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
+    NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
+    dimsSurfE.push_back(nc_nAngles);
+    dimsSurfE.push_back(nc_nEnergies);
+    NcVar nc_grossDep = ncFile1.addVar("grossDeposition", ncFloat, nc_nLines);
+    NcVar nc_grossEro = ncFile1.addVar("grossErosion", ncFloat, nc_nLines);
+    NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", ncFloat, nc_nLines);
+    NcVar nc_spylCounts = ncFile1.addVar("spylCounts", ncInt, nc_nLines);
+    NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", ncInt, nc_nLines);
+    NcVar nc_sumParticlesStrike =
+        ncFile1.addVar("sumParticlesStrike", ncInt, nc_nLines);
+    NcVar nc_sumWeightStrike =
+        ncFile1.addVar("sumWeightStrike", ncFloat, nc_nLines);
+    nc_grossDep.putVar(&surfaces->grossDeposition[0]);
+    nc_surfNum.putVar(&surfaceNumbers[0]);
+    nc_grossEro.putVar(&grossErosion[0]);
+    nc_aveSpyl.putVar(&aveSputtYld[0]);
+    nc_spylCounts.putVar(&sputtYldCount[0]);
+    nc_sumParticlesStrike.putVar(&sumParticlesStrike[0]);
+    nc_sumWeightStrike.putVar(&sumWeightStrike[0]);
+    // NcVar nc_surfImpacts = ncFile1.addVar("impacts",ncFloat,dims1);
+    // NcVar nc_surfRedeposit = ncFile1.addVar("redeposit",ncFloat,dims1);
+    // NcVar nc_surfStartingParticles =
+    // ncFile1.addVar("startingParticles",ncFloat,dims1); NcVar nc_surfZ =
+    // ncFile1.addVar("Z",ncFloat,dims1);
+    NcVar nc_surfEDist = ncFile1.addVar("surfEDist", ncFloat, dimsSurfE);
+    NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", ncFloat, dimsSurfE);
+    NcVar nc_surfSputtDist =
+        ncFile1.addVar("surfSputtDist", ncFloat, dimsSurfE);
+    // nc_surfImpacts.putVar(impacts);
+    //#if USE3DTETGEOM > 0
+    // nc_surfRedeposit.putVar(redeposit);
+    //#endif
+    // nc_surfStartingParticles.putVar(startingParticles);
+    // nc_surfZ.putVar(surfZ);
+    nc_surfEDist.putVar(&energyDistribution[0]);
+    nc_surfReflDist.putVar(&reflDistribution[0]);
+    nc_surfSputtDist.putVar(&sputtDistribution[0]);
+    // NcVar nc_surfEDistGrid = ncFile1.addVar("gridE",ncDouble,nc_nEnergies);
+    // nc_surfEDistGrid.putVar(&surfaces->gridE[0]);
+    // NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
+    // nc_surfADistGrid.putVar(&surfaces->gridA[0]);
+    ncFile1.close();
+#endif
 #endif
 #if PARTICLE_TRACKS > 0
 

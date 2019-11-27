@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(gitr)
 
-set(OPENMP 1)
+set(CUDA 1)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
@@ -10,7 +10,9 @@ set(CXX_STANDARD_REQUIRED TRUE)
 # Set source files
 file(GLOB SRC_FILES src/*.cpp)
 file(GLOB TEST_FILES src/*.cpp test/tests_general.cpp)
-list (REMOVE_ITEM TEST_FILES /Users/tyounkin/Code/gitr_repo/src/gitr.cpp)
+file(GLOB TEST_FILE_IO test/file_io_tests.cpp)
+file(GLOB TEST_COULOMB test/coulomb_tests.cpp)
+list (REMOVE_ITEM TEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/gitr.cpp)
 message("${TEST_FILES}")
 file( GLOB HEADER_FILES include/*.h test/tests_general.hpp)
 add_library(YourLib ${TEST_FILES})
@@ -80,10 +82,15 @@ if (${CUDA})
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     set(CUDA_SEPARABLE_COMPILATION TRUE)
     #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA --std=c++14 -O3 --expt-relaxed-constexpr) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
-    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA --std=c++1z -O3) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA --std=c++14 -O3 --expt-relaxed-constexpr) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
 
     set_source_files_properties(${SRC_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
-    CUDA_ADD_EXECUTABLE(tests test/file_io_tests.cpp ${TEST_FILES})
+    #test comment
+    set_source_files_properties(${TEST_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
+    set_source_files_properties(${TEST_FILE_IO} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
+    set_source_files_properties(${TEST_COULOMB} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
+    CUDA_ADD_EXECUTABLE(tests ${TEST_FILE_IO} ${TEST_FILES})
+    CUDA_ADD_EXECUTABLE(coulomb_tests ${TEST_COULOMB} ${TEST_FILES})
     cuda_add_executable(GITR ${SRC_FILES})
 endif ()
 
@@ -122,7 +129,7 @@ target_link_libraries(GITR ${MPI_C_LIBRARIES})
 target_link_libraries(GITR ${MPI_CXX_LIBRARIES})
 target_link_libraries(GITR YourLib)
 #target_link_libraries(GITR "-lstdc++fs")
-
+#test comment
 target_link_libraries(tests YourLib)
 target_link_libraries(tests ${NETCDF_CXX_LIBRARIES})
 target_link_libraries(tests ${NETCDF_C_LIBRARIES})
@@ -137,7 +144,7 @@ target_link_libraries(tests ${MPI_CXX_LIBRARIES})
 #target_link_libraries(geom_test ${LIBCONFIGPP_LIBRARIES})
 #target_link_libraries(geom_test ${MPI_C_LIBRARIES})
 #target_link_libraries(geom_test ${MPI_CXX_LIBRARIES})
-#target_link_libraries(tests "-lstdc++fs")
+##target_link_libraries(tests "-lstdc++fs")
 target_link_libraries(coulomb_tests YourLib)
 target_link_libraries(coulomb_tests ${NETCDF_CXX_LIBRARIES})
 target_link_libraries(coulomb_tests ${NETCDF_C_LIBRARIES})
@@ -151,8 +158,9 @@ add_test(Coulomb_tests coulomb_tests)
 
 find_package (Python3 COMPONENTS Interpreter)
 message( STATUS "python stuff " ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR} ${EXECUTABLE_OUTPUT_PATH})
-add_test(NAME sample_test COMMAND ${PYTHON_EXECUTABLE} /Users/tyounkin/Code/GITR-1/test/sample_test.py WORKING_DIRECTORY /Users/tyounkin/Code/GITR-1/test )
+add_test(NAME sample_test COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_test.py WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test )
 #add_test(TestName geom_test)
+# end test comment
 # Install binaries
 install(TARGETS GITR DESTINATION bin)
 get_directory_property( DirDefs DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS )
