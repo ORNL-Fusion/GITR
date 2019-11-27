@@ -55,7 +55,7 @@ void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNorma
             surfaceNormalVector[2] = surfaceNormalVector[2]/norm_normal;
                 }
 #if USECYLSYMM > 0 
-            float theta = std::atan2f(y,x);
+            float theta = std::atan2(y,x);
             float Sr = surfaceNormalVector[0];
             surfaceNormalVector[0] = std::cos(theta)*Sr;
             surfaceNormalVector[1] = std::sin(theta)*Sr;

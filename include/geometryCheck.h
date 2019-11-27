@@ -539,7 +539,7 @@ struct geometry_check {
  //particlesPointer->z[indx]<< std::endl;
 #if GEOM_HASH > 0
 #if USECYLSYMM > 0
-      float r_position = std::sqrtf(particlesPointer->xprevious[indx] *
+      float r_position = std::sqrt(particlesPointer->xprevious[indx] *
                                    particlesPointer->xprevious[indx] +
                                particlesPointer->yprevious[indx] *
                                    particlesPointer->yprevious[indx]);
