@@ -1,4 +1,4 @@
-export PATH=$PATH:/$HOME/Code/cmakebuild/bin
+export PATH=$PATH:/$HOME/Code/cmakebuild/bin:$HOME/Code/pythonbuild/bin
 export CMAKE_SOURCE_DIR=../
 export  NETCDF=$HOME/Code/netcdfcbuild 
 export  NETCDFCXX4=$HOME/Code/netcdfcxxbuild  

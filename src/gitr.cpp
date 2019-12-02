@@ -112,7 +112,7 @@ int main(int argc, char **argv, char **envp) {
   libconfig::Config cfg, cfg_geom;
   std::string input_path = "input/";
   
-  Flags gitr_flags;
+  auto gitr_flags = new Flags();
   if (world_rank == 0) {
     // Parse and read input file
     std::cout << "Open configuration file " << input_path << inputFile
@@ -130,8 +130,8 @@ int main(int argc, char **argv, char **envp) {
 // check binary compatibility with input file
 #if CHECK_COMPATIBILITY > 0
     checkFlags(cfg);
-    gitr_flags.initialize_flags(cfg);
-    std::cout << "gitr flags " << gitr_flags.USE_IONIZATION << std::endl;
+    //gitr_flags.initialize_flags(cfg);
+    std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
 #endif
   }
 
@@ -3686,17 +3686,13 @@ int main(int argc, char **argv, char **envp) {
 #endif
 #if USEIONIZATION > 0
   ionize ionize0(
-      particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
+      gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
       &rateCoeff_Ionization.front());
-  if(gitr_flags.USE_IONIZATION > 0) ionize0.func = &ionize::operator();
-  else ionize0.func = &ionize::operator1;
-  ionize * ionptr = &ionize0;
-  ionizeNothing ionizeNo;
-  ionptr = &ionizeNo;
-  //device_ptr<Particle> p = device_new<Particle>();
+  //if(gitr_flags.USE_IONIZATION > 0) ionize0.func = &ionize::operator();
+  //else ionize0.func = &ionize::operator1;
   //void (ionize::*func)(std::size_t) = &ionize::operator();
   //ionize * ionize_ptr = &ionize0;
   //void (*func11)(std::size_t)  = &ionize0.operator();
@@ -4011,7 +4007,7 @@ int main(int argc, char **argv, char **envp) {
 #endif
 
 #if USEIONIZATION > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd,*ionptr);
+      thrust::for_each(thrust::device, particleBegin, particleEnd,ionize0);
 #ifdef __CUDACC__
       // cudaThreadSynchronize();
 #endif

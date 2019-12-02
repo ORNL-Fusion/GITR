@@ -10,6 +10,7 @@
 #endif
 
 #include "Particles.h"
+#include "flags.hpp"
 #ifdef __CUDACC__
 #include <thrust/random.h>
 #include <curand_kernel.h>
@@ -23,6 +24,7 @@
 #include "interpRateCoeff.hpp"
 
 struct ionize { 
+    Flags *flags;
     Particles *particlesPointer;
     int nR_Dens;
     int nZ_Dens;
@@ -50,7 +52,7 @@ struct ionize {
     std::mt19937 *state;
 #endif
         ionize():dt(0.0) {};
-        ionize(Particles *_particlesPointer, float _dt,
+        ionize(Flags *_flags, Particles *_particlesPointer, float _dt,
 #if __CUDACC__
                 curandState *_state,
 #else
@@ -63,7 +65,7 @@ struct ionize {
     float* _rateCoeff_Ionization
               ) : 
    
-         particlesPointer(_particlesPointer),
+         flags(_flags),particlesPointer(_particlesPointer),
                                          nR_Dens(_nR_Dens),
                                          nZ_Dens(_nZ_Dens),
                                          DensGridr(_DensGridr),
@@ -84,15 +86,10 @@ struct ionize {
   }
         CUDA_CALLABLE_MEMBER_DEVICE
         void operator1(std::size_t indx) {}
-        CUDA_CALLABLE_MEMBER_DEVICE
-	  void doWork(std::size_t indx) {
-    // ‘*this’ capture mode tells compiler to make a copy
-    // of the object
-    auto lam1 = [=, *this] __device__ { return xx1+1; };
-    //auto lam1 = [=, *this] __device__ (std::size_t indx) { operator(indx); };
-	  }
+
         CUDA_CALLABLE_MEMBER_DEVICE 
-        virtual void operator()(std::size_t indx)  { 
+        void operator()(std::size_t indx)  {
+	       if(flags->USE_IONIZATION){	
 	//if(particlesPointer->hitWall[indx] == 0.0){        
         //std::cout << "interpolating rate coeff at "<< particlesPointer->x[indx] << " " << particlesPointer->y[indx] << " " << particlesPointer->z[indx] << std::endl;
        tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesIonize,nDensitiesIonize,gridTemperature_Ionization,gridDensity_Ionization,rateCoeff_Ionization );	
@@ -151,7 +148,7 @@ struct ionize {
 
         } 
        
-    //} 
+    } 
 
 	} 
 };
