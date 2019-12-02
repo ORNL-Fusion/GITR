@@ -43,12 +43,13 @@ struct ionize {
     float tion;
     void (ionize::*func)(std::size_t);
     //int& tt;
+    int xx1;
 #if __CUDACC__
     curandState *state;
 #else
     std::mt19937 *state;
 #endif
-
+        ionize():dt(0.0) {};
         ionize(Particles *_particlesPointer, float _dt,
 #if __CUDACC__
                 curandState *_state,
@@ -83,9 +84,15 @@ struct ionize {
   }
         CUDA_CALLABLE_MEMBER_DEVICE
         void operator1(std::size_t indx) {}
-
+        CUDA_CALLABLE_MEMBER_DEVICE
+	  void doWork(std::size_t indx) {
+    // ‘*this’ capture mode tells compiler to make a copy
+    // of the object
+    auto lam1 = [=, *this] __device__ { return xx1+1; };
+    //auto lam1 = [=, *this] __device__ (std::size_t indx) { operator(indx); };
+	  }
         CUDA_CALLABLE_MEMBER_DEVICE 
-        void operator()(std::size_t indx)  { 
+        virtual void operator()(std::size_t indx)  { 
 	//if(particlesPointer->hitWall[indx] == 0.0){        
         //std::cout << "interpolating rate coeff at "<< particlesPointer->x[indx] << " " << particlesPointer->y[indx] << " " << particlesPointer->z[indx] << std::endl;
        tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesIonize,nDensitiesIonize,gridTemperature_Ionization,gridDensity_Ionization,rateCoeff_Ionization );	
@@ -148,5 +155,11 @@ struct ionize {
 
 	} 
 };
-
+struct ionizeNothing : ionize
+{
+	int member;
+	ionizeNothing():member(1){}
+        CUDA_CALLABLE_MEMBER_DEVICE 
+        void operator()(std::size_t indx)  {} 
+};	
 #endif

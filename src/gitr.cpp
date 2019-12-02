@@ -3194,16 +3194,16 @@ int main(int argc, char **argv, char **envp) {
     // Return this in event of a problem.
     static const int NC_ERR = 2;
     try {
-      NcFile ncp0("input/" + ncParticleSourceFile, NcFile::read);
-    } catch (NcException &e) {
+	    netCDF::NcFile ncp0("input/" + ncParticleSourceFile, netCDF::NcFile::read);
+    } catch (netCDF::exceptions::NcException &e) {
       e.what();
       cout << "FAILURE*************************************" << endl;
       return NC_ERR;
     }
     std::cout << "finished NcFile ncp0 starting ncp" << std::endl;
-    NcFile ncp("input/" + ncParticleSourceFile, NcFile::read);
+    netCDF::NcFile ncp("input/" + ncParticleSourceFile, netCDF::NcFile::read);
     std::cout << "getting dim nP" << std::endl;
-    NcDim ps_nP(ncp.getDim("nP"));
+    netCDF::NcDim ps_nP(ncp.getDim("nP"));
 
     nPfile = ps_nP.getSize();
     xpfile.resize(nPfile);
@@ -3213,12 +3213,12 @@ int main(int argc, char **argv, char **envp) {
     vypfile.resize(nPfile);
     vzpfile.resize(nPfile);
     // std::cout << "nPfile "<< nPfile << std::endl;
-    NcVar ncp_x(ncp.getVar("x"));
-    NcVar ncp_y(ncp.getVar("y"));
-    NcVar ncp_z(ncp.getVar("z"));
-    NcVar ncp_vx(ncp.getVar("vx"));
-    NcVar ncp_vy(ncp.getVar("vy"));
-    NcVar ncp_vz(ncp.getVar("vz"));
+    netCDF::NcVar ncp_x(ncp.getVar("x"));
+    netCDF::NcVar ncp_y(ncp.getVar("y"));
+    netCDF::NcVar ncp_z(ncp.getVar("z"));
+    netCDF::NcVar ncp_vx(ncp.getVar("vx"));
+    netCDF::NcVar ncp_vy(ncp.getVar("vy"));
+    netCDF::NcVar ncp_vz(ncp.getVar("vz"));
     std::cout << "got through NcVar " << std::endl;
     ncp_x.getVar(&xpfile[0]);
     ncp_y.getVar(&ypfile[0]);
@@ -3693,6 +3693,10 @@ int main(int argc, char **argv, char **envp) {
       &rateCoeff_Ionization.front());
   if(gitr_flags.USE_IONIZATION > 0) ionize0.func = &ionize::operator();
   else ionize0.func = &ionize::operator1;
+  ionize * ionptr = &ionize0;
+  ionizeNothing ionizeNo;
+  ionptr = &ionizeNo;
+  //device_ptr<Particle> p = device_new<Particle>();
   //void (ionize::*func)(std::size_t) = &ionize::operator();
   //ionize * ionize_ptr = &ionize0;
   //void (*func11)(std::size_t)  = &ionize0.operator();
@@ -4007,7 +4011,7 @@ int main(int argc, char **argv, char **envp) {
 #endif
 
 #if USEIONIZATION > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd, [&ionize0](std::size_t indx){(ionize0.*(ionize0.func))(indx);});
+      thrust::for_each(thrust::device, particleBegin, particleEnd,*ionptr);
 #ifdef __CUDACC__
       // cudaThreadSynchronize();
 #endif
@@ -4487,6 +4491,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_weight0 = ncFile0.addVar("weight", netCDF::ncFloat, dims0);
     netCDF::NcVar nc_charge0 = ncFile0.addVar("charge", netCDF::ncFloat, dims0);
     netCDF::NcVar nc_leak0 = ncFile0.addVar("hasLeaked", netCDF::ncInt, dims0);
+    netCDF::NcVar nc_dist0 = ncFile0.addVar("distTraveled", netCDF::ncFloat, dims0);
 #if USE_MPI > 0
     nc_x0.putVar(&xGather[0]);
     nc_y0.putVar(&yGather[0]);
@@ -4643,26 +4648,26 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
         srf = srf + 1;
       }
     }
-    NcFile ncFile1("output/surface.nc", NcFile::replace);
-    NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
-    vector<NcDim> dims1;
+    netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
+    vector<netCDF::NcDim> dims1;
     dims1.push_back(nc_nLines);
 
-    vector<NcDim> dimsSurfE;
+    vector<netCDF::NcDim> dimsSurfE;
     dimsSurfE.push_back(nc_nLines);
-    NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
-    NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
+    netCDF::NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
+    netCDF::NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
     dimsSurfE.push_back(nc_nAngles);
     dimsSurfE.push_back(nc_nEnergies);
-    NcVar nc_grossDep = ncFile1.addVar("grossDeposition", ncFloat, nc_nLines);
-    NcVar nc_grossEro = ncFile1.addVar("grossErosion", ncFloat, nc_nLines);
-    NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", ncFloat, nc_nLines);
-    NcVar nc_spylCounts = ncFile1.addVar("spylCounts", ncInt, nc_nLines);
-    NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", ncInt, nc_nLines);
-    NcVar nc_sumParticlesStrike =
-        ncFile1.addVar("sumParticlesStrike", ncInt, nc_nLines);
-    NcVar nc_sumWeightStrike =
-        ncFile1.addVar("sumWeightStrike", ncFloat, nc_nLines);
+    netCDF::NcVar nc_grossDep = ncFile1.addVar("grossDeposition", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_grossEro = ncFile1.addVar("grossErosion", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_spylCounts = ncFile1.addVar("spylCounts", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_sumParticlesStrike =
+        ncFile1.addVar("sumParticlesStrike", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_sumWeightStrike =
+        ncFile1.addVar("sumWeightStrike", netCDF::ncFloat, nc_nLines);
     nc_grossDep.putVar(&surfaces->grossDeposition[0]);
     nc_surfNum.putVar(&surfaceNumbers[0]);
     nc_grossEro.putVar(&grossErosion[0]);
@@ -4675,10 +4680,10 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // NcVar nc_surfStartingParticles =
     // ncFile1.addVar("startingParticles",ncFloat,dims1); NcVar nc_surfZ =
     // ncFile1.addVar("Z",ncFloat,dims1);
-    NcVar nc_surfEDist = ncFile1.addVar("surfEDist", ncFloat, dimsSurfE);
-    NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", ncFloat, dimsSurfE);
-    NcVar nc_surfSputtDist =
-        ncFile1.addVar("surfSputtDist", ncFloat, dimsSurfE);
+    netCDF::NcVar nc_surfEDist = ncFile1.addVar("surfEDist", netCDF::ncFloat, dimsSurfE);
+    netCDF::NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", netCDF::ncFloat, dimsSurfE);
+    netCDF::NcVar nc_surfSputtDist =
+        ncFile1.addVar("surfSputtDist", netCDF::ncFloat, dimsSurfE);
     // nc_surfImpacts.putVar(impacts);
     //#if USE3DTETGEOM > 0
     // nc_surfRedeposit.putVar(redeposit);
@@ -4773,7 +4778,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_gridR.putVar(&gridX_bins[0]);
     nc_gridZ.putVar(&gridZ_bins[0]);
 #if SPECTROSCOPY > 2
-    NcVar nc_gridY = ncFile.addVar("gridY", ncFloat, nc_nY);
+    netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netCDF::ncFloat, nc_nY);
     nc_gridY.putVar(&gridY_bins[0]);
 #endif
     nc_n.putVar(&net_BinsTotal[0]);
