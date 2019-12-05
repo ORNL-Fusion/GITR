@@ -110,9 +110,11 @@ int main(int argc, char **argv, char **envp) {
   
   // Prepare config files for import
   libconfig::Config cfg, cfg_geom;
+  cfg.setAutoConvert(true);
+  cfg_geom.setAutoConvert(true);
+
   std::string input_path = "input/";
   
-  auto gitr_flags = new Flags();
   if (world_rank == 0) {
     // Parse and read input file
     std::cout << "Open configuration file " << input_path << inputFile
@@ -130,10 +132,10 @@ int main(int argc, char **argv, char **envp) {
 // check binary compatibility with input file
 #if CHECK_COMPATIBILITY > 0
     checkFlags(cfg);
-    //gitr_flags.initialize_flags(cfg);
-    std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
 #endif
   }
+  auto gitr_flags = new Flags(cfg);
+    std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
 
 //// show memory usage of GPU
 //#if __CUDACC__
@@ -2856,8 +2858,7 @@ int main(int argc, char **argv, char **envp) {
   std::cout << "World rank " << world_rank << " has " << nPPerRank[world_rank]
             << " starting at " << pStartIndx[world_rank] 
             << " ending at " << pStartIndx[world_rank]+nPPerRank[world_rank] << std::endl;
-  auto particleArray = new Particles(nParticles);
-  // auto particleArray2 = new Particles(nParticles);
+  auto particleArray = new Particles(nParticles,1,cfg,gitr_flags);
 
   float x, y, z, E, vtotal, vx, vy, vz, Ex, Ey, Ez, amu, Z, charge, phi, theta,
       Ex_prime, Ez_prime, theta_transform;
@@ -3579,16 +3580,17 @@ int main(int argc, char **argv, char **envp) {
   std::cout << "Beginning random number seeds" << std::endl;
   std::uniform_real_distribution<float> dist(0, 1e6);
 
-#if FIXEDSEEDS == 0
-  std::random_device rd;
-  std::default_random_engine generator(rd());
-  std::default_random_engine generator1(rd());
-  std::default_random_engine generator2(rd());
-  std::default_random_engine generator3(rd());
-  std::default_random_engine generator4(rd());
-  std::default_random_engine generator5(rd());
-  std::default_random_engine generator6(rd());
-#endif
+//if FIXEDSEEDS == 0
+//{
+  //std::random_device rd;
+  //std::default_random_engine generator(getVariable_cfg<int> (cfg,"operators.ionization.seed"));
+  //std::default_random_engine generator1(rd());
+  //std::default_random_engine generator2(rd());
+  //std::default_random_engine generator3(rd());
+  //std::default_random_engine generator4(rd());
+  //std::default_random_engine generator5(rd());
+  //std::default_random_engine generator6(rd());
+//}
 
   thrust::counting_iterator<std::size_t> particleBegin(pStartIndx[world_rank]);
   thrust::counting_iterator<std::size_t> particleEnd(

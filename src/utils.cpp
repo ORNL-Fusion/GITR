@@ -202,6 +202,7 @@ T getVariable_cfg (libconfig::Config &cfg,const std::string& s)
 }
 
 template int getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+template unsigned int getVariable_cfg(libconfig::Config &cfg,const std::string& s);
 template float getVariable_cfg(libconfig::Config &cfg,const std::string& s);
 template double getVariable_cfg(libconfig::Config &cfg,const std::string& s);
 template std::string getVariable_cfg(libconfig::Config &cfg,const std::string& s);

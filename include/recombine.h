@@ -87,9 +87,7 @@ struct recombine {
       if(particlesPointer->charge[indx] > 0)
     {
        tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
-       //float PrP = particlesPointer->PrecombinationPrevious[indx];
        float P = expf(-dt/tion);
-       //particlesPointer->PrecombinationPrevious[indx] = PrP*P;
        P1 = 1.0-P;
     }
 
@@ -114,7 +112,6 @@ struct recombine {
 	if(r1 <= P1)
 	{
         particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;
-        particlesPointer->PrecombinationPrevious[indx] = 1.0;
 	}         
    }	
 

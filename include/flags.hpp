@@ -14,9 +14,12 @@ class Flags : public ManagedAllocation
 {
   private:
   public:
-   int USE_IONIZATION;
+   const bool USE_IONIZATION;
+   const bool FIXED_SEEDS;
    CUDA_CALLABLE_MEMBER
-   Flags() : USE_IONIZATION{0} {};
-   void initialize_flags(libconfig::Config &cfg);
+   Flags(libconfig::Config &cfg) : 
+     USE_IONIZATION{initialize_flags(cfg,"USE_IONIZATION")},
+       FIXED_SEEDS{initialize_flags(cfg,"FIXED_SEEDS")} {};
+   bool initialize_flags(libconfig::Config &cfg, std::string s);
 };
 #endif
