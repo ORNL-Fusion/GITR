@@ -8,7 +8,10 @@
 
 //CUDA_CALLABLE_MEMBER
 //Flags::Flags() : USE_IONIZATION{0} {};
-void Flags::initialize_flags(libconfig::Config &cfg) 
+bool Flags::initialize_flags(libconfig::Config &cfg,std::string s) 
 {
-  USE_IONIZATION = getVariable_cfg<int> (cfg,"flags.USE_IONIZATION");
+  std::string base = "flags.";
+  int flag = getVariable_cfg<int> (cfg, base+s);
+  if(flag > 0) return true;
+  else return false;
 }
