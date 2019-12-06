@@ -8,6 +8,9 @@
 #endif
 
 #include "array.h"
+#include "flags.hpp"
+#include <libconfig.h++>
+
 #include <cstdlib>
 #include <stdio.h>
 
@@ -20,8 +23,6 @@
 #endif
 
 #include <random>
-
-// CUDA_CALLABLE_MEMBER
 
 class Particles : public ManagedAllocation {
 public:
@@ -46,24 +47,22 @@ public:
   sim::Array<int> tt;
   sim::Array<int> hasLeaked;
   sim::Array<float> leakZ;
-#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
-  // sim::Array<curandState> streams;
-  // sim::Array<curandState> streams_rec;
-  // sim::Array<curandState> streams_collision1;
-  // sim::Array<curandState> streams_collision2;
-  // sim::Array<curandState> streams_collision3;
-  // sim::Array<curandState> streams_diff;
-  // sim::Array<curandState> streams_surf;
+  sim::Array<curandState> stream_ionize;
+  //sim::Array<curandState> streams_rec;
+  //sim::Array<curandState> streams_collision1;
+  //sim::Array<curandState> streams_collision2;
+  //sim::Array<curandState> streams_collision3;
+  //sim::Array<curandState> streams_diff;
+  //sim::Array<curandState> streams_surf;
 #else
-  // sim::Array<std::mt19937> streams;
-  // sim::Array<std::mt19937> streams_rec;
-  // sim::Array<std::mt19937> streams_collision1;
-  // sim::Array<std::mt19937> streams_collision2;
-  // sim::Array<std::mt19937> streams_collision3;
-  // sim::Array<std::mt19937> streams_diff;
-  // sim::Array<std::mt19937> streams_surf;
-#endif
+  sim::Array<std::mt19937> stream_ionize;
+  //sim::Array<std::mt19937> streams_rec;
+  //sim::Array<std::mt19937> streams_collision1;
+  //sim::Array<std::mt19937> streams_collision2;
+  //sim::Array<std::mt19937> streams_collision3;
+  //sim::Array<std::mt19937> streams_diff;
+  //sim::Array<std::mt19937> streams_surf;
 #endif
 
   sim::Array<float> hitWall;
@@ -81,8 +80,6 @@ public:
   sim::Array<float> test4;
   sim::Array<float> distanceTraveled;
   sim::Array<float> weight;
-  sim::Array<float> PionizationPrevious;
-  sim::Array<float> PrecombinationPrevious;
   sim::Array<float> firstIonizationZ;
   sim::Array<float> firstIonizationT;
 
@@ -219,22 +216,80 @@ public:
     this->firstIonizationZ[n] = firstIonizationZT;
     this->firstIonizationT[n] = firstIonizationTT;
   };
+  
   CUDA_CALLABLE_MEMBER
-  Particles(std::size_t nP)
-      : nParticles{nP}, index{nP, 0}, x{nP}, y{nP}, z{nP}, xprevious{nP},
-        yprevious{nP}, zprevious{nP},v{nP, 0.0}, vx{nP}, vy{nP}, vz{nP}, Z{nP},
-        amu{nP}, charge{nP}, newVelocity{nP}, nu_s{nP}, vD{nP, 0.0}, tt{nP, 0}, hasLeaked{nP, 0}, leakZ{nP,0.0},
-#if PARTICLESEEDS > 0
-  //    streams{nP},streams_rec{nP},streams_collision1{nP},streams_collision2{nP},
-  //    streams_collision3{nP},streams_diff{nP},streams_surf{nP},
-#endif
-        hitWall{nP, 0.0},wallHit{nP, 0},firstCollision{nP, 1}, transitTime{nP, 0.0}, distTraveled{nP, 0.0},
-        wallIndex{nP},
-        perpDistanceToSurface{nP}, test{nP, 0.0}, test0{nP, 0.0},
-        test1{nP, 0.0}, test2{nP, 0.0}, test3{nP, 0.0}, test4{nP, 0.0},
-        distanceTraveled{nP}, weight{nP, 1.0}, PionizationPrevious{nP, 1.0},
-        PrecombinationPrevious{nP, 1.0}, firstIonizationZ{nP, 0.0},
-        firstIonizationT{nP, 0.0} {};
+  Particles(std::size_t nP,std::size_t nStreams,libconfig::Config &cfg, Flags *gitr_flags) : 
+    nParticles{getVariable_cfg<unsigned int> (cfg,"impurityParticleSource.nP")},
+    index{nParticles, 0}, 
+    x{nParticles}, 
+    y{nParticles}, 
+    z{nParticles}, 
+    xprevious{nParticles},
+    yprevious{nParticles}, 
+    zprevious{nParticles},
+    v{nParticles, 0.0}, 
+    vx{nParticles}, 
+    vy{nParticles}, 
+    vz{nParticles}, 
+    Z{nParticles},
+    amu{nParticles}, 
+    charge{nParticles,0.0}, 
+    newVelocity{nParticles}, 
+    nu_s{nParticles}, 
+    vD{nParticles, 0.0}, 
+    tt{nParticles, 0}, 
+    hasLeaked{nParticles, 0}, 
+    leakZ{nParticles,0.0}, 
+    stream_ionize{initialize_random_streams(nParticles,cfg,gitr_flags)},
+
+//streams_rec{nStreams},streams_collision1{nStreams},streams_collision2{nStreams},
+  //    streams_collision3{nStreams},streams_diff{nStreams},streams_surf{nStreams},
+    hitWall{nParticles, 0.0},
+    wallHit{nParticles, 0},
+    firstCollision{nParticles, 1}, 
+    transitTime{nParticles, 0.0}, 
+    distTraveled{nParticles, 0.0},
+    wallIndex{nParticles},
+    perpDistanceToSurface{nParticles}, 
+    test{nParticles, 0.0}, 
+    test0{nParticles, 0.0},
+    test1{nParticles, 0.0}, 
+    test2{nParticles, 0.0}, 
+    test3{nParticles, 0.0}, 
+    test4{nParticles, 0.0},
+    distanceTraveled{nParticles}, 
+    weight{nParticles, 1.0}, 
+    firstIonizationZ{nParticles, 0.0},
+    firstIonizationT{nParticles, 0.0} {};
+
+  CUDA_CALLABLE_MEMBER
+  sim::Array<std::mt19937> initialize_random_streams(int nStreams,libconfig::Config &cfg, Flags *gitr_flags)
+  {
+    sim::Array<std::mt19937> stream(nStreams);
+
+    if(gitr_flags->FIXED_SEEDS)
+    {
+      int seed0 = getVariable_cfg<int> (cfg,"operators.ionization.seed");
+      for (int i =0;i < nParticles; i++) 
+      {
+        std::mt19937 s0(seed0+i);
+        stream_ionize[i] = s0;
+      }
+    }
+    else
+    {
+      
+      std::random_device randDeviceInit;
+      for (int i =0;i < nStreams; i++) 
+      {
+        std::mt19937 s0(randDeviceInit());
+        stream[i] = s0;
+      }
+    }
+     
+    return stream;
+  }
+
 };
 
 #endif

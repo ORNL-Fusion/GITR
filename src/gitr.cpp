@@ -136,7 +136,12 @@ int main(int argc, char **argv, char **envp) {
   }
   auto gitr_flags = new Flags(cfg);
     std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
-
+  Field_client *pClient = new Field_client(); 
+    std::cout << "created client " << std::endl;
+    Field * pField = pClient->getField(); 
+    std::cout << "created field pointer " << std::endl;
+    float interpvalfield  = pField->interpolate();
+    std::cout << "called interpolate " << std::endl;
 //// show memory usage of GPU
 //#if __CUDACC__
 //  namespace fsn = std::experimental::filesystem;
