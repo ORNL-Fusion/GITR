@@ -460,14 +460,7 @@ int main(int argc, char **argv, char **envp) {
      nHashPointsTotal = 0;
      for(int j=0;j<nHashes;j++)
     {
-      if(nHashes > 1)
-      {
         nHashPoints[j] =nR_closeGeom[j]*nY_closeGeom[j]*nZ_closeGeom[j];
-      }
-      else
-      {
-        nHashPoints[j] =nR_closeGeom[j]*nZ_closeGeom[j];
-      }
       nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
       nGeomHash = nGeomHash + nHashPoints[j]*n_closeGeomElements[j];
       nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
@@ -771,8 +764,10 @@ int main(int argc, char **argv, char **envp) {
   printf("Time taken          is %6.3f (secs) \n", fs0.count());
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
+      std::cout << "opening file" << std::endl;
       netCDF::NcFile ncFile_hash("output/geomHash" + std::to_string(i) + ".nc",
                          netCDF::NcFile::replace);
+      std::cout << "opened file" << std::endl;
       netCDF::NcDim hashNR = ncFile_hash.addDim("nR", nR_closeGeom[i]);
 #if USE3DTETGEOM > 0
       netCDF::NcDim hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
@@ -781,17 +776,20 @@ int main(int argc, char **argv, char **envp) {
       netCDF::NcDim hashN = ncFile_hash.addDim("n", n_closeGeomElements[i]);
       vector<netCDF::NcDim> geomHashDim;
       geomHashDim.push_back(hashNR);
+      std::cout << "created dims" << std::endl;
 #if USE3DTETGEOM > 0
       geomHashDim.push_back(hashNY);
 #endif
       geomHashDim.push_back(hashNZ);
       geomHashDim.push_back(hashN);
       netCDF::NcVar hash_gridR = ncFile_hash.addVar("gridR", netCDF::ncFloat, hashNR);
+      std::cout << "created dims2" << std::endl;
 #if USE3DTETGEOM > 0
       netCDF::NcVar hash_gridY = ncFile_hash.addVar("gridY", netCDF::ncFloat, hashNY);
 #endif
       netCDF::NcVar hash_gridZ = ncFile_hash.addVar("gridZ", netCDF::ncFloat, hashNZ);
       netCDF::NcVar hash = ncFile_hash.addVar("hash", netCDF::ncInt, geomHashDim);
+      std::cout << "created vars" << std::endl;
       int ncIndex = 0;
       if (i > 0)
         ncIndex = nR_closeGeom[i - 1];
@@ -812,6 +810,7 @@ int main(int argc, char **argv, char **envp) {
       ncFile_hash.close();
     }
   }
+      std::cout << "created vars2" << std::endl;
 #elif GEOM_HASH > 1
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
@@ -824,6 +823,7 @@ int main(int argc, char **argv, char **envp) {
         dataIndex = nZ_closeGeom[0];
       getVarFromFile(cfg, input_path + hashFile[i], geomHashCfg, "gridZString",
                      closeGeomGridz[dataIndex]);
+      std::cout << "created vars3" << std::endl;
 #if USE3DTETGEOM > 0
       if (i > 0)
         dataIndex = nY_closeGeom[0];
@@ -837,6 +837,7 @@ int main(int argc, char **argv, char **envp) {
                      "closeGeomString", closeGeom[dataIndex]);
     }
   }
+      std::cout << "created vars4" << std::endl;
 #if USE_MPI > 0
   MPI_Bcast(closeGeomGridr.data(), nR_closeGeomTotal, MPI_FLOAT, 0,
             MPI_COMM_WORLD);
@@ -1007,25 +1008,25 @@ int main(int argc, char **argv, char **envp) {
   fsec0_s fs0_s = finish_clock0_s - start_clock0_s;
   printf("Time taken          is %6.3f (secs) \n", fs0_s.count());
   if (world_rank == 0) {
-    NcFile ncFile_hash_sheath("output/geomHash_sheath.nc", NcFile::replace);
-    NcDim hashNR_sheath = ncFile_hash_sheath.addDim("nR", nR_closeGeom_sheath);
-    NcDim hashNY_sheath = ncFile_hash_sheath.addDim("nY", nY_closeGeom_sheath);
-    NcDim hashNZ_sheath = ncFile_hash_sheath.addDim("nZ", nZ_closeGeom_sheath);
-    NcDim hashN_sheath =
+    netCDF::NcFile ncFile_hash_sheath("output/geomHash_sheath.nc", netCDF::NcFile::replace);
+    netCDF::NcDim hashNR_sheath = ncFile_hash_sheath.addDim("nR", nR_closeGeom_sheath);
+    netCDF::NcDim hashNY_sheath = ncFile_hash_sheath.addDim("nY", nY_closeGeom_sheath);
+    netCDF::NcDim hashNZ_sheath = ncFile_hash_sheath.addDim("nZ", nZ_closeGeom_sheath);
+    netCDF::NcDim hashN_sheath =
         ncFile_hash_sheath.addDim("n", n_closeGeomElements_sheath);
-    vector<NcDim> geomHashDim_sheath;
+    vector<netCDF::NcDim> geomHashDim_sheath;
     geomHashDim_sheath.push_back(hashNR_sheath);
     geomHashDim_sheath.push_back(hashNY_sheath);
     geomHashDim_sheath.push_back(hashNZ_sheath);
     geomHashDim_sheath.push_back(hashN_sheath);
-    NcVar hash_gridR_sheath =
-        ncFile_hash_sheath.addVar("gridR", ncFloat, hashNR_sheath);
-    NcVar hash_gridY_sheath =
-        ncFile_hash_sheath.addVar("gridY", ncFloat, hashNY_sheath);
-    NcVar hash_gridZ_sheath =
-        ncFile_hash_sheath.addVar("gridZ", ncFloat, hashNZ_sheath);
-    NcVar hash_sheath =
-        ncFile_hash_sheath.addVar("hash", ncInt, geomHashDim_sheath);
+    netCDF::NcVar hash_gridR_sheath =
+        ncFile_hash_sheath.addVar("gridR", netCDF::ncFloat, hashNR_sheath);
+    netCDF::NcVar hash_gridY_sheath =
+        ncFile_hash_sheath.addVar("gridY", netCDF::ncFloat, hashNY_sheath);
+    netCDF::NcVar hash_gridZ_sheath =
+        ncFile_hash_sheath.addVar("gridZ", netCDF::ncFloat, hashNZ_sheath);
+    netCDF::NcVar hash_sheath =
+        ncFile_hash_sheath.addVar("hash", netCDF::ncInt, geomHashDim_sheath);
     hash_gridR_sheath.putVar(&closeGeomGridr_sheath[0]);
     hash_gridY_sheath.putVar(&closeGeomGridy_sheath[0]);
     hash_gridZ_sheath.putVar(&closeGeomGridz_sheath[0]);
@@ -4591,26 +4592,26 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
         srf = srf + 1;
       }
     }
-    NcFile ncFile1("output/surface.nc", NcFile::replace);
-    NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
-    vector<NcDim> dims1;
+    netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
+    vector<netCDF::NcDim> dims1;
     dims1.push_back(nc_nLines);
 
-    vector<NcDim> dimsSurfE;
+    vector<netCDF::NcDim> dimsSurfE;
     dimsSurfE.push_back(nc_nLines);
-    NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
-    NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
+    netCDF::NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
+    netCDF::NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
     dimsSurfE.push_back(nc_nAngles);
     dimsSurfE.push_back(nc_nEnergies);
-    NcVar nc_grossDep = ncFile1.addVar("grossDeposition", ncFloat, nc_nLines);
-    NcVar nc_grossEro = ncFile1.addVar("grossErosion", ncFloat, nc_nLines);
-    NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", ncFloat, nc_nLines);
-    NcVar nc_spylCounts = ncFile1.addVar("spylCounts", ncInt, nc_nLines);
-    NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", ncInt, nc_nLines);
-    NcVar nc_sumParticlesStrike =
-        ncFile1.addVar("sumParticlesStrike", ncInt, nc_nLines);
-    NcVar nc_sumWeightStrike =
-        ncFile1.addVar("sumWeightStrike", ncFloat, nc_nLines);
+    netCDF::NcVar nc_grossDep = ncFile1.addVar("grossDeposition", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_grossEro = ncFile1.addVar("grossErosion", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_spylCounts = ncFile1.addVar("spylCounts", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_sumParticlesStrike =
+        ncFile1.addVar("sumParticlesStrike", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_sumWeightStrike =
+        ncFile1.addVar("sumWeightStrike", netCDF::ncFloat, nc_nLines);
     nc_grossDep.putVar(&grossDeposition[0]);
     nc_surfNum.putVar(&surfaceNumbers[0]);
     nc_grossEro.putVar(&grossErosion[0]);
@@ -4623,10 +4624,10 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // NcVar nc_surfStartingParticles =
     // ncFile1.addVar("startingParticles",ncFloat,dims1); NcVar nc_surfZ =
     // ncFile1.addVar("Z",ncFloat,dims1);
-    NcVar nc_surfEDist = ncFile1.addVar("surfEDist", ncFloat, dimsSurfE);
-    NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", ncFloat, dimsSurfE);
-    NcVar nc_surfSputtDist =
-        ncFile1.addVar("surfSputtDist", ncFloat, dimsSurfE);
+    netCDF::NcVar nc_surfEDist = ncFile1.addVar("surfEDist", netCDF::ncFloat, dimsSurfE);
+    netCDF::NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", netCDF::ncFloat, dimsSurfE);
+    netCDF::NcVar nc_surfSputtDist =
+        ncFile1.addVar("surfSputtDist", netCDF::ncFloat, dimsSurfE);
     // nc_surfImpacts.putVar(impacts);
     //#if USE3DTETGEOM > 0
     // nc_surfRedeposit.putVar(redeposit);

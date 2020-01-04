@@ -237,6 +237,7 @@ struct geometry_check {
       float totalSigns = 0.0;
       int nBoundariesCrossed = 0;
       int boundariesCrossed[6] = {0, 0, 0, 0, 0, 0};
+      float dist_to_boundariesCrossed[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
       /*
       if(particlesPointer->xprevious[indx] < 0 ||
       particlesPointer->yprevious[indx] < 0 ||
@@ -428,7 +429,8 @@ struct geometry_check {
           // hitSurface << std::endl;
           if (hitSurface == 1) {
             boundariesCrossed[nBoundariesCrossed] = i;
-            // std::cout << "boundary crossed " << i << std::endl;
+            dist_to_boundariesCrossed[nBoundariesCrossed] = pointToPlaneDistance0;
+            //std::cout << "boundary crossed " << i << std::endl;
             nBoundariesCrossed++;
             particlesPointer->hitWall[indx] = 1.0;
             particlesPointer->xprevious[indx] = p[0];
