@@ -66,10 +66,10 @@ int main(int argc, char **argv, char **envp) {
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
 
-  //Set default processes per node to 1
+  // Set default processes per node to 1
   int ppn = 1;
 
-  //Set default input file string
+  // Set default input file string
   std::string inputFile = "gitrInput.cfg";
 
 #if USE_MPI > 0
@@ -136,12 +136,16 @@ int main(int argc, char **argv, char **envp) {
   }
   auto gitr_flags = new Flags(cfg);
     std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
-  Field_client *pClient = new Field_client(); 
+    //FIXME: work on new field struct
+    auto field1 = new Field();
+    auto pClient = new Field_client(); 
     std::cout << "created client " << std::endl;
-    Field * pField = pClient->getField(); 
-    std::cout << "created field pointer " << std::endl;
-    float interpvalfield  = pField->interpolate();
-    std::cout << "called interpolate " << std::endl;
+    std::cout << "interp " << (field1->*(field1->fooHandler))(1.0,2.0,3.0) << std::endl;
+    //Field * pField = pClient->getField(); 
+    //std::cout << "created field pointer " << std::endl;
+    std::cout << "interp2 " << field1->interpolate(1.0,2.0,3.0) << std::endl;
+    ////float interpvalfield  = pField->interpolate();
+    //std::cout << "called interpolate " << std::endl;
 //// show memory usage of GPU
 //#if __CUDACC__
 //  namespace fsn = std::experimental::filesystem;
@@ -253,11 +257,11 @@ int main(int argc, char **argv, char **envp) {
 #if USE_MPI > 0
   MPI_Bcast(&nSurfaces, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #if USE3DTETGEOM > 0
-  const int nBoundaryMembers = 39;
-  int nIntMembers = 5;
+  const int nBoundaryMembers = 41;
+  int nIntMembers = 6;
 #else
-  const int nBoundaryMembers = 37;
-  int nIntMembers = 5;
+  const int nBoundaryMembers = 39;
+  int nIntMembers = 6;
 #endif
   int lengths[nBoundaryMembers] = {0};
   MPI_Aint offsets[nBoundaryMembers] = {};
@@ -2041,6 +2045,8 @@ int main(int argc, char **argv, char **envp) {
                               te.data(), biasPotential));
 
   std::cout << "Completed Boundary Init " << std::endl;
+  std::cout << "periodicy "<<boundaries[nLines].periodic << std::endl;
+  std::cout << "periodicx "<<boundaries[nLines].periodic_bc_x << std::endl;
 
   // Efield
   int nR_PreSheathEfield = 1;
@@ -3693,12 +3699,12 @@ int main(int argc, char **argv, char **envp) {
                      &gridZ_bins.front(), &net_Bins.front(), dt);
 #endif
 #if USEIONIZATION > 0
-  ionize ionize0(
+  ionize<curandState> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front());
+      &rateCoeff_Ionization.front(),field1);
   //if(gitr_flags.USE_IONIZATION > 0) ionize0.func = &ionize::operator();
   //else ionize0.func = &ionize::operator1;
   //void (ionize::*func)(std::size_t) = &ionize::operator();
@@ -3709,7 +3715,7 @@ int main(int argc, char **argv, char **envp) {
   //auto func1 = *func;
 #endif
 #if USERECOMBINATION > 0
-  recombine recombine0(
+  recombine<curandState> recombine0(
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
@@ -4152,6 +4158,7 @@ for(int i=0; i<nP ; i++)
   sim::Array<float> vyGather(nP, 0.0);
   sim::Array<float> vzGather(nP, 0.0);
   sim::Array<float> hitWallGather(nP, 0.0);
+  sim::Array<int> surfaceHitGather(nP, 0.0);
   sim::Array<float> weightGather(nP, 0.0);
   sim::Array<float> chargeGather(nP, 0.0);
   sim::Array<float> firstIonizationTGather(nP, 0.0);
@@ -4189,6 +4196,9 @@ for(int i=0; i<nP ; i++)
   MPI_Gather(&particleArray->hitWall[world_rank * nP / world_size],
              nP / world_size, MPI_FLOAT, &hitWallGather[0], nP / world_size,
              MPI_FLOAT, 0, MPI_COMM_WORLD);
+  MPI_Gather(&particleArray->wallHit[world_rank * nP / world_size],
+             nP / world_size, MPI_FLOAT, &surfaceHitGather[0], nP / world_size,
+             MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Gather(&particleArray->weight[world_rank * nP / world_size],
              nP / world_size, MPI_FLOAT, &weightGather[0], nP / world_size,
              MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -4492,6 +4502,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_vz0 = ncFile0.addVar("vz", netCDF::ncFloat, dims0);
     netCDF::NcVar nc_trans0 = ncFile0.addVar("transitTime", netCDF::ncFloat, dims0);
     netCDF::NcVar nc_impact0 = ncFile0.addVar("hitWall", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_surfHit0 = ncFile0.addVar("surfaceHit", netCDF::ncInt, dims0);
     netCDF::NcVar nc_weight0 = ncFile0.addVar("weight", netCDF::ncFloat, dims0);
     netCDF::NcVar nc_charge0 = ncFile0.addVar("charge", netCDF::ncFloat, dims0);
     netCDF::NcVar nc_leak0 = ncFile0.addVar("hasLeaked", netCDF::ncInt, dims0);
@@ -4505,6 +4516,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_vz0.putVar(&vzGather[0]);
     nc_trans0.putVar(&particleArray->transitTime[0]);
     nc_impact0.putVar(&hitWallGather[0]);
+    nc_surfHit0.putVar(&surfaceHitGather[0]);
     nc_weight0.putVar(&weightGather[0]);
     nc_charge0.putVar(&chargeGather[0]);
     nc_leak0.putVar(&hasLeakedGather[0]);
@@ -4518,6 +4530,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
   nc_vz0.putVar(&particleArray->vz[0]);
   nc_trans0.putVar(&particleArray->transitTime[0]);
   nc_impact0.putVar(&particleArray->hitWall[0]);
+  nc_surfHit0.putVar(&particleArray->surfaceHit[0]);
   nc_weight0.putVar(&particleArray->weight[0]);
   nc_charge0.putVar(&particleArray->charge[0]);
   nc_leak0.putVar(&particleArray->hasLeaked[0]);

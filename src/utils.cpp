@@ -185,6 +185,23 @@ template float getVariable(libconfig::Config &cfg,const std::string& s, float &a
 template double getVariable(libconfig::Config &cfg,const std::string& s, double &a);
 template std::string getVariable(libconfig::Config &cfg,const std::string& s, std::string &a);
 
+template <typename T>
+T get_variable(libconfig::Config &cfg, const std::string s) {
+  T tmp;
+  if (cfg.lookupValue(s, tmp)) {
+    std::cout << s << " = " << tmp << std::endl;
+  } else {
+    std::cout << "ERROR: Failed importing " << s << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  return tmp;
+}
+
+template int get_variable(libconfig::Config &cfg, const std::string s);
+template float get_variable(libconfig::Config &cfg, const std::string s);
+template double get_variable(libconfig::Config &cfg, const std::string s);
+template const char* get_variable(libconfig::Config &cfg, const std::string s);
+
 template <typename T=float>
 T getVariable_cfg (libconfig::Config &cfg,const std::string& s)
 {
@@ -523,6 +540,12 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        }
      }   
      std::cout << "finished bound import "  << std::endl;
+       boundaries[nLines].periodic_bc_x0 = geom["periodic_bc_x0"];
+       boundaries[nLines].periodic_bc_x1 = geom["periodic_bc_x1"];
+       boundaries[nLines].periodic_bc_x = geom["periodic_bc_x"];
+       boundaries[nLines].y1 = geom["theta0"];
+       boundaries[nLines].y2 = geom["theta1"];
+       boundaries[nLines].periodic = geom["periodic"];
      #if USECYLSYMM
           std::cout << "Reading cylindrically symmetric boundary characteristics " << std::endl;
        boundaries[nLines].y1 = geom["theta0"];

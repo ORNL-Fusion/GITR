@@ -252,9 +252,10 @@ void operator()(std::size_t indx) const {
       float R0 = 0.0;
       float totalYR = 0.0;
       float newWeight = 0.0;
-      int wallHit = particles->wallHit[indx];
+      int wallHit = particles->surfaceHit[indx];
       int surfaceHit = boundaryVector[wallHit].surfaceNumber;
       int surface = boundaryVector[wallHit].surface;
+      //FIXME
       if (wallHit > 260)
         wallHit = 260;
       if (wallHit < 0)

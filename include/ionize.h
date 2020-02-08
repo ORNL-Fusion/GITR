@@ -10,6 +10,7 @@
 #endif
 
 #include "Particles.h"
+#include "Fields.h"
 #include "flags.hpp"
 #ifdef __CUDACC__
 #include <curand_kernel.h>
@@ -23,6 +24,24 @@
 
 #include "interpRateCoeff.hpp"
 
+CUDA_CALLABLE_MEMBER_DEVICE
+float get_rand(curandState *state,int indx)
+{
+        curandState localState = state[indx];
+        float r1 = curand_uniform(&localState);
+        state[indx] = localState;
+	return r1;
+}
+
+CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
+float get_rand(std::mt19937 *state,int indx)
+{
+        std::uniform_real_distribution<float> dist(0.0, 1.0);
+        float r1 = dist(state[indx]);
+	return r1;
+}
+
+template <typename T=std::mt19937> 
 struct ionize {
   Flags *flags;
   Particles *particlesPointer;
@@ -46,23 +65,25 @@ struct ionize {
   void (ionize::*func)(std::size_t);
   // int& tt;
   int xx1;
-#if __CUDA_ARCH__
-  curandState *state;
-#else
-  std::mt19937 *state;
-#endif
+  T *state;
+  Field *field1;
+//#if __CUDA_ARCH__
+//  curandState *state;
+//#else
+//  std::mt19937 *state;
+//#endif
   ionize() : dt(0.0){};
-  ionize(Flags *_flags, Particles *_particlesPointer, float _dt,
-#if __CUDA_ARCH__
-         curandState *_state,
-#else
-         std::mt19937 *_state,
-#endif
+  ionize(Flags *_flags, Particles *_particlesPointer, float _dt,T *_state,
+//#if __CUDA_ARCH__
+//         curandState *_state,
+//#else
+//         std::mt19937 *_state,
+//#endif
          int _nR_Dens, int _nZ_Dens, float *_DensGridr, float *_DensGridz,
          float *_ne, int _nR_Temp, int _nZ_Temp, float *_TempGridr,
          float *_TempGridz, float *_te, int _nTemperaturesIonize,
          int _nDensitiesIonize, float *_gridTemperature_Ionization,
-         float *_gridDensity_Ionization, float *_rateCoeff_Ionization)
+         float *_gridDensity_Ionization, float *_rateCoeff_Ionization, Field *_field1)
       :
 
         flags(_flags), particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
@@ -75,7 +96,7 @@ struct ionize {
         gridTemperature_Ionization(_gridTemperature_Ionization),
         rateCoeff_Ionization(_rateCoeff_Ionization),
         dt(_dt),
-        state(_state) {
+        state(_state),field1(_field1) {
   }
 
   CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
@@ -87,17 +108,11 @@ struct ionize {
           nZ_Temp, TempGridr, TempGridz, te, DensGridr, DensGridz, ne,
           nTemperaturesIonize, nDensitiesIonize, gridTemperature_Ionization,
           gridDensity_Ionization, rateCoeff_Ionization);
+      float interp1 = field1->interpolate(1.0,2.0,3.0);
       float P = expf(-dt / tion);
       float P1 = 1.0 - P;
       if (particlesPointer->hitWall[indx] == 0.0) {
-#if __CUDA_ARCH__
-        curandState localState = state[thread_id];
-        float r1 = curand_uniform(&localState);
-        state[thread_id] = localState;
-#else
-        std::uniform_real_distribution<float> dist(0.0, 1.0);
-        float r1 = dist(state[indx]);
-#endif
+        float r1 = get_rand(state,indx);
         if (r1 <= P1) {
           particlesPointer->charge[indx] = particlesPointer->charge[indx] + 1;
         }

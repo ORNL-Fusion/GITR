@@ -24,6 +24,7 @@ class Boundary
 {
   public:
     int periodic;
+    int periodic_bc_x;
     int pointLine;
     int surfaceNumber;
     int surface;
@@ -47,7 +48,9 @@ class Boundary
     #else
       float slope_dzdx;
       float intercept_z;
-    #endif     
+    #endif 
+    float periodic_bc_x0;    
+    float periodic_bc_x1;    
     float Z;
     float amu;
     float potential;

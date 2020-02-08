@@ -74,6 +74,8 @@ namespace sim {
   public:
     /*! Construct an array of fixed capacity
      */
+    Array() : capacity_{1}, size_{1}, data_{alloc_data()} {}
+    
     Array(const std::size_t capacity) : capacity_{capacity}, size_{capacity}, data_{alloc_data()} {}
 
     /*! Construct an array of fixed capacity and initialize values
@@ -123,6 +125,15 @@ namespace sim {
     }
 
     Array &operator=(const Array &source)// = delete;
+    {
+        for(int i=0;i<source.size();i++)
+        {
+            data_[i] = source[i];
+        }
+        return *this;
+    }
+    
+    Array &operator=(const std::vector<T> &source)// = delete;
     {
         for(int i=0;i<source.size();i++)
         {

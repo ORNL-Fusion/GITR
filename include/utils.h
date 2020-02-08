@@ -57,6 +57,15 @@ extern template int getVariable(libconfig::Config &cfg,const std::string& s, int
 extern template float getVariable(libconfig::Config &cfg,const std::string& s, float &a);
 extern template double getVariable(libconfig::Config &cfg,const std::string& s, double &a);
 extern template std::string getVariable(libconfig::Config &cfg,const std::string& s, std::string &a);
+
+template <typename P>
+P get_variable(libconfig::Config &cfg, const std::string s);
+
+extern template int get_variable(libconfig::Config &cfg, const std::string s);
+extern template float get_variable(libconfig::Config &cfg, const std::string s);
+extern template double get_variable(libconfig::Config &cfg, const std::string s);
+extern template const char* get_variable(libconfig::Config &cfg, const std::string s);
+
 template <typename T>
 int readFileVar(const std::string& fileName,const std::string& section,const std::string& varName,T &x ) {
        std::string profiles_folder = "output/profiles";
