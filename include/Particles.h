@@ -3,6 +3,7 @@
 
 #ifdef __CUDACC__
 #define CUDA_CALLABLE_MEMBER __host__ __device__
+#define CUDA_CALLABLE_MEMBER_DEVICE __device__
 #else
 #define CUDA_CALLABLE_MEMBER
 #endif
@@ -66,7 +67,7 @@ public:
 #endif
 
   sim::Array<float> hitWall;
-  sim::Array<int> wallHit;
+  sim::Array<int> surfaceHit;
   sim::Array<int> firstCollision;
   sim::Array<float> transitTime;
   sim::Array<float> distTraveled;
@@ -166,7 +167,7 @@ public:
     float vxT = this->vx[indx];
     float vyT = this->vy[indx];
     float vzT = this->vz[indx];
-    int wHT = this->wallHit[indx];
+    int wHT = this->surfaceHit[indx];
     float ttT = this->transitTime[indx];
     float dtT = this->distTraveled[indx];
     float firstIonizationZT = this->firstIonizationZ[indx];
@@ -188,7 +189,7 @@ public:
     this->vx[indx] = this->vx[n];
     this->vy[indx] = this->vy[n];
     this->vz[indx] = this->vz[n];
-    this->wallHit[indx] = this->wallHit[n];
+    this->surfaceHit[indx] = this->surfaceHit[n];
     this->transitTime[indx] = this->transitTime[n];
     this->distTraveled[indx] = this->distTraveled[n];
     this->firstIonizationZ[indx] = this->firstIonizationZ[n];
@@ -210,7 +211,7 @@ public:
     this->vx[n] = vxT;
     this->vy[n] = vyT;
     this->vz[n] = vzT;
-    this->wallHit[n] = wHT;
+    this->surfaceHit[n] = wHT;
     this->transitTime[n] = ttT;
     this->distTraveled[n] = dtT;
     this->firstIonizationZ[n] = firstIonizationZT;
@@ -240,12 +241,12 @@ public:
     tt{nParticles, 0}, 
     hasLeaked{nParticles, 0}, 
     leakZ{nParticles,0.0}, 
-    stream_ionize{initialize_random_streams(nParticles,cfg,gitr_flags)},
+    stream_ionize{nParticles},
 
 //streams_rec{nStreams},streams_collision1{nStreams},streams_collision2{nStreams},
   //    streams_collision3{nStreams},streams_diff{nStreams},streams_surf{nStreams},
     hitWall{nParticles, 0.0},
-    wallHit{nParticles, 0},
+    surfaceHit{nParticles, -1},
     firstCollision{nParticles, 1}, 
     transitTime{nParticles, 0.0}, 
     distTraveled{nParticles, 0.0},
@@ -261,34 +262,48 @@ public:
     weight{nParticles, 1.0}, 
     firstIonizationZ{nParticles, 0.0},
     firstIonizationT{nParticles, 0.0} {};
-
-  CUDA_CALLABLE_MEMBER
-  sim::Array<std::mt19937> initialize_random_streams(int nStreams,libconfig::Config &cfg, Flags *gitr_flags)
-  {
-    sim::Array<std::mt19937> stream(nStreams);
-
-    if(gitr_flags->FIXED_SEEDS)
-    {
-      int seed0 = getVariable_cfg<int> (cfg,"operators.ionization.seed");
-      for (int i =0;i < nParticles; i++) 
-      {
-        std::mt19937 s0(seed0+i);
-        stream_ionize[i] = s0;
-      }
-    }
-    else
-    {
-      
-      std::random_device randDeviceInit;
-      for (int i =0;i < nStreams; i++) 
-      {
-        std::mt19937 s0(randDeviceInit());
-        stream[i] = s0;
-      }
-    }
-     
-    return stream;
-  }
+  
+  //CUDA_CALLABLE_MEMBER_DEVICE
+  //      #if __CUDACC__  
+  //sim::Array<curandState> initialize_random_streams(int nStreams,libconfig::Config &cfg, Flags *gitr_flags)
+  //{
+  //        sim::Array<curandState> stream(nStreams);	  
+  //      #else      
+  //sim::Array<std::mt19937> initialize_random_streams(int nStreams,libconfig::Config &cfg, Flags *gitr_flags)
+  //{
+  //  sim::Array<std::mt19937> stream(nStreams);
+  //#endif
+//
+//    if(gitr_flags->FIXED_SEEDS)
+//    {
+//      int seed0 = getVariable_cfg<int> (cfg,"operators.ionization.seed");
+//      for (int i =0;i < nParticles; i++) 
+//      {
+//        #if __CUDACC__  
+//          curand_init(i, 0, 0, &stream[i]);
+//        #else      
+//          std::mt19937 s0(seed0+i);
+//          stream_ionize[i] = s0;
+//        #endif
+//      }
+//    }
+//    else
+//    {
+//      
+//      std::random_device randDeviceInit;
+//      for (int i =0;i < nStreams; i++) 
+//      {
+//        #if __CUDACC__  
+//          curand_init(clock64(), 0, 0, &stream[i]);
+//        #else      
+//          std::mt19937 s0(randDeviceInit());
+//          stream[i] = s0;
+//        #endif
+//      }
+//    }
+//     
+//    return stream;
+//  }
 
 };
 

@@ -1,4 +1,4 @@
-export PATH=$PATH:/$HOME/Code/cmakebuild/bin:$HOME/Code/pythonbuild/bin
+export PATH=$PATH:/$HOME/Code/cmakebuild/bin:$HOME/Code/pythonbuild/bin:$HOME/Code/openmpiBuild/bin
 export CMAKE_SOURCE_DIR=../
 export  NETCDF=$HOME/Code/netcdfcbuild 
 export  NETCDFCXX4=$HOME/Code/netcdfcxxbuild  
@@ -20,4 +20,4 @@ export LIBCONFIGPP_INCLUDE_DIR=$LIBCONFIGDIR/include
 export LIBCONFIG_LIBRARY=lconfig
 export THRUST_INCLUDE_DIRS=$HOME/Code/thrust
 export THRUST_INCLUDE_DIR=$HOME/Code/thrust
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NETCDF/lib:$NETCDFCXX4/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NETCDF/lib:$NETCDFCXX4/lib:$Home/Code/openmpiBuild/lib
