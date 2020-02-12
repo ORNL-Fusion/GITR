@@ -137,13 +137,13 @@ int main(int argc, char **argv, char **envp) {
   auto gitr_flags = new Flags(cfg);
     std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
     //FIXME: work on new field struct
-    auto field1 = new Field();
-    auto pClient = new Field_client(); 
-    std::cout << "created client " << std::endl;
-    std::cout << "interp " << (field1->*(field1->fooHandler))(1.0,2.0,3.0) << std::endl;
+    //auto field1 = new Field();
+    //auto pClient = new Field_client(); 
+    //std::cout << "created client " << std::endl;
+    //std::cout << "interp " << (field1->*(field1->fooHandler))(1.0,2.0,3.0) << std::endl;
     //Field * pField = pClient->getField(); 
     //std::cout << "created field pointer " << std::endl;
-    std::cout << "interp2 " << field1->interpolate(1.0,2.0,3.0) << std::endl;
+    //std::cout << "interp2 " << field1->interpolate(1.0,2.0,3.0) << std::endl;
     ////float interpvalfield  = pField->interpolate();
     //std::cout << "called interpolate " << std::endl;
 //// show memory usage of GPU
