@@ -183,8 +183,11 @@ namespace sim {
     {
       if (__new_size > size())
       {
+          free_data();
           capacity_ = __new_size;
           size_ = __new_size;
+          data_ = alloc_data();
+          
       }      
       else if (__new_size < size())
       {
