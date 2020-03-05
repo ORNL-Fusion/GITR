@@ -54,12 +54,14 @@ public:
 
     int err, status, ncid, groupid, cmode, val_id, r_id, retval;
     cmode = NC_NOWRITE;
+    std::cout << " here" << std::endl;
 #if USE_MPI == 1
     err = nc_open_par(ncfilename.c_str(), cmode, MPI_COMM_WORLD, MPI_INFO_NULL,
                       &ncid);
 #else
     err = nc_open(ncfilename.c_str(), cmode, &ncid);
 #endif
+    std::cout << " here 2" << std::endl;
     err = nc_inq_varid(ncid, ncvarname.c_str(), &val_id);
 
     // get number of dimensions
@@ -114,6 +116,7 @@ public:
         } 
 	else if (index == 1) {
           y.resize(vec_size);
+          std::cout << "ysize " << y.size() << " vecsize " << vec.size() << std::endl;
           y = vec;
         } 
 	else if (index == 2) {
