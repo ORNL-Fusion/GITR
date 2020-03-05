@@ -8,7 +8,9 @@
 #endif
 
 #include "array.h"
+#if USE_MPI > 0
 #include "mpi.h"
+#endif
 #include "utils.h"
 #include <cstdlib>
 #include <libconfig.h++>
