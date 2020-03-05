@@ -23,7 +23,7 @@
 #endif
 
 #include "interpRateCoeff.hpp"
-
+#if __CUDA_ARCH__
 CUDA_CALLABLE_MEMBER_DEVICE
 float get_rand(curandState *state,int indx)
 {
@@ -32,6 +32,7 @@ float get_rand(curandState *state,int indx)
         state[indx] = localState;
 	return r1;
 }
+#endif
 
 CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
 float get_rand(std::mt19937 *state,int indx)
