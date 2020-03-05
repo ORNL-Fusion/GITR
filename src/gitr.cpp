@@ -4798,7 +4798,11 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netCDF::ncFloat, nc_nY);
     nc_gridY.putVar(&gridY_bins[0]);
 #endif
+#if USE_MPI > 0
     nc_n.putVar(&net_BinsTotal[0]);
+#else
+    nc_n.putVar(&net_Bins[0]);
+#endif
     ncFile.close();
 #endif
 #ifdef __CUDACC__
