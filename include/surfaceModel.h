@@ -55,7 +55,7 @@ void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNorma
             surfaceNormalVector[2] = surfaceNormalVector[2]/norm_normal;
                 }
 #if USECYLSYMM > 0 
-            float theta = std::atan2f(y,x);
+            float theta = std::atan2(y,x);
             float Sr = surfaceNormalVector[0];
             surfaceNormalVector[0] = std::cos(theta)*Sr;
             surfaceNormalVector[1] = std::sin(theta)*Sr;
@@ -252,9 +252,10 @@ void operator()(std::size_t indx) const {
       float R0 = 0.0;
       float totalYR = 0.0;
       float newWeight = 0.0;
-      int wallHit = particles->wallHit[indx];
+      int wallHit = particles->surfaceHit[indx];
       int surfaceHit = boundaryVector[wallHit].surfaceNumber;
       int surface = boundaryVector[wallHit].surface;
+      //FIXME
       if (wallHit > 260)
         wallHit = 260;
       if (wallHit < 0)
