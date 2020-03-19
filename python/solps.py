@@ -6,8 +6,11 @@ import numpy.matlib as ml
 import gitr
 import scipy.interpolate as scii
 import netCDF4
-def readEquilibrium(filename='/global/homes/t/tyounkin/atomIPS/atom-install-edison/solps-iter-data/Baseline2008-li0.70.x4.equ',geometryFile='/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/iter/iter_milestone/2d/input/iter2dRefinedOuterTarget.cfg'):
-    print('Reading B Equilibrium file %s and making use of GITR geometry file %s' %(filename,geometryFile))
+import math
+import os
+
+def readEquilibrium(filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseline2008-li0.70.x4.equ'):
+
     rr=0
     zz=0
     pp=0
@@ -16,16 +19,11 @@ def readEquilibrium(filename='/global/homes/t/tyounkin/atomIPS/atom-install-edis
     psi = []
     with open(filename) as openfileobject:
         for line in openfileobject:
-                #print line
             if line:
-    	    #    print 'empty line'
-    	    #else:
                     l = line.split()
                     if not l:
                         k=1
-    		    #print 'empty line'
                     else:
-    		    #print l
                         if (l[0] == "jm" and l[1]=="="):
                             jm = int(l[2])
                         if (l[0] == "km" and l[1]=="="):
@@ -57,7 +55,6 @@ def readEquilibrium(filename='/global/homes/t/tyounkin/atomIPS/atom-install-edis
     
     print ('Equ data dimensions %i by %i ' %(jm,km)	)
     psi = np.reshape(psi,[len(z),len(r)])
-    #print(psi.shape)
     plt.pcolor(r, z, psi)
     plt.title('pcolor')
     # set the limits of the plot to the limits of the data
@@ -66,59 +63,44 @@ def readEquilibrium(filename='/global/homes/t/tyounkin/atomIPS/atom-install-edis
     print( 'Saving psi function as psi.png ')
     plt.savefig('psi.png')
     plt.close()
+
     plt.contour(r,z,psi,100)
     plt.title('contour')
     # set the limits of the plot to the limits of the data
     plt.axis([r.min(), r.max(), z.min(), z.max()])
     plt.colorbar()
-    gitr.plot2dGeom(geometryFile)
     print ('Saving psi contour as psiContour.png ')
     plt.savefig('psiContour.png')
-    print('About to take gradient')
-    print(r.shape)
-    print(z.shape)
-    print(psi.shape)
-    [gradz,gradr] = np.gradient(np.array(psi),z[1]-z[0],r[1]-r[0]) #z,r) sometimes this doesn't work
-    print(gradr.shape)
-    print(gradz.shape)
+
+    print('Take gradients of magnetic flux to produce magnetic field')
+    [gradz,gradr] = np.gradient(np.array(psi),z[1]-z[0],r[1]-r[0])
+
     br = -gradz/r
-    print(br.shape)
     bz =gradr/r
-    print(bz.shape)
+
     plt.close()
-    print(r)
-    print(z)
     plt.pcolor(r,z,br)
     plt.colorbar()
     print ('Saving br profile as br.png ')
     plt.savefig('br.png')
     plt.close()
+
     plt.pcolor(r,z,bz)
     plt.colorbar()
     print ('Saving br profile as br.png ')
     plt.savefig('bz.png')
+
     Bp = np.sqrt(np.multiply(br,br) + np.multiply(bz,bz))
     bt = ml.repmat(btf*rtf/r,len(z),1)
     bt = np.reshape(bt,[len(z),len(r)])
+
     plt.close()
     plt.pcolor(r,z,bt)
     plt.colorbar()
-    print( 'Saving br profile as br.png ')
+    print( 'Saving bt profile as bt.png ')
     plt.savefig('bt.png')
     plt.close()
-    #print 'plotting psi'
-    #plt.contour(r,z,psi,np.linspace(-2,2,20),linewidths=0.3)
-    ##plt.axis.set_aspect('equal')
-    ##plt.axis.autoscale(tight=True)
-    ##plt.axis({'equal','tight'})
-    ##plt.axis('equal')
-    ##plt.axis('tight')
-    ##plt.autoscale(enable=True, axis='x', tight=True)
-    #plt.colorbar()
-    #gitr.plot2dGeom(geometryFile)
-    #plt.axis('equal')
-    #plt.axis('tight')
-    #plt.savefig('psiContour.png')
+
     rootgrp = netCDF4.Dataset("bField.nc", "w", format="NETCDF4")
     nrr = rootgrp.createDimension("nR", len(r))
     nzz = rootgrp.createDimension("nZ", len(z))
@@ -134,6 +116,7 @@ def readEquilibrium(filename='/global/homes/t/tyounkin/atomIPS/atom-install-edis
     zz[:] = z
     rootgrp.close()
     print( 'finishing read equilibirium')
+
     return r,z,br, bz, bt,psi
 def findStrikepoint(x1,x2,z1,z2,length,r,z,psi,rmin=5.55,rmax=6.226,zmin=-4.6,zmax=-3.238):
     outerTargetInd = np.where((x1 > rmin) & (x1 < rmax) & (x2 > rmin) & (x2 < rmax) & (z1 > zmin) & (z1 < zmax) & (z2 > zmin) & (z2 < zmax))
@@ -254,15 +237,328 @@ def getRsepFromRZ(x1,x2,z1,z2,slope,rMrs,r,z):
     else:
         rMrSep = rMrs[surfNumber]+dx2
     return rMrSep,surfNumber
-def getBfield(rTarg,zTarg,filename='/global/homes/t/tyounkin/atomIPS/atom-install-edison/solps-iter-data/Baseline2008-li0.70.x4.equ',geometryFile='/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/iter/iter_milestone/2d/input/iter2dRefinedOuterTarget.cfg',rmin=5.55,rmax=6.226,zmin=-4.6,zmax=-3.238):    
-    r,z,br, bz, bt,psi = readEquilibrium(filename,geometryFile)
+def getBfield(rTarg,zTarg, \
+              filename='/global/homes/t/tyounkin/atomIPS/atom-install-edison/solps-iter-data/Baseline2008-li0.70.x4.equ', \
+              geometryFile='/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/iter/iter_milestone/2d/input/iter2dRefinedOuterTarget.cfg',
+              rmin=5.55,rmax=6.226,zmin=-4.6,zmax=-3.238):
+    r,z,br, bz, bt,psi = readEquilibrium(filename)
     rSep,bAngle, bMag = interpolateBfield(r,z,br, bz, bt,psi,rTarg,zTarg,geometryFile,rmin,rmax,zmin,zmax)
     print( 'plotting bangle at target')
     plt.close()
     plt.plot(rSep,bAngle)
     plt.savefig('bangle.png')
     return rSep,bAngle,bMag
+
+def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-iter-data/build/dakota', \
+                                  nR = 500, nZ = 1000, plot_variables=1):
+    nIonSpecies, am, zamin, zn = get_solps_species()
+
+    dak = np.loadtxt(dakota_filename)
+    dak = np.reshape(dak, (nR * nZ, -1))
+    print('dak shape', dak.shape)
+
+    rdak = np.unique(dak[:, 0])
+    rdak = np.linspace(rdak[0],rdak[-1],len(rdak))
+    zdak = np.unique(dak[:, 1])
+    zdak = np.linspace(zdak[0],zdak[-1],len(zdak))
+
+    te = get_dakota_variable(2,dak,rdak,zdak,nR,nZ,'te',plot_variables)
+    off_grid_inds = np.where(te < -0.5)
+
+    ne = get_dakota_variable(3,dak,rdak,zdak,nR,nZ,'ne',plot_variables)
+
+    ti = get_dakota_variable(4,dak,rdak,zdak,nR,nZ,'ti',plot_variables)
+
+    ni = np.zeros((nIonSpecies, nZ, nR))
+    v_parallel = np.zeros((nIonSpecies, nZ, nR))
+
+    for i in range(nIonSpecies):
+        ni[i,:,:] = get_dakota_variable(5+i,dak,rdak,zdak,nR,nZ,'ni'+str(i),plot_variables)
+        v_parallel[i,:,:] = get_dakota_variable(5+4*nIonSpecies+i,dak,rdak,zdak,nR,nZ,'v_parallel'+str(i),plot_variables)
+
+    ni_total = np.zeros(( nZ, nR))
+    v_parallel_total = np.zeros((nZ, nR))
+    aveMass = np.zeros((nZ, nR))
+    aveCharge = np.zeros((nZ, nR))
+
+    for i in range(nIonSpecies):
+        if zamin[i] > 0.0:
+            ni_total = ni_total + np.reshape(ni[i, :, :], (nZ, nR))
+            aveMass = aveMass + np.reshape(am[i] * ni[i, :, :], (nZ, nR))
+            aveCharge = aveCharge + np.reshape(zamin[i] * ni[i, :, :], (nZ, nR))
+            v_parallel_total = v_parallel_total + np.reshape(np.multiply(v_parallel[i, :, :], ni[i, :, :]), (nZ, nR))
+
+    aveMass = np.divide(aveMass, ni_total)
+    aveMass[off_grid_inds] = 0
+    aveCharge = np.divide(aveCharge, ni_total)
+    aveCharge[off_grid_inds] = 0
+    ni_total[off_grid_inds] = 0
+    v_parallel_total = np.divide(v_parallel_total, ni_total)
+    v_parallel_total[off_grid_inds] = 0
+
+    if plot_variables:
+        plt.close()
+        plt.pcolor(rdak, zdak, ni_total)
+        plt.colorbar()
+        plt.savefig('niTotal.png')
+        plt.close()
+        plt.pcolor(rdak, zdak, aveMass)
+        plt.colorbar()
+        plt.savefig('aveMass.png')
+        plt.close()
+        plt.pcolor(rdak, zdak, aveCharge)
+        plt.colorbar()
+        plt.savefig('aveCharge.png')
+
+    br = get_dakota_variable(5+5*nIonSpecies,dak,rdak,zdak,nR,nZ,'br',plot_variables)
+    bphi = get_dakota_variable(5+5*nIonSpecies+1,dak,rdak,zdak,nR,nZ,'bphi',plot_variables)
+    bz = get_dakota_variable(5+5*nIonSpecies+2,dak,rdak,zdak,nR,nZ,'bz',plot_variables)
+
+    print('br size',br.shape)
+    vr,vt,vz = project_parallel_variable_xyz(v_parallel_total, br, bphi, bz,rdak,zdak, nR, nZ, 'v',plot_variables)
+
+    grad_ti = get_dakota_variable(5+ 5*nIonSpecies+4, dak, rdak, zdak, nR, nZ, 'grad_ti',plot_variables)
+    grad_te = get_dakota_variable(5+ 5*nIonSpecies+5, dak, rdak, zdak, nR, nZ, 'grad_te',plot_variables)
+
+    print('br size',br.shape)
+
+    grad_ti_r,grad_ti_t,grad_ti_z = project_parallel_variable_xyz(grad_ti, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_ti',plot_variables)
+    grad_te_r,grad_te_t,grad_te_z = project_parallel_variable_xyz(grad_ti, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_te',plot_variables)
+
+    e_para = get_dakota_variable(5+ 5*nIonSpecies+6, dak, rdak, zdak, nR, nZ, 'e_para',plot_variables)
+    e_perp = get_dakota_variable(5+ 5*nIonSpecies+7, dak, rdak, zdak, nR, nZ, 'e_parp',plot_variables)
+
+    profiles_filename = "profiles.nc"
+    if os.path.exists(profiles_filename):
+        os.remove(profiles_filename)
+
+    rootgrp = netCDF4.Dataset(profiles_filename, "w", format="NETCDF4")
+    nrr = rootgrp.createDimension("nR", len(rdak))
+    nzz = rootgrp.createDimension("nZ", len(zdak))
+    brr = rootgrp.createVariable("br", "f8", ("nZ", "nR"))
+    btt = rootgrp.createVariable("bt", "f8", ("nZ", "nR"))
+    bzz = rootgrp.createVariable("bz", "f8", ("nZ", "nR"))
+    rr = rootgrp.createVariable("r", "f8", ("nR"))
+    zz = rootgrp.createVariable("z", "f8", ("nZ"))
+    brr[:] = br
+    btt[:] = bphi
+    bzz[:] = bz
+    rr[:] = rdak
+    zz[:] = zdak
+    tee = rootgrp.createVariable("te", "f8", ("nZ", "nR"))
+    nee = rootgrp.createVariable("ne", "f8", ("nZ", "nR"))
+    tii = rootgrp.createVariable("ti", "f8", ("nZ", "nR"))
+    nii = rootgrp.createVariable("ni", "f8", ("nZ", "nR"))
+    mass = rootgrp.createVariable("mass", "f8", ("nZ", "nR"))
+    charge = rootgrp.createVariable("charge", "f8", ("nZ", "nR"))
+    vrr = rootgrp.createVariable("vr", "f8", ("nZ", "nR"))
+    vzz = rootgrp.createVariable("vz", "f8", ("nZ", "nR"))
+    vpp = rootgrp.createVariable("vp", "f8", ("nZ", "nR"))
+    Err = rootgrp.createVariable("Er", "f8", ("nZ", "nR"))
+    Ett = rootgrp.createVariable("Et", "f8", ("nZ", "nR"))
+    Ezz = rootgrp.createVariable("Ez", "f8", ("nZ", "nR"))
+    teer = rootgrp.createVariable("gradTeR", "f8", ("nZ", "nR"))
+    teez = rootgrp.createVariable("gradTeZ", "f8", ("nZ", "nR"))
+    teey = rootgrp.createVariable("gradTeY", "f8", ("nZ", "nR"))
+    tiir = rootgrp.createVariable("gradTiR", "f8", ("nZ", "nR"))
+    tiiz = rootgrp.createVariable("gradTiZ", "f8", ("nZ", "nR"))
+    tiiy = rootgrp.createVariable("gradTiY", "f8", ("nZ", "nR"))
+    tee[:] = te
+    nee[:] = ne
+    tii[:] = ti
+    nii[:] = ni_total
+    mass[:] = aveMass
+    charge[:] = aveCharge
+    vrr[:] = vr
+    vpp[:] = vt
+    vzz[:] = vz
+    Err[:] = e_para
+    Ett[:] = 0 * e_para
+    Ezz[:] = e_perp
+    teer[:] = grad_te_r
+    teey[:] = grad_te_t
+    teez[:] = grad_te_z
+    tiir[:] = grad_ti_r
+    tiiy[:] = grad_ti_t
+    tiiz[:] = grad_ti_z
+    rootgrp.close()
+
+def project_parallel_variable_xyz(v_parallel_total,br,bphi,bz,rdak,zdak,nR,nZ,title='v',plot_variables=0):
+    b_total = np.sqrt(np.multiply(br,br) + np.multiply(bphi,bphi) + np.multiply(bz,bz))
+
+    vr = np.divide(np.multiply(br,v_parallel_total),b_total)
+    vt = np.divide(np.multiply(bphi,v_parallel_total),b_total)
+    vz = np.divide(np.multiply(bz,v_parallel_total),b_total)
+
+    off_grid_inds = np.where(br == -1)
+    if plot_variables:
+        vr[off_grid_inds] = float("nan")
+        vt[off_grid_inds] = float("nan")
+        vz[off_grid_inds] = float("nan")
+
+        plt.close()
+        plt.pcolor(rdak, zdak, vr)
+        plt.colorbar()
+        plt.savefig(title+'_r.png')
+        plt.close()
+        plt.pcolor(rdak, zdak, vt)
+        plt.colorbar()
+        plt.savefig(title+'_t.png')
+        plt.close()
+        plt.pcolor(rdak, zdak, vz)
+        plt.colorbar()
+        plt.savefig(title+'_z.png')
+
+        vr[off_grid_inds] = -1
+        vt[off_grid_inds] = -1
+        vz[off_grid_inds] = -1
+
+    return vr,vt,vz
+
+def get_dakota_variable(index,dak,rdak,zdak,nR,nZ,title='title',plot_variables=0):
+    variable = np.reshape(dak[:, index], (nZ, nR))
+
+    if plot_variables:
+        off_grid_inds = np.where(variable == -1)
+        variable[off_grid_inds] = float("nan");
+        plt.close()
+        plt.pcolor(rdak, zdak, np.reshape(variable, (nZ, nR)))
+        plt.colorbar(orientation='vertical')
+        plt.savefig(title+'.png')
+        plt.close()
+        variable[off_grid_inds] = -1;
+
+    return variable
+
+def read_b2f_geometry(solps_geometry_filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry'):
+    nxny = read_b2f_variable(solps_geometry_filename= solps_geometry_filename, \
+                            field_name='nx,ny')
+    nx = int(nxny[0]+2)
+    ny = int(nxny[1]+2)
+
+    crx = read_b2f_variable(solps_geometry_filename= solps_geometry_filename, \
+                            field_name='crx')
+    crx = np.reshape(crx,(nx,ny,-1))
+
+    cry = read_b2f_variable(solps_geometry_filename= solps_geometry_filename, \
+                            field_name='cry')
+    cry = np.reshape(cry,(nx,ny,-1))
+
+    print('crx shape',crx.shape)
+    region = read_b2f_variable(solps_geometry_filename, \
+                            field_name='region')
+    region = np.reshape(region,(nx,ny,-1))
+
+    return nx,ny,crx,cry,region
+def read_b2f_variable(solps_geometry_filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry', \
+                      field_name = 'crx'):
+    f = open(solps_geometry_filename, 'r')
+    txt = f.readlines()
+    f.close()
+
+    field_start = 0
+    field_end = 0
+    found = 0
+
+    for count, line in enumerate(txt):
+        if found == 0:
+            if '*cf' in line:
+                words = line.split()
+                if words[-1] == field_name:
+                    field_start = count+1
+                    found = 1;
+        elif found == 1:
+            if '*cf' in line:
+                field_end = count
+                found = 2
+        elif found == 2:
+            break
+
+    field = [];
+    txt_list = txt[field_start:field_end]
+    for sublist in txt_list:
+        split_sublist = sublist.split()
+        for element in split_sublist:
+            field.append(element)
+
+    field = np.array(field)
+    field = field.astype(np.float)
+
+    return field
+
+def get_solps_species(solps_state_filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fstate'):
+    f = open(solps_state_filename, 'r')
+    txt = f.readlines()[:200]
+    f.close()
+
+    znLine = 0
+    zn = ''
+    for count, line in enumerate(txt):
+        if znLine:
+            if '*' in line:
+                break
+            else:
+                zn = ''.join((zn, line))
+        if 'zn' in line:
+            znLine = count
+
+    zaminLine = 0
+    zamin = ''
+    for count, line in enumerate(txt):
+        if zaminLine:
+            if '*' in line:
+                break
+            else:
+                zamin = ''.join((zamin, line))
+        if 'zamin' in line:
+            zaminLine = count
+
+    amLine = 0
+    am = ''
+    for count, line in enumerate(txt):
+        if amLine:
+            if '*' in line:
+                break
+            else:
+                am = ''.join((am, line))
+        if 'am ' in line:
+            amLine = count
+
+    zn = zn.split()
+    zn = [float(i) for i in zn]
+
+    zamin = zamin.split()
+    zamin = [float(i) for i in zamin]
+
+    am = am.split()
+    am = [float(i) for i in am]
+    # Section to manually add in Tritium
+    #zn.insert(2, 1.0)
+    #zamin.insert(2, 0.0)
+    #am.insert(2, 3.0)
+    #zn.insert(3, 1.0)
+    #zamin.insert(3, 1.0)
+    #am.insert(3, 3.0)
+    nIonSpecies = len(zn)
+
+    print('nIonSpecies', nIonSpecies)
+    species_file = open("speciesList.txt", "w")
+    species_file.write('SpeciesIndex   Z   Mass   Charge\n')
+    print('Existing species for current SOLPS run:\n')
+    print('SpeciesIndex   Z   Mass   Charge\n')
+    for i in range(nIonSpecies):
+        print('%f       %f        %f      %f \n' % (i, zn[i], am[i], zamin[i]))
+        species_file.write('%f       %f        %f      %f \n' % (i, zn[i], am[i], zamin[i]))
+
+    species_file.close()
+
+    return nIonSpecies, am,zamin, zn
+
 if __name__ == "__main__":   
-    rTarg = np.linspace(5,6.5,100)
-    zTarg=np.linspace(0,1,100)
-    getBfield(rTarg,zTarg,"/Users/tyounkin/Dissertation/ITER/mq3/final/Baseline2008-li0.70.x4.equ","/Users/tyounkin/Code/gitr2/iter/iter_milestone/2d/input/iterGeom2DdirBe0.cfg")
+    #rTarg = np.linspace(5,6.5,100)
+    #zTarg=np.linspace(0,1,100)
+    #getBfield(rTarg,zTarg,"/Users/tyounkin/Dissertation/ITER/mq3/final/Baseline2008-li0.70.x4.equ","/Users/tyounkin/Code/gitr2/iter/iter_milestone/2d/input/iterGeom2DdirBe0.cfg")
+    #process_solps_output_for_gitr()
+    #get_solps_species()
+    #readEquilibrium()
+    read_b2f_geometry()
