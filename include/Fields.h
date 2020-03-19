@@ -8,12 +8,14 @@
 #endif
 
 #include "array.h"
+#if USE_MPI > 0
 #include "mpi.h"
+#include <netcdf_par.h>
+#endif
 #include "utils.h"
 #include <cstdlib>
 #include <libconfig.h++>
 #include <netcdf>
-#include <netcdf_par.h>
 #include <stdio.h>
 #include <vector>
 #ifdef __CUDACC__

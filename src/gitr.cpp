@@ -136,6 +136,7 @@ int main(int argc, char **argv, char **envp) {
   }
   auto gitr_flags = new Flags(cfg);
     std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
+    auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     //FIXME: work on new field struct
     //auto field1 = new Field();
     //auto pClient = new Field_client(); 
@@ -3699,7 +3700,7 @@ int main(int argc, char **argv, char **envp) {
                      &gridZ_bins.front(), &net_Bins.front(), dt);
 #endif
 #if USEIONIZATION > 0
-  ionize<curandState> ionize0(
+  ionize<> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
@@ -3715,7 +3716,7 @@ int main(int argc, char **argv, char **envp) {
   //auto func1 = *func;
 #endif
 #if USERECOMBINATION > 0
-  recombine<curandState> recombine0(
+  recombine<> recombine0(
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
@@ -4798,7 +4799,11 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netCDF::ncFloat, nc_nY);
     nc_gridY.putVar(&gridY_bins[0]);
 #endif
+#if USE_MPI > 0
     nc_n.putVar(&net_BinsTotal[0]);
+#else
+    nc_n.putVar(&net_Bins[0]);
+#endif
     ncFile.close();
 #endif
 #ifdef __CUDACC__
