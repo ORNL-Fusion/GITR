@@ -76,6 +76,11 @@ struct recombine {
   
   CUDA_CALLABLE_MEMBER_DEVICE 
   void operator()(std::size_t indx) { 
+      //std::cout << "rec index " <<indx  << std::endl;
+      //if(indx > 1000)
+      //{
+      // std::cout << "wtf " <<indx  << std::endl;
+      //} 
   float P1 = 0.0f;
       if(particlesPointer->charge[indx] > 0)
     {

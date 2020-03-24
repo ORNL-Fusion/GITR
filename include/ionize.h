@@ -102,18 +102,28 @@ struct ionize {
 
   CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
   void operator()(std::size_t indx) {
+      //std::cout << "index " <<indx  << std::endl;
     if (flags->USE_IONIZATION) {
+      //std::cout << " charge xyz nR nZ " << particlesPointer->charge[indx] << 
+      // " " <<  particlesPointer->x[indx] << " " << 
+      //    particlesPointer->y[indx] << " " <<  particlesPointer->z[indx] << 
+      //   " " <<  nR_Temp << " " << 
+      //    nZ_Temp << std::endl;
+          // TempGridr, TempGridz, te, DensGridr, DensGridz, ne,
+          //nTemperaturesIonize, nDensitiesIonize, gridTemperature_Ionization,
+          //gridDensity_Ionization, rateCoeff_Ionization);
       tion = interpRateCoeff2d(
           particlesPointer->charge[indx], particlesPointer->x[indx],
           particlesPointer->y[indx], particlesPointer->z[indx], nR_Temp,
           nZ_Temp, TempGridr, TempGridz, te, DensGridr, DensGridz, ne,
           nTemperaturesIonize, nDensitiesIonize, gridTemperature_Ionization,
           gridDensity_Ionization, rateCoeff_Ionization);
+      //std::cout << "index tion " <<indx << " " <<  tion << std::endl;
       float interp1 = field1->interpolate(1.0,2.0,3.0);
       float P = expf(-dt / tion);
       float P1 = 1.0 - P;
+      float r1 = get_rand(state,indx);
       if (particlesPointer->hitWall[indx] == 0.0) {
-        float r1 = get_rand(state,indx);
         if (r1 <= P1) {
           particlesPointer->charge[indx] = particlesPointer->charge[indx] + 1;
         }

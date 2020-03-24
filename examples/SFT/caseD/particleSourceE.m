@@ -9,7 +9,7 @@ x1= 0.02;
 x = (x1-x0)*rand(1,nP)+x0;
 z = (z1-z0)*rand(1,nP)+z0;
 y = 0.0*ones(1,nP);
-T=100;
+T=10;
 m=12;
 
 vTh = sqrt(2*T*1.602e-19/m/1.66e-27);
@@ -61,7 +61,7 @@ vTh = sqrt(2*T*1.602e-19/m/1.66e-27);
 
 scatter(x,z)
 
-ncid = netcdf.create(['./particleSourceD100Gauss.nc'],'NC_WRITE')
+ncid = netcdf.create(['./particleSourceD10Gauss.nc'],'NC_WRITE')
  
 dimP = netcdf.defDim(ncid,'nP',nP);
 
