@@ -430,24 +430,105 @@ def get_dakota_variable(index,dak,rdak,zdak,nR,nZ,title='title',plot_variables=0
 
     return variable
 
+def intersection(a_x, a_y, b_x, b_y):
+    i_a = np.array(0)
+    i_b = np.array(0)
+
+    for i in range(len(b_x)):
+        for j in range(len(a_x)):
+            if (b_x[i] == a_x[j] and b_y[i] == a_y[j]):
+                i_a = np.append(i_a, j)
+                i_b = np.append(i_b, i)
+
+    i_a = np.delete(i_a, 0)
+    i_b = np.delete(i_b, 0)
+
+    return i_a, i_b
+
+def find_strike_points(solps_geometry_filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry'):
+    nx, ny, crx, cry, region = read_b2f_geometry(solps_geometry_filename)
+
+    print('crx_size',crx.shape)
+    print('region_size',region.shape)
+    bottom_left = 0
+    bottom_right = 1
+
+    region_3_position = bottom_right
+    region_4_position = bottom_left
+
+    crx_region_3 = crx[:,:,region_3_position]
+    cry_region_3 = cry[:,:,region_3_position]
+
+    crx_region_4 = crx[:,:,region_4_position]
+    cry_region_4 = cry[:,:,region_4_position]
+    print('crx_region_3 shape',crx_region_3.shape)
+    print('crx_region_4 shape',crx_region_4.shape)
+
+    condition_region_3 = region == 3
+    condition_region_4 = region == 4
+
+    region_3_indx = np.where(condition_region_3)
+    region_4_indx = np.where(condition_region_4)
+
+    print('region_3_indx shape',region_3_indx)
+    x_region_3 = crx_region_3[region_3_indx]
+    y_region_3 = cry_region_3[region_3_indx]
+    x_region_4 = crx_region_4[region_4_indx]
+    y_region_4 = cry_region_4[region_4_indx]
+
+    plt.close()
+    plt.scatter(x_region_3,y_region_3)
+    plt.scatter(x_region_3,y_region_3)
+    plt.savefig('region34.png')
+    plt.close()
+
+    i_a,i_b = intersection(x_region_3,y_region_3,x_region_4,y_region_4)
+
+    index = np.argmax(y_region_3[i_a])
+    print('index',index)
+    print('ia_index',i_a[index])
+    row_col = np.unravel_index(i_a[index],crx_region_3.shape)
+
+    x_x_point = crx_region_3[row_col[0],row_col[1]]
+    y_x_point = cry_region_3[row_col[0],row_col[1]]
+
+    x_inner_strikepoint = crx_region_3[0,row_col[1]]
+    y_inner_strikepoint = cry_region_3[0,row_col[1]]
+
+    x_outer_strikepoint = crx_region_3[-1,row_col[1]]
+    y_outer_strikepoint = cry_region_3[-1,row_col[1]]
+
+    return x_x_point,y_x_point, \
+           x_inner_strikepoint ,y_inner_strikepoint, \
+           x_outer_strikepoint ,y_outer_strikepoint
+
+
+
+
+
 def read_b2f_geometry(solps_geometry_filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry'):
     nxny = read_b2f_variable(solps_geometry_filename= solps_geometry_filename, \
                             field_name='nx,ny')
     nx = int(nxny[0]+2)
     ny = int(nxny[1]+2)
+    print('nx,ny',nx,ny)
+    crx = np.zeros((nx, ny, 4))
+    cry = np.zeros((nx, ny, 4))
 
-    crx = read_b2f_variable(solps_geometry_filename= solps_geometry_filename, \
+    crx_long = read_b2f_variable(solps_geometry_filename= solps_geometry_filename, \
                             field_name='crx')
-    crx = np.reshape(crx,(nx,ny,-1))
-
-    cry = read_b2f_variable(solps_geometry_filename= solps_geometry_filename, \
+    cry_long = read_b2f_variable(solps_geometry_filename= solps_geometry_filename, \
                             field_name='cry')
-    cry = np.reshape(cry,(nx,ny,-1))
+
+    for i in range(4):
+        crx[:,:,i] = np.transpose(np.reshape(crx_long[i*nx*ny:(i+1)*nx*ny],(ny,nx)))
+        cry[:,:,i] = np.transpose(np.reshape(cry_long[i*nx*ny:(i+1)*nx*ny],(ny,nx)))
 
     print('crx shape',crx.shape)
     region = read_b2f_variable(solps_geometry_filename, \
                             field_name='region')
-    region = np.reshape(region,(nx,ny,-1))
+    print('firstwhatever',region[0:nx*ny])
+    region = np.transpose(np.reshape(region[0:nx*ny],(ny,nx)))
 
     return nx,ny,crx,cry,region
 def read_b2f_variable(solps_geometry_filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry', \
@@ -554,6 +635,54 @@ def get_solps_species(solps_state_filename='/Users/tyounkin/Dissertation/ITER/mq
 
     return nIonSpecies, am,zamin, zn
 
+def read_target_file(filename = '/Users/tyounkin/Code/solps-iter-data/build/rightTargOutput' ):
+    # target files contain
+    # r,z,ti,
+    # ni for nSpecies,
+    # flux ro nSpeces,
+    # te, ne
+    target = np.loadtxt(filename)
+    target_shape = target.shape
+    nSpecies = int((target_shape[1] - 5)/2)
+    print('nSpecies',nSpecies)
+    r = target[:, 0]
+    z = target[:, 1]
+    ti = target[:,2]
+    ni = np.zeros((target_shape[0],nSpecies))
+    flux = np.zeros((target_shape[0],nSpecies))
+
+    for i in range(nSpecies):
+        ni[:,i] = target[:,3+i]
+        flux[:,i] = target[:,3+nSpecies+i]
+
+    te = target[:,3+2*nSpecies]
+    ne = target[:,3+2*nSpecies+1]
+
+    return r,z,ti,ni,flux,te,ne
+
+def make_solps_targ_file():
+    r, z, ti, ni, flux, te, ne = read_target_file()
+    x_x_point, y_x_point, \
+    x_inner_strikepoint, y_inner_strikepoint, \
+    x_outer_strikepoint, y_outer_strikepoint = find_strike_points()
+
+    lengths = np.sqrt(np.multiply((r[1:-1] -r[0:-2]),(r[1:-1] -r[0:-2])) + np.multiply((z[1:-1] -z[0:-2]),(z[1:-1] -z[0:-2])) )
+
+    tol = 1e-4
+    condition = np.abs(r - x_outer_strikepoint) <= tol
+    condition2 = np.abs(z - y_outer_strikepoint) <= tol
+
+    rz_ind = np.where(condition & condition2)
+    print('strikepoint',x_outer_strikepoint,y_outer_strikepoint)
+    print('strikepoint rzind',rz_ind)
+    print('strikepoint rz',r,z)
+    plt.close()
+    plt.plot(r,z)
+    plt.scatter(r,z)
+    plt.scatter(x_outer_strikepoint,y_outer_strikepoint)
+    plt.axis([5.5,5.6,-4.42, -4.36])
+    plt.savefig('rz_targ.png')
+
 if __name__ == "__main__":   
     #rTarg = np.linspace(5,6.5,100)
     #zTarg=np.linspace(0,1,100)
@@ -561,4 +690,7 @@ if __name__ == "__main__":
     #process_solps_output_for_gitr()
     #get_solps_species()
     #readEquilibrium()
-    read_b2f_geometry()
+    #read_b2f_geometry()
+    #find_strike_points()
+    #read_target_file()
+    make_solps_targ_file()

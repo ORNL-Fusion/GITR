@@ -1025,12 +1025,12 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
 
     lines = gitr_lines_from_points(r_final, z_final)
 
-    lines_to_gitr_geometry('iter_geometry_He1.cfg', lines, Z, surfaces, inDir)
+    lines_to_gitr_geometry(gitr_geometry_filename, lines, Z, surfaces, inDir)
 
-    removeQuotes(infile="iter_geometry_He1.cfg", outfile="iter_geometry_He.cfg")
+    removeQuotes(infile=gitr_geometry_filename, outfile=gitr_geometry_filename+"0")
 
-    remove_endline_after_comma(infile="iter_geometry_He.cfg", outfile="iter_geometry_He0.cfg")
-    remove_endline_after_comma2(infile="iter_geometry_He0.cfg", outfile="iter_geometry_He00.cfg")
+    remove_endline_after_comma(infile=gitr_geometry_filename+"0", outfile=gitr_geometry_filename+"00")
+    remove_endline_after_comma2(infile=gitr_geometry_filename+"00", outfile=gitr_geometry_filename)
 def removeQuotes(infile='this.cfg',outfile='that.cfg'):
     with open(infile, 'r') as f, open(outfile, 'w') as fo:
         for line in f:
