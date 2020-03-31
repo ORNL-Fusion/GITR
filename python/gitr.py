@@ -22,6 +22,7 @@ import shutil
 import math
 import scipy.interpolate as scii
 
+import solps
 
 def copy_folder(from_folder, to_folder):
     copy_tree(from_folder, to_folder)
@@ -938,8 +939,7 @@ def plotPitch(filename='positions.nc'):
 
 def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
                                   solps_mesh_extra='/Users/tyounkin/Downloads/mesh.extra.iter', \
-                                  right_target_file='/Users/tyounkin/Code/solps-iter-data/build/rightTargOutput', \
-                                  left_target_file='/Users/tyounkin/Code/solps-iter-data/build/leftTargOutput'):
+                                  solps_geom = '/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry'):
     # This program uses the solps-iter mesh.extra file in combination
     # with the inner and outer (left and right) divertor target
     # coordinates which come from the solps-iter-data interpolation
@@ -986,20 +986,9 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
     plt.plot(r_iter, z_iter)
     plt.scatter(r_iter,z_iter)
     print('manual geometry size',r_iter.size)
-
-    right_target = np.loadtxt(right_target_file)
-    r_right_target = right_target[:, 0]
-    z_right_target = right_target[:, 1]
-    print('right target size',r_right_target.size)
-    plt.scatter(r_right_target,z_right_target)
-
-    left_target = np.loadtxt(left_target_file)
-    r_left_target = left_target[:, 0]
-    z_left_target = left_target[:, 1]
-    print('left target size',r_left_target.size)
-    plt.scatter(r_left_target,z_left_target)
-    plt.show()
-
+    r_left_target,z_left_target,r_right_target,z_right_target = solps.get_target_coordinates(solps_geom)
+    print('r_right_target',r_right_target)
+    print('z_right_target',z_right_target)
     print('r_final size before',r_iter.size)
     r_final, z_final = replace_line_segment(r_right_target, z_right_target, r_iter, z_iter)
     print('r_final size after',r_final.size)
