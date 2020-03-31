@@ -697,8 +697,9 @@ def read_target_file(filename = '/Users/tyounkin/Code/solps-iter-data/build/righ
     return r,z,ti,ni,flux,te,ne
 
 def make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
-    solps_geom = '/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry'):
-    r, z, ti, ni, flux, te, ne = read_target_file()
+    solps_geom = '/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry', \
+    right_target_filename= '/Users/tyounkin/Code/solps-iter-data/build/rightTargOutput'):
+    r, z, ti, ni, flux, te, ne = read_target_file(right_target_filename)
     x_x_point, y_x_point, \
     x_inner_strikepoint, y_inner_strikepoint, \
     x_outer_strikepoint, y_outer_strikepoint = find_strike_points(solps_geom)
