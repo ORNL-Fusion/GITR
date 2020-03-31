@@ -252,8 +252,9 @@ def getBfield(rTarg,zTarg, \
     return rSep,bAngle,bMag
 
 def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-iter-data/build/dakota', \
-                                  nR = 500, nZ = 1000, plot_variables=1):
-    nIonSpecies, am, zamin, zn = get_solps_species()
+                                  nR = 500, nZ = 1000, plot_variables=1, \
+                                  b2fstate_filename = '/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fstate'):
+    nIonSpecies, am, zamin, zn = get_solps_species(b2fstate_filename)
 
     dak = np.loadtxt(dakota_filename)
     dak = np.reshape(dak, (nR * nZ, -1))
