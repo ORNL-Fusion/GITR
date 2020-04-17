@@ -5,6 +5,7 @@
 #include <thrust/execution_policy.h>
 #include "curandInitialize.h"
 #include "curandInitialize2.h"
+#include "Fields.h"
 template <typename T=double>
 bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin) {
     if (a.size() != b.size()) return false;
@@ -24,6 +25,7 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin) {
 }
 
 TEST_CASE("Atomic physics", "tests") {
+<<<<<<< HEAD
   SECTION("ionize - test fixed random seeds")
   {
     libconfig::Config cfg;
@@ -130,9 +132,9 @@ TEST_CASE("Atomic physics", "tests") {
                         nCS_Ionize, nCS_Recombine);
     std::cout << "here 0.1 " << std::endl; 
 
-    i1 = read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
-                        nDensitiesIonize, nTemperaturesIonize);
-    std::cout << "here 0.2 " << std::endl; 
+  //  i1 = read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
+  //                      nDensitiesIonize, nTemperaturesIonize);
+  //  std::cout << "here 0.2 " << std::endl; 
 
     //i3 = read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
     //                    nDensitiesRecombine, nTemperaturesRecombine);
@@ -307,9 +309,9 @@ TEST_CASE("Atomic physics", "tests") {
                         nCS_Ionize, nCS_Recombine);
     std::cout << "here 0.1 " << std::endl; 
 
-    i1 = read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
-                        nDensitiesIonize, nTemperaturesIonize);
-    std::cout << "here 0.2 " << std::endl; 
+  //  i1 = read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
+  //                      nDensitiesIonize, nTemperaturesIonize);
+  //  std::cout << "here 0.2 " << std::endl; 
 
     //i3 = read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
     //                    nDensitiesRecombine, nTemperaturesRecombine);
@@ -539,12 +541,11 @@ TEST_CASE("Atomic physics", "tests") {
     int it2 = int(*it);
     //std::cout << "particle charge " << *it<<" "  <<   it2 << " " << particleArray->charge[it2] << std::endl;
   }
-  std::vector<int> nothing(nParticles,0);
-  int count = 0;
-  for(auto it=nothing.begin(); it !=nothing.end(); it++)
+  //std::vector<int> nothing(nParticles,0);
+  std::vector<int> nothing;
+  for (int i=0; i< nParticles;i++)
   {
-    *it = count;
-    count++;
+    nothing.push_back(i);
   }
     std::cout << "starting ionization " << std::endl; 
 typedef std::chrono::high_resolution_clock gitr_time;
@@ -571,6 +572,7 @@ auto gitr_start_clock = gitr_time::now();
   {
     //std::cout << "particle sorted " << i << " " << particleArray->charge[i] << std::endl;
    charge_counts[int(particleArray->charge[i])] = charge_counts[int(particleArray->charge[i])]+1.0/nParticles;
+    }
   }
 
   std::cout << "charge 5 " << charge_counts[5] << "charge 6 "<< charge_counts[6] << " 7 " << charge_counts[7] << " 8 " << charge_counts[8] << std::endl;

@@ -106,9 +106,9 @@ class Boundary
   CUDA_CALLABLE_MEMBER
   void getSurfaceNormal(float B[], float y, float x) {
 #if USE3DTETGEOM > 0
-    B[0] = -a / plane_norm;
-    B[1] = -b / plane_norm;
-    B[2] = -c / plane_norm;
+    B[0] = a / plane_norm;
+    B[1] = b / plane_norm;
+    B[2] = c / plane_norm;
 #else
     float perpSlope = 0.0;
     if (slope_dzdx == 0.0) {
