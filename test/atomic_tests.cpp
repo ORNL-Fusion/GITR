@@ -2,12 +2,21 @@
 #include "ionize.h"
 #include "recombine.h"
 #include "utils.h"
+#include <thrust/execution_policy.h>
+#include "curandInitialize.h"
+#include "curandInitialize2.h"
 template <typename T=double>
-bool compareVectors(std::vector<T> a, std::vector<T> b) {
+bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin) {
     if (a.size() != b.size()) return false;
     for (size_t i = 0; i < a.size(); i++) {
-        if (a[i] != Approx(b[i]).epsilon(0.01)) {
-            std::cout << a[i] << " Should == " << b[i] << std::endl;
+	//bool scale_check = (a[i] != Approx(b[i]).scale(scale));    
+	bool margin_check = (a[i] != Approx(b[i]).margin(margin));    
+	bool epsilon_check = (a[i] != Approx(b[i]).epsilon(epsilon));//std::numeric_limits<T>::epsilon()*100));    
+        if (margin_check && epsilon_check){ 
+            std::cout << "margin epsilon " <<
+		   margin_check << " " << epsilon_check << std::endl; 
+            std::cout << "Element " << i << 
+	    " " << a[i] << " Should == " << b[i] << std::endl;
             return false;
         }
     }
@@ -29,7 +38,12 @@ TEST_CASE("Atomic physics", "tests") {
     std::cout << " autoconvert " << cfg.getAutoConvert() << std::endl;
     int seed01 = getVariable_cfg<int> (cfg,"operators.ionization.seed");
     auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
-    sim::Array<std::mt19937> state1(nParticles);
+#ifdef __CUDACC__
+     typedef curandState rand_type;
+#else
+     typedef std::mt19937 rand_type;
+#endif
+    sim::Array<rand_type> state1(nParticles);
     //std::random_device randDeviceInit;
     //int seed0 = 250012;
     //for (int i =0;i < nParticles; i++) 
@@ -38,6 +52,10 @@ TEST_CASE("Atomic physics", "tests") {
     //  std::mt19937 s0(seed0+i);
     //  particleArray->stream_ionize[i] = s0;
     //}
+  thrust::counting_iterator<std::size_t> particle_iterator0(0);
+  thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
+  thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
+                   curandInitialize(&state1.front(), 0));
     float x = 0.0;
     float y = 0.0;
     float z = 0.0;
@@ -132,36 +150,40 @@ TEST_CASE("Atomic physics", "tests") {
     std::cout << "here 0.6 " << std::endl; 
     float dt = 1.0e-5;
     std::cout << "here 1 " << std::endl; 
-  ionize<> ionize0(
+    auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
+
+    sim::Array<float> dev_f(1,-1.0);
+    ionize<rand_type> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front());
+      &rateCoeff_Ionization.front(),field1, &dev_f.front());
   std::vector<float> values(nParticles,0.0);
   for (int i=0;i<nParticles;i++)
   {
-        std::uniform_real_distribution<float> dist(0.0, 1.0);
-        //FIXME: r1 needs to be gottent from the proper stream
-	//float r1 = dist(particleArray->stream_ionize[i]);
-	float r1 = 0.0;
+        thrust::for_each(thrust::device,particle_iterator0+i, particle_iterator0+i+1,ionize0);
+	//ionize_kernel<<<1,10>>>(ionize0,i);
+        float r1 = dev_f[0];
         values[i] = r1;
         std::cout << i << " " << r1 << std::endl;
 
   }
+  thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
+                   curandInitialize(&state1.front(), 0));
   
   std::vector<float> values2(nParticles,0.0);
   for (int i=0;i<nParticles;i++)
   {
-        std::uniform_real_distribution<float> dist(0.0, 1.0);
-        //FIXME: r1 needs to be gottent from the proper stream
-        //float r1 = dist(particleArray->stream_ionize[i]);
-        float r1 = 0.0;
-	values2[i] = r1;
+        thrust::for_each(thrust::device,particle_iterator0+i, particle_iterator0+i+1,ionize0);
+        float r1 = dev_f[0];
+        values2[i] = r1;
         std::cout << i << " " << r1 << std::endl;
 
   }
-  REQUIRE(values == values2);
+  float margin = 0.00001;
+  float epsilon = 0.000001;
+  REQUIRE(compareVectors<float>(values,values2,epsilon,margin));
   }
   SECTION("ionize - test non-fixed random seeds")
   {
@@ -177,7 +199,12 @@ TEST_CASE("Atomic physics", "tests") {
     std::cout << " autoconvert " << cfg.getAutoConvert() << std::endl;
     int seed01 = getVariable_cfg<int> (cfg,"operators.ionization.seed");
     auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
-    sim::Array<std::mt19937> state1(nParticles);
+#ifdef __CUDACC__
+     typedef curandState rand_type;
+#else
+     typedef std::mt19937 rand_type;
+#endif
+    sim::Array<rand_type> state1(nParticles);
     //std::random_device randDeviceInit;
     //int seed0 = 250012;
     //for (int i =0;i < nParticles; i++) 
@@ -186,6 +213,26 @@ TEST_CASE("Atomic physics", "tests") {
     //  std::mt19937 s0(seed0+i);
     //  particleArray->stream_ionize[i] = s0;
     //}
+  thrust::counting_iterator<std::size_t> particle_iterator0(0);
+  thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
+    sim::Array<int> seed(nParticles,0);
+    sim::Array<int> sequence(nParticles,0);
+    sim::Array<int> offset(nParticles,0);
+  std::random_device randDeviceInit;
+    std::mt19937 s0(randDeviceInit());
+        	std::uniform_int_distribution<int> dist(0, 100000);
+		for(int i=0;i<nParticles;i++)
+		{
+        	int r3=dist(s0);
+        	int r4=dist(s0);
+        	int r5=dist(s0);
+		sequence[i] = r3;
+		offset[i] = r4;
+		seed[i] = r5;
+		}
+
+    thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
+                   curandInitialize2(&state1.front(),&seed.front(), &sequence.front(),&offset.front()));
     float x = 0.0;
     float y = 0.0;
     float z = 0.0;
@@ -223,7 +270,6 @@ TEST_CASE("Atomic physics", "tests") {
     sim::Array<float> BfieldZ(1,0.0);
     sim::Array<float> BfieldT(1,0.0);
     float T_background  = 20.0;
-    int nT = 1000;
   int nCS_Ionize = 1, nCS_Recombine = 1;
   const char *ionizeNcs, *ionizeNDens, *ionizeNTemp, *ionizeDensGrid,
       *ionizeTempGrid, *ionizeRCvarChar, *recombNcs, *recombNDens, *recombNTemp,
@@ -281,36 +327,40 @@ TEST_CASE("Atomic physics", "tests") {
     std::cout << "here 0.6 " << std::endl; 
     float dt = 1.0e-5;
     std::cout << "here 1 " << std::endl; 
-  ionize<> ionize0(
+    auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
+
+    sim::Array<float> dev_f(1,-1.0);
+    ionize<rand_type> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front());
+      &rateCoeff_Ionization.front(),field1, &dev_f.front());
   std::vector<float> values(nParticles,0.0);
   for (int i=0;i<nParticles;i++)
   {
-        std::uniform_real_distribution<float> dist(0.0, 1.0);
-        //FIXME: r1 needs to be gottent from the proper stream
-        float r1 = 0.0;
-        //float r1 = dist(particleArray->stream_ionize[i]);
+        thrust::for_each(thrust::device,particle_iterator0+i, particle_iterator0+i+1,ionize0);
+	//ionize_kernel<<<1,10>>>(ionize0,i);
+        float r1 = dev_f[0];
         values[i] = r1;
         std::cout << i << " " << r1 << std::endl;
 
   }
+  thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
+                   curandInitialize(&state1.front(), 0));
   
   std::vector<float> values2(nParticles,0.0);
   for (int i=0;i<nParticles;i++)
   {
-        std::uniform_real_distribution<float> dist(0.0, 1.0);
-        //FIXME: r1 needs to be gottent from the proper stream
-        float r1 = 0.0;
-        //float r1 = dist(particleArray->stream_ionize[i]);
+        thrust::for_each(thrust::device,particle_iterator0+i, particle_iterator0+i+1,ionize0);
+        float r1 = dev_f[0];
         values2[i] = r1;
         std::cout << i << " " << r1 << std::endl;
 
   }
-  REQUIRE(values != values2);
+  float margin = 0.00001;
+  float epsilon = 0.000001;
+  REQUIRE(!compareVectors<float>(values,values2,epsilon,margin));
   }
   SECTION("ionize - steady state")
   {
@@ -322,11 +372,21 @@ TEST_CASE("Atomic physics", "tests") {
   
     auto gitr_flags = new Flags(cfg);
     
-    int nParticles = 1000;
+    int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
     std::cout << " autoconvert " << cfg.getAutoConvert() << std::endl;
     int seed01 = getVariable_cfg<int> (cfg,"operators.ionization.seed");
     auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
-    sim::Array<std::mt19937> state1(nParticles);
+  thrust::counting_iterator<std::size_t> particle_iterator0(0);
+  thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
+    #if __CUDACC__
+     typedef curandState rand_type;
+#else
+     typedef std::mt19937 rand_type;
+#endif
+    sim::Array<rand_type> state1(nParticles);
+  thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
+                   curandInitialize(&state1.front(), 0));
+    //sim::Array<std::mt19937> state1(nParticles);
     //std::random_device randDeviceInit;
     //int seed0 = 250012;
     //for (int i =0;i < nParticles; i++) 
@@ -455,25 +515,29 @@ TEST_CASE("Atomic physics", "tests") {
         gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
     std::cout << "here 0.6 " << std::endl; 
     //Adjust
-    float dt = 1.0e-8;
-    int nT = 200000;
+    float dt = getVariable_cfg<float> (cfg,"timeStep.dt");
+    int nT = getVariable_cfg<int> (cfg,"timeStep.nT");
     std::cout << "here 1 " << std::endl; 
-  ionize<> ionize0(
+    auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
+    std::cout << "here 1 " << std::endl; 
+    sim::Array<float> dev_f(1,-1.0);
+  ionize<rand_type> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front());
-  recombine<> recombine0(
+      &rateCoeff_Ionization.front(),field1,&dev_f.front());
+  recombine<rand_type> recombine0(
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
       gridDensity_Recombination.data(), rateCoeff_Recombination.data());
+    std::cout << "created functors " << std::endl; 
   for(auto it=particleArray->charge.begin(); it !=particleArray->charge.end(); it++)
   {
     int it2 = int(*it);
-    std::cout << "particle charge " << *it<<" "  <<   it2 << " " << particleArray->charge[it2] << std::endl;
+    //std::cout << "particle charge " << *it<<" "  <<   it2 << " " << particleArray->charge[it2] << std::endl;
   }
   std::vector<int> nothing(nParticles,0);
   int count = 0;
@@ -482,27 +546,39 @@ TEST_CASE("Atomic physics", "tests") {
     *it = count;
     count++;
   }
-
+    std::cout << "starting ionization " << std::endl; 
+typedef std::chrono::high_resolution_clock gitr_time;
+auto gitr_start_clock = gitr_time::now();
   for(int i=0; i<nT; i++)
   {
-    std::for_each(nothing.begin(), nothing.end(),ionize0);
-    std::for_each(nothing.begin(), nothing.end(),recombine0);
+	  if(i%(nT/100) == 0) std::cout << 100.0f*i/nT << " % done" << std::endl;
+    thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,ionize0);
+    thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,recombine0);
   }
-  for(int i=0; i< nParticles; i++)
-  {
-    std::cout << "particle charge " << i << " " << particleArray->charge[i] << std::endl;
-  }
+  auto finish_clock0nc = gitr_time::now();
+  typedef std::chrono::duration<float> fsec0nc;
+  fsec0nc fs0nc = finish_clock0nc - gitr_start_clock;
+  printf("Time taken for geometry import is %6.3f (secs) \n", fs0nc.count());
+    std::cout << "finished ionization " << std::endl; 
+  //for(int i=0; i< nParticles; i++)
+  //{
+  //  std::cout << "particle charge " << i << " " << particleArray->charge[i] << std::endl;
+  //}
   
   std::sort(particleArray->charge.begin(), particleArray->charge.end(), std::less<int>());
-  std::vector<float> charge_counts(10,0);
+  std::vector<float> charge_counts(20,0);
   for(int i=0; i< nParticles; i++)
   {
-    std::cout << "particle sorted " << i << " " << particleArray->charge[i] << std::endl;
+    //std::cout << "particle sorted " << i << " " << particleArray->charge[i] << std::endl;
    charge_counts[int(particleArray->charge[i])] = charge_counts[int(particleArray->charge[i])]+1.0/nParticles;
   }
 
   std::cout << "charge 5 " << charge_counts[5] << "charge 6 "<< charge_counts[6] << " 7 " << charge_counts[7] << " 8 " << charge_counts[8] << std::endl;
-  std::vector<float> gold(10,0.0);
+  for(int i=0; i<20; i++)
+  {
+     std::cout << charge_counts[i] << std::endl;
+  }
+  std::vector<float> gold(20,0.0);
    gold[0] = 0.00000000000000;
    gold[1] = 0.00000000015371;
    gold[2] = 0.00000029105935;
@@ -513,8 +589,11 @@ TEST_CASE("Atomic physics", "tests") {
    gold[7] = 0.14898717275460;
    gold[8] = 0.00742343038943;
    gold[9] = 0.00012814360176;
-  REQUIRE(Approx(charge_counts[6]) == gold[6]);
-  //REQUIRE(compareVectors<float>(charge_counts,gold));
+  //REQUIRE(Approx(charge_counts[6]) == gold[6]);
+  float scale = 0.02;
+  float margin = 200.0/nParticles;
+  float epsilon = 0.03;
+  REQUIRE(compareVectors<float>(charge_counts,gold,epsilon,margin));
   
   }
 }
