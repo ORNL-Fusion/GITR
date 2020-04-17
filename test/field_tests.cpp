@@ -3,10 +3,12 @@
 #include "recombine.h"
 #include "utils.h"
 template <typename T=double>
-bool compareVectors(std::vector<T> a, std::vector<T> b) {
+bool compareVectors(std::vector<T> a, std::vector<T> b, T scale) {
     if (a.size() != b.size()) return false;
     for (size_t i = 0; i < a.size(); i++) {
-        if (a[i] != Approx(b[i]).epsilon(0.01)) {
+        if ((a[i] != Approx(b[i]).scale(0.01)) && 
+	    (a[i] != Approx(b[i]).margin(2.0e-10)) &&
+	    (a[i] != Approx(b[i]).epsilon(std::numeric_limits<float>::epsilon()*100))) {
             std::cout << a[i] << " Should == " << b[i] << std::endl;
             return false;
         }

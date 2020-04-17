@@ -2268,6 +2268,19 @@ int main(int argc, char **argv, char **envp) {
       minDist(nR_Bfield * nZ_Bfield);
 
 #if USESHEATHEFIELD > 0
+  float thisE0[3] = {0.0, 0.0, 0.0};
+  float minDist0 = 0.0;
+  int minInd_bnd = 0;
+  for (int i = 0; i < 1000; i++) {
+      minDist0 =
+          getE(0.0, 0.0, 1.0E-6*i, thisE0, boundaries.data(),
+               nLines,
+               nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
+               n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
+               &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
+               &closeGeom_sheath.front(), minInd_bnd);
+      std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
+  }
 #if EFIELD_INTERP == 1
   float thisE[3] = {0.0, 0.0, 0.0};
 
@@ -3612,10 +3625,15 @@ int main(int argc, char **argv, char **envp) {
   auto randInitStart_clock = gitr_time::now();
 
 #if PARTICLESEEDS > 0
-#if USE_CUDA
-  sim::Array<curandState> state1(nParticles);
+#ifdef __CUDACC__
+     typedef curandState rand_type;
 #else
-  sim::Array<std::mt19937> state1(nParticles);
+     typedef std::mt19937 rand_type;
+#endif
+#if USE_CUDA
+  sim::Array<rand_type> state1(nParticles);
+#else
+  sim::Array<rand_type> state1(nParticles);
 #endif
 #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 ||       \
     USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
@@ -3700,7 +3718,7 @@ int main(int argc, char **argv, char **envp) {
                      &gridZ_bins.front(), &net_Bins.front(), dt);
 #endif
 #if USEIONIZATION > 0
-  ionize<> ionize0(
+  ionize<rand_type> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
@@ -3716,7 +3734,7 @@ int main(int argc, char **argv, char **envp) {
   //auto func1 = *func;
 #endif
 #if USERECOMBINATION > 0
-  recombine<> recombine0(
+  recombine<rand_type> recombine0(
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
