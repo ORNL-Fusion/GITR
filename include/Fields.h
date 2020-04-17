@@ -27,7 +27,7 @@
 #endif
 
 #include <random>
-enum FieldType { FieldType_2d_xz = 1, FieldType_2d_rz = 2 };
+enum FieldType { FieldType_constant = 0, FieldType_2d_xz = 1, FieldType_2d_rz = 2 };
 template <typename T> using FunctionHandler = float (T::*)(float, float, float);
 
 class Field : public ManagedAllocation {
@@ -49,6 +49,18 @@ public:
 
   CUDA_CALLABLE_MEMBER
   Field(libconfig::Config &cfg, std::string field_name) {
+    int interpolator_number = get_variable<int>(cfg, field_name + ".interpolation");
+    if ( interpolator_number == 0)
+    {
+      std::cout << "constant " << std::endl;
+      field_type = FieldType_constant;
+      nD = 0;
+      values[0] = get_variable<float>(cfg, field_name+ ".value");
+      function = returnPointerTable(field_type);
+    }
+    else if (interpolator_number > 0)
+    {
+      std::cout << "non - constant " << std::endl;
     std::string ncfilename =
         get_variable<const char *>(cfg, field_name + ".filename");
     std::string ncvarname =
@@ -135,9 +147,13 @@ public:
     values.resize(val_size);
     values = vec;
     nc_close(ncid);
+   }
   };
   
   
+  CUDA_CALLABLE_MEMBER
+  float return_const(float x, float y, float z) { return values[0]; }
+
   CUDA_CALLABLE_MEMBER
   float returnOne(float x, float y, float z) { return 1; }
   
@@ -178,7 +194,10 @@ public:
 
   CUDA_CALLABLE_MEMBER
   FunctionHandler<Field> returnPointerTable(int num) {
-    if (num == FieldType_2d_xz) {
+    if (num == FieldType_constant) {
+      return &Field::return_const;
+    }
+    else if(num == FieldType_2d_xz) {
       return &Field::returnOne;
     } else {
       return &Field::cylindrical_2d_interpolation;

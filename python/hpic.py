@@ -8,6 +8,14 @@ import scipy.interpolate as scii
 import netCDF4
 import os
 from scipy.interpolate import griddata
+def read_hpic_iead(num=1,file_path='/Users/tyounkin/Dissertation/ITER/mq3/final/hPIC_IEAD_solps_conditions/hPIC_IEAD_DATA'):
+    iead = np.loadtxt(file_path+'/SolpsPoint'+str(num)+'_IEAD.dat', dtype='float',skiprows=0,delimiter=',')
+    energy = np.loadtxt(file_path+'/SolpsPoint'+str(num)+'_EnergyCenters.dat', dtype='float',skiprows=0,delimiter=',')
+    angle = np.loadtxt(file_path+'/SolpsPoint'+str(num)+'_AngleCenters.dat', dtype='float',skiprows=0,delimiter=',')
+    print('Solps shape', iead.shape)
+    print('energy', energy)
+    print('angle', angle)
+
 def plot_hpic_iead(solps_path='solpsTarg.txt',HpicDataFolder = '/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180730/hpicwork0004'):
     me   =  9.10938356e-31; # Electron mass
     mp   =  1.67262190e-27; # Proton mass
