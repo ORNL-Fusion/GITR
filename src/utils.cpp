@@ -733,6 +733,7 @@ int read_profileNs( std::string fileName, std::string nxName, std::string nzName
     NcFile nc(fileName.c_str(), NcFile::read);
 
     NcDim nc_nx(nc.getDim(nxName));
+    std::cout << " got dim x " << std::endl;
     NcDim nc_nz(nc.getDim(nzName));
     
     n_x = nc_nx.getSize(); 
@@ -780,13 +781,15 @@ int read_profiles( std::string fileName, int &n_x, int &n_z,std::string gridxNam
     }
 
     NcFile nc(fileName.c_str(), NcFile::read);
+    std::cout << " opened file " << std::endl;
 
     NcVar nc_gridx(nc.getVar(gridxName));
     NcVar nc_gridz(nc.getVar(gridzName));
+    std::cout << " got vars " << std::endl;
 
     nc_gridx.getVar(&gridx[0]);
+    std::cout << " got gridx " << std::endl;
     nc_gridz.getVar(&gridz[0]);
-
     NcVar nc_ne(nc.getVar(dataName));
     nc_ne.getVar(&data[0]);
     nc.close();

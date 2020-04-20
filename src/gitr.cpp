@@ -3649,7 +3649,7 @@ int main(int argc, char **argv, char **envp) {
                    // world_rank*nP/world_size,particleBegin +
                    // (world_rank+1)*nP/world_size-10,
                    // curandInitialize(&state1[0],randDeviceInit,0));
-                   curandInitialize(&state1.front(), 0));
+                   curandInitialize<>(&state1.front(), 0));
   std::cout << " finished curandInit" << std::endl;
   // curandInitialize cuIn(0);
   // cuIn(0);
@@ -3718,12 +3718,20 @@ int main(int argc, char **argv, char **envp) {
                      &gridZ_bins.front(), &net_Bins.front(), dt);
 #endif
 #if USEIONIZATION > 0
+#if USE_CUDA > 0
+  float *uni;
+  cudaMallocManaged(&uni, sizeof(float));
+#else
+  float *uni = new float[1];
+  *uni = 0;
+#endif
+
   ionize<rand_type> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(),field1);
+      &rateCoeff_Ionization.front(),field1,uni);
   //if(gitr_flags.USE_IONIZATION > 0) ionize0.func = &ionize::operator();
   //else ionize0.func = &ionize::operator1;
   //void (ionize::*func)(std::size_t) = &ionize::operator();

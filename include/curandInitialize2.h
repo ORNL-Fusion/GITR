@@ -1,5 +1,5 @@
-#ifndef _CURANDINITIAL_
-#define _CURANDINITIAL_
+#ifndef _CURANDINITIAL2_
+#define _CURANDINITIAL2_
 
 #ifdef __CUDACC__
 #define CUDA_CALLABLE_MEMBER_DEVICE __device__
@@ -12,21 +12,23 @@
 #include "libconfig.h++"
 
 template <typename T=std::mt19937>
-struct curandInitialize{
+struct curandInitialize2{
 #if __CUDACC__
    curandState *s;
 #else
    T *s;
 #endif
-  int seed;
+  int * seed;
+  int * sequence;
+  int * offset;
   
- curandInitialize(
+ curandInitialize2(
 #if __CUDACC__		 
          curandState *_s,
 #else
          T *_s,
 #endif
-         int _seed) : s(_s), seed(_seed) {} 
+         int * _seed, int * _sequence, int * _offset) : s(_s), seed(_seed), sequence(_sequence), offset(_offset) {} 
 //void curandInitialize(curandState *_s, int _seed) : s(_s),seed(_seed) {}
     CUDA_CALLABLE_MEMBER_DEVICE
     void operator()(std::size_t indx) {
@@ -42,11 +44,10 @@ struct curandInitialize{
        ////}
        ////else{ seedTotal = thread_id;}
 
-        curand_init(indx, 0, 0, &s[indx]);
+        curand_init(seed[indx], sequence[indx], offset[indx], &s[indx]);
 #else
         std::random_device randDevice;
-        //std::mt19937 s0(randDevice());
-        T s0(1234^indx);
+        T s0(randDevice());
         s[indx] = s0;
 #endif
     }
