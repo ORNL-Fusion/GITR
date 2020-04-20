@@ -8,12 +8,14 @@
 #endif
 
 #include "array.h"
+#if USE_MPI > 0
 #include "mpi.h"
+#include <netcdf_par.h>
+#endif
 #include "utils.h"
 #include <cstdlib>
 #include <libconfig.h++>
 #include <netcdf>
-#include <netcdf_par.h>
 #include <stdio.h>
 #include <vector>
 #ifdef __CUDACC__
@@ -25,7 +27,7 @@
 #endif
 
 #include <random>
-enum FieldType { FieldType_2d_xz = 1, FieldType_2d_rz = 2 };
+enum FieldType { FieldType_constant = 0, FieldType_2d_xz = 1, FieldType_2d_rz = 2 };
 template <typename T> using FunctionHandler = float (T::*)(float, float, float);
 
 class Field : public ManagedAllocation {
@@ -47,6 +49,18 @@ public:
 
   CUDA_CALLABLE_MEMBER
   Field(libconfig::Config &cfg, std::string field_name) {
+    int interpolator_number = get_variable<int>(cfg, field_name + ".interpolation");
+    if ( interpolator_number == 0)
+    {
+      //std::cout << "constant " << std::endl;
+      field_type = FieldType_constant;
+      nD = 0;
+      values[0] = get_variable<float>(cfg, field_name+ ".value");
+      function = returnPointerTable(field_type);
+    }
+    else if (interpolator_number > 0)
+    {
+      //std::cout << "non - constant " << std::endl;
     std::string ncfilename =
         get_variable<const char *>(cfg, field_name + ".filename");
     std::string ncvarname =
@@ -54,14 +68,12 @@ public:
 
     int err, status, ncid, groupid, cmode, val_id, r_id, retval;
     cmode = NC_NOWRITE;
-    std::cout << " here" << std::endl;
 #if USE_MPI == 1
     err = nc_open_par(ncfilename.c_str(), cmode, MPI_COMM_WORLD, MPI_INFO_NULL,
                       &ncid);
 #else
     err = nc_open(ncfilename.c_str(), cmode, &ncid);
 #endif
-    std::cout << " here 2" << std::endl;
     err = nc_inq_varid(ncid, ncvarname.c_str(), &val_id);
 
     // get number of dimensions
@@ -116,7 +128,6 @@ public:
         } 
 	else if (index == 1) {
           y.resize(vec_size);
-          std::cout << "ysize " << y.size() << " vecsize " << vec.size() << std::endl;
           y = vec;
         } 
 	else if (index == 2) {
@@ -136,9 +147,13 @@ public:
     values.resize(val_size);
     values = vec;
     nc_close(ncid);
+   }
   };
   
   
+  CUDA_CALLABLE_MEMBER
+  float return_const(float x, float y, float z) { return values[0]; }
+
   CUDA_CALLABLE_MEMBER
   float returnOne(float x, float y, float z) { return 1; }
   
@@ -179,7 +194,10 @@ public:
 
   CUDA_CALLABLE_MEMBER
   FunctionHandler<Field> returnPointerTable(int num) {
-    if (num == FieldType_2d_xz) {
+    if (num == FieldType_constant) {
+      return &Field::return_const;
+    }
+    else if(num == FieldType_2d_xz) {
       return &Field::returnOne;
     } else {
       return &Field::cylindrical_2d_interpolation;

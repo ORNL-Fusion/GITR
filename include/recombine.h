@@ -76,10 +76,15 @@ struct recombine {
   
   CUDA_CALLABLE_MEMBER_DEVICE 
   void operator()(std::size_t indx) { 
+      //std::cout << "rec index " <<indx  << std::endl;
+      //if(indx > 1000)
+      //{
+      // std::cout << "wtf " <<indx  << std::endl;
+      //} 
   float P1 = 0.0f;
       if(particlesPointer->charge[indx] > 0)
     {
-       tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
+       tion = interpRateCoeff2d ( particlesPointer->charge[indx]-1, particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
        float P = expf(-dt/tion);
        P1 = 1.0-P;
     }

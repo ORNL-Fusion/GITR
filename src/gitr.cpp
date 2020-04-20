@@ -136,6 +136,7 @@ int main(int argc, char **argv, char **envp) {
   }
   auto gitr_flags = new Flags(cfg);
     std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
+    auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     //FIXME: work on new field struct
     //auto field1 = new Field();
     //auto pClient = new Field_client(); 
@@ -2267,6 +2268,19 @@ int main(int argc, char **argv, char **envp) {
       minDist(nR_Bfield * nZ_Bfield);
 
 #if USESHEATHEFIELD > 0
+  float thisE0[3] = {0.0, 0.0, 0.0};
+  float minDist0 = 0.0;
+  int minInd_bnd = 0;
+  for (int i = 0; i < 1000; i++) {
+      minDist0 =
+          getE(0.0, 0.0, 1.0E-6*i, thisE0, boundaries.data(),
+               nLines,
+               nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
+               n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
+               &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
+               &closeGeom_sheath.front(), minInd_bnd);
+      std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
+  }
 #if EFIELD_INTERP == 1
   float thisE[3] = {0.0, 0.0, 0.0};
 
@@ -3611,10 +3625,15 @@ int main(int argc, char **argv, char **envp) {
   auto randInitStart_clock = gitr_time::now();
 
 #if PARTICLESEEDS > 0
-#if USE_CUDA
-  sim::Array<curandState> state1(nParticles);
+#ifdef __CUDACC__
+     typedef curandState rand_type;
 #else
-  sim::Array<std::mt19937> state1(nParticles);
+     typedef std::mt19937 rand_type;
+#endif
+#if USE_CUDA
+  sim::Array<rand_type> state1(nParticles);
+#else
+  sim::Array<rand_type> state1(nParticles);
 #endif
 #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 ||       \
     USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
@@ -3630,7 +3649,7 @@ int main(int argc, char **argv, char **envp) {
                    // world_rank*nP/world_size,particleBegin +
                    // (world_rank+1)*nP/world_size-10,
                    // curandInitialize(&state1[0],randDeviceInit,0));
-                   curandInitialize(&state1.front(), 0));
+                   curandInitialize<>(&state1.front(), 0));
   std::cout << " finished curandInit" << std::endl;
   // curandInitialize cuIn(0);
   // cuIn(0);
@@ -3699,12 +3718,20 @@ int main(int argc, char **argv, char **envp) {
                      &gridZ_bins.front(), &net_Bins.front(), dt);
 #endif
 #if USEIONIZATION > 0
-  ionize<curandState> ionize0(
+#if USE_CUDA > 0
+  float *uni;
+  cudaMallocManaged(&uni, sizeof(float));
+#else
+  float *uni = new float[1];
+  *uni = 0;
+#endif
+
+  ionize<rand_type> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(),field1);
+      &rateCoeff_Ionization.front(),field1,uni);
   //if(gitr_flags.USE_IONIZATION > 0) ionize0.func = &ionize::operator();
   //else ionize0.func = &ionize::operator1;
   //void (ionize::*func)(std::size_t) = &ionize::operator();
@@ -3715,7 +3742,7 @@ int main(int argc, char **argv, char **envp) {
   //auto func1 = *func;
 #endif
 #if USERECOMBINATION > 0
-  recombine<curandState> recombine0(
+  recombine<rand_type> recombine0(
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
@@ -3816,7 +3843,7 @@ int main(int argc, char **argv, char **envp) {
         float testTi =
             interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),
                              TempGridz.data(), ti.data());
-        std::cout << "Finished Temperature import " << testVec << std::endl;
+        //std::cout << "Finished Temperature import " << testVec << std::endl;
         //" " << Btest[2] << " " << Btotal << std::endl;
         particleArray->setParticle(0, forceR[i], 0.0, forceZ[j], testTi, 0.0,
                                    0.0, Z, amu, charge + 1.0);
@@ -3861,31 +3888,31 @@ int main(int argc, char **argv, char **envp) {
       }
     }
     std::cout << " about to write ncFile_forces " << std::endl;
-    NcFile ncFile_force("output/forces.nc", NcFile::replace);
-    NcDim nc_nRf = ncFile_force.addDim("nR", nR_force);
-    NcDim nc_nZf = ncFile_force.addDim("nZ", nZ_force);
-    vector<NcDim> forceDims;
+    netCDF::NcFile ncFile_force("output/forces.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nRf = ncFile_force.addDim("nR", nR_force);
+    netCDF::NcDim nc_nZf = ncFile_force.addDim("nZ", nZ_force);
+    vector<netCDF::NcDim> forceDims;
     forceDims.push_back(nc_nZf);
     forceDims.push_back(nc_nRf);
-    NcVar forceRf = ncFile_force.addVar("r", ncFloat, nc_nRf);
-    NcVar forceZf = ncFile_force.addVar("z", ncFloat, nc_nZf);
-    NcVar nction = ncFile_force.addVar("tIon", ncFloat, forceDims);
-    NcVar nctrec = ncFile_force.addVar("tRec", ncFloat, forceDims);
-    NcVar dvErf = ncFile_force.addVar("dvEr", ncFloat, forceDims);
-    NcVar dvEzf = ncFile_force.addVar("dvEz", ncFloat, forceDims);
-    NcVar dvEtf = ncFile_force.addVar("dvEt", ncFloat, forceDims);
-    NcVar dvBrf = ncFile_force.addVar("dvBr", ncFloat, forceDims);
-    NcVar dvBzf = ncFile_force.addVar("dvBz", ncFloat, forceDims);
-    NcVar dvBtf = ncFile_force.addVar("dvBt", ncFloat, forceDims);
-    NcVar dvCollrf = ncFile_force.addVar("dvCollr", ncFloat, forceDims);
-    NcVar dvCollzf = ncFile_force.addVar("dvCollz", ncFloat, forceDims);
-    NcVar dvColltf = ncFile_force.addVar("dvCollt", ncFloat, forceDims);
-    NcVar dvITGrf = ncFile_force.addVar("dvITGr", ncFloat, forceDims);
-    NcVar dvITGzf = ncFile_force.addVar("dvITGz", ncFloat, forceDims);
-    NcVar dvITGtf = ncFile_force.addVar("dvITGt", ncFloat, forceDims);
-    NcVar dvETGrf = ncFile_force.addVar("dvETGr", ncFloat, forceDims);
-    NcVar dvETGzf = ncFile_force.addVar("dvETGz", ncFloat, forceDims);
-    NcVar dvETGtf = ncFile_force.addVar("dvETGt", ncFloat, forceDims);
+    netCDF::NcVar forceRf = ncFile_force.addVar("r", netCDF::ncFloat, nc_nRf);
+    netCDF::NcVar forceZf = ncFile_force.addVar("z", netCDF::ncFloat, nc_nZf);
+    netCDF::NcVar nction = ncFile_force.addVar("tIon", netCDF::ncFloat, forceDims);
+    netCDF::NcVar nctrec = ncFile_force.addVar("tRec", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvErf = ncFile_force.addVar("dvEr", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvEzf = ncFile_force.addVar("dvEz", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvEtf = ncFile_force.addVar("dvEt", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvBrf = ncFile_force.addVar("dvBr", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvBzf = ncFile_force.addVar("dvBz", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvBtf = ncFile_force.addVar("dvBt", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvCollrf = ncFile_force.addVar("dvCollr", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvCollzf = ncFile_force.addVar("dvCollz", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvColltf = ncFile_force.addVar("dvCollt", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvITGrf = ncFile_force.addVar("dvITGr", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvITGzf = ncFile_force.addVar("dvITGz", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvITGtf = ncFile_force.addVar("dvITGt", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvETGrf = ncFile_force.addVar("dvETGr", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvETGzf = ncFile_force.addVar("dvETGz", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvETGtf = ncFile_force.addVar("dvETGt", netCDF::ncFloat, forceDims);
     forceRf.putVar(&forceR[0]);
     forceZf.putVar(&forceZ[0]);
     nction.putVar(&tIon[0]);
@@ -4663,6 +4690,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
         surfaceNumbers[srf] = i;
 
         srf = srf + 1;
+        surfaces->grossErosion[i] = surfaces->grossErosion[i] + grossErosion[i];
       }
     }
     netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
@@ -4687,11 +4715,11 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
         ncFile1.addVar("sumWeightStrike", netCDF::ncFloat, nc_nLines);
     nc_grossDep.putVar(&surfaces->grossDeposition[0]);
     nc_surfNum.putVar(&surfaceNumbers[0]);
-    nc_grossEro.putVar(&grossErosion[0]);
-    nc_aveSpyl.putVar(&aveSputtYld[0]);
-    nc_spylCounts.putVar(&sputtYldCount[0]);
-    nc_sumParticlesStrike.putVar(&sumParticlesStrike[0]);
-    nc_sumWeightStrike.putVar(&sumWeightStrike[0]);
+    nc_grossEro.putVar(&surfaces->grossErosion[0]);
+    nc_aveSpyl.putVar(&surfaces->aveSputtYld[0]);
+    nc_spylCounts.putVar(&surfaces->sputtYldCount[0]);
+    nc_sumParticlesStrike.putVar(&surfaces->sumParticlesStrike[0]);
+    nc_sumWeightStrike.putVar(&surfaces->sumWeightStrike[0]);
     // NcVar nc_surfImpacts = ncFile1.addVar("impacts",ncFloat,dims1);
     // NcVar nc_surfRedeposit = ncFile1.addVar("redeposit",ncFloat,dims1);
     // NcVar nc_surfStartingParticles =
@@ -4707,9 +4735,9 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     //#endif
     // nc_surfStartingParticles.putVar(startingParticles);
     // nc_surfZ.putVar(surfZ);
-    nc_surfEDist.putVar(&energyDistribution[0]);
-    nc_surfReflDist.putVar(&reflDistribution[0]);
-    nc_surfSputtDist.putVar(&sputtDistribution[0]);
+    nc_surfEDist.putVar(&surfaces->energyDistribution[0]);
+    nc_surfReflDist.putVar(&surfaces->reflDistribution[0]);
+    nc_surfSputtDist.putVar(&surfaces->sputtDistribution[0]);
     // NcVar nc_surfEDistGrid = ncFile1.addVar("gridE",ncDouble,nc_nEnergies);
     // nc_surfEDistGrid.putVar(&surfaces->gridE[0]);
     // NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
