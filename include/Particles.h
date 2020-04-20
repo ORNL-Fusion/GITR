@@ -222,19 +222,27 @@ public:
   Particles(std::size_t nP,std::size_t nStreams,libconfig::Config &cfg, Flags *gitr_flags) : 
     nParticles{getVariable_cfg<unsigned int> (cfg,"impurityParticleSource.nP")},
     index{nParticles, 0}, 
-    x{nParticles}, 
-    y{nParticles}, 
-    z{nParticles}, 
-    xprevious{nParticles},
-    yprevious{nParticles}, 
-    zprevious{nParticles},
+    x{nP,0.0}, 
+    y{nP,0.0}, 
+    z{nP,0.0}, 
+    xprevious{nParticles,0.0},
+    yprevious{nParticles,0.0}, 
+    zprevious{nParticles,0.0},
     v{nParticles, 0.0}, 
-    vx{nParticles}, 
-    vy{nParticles}, 
-    vz{nParticles}, 
+    vx{nParticles,std::sqrt(2.0*getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
+		    1.602e-19/getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27)*
+    std::cos(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.theta"))*
+    std::sin(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.phi"))}, 
+    vy{nParticles,std::sqrt(2.0*getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
+		    1.602e-19/getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27)*
+    std::sin(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.theta"))*
+    std::sin(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.phi"))}, 
+    vz{nParticles,std::sqrt(2.0*getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
+		    1.602e-19/getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27)*
+    std::cos(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.phi"))}, 
     Z{nParticles},
-    amu{nParticles}, 
-    charge{nParticles,0.0}, 
+    amu{nParticles,getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.impurity_amu")}, 
+    charge{nParticles,getVariable_cfg<int> (cfg,"impurityParticleSource.initialConditions.charge")}, 
     newVelocity{nParticles}, 
     nu_s{nParticles}, 
     vD{nParticles, 0.0}, 
@@ -250,15 +258,15 @@ public:
     firstCollision{nParticles, 1}, 
     transitTime{nParticles, 0.0}, 
     distTraveled{nParticles, 0.0},
-    wallIndex{nParticles},
-    perpDistanceToSurface{nParticles}, 
+    wallIndex{nParticles,0},
+    perpDistanceToSurface{nParticles,0.0}, 
     test{nParticles, 0.0}, 
     test0{nParticles, 0.0},
     test1{nParticles, 0.0}, 
     test2{nParticles, 0.0}, 
     test3{nParticles, 0.0}, 
     test4{nParticles, 0.0},
-    distanceTraveled{nParticles}, 
+    distanceTraveled{nParticles,0.0}, 
     weight{nParticles, 1.0}, 
     firstIonizationZ{nParticles, 0.0},
     firstIonizationT{nParticles, 0.0} {};
