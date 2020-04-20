@@ -185,7 +185,7 @@ TEST_CASE("Coulomb collision", "tests") {
 #endif
     int example=1;
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize(&state1.front(), 0));
+                   curandInitialize<>(&state1.front(), 0));
     
     float x = 0.0;
     float y = 0.0;
@@ -288,7 +288,7 @@ auto gitr_start_clock = gitr_time::now();
      std::cout <<this_v << " " << gitr << " " << analytic << std::endl;
      mse = mse + std::pow(gitr-analytic,2)/n_bins;
   }
-  float tolerance = 1.0e-12;
+  float tolerance = 1.0e-11;
   printf("mse and tol %e %e ", mse, tolerance);
   REQUIRE(mse <= tolerance);
   }
@@ -335,7 +335,7 @@ auto gitr_start_clock = gitr_time::now();
         	}
 
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize2(&state1.front(),&seed.front(), &sequence.front(),&offset.front()));
+                   curandInitialize2<>(&state1.front(),&seed.front(), &sequence.front(),&offset.front()));
     
     float nu_friction = 0.0;
     float nu_deflection = 0.0;
@@ -471,7 +471,7 @@ auto gitr_start_clock = gitr_time::now();
     }
     float tolerance = 1.0e-12;
     printf("ave_vx %e \n", ave_vx);
-    REQUIRE(ave_vx == Approx(flowVr[0]).margin(40.0));
+    REQUIRE(ave_vx == Approx(flowVr[0]).margin(100.0));
   }
 
 }

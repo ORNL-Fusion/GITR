@@ -247,6 +247,13 @@ void getSlowDownDirections2 (float parallel_direction[], float perp_direction1[]
         float vx, float vy, float vz)
 {
 	float v = std::sqrt(vx*vx + vy*vy + vz*vz);
+	if(v == 0.0)
+	{
+		v = 1.0;
+		vz = 1.0;
+		vx = 0.0;
+		vy = 0.0;
+	}
         float ez1 = vx/v;
         float ez2 = vy/v;
         float ez3 = vz/v;
@@ -277,7 +284,7 @@ void getSlowDownDirections2 (float parallel_direction[], float perp_direction1[]
     ex3 = ex3/exnorm;
     
     if(isnan(ex1) || isnan(ex2) || isnan(ex3)){
-       printf("ex nan %f %f %f ", ez1, ez2, ez3);
+       printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
     }
     // Find the second perpendicular direction 
     // by taking the cross product
@@ -643,7 +650,7 @@ void operator()(std::size_t indx)  {
       float coeff_perp1 = cosXsi * std::sqrt(nu_deflection * dt*0.5);
       float coeff_perp2 = sinXsi * std::sqrt(nu_deflection * dt*0.5);
 #if USEFRICTION == 0
-      drag = 0.0;
+      //drag = 0.0;
 #endif
 #if USEANGLESCATTERING == 0
       coeff_perp1 = 0.0;
