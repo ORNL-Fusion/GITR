@@ -84,7 +84,7 @@ jobs:
         -DCHECK_COMPATIBILITY=1
         .. &&
         make VERBOSE=1 &&
-        cd ../examples/pointPlane/Deposit/3d
+        cd ../examples/pointPlane/Deposit/3d &&
         ../../../build/GITR
       env:
         MY_NAME: "Tim"
