@@ -5,6 +5,7 @@ import numpy as np
 import numpy.matlib as ml
 import gitr
 import scipy.interpolate as scii
+from scipy.interpolate import griddata
 import netCDF4
 import math
 import os
@@ -657,17 +658,22 @@ def get_solps_species(solps_state_filename='/Users/tyounkin/Dissertation/ITER/mq
     #zamin.insert(3, 1.0)
     #am.insert(3, 3.0)
     nIonSpecies = len(zn)
+    species_index = [int(i) for i in range(nIonSpecies)]
 
-    print('nIonSpecies', nIonSpecies)
-    species_file = open("speciesList.txt", "w")
-    species_file.write('SpeciesIndex   Z   Mass   Charge\n')
-    print('Existing species for current SOLPS run:\n')
-    print('SpeciesIndex   Z   Mass   Charge\n')
-    for i in range(nIonSpecies):
-        print('%f       %f        %f      %f \n' % (i, zn[i], am[i], zamin[i]))
-        species_file.write('%f       %f        %f      %f \n' % (i, zn[i], am[i], zamin[i]))
+    array = np.array((species_index,zn,am,zamin))
+    array = np.transpose(array)
+    print(array)
+    np.savetxt('speciesList.txt',array,header='SpeciesIndex   Z   Mass   Charge', delimiter=' ') 
+    #print('nIonSpecies', nIonSpecies)
+    #species_file = open("speciesList.txt", "w")
+    #species_file.write('SpeciesIndex   Z   Mass   Charge\n')
+    #print('Existing species for current SOLPS run:\n')
+    #print('SpeciesIndex   Z   Mass   Charge\n')
+    #for i in range(nIonSpecies):
+    #    print('%f %f %f %f \n' % (i, zn[i], am[i], zamin[i]))
+    #    species_file.write('%f %f %f %f \n' % (i, zn[i], am[i], zamin[i]))
 
-    species_file.close()
+    #species_file.close()
 
     return nIonSpecies, am,zamin, zn
 
@@ -763,6 +769,78 @@ def make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
     A[:,3] = i_a
 
     np.savetxt('right_target_coordinates.txt',A,header='r,z,r_minus_r_sep,gitr_index')
+
+def make_solps_targ_file_txt(solps_geom = 'b2fgmtry', \
+    b_field_file = 'Baseline2008-li0.70.x4.equ', \
+    coords_file = 'right_target_coordinates.txt', \
+    right_target_filename= 'rightTargOutput'):
+
+    r, z, ti, ni, flux, te, ne = read_target_file(right_target_filename)
+
+    r_left_target,z_left_target,r_right_target,z_right_target = get_target_coordinates(solps_geom)
+    
+    rr, zz, r_minus_r_sep, gitr_ind = read_targ_coordinates_file(coords_file)
+    print('len z', len(z_right_target))
+    r_no_guard_cells = r_right_target[1:-1]
+    z_no_guard_cells = z_right_target[1:-1]
+    
+    print('len zno', len(z_no_guard_cells))
+    
+    slope = np.zeros(len(r_no_guard_cells)-1)
+    rise = z_no_guard_cells[1:] - z_no_guard_cells[0:-1]
+    run = r_no_guard_cells[1:] - r_no_guard_cells[0:-1]
+    slope = np.divide(rise,run)
+    perp_slope = -np.sign(slope)/np.absolute(slope)
+    rPerp = np.divide(1.0,np.sqrt(np.multiply(perp_slope,perp_slope)+1))
+    zPerp = 1.0*np.sqrt(1-np.multiply(rPerp,rPerp))
+    length = np.sqrt(np.multiply(rise,rise)+np.multiply(run,run))
+    print('slope',slope)
+    print('lenslope',len(slope))
+    z_midpoint = 0.5*(z_no_guard_cells[1:] + z_no_guard_cells[0:-1])
+    r_midpoint = 0.5*(r_no_guard_cells[1:] + r_no_guard_cells[0:-1])
+    print('rmid', r_midpoint)
+    print('zmid', z_midpoint)
+
+    r, z, br, bz, bt, psi = readEquilibrium(b_field_file)
+    
+    btot = np.sqrt(np.multiply(br,br) + np.multiply(bz,bz) + np.multiply(bt,bt))
+
+    #f = scii.interp2d(r,z,btot)
+    #btarg = f(r_midpoint,z_midpoint)
+    grid_r, grid_z = np.meshgrid(r,z)
+    print(grid_r.shape, grid_z.shape, btot.shape)
+    btarg = griddata((grid_r.flatten(),grid_z.flatten()), btot.flatten(), (r_midpoint, z_midpoint), method='linear')
+    brtarg = griddata((grid_r.flatten(),grid_z.flatten()), br.flatten(), (r_midpoint, z_midpoint), method='linear')
+    bztarg = griddata((grid_r.flatten(),grid_z.flatten()), bz.flatten(), (r_midpoint, z_midpoint), method='linear')
+    
+    angle = 180.0/np.pi*np.arccos(np.divide(np.multiply(brtarg,rPerp) + np.multiply(bztarg,zPerp),btarg))
+
+    len_rmid = len(r_midpoint)
+    A = np.zeros((len(r_midpoint),3))
+    A[:,0] = r_minus_r_sep[1:-2] + 0.5*length
+    A[:,1] = r_midpoint
+    A[:,2] = z_midpoint
+
+    A = np.hstack((A,np.reshape(te,(len_rmid,1))))
+    A = np.hstack((A,np.reshape(ti,(len_rmid,1))))
+    A = np.hstack((A,flux))
+    A = np.hstack((A,ni))
+    A = np.hstack((A,np.reshape(btarg,(len_rmid,1))))
+    A = np.hstack((A,np.reshape(angle,(len_rmid,1))))
+
+    print('fshpe',flux.shape)
+    np.savetxt('solpsTarg.txt',A,delimiter=',',header='R-Rsep, r, z, Te, Ti, Flux (for each species), n (for each species), Btot, Bangle')
+
+def read_targ_coordinates_file(filename = 'right_target_coordinates.txt'):
+    
+    data = np.loadtxt(filename, skiprows=0)
+
+    r_right_target = data[:,0]
+    z_right_target = data[:,1]
+    r_minus_r_sep = data[:,2]
+    gitr_ind = data[:,3]
+
+    return r_right_target, z_right_target, r_minus_r_sep, gitr_ind
 
 if __name__ == "__main__":   
     #rTarg = np.linspace(5,6.5,100)

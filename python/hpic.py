@@ -8,6 +8,8 @@ import scipy.interpolate as scii
 import netCDF4
 import os
 from scipy.interpolate import griddata
+import zipfile
+
 def read_hpic_iead(num=1,file_path='/Users/tyounkin/Dissertation/ITER/mq3/final/hPIC_IEAD_solps_conditions/hPIC_IEAD_DATA'):
     iead = np.loadtxt(file_path+'/SolpsPoint'+str(num)+'_IEAD.dat', dtype='float',skiprows=0,delimiter=',')
     energy = np.loadtxt(file_path+'/SolpsPoint'+str(num)+'_EnergyCenters.dat', dtype='float',skiprows=0,delimiter=',')
@@ -16,7 +18,9 @@ def read_hpic_iead(num=1,file_path='/Users/tyounkin/Dissertation/ITER/mq3/final/
     print('energy', energy)
     print('angle', angle)
 
-def plot_hpic_iead(solps_path='solpsTarg.txt',HpicDataFolder = '/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180730/hpicwork0004'):
+def plot_hpic_iead(solps_path='solpsTarg.txt',HpicDataFolder = '/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180730/hpicwork0004', \
+         solpsIndex = [3]):
+    os.mkdir('hpic_ieads')
     me   =  9.10938356e-31; # Electron mass
     mp   =  1.67262190e-27; # Proton mass
     
@@ -26,85 +30,114 @@ def plot_hpic_iead(solps_path='solpsTarg.txt',HpicDataFolder = '/global/homes/t/
     #   - List of SOLPS points resolved with hPIC
     #   - Ai, Ion Atomic Mass
     #   - Zi, Charge State
-    SOLPS = np.loadtxt(solps_path, dtype='float',skiprows=1,delimiter=' ')
-    nL = 36;
+    nSpecOut = len(solpsIndex)
+    SOLPS = np.loadtxt(solps_path, dtype='float',skiprows=1,delimiter=',')
+    solps_shape = SOLPS.shape
+    print('solps shape',solps_shape[0],solps_shape[1])
+    nL = solps_shape[0];
+    nSolpsSpecies = int((solps_shape[1]-7)/2)
+    solps_species = np.loadtxt('speciesList.txt', dtype='float',skiprows=1,delimiter=' ')
+    Ai = solps_species[:,2]
+    Zi = solps_species[:,3]
     SolpsLocationList = list(range(1,nL+1));
-    Ai  = [ 2, 3, 4, 4, 9, 9, 9, 9, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20 ];
-    Zi  = [ 1, 1, 1, 2, 1, 2, 3, 4, 1,  2,  3,  4,  5,  6,  7,  8,  9,  10 ];
+    #Ai  = [ 2, 3, 4, 4, 9, 9, 9, 9, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20 ];
+    #Zi  = [ 1, 1, 1, 2, 1, 2, 3, 4, 1,  2,  3,  4,  5,  6,  7,  8,  9,  10 ];
     nS = len(Ai);
-    nA = 90;
-    nE = 240;
-    nn = np.zeros([nS,nL]);
-    ff = np.zeros([nS,nL]);
-    EEE = np.zeros([nL,nE]);
-    AAA =  np.zeros([nL,nA]);
-    IEADs = np.zeros([nS,nL,nE,nA]);
-    for i in range(len(SolpsLocationList)):
-        Ti  = SOLPS[i,3];
-        Te  = SOLPS[i,-4]; 
-        ni  = np.append(SOLPS[i,5], np.append(np.append(np.append(SOLPS[i,5], SOLPS[i,7:9]), SOLPS[i,10:14]), SOLPS[i,15:25]));
-        print('ni', ni)
-        fluxInds = [28,30,32,33,35,36,37,38,40,41,42,43,44,45,46,47,48,49]
-        fi  = SOLPS[i,fluxInds];
-        nn[:,i] = ni;
-        ff[:,i] = fi;
-        ntot = sum(ni);
-        ci = ni/ntot;
-        phi_floating = -Te*(np.log(sum(np.multiply(np.multiply(Zi,ci),np.sqrt(np.divide(2*np.pi*me/mp,Ai))))));
-        phi_total = phi_floating + 0.5*Te;
-        EE   = np.linspace(0,24*Te,240);
-        AA   = np.linspace(0,89,90);
-        EEE[i,:] = EE;
-        AAA[i,:] = AA;
-        for j in range(len(Ai)):
-            ID   = 'SolpsPoint'+str(i+1);
-            IEAD = np.loadtxt( HpicDataFolder +'/' +ID +'_IEAD_Sp'+ str(j) +'.dat',dtype='float');
-            IEADs[j,i,:,:] = IEAD;
-            #plt.close()
-	    #plt.pcolor(AA,EE,IEAD)
-            #plt.colorbar(orientation='vertical')
-            #plt.title('plot title')
-            #plt.title('ITER Divertor Target Plasma Density')
-            #plt.ylabel('n[m-3]')
-            #plt.xlabel('R-Rsep[m]')
-            #plt.savefig('iead00.png')
+    #nA = 91;
+    #nE = 91;
     
-    rootgrp = netCDF4.Dataset("hpic.nc", "w", format="NETCDF4")
-    nll = rootgrp.createDimension("nL", nL)
-    nss = rootgrp.createDimension("nS", nS)
-    nee = rootgrp.createDimension("nE", nE)
-    naa = rootgrp.createDimension("nA", nA)
-    rr = rootgrp.createVariable("r","f8",("nL"))
-    zzz = rootgrp.createVariable("z","f8",("nL"))
-    aa = rootgrp.createVariable("A","f8",("nS"))
-    zz = rootgrp.createVariable("Z","f8",("nS"))
-    rmrs = rootgrp.createVariable("RmRs","f8",("nL"))
-    gridee = rootgrp.createVariable("gridE","f8",("nL","nE"))
-    gridaa = rootgrp.createVariable("gridA","f8",("nL","nA"))
-    fff = rootgrp.createVariable("flux","f8",("nS","nL"))
-    nnn = rootgrp.createVariable("dens","f8",("nS","nL"))
-    ieadd = rootgrp.createVariable("iead","f8",("nS","nL","nE","nA"))
-    rr[:] = SOLPS[:,1]
-    zzz[:] = SOLPS[:,2]
-    aa[:] = Ai
-    zz[:] = Zi
-    rmrs[:] = SOLPS[:,0]
-    gridaa[:] = AAA
-    gridee[:] = EEE
-    fff[:] = ff
-    nnn[:] = nn
-    ieadd[:] = IEADs
-    rootgrp.close()
-    print('shapes', SOLPS[:,0].shape, ff.shape)
-    plt.close()
-    plt.plot(SOLPS[:,0],abs(ff.T))
-    plt.title('plot title')
-    plt.title('ITER Divertor Target Plasma Density')
-    plt.ylabel('n[m-3]')
-    plt.xlabel('R-Rsep[m]')
-    plt.yscale('log')
-    plt.savefig('flux.png')
-    plt.close()
+    for k in range(nSpecOut):
+        energy = np.loadtxt(HpicDataFolder[k] +'/' +'SolpsPoint1' +'_EnergyCenters.dat', dtype='float',skiprows=0,delimiter=',')
+        angle = np.loadtxt(HpicDataFolder[k] +'/' + 'SolpsPoint1' +'_AngleCenters.dat', dtype='float',skiprows=0,delimiter=',')
+        nE = len(energy)
+        nA = len(angle)
+        IEADs = np.zeros([nL,nE,nA]);
+        nn = np.zeros(nL);
+        ff = np.zeros(nL);
+        EEE = np.zeros([nL,nE]);
+        AAA =  np.zeros([nL,nA]);
+        for i in range(len(SolpsLocationList)):
+            Ti  = SOLPS[i,3];
+            Te  = SOLPS[i,4]; 
+            fi  = SOLPS[i,5:(5+nSolpsSpecies)];
+            ni  = SOLPS[i,5+nSolpsSpecies:5+2*nSolpsSpecies];
+            print('ni', ni)
+            nn[i] = ni[solpsIndex[k]];
+            ff[i] = fi[solpsIndex[k]];
+            ntot = sum(ni);
+            ci = ni/ntot;
+            print(Zi)
+            print(ci)
+            print(Ai)
+            phi_floating = -Te*(np.log(sum(np.multiply(np.multiply(Zi,ci),np.sqrt(np.divide(2*np.pi*me/mp,Ai))))));
+            phi_total = phi_floating + 0.5*Te;
+            #EE   = np.linspace(0,24*Te,nE);
+            #AA   = np.linspace(0,89,nA);
+            #EEE[i,:] = EE;
+            #AAA[i,:] = AA;
+            ID   = 'SolpsPoint'+str(i+1);
+            energy = np.loadtxt(HpicDataFolder[k] +'/' +ID +'_EnergyCenters.dat', dtype='float',skiprows=0,delimiter=',')
+            angle = np.loadtxt(HpicDataFolder[k] +'/' +ID +'_AngleCenters.dat', dtype='float',skiprows=0,delimiter=',')
+            EEE[i,:] = energy;
+            AAA[i,:] = angle;
+            IEAD = np.loadtxt( HpicDataFolder[k] +'/' +ID +'_IEAD.dat',dtype='float',delimiter = ',');
+                #plt.close()
+                #plt.pcolor(AA,EE,IEAD)
+                #plt.colorbar(orientation='vertical')
+                #plt.title('plot title')
+                #plt.title('ITER Divertor Target Plasma Density')
+                #plt.ylabel('n[m-3]')
+                #plt.xlabel('R-Rsep[m]')
+                #plt.savefig('iead00.png')
+    
+            rootgrp = netCDF4.Dataset("hpic_ieads/hpic"+str(k)+".nc", "w", format="NETCDF4")
+            nc_const = rootgrp.createDimension("const", 1)
+            nll = rootgrp.createDimension("nL", nL)
+            #nss = rootgrp.createDimension("nS", nS)
+            nee = rootgrp.createDimension("nE", nE)
+            naa = rootgrp.createDimension("nA", nA)
+            rr = rootgrp.createVariable("r","f8",("nL"))
+            zzz = rootgrp.createVariable("z","f8",("nL"))
+            aa = rootgrp.createVariable("A","f8",("const"))
+            zz = rootgrp.createVariable("Z","f8",("const"))
+            rmrs = rootgrp.createVariable("RmRs","f8",("nL"))
+            gridee = rootgrp.createVariable("gridE","f8",("nL","nE"))
+            gridaa = rootgrp.createVariable("gridA","f8",("nL","nA"))
+            fff = rootgrp.createVariable("flux","f8",("nL"))
+            nnn = rootgrp.createVariable("dens","f8",("nL"))
+            ieadd = rootgrp.createVariable("iead","f8",("nL","nE","nA"))
+            rr[:] = SOLPS[:,1]
+            zzz[:] = SOLPS[:,2]
+            aa[:] = Ai[solpsIndex[k]]
+            zz[:] = Zi[solpsIndex[k]]
+            rmrs[:] = SOLPS[:,0]
+            gridaa[:] = AAA
+            gridee[:] = EEE
+            fff[:] = ff
+            nnn[:] = nn
+            ieadd[:] = IEADs
+            rootgrp.close()
+    
+    zipf = zipfile.ZipFile('hpic_ieads.zip', 'w', zipfile.ZIP_DEFLATED)
+    zipdir('hpic_ieads/', zipf)
+    zipf.close()        
+    #print('shapes', SOLPS[:,0].shape, ff.shape)
+    #plt.close()
+    #plt.plot(SOLPS[:,0],abs(ff.T))
+    #plt.title('plot title')
+    #plt.title('ITER Divertor Target Plasma Density')
+    #plt.ylabel('n[m-3]')
+    #plt.xlabel('R-Rsep[m]')
+    #plt.yscale('log')
+    #plt.savefig('flux.png')
+    #plt.close()
+
+def zipdir(path, ziph):
+    # ziph is zipfile handle
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            ziph.write(os.path.join(root, file))
+
 def plot_hpic_ieadDavide(solps_path='/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180730/solpsTarg.txt',HpicDataFolder = '/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180730/hpicwork0004'):
     me   =  9.10938356e-31; # Electron mass
     mp   =  1.67262190e-27; # Proton mass
@@ -597,8 +630,11 @@ def printBackgroundDist(path = '',rmrsPoints = [-0.1,0.02,0.09,0.2]):
         #    shutil.copyfile('gitrOut.txt',path+'/'+'gitrOut.txt')
     return  bgFlux,flux_fracs
 if __name__ == "__main__":   
-    plot_hpic_ieadDavide(solps_path='/project/projectdirs/atom/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180905/solpsTarg.txt',HpicDataFolder = '/project/projectdirs/atom/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180905/hpicdata0005')
-
+    #plot_hpic_ieadDavide(solps_path='/project/projectdirs/atom/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180905/solpsTarg.txt',HpicDataFolder = '/project/projectdirs/atom/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180905/hpicdata0005')
+    plot_hpic_iead(solps_path='solpsTarg.txt', \
+            HpicDataFolder = ['/project/projectdirs/m1709/psi-install-cori/hpic_data/mq3/hPIC_IEAD_solps_conditions/hPIC_IEAD_DATA', \
+            '/project/projectdirs/m1709/psi-install-cori/hpic_data/mq3/hPIC_IEAD_He2_final/hPIC_IEAD_He2'],\
+            solpsIndex = [3,4])
     #plot_hpic_ieadDavide()
     #nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic()
     #readFtridynSelf()
