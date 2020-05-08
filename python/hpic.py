@@ -81,6 +81,7 @@ def plot_hpic_iead(solps_path='solpsTarg.txt',HpicDataFolder = '/global/homes/t/
             EEE[i,:] = energy;
             AAA[i,:] = angle;
             IEAD = np.loadtxt( HpicDataFolder[k] +'/' +ID +'_IEAD.dat',dtype='float',delimiter = ',');
+            IEADs[i,:,:] = IEAD
                 #plt.close()
                 #plt.pcolor(AA,EE,IEAD)
                 #plt.colorbar(orientation='vertical')
@@ -234,80 +235,53 @@ def plot_hpic_ieadDavide(solps_path='/global/homes/t/tyounkin/atomIPS/atom-insta
     plt.savefig('flux.png')
     plt.close()
 
-def readHpic(fname = 'hpic.nc'):
-    ncFile = netCDF4.Dataset(fname,"r")
-    nLocations = len(ncFile.dimensions['nL'])
-    nSpecies = len(ncFile.dimensions['nS'])
-    nE = len(ncFile.dimensions['nE'])
-    nA = len(ncFile.dimensions['nA'])
-    print("dimensions nL nS nE nA", nLocations, nSpecies, nE, nA)
+def readHpic(pathname = 'hpic_ieads',solps_inds=[3,4]):
+    nSpec = len(solps_inds)
+    nLocations = [];
+    nE = []
+    nA = []
+    r = []
+    z = []
+    Z = []
+    A = []
+    RmRs = []
+    gridE = []
+    gridA = []
+    flux = []
+    dens = []
+    IEAD = []
 
-    r = np.array(ncFile.variables['r'])
-    z = np.array(ncFile.variables['z'])
-    Z = np.array(ncFile.variables['Z'])
-    A = np.array(ncFile.variables['A'])
-    print("Z",Z)
-    print("A",A)
-    RmRs = np.array(ncFile.variables['RmRs'])
-    gridE = np.array(ncFile.variables['gridE'])
-    gridA = np.array(ncFile.variables['gridA'])
-    gridE = np.reshape(gridE,[nLocations,nE])
-    gridA = np.reshape(gridA,[nLocations,nA])
-    flux = np.array(ncFile.variables['flux'])
-    flux =np.reshape(flux,[nSpecies,nLocations])
-    plt.close()
-    plt.plot(RmRs,abs(flux.T))
-    plt.title('plot title')
-    plt.title('ITER Divertor Target Plasma Density')
-    plt.ylabel('n[m-3]')
-    plt.xlabel('R-Rsep[m]')
-    plt.yscale('log')
-    plt.savefig('flux.png')
-    plt.close()
-    dens = np.array(ncFile.variables['dens'])
-    dens =np.reshape(dens,[nSpecies,nLocations])
-    
-    IEAD = np.array(ncFile.variables['iead'])
-    IEAD = np.reshape(IEAD,[nSpecies,nLocations,nE,nA])
-    print("gridA ", gridA[0,:]) 
-    print("gridE ", gridE[0,:]) 
-    print("iead shape ", IEAD.shape)
-    print("iead00 ", np.reshape(IEAD[0,0,:,:],(nE,nA)))
-    plt.pcolor(gridA[0,:],gridE[0,:],np.reshape(IEAD[0,0,:,:],(nE,nA)))
-    plt.colorbar(orientation='vertical')
-    plt.title('plot title')
-    plt.title('ITER Divertor Target Plasma Density')
-    plt.ylabel('n[m-3]')
-    plt.xlabel('R-Rsep[m]')
-    plt.savefig('iead00.png')
-    #for i in range(len(z)):
-    #    idx = (np.abs(zPoints - z[i])).argmin()
-    #    print('index',idx)
-    #    heFlux[i] = flux[idx] 
-    #    thisDist = EAdist[:,:,idx] #first dimension is angle, second is energy
-    #    thisDist = np.transpose(thisDist)
-    #    print('thisDistHe size', thisDist.shape)
-    #    #print(thisDist)
-    #    Aweight = np.sum(thisDist,axis=0)
-    #    gitrDir = 'GITRoutput/'+'gitr'+str(i)
-    #    os.mkdir(gitrDir)
-    #    np.savetxt(gitrDir+'/gitrFluxE.dat', gridE)
-    #    np.savetxt(gitrDir+'/gitrFluxAweight.dat', Aweight)
-    #    np.savetxt(gitrDir+'/gitrFluxA.dat',gridA[:-1])
-    #    np.savetxt(gitrDir+'/gitrFluxEAdist.dat', thisDist)
-    #    
-    #    if(path != ''): 
-    #        np.savetxt(path+'/'+gitrDir+'/gitrFluxE.dat', gridE)
-    #        np.savetxt(path+'/'+gitrDir+'/gitrFluxAweight.dat', Aweight)
-    #        np.savetxt(path+'/'+gitrDir+'/gitrFluxA.dat', gridA)
-    #        np.savetxt(path+'/'+gitrDir+'/gitrFluxEAdist.dat', thisDist)
+    for i in range(nSpec):
+        fname = pathname + '/hpic'+str(i)+'.nc'
 
-    #    for j in range(0,nA):
-    #        #print('Evec size ', gridE.size)
-    #        #print('EAdist[:,i] size ', EAdist[:,i].size)
-    #        edOut = np.column_stack((gridE,thisDist[:,j]))
-    #        np.savetxt(gitrDir+'/dist'+str(j)+'.dat', edOut)
-    return RmRs,r,z,nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD
+        ncFile = netCDF4.Dataset(fname,"r")
+        nLocations.append(len(ncFile.dimensions['nL']))
+        nE.append(len(ncFile.dimensions['nE']))
+        nA.append(len(ncFile.dimensions['nA']))
+        print("dimensions nL nE nA", nLocations, nE, nA)
+
+        r.append(np.array(ncFile.variables['r']))
+        z.append(np.array(ncFile.variables['z']))
+        Z.append(np.array(ncFile.variables['Z']))
+        A.append(np.array(ncFile.variables['A']))
+        print("Z",Z)
+        print("A",A)
+        RmRs.append(np.array(ncFile.variables['RmRs']))
+        gridE.append(np.array(ncFile.variables['gridE']))
+        gridA.append(np.array(ncFile.variables['gridA']))
+        print('gridE',gridE[i])
+        print('gridA',gridA[i])
+        #gridE = np.reshape(gridE,[nLocations,nE])
+        #gridA = np.reshape(gridA,[nLocations,nA])
+        flux.append(np.array(ncFile.variables['flux']))
+        #flux =np.reshape(flux,[nSpecies,nLocations])
+        dens.append(np.array(ncFile.variables['dens']))
+        #dens =np.reshape(dens,[nSpecies,nLocations])
+        
+        IEAD.append(np.array(ncFile.variables['iead']))
+        #IEAD = np.reshape(IEAD,[nSpecies,nLocations,nE,nA])
+    print('iead shape',IEAD[0].shape)
+    return RmRs,r,z,nE,nA,nLocations,nSpec,Z,A,dens,flux,gridE,gridA,IEAD
 def readFtridynSelf(fname='ftridynSelf.nc'):
     ncFile = netCDF4.Dataset(fname,"r")
     nE = len(ncFile.dimensions['nE'])
@@ -381,132 +355,69 @@ def readFtridynBackground(fname='ftridynBackground.nc'):
     #plt.xlabel('E[eV]')
     #plt.savefig('Edist.png')
     return E,A,spyld,eDistEgrid,energyDist,phiGrid,cosXdist
-def computeSputtYld(plots=0):
+def computeSputtYld(plots=0,hpic_zipfile='hpic_ieads',solps_inds = [3,4]):
     #plot_hpic_iead()
+    nSpec = len(solps_inds)
+    with zipfile.ZipFile(hpic_zipfile+'.zip', 'r') as zipObj:
+        # Extract all the contents of zip file in current directory
+        zipObj.extractall()
     Energy,Angle,spyld,eDistEgrid,energyDist,phiGrid,cosXdist=readFtridynBackground()
-    RmRs,r,z,nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic()
-    ftSpecies=0
-    specInd = []
-    yfElements = np.zeros((4,nLocations,nE,nA))
-    yfSpecies = 0*IEAD
-    sputtContribution = np.zeros([nLocations,len(A)])
-    fContribution = np.zeros([nLocations,len(A)])
-    for i in range(nLocations):
-        if(gridE[i,-1] > 100.0):
-            ftSpecies=0
-            for j in range(len(A)):
-                if plots:
-                    plt.close()
-                    plt.figure(1,figsize=(10, 6), dpi=200)
-                    plt.subplot(2,2,1)
-                    plt.pcolor(gridA[i,:],gridE[i,:],np.reshape(IEAD[j,i,:,:],(nE,nA)))
-                    plt.colorbar(orientation='vertical')
-                    plt.subplot(2,2,2)
-                    plt.pcolor(Angle,Energy,np.reshape(spyld[ftSpecies,:,:],[len(Energy),len(Angle)]))
-                    plt.colorbar(orientation='vertical')
-                print('doing meshgrid')
-                ieadGridX,ieadGridY = np.meshgrid(gridE[i,:],gridA[i,:])
-                points = np.zeros([len(Energy)*len(Angle),2])
-                val1 = np.reshape(spyld[ftSpecies,:,:],[len(Energy),len(Angle)])
-                values = []
-                print('doing points and values')
-                for ii in range(len(Energy)):
-                    for jj in range(len(Angle)):
-                        points[ii*len(Angle)+jj,0] = Energy[ii]
-                        points[ii*len(Angle)+jj,1] = Angle[jj]
-                        values.append(val1[ii,jj])
-                print('doing griddatta')
-                grid_z1 = griddata(points, values, (ieadGridX, ieadGridY), method='linear',fill_value=0.0)
-                print('grid_z',grid_z1.shape)
-                if plots:
-                    plt.subplot(2,2,3)
-                    print('plotting gridz',gridE)
-                    plt.pcolor(ieadGridY,ieadGridX,grid_z1)
-                    plt.colorbar(orientation='vertical')
-                print('saving')
-                mult = np.multiply(grid_z1,np.reshape(IEAD[j,i,:,:],(nE,nA)).T)
-                yfSpecies[j,i,:,:] = mult.T
-                if plots:
-                    plt.subplot(2,2,4)
-                    plt.pcolor(ieadGridY,ieadGridX,mult)
-                    plt.colorbar(orientation='vertical')
-                    plt.savefig('hpicFT'+str(i)+str(j)+'.png')
-                if(j < len(A)-1):
-                    if(ftSpecies ==0):
-                        specInd.append(j)
-                        ftSpecies = ftSpecies+1
-                    elif(A[j+1] > A[j]):
-                        specInd.append(j)
-                        print("aj+1 aj ftSpecies", A[j+1] ,A[j],ftSpecies)
-                        ftSpecies = ftSpecies+1
-                sputtContribution[i,j] = np.sum(mult)
-                fContribution[i,j] = np.sum(np.reshape(IEAD[j,i,:,:],(nE,nA)))
-    normSputtCont = np.divide(sputtContribution,np.sum(fContribution,axis=1)[:,None])
-    normSputtCont[np.isnan(normSputtCont)] = 0.0
-    yfElements[0,:,:,:] = yfSpecies[0,:,:,:]
-    yfElements[1,:,:,:] = yfSpecies[1,:,:,:]
-    yfElements[2,:,:,:] = np.sum(yfSpecies[2:4,:,:,:],axis=0)
-    yfElements[3,:,:,:] = np.sum(yfSpecies[8:18,:,:,:],axis=0)
-    print(('max yfSpc and yfEl', np.max(yfSpecies[8:18,:,:,:]), np.max(yfElements[3,:,:,:])))
-    eDistLocations = np.zeros((nLocations,len(eDistEgrid)))
-    aDistLocations = np.zeros((nLocations,len(phiGrid)))
-    for i in range(nLocations):
-        for j in range(nE):
-            thisE = gridE[i,j]
-            aa = Energy - thisE
-            indPlusVal = min(ii for ii in aa if ii >= 0)
-            idxPlus = list(aa).index(indPlusVal)
-            eInd = idxPlus-1
-            #print('Energy and eInd',thisE,eInd)
-            if eInd >= 0:
-                for k in range(nA):
-                    thisA = gridA[i,k]
-                    #print('Energy angle',thisE,thisA)
-                    aInd = int((thisA - Angle[0])/(Angle[1]-Angle[0]))
-                    #print('Energy angle ind',eInd,aInd)
-                    #if yfElements[3,i,j,k] > 0.0:
-                        #print('yfElements and energyDist',yfElements[3,i,j,k],energyDist[3,eInd,aInd,:])
-                    eDistLocations[i,:] = yfElements[3,i,j,k]*energyDist[3,eInd,aInd,:] + eDistLocations[i,:]
-                    aDistLocations[i,:] = yfElements[3,i,j,k]*cosXdist[3,eInd,aInd,:] + aDistLocations[i,:]
-    rootgrp = netCDF4.Dataset("EAdistLocations.nc", "w", format="NETCDF4")
-    nll = rootgrp.createDimension("nL", nLocations)
-    nee = rootgrp.createDimension("nEdist", len(eDistEgrid))
-    naa = rootgrp.createDimension("nAdist", len(phiGrid))
-    eee = rootgrp.createVariable("E","f8",("nEdist"))
-    aaa = rootgrp.createVariable("phi","f8",("nAdist"))
-    edl = rootgrp.createVariable("eDistLocations","f8",("nL","nEdist"))
-    adl = rootgrp.createVariable("aDistLocations","f8",("nL","nAdist"))
-    eee[:] = eDistEgrid
-    aaa[:] = phiGrid
-    edl[:] = eDistLocations
-    adl[:] = aDistLocations
-    rootgrp.close()
-                    
-    plt.close()
-    #plt.plot(RmRs,normSputtCont[:,0:8])
-    plt.plot(RmRs,normSputtCont[:,0:4])
-    plt.plot(RmRs,normSputtCont[:,8:16],linestyle='dashed')
-    plt.plot(RmRs,normSputtCont[:,16:19],linestyle='dotted')
-    plt.ticklabel_format(style='sci', axis='y',scilimits=(-4,-4))
-    plt.title('Energy-Angle Averaged Sputtering Yield \n of Background Species\n')
-    plt.ylabel('Yield')
-    plt.xlabel('R-Rsep [m]')
-    plt.legend(['D_1+','T_1+','He_1+','He_2+','Ne_1+','Ne_2+','Ne_3+','Ne_4+','Ne_5+','Ne_6+','Ne_7+','Ne_8+','Ne_9+','Ne_10+'],loc=1)
-    plt.savefig('totalSputt.png')
-    heTotal = np.sum(normSputtCont[:,2:4],axis=1)
-    beTotal = np.sum(normSputtCont[:,4:8],axis=1)
-    neTotal = np.sum(normSputtCont[:,8:18],axis=1)
-    plt.close()
-    plt.plot(RmRs,normSputtCont[:,0])
-    plt.plot(RmRs,normSputtCont[:,1])
-    plt.plot(RmRs,heTotal)
-    plt.plot(RmRs,beTotal)
-    plt.plot(RmRs,neTotal)
-    plt.legend(['D','T','He','Be','Ne'])
-    plt.savefig('totalSputt2.png')
-    specArray = ['D_1+','T_1+','He_1+','He_2+','Be_1+','Be_2+','Be_3+','Be_4+','Ne_1+','Ne_2+','Ne_3+','Ne_4+','Ne_5+','Ne_6+','Ne_7+','Ne_8+','Ne_9+','Ne_10+']
+    RmRs,r,z,nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic(hpic_zipfile,solps_inds)
+        
+    RmRs = RmRs[0]
+    Y = np.zeros((2*nSpec,len(RmRs)))
+    ee, aa = np.meshgrid(Energy, Angle)
+    for i in range(nSpec):
+        gridE_current = gridE[i]
+        gridA_current = gridA[i]
+        IEAD_current = IEAD[i]
+        #print('size e a spyld', Energy.shape, Angle.shape, spyld.shape)
+        #FIXME 1 index is for helium specifically
+        f = scii.interp2d(Energy, Angle, np.transpose(spyld[1,:,:]))
+        plt.close()
+        plt.pcolor(Energy, Angle, np.transpose(spyld[1,:,:]))
+        plt.colorbar(orientation='vertical')
+        plt.title('spyld')
+        plt.ylabel('E[eV]')
+        plt.xlabel('A[degrees]')
+        plt.savefig('spyld.png')
+        plt.close()
+
+        flux_current =flux[i]
+        Y[nSpec+i,:] = flux_current
     
-    np.savetxt('SpylPerSpecies.dat', normSputtCont,header=" ".join(specArray))
+        for j in range(len(RmRs)):
+            IEAD_current_location = IEAD_current[j,:,:]
+            gridE_current_location = gridE_current[j,:]
+            gridA_current_location = gridA_current[j,:]
+            plt.close()
+            plt.pcolor(gridE_current_location,gridA_current_location,IEAD_current_location)
+            plt.colorbar(orientation='vertical')
+            plt.title('IEAD')
+            plt.ylabel('E[eV]')
+            plt.xlabel('A[degrees]')
+            plt.savefig('iead.png')
+            plt.close()
+        
+            spyld_current = f(gridE_current_location, gridA_current_location)
+            #spyld_current = griddata((gridE_current_location.flatten(),gridA_current_location.flatten()),spyld.flatten(), (r_midpoint, z_midpoint), method='linear')
+            
+            plt.close()
+            plt.pcolor(gridE_current_location,gridA_current_location, spyld_current)
+            plt.colorbar(orientation='vertical')
+            plt.title('Y')
+            plt.ylabel('E[eV]')
+            plt.xlabel('A[degrees]')
+            plt.savefig('Ys.png')
+            plt.close()
+
+            Y[i,j] = np.sum(np.multiply(np.transpose(IEAD_current_location),spyld_current))/np.sum(IEAD_current_location)
+
+
+        
+    np.savetxt('Yields.txt', np.transpose(Y), delimiter=' ',header='Yields and fluxes')
+
+
 def printBackgroundDist(path = '',rmrsPoints = [-0.1,0.02,0.09,0.2]):
     RmRs,r,zPoints,nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic()
     flux = np.abs(flux)
@@ -631,14 +542,14 @@ def printBackgroundDist(path = '',rmrsPoints = [-0.1,0.02,0.09,0.2]):
     return  bgFlux,flux_fracs
 if __name__ == "__main__":   
     #plot_hpic_ieadDavide(solps_path='/project/projectdirs/atom/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180905/solpsTarg.txt',HpicDataFolder = '/project/projectdirs/atom/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180905/hpicdata0005')
-    plot_hpic_iead(solps_path='solpsTarg.txt', \
-            HpicDataFolder = ['/project/projectdirs/m1709/psi-install-cori/hpic_data/mq3/hPIC_IEAD_solps_conditions/hPIC_IEAD_DATA', \
-            '/project/projectdirs/m1709/psi-install-cori/hpic_data/mq3/hPIC_IEAD_He2_final/hPIC_IEAD_He2'],\
-            solpsIndex = [3,4])
+    #plot_hpic_iead(solps_path='solpsTarg.txt', \
+    #        HpicDataFolder = ['/project/projectdirs/m1709/psi-install-cori/hpic_data/mq3/hPIC_IEAD_solps_conditions/hPIC_IEAD_DATA', \
+    #        '/project/projectdirs/m1709/psi-install-cori/hpic_data/mq3/hPIC_IEAD_He2_final/hPIC_IEAD_He2'],\
+    #        solpsIndex = [3,4])
     #plot_hpic_ieadDavide()
     #nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic()
     #readFtridynSelf()
     #readFtridynBackground()
-    #computeSputtYld()
+    computeSputtYld()
     #printBackgroundDist()
     #plot_hpic_iead()
