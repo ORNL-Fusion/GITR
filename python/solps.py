@@ -510,6 +510,10 @@ def find_strike_points(solps_geometry_filename='/Users/tyounkin/Dissertation/ITE
     y_inner_strikepoint = cry[1,topcut,bottom_left]
     x_outer_strikepoint = crx[-1,topcut,bottom_left]
     y_outer_strikepoint = cry[-1,topcut,bottom_left]
+
+    print('sp xy',x_outer_strikepoint,y_outer_strikepoint)
+    print('sp xy crx',crx[-1,topcut,:])
+    print('sp xy cry',cry[-1,topcut,:])
     return x_x_point,y_x_point, \
            x_inner_strikepoint ,y_inner_strikepoint, \
            x_outer_strikepoint ,y_outer_strikepoint
@@ -527,17 +531,18 @@ def get_target_coordinates(solps_geometry_filename='/Users/tyounkin/Dissertation
     top_left = 2;
     top_right = 3;
 
-    r_inner_target = crx[0,:,[bottom_right, top_right]]
-    z_inner_target = cry[0,:,[bottom_right, top_right]]
-    r_outer_target = crx[-1,:,[bottom_left, top_left]]
-    z_outer_target = cry[-1,:,[bottom_left, top_left]]
+    r_inner_target = crx[0,1:,bottom_right] #[bottom_right, top_right]]
+    z_inner_target = cry[0,1:,bottom_right] #[bottom_right, top_right]]
+    r_outer_target = crx[-1,1:,bottom_left] #[bottom_left, top_left]]
+    z_outer_target = cry[-1,1:,bottom_left] #[bottom_left, top_left]]
 
-    r_inner_target = np.unique(r_inner_target)
-    z_inner_target = np.unique(z_inner_target)
-    r_outer_target = np.unique(r_outer_target)
-    z_outer_target = np.unique(z_outer_target)
+    #r_inner_target = np.unique(r_inner_target)
+    #z_inner_target = np.unique(z_inner_target)
+    #r_outer_target = np.unique(r_outer_target)
+    #z_outer_target = np.unique(z_outer_target)
 
     print('zouter',z_outer_target)
+    print('router',r_outer_target)
 
     return r_inner_target,z_inner_target, \
            r_outer_target,z_outer_target
@@ -692,7 +697,6 @@ def read_target_file(filename = '/Users/tyounkin/Code/solps-iter-data/build/righ
     ti = target[:,2]
     ni = np.zeros((target_shape[0],nSpecies))
     flux = np.zeros((target_shape[0],nSpecies))
-
     for i in range(nSpecies):
         ni[:,i] = target[:,3+i]
         flux[:,i] = target[:,3+nSpecies+i]
@@ -762,13 +766,19 @@ def make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
     i_a, i_b = intersection(x1, z1, r_right_target, z_right_target)
 
     print('i_a',i_a)
-    A = np.zeros((len(i_a),4))
+    A = np.zeros((len(i_a),10))
     A[:,0] = r_right_target
     A[:,1] = z_right_target
     A[:,2] = r_minus_r_sep
     A[:,3] = i_a
+    A[:,4] = x1[i_a]
+    A[:,5] = x2[i_a]
+    A[:,6] = z1[i_a]
+    A[:,7] = z2[i_a]
+    A[:,8] = 0.5*(x1[i_a]+x2[i_a])
+    A[:,9] = 0.5*(z1[i_a]+z2[i_a])
 
-    np.savetxt('right_target_coordinates.txt',A,header='r,z,r_minus_r_sep,gitr_index')
+    np.savetxt('right_target_coordinates.txt',A,header='r,z,r_minus_r_sep,gitr_index,x1,x2,z1,z2,xmid,zmid')
 
 def make_solps_targ_file_txt(solps_geom = 'b2fgmtry', \
     b_field_file = 'Baseline2008-li0.70.x4.equ', \
@@ -781,8 +791,8 @@ def make_solps_targ_file_txt(solps_geom = 'b2fgmtry', \
     
     rr, zz, r_minus_r_sep, gitr_ind = read_targ_coordinates_file(coords_file)
     print('len z', len(z_right_target))
-    r_no_guard_cells = r_right_target[1:-1]
-    z_no_guard_cells = z_right_target[1:-1]
+    r_no_guard_cells = r_right_target
+    z_no_guard_cells = z_right_target
     
     print('len zno', len(z_no_guard_cells))
     
@@ -817,7 +827,7 @@ def make_solps_targ_file_txt(solps_geom = 'b2fgmtry', \
 
     len_rmid = len(r_midpoint)
     A = np.zeros((len(r_midpoint),3))
-    A[:,0] = r_minus_r_sep[1:-2] + 0.5*length
+    A[:,0] = r_minus_r_sep[0:-1] + 0.5*length
     A[:,1] = r_midpoint
     A[:,2] = z_midpoint
 
@@ -853,4 +863,11 @@ if __name__ == "__main__":
     #find_strike_points()
     #read_target_file()
     #get_target_coordinates()
-    make_solps_targ_file()
+    #make_solps_targ_file()
+    #make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
+    #solps_geom = '/project/projectdirs/m1709/psi-install-cori/solps_data/mq3/b2fgmtry', \
+    #right_target_filename= 'rightTargOutput')
+    make_solps_targ_file_txt(solps_geom = '/project/projectdirs/m1709/psi-install-cori/solps_data/mq3/b2fgmtry', \
+    b_field_file = '/project/projectdirs/m1709/psi-install-cori/solps_data/mq3/Baseline2008-li0.70.x4.equ', \
+    coords_file = 'right_target_coordinates.txt', \
+    right_target_filename= 'rightTargOutput')
