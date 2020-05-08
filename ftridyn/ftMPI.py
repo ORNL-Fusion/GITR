@@ -41,7 +41,7 @@ class species_lookup_table:
 	def __init__(self,dataFile):
 		#cwd = os.path.dirname(os.path.realpath(__file__))
 		print('dataFile',dataFile)
-		self.table1 = open(dataFile[0],'r').readlines()[11:130]
+		self.table1 = open(dataFile,'r').readlines()[11:130]
 		self.species_name = []
 		self.ZZ = []
 		self.M = []
@@ -864,6 +864,8 @@ def main(func,argv):
         print(d)
         d['Escale'] = d['Escale'][0]
         d['target'] = d['target'][0]
+        d['exe'] = d['exe'][0]
+        d['data'] = d['data'][0]
         if(d['Escale'] == 'log'):
             energy = np.logspace(d['energy_start'],d['energy_end'],d['nE'])
         else:

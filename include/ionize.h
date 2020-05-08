@@ -38,9 +38,22 @@ CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
 float get_rand(std::mt19937 *state,int indx)
 {
         std::uniform_real_distribution<float> dist(0.0, 1.0);
-        float r1 = dist(state[indx]);
+	std::mt19937 this_state = state[indx];
+        float r1 = dist(this_state);
+	state[indx] = this_state;
 	return r1;
 }
+
+CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
+float get_rand(std::minstd_rand *state,int indx)
+{
+        std::uniform_real_distribution<float> dist(0.0, 1.0);
+	std::minstd_rand this_state = state[indx];
+        float r1 = dist(this_state);
+	state[indx] = this_state;
+	return r1;
+}
+
 template <typename T=std::mt19937> 
 struct ionize {
   Flags *flags;
@@ -142,8 +155,8 @@ struct ionize {
   }
 };
 
-template <typename T=std::mt19937> 
-__global__ void ionize_kernel(ionize<curandState> i0, std::size_t indx) {
-   i0(indx);
-}
+//template <typename T=std::mt19937> 
+//__global__ void ionize_kernel(ionize<curandState> i0, std::size_t indx) {
+//   i0(indx);
+//}
 #endif

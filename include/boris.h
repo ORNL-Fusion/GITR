@@ -464,6 +464,13 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
          //std::cout << "point to AB BC CA " << p0ABdist << " " << p0BCdist << " " << p0CAdist << std::endl;
         //}
        }
+    if(isnan(directionUnitVector[0]) || isnan(directionUnitVector[1]) || isnan(directionUnitVector[2])){
+	    printf("minDist %f \n", minDistance);
+	    printf("directionV %f %f %f \n", directionUnitVector[0],directionUnitVector[1],directionUnitVector[2]);
+	    directionUnitVector[0] = 0.0;
+	    directionUnitVector[1] = 0.0;
+	    directionUnitVector[2] = 0.0;
+    }
       //vectorScalarMult(-1.0,directionUnitVector,directionUnitVector);
       //std::cout << "min dist " << minDistance << std::endl;
 #else //2dGeom     
@@ -700,7 +707,12 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
         Emag = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength))+ (1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius) );
         float part1 = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength)));
         float part2 = pot*(1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius);
-        //std::cout << "Emag " << Emag << std::endl;
+        if(isnan(Emag)){
+	printf("Emag %f ", Emag);
+	}
+        if(isnan(directionUnitVector[0]) ||isnan(directionUnitVector[1]) || isnan(directionUnitVector[2]) ){
+	printf("direction %f %f %f \n", directionUnitVector[0],directionUnitVector[1],directionUnitVector[2]);
+	}
         //std::cout << "fd " << fd << std::endl;
         //std::cout << "minDistance " << minDistance << std::endl;
 #endif

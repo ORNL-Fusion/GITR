@@ -255,19 +255,19 @@ void operator()(std::size_t indx) const {
       int wallHit = particles->surfaceHit[indx];
       int surfaceHit = boundaryVector[wallHit].surfaceNumber;
       int surface = boundaryVector[wallHit].surface;
-      //FIXME
-      if (wallHit > 260)
-        wallHit = 260;
-      if (wallHit < 0)
-        wallHit = 0;
-      if (surfaceHit > 260)
-        surfaceHit = 260;
-      if (surfaceHit < 0)
-        surfaceHit = 0;
-      if (surface > 260)
-        surface = 260;
-      if (surface < 0)
-        surface = 0;
+      ////FIXME
+      //if (wallHit > 260)
+      //  wallHit = 260;
+      //if (wallHit < 0)
+      //  wallHit = 0;
+      //if (surfaceHit > 260)
+      //  surfaceHit = 260;
+      //if (surfaceHit < 0)
+      //  surfaceHit = 0;
+      //if (surface > 260)
+      //  surface = 260;
+      //if (surface < 0)
+      //  surface = 0;
       float eInterpVal = 0.0;
       float aInterpVal = 0.0;
       float weight = particles->weight[indx];

@@ -52,7 +52,7 @@ public:
     int interpolator_number = get_variable<int>(cfg, field_name + ".interpolation");
     if ( interpolator_number == 0)
     {
-      std::cout << "constant " << std::endl;
+      //std::cout << "constant " << std::endl;
       field_type = FieldType_constant;
       nD = 0;
       values[0] = get_variable<float>(cfg, field_name+ ".value");
@@ -60,7 +60,7 @@ public:
     }
     else if (interpolator_number > 0)
     {
-      std::cout << "non - constant " << std::endl;
+      //std::cout << "non - constant " << std::endl;
     std::string ncfilename =
         get_variable<const char *>(cfg, field_name + ".filename");
     std::string ncvarname =
