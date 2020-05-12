@@ -964,11 +964,18 @@ def main(func,argv):
                     nenergyRef = np.loadtxt(pathString+"/"+"energyRef.out", dtype='float')
                     eDistributionRef[specNum,i,j,:] = nenergyRef
                     totalIndex = totalIndex+1
-	#for i in range(d['nS']):	    
+	#for i in range(d['nS']):
+        if d['beam'][-1] == d['target']:
+            nS_background = d['nS']-1
+            save_self = 1
+        else:
+            nS_background = d['nS']
+            save_self = 0
+
         rootgrp = netCDF4.Dataset("ftridynBackground"+".nc", "w", format="NETCDF4")
         ne = rootgrp.createDimension("nE", len(energy))
         na = rootgrp.createDimension("nA", len(angle))
-        ns = rootgrp.createDimension("nS", d['nS']-1)
+        ns = rootgrp.createDimension("nS", nS_background)
         nedistgrid = rootgrp.createDimension("nEdistBins", nEgrid)
         nedistgridref = rootgrp.createDimension("nEdistBinsRef", nEgrid_ref)
         nadistgrid = rootgrp.createDimension("nAdistBins", nAgrid)
@@ -994,57 +1001,58 @@ def main(func,argv):
         edistegridref[:] = eDistEgridRef
         phigrid[:] = phiGrid
         thetagrid[:] = thetaGrid
-        spyld[:] = sputt[0:(d['nS']-1),:,:]
-        rfyld[:] = refl[0:(d['nS']-1),:,:]
-        cosxdist[:] = cosXDistribution[0:(d['nS']-1),:,:,:]
-        cosydist[:] = cosYDistribution[0:(d['nS']-1),:,:,:]
+        spyld[:] = sputt[0:(nS_background),:,:]
+        rfyld[:] = refl[0:(nS_background),:,:]
+        cosxdist[:] = cosXDistribution[0:(nS_background),:,:,:]
+        cosydist[:] = cosYDistribution[0:(nS_background),:,:,:]
         #coszdist[:] = cosZDistribution[0:d['nS'],:,:,:]
-        cosxdistref[:] = cosXDistributionRef[0:(d['nS']-1),:,:,:]
-        cosydistref[:] = cosYDistributionRef[0:(d['nS']-1),:,:,:]
+        cosxdistref[:] = cosXDistributionRef[0:(nS_background),:,:,:]
+        cosydistref[:] = cosYDistributionRef[0:(nS_background),:,:,:]
         #coszdistref[:] = cosZDistributionRef[0:d['nS'],:,:,:]
-        edist[:] = eDistribution[0:(d['nS']-1),:,:,:]
-        edistref[:] = eDistributionRef[0:(d['nS']-1),:,:,:]
+        edist[:] = eDistribution[0:(nS_background),:,:,:]
+        edistref[:] = eDistributionRef[0:(nS_background),:,:,:]
         rootgrp.close()
         
-        rootgrp = netCDF4.Dataset("ftridynSelf"+".nc", "w", format="NETCDF4")
-        ne = rootgrp.createDimension("nE", len(energy))
-        na = rootgrp.createDimension("nA", len(angle))
-        nedistgrid = rootgrp.createDimension("nEdistBins", nEgrid)
-        nedistgridref = rootgrp.createDimension("nEdistBinsRef", nEgrid_ref)
-        nadistgrid = rootgrp.createDimension("nAdistBins", nAgrid)
-        spyld = rootgrp.createVariable("spyld","f8",("nE","nA"))
-        rfyld = rootgrp.createVariable("rfyld","f8",("nE","nA"))
-        ee = rootgrp.createVariable("E","f8",("nE"))
-        aa = rootgrp.createVariable("A","f8",("nA"))
-        cosxdist = rootgrp.createVariable("cosXDist","f8",("nE","nA","nAdistBins"))
-        cosydist = rootgrp.createVariable("cosYDist","f8",("nE","nA","nAdistBins"))
-        #coszdist = rootgrp.createVariable("cosZDist","f8",("nE","nA","nAdistBins"))
-        cosxdistref = rootgrp.createVariable("cosXDistRef","f8",("nE","nA","nAdistBins"))
-        cosydistref = rootgrp.createVariable("cosYDistRef","f8",("nE","nA","nAdistBins"))
-        #coszdistref = rootgrp.createVariable("cosZDistRef","f8",("nE","nA","nAdistBins"))
-        edist = rootgrp.createVariable("energyDist","f8",("nE","nA","nEdistBins"))
-        edistref = rootgrp.createVariable("energyDistRef","f8",("nE","nA","nEdistBinsRef"))
-        edistegrid = rootgrp.createVariable("eDistEgrid","f8",("nEdistBins")) 
-        edistegridref = rootgrp.createVariable("eDistEgridRef","f8",("nEdistBinsRef")) 
-        phigrid = rootgrp.createVariable("phiGrid","f8",("nAdistBins")) 
-        thetagrid = rootgrp.createVariable("thetaGrid","f8",("nAdistBins")) 
-        phigrid[:] = phiGrid
-        thetagrid[:] = thetaGrid
-        ee[:] = energy
-        aa[:] = angle
-        edistegrid[:] = eDistEgrid
-        edistegridref[:] = eDistEgridRef
-        spyld[:] = sputt[-1,:,:]
-        rfyld[:] = refl[-1,:,:]
-        cosxdist[:] = cosXDistribution[-1,:,:,:]
-        cosydist[:] = cosYDistribution[-1,:,:,:]
-        #coszdist[:] = cosZDistribution[-1,:,:,:]
-        cosxdistref[:] = cosXDistributionRef[-1,:,:,:]
-        cosydistref[:] = cosYDistributionRef[-1,:,:,:]
-        #coszdistref[:] = cosZDistributionRef[-1,:,:,:]
-        edist[:] = eDistribution[-1,:,:,:]
-        edistref[:] = eDistributionRef[-1,:,:,:]
-        rootgrp.close()
+        if save_self:
+            rootgrp = netCDF4.Dataset("ftridynSelf"+".nc", "w", format="NETCDF4")
+            ne = rootgrp.createDimension("nE", len(energy))
+            na = rootgrp.createDimension("nA", len(angle))
+            nedistgrid = rootgrp.createDimension("nEdistBins", nEgrid)
+            nedistgridref = rootgrp.createDimension("nEdistBinsRef", nEgrid_ref)
+            nadistgrid = rootgrp.createDimension("nAdistBins", nAgrid)
+            spyld = rootgrp.createVariable("spyld","f8",("nE","nA"))
+            rfyld = rootgrp.createVariable("rfyld","f8",("nE","nA"))
+            ee = rootgrp.createVariable("E","f8",("nE"))
+            aa = rootgrp.createVariable("A","f8",("nA"))
+            cosxdist = rootgrp.createVariable("cosXDist","f8",("nE","nA","nAdistBins"))
+            cosydist = rootgrp.createVariable("cosYDist","f8",("nE","nA","nAdistBins"))
+            #coszdist = rootgrp.createVariable("cosZDist","f8",("nE","nA","nAdistBins"))
+            cosxdistref = rootgrp.createVariable("cosXDistRef","f8",("nE","nA","nAdistBins"))
+            cosydistref = rootgrp.createVariable("cosYDistRef","f8",("nE","nA","nAdistBins"))
+            #coszdistref = rootgrp.createVariable("cosZDistRef","f8",("nE","nA","nAdistBins"))
+            edist = rootgrp.createVariable("energyDist","f8",("nE","nA","nEdistBins"))
+            edistref = rootgrp.createVariable("energyDistRef","f8",("nE","nA","nEdistBinsRef"))
+            edistegrid = rootgrp.createVariable("eDistEgrid","f8",("nEdistBins")) 
+            edistegridref = rootgrp.createVariable("eDistEgridRef","f8",("nEdistBinsRef")) 
+            phigrid = rootgrp.createVariable("phiGrid","f8",("nAdistBins")) 
+            thetagrid = rootgrp.createVariable("thetaGrid","f8",("nAdistBins")) 
+            phigrid[:] = phiGrid
+            thetagrid[:] = thetaGrid
+            ee[:] = energy
+            aa[:] = angle
+            edistegrid[:] = eDistEgrid
+            edistegridref[:] = eDistEgridRef
+            spyld[:] = sputt[-1,:,:]
+            rfyld[:] = refl[-1,:,:]
+            cosxdist[:] = cosXDistribution[-1,:,:,:]
+            cosydist[:] = cosYDistribution[-1,:,:,:]
+            #coszdist[:] = cosZDistribution[-1,:,:,:]
+            cosxdistref[:] = cosXDistributionRef[-1,:,:,:]
+            cosydistref[:] = cosYDistributionRef[-1,:,:,:]
+            #coszdistref[:] = cosZDistributionRef[-1,:,:,:]
+            edist[:] = eDistribution[-1,:,:,:]
+            edistref[:] = eDistributionRef[-1,:,:,:]
+            rootgrp.close()
 
         exec_time = time.time()
         print("Execution of FTRIDYN Cases took --- %s seconds ---" % (exec_time - start_time))
