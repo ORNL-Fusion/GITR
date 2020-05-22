@@ -308,7 +308,7 @@ def readFtridynSelf(fname='ftridynSelf.nc'):
     eDistEgrid = np.array(ncFile.variables['eDistEgrid'])
     cosDistAgrid = np.array(ncFile.variables['cosDistAgrid'])
     energyDist = np.array(ncFile.variables['energyDist'])
-    energyDist = np.reshape(energyDist,[nE,nA,nEdist])
+    energyDist = np.reshape(energyDist,[nEdist,nA,nE])
     plt.close()
     plt.plot(eDistEgrid,energyDist[-1,-3,:])
     plt.title('W on W Self Sputtering')
@@ -348,12 +348,12 @@ def readFtridynBackground(fname='ftridynBackground.nc'):
     cosXdist = np.array(ncFile.variables['cosXDist'])
     cosXdist = np.reshape(cosXdist,[nS,nE,nA,nAdist])
     print(('Max edist and adist ', np.max(energyDist), np.max(cosXdist)))
-    #plt.close()
-    #plt.plot(eDistEgrid,energyDist[-1,-3,:])
-    #plt.title('W on W Self Sputtering')
-    #plt.ylabel('A [degrees]')
-    #plt.xlabel('E[eV]')
-    #plt.savefig('Edist.png')
+    plt.close()
+    plt.plot(eDistEgrid,energyDist[1,-1,0,:])
+    plt.title('W on W Self Sputtering')
+    plt.ylabel('A [degrees]')
+    plt.xlabel('E[eV]')
+    plt.savefig('Edist.png')
     return E,A,spyld,eDistEgrid,energyDist,phiGrid,cosXdist
 def computeSputtYld(plots=0,hpic_zipfile='hpic_ieads',solps_inds = [3,4]):
     #plot_hpic_iead()
@@ -367,12 +367,15 @@ def computeSputtYld(plots=0,hpic_zipfile='hpic_ieads',solps_inds = [3,4]):
     RmRs = RmRs[0]
     Y = np.zeros((2*nSpec,len(RmRs)))
     ee, aa = np.meshgrid(Energy, Angle)
+    eDist_total = np.zeros((nSpec,len(RmRs),len(eDistEgrid)))
+
     for i in range(nSpec):
         gridE_current = gridE[i]
         gridA_current = gridA[i]
         IEAD_current = IEAD[i]
         #print('size e a spyld', Energy.shape, Angle.shape, spyld.shape)
         #FIXME 1 index is for helium specifically
+        eDist = energyDist[1,:,:,:]
         f = scii.interp2d(Energy, Angle, np.transpose(spyld[1,:,:]))
         plt.close()
         plt.pcolor(Energy, Angle, np.transpose(spyld[1,:,:]))
@@ -382,6 +385,7 @@ def computeSputtYld(plots=0,hpic_zipfile='hpic_ieads',solps_inds = [3,4]):
         plt.xlabel('A[degrees]')
         plt.savefig('spyld.png')
         plt.close()
+    
 
         flux_current =flux[i]
         Y[nSpec+i,:] = flux_current
@@ -391,15 +395,20 @@ def computeSputtYld(plots=0,hpic_zipfile='hpic_ieads',solps_inds = [3,4]):
             gridE_current_location = gridE_current[j,:]
             gridA_current_location = gridA_current[j,:]
             plt.close()
-            plt.pcolor(gridE_current_location,gridA_current_location,IEAD_current_location)
+            plt.pcolor(gridE_current_location,gridA_current_location,np.transpose(IEAD_current_location))
             plt.colorbar(orientation='vertical')
             plt.title('IEAD')
             plt.ylabel('E[eV]')
             plt.xlabel('A[degrees]')
             plt.savefig('iead.png')
             plt.close()
-        
+            
+
+            eee, aaa = np.meshgrid(gridE_current_location, gridA_current_location)
+            print('eee aaa shape',eee.shape)
+            print('spyld shape',spyld.shape)
             spyld_current = f(gridE_current_location, gridA_current_location)
+            spyld_current = gitr.interp_2d(Energy, Angle, spyld[1,:,:],eee,aaa)
             #spyld_current = griddata((gridE_current_location.flatten(),gridA_current_location.flatten()),spyld.flatten(), (r_midpoint, z_midpoint), method='linear')
             
             plt.close()
@@ -411,11 +420,95 @@ def computeSputtYld(plots=0,hpic_zipfile='hpic_ieads',solps_inds = [3,4]):
             plt.savefig('Ys.png')
             plt.close()
 
+            Y_iead = np.multiply(np.transpose(IEAD_current_location),spyld_current)
             Y[i,j] = np.sum(np.multiply(np.transpose(IEAD_current_location),spyld_current))/np.sum(IEAD_current_location)
+     
+            print('edist size',eDist.shape)
+            
+            eee2, aaa2, ed2 = np.meshgrid(gridE_current_location, gridA_current_location,eDistEgrid)
+            edist_current = gitr.interp_3d(Energy, Angle,eDistEgrid, eDist ,eee2,aaa2,ed2)
+            
+            for ii in range(len(Energy)):
+                for jj in range(len(Angle)):
+                    this_edist = edist_current[ii,jj,:]
+                    edist_sum = np.sum(this_edist)
+                    if (edist_sum > 0.0):
+                        this_edist = np.divide(this_edist,eist_sum)
+                    else:
+                        this_edist = 0.0*this_edist
 
+                    eDist_total[i,j,:] = eDist_total[i,j,:] + np.sum(np.multiply(Y_iead[ii,jj],this_edist))
 
-        
+            #print(gridE_current_location)
+            #print(Energy[0])
+            #erange = np.where(gridE_current_location > Energy[0])
+            #erange_high = np.where(gridE_current_location > Energy[-1])
+            #arange = np.where(gridA_current_location > Angle[-1])
+            #gridA_current_location[arange] = Angle[-1]
+            #gridE_current_location[erange_high] = Energy[-1]
+            #print('erange',erange)
+            #erange0 = erange[0]
+            ##erange0 = erange0[0]
+            #print('erange0',erange0)
+            #if (len(erange0)):
+            #    erange0 = erange0[0]
+            #    print('erange0',erange0)
+            #    print('Edist max', np.max(eDist))
+            #    my_interpolating_function = scii.RegularGridInterpolator((np.log10(Energy),Angle,eDistEgrid),eDist,fill_value=0.0)
+            #    pts = np.meshgrid(np.log10(gridE_current_location[erange0:]),gridA_current_location,eDistEgrid)
+            #    pts_columns = np.zeros((len(gridE_current_location[erange0:])*len(gridA_current_location)*len(eDistEgrid),3))
+            #    print('pts size',len(np.reshape(pts[0],-1)))
+            #    print('pts_col size',pts_columns.shape)
+            #    pts_columns[:,0] = np.reshape(pts[0],-1,order='F')
+            #    pts_columns[:,1] = np.reshape(pts[1],-1,order='F')
+            #    pts_columns[:,2] = np.reshape(pts[2],-1,order='F')
+            #    #pts = np.array(pts)
+            #    #pts = np.reshape(pts,(-1,3))
+            #    print('pts size',pts_columns.shape)
+            #    print(pts_columns)
+            #    eDist_interp = my_interpolating_function(pts_columns)
+            #    print('Edist interp', np.max(eDist_interp))
+            #    eDist_interp = np.reshape(eDist_interp,(len(eDistEgrid),len(gridA_current_location),(len(gridE_current_location)-erange0)),order='F')
+            #    eDist_full = np.zeros((len(eDistEgrid),len(gridA_current_location),len(gridE_current_location)))
+            #    eDist_full[:,:,erange0:] = eDist_interp
+            #    #eDist_full = np.zeros((len(gridE_current_location),len(gridA_current_location),len(eDistEgrid)))
+            #    #eDist_full[erange0:,:,:] = eDist_interp
+            #    plt.close()
+            #    for ii in range(len(gridE_current_location)):
+            #        for jj in range(len(gridA_current_location)):
+            #            if ((gridE_current_location[ii] >= Energy[0]) and (gridE_current_location[ii] <= Energy[-1])):
+            #                coord_array = np.zeros((len(eDistEgrid),3))
+            #                coord_array[:,2] = eDistEgrid
+            #                coord_array[:,1] = gridA_current_location[jj]*np.ones(len(eDistEgrid))
+            #                coord_array[:,0] = np.log10(gridE_current_location[ii])*np.ones(len(eDistEgrid))
+            #                plt.plot(my_interpolating_function(coord_array))
+            #    
+            #    plt.title('edists')
+            #    plt.ylabel('E[eV]')
+            #    plt.xlabel('A[degrees]')
+            #    plt.savefig('edist.png')
+            #    plt.close()
+
+            #    eDist_weighted = np.zeros(len(eDistEgrid))
+            #    print('Y_iead', Y_iead)
+            #    print('iead sum',np.sum(IEAD_current_location))
+            #    for ee in range(len(gridE_current_location)):
+            #        for aa in range(len(gridA_current_location)):
+            #            eDist_ee_aa_normalized = eDist_full[:,ee,aa]/np.sum(eDist_full[:,ee,aa])
+            #            if (np.sum(eDist_full[:,ee,aa]) == 0):
+            #                eDist_ee_aa_normalized = np.zeros(len(eDistEgrid))
+            #            eDist_weighted = eDist_weighted + np.abs(flux_current[j])*Y_iead[ee,aa]*eDist_ee_aa_normalized/np.sum(IEAD_current_location)
+            #    #eDist_full = np.zeros((len(gridE_current_location)*len(gridA_current_location)*len(eDistEgrid),3))
+            #    #eDist_interp = scii.interpn([np.log10(Energy),Angle,eDistEgrid],eDist, [gridE_current_location,gridA_current_location,eDistEgrid])
+            #else:
+            #    eDist_weighted = np.zeros(len(eDistEgrid))
+
+            #print('eDist weighted', eDist_weighted)
+            #eDist_total[i,j,:] = eDist_weighted
+    
+    print('edist total',eDist_total)
     np.savetxt('Yields.txt', np.transpose(Y), delimiter=' ',header='Yields and fluxes')
+    np.savetxt('Edists.txt', np.sum(eDist_total,axis=0), delimiter=' ',header='Edists')
 
 
 def printBackgroundDist(path = '',rmrsPoints = [-0.1,0.02,0.09,0.2]):
@@ -543,8 +636,8 @@ def printBackgroundDist(path = '',rmrsPoints = [-0.1,0.02,0.09,0.2]):
 if __name__ == "__main__":   
     #plot_hpic_ieadDavide(solps_path='/project/projectdirs/atom/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180905/solpsTarg.txt',HpicDataFolder = '/project/projectdirs/atom/atom-install-edison/GITR/data/ITER/mq4/hpicdata_solps_DT_20180905/hpicdata0005')
     #plot_hpic_iead(solps_path='solpsTarg.txt', \
-    #        HpicDataFolder = ['/project/projectdirs/m1709/psi-install-cori/hpic_data/mq3/hPIC_IEAD_solps_conditions/hPIC_IEAD_DATA', \
-    #        '/project/projectdirs/m1709/psi-install-cori/hpic_data/mq3/hPIC_IEAD_He2_final/hPIC_IEAD_He2'],\
+    #        HpicDataFolder = ['/Users/tyounkin/Dissertation/ITER/mq3/final/hPIC_IEAD_solps_conditions/hPIC_IEAD_DATA', \
+    #        '/Users/tyounkin/Dissertation/ITER/mq3/final/hPIC_IEAD_He2_final/hPIC_IEAD_He2'],\
     #        solpsIndex = [3,4])
     #plot_hpic_ieadDavide()
     #nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic()
