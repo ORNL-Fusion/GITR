@@ -3956,13 +3956,13 @@ int main(int argc, char **argv, char **envp) {
          fs1.count());
   float testFlowVec[3] = {0.0f};
 #if USEFIELDALIGNEDVALUES > 0
-  interpFieldAlignedVector(&testFlowVec[0], 1.4981, 0.0, -1.2408, nR_flowV,
+  interpFieldAlignedVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV,
                            nZ_flowV, flowVGridr.data(), flowVGridz.data(),
                            flowVr.data(), flowVz.data(), flowVt.data(),
                            nR_Bfield, nZ_Bfield, bfieldGridr.data(),
                            bfieldGridz.data(), br.data(), bz.data(), by.data());
 #else
-  interp2dVector(&testFlowVec[0], 1.4981, 0.0, -1.2408, nR_flowV, nZ_flowV,
+  interp2dVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV, nZ_flowV,
                  flowVGridr.data(), flowVGridz.data(), flowVr.data(),
                  flowVz.data(), flowVt.data());
 #endif
