@@ -134,6 +134,7 @@ int main(int argc, char **argv, char **envp) {
     checkFlags(cfg);
 #endif
   }
+
   auto gitr_flags = new Flags(cfg);
     std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
     //auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
@@ -147,7 +148,9 @@ int main(int argc, char **argv, char **envp) {
     //std::cout << "interp2 " << field1->interpolate(1.0,2.0,3.0) << std::endl;
     ////float interpvalfield  = pField->interpolate();
     //std::cout << "called interpolate " << std::endl;
-//// show memory usage of GPU
+
+// show memory usage of GPU
+
 //#if __CUDACC__
 //  namespace fsn = std::experimental::filesystem;
 //#else

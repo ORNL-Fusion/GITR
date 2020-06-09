@@ -108,9 +108,9 @@ def get_profilesA(case='caseA', fileExtension='', vb=750):
     #export to ncid file
     pop_ncid(ncid, vz2D, Ti2D, gradTi2D)
 
-def get_profilesB(case='caseB', fileExtension='', TD0=100):
+def get_profilesB(fileExtension='', TD0=100):
     L = 30
-    nR, r, nZ, z, mid, ncid = init_ncid(case, fileExtension, L)
+    nR, r, nZ, z, mid, ncid = init_ncid(fileExtension, L)
 
     #define constants
     n0 = 1e20
@@ -123,9 +123,9 @@ def get_profilesB(case='caseB', fileExtension='', TD0=100):
     #export to ncid file
     pop_ncid(ncid, vz2D, Ti2D, gradTi2D)
 
-def get_profilesC(case='caseC', fileExtension=''):
+def get_profilesC(fileExtension=''):
     L = 10
-    nR, r, nZ, z, mid, ncid = init_ncid(case, fileExtension, L)
+    nR, r, nZ, z, mid, ncid = init_ncid(fileExtension, L)
 
     #update electric field
     Ez0 = -25
@@ -139,9 +139,9 @@ def get_profilesC(case='caseC', fileExtension=''):
     ncid.createVariable('Ez','d',('nR','nZ',))[:] = Ez2D
     ncid.close()
 
-def get_profilesD(case='caseD', fileExtension=''):
+def get_profilesD(fileExtension=''):
     L = 10
-    nR, r, nZ, z, mid, ncid = init_ncid(case, fileExtension, L)
+    nR, r, nZ, z, mid, ncid = init_ncid(fileExtension, L)
 
     #update vz from vb
     vb = -112.2
@@ -155,9 +155,9 @@ def get_profilesD(case='caseD', fileExtension=''):
     ncid.createVariable('vz','d',('nZ','nR',))[:] = vz2D
     ncid.close()
 
-def get_profilesE(case='caseE', fileExtension='', TD0=10):
+def get_profilesE(fileExtension='', TD0):
     L = 10
-    nR, r, nZ, z, mid, ncid = init_ncid(case, fileExtension, L)
+    nR, r, nZ, z, mid, ncid = init_ncid(fileExtension, L)
 
     #define constants
     n0 = 1e19
@@ -170,10 +170,10 @@ def get_profilesE(case='caseE', fileExtension='', TD0=10):
     #export to ncid file
     pop_ncid(ncid, vz2D, Ti2D, gradTi2D)
 
-def get_profilesF(case='caseF', fileExtension='', TD0=20):
+def get_profilesF(fileExtension=''):
     L = 30
     sv = 10.85
-    nR, r, nZ, z, mid, ncid = init_ncid(case, fileExtension, L)
+    nR, r, nZ, z, mid, ncid = init_ncid(fileExtension, L)
 
     #define constants
     n0 = 1e19
@@ -328,3 +328,4 @@ def SFTanalysis(cases=['D']):
 
 if __name__ == "__main__":
     get_profilesF()
+    get_profilesD()
