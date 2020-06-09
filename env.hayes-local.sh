@@ -10,4 +10,4 @@ export  NETCDFINCLUDE=$NETCDF_DIR/include
 export  NETCDFCXX4INCLUDE=$NETCDFCXX4_DIR/include
 export  NETCDFLIB=$NETCDFDIR/libnetcdf.dylib
 export  NETCDFLIB_CPP=$NETCDFCXX4DIR/libnetcdf-cxx4.dylib
-export PYTHONPATH=$HOME/Dev/gitr2/python:$PYTHONPATH
+export PYTHONPATH=$HOME/Dev/GITR/python:$PYTHONPATH

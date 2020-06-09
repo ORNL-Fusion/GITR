@@ -42,9 +42,9 @@
 #ifdef __CUDACC__
 #include <curand.h>
 #include <curand_kernel.h>
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 #else
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 #endif
 
 #if USE_MPI
@@ -132,24 +132,24 @@ int main(int argc, char **argv, char **envp) {
   }
 
 // show memory usage of GPU
-#if __CUDACC__
-  namespace fsn = std::experimental::filesystem;
-#else
-  namespace fsn = std::experimental::filesystem;
-#endif
-
-print_gpu_memory_usage(world_rank);
-
-  fsn::path output_folder = "output";
-  // Output
-
-  //boost::filesystem::path dir(output_folder);
-  if (!(fsn::exists(output_folder))) {
-    std::cout << "Doesn't Exist in main" << std::endl;
-    if (fsn::create_directory(output_folder)) {
-      std::cout << " Successfully Created " << std::endl;
-    }
-  }
+//#if __CUDACC__
+//  namespace fsn = std::experimental::filesystem;
+//#else
+//  namespace fsn = std::experimental::filesystem;
+//#endif
+//
+//print_gpu_memory_usage(world_rank);
+//
+//  fsn::path output_folder = "output";
+//  // Output
+//
+//  //boost::filesystem::path dir(output_folder);
+//  if (!(fsn::exists(output_folder))) {
+//    std::cout << "Doesn't Exist in main" << std::endl;
+//    if (fsn::create_directory(output_folder)) {
+//      std::cout << " Successfully Created " << std::endl;
+//    }
+//  }
 
   // Background species info
   float background_Z = 0.0, background_amu = 0.0;
@@ -3888,13 +3888,13 @@ print_gpu_memory_usage(world_rank);
          fs1.count());
   float testFlowVec[3] = {0.0f};
 #if USEFIELDALIGNEDVALUES > 0
-  interpFieldAlignedVector(&testFlowVec[0], 1.4981, 0.0, -1.2408, nR_flowV,
+  interpFieldAlignedVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV,
                            nZ_flowV, flowVGridr.data(), flowVGridz.data(),
                            flowVr.data(), flowVz.data(), flowVt.data(),
                            nR_Bfield, nZ_Bfield, bfieldGridr.data(),
                            bfieldGridz.data(), br.data(), bz.data(), by.data());
 #else
-  interp2dVector(&testFlowVec[0], 1.4981, 0.0, -1.2408, nR_flowV, nZ_flowV,
+  interp2dVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV, nZ_flowV,
                  flowVGridr.data(), flowVGridz.data(), flowVr.data(),
                  flowVz.data(), flowVt.data());
 #endif
