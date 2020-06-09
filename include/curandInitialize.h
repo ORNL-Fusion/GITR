@@ -11,26 +11,26 @@
 #include "Particles.h"
 #include "libconfig.h++"
 
-
+template <typename T=std::mt19937>
 struct curandInitialize{
 #if __CUDACC__
    curandState *s;
 #else
-   std::mt19937 *s;
+   T *s;
 #endif
   int seed;
   
  curandInitialize(
-#if __CUDACC__
+#if __CUDACC__		 
          curandState *_s,
 #else
-         std::mt19937 *_s,
+         T *_s,
 #endif
          int _seed) : s(_s), seed(_seed) {} 
 //void curandInitialize(curandState *_s, int _seed) : s(_s),seed(_seed) {}
     CUDA_CALLABLE_MEMBER_DEVICE
     void operator()(std::size_t indx) {
-#if USE_CUDA
+#if __CUDACC__
        //uint32_t block_id=blockIdx.y*gridDim.x+blockIdx.x;
        //uint32_t blockSize=blockDim.z*blockDim.y*blockDim.x;
        //uint32_t thread_id=threadIdx.z*blockDim.y+threadIdx.y*blockDim.x+threadIdx.x;
@@ -45,7 +45,8 @@ struct curandInitialize{
         curand_init(indx, 0, 0, &s[indx]);
 #else
         std::random_device randDevice;
-        std::mt19937 s0(randDevice());
+        //std::mt19937 s0(randDevice());
+        T s0(1234^indx);
         s[indx] = s0;
 #endif
     }

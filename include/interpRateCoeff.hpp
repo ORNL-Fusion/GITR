@@ -64,6 +64,7 @@ if(charge > 74-1)
             + bN*std::pow(10.0f,Ratesp[charge*nT*nD            + (indT+1)*nD + indN+1]))/abN;
     float fxz = (aT*fx_z1+bT*fx_z2)/abT;
     //std::cout << "fxz1 and 2 " << fx_z1 << " " << fx_z2<< " "<< fxz << std::endl;
+    //printf ("floats:%i %e  \n",charge,fxz);
     return fxz;    
 }
 

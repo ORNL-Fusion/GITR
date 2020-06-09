@@ -464,6 +464,13 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
          //std::cout << "point to AB BC CA " << p0ABdist << " " << p0BCdist << " " << p0CAdist << std::endl;
         //}
        }
+    if(isnan(directionUnitVector[0]) || isnan(directionUnitVector[1]) || isnan(directionUnitVector[2])){
+	    printf("minDist %f \n", minDistance);
+	    printf("directionV %f %f %f \n", directionUnitVector[0],directionUnitVector[1],directionUnitVector[2]);
+	    directionUnitVector[0] = 0.0;
+	    directionUnitVector[1] = 0.0;
+	    directionUnitVector[2] = 0.0;
+    }
       //vectorScalarMult(-1.0,directionUnitVector,directionUnitVector);
       //std::cout << "min dist " << minDistance << std::endl;
 #else //2dGeom     
@@ -700,7 +707,12 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
         Emag = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength))+ (1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius) );
         float part1 = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength)));
         float part2 = pot*(1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius);
-        //std::cout << "Emag " << Emag << std::endl;
+        if(isnan(Emag)){
+	printf("Emag %f ", Emag);
+	}
+        if(isnan(directionUnitVector[0]) ||isnan(directionUnitVector[1]) || isnan(directionUnitVector[2]) ){
+	printf("direction %f %f %f \n", directionUnitVector[0],directionUnitVector[1],directionUnitVector[2]);
+	}
         //std::cout << "fd " << fd << std::endl;
         //std::cout << "minDistance " << minDistance << std::endl;
 #endif
@@ -968,11 +980,12 @@ float operationsTime = 0.0f;
               
 //std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
     	    }
+            }
 #endif
 
 #if ODEINT == 1
-        float m = p.amu*1.6737236e-27;
-        float q_m = p.charge*1.60217662e-19/m;
+        float m = particlesPointer->amu[indx]*1.6737236e-27;
+        float q_m = particlesPointer->charge[indx]*1.60217662e-19/m;
         float r[3]= {0.0, 0.0, 0.0};
         float r2[3]= {0.0, 0.0, 0.0};
         float r3[3]= {0.0, 0.0, 0.0};
@@ -994,13 +1007,13 @@ float operationsTime = 0.0f;
         float halfKr[3] = {0.0,0.0,0.0};
         float halfKv[3] = {0.0,0.0,0.0};
         float half = 0.5;
-                v[0] = p.vx;
-                v[1] = p.vy;
-	            v[2] = p.vz;
+                v[0] = particlesPointer->vx[indx];
+                v[1] = particlesPointer->vy[indx];
+	              v[2] = particlesPointer->vz[indx];
 
-                r[0] = p.xprevious;
-                r[1] = p.yprevious;
-	            r[2] = p.zprevious;
+                r[0] = particlesPointer->xprevious[indx];
+                r[1] = particlesPointer->yprevious[indx];
+	              r[2] = particlesPointer->zprevious[indx];
 #ifdef __CUDACC__
 #else
 #endif
@@ -1013,11 +1026,11 @@ for ( int s=0; s<nSteps; s++ )
     minDist = getE(r[0],r[1],r[2],E,boundaryVector,nLines);
 #endif
 #if USEPRESHEATHEFIELD > 0
-    interp2dVector(&PSE[0],p.xprevious,p.yprevious,p.zprevious,nR_Efield,nZ_Efield,
-          EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-          EfieldZDevicePointer,EfieldTDevicePointer);
+    interparticlesPointer->dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
+          EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
+          EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter);
                  
-    vectorAdd(E,PSE,E);
+    vectorAdd(E,particlesPointer->E,E);
 #endif              
 #ifdef __CUDACC__
 #else
@@ -1069,10 +1082,10 @@ for ( int s=0; s<nSteps; s++ )
     minDist = getE(r2[0],r2[1],r2[2],E,boundaryVector,nLines);
 #endif
 #if USEPRESHEATHEFIELD > 0
-    interp2dVector(&PSE[0],p.xprevious,p.yprevious,p.zprevious,nR_Efield,nZ_Efield,
-               EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-               EfieldZDevicePointer,EfieldTDevicePointer);
-    vectorAdd(E,PSE,E);
+    interparticlesPointer->dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
+               EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
+               EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter);
+    vectorAdd(E,particlesPointer->E,E);
 #endif              
 #ifdef __CUDACC__
 #else
@@ -1125,10 +1138,10 @@ for ( int s=0; s<nSteps; s++ )
     minDist = getE(r3[0],r3[1],r3[2],E,boundaryVector,nLines);
 #endif
 #if USEPRESHEATHEFIELD > 0
-    interp2dVector(&PSE[0],p.xprevious,p.yprevious,p.zprevious,nR_Efield,nZ_Efield,
-               EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-               EfieldZDevicePointer,EfieldTDevicePointer);
-    vectorAdd(E,PSE,E);
+    interparticlesPointer->dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
+               EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
+               EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter);
+    vectorAdd(E,particlesPointer->E,E);
 #endif              
 
 #ifdef __CUDACC__
@@ -1179,10 +1192,10 @@ for ( int s=0; s<nSteps; s++ )
 	minDist = getE(r4[0],r4[1],r4[2],E,boundaryVector,nLines);
 #endif
 #if USEPRESHEATHEFIELD > 0
-   interp2dVector(&PSE[0],p.xprevious,p.yprevious,p.zprevious,nR_Efield,nZ_Efield,
-               EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-               EfieldZDevicePointer,EfieldTDevicePointer);
-    vectorAdd(E,PSE,E);
+   interp2dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
+               EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
+               EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter);
+    vectorAdd(E,particlesPointer->E,E);
 #endif              
 #ifdef __CUDACC__
 #else
@@ -1211,22 +1224,21 @@ for ( int s=0; s<nSteps; s++ )
    k4v[1] = dt*q_m*(E[1] + (v4[2]*B[0] - v4[0]*B[2]));
    k4v[2] = dt*q_m*(E[2] + (v4[0]*B[1] - v4[1]*B[0]));
    */
-   p.x = r[0] + (k1r[0] + 2*k2r[0] + 2*k3r[0] + k4r[0])/6;
-   p.y = r[1] + (k1r[1] + 2*k2r[1] + 2*k3r[1] + k4r[1])/6;
-   p.z = r[2] + (k1r[2] + 2*k2r[2] + 2*k3r[2] + k4r[2])/6;
-   p.vx = v[0] + (k1v[0] + 2*k2v[0] + 2*k3v[0] + k4v[0])/6;
-   p.vy = v[1] + (k1v[1] + 2*k2v[1] + 2*k3v[1] + k4v[1])/6;
-   p.vz = v[2] + (k1v[2] + 2*k2v[2] + 2*k3v[2] + k4v[2])/6;
+   particlesPointer->x[indx] = r[0] + (k1r[0] + 2*k2r[0] + 2*k3r[0] + k4r[0])/6;
+   particlesPointer->y[indx] = r[1] + (k1r[1] + 2*k2r[1] + 2*k3r[1] + k4r[1])/6;
+   particlesPointer->z[indx] = r[2] + (k1r[2] + 2*k2r[2] + 2*k3r[2] + k4r[2])/6;
+   particlesPointer->vx[indx] = v[0] + (k1v[0] + 2*k2v[0] + 2*k3v[0] + k4v[0])/6;
+   particlesPointer->vy[indx] = v[1] + (k1v[1] + 2*k2v[1] + 2*k3v[1] + k4v[1])/6;
+   particlesPointer->vz[indx] = v[2] + (k1v[2] + 2*k2v[2] + 2*k3v[2] + k4v[2])/6;
 #ifdef __CUDACC__
 #else
 #endif
-//std::cout << "Operations Time: " << operationsTime <<std::endl;
-//std::cout << "Efield Interpolation Time: " << interpETime <<std::endl;
-//std::cout << "Bfield Interpolation Time: " << interpBTime <<std::endl;
+//std::cout << "OparticlesPointer->rations Time: " << oparticlesPointer->rationsTime <<std::endl;
+//std::cout << "Efield InterparticlesPointer->lation Time: " << interparticlesPointer->Time <<std::endl;
+//std::cout << "Bfield InterparticlesPointer->lation Time: " << interparticlesPointer->Time <<std::endl;
 //std::cout << "Init Time: " << initTime <<std::endl;
             }
 #endif
-        }
     } 
 };
 

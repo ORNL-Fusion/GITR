@@ -1,10 +1,9 @@
-#define CATCH_CONFIG_MAIN
 //#include "file_io.hpp"
 #include <iostream>
 #include <libconfig.h++>
 #include <stdio.h>
 #include "utils.h"
-#include "catch.hpp"
+#include "tests_general.hpp"
 #include "Particles.h"
 #include "geometryCheck.h"
 TEST_CASE("Factorials are computed", "[factorial]") {
@@ -74,9 +73,10 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   }
   SECTION("geom test")
   {
-  libconfig::Config cfg_geom;
+  libconfig::Config cfg,cfg_geom;
   
     importLibConfig(cfg_geom, "../test/geom_test.cfg");
+    importLibConfig(cfg, "../test/ionize.cfg");
   std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;
@@ -96,7 +96,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
-      auto particleArray = new Particles(nParticles);
+  auto gitr_flags = new Flags(cfg);
+      auto particleArray = new Particles(nParticles,1,cfg,gitr_flags);
       int nHashes = 1;
   sim::Array<int> nR_closeGeom(nHashes, 0);
   sim::Array<int> nY_closeGeom(nHashes, 0);
@@ -127,9 +128,10 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   
   SECTION("geom test - flat line")
   {
-  libconfig::Config cfg_geom;
+  libconfig::Config cfg, cfg_geom;
   
     importLibConfig(cfg_geom, "../test/flat_line.cfg");
+    importLibConfig(cfg, "../test/ionize.cfg");
   std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;
@@ -149,7 +151,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
-      auto particleArray = new Particles(nParticles);
+  auto gitr_flags = new Flags(cfg);
+      auto particleArray = new Particles(nParticles,1,cfg,gitr_flags);
       int nHashes = 1;
   sim::Array<int> nR_closeGeom(nHashes, 0);
   sim::Array<int> nY_closeGeom(nHashes, 0);
@@ -182,6 +185,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
 
     geometry_check0(0);
     std::cout << "particle x and z " << particleArray->x[0] << " " <<  particleArray->z[0] << std::endl;
+    std::cout << "particle hitWall " << particleArray->hitWall[0] << std::endl;
     REQUIRE(particleArray->hitWall[0] == 1);
     
     particleArray->x[0] = 1.0;
@@ -210,9 +214,10 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   
   SECTION("geom test - positive slope")
   {
-  libconfig::Config cfg_geom;
+  libconfig::Config cfg,cfg_geom;
   
     importLibConfig(cfg_geom, "../test/positive_slope.cfg");
+    importLibConfig(cfg, "../test/ionize.cfg");
   std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;
@@ -232,7 +237,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
-      auto particleArray = new Particles(nParticles);
+  auto gitr_flags = new Flags(cfg);
+      auto particleArray = new Particles(nParticles,1,cfg,gitr_flags);
       int nHashes = 1;
   sim::Array<int> nR_closeGeom(nHashes, 0);
   sim::Array<int> nY_closeGeom(nHashes, 0);
