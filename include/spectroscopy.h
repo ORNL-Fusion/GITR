@@ -70,6 +70,7 @@ void operator()(std::size_t indx) const {
     float x = particlesPointer->xprevious[indx];
     float y = particlesPointer->yprevious[indx];
     float z = particlesPointer->zprevious[indx];
+	    //printf ("z %f \n", z);
 #if SPECTROSCOPY > 2
     float dim1 = particlesPointer->xprevious[indx];
 #else
@@ -91,6 +92,8 @@ void operator()(std::size_t indx) const {
               int indx_Z = std::floor((z-gridZ[0])/dz);
               int indx_Y = 0;
               int nnYY=1;
+	    //printf ("indX %i \n", indx_X);
+	    //printf ("indZ %i \n", indx_Z);
 #else
               if((y > gridY[0]) && (y < gridY[nY-1]))
               { 
@@ -113,6 +116,7 @@ void operator()(std::size_t indx) const {
               if(particlesPointer->hitWall[indx]== 0.0)
               {
                   float specWeight = particlesPointer->weight[indx];
+		  //printf ("Characters: %f \n", specWeight);
 #if USE_CUDA >0
               //for 2d
               /*
@@ -123,7 +127,9 @@ void operator()(std::size_t indx) const {
               }
               */
                //for 3d
-              atomicAdd1(&bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX+ indx_X], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
+	       int index = nBins*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX+ indx_X;
+		  //printf ("Index %i \n", index);
+              atomicAdd1(&bins[index], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
               if(charge < nBins)
               {
                 atomicAdd1(&bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY + indx_Y*nX+ indx_X], 1.0*specWeight);//0*nX*nZ + indx_Z*nZ + indx_X

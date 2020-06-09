@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 from mpi4py import MPI
 #import generate_ftridyn_input_gitr
 #import analyze_ftridyn_simulations_gitr
@@ -11,7 +11,7 @@ import numpy as np
 import netCDF4
 import getopt, sys
 import pickle
-from cStringIO import StringIO
+from io import StringIO
 from collections import defaultdict
 import matplotlib
 matplotlib.use('Agg')
@@ -580,7 +580,7 @@ def plot_reflected_energy_distributions(simulation_name,nEbins=500,maxE=1000.0, 
         en = splst[:,2]
         plt.close()    
         plt.figure(1)
-	print('en bins range',en, nEbins, maxE)
+        print('en bins range',en, nEbins, maxE)
         n,bins,patches = plt.hist(en,bins=nEbins,range=(0.0,maxE))
         if plotsOn :
             plt.title(simulation_name+' Energy Distribution')
@@ -755,7 +755,7 @@ class Work():
             return None
         return self.work_items.pop()
 def master(nList):
-    indxList = range(1,nList+1)
+    indxList = list(range(1,nList+1))
     all_data = []
     np = MPI.COMM_WORLD.Get_size()
     current_work = Work(indxList) 
@@ -793,8 +793,8 @@ def slave(func,pathList,eList,aList,rList,d):
         data = comm.recv(None, source=0, tag=MPI.ANY_TAG, status=status)
         if status.Get_tag(): break
         else:
-	    print('rank %d (total %d) received data %i' % ( rank, size,int(data)) )
-	specNum = int(data)%d['nS']
+            print('rank %d (total %d) received data %i' % ( rank, size,int(data)) )
+        specNum = int(data)%d['nS']
         complete = func(pathList[data],eList[data],aList[data],rList[data],d,specNum)
         comm.send(complete, dest=0)
 
@@ -826,9 +826,9 @@ def main(func,argv):
                 if o in ("-d", "--dictionary"):
                     #usage()
                     #sys.exit()
-        	    print("dictionary " , a)
-        	    loadDict = True
-        	    dictName = a
+                    print("dictionary " , a)
+                    loadDict = True
+                    dictName = a
                 else:
                     assert False, "unhandled option"
                     exit=1
@@ -855,7 +855,7 @@ def main(func,argv):
                 for line in f:
                     split = line.split()
                     if(split[0] == 'beam' or split[0]=='target' or split[0]=='Escale' or split[0]=='exe' or split[0]=='data'):
-		        for j in range(1,len(split)):
+                        for j in range(1,len(split)):
                             d[split[0]].append(split[j])
                     elif(split[0] == 'nE' or split[0] == 'nA' or split[0]=='nR' or split[0]=='nEdist' or split[0]=='nEdist_ref' or split[0]=='nAdist' or split[0]=='nH'):
                         d[split[0]] = int(split[1])
@@ -871,8 +871,8 @@ def main(func,argv):
         angle = np.linspace(d['angle_start'],d['angle_end'],d['nA'])
         roughness = np.linspace(d['roughness_start'],d['roughness_end'],d['nR'])
         d['nS'] = len(d['beam'])
-	print('nS', d['nS'], d['beam'])
-	for i in range(d['nE']):
+        print('nS', d['nS'], d['beam'])
+        for i in range(d['nE']):
             for j in range(d['nA']):
                 for k in range(d['nR']):
                     for ii in range(d['nS']):
@@ -882,7 +882,7 @@ def main(func,argv):
                         aList.append(angle[j])
                         rList.append(roughness[k])
         print(pathList)
-	f = open('pathList.pkl', 'w')
+        f = open('pathList.pkl', 'wb')
         pickle.dump(pathList,f)
         f.close() 
     comm.Barrier()
@@ -940,7 +940,7 @@ def main(func,argv):
         for i in range(len(energy)):
             for j in range(len(angle)):
                 for ii in range(d['nS']):
-		    specNum = ii%d['nS']
+                    specNum = ii%d['nS']
                     pathString = pathList[totalIndex]
                     yr = np.loadtxt(pathString+"/"+"YR.out", dtype='float')
                     sputt[specNum,i,j] = yr[0]
@@ -992,17 +992,18 @@ def main(func,argv):
         edistegridref[:] = eDistEgridRef
         phigrid[:] = phiGrid
         thetagrid[:] = thetaGrid
-        spyld[:] = sputt[0:d['nS']-1,:,:]
-        rfyld[:] = refl[0:d['nS']-1,:,:]
-        cosxdist[:] = cosXDistribution[0:d['nS']-1,:,:,:]
-        cosydist[:] = cosYDistribution[0:d['nS']-1,:,:,:]
-        #coszdist[:] = cosZDistribution[0:d['nS']-1,:,:,:]
-        cosxdistref[:] = cosXDistributionRef[0:d['nS']-1,:,:,:]
-        cosydistref[:] = cosYDistributionRef[0:d['nS']-1,:,:,:]
-        #coszdistref[:] = cosZDistributionRef[0:d['nS']-1,:,:,:]
-        edist[:] = eDistribution[0:d['nS']-1,:,:,:]
-        edistref[:] = eDistributionRef[0:d['nS']-1,:,:,:]
+        spyld[:] = sputt[0:(d['nS']-1),:,:]
+        rfyld[:] = refl[0:(d['nS']-1),:,:]
+        cosxdist[:] = cosXDistribution[0:(d['nS']-1),:,:,:]
+        cosydist[:] = cosYDistribution[0:(d['nS']-1),:,:,:]
+        #coszdist[:] = cosZDistribution[0:d['nS'],:,:,:]
+        cosxdistref[:] = cosXDistributionRef[0:(d['nS']-1),:,:,:]
+        cosydistref[:] = cosYDistributionRef[0:(d['nS']-1),:,:,:]
+        #coszdistref[:] = cosZDistributionRef[0:d['nS'],:,:,:]
+        edist[:] = eDistribution[0:(d['nS']-1),:,:,:]
+        edistref[:] = eDistributionRef[0:(d['nS']-1),:,:,:]
         rootgrp.close()
+        
         rootgrp = netCDF4.Dataset("ftridynSelf"+".nc", "w", format="NETCDF4")
         ne = rootgrp.createDimension("nE", len(energy))
         na = rootgrp.createDimension("nA", len(angle))
@@ -1015,10 +1016,10 @@ def main(func,argv):
         aa = rootgrp.createVariable("A","f8",("nA"))
         cosxdist = rootgrp.createVariable("cosXDist","f8",("nE","nA","nAdistBins"))
         cosydist = rootgrp.createVariable("cosYDist","f8",("nE","nA","nAdistBins"))
-        coszdist = rootgrp.createVariable("cosZDist","f8",("nE","nA","nAdistBins"))
+        #coszdist = rootgrp.createVariable("cosZDist","f8",("nE","nA","nAdistBins"))
         cosxdistref = rootgrp.createVariable("cosXDistRef","f8",("nE","nA","nAdistBins"))
         cosydistref = rootgrp.createVariable("cosYDistRef","f8",("nE","nA","nAdistBins"))
-        coszdistref = rootgrp.createVariable("cosZDistRef","f8",("nE","nA","nAdistBins"))
+        #coszdistref = rootgrp.createVariable("cosZDistRef","f8",("nE","nA","nAdistBins"))
         edist = rootgrp.createVariable("energyDist","f8",("nE","nA","nEdistBins"))
         edistref = rootgrp.createVariable("energyDistRef","f8",("nE","nA","nEdistBinsRef"))
         edistegrid = rootgrp.createVariable("eDistEgrid","f8",("nEdistBins")) 
@@ -1042,6 +1043,7 @@ def main(func,argv):
         edist[:] = eDistribution[-1,:,:,:]
         edistref[:] = eDistributionRef[-1,:,:,:]
         rootgrp.close()
+
         exec_time = time.time()
         print("Execution of FTRIDYN Cases took --- %s seconds ---" % (exec_time - start_time))
 

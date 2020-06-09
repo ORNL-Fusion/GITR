@@ -10,6 +10,7 @@
 #endif
 
 #include "Particles.h"
+#include "ionize.h"
 #ifdef __CUDACC__
 #include <thrust/random.h>
 #include <curand_kernel.h>
@@ -22,6 +23,7 @@
 
 #include "interpRateCoeff.hpp"
 
+template <typename T=std::mt19937> 
 struct recombine { 
   Particles *particlesPointer;
   int nR_Dens;
@@ -41,19 +43,10 @@ struct recombine {
   float* rateCoeff_Recombination;
   const float dt;
   float tion;
-  //int& tt;
-#if __CUDACC__
-      curandState *state;
-#else
-      std::mt19937 *state;
-#endif
+  T *state;
 
   recombine(Particles *_particlesPointer, float _dt,
-#if __CUDACC__
-      curandState *_state,
-#else
-      std::mt19937 *_state,
-#endif
+      T *_state,
      int _nR_Dens,int _nZ_Dens,float* _DensGridr,
      float* _DensGridz,float* _ne,int _nR_Temp, int _nZ_Temp,
      float* _TempGridr, float* _TempGridz,float* _te,int _nTemperaturesRecomb,
@@ -83,38 +76,25 @@ struct recombine {
   
   CUDA_CALLABLE_MEMBER_DEVICE 
   void operator()(std::size_t indx) { 
+      //std::cout << "rec index " <<indx  << std::endl;
+      //if(indx > 1000)
+      //{
+      // std::cout << "wtf " <<indx  << std::endl;
+      //} 
   float P1 = 0.0f;
       if(particlesPointer->charge[indx] > 0)
     {
-       tion = interpRateCoeff2d ( particlesPointer->charge[indx], particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
-       //float PrP = particlesPointer->PrecombinationPrevious[indx];
+       tion = interpRateCoeff2d ( particlesPointer->charge[indx]-1, particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
        float P = expf(-dt/tion);
-       //particlesPointer->PrecombinationPrevious[indx] = PrP*P;
        P1 = 1.0-P;
     }
 
   if(particlesPointer->hitWall[indx] == 0.0)
 	{        
-#if PARTICLESEEDS > 0
-        #ifdef __CUDACC__
-        float r1 = curand_uniform(&state[indx]);
-        #else
-        std::uniform_real_distribution<float> dist(0.0, 1.0);
-        float r1=dist(state[indx]);
-        #endif
-#else
-    #if __CUDACC__
-    float r1 = curand_uniform(&state[1]);
-    #else
-            std::uniform_real_distribution<float> dist(0.0, 1.0);
-    float r1=dist(state[1]);
-    #endif
-#endif   
-
+        float r1 = get_rand(state,indx);
 	if(r1 <= P1)
 	{
         particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;
-        particlesPointer->PrecombinationPrevious[indx] = 1.0;
 	}         
    }	
 

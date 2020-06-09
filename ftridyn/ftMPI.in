@@ -1,13 +1,13 @@
-beam D He
+beam He
 target W
-nH 1000
-energy_start 2
+nH 100000
+energy_start 1
 energy_end 3
-nE 2
+nE 6
 Escale log 
 angle_start 0
 angle_end 89.9
-nA 3
+nA 6
 roughness_start 1.0
 roughness_end 1.0
 nR 1
