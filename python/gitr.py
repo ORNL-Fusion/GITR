@@ -23,7 +23,6 @@ import math
 import scipy.interpolate as scii
 
 import solps
-
 def copy_folder(from_folder, to_folder):
     copy_tree(from_folder, to_folder)
 
@@ -116,8 +115,10 @@ def plot2dGeom(filename="gitrGeometry.cfg"):
     y2 = config.geom.y2
     ys1 = np.ones(x1.size) * y1
     ys2 = np.ones(x1.size) * y2
+    slope = np.array(config.geom.slope)
+    inDir = np.array(config.geom.inDir)
     # if plt.fignum_exists(num=1):
-    plt.plot(np.append(x1, x1[0]), np.append(z1, z1[0]), linewidth=2.0, color='k')
+    #plt.plot(np.append(x1, x1[0]), np.append(z1, z1[0]), linewidth=2.0, color='k')
     # else:
     #    fig = plt.figure()
     #    #fig.patch.set_facecolor('black')
@@ -129,7 +130,7 @@ def plot2dGeom(filename="gitrGeometry.cfg"):
     #    plt.savefig('geomPlot.png')
     #    print('config', config)
     #    print('x1 ', x1)
-    return x1, x2, z1, z2, length, Z
+    return x1, x2, z1, z2, length, Z, slope, inDir
 
 
 def read3dGeom(filename="gitrGeometry.cfg"):
@@ -1177,29 +1178,48 @@ def interp_1d(x_grid,vals,x_i,default_value = 0.0):
     else:
         nPoints = len(x_i)
 
-    for i in range(nPoints):
-        if ((x_i[i] < x_grid[0]) or (x_i[i] > x_grid[-1])):
-            if xi_scalar:
-                interp_vals = default_value
-            else:    
-                interp_vals[i] = default_value
-        else:    
-            x_grid_shift = x_grid - x_i[i]
-            where_negative = np.where(x_grid_shift <= 0.0)
+    x_grid_rep = np.matlib.repmat(x_grid, nPoints, 1)
+    x_i_rep = np.transpose(np.matlib.repmat(x_i, len(x_grid), 1))
+    x_grid_shift = np.subtract(x_grid_rep,x_i_rep)
+    where_negative = np.where(x_grid_shift <= 0.0)
+    index_row = np.unique(where_negative[:][0])
+    index_column0 = np.where(where_negative[:][1] == 0)
+    index_column0 = np.append(where_negative[1][index_column0[0][1:]-1],where_negative[1][-1])
+    top_end = np.where(index_column0 == len(x_grid)-1)
+    index_column0[top_end] = index_column0[top_end] -1
+    #print('ic',index_column0)
+    index_column1 = index_column0 + 1
+    dx = x_grid[index_column1] - x_grid[index_column0]
 
-            index_x0 = where_negative[0][-1]
-            index_x1 = index_x0+1
+    if xi_scalar:
+        interp_vals = (vals[index_column0]*(x_grid[index_column1] - x_i) + vals[index_column1]*(x_i - x_grid[index_column0]))/dx
+    else:
+        interp_vals[index_row] = (vals[index_column0]*(x_grid[index_column1] - x_i[index_row]) + vals[index_column1]*(x_i[index_row] - x_grid[index_column0]))/dx
+    
 
-            dx = x_grid[index_x1] - x_grid[index_x0]
+    #for i in range(nPoints):
+    #    if ((x_i[i] < x_grid[0]) or (x_i[i] > x_grid[-1])):
+    #        if xi_scalar:
+    #            interp_vals = default_value
+    #        else:    
+    #            interp_vals[i] = default_value
+    #    else:    
+    #        x_grid_shift = x_grid - x_i[i]
+    #        where_negative = np.where(x_grid_shift <= 0.0)
 
-            value_interpolated = (vals[index_x0]*(x_grid[index_x1] - x_i[i]) + vals[index_x1]*(x_i[i] - x_grid[index_x0]))/dx
-            if xi_scalar:
-                interp_vals = value_interpolated
-            else:    
-                #print('xi',x_i)
-                #print('interp_vals',interp_vals)
-                #print('val_inter', value_interpolated)
-                interp_vals[i] = value_interpolated
+    #        index_x0 = where_negative[0][-1]
+    #        index_x1 = index_x0+1
+
+    #        dx = x_grid[index_x1] - x_grid[index_x0]
+
+    #        value_interpolated = (vals[index_x0]*(x_grid[index_x1] - x_i[i]) + vals[index_x1]*(x_i[i] - x_grid[index_x0]))/dx
+    #        if xi_scalar:
+    #            interp_vals = value_interpolated
+    #        else:    
+    #            #print('xi',x_i)
+    #            #print('interp_vals',interp_vals)
+    #            #print('val_inter', value_interpolated)
+    #            interp_vals[i] = value_interpolated
 
     return interp_vals
 
@@ -1226,43 +1246,41 @@ def interp_2d(x_grid,y_grid,vals,x_i,y_i,default_value = 0.0):
         print('ERROR: interp_2d values dimension 2 do not match y_grid')
         return -1
     
-    interp_vals = 0*np.array(x_i)
+    interp_vals = np.zeros((len(x_i),len(y_i)))
     
-    yi_scalar = is_scalar(y_i)
+    xi_scalar = is_scalar(x_i)
     
     if is_scalar(y_i):
         x_i = np.array([x_i])
         y_i = np.array([y_i])
         nPoints = 1
     else:
-        nPoints = len(y_i)
+        nPoints = len(x_i)
     
-    #for i in range(nPoints):
-    for i, value in np.ndenumerate(y_i):
-        if ((y_i[i] < y_grid[0]) or (y_i[i] > y_grid[-1])):
-            if yi_scalar:
+    for i in range(nPoints):
+    #for i, value in np.ndenumerate(y_i):
+        if ((x_i[i] < x_grid[0]) or (x_i[i] > x_grid[-1])):
+            if xi_scalar:
                 interp_vals = default_value
             else:    
-                interp_vals[i] = default_value
+                interp_vals[i,:] = default_value
         else:    
             # do two 1d interp in x
-            y_grid_shift = y_grid - y_i[i]
-            where_negative = np.where(y_grid_shift <= 0.0)
+            x_grid_shift = x_grid - x_i[i]
+            where_negative = np.where(x_grid_shift <= 0.0)
 
-            index_y0 = where_negative[0][-1]
-            index_y1 = index_y0+1
-            dy = y_grid[index_y1] - y_grid[index_y0]
+            index_x0 = where_negative[0][-1]
+            index_x1 = index_x0+1
+            dx = x_grid[index_x1] - x_grid[index_x0]
 
-            val_interp_y0 = interp_1d(x_grid,vals[:,index_y0],x_i[i],default_value)
-            val_interp_y1 = interp_1d(x_grid,vals[:,index_y1],x_i[i],default_value)
+            val_interp_x0 = interp_1d(y_grid,vals[index_x0,:],y_i,default_value)
+            val_interp_x1 = interp_1d(y_grid,vals[index_x1,:],y_i,default_value)
             # do one 1d interp in y
-            val_interp_y0 = val_interp_y0
-            val_interp_y1 = val_interp_y1
-            value_interpolated = (val_interp_y0*(y_grid[index_y1] - y_i[i]) + val_interp_y1*(y_i[i] - y_grid[index_y0]))/dy
-            if yi_scalar:
+            value_interpolated = (val_interp_x0*(x_grid[index_x1] - x_i[i]) + val_interp_x1*(x_i[i] - x_grid[index_x0]))/dx
+            if xi_scalar:
                 interp_vals = value_interpolated
             else:    
-                interp_vals[i] = value_interpolated
+                interp_vals[i,:] = value_interpolated
 
     return interp_vals
             
@@ -1295,47 +1313,45 @@ def interp_3d(x_grid,y_grid,z_grid,vals,x_i,y_i,z_i,default_value = 0.0):
         print('ERROR: interp_3d values dimension 3 do not match z_grid')
         return -1
     
-    interp_vals = 0*np.array(z_i)
+    interp_vals = np.zeros((len(x_i),len(y_i),len(z_i)))
     
-    zi_scalar = is_scalar(z_i)
+    xi_scalar = is_scalar(x_i)
     # find the y indices
     
-    if is_scalar(z_i):
+    if is_scalar(x_i):
         x_i = np.array([x_i])
         y_i = np.array([y_i])
         z_i = np.array([z_i])
         nPoints = 1
     else:
-        nPoints = len(z_i)
+        nPoints = len(x_i)
     
-    for i, value in np.ndenumerate(z_i):
-        if ((z_i[i] < z_grid[0]) or (z_i[i] > z_grid[-1])):
-            if zi_scalar:
+    for i in range(nPoints):
+        if ((x_i[i] < x_grid[0]) or (x_i[i] > x_grid[-1])):
+            if xi_scalar:
                 interp_vals = default_value
             else:    
-                interp_vals[i] = default_value
+                interp_vals[i,:,:] = default_value
         else:    
             # do two 2d interp in xy
-            z_grid_shift = z_grid - z_i[i]
-            where_negative = np.where(z_grid_shift <= 0.0)
+            x_grid_shift = x_grid - x_i[i]
+            where_negative = np.where(x_grid_shift <= 0.0)
 
-            index_z0 = where_negative[0][-1]
-            index_z1 = index_z0+1
-            if (z_i[i] == z_grid[-1]):
-                index_z0 = index_z0 - 1 
-                index_z1 = index_z1 - 1 
+            index_x0 = where_negative[0][-1]
+            index_x1 = index_x0+1
+            if (x_i[i] == x_grid[-1]):
+                index_x0 = index_x0 - 1 
+                index_x1 = index_x1 - 1 
 
-            dz = z_grid[index_z1] - z_grid[index_z0]
-            val_interp_z0 = interp_2d(x_grid,y_grid,vals[:,:,index_z0],x_i[i],y_i[i],default_value)
-            val_interp_z1 = interp_2d(x_grid,y_grid,vals[:,:,index_z1],x_i[i],y_i[i],default_value)
+            dx = x_grid[index_x1] - x_grid[index_x0]
+            val_interp_x0 = interp_2d(y_grid,z_grid,vals[index_x0,:,:],y_i,z_i,default_value)
+            val_interp_x1 = interp_2d(y_grid,z_grid,vals[index_x1,:,:],y_i,z_i,default_value)
             # do one 1d interp in z
-            val_interp_z0 = val_interp_z0
-            val_interp_z1 = val_interp_z1
-            value_interpolated = (val_interp_z0*(z_grid[index_z1] - z_i[i]) + val_interp_z1*(z_i[i] - z_grid[index_z0]))/dz
-            if zi_scalar:
+            value_interpolated = (val_interp_x0*(x_grid[index_x1] - x_i[i]) + val_interp_x1*(x_i[i] - x_grid[index_x0]))/dx
+            if xi_scalar:
                 interp_vals = value_interpolated
             else:    
-                interp_vals[i] = value_interpolated
+                interp_vals[i,:,:] = value_interpolated
 
     return interp_vals
 
@@ -1369,61 +1385,63 @@ def test_interp():
         for j in range(nY):
             vals[i,j] = np.cos(x_grid[i])*np.cos(y_grid[j])
 
-    y_i = np.array([0.2, -0.1, 0.8])
+    y_i = np.array([0.2, -0.1, 0.8, 1.2])
     value_interpolated = interp_2d(x_grid,y_grid,vals,x_i,y_i,default_value = 0.0)
     print(value_interpolated)
+    print(value_interpolated.shape)
 
-    z_i = np.array([0.1, -0.1, 1.8]);
+    z_i = np.array([0.1, -0.1, 1.8, 2.2, 2.9]);
     z_grid = np.linspace(0.0,3.0,nZ)
     vals = np.zeros((nX,nY,nZ))
     for i in range(nX):
         for j in range(nY):
             for k in range(nZ):
                 vals[i,j,k] = np.cos(x_grid[i])*np.cos(y_grid[j])*np.cos(z_grid[k])
-
-    value_interpolated = interp_3d(x_grid,y_grid,z_grid,vals,x_i,y_i,z_i,default_value = 0.0)
+    for i in range(1000):
+        value_interpolated = interp_3d(x_grid,y_grid,z_grid,vals,x_i,y_i,z_i,default_value = 0.0)
     print(value_interpolated)
+    print(value_interpolated.shape)
     
-    vals = np.cos(x_grid)
-    x_i = np.array([0.5, -0.1, 0.6])
-    value_interpolated = interp_1d(x_grid,vals,x_i,default_value = 0.0)
-    print(value_interpolated)
-    
-    vals = np.zeros((nX,nY))
-    for i in range(nX):
-        for j in range(nY):
-            vals[i,j] = np.cos(x_grid[i])*np.cos(y_grid[j])
+    #vals = np.cos(x_grid)
+    #x_i = np.array([0.5, -0.1, 0.6])
+    #value_interpolated = interp_1d(x_grid,vals,x_i,default_value = 0.0)
+    #print(value_interpolated)
+    #
+    #vals = np.zeros((nX,nY))
+    #for i in range(nX):
+    #    for j in range(nY):
+    #        vals[i,j] = np.cos(x_grid[i])*np.cos(y_grid[j])
 
-    x_i = np.zeros((2,3))
-    y_i = np.zeros((2,3))
-    x_i[0,:] = [0.5, -0.1, 0.6]
-    x_i[1,:] = [0.2, 0.1, 0.9]
+    #x_i = np.zeros((2,3))
+    #y_i = np.zeros((2,3))
+    #x_i[0,:] = [0.5, -0.1, 0.6]
+    #x_i[1,:] = [0.2, 0.1, 0.9]
 
-    y_i[0,:] = [0.2, -0.1, 0.8]
-    y_i[1,:] = [0.4, 1.1, 1.8]
-    value_interpolated = interp_2d(x_grid,y_grid,vals,x_i,y_i,default_value = 0.0)
-    print(value_interpolated)
-    
-    vals = np.zeros((nX,nY,nZ))
-    for i in range(nX):
-        for j in range(nY):
-            for k in range(nZ):
-                vals[i,j,k] = np.cos(x_grid[i])*np.cos(y_grid[j])*np.cos(z_grid[k])
-    
-    x_i = np.zeros((2,3))
-    y_i = np.zeros((2,3))
-    z_i = np.zeros((2,3))
-    x_i[0,:] = [0.5, -0.1, 0.6]
-    x_i[1,:] = [0.2, 0.1, 0.9]
+    #y_i[0,:] = [0.2, -0.1, 0.8]
+    #y_i[1,:] = [0.4, 1.1, 1.8]
+    #value_interpolated = interp_2d(x_grid,y_grid,vals,x_i,y_i,default_value = 0.0)
+    #print(value_interpolated)
+    #
+    #vals = np.zeros((nX,nY,nZ))
+    #for i in range(nX):
+    #    for j in range(nY):
+    #        for k in range(nZ):
+    #            vals[i,j,k] = np.cos(x_grid[i])*np.cos(y_grid[j])*np.cos(z_grid[k])
+    #
+    #x_i = np.zeros((2,3))
+    #y_i = np.zeros((2,3))
+    #z_i = np.zeros((2,3))
+    #x_i[0,:] = [0.5, -0.1, 0.6]
+    #x_i[1,:] = [0.2, 0.1, 0.9]
 
-    y_i[0,:] = [0.2, -0.1, 0.8]
-    y_i[1,:] = [0.4, 1.1, 1.8]
-    
-    z_i[0,:] = [0.1, -0.1, 1.8];
-    z_i[1,:] = [2.4, 1.1, 0.8];
-    
-    value_interpolated = interp_3d(x_grid,y_grid,z_grid,vals,x_i,y_i,z_i,default_value = 0.0)
-    print(value_interpolated)
+    #y_i[0,:] = [0.2, -0.1, 0.8]
+    #y_i[1,:] = [0.4, 1.1, 1.8]
+    #
+    #z_i[0,:] = [0.1, -0.1, 1.8];
+    #z_i[1,:] = [2.4, 1.1, 0.8];
+    #
+    #value_interpolated = interp_3d(x_grid,y_grid,z_grid,vals,x_i,y_i,z_i,default_value = 0.0)
+    #print(value_interpolated)
 if __name__ == "__main__":
     test_interp()
     #make_gitr_geometry_from_solps()

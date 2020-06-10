@@ -338,8 +338,124 @@ def sampleTriangle(x=np.array([1, 1.2, 1.3]),y=np.array([0, 0.1, -0.1]),z=np.arr
     samples[1] = samples[1]+ y[0];
     samples[2] = samples[2]+ z[0];
     return samples
+def particleSource2d(nParticles = int(1e3),spylFile = 'Yields.txt', coordsFile='right_target_coordinates.txt',edist_file = 'Edists.txt',adist_file = 'Adists.txt'):
+    y_f = np.loadtxt(spylFile, dtype='float',skiprows=1,delimiter=' ')
+    eDists = np.loadtxt(edist_file, dtype='float',skiprows=1,delimiter=' ')
+    aDists = np.loadtxt(adist_file, dtype='float',skiprows=1,delimiter=' ')
+    coords = np.loadtxt(coordsFile, dtype='float',skiprows=1,delimiter=' ')
+    x1, x2, z1, z2, length, Z, slope, inDir = gitr.plot2dGeom('gitr_geometry.cfg')
+    print('shapes',y_f.shape,coords.shape,eDists.shape)
+
+    #calcualte erosion flux
+    yf_shape = y_f.shape
+    nSpec = int(0.5*yf_shape[1])
+
+    sputt_flux = np.zeros((yf_shape[0],nSpec+1))
+
+    for i in range(nSpec):
+        sputt_flux[:,i] = np.multiply(y_f[:,i],y_f[:,i+nSpec])
+        sputt_flux[:,-1] = sputt_flux[:,-1] + sputt_flux[:,i]
+
+    #calculate ribbon area
+    gitr_inds = [int(i) for i in coords[:,3]]
+    r1 = x1[gitr_inds] #coords[:,4]
+    r2 = x2[gitr_inds] #coords[:,5]
+    z1 = z1[gitr_inds] #coords[:,6]
+    z2 = z2[gitr_inds] #coords[:,7]
+    slope = slope[gitr_inds] #coords[:,7]
+    inDir = inDir[gitr_inds] #coords[:,7]
+
+    area = np.pi*(r1+r2)*np.sqrt(np.power(r1-r2,2) + np.power(z1 - z2,2))
+
+    particles_per_second = np.multiply(np.abs(sputt_flux[:,-1]),area)
+
+    print('sputt flux', sputt_flux)    
+    print('area',area)
+    print('pps',particles_per_second)
+    pps_cdf = np.cumsum(particles_per_second)
+    pps_sum = pps_cdf[-1]
+    pps_cdf = pps_cdf/pps_cdf[-1]
+    pps_cdf = np.transpose(np.matlib.repmat(pps_cdf,nParticles,1))
+    rand1 = np.random.rand(nParticles)
+    rand1 = np.matlib.repmat(rand1,yf_shape[0],1)
+
+    print('rand1 shape',rand1.shape)
+
+    diff = pps_cdf - rand1
+    diff[diff<0.0] = 100.0
+    mins = np.argmin(diff,axis=0)
+    
+    print('mins',mins)
+    print('diff',diff[mins,range(nParticles)])
+    print('scale',pps_cdf[-1]/particles_per_second[mins])
+
+    r_sample = r1[mins] + (r2[mins] - r1[mins])*diff[mins,range(nParticles)]/particles_per_second[mins]*pps_sum
+    z_sample = z1[mins] + (z2[mins] - z1[mins])*diff[mins,range(nParticles)]/particles_per_second[mins]*pps_sum
+    print('rsamp',r_sample)
+    print('zsamp',z_sample)
+    plt.close()
+    plt.plot(r1,z1)
+    plt.scatter(r_sample,z_sample)
+    plt.title('Outer divertor')
+    plt.ylabel('z [m]')
+    plt.xlabel('r [m]')
+    plt.savefig('particleScatter.png')
+    
+    perpSlope = -np.sign(slope)/np.abs(slope);
+    rPerp = -inDir/np.sqrt(perpSlope*perpSlope+1);
+    zPerp = -inDir*np.sign(perpSlope)*np.sqrt(1-rPerp*rPerp);
+    surface_buffer = 1.0e-5
+    r_sample = r_sample + surface_buffer*rPerp[mins]
+    z_sample = z_sample + surface_buffer*zPerp[mins]
+
+    particle_energy = np.zeros(nParticles)
+    particle_angle = np.zeros(nParticles)
+    mins_array = np.array(mins)
+    plt.close()
+    for i in range(len(gitr_inds)):
+        e_cdf = np.cumsum(eDists[i,:])
+        plt.plot(eDists[i,:])
+        e_sum = e_cdf[-1]
+        if (e_sum > 0.0):
+            e_cdf = e_cdf/e_sum
+            if (e_cdf[0] != 0.0):
+                e_cdf[0] = 0.0
+            where_mins = np.where(mins_array == i)
+            print('where mins',where_mins)
+            if (len(where_mins[0]) > 0):
+                these_energies = gitr.interp_1d(e_cdf,np.linspace(0.0,40.0,40),np.random.rand(len(where_mins[0])),default_value = 5.0)
+                particle_energy[where_mins[0]] = these_energies
+    plt.savefig('edist.png')
+    plt.close()
+    plt.hist(particle_energy)
+    plt.savefig('pE.png')
+    plt.close()
+    
+    particle_angle = np.zeros(nParticles)
+    mins_array = np.array(mins)
+    plt.close()
+    for i in range(len(gitr_inds)):
+        a_cdf = np.cumsum(aDists[i,:])
+        plt.plot(aDists[i,:])
+        a_sum = a_cdf[-1]
+        if (a_sum > 0.0):
+            a_cdf = a_cdf/a_sum
+            if (a_cdf[0] != 0.0):
+                a_cdf[0] = 0.0
+            where_mins = np.where(mins_array == i)
+            print('where mins',where_mins)
+            if (len(where_mins[0]) > 0):
+                these_angles = gitr.interp_1d(a_cdf,np.linspace(0.0,89.9,50),np.random.rand(len(where_mins[0])),default_value = 45.0)
+                particle_angle[where_mins[0]] = these_angles
+    plt.savefig('adist.png')
+    plt.close()
+    plt.hist(particle_angle)
+    plt.savefig('pA.png')
+    plt.close()
+
 if __name__ == "__main__":
-    particleSource()
+    particleSource2d()
+
     #x = []
     #y=[]
     #z=[]
