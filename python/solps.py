@@ -764,7 +764,7 @@ def make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
     z2 = np.array(config.geom.z2)
 
     i_a, i_b = intersection(x1, z1, r_right_target, z_right_target)
-
+    i_a = i_a[0:-1]
     print('i_a',i_a)
     A = np.zeros((len(i_a),10))
     A[:,0] = r_right_target

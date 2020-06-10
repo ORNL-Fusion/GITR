@@ -355,7 +355,7 @@ def readFtridynBackground(fname='ftridynBackground.nc'):
     plt.xlabel('E[eV]')
     plt.savefig('Edist.png')
     return E,A,spyld,eDistEgrid,energyDist,phiGrid,cosXdist
-def computeSputtYld(plots=0,hpic_zipfile='hpic_ieads',solps_inds = [3,4]):
+def computeSputtYld(plots=False,hpic_zipfile='hpic_ieads',solps_inds = [3,4],nEdistPts=40):
     #plot_hpic_iead()
     nSpec = len(solps_inds)
     with zipfile.ZipFile(hpic_zipfile+'.zip', 'r') as zipObj:
@@ -367,7 +367,8 @@ def computeSputtYld(plots=0,hpic_zipfile='hpic_ieads',solps_inds = [3,4]):
     RmRs = RmRs[0]
     Y = np.zeros((2*nSpec,len(RmRs)))
     ee, aa = np.meshgrid(Energy, Angle)
-    eDist_total = np.zeros((nSpec,len(RmRs),len(eDistEgrid)))
+    eDist_total = np.zeros((nSpec,len(RmRs),nEdistPts))
+    aDist_total = np.zeros((nSpec,len(RmRs),len(phiGrid)))
 
     for i in range(nSpec):
         gridE_current = gridE[i]
@@ -376,68 +377,75 @@ def computeSputtYld(plots=0,hpic_zipfile='hpic_ieads',solps_inds = [3,4]):
         #print('size e a spyld', Energy.shape, Angle.shape, spyld.shape)
         #FIXME 1 index is for helium specifically
         eDist = energyDist[1,:,:,:]
+        aDist = cosXdist[1,:,:,:]
         f = scii.interp2d(Energy, Angle, np.transpose(spyld[1,:,:]))
-        plt.close()
-        plt.pcolor(Energy, Angle, np.transpose(spyld[1,:,:]))
-        plt.colorbar(orientation='vertical')
-        plt.title('spyld')
-        plt.ylabel('E[eV]')
-        plt.xlabel('A[degrees]')
-        plt.savefig('spyld.png')
-        plt.close()
+        if plots:
+            plt.close()
+            plt.pcolor(Energy, Angle, np.transpose(spyld[1,:,:]))
+            plt.colorbar(orientation='vertical')
+            plt.title('spyld')
+            plt.ylabel('E[eV]')
+            plt.xlabel('A[degrees]')
+            plt.savefig('spyld.png')
+            plt.close()
     
 
         flux_current =flux[i]
         Y[nSpec+i,:] = flux_current
     
         for j in range(len(RmRs)):
+            print('For species', i, 'processing location',j)
             IEAD_current_location = IEAD_current[j,:,:]
             gridE_current_location = gridE_current[j,:]
             gridA_current_location = gridA_current[j,:]
-            plt.close()
-            plt.pcolor(gridE_current_location,gridA_current_location,np.transpose(IEAD_current_location))
-            plt.colorbar(orientation='vertical')
-            plt.title('IEAD')
-            plt.ylabel('E[eV]')
-            plt.xlabel('A[degrees]')
-            plt.savefig('iead.png')
-            plt.close()
+            if plots:
+                plt.close()
+                plt.pcolor(gridE_current_location,gridA_current_location,np.transpose(IEAD_current_location))
+                plt.colorbar(orientation='vertical')
+                plt.title('IEAD')
+                plt.ylabel('E[eV]')
+                plt.xlabel('A[degrees]')
+                plt.savefig('iead.png')
+                plt.close()
             
 
-            eee, aaa = np.meshgrid(gridE_current_location, gridA_current_location)
-            print('eee aaa shape',eee.shape)
             print('spyld shape',spyld.shape)
             spyld_current = f(gridE_current_location, gridA_current_location)
-            spyld_current = gitr.interp_2d(Energy, Angle, spyld[1,:,:],eee,aaa)
+            spyld_current = gitr.interp_2d(Energy, Angle, spyld[1,:,:],gridE_current_location, gridA_current_location)
             #spyld_current = griddata((gridE_current_location.flatten(),gridA_current_location.flatten()),spyld.flatten(), (r_midpoint, z_midpoint), method='linear')
             
-            plt.close()
-            plt.pcolor(gridE_current_location,gridA_current_location, spyld_current)
-            plt.colorbar(orientation='vertical')
-            plt.title('Y')
-            plt.ylabel('E[eV]')
-            plt.xlabel('A[degrees]')
-            plt.savefig('Ys.png')
-            plt.close()
+            if plots:
+                plt.close()
+                plt.pcolor(gridE_current_location,gridA_current_location, np.transpose(spyld_current))
+                plt.colorbar(orientation='vertical')
+                plt.title('Y')
+                plt.ylabel('E[eV]')
+                plt.xlabel('A[degrees]')
+                plt.savefig('Ys.png')
+                plt.close()
 
-            Y_iead = np.multiply(np.transpose(IEAD_current_location),spyld_current)
-            Y[i,j] = np.sum(np.multiply(np.transpose(IEAD_current_location),spyld_current))/np.sum(IEAD_current_location)
+            Y_iead = np.multiply(IEAD_current_location,spyld_current)
+            Y[i,j] = np.sum(Y_iead)/np.sum(IEAD_current_location)
      
             print('edist size',eDist.shape)
             
-            eee2, aaa2, ed2 = np.meshgrid(gridE_current_location, gridA_current_location,eDistEgrid)
-            edist_current = gitr.interp_3d(Energy, Angle,eDistEgrid, eDist ,eee2,aaa2,ed2)
-            
-            for ii in range(len(Energy)):
-                for jj in range(len(Angle)):
-                    this_edist = edist_current[ii,jj,:]
-                    edist_sum = np.sum(this_edist)
-                    if (edist_sum > 0.0):
-                        this_edist = np.divide(this_edist,eist_sum)
-                    else:
-                        this_edist = 0.0*this_edist
+            if (Y[i,j] > 0.0):
+                print('yield',Y[i,j])
+                edist_current = gitr.interp_3d(Energy, Angle,eDistEgrid, eDist ,gridE_current_location, gridA_current_location,np.linspace(0.0,40.0,nEdistPts))
+                phi_dist_current = gitr.interp_3d(Energy, Angle,phiGrid, aDist ,gridE_current_location, gridA_current_location,phiGrid)
+                
+                for ii in range(len(gridE_current_location)):
+                    for jj in range(len(gridA_current_location)):
+                        this_edist = edist_current[ii,jj,:]
+                        edist_sum = np.sum(this_edist)
+                        this_adist = phi_dist_current[ii,jj,:]
+                        adist_sum = np.sum(this_adist)
+                        if (edist_sum > 0.0):
+                            this_edist = np.divide(this_edist,edist_sum)
+                            eDist_total[i,j,:] = eDist_total[i,j,:] + Y_iead[ii,jj]*this_edist
+                            this_adist = np.divide(this_adist,adist_sum)
+                            aDist_total[i,j,:] = aDist_total[i,j,:] + Y_iead[ii,jj]*this_adist
 
-                    eDist_total[i,j,:] = eDist_total[i,j,:] + np.sum(np.multiply(Y_iead[ii,jj],this_edist))
 
             #print(gridE_current_location)
             #print(Energy[0])
@@ -506,9 +514,10 @@ def computeSputtYld(plots=0,hpic_zipfile='hpic_ieads',solps_inds = [3,4]):
             #print('eDist weighted', eDist_weighted)
             #eDist_total[i,j,:] = eDist_weighted
     
-    print('edist total',eDist_total)
+    print('edist total',eDist_total[0,25,:])
     np.savetxt('Yields.txt', np.transpose(Y), delimiter=' ',header='Yields and fluxes')
     np.savetxt('Edists.txt', np.sum(eDist_total,axis=0), delimiter=' ',header='Edists')
+    np.savetxt('Adists.txt', np.sum(aDist_total,axis=0), delimiter=' ',header='Adists')
 
 
 def printBackgroundDist(path = '',rmrsPoints = [-0.1,0.02,0.09,0.2]):
