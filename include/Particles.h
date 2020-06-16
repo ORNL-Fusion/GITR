@@ -24,6 +24,7 @@
 #endif
 
 #include <random>
+#include <cmath>
 
 class Particles : public ManagedAllocation {
 public:
