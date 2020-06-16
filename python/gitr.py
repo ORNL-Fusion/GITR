@@ -21,8 +21,8 @@ import os
 import shutil
 import math
 import scipy.interpolate as scii
-import seaborn as sns
-sns.set()
+#import seaborn as sns
+#sns.set()
 
 import solps
 def copy_folder(from_folder, to_folder):
@@ -1686,22 +1686,22 @@ def test_interp():
 
 
 if __name__ == "__main__":
-#test_interp()
-#make_gitr_geometry_from_solps()
-make_gitr_geometry_from_solps_west()
-# asdfanc_show("surface.nc")
-# depositedEdist()
-# if(os.path.exists('output/history.nc')):
-# 	nc_plotHist('output/history.nc')
-# if(os.path.exists('output/spec.nc')):
-#	nc_plotSpec('output/spec.nc')
-# iter2dProcessing()
-# iter3dProcessingQ4()
-# printHeDist()
-# nc_plotSpec3D()
-# nc_plotPositions()
-# nc_plotVz()
-# plotPitch()
-# piscesProcessing()
-# modifyInputParam()
-# nc_readSurface()
+    #test_interp()
+    #make_gitr_geometry_from_solps()
+    make_gitr_geometry_from_solps_west()
+    #asdfanc_show("surface.nc")
+    #depositedEdist()
+    #if(os.path.exists('output/history.nc')):
+    #nc_plotHist('output/history.nc')
+    #if(os.path.exists('output/spec.nc')):
+    #nc_plotSpec('output/spec.nc')
+    #iter2dProcessing()
+    #iter3dProcessingQ4()
+    #printHeDist()
+    #nc_plotSpec3D()
+    #nc_plotPositions()
+    #nc_plotVz()
+    #plotPitch()
+    #piscesProcessing()
+    #modifyInputParam()
+    #nc_readSurface()
