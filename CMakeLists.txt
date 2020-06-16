@@ -112,7 +112,7 @@ if (${OPENMP})
     find_package(OpenMP REQUIRED)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -O3 -gline-tables-only -std=c++1z -std=c++1z -stdlib=libc++ -nostdinc++ -I/opt/local/libexec/llvm-devel/include/c++/v1 -L/opt/local/libexec/llvm-devel/lib/c++/v1 -Wl,-rpath,-I/opt/local/libexec/llvm-devel/include/c++/v1") # -Wno-c++11-narrowing -fstack-protector-all -fstack-check -W -Wall") #-O3 -g -G -fsanitize=address
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -std=c++1z -g") # -nostdinc++ -I/opt/local/libexec/llvm-devel/include/c++/v1 -L/opt/local/libexec/llvm-devel/lib/c++/v1 -Wl,-rpath,-I/opt/local/libexec/llvm-devel/include/c++/v1") # -Wno-c++11-narrowing -fstack-protector-all -fstack-check -W -Wall") #-O3 -g -G stdlib=libc++
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -std=c++17") # -nostdinc++ -I/opt/local/libexec/llvm-devel/include/c++/v1 -L/opt/local/libexec/llvm-devel/lib/c++/v1 -Wl,-rpath,-I/opt/local/libexec/llvm-devel/include/c++/v1") # -Wno-c++11-narrowing -fstack-protector-all -fstack-check -W -Wall") #-O3 -g -G stdlib=libc++
     set_source_files_properties(${SRC_FILES} PROPERTIES LANGUAGE CXX)
     add_executable(GITR ${SRC_FILES})
     add_definitions("-x c++ -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP -DTHRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_OMP")
