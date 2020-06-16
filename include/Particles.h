@@ -229,20 +229,20 @@ public:
     yprevious{nParticles,0.0}, 
     zprevious{nParticles,0.0},
     v{nParticles, 0.0}, 
-    vx{nParticles,std::sqrt(2.0*getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
+    vx{nParticles,std::sqrtf(2.0*getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
 		    1.602e-19/getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27)*
     std::cos(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.theta"))*
     std::sin(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.phi"))}, 
-    vy{nParticles,std::sqrt(2.0*getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
+    vy{nParticles,std::sqrtf(2.0*getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
 		    1.602e-19/getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27)*
     std::sin(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.theta"))*
     std::sin(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.phi"))}, 
-    vz{nParticles,std::sqrt(2.0*getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
+    vz{nParticles,std::sqrtf(2.0*getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
 		    1.602e-19/getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27)*
     std::cos(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.phi"))}, 
     Z{nParticles},
     amu{nParticles,getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.impurity_amu")}, 
-    charge{nParticles,getVariable_cfg<int> (cfg,"impurityParticleSource.initialConditions.charge")}, 
+    charge{nParticles,getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.charge")}, 
     newVelocity{nParticles}, 
     nu_s{nParticles}, 
     vD{nParticles, 0.0}, 
