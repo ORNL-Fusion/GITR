@@ -123,11 +123,13 @@ def readEquilibrium(filename='/Users/Alyssa/Dev/WEST/baserun/west_54034_10p2s_ma
     brr = rootgrp.createVariable("br","f8",("nZ","nR"))
     btt = rootgrp.createVariable("bt","f8",("nZ","nR"))
     bzz = rootgrp.createVariable("bz","f8",("nZ","nR"))
+    psii = rootgrp.createVariable("psi","f8",("nZ","nR"))
     rr = rootgrp.createVariable("r","f8",("nR"))
     zz = rootgrp.createVariable("z","f8",("nZ"))
     brr[:] = br
     btt[:] = bt
     bzz[:] = bz
+    psii[:] = psi
     rr[:] = r
     zz[:] = z
     rootgrp.close()

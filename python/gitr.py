@@ -21,8 +21,8 @@ import os
 import shutil
 import math
 import scipy.interpolate as scii
-import seaborn as sns
-sns.set()
+#import seaborn as sns
+#sns.set()
 
 import solps
 def copy_folder(from_folder, to_folder):
