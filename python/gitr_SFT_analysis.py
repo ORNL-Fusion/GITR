@@ -18,14 +18,14 @@ sv = 1.2
 #---------------------------------------------------------
 
 #initiate netcdf file
-def init_ncid(fileExtension, L):
+def init_ncid(case, fileExtension, L):
     nR = 10;
     r = np.linspace(-300,300,nR)
     nZ = 101
     z = np.linspace(0,2*L,nZ)
     mid = int(nZ/2)
 
-    ncid = netCDF4.Dataset('input/profiles'+fileExtension+'.nc','w')
+    ncid = netCDF4.Dataset('../examples/SFT/%s/input/profiles'%case+fileExtension+'.nc','w')
     dimR = ncid.createDimension('nR',nR)
     dimZ = ncid.createDimension('nZ',nZ)
     ncid.createVariable('gridR','d',('nR',))[:] = r
@@ -82,9 +82,9 @@ def pop_ncid(ncid, vz2D, Ti2D, gradTi2D):
 #---------------------------------------------------------
 
 #define profiles
-def get_profilesA(fileExtension='', vb=750):
+def get_profilesA(case='caseA', fileExtension='', vb=750):
     L=10
-    nR, r, nZ, z, mid, ncid = init_ncid(fileExtension, L)
+    nR, r, nZ, z, mid, ncid = init_ncid(case, fileExtension, L)
 
     #define constants
     TD0 = 10
@@ -108,9 +108,9 @@ def get_profilesA(fileExtension='', vb=750):
     #export to ncid file
     pop_ncid(ncid, vz2D, Ti2D, gradTi2D)
 
-def get_profilesB(fileExtension='', TD0=100):
+def get_profilesB(case='caseB', fileExtension='', TD0=100):
     L = 30
-    nR, r, nZ, z, mid, ncid = init_ncid(fileExtension, L)
+    nR, r, nZ, z, mid, ncid = init_ncid(case, fileExtension, L)
 
     #define constants
     n0 = 1e20
@@ -123,9 +123,9 @@ def get_profilesB(fileExtension='', TD0=100):
     #export to ncid file
     pop_ncid(ncid, vz2D, Ti2D, gradTi2D)
 
-def get_profilesC(fileExtension=''):
+def get_profilesC(case='caseC', fileExtension=''):
     L = 10
-    nR, r, nZ, z, mid, ncid = init_ncid(fileExtension, L)
+    nR, r, nZ, z, mid, ncid = init_ncid(case, fileExtension, L)
 
     #update electric field
     Ez0 = -25
@@ -139,9 +139,9 @@ def get_profilesC(fileExtension=''):
     ncid.createVariable('Ez','d',('nR','nZ',))[:] = Ez2D
     ncid.close()
 
-def get_profilesD(fileExtension=''):
+def get_profilesD(case='caseD', fileExtension=''):
     L = 10
-    nR, r, nZ, z, mid, ncid = init_ncid(fileExtension, L)
+    nR, r, nZ, z, mid, ncid = init_ncid(case, fileExtension, L)
 
     #update vz from vb
     vb = -112.2
@@ -155,9 +155,9 @@ def get_profilesD(fileExtension=''):
     ncid.createVariable('vz','d',('nZ','nR',))[:] = vz2D
     ncid.close()
 
-def get_profilesE(fileExtension='', TD0):
+def get_profilesE(case='caseE', fileExtension='', TD0=10):
     L = 10
-    nR, r, nZ, z, mid, ncid = init_ncid(fileExtension, L)
+    nR, r, nZ, z, mid, ncid = init_ncid(case, fileExtension, L)
 
     #define constants
     n0 = 1e19
@@ -170,10 +170,10 @@ def get_profilesE(fileExtension='', TD0):
     #export to ncid file
     pop_ncid(ncid, vz2D, Ti2D, gradTi2D)
 
-def get_profilesF(fileExtension=''):
+def get_profilesF(case='caseF', fileExtension='', TD0=20):
     L = 30
     sv = 10.85
-    nR, r, nZ, z, mid, ncid = init_ncid(fileExtension, L)
+    nR, r, nZ, z, mid, ncid = init_ncid(case, fileExtension, L)
 
     #define constants
     n0 = 1e19
@@ -327,4 +327,4 @@ def SFTanalysis(cases=['D']):
         plt.show()
 
 if __name__ == "__main__":
-    get_profilesD()
+    get_profilesF()
