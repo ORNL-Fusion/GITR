@@ -901,7 +901,7 @@ if __name__ == "__main__":
     #make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
     #solps_geom = '/project/projectdirs/m1709/psi-install-cori/solps_data/mq3/b2fgmtry', \
     #right_target_filename= 'rightTargOutput')
-    make_solps_targ_file_txt(solps_geom='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry',b_field_file = '/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseline2008-li0.70.x4.equ')
+    #make_solps_targ_file_txt(solps_geom='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry',b_field_file = '/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseline2008-li0.70.x4.equ')
     #solps_geom = '/Users/tyounkin/postDoc/DOE-West/Deuterium/WEST_D_run1/baserun/b2fgmtry', \
     #b_field_file = '/Users/tyounkin/postDoc/DOE-West/Deuterium/WEST_D_run1/baserun/west_54034_10p2s_mag.X4.equ', \
     #coords_file = 'right_target_coordinates.txt', \
