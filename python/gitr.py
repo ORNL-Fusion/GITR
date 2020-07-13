@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib
 # matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-# matplotlib.use('agg')
+#matplotlib.use('agg')
 # import cv2
 import io, libconf
 # from mpl_toolkits.mplot3d import Axes3D
@@ -1069,6 +1069,127 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
 
     remove_endline_after_comma(infile=gitr_geometry_filename+"0", outfile=gitr_geometry_filename+"00")
     remove_endline_after_comma2(infile=gitr_geometry_filename+"00", outfile=gitr_geometry_filename)
+
+
+def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg', \
+                                  solps_mesh_extra='/Users/Alyssa/Dev/WEST/baserun/mesh.extra', \
+                                  solps_geom = '/Users/Alyssa/Dev/WEST/baserun/b2fgmtry'):
+    # This program uses the solps-west mesh.extra file in combination
+    # with the inner and outer (left and right) divertor target
+    # coordinates which come from the solps-west-data interpolation
+    # program to create a 2d geometry for GITR in which
+    # the solps plasma profiles properly match the divertor target
+    # geometry.
+    #
+    # This geometry is then written to a config (cfg) file for
+    # use in GITR simulation
+
+    #get geometry from solps
+    solps_mesh = np.loadtxt(solps_mesh_extra)
+
+    r = solps_mesh[:, [0,2]].transpose()
+    z = solps_mesh[:, [1,3]].transpose()
+
+    #order line segments
+    manual_indices = np.array(range(3, 5))
+    manual_indices = np.append(manual_indices, 77)
+    manual_indices = np.append(manual_indices, range(5, 22))
+    manual_indices = np.append(manual_indices, 78)
+    manual_indices = np.append(manual_indices, range(22, 24))
+    manual_indices = np.append(manual_indices, range(79, 90))
+    manual_indices = np.append(manual_indices, 91)
+    manual_indices = np.append(manual_indices, range(24, 50))
+    manual_indices = np.append(manual_indices, 90)
+    manual_indices = np.append(manual_indices, range(50, 62))
+    manual_indices = np.append(manual_indices, 0)
+    manual_indices = np.append(manual_indices, 62)
+    manual_indices = np.append(manual_indices, 1)
+    manual_indices = np.append(manual_indices, range(63, 77))
+    manual_indices = np.append(manual_indices, 2)
+    manual_indices = np.append(manual_indices, range(92, 102))
+    manual_indices = np.append(manual_indices, range(112, 114))
+    manual_indices = np.append(manual_indices, range(102, 108))
+    manual_indices = np.append(manual_indices, 110)
+    manual_indices = np.append(manual_indices, range(108, 110))
+    manual_indices = np.append(manual_indices, 111)
+    manual_indices = np.append(manual_indices, 3)
+
+    r_west = solps_mesh[:, [0, 2]].transpose()[0, manual_indices]
+    z_west = solps_mesh[:, [1, 3]].transpose()[0, manual_indices]
+
+    plt.plot(r_west, z_west)
+    plt.savefig('mesh_extra_west.png')
+
+    #plt.scatter(r,z,s=0.4)
+    #plt.savefig('mesh_extra_west_scatter.png')
+
+    #get target geometries from solps
+    #print('manual geometry size',r_west.size)
+    r_left_target,z_left_target,r_right_target,z_right_target = solps.get_target_coordinates(solps_geom)
+    plt.plot(r_left_target, z_left_target)
+    plt.plot(r_right_target, z_right_target)
+    plt.savefig('targets_west.png')
+
+    #integrate target geometry into base geometry
+    #print('START r_west size: ', r_west.size)
+    #print('ADD r_inner_target size: ', r_left_target.size)
+    r_final, z_final = replace_line_segment_west(r_left_target, z_left_target, r_west, z_west)
+    #print('CHECK r_final size after replacing inner target: ', r_final.size)
+    #print('ADD r_outer_target size: ', r_right_target.size)
+    r_final, z_final = replace_line_segment_west(r_right_target, z_right_target, r_final, z_final)
+    #print('CHECK r_final size after replacing outer target: ', r_final.size)
+
+    plt.close()
+    plt.plot(r_final, z_final, linewidth=0.1)
+    plt.scatter(r_final, z_final, s=0.4)
+    #plt.scatter(r_west, z_west, s=0.3)
+    plt.savefig('final_west.pdf')
+
+    Z = np.zeros(len(r_final)+1)
+    surfaces = np.zeros(len(r_final)+1)
+    inDir = np.zeros(len(r_final))
+
+    i_a, i_b = intersection(r_final, z_final, r_left_target, z_left_target)
+    Z[i_b] = 74;
+    surfaces[i_b] = 1;
+
+    i_a, i_b = intersection(r_final, z_final, r_right_target, z_right_target)
+    Z[i_b] = 74;
+    surfaces[i_b] = 1;
+    inDir[i_b] = -1;
+
+    lines = gitr_lines_from_points(r_final, z_final)
+
+    lines_to_gitr_geometry(gitr_geometry_filename, lines, Z, surfaces, inDir)
+
+    removeQuotes(infile=gitr_geometry_filename, outfile=gitr_geometry_filename+"0")
+
+    remove_endline_after_comma(infile=gitr_geometry_filename+"0", outfile=gitr_geometry_filename+"00")
+    remove_endline_after_comma2(infile=gitr_geometry_filename+"00", outfile=gitr_geometry_filename)
+
+def replace_line_segment_west(x_priority, y_priority, x_base, y_base):
+    x_left_bound = min(x_priority[0], x_priority[-1])
+    x_right_bound = max(x_priority[0], x_priority[-1])
+    y_bottom_bound = min(y_priority[0], y_priority[-1])
+    y_top_bound = max(y_priority[0], y_priority[-1])
+
+    remove_indices = np.empty([0])
+
+    for i in range(0, len(x_base)):
+        if ((x_base[i]>x_left_bound) and (x_base[i]<x_right_bound)\
+                and (y_base[i]>y_bottom_bound) and (y_base[i]<y_top_bound)):
+                    remove_indices = np.append(remove_indices, i)
+
+    remove_indices = remove_indices.astype(int)
+    #print('SUBTRACT remove_indices: ', remove_indices.size)
+
+    x_final = np.append(x_base[0:(remove_indices[0])], x_priority)
+    x_final = np.append(x_final, x_base[(remove_indices[-1] + 1):]);
+    y_final = np.append(y_base[0:(remove_indices[0])], y_priority)
+    y_final = np.append(y_final, y_base[(remove_indices[-1] + 1):]);
+
+    return x_final, y_final
+
 def removeQuotes(infile='this.cfg',outfile='that.cfg'):
     with open(infile, 'r') as f, open(outfile, 'w') as fo:
         for line in f:
@@ -1201,6 +1322,7 @@ def gitr_lines_from_points(r,z):
     lines[:, 6] = np.sqrt((lines[:, 2] - lines[:, 0])**2 + (lines[:, 3] - lines[:, 1])** 2);
 
     return lines
+
 def interp_1d(x_grid,vals,x_i,default_value = 0.0):
     #print(len(x_grid),len(vals),len(x_i))
     try:
@@ -1490,9 +1612,13 @@ def test_interp():
     #
     #value_interpolated = interp_3d(x_grid,y_grid,z_grid,vals,x_i,y_i,z_i,default_value = 0.0)
     #print(value_interpolated)
+
+
+
 if __name__ == "__main__":
-    #test_interp()
-    make_gitr_geometry_from_solps()
+#test_interp()
+#make_gitr_geometry_from_solps()
+make_gitr_geometry_from_solps_west()
 # asdfanc_show("surface.nc")
 # depositedEdist()
 # if(os.path.exists('output/history.nc')):

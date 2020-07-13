@@ -550,13 +550,15 @@ def get_target_coordinates(solps_geometry_filename='/Users/tyounkin/Dissertation
     r_outer_target = crx[-1,1:,bottom_left] #[bottom_left, top_left]]
     z_outer_target = cry[-1,1:,bottom_left] #[bottom_left, top_left]]
 
-    #r_inner_target = np.unique(r_inner_target)
-    #z_inner_target = np.unique(z_inner_target)
-    #r_outer_target = np.unique(r_outer_target)
-    #z_outer_target = np.unique(z_outer_target)
+    r_inner_target = np.append(r_inner_target[0,:], r_inner_target[1,-1])
+    z_inner_target = np.append(z_inner_target[0,:], z_inner_target[1,-1])
+    r_outer_target = np.append(r_outer_target[0,:], r_outer_target[1,-1])
+    z_outer_target = np.append(z_outer_target[0,:], z_outer_target[1,-1])
 
-    #print('zouter',z_outer_target)
-    #print('router',r_outer_target)
+    #print('r_inner_target',r_inner_target)
+    #print('z_inner_target',z_inner_target)
+    #print('r_outer_target',r_outer_target)
+    #print('z_outer_target',z_outer_target)
 
     return r_inner_target,z_inner_target, \
            r_outer_target,z_outer_target
@@ -885,7 +887,7 @@ if __name__ == "__main__":
     #make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
     #solps_geom = '/project/projectdirs/m1709/psi-install-cori/solps_data/mq3/b2fgmtry', \
     #right_target_filename= 'rightTargOutput')
-    make_solps_targ_file_txt(solps_geom='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry',b_field_file = '/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseline2008-li0.70.x4.equ')
+    #make_solps_targ_file_txt(solps_geom='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry',b_field_file = '/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseline2008-li0.70.x4.equ')
     #solps_geom = '/Users/tyounkin/postDoc/DOE-West/Deuterium/WEST_D_run1/baserun/b2fgmtry', \
     #b_field_file = '/Users/tyounkin/postDoc/DOE-West/Deuterium/WEST_D_run1/baserun/west_54034_10p2s_mag.X4.equ', \
     #coords_file = 'right_target_coordinates.txt', \
