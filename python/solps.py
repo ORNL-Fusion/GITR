@@ -519,8 +519,8 @@ def get_target_coordinates(solps_geometry_filename='/Users/tyounkin/Dissertation
     nx, ny, crx, cry, region = read_b2f_geometry(solps_geometry_filename)
 
     geom_shape = crx.shape
-    print('crx_size',crx.shape)
-    print('region_size',region.shape)
+    #print('crx_size',crx.shape)
+    #print('region_size',region.shape)
     bottom_left = 0
     bottom_right = 1
     top_left = 2;
@@ -531,12 +531,15 @@ def get_target_coordinates(solps_geometry_filename='/Users/tyounkin/Dissertation
     r_outer_target = crx[-1,:,[bottom_left, top_left]]
     z_outer_target = cry[-1,:,[bottom_left, top_left]]
 
-    r_inner_target = np.unique(r_inner_target)
-    z_inner_target = np.unique(z_inner_target)
-    r_outer_target = np.unique(r_outer_target)
-    z_outer_target = np.unique(z_outer_target)
+    r_inner_target = np.append(r_inner_target[0,:], r_inner_target[1,-1])
+    z_inner_target = np.append(z_inner_target[0,:], z_inner_target[1,-1])
+    r_outer_target = np.append(r_outer_target[0,:], r_outer_target[1,-1])
+    z_outer_target = np.append(z_outer_target[0,:], z_outer_target[1,-1])
 
-    print('zouter',z_outer_target)
+    #print('r_inner_target', r_inner_target)
+    #print('z_inner_target',z_inner_target)
+    #print('r_outer_target',r_outer_target)
+    #print('z_outer_target',z_outer_target)
 
     return r_inner_target,z_inner_target, \
            r_outer_target,z_outer_target
@@ -547,7 +550,7 @@ def read_b2f_geometry(solps_geometry_filename='/Users/tyounkin/Dissertation/ITER
                             field_name='nx,ny')
     nx = int(nxny[0]+2)
     ny = int(nxny[1]+2)
-    print('nx,ny',nx,ny)
+    #print('nx,ny',nx,ny)
     crx = np.zeros((nx, ny, 4))
     cry = np.zeros((nx, ny, 4))
 
@@ -560,10 +563,10 @@ def read_b2f_geometry(solps_geometry_filename='/Users/tyounkin/Dissertation/ITER
         crx[:,:,i] = np.transpose(np.reshape(crx_long[i*nx*ny:(i+1)*nx*ny],(ny,nx)))
         cry[:,:,i] = np.transpose(np.reshape(cry_long[i*nx*ny:(i+1)*nx*ny],(ny,nx)))
 
-    print('crx shape',crx.shape)
+    #print('crx shape',crx.shape)
     region = read_b2f_variable(solps_geometry_filename, \
                             field_name='region')
-    print('firstwhatever',region[0:nx*ny])
+    #print('firstwhatever',region[0:nx*ny])
     region = np.transpose(np.reshape(region[0:nx*ny],(ny,nx)))
 
     return nx,ny,crx,cry,region
