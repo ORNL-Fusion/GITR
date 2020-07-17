@@ -1118,38 +1118,25 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg
     z_west = solps_mesh[:, [1, 3]].transpose()[0, manual_indices]
 
     plt.plot(r_west, z_west)
-<<<<<<< HEAD
     plt.xlabel('r')
     plt.ylabel('z')
     plt.title('Raw WEST Geometry from SOLPS')
-=======
->>>>>>> 009bdad... process solps west geometry for gitr inputs
     plt.savefig('mesh_extra_west.png')
 
     #plt.scatter(r,z,s=0.4)
     #plt.savefig('mesh_extra_west_scatter.png')
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 009bdad... process solps west geometry for gitr inputs
     #get target geometries from solps
     #print('manual geometry size',r_west.size)
     r_left_target,z_left_target,r_right_target,z_right_target = solps.get_target_coordinates(solps_geom)
     plt.plot(r_left_target, z_left_target)
     plt.plot(r_right_target, z_right_target)
-<<<<<<< HEAD
     plt.title('Raw WEST Targets from SOLPS')
     plt.savefig('targets_west.png')
 
     #integrate target geometry into base geometry
     #uncomment print statements here and in replace_line_segments_west
     #to help solve errors integrating targets into the base geometry
-=======
-    plt.savefig('targets_west.png')
-
-    #integrate target geometry into base geometry
->>>>>>> 009bdad... process solps west geometry for gitr inputs
     #print('START r_west size: ', r_west.size)
     #print('ADD r_inner_target size: ', r_left_target.size)
     r_final, z_final = replace_line_segment_west(r_left_target, z_left_target, r_west, z_west)
@@ -1162,7 +1149,6 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg
     plt.plot(r_final, z_final, linewidth=0.1)
     plt.scatter(r_final, z_final, s=0.4)
     #plt.scatter(r_west, z_west, s=0.3)
-<<<<<<< HEAD
     plt.xlabel('r')
     plt.ylabel('z')
     plt.title('Target Geometry Integrated with WEST')
@@ -1181,13 +1167,11 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg
 
     Z = np.zeros(len(r_final)+1)
     surfaces = np.zeros(len(r_final)+1)
-=======
     plt.savefig('final_west.pdf')
+
 
     Z = np.zeros(len(r_final)+1)
     surfaces = np.zeros(len(r_final)+1)
-    inDir = np.zeros(len(r_final))
->>>>>>> 009bdad... process solps west geometry for gitr inputs
 
     i_a, i_b = intersection(r_final, z_final, r_left_target, z_left_target)
     Z[i_b] = 74;
@@ -1196,12 +1180,9 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg
     i_a, i_b = intersection(r_final, z_final, r_right_target, z_right_target)
     Z[i_b] = 74;
     surfaces[i_b] = 1;
-<<<<<<< HEAD
-=======
     inDir[i_b] = -1;
 
     lines = gitr_lines_from_points(r_final, z_final)
->>>>>>> 009bdad... process solps west geometry for gitr inputs
 
     lines_to_gitr_geometry(gitr_geometry_filename, lines, Z, surfaces, inDir)
 
@@ -1233,7 +1214,6 @@ def replace_line_segment_west(x_priority, y_priority, x_base, y_base):
 
     return x_final, y_final
 
-<<<<<<< HEAD
 def gitr_lines_from_points_west(r,z):
 
     nPoints = len(r)-1;
@@ -1287,8 +1267,6 @@ def lines_to_vectors_west(lines, inDir, filename):
     plt.axis('scaled')
     plt.savefig(filename)
 
-=======
->>>>>>> 009bdad... process solps west geometry for gitr inputs
 def removeQuotes(infile='this.cfg',outfile='that.cfg'):
     with open(infile, 'r') as f, open(outfile, 'w') as fo:
         for line in f:
