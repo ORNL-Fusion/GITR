@@ -1118,19 +1118,26 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg
     z_west = solps_mesh[:, [1, 3]].transpose()[0, manual_indices]
 
     plt.plot(r_west, z_west)
+    plt.xlabel('r')
+    plt.ylabel('z')
+    plt.title('Raw WEST Geometry from SOLPS')
     plt.savefig('mesh_extra_west.png')
 
     #plt.scatter(r,z,s=0.4)
     #plt.savefig('mesh_extra_west_scatter.png')
+
 
     #get target geometries from solps
     #print('manual geometry size',r_west.size)
     r_left_target,z_left_target,r_right_target,z_right_target = solps.get_target_coordinates(solps_geom)
     plt.plot(r_left_target, z_left_target)
     plt.plot(r_right_target, z_right_target)
+    plt.title('Raw WEST Targets from SOLPS')
     plt.savefig('targets_west.png')
 
     #integrate target geometry into base geometry
+    #uncomment print statements here and in replace_line_segments_west
+    #to help solve errors integrating targets into the base geometry
     #print('START r_west size: ', r_west.size)
     #print('ADD r_inner_target size: ', r_left_target.size)
     r_final, z_final = replace_line_segment_west(r_left_target, z_left_target, r_west, z_west)
@@ -1143,11 +1150,24 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg
     plt.plot(r_final, z_final, linewidth=0.1)
     plt.scatter(r_final, z_final, s=0.4)
     #plt.scatter(r_west, z_west, s=0.3)
-    plt.savefig('final_west.pdf')
+    plt.xlabel('r')
+    plt.ylabel('z')
+    plt.title('Target Geometry Integrated with WEST')
+    plt.savefig('final_west.png')
+
+
+    #define interior side of each line segment in the geometry with inDir
+    inDir = np.ones(len(r_final))
+    inDir[0:2] = inDir[3] = inDir[11:13] = inDir[14] = inDir[16] = inDir[18:21] = \
+            inDir[34:37] = inDir[58:61] = inDir[74] = inDir[77:] = -1
+
+    #populate lines and check that vectors point inward
+    lines = gitr_lines_from_points_west(r_final, z_final)
+    lines_to_vectors_west(lines, inDir, 'vectors_west.png')
+
 
     Z = np.zeros(len(r_final)+1)
     surfaces = np.zeros(len(r_final)+1)
-    inDir = np.zeros(len(r_final))
 
     i_a, i_b = intersection(r_final, z_final, r_left_target, z_left_target)
     Z[i_b] = 74;
@@ -1156,9 +1176,6 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg
     i_a, i_b = intersection(r_final, z_final, r_right_target, z_right_target)
     Z[i_b] = 74;
     surfaces[i_b] = 1;
-    inDir[i_b] = -1;
-
-    lines = gitr_lines_from_points(r_final, z_final)
 
     lines_to_gitr_geometry(gitr_geometry_filename, lines, Z, surfaces, inDir)
 
@@ -1189,6 +1206,59 @@ def replace_line_segment_west(x_priority, y_priority, x_base, y_base):
     y_final = np.append(y_final, y_base[(remove_indices[-1] + 1):]);
 
     return x_final, y_final
+
+def gitr_lines_from_points_west(r,z):
+
+    nPoints = len(r)-1;
+    lines = np.zeros([nPoints, 7]);
+    lines[:, 0] = r[:-1];
+    lines[:, 1] = z[:-1];
+    lines[:, 2] = r[1:];
+    lines[:, 3] = z[1:];
+
+    tol = 1e12;
+    tol_small = 1e-12;
+
+    for i in range(nPoints):
+        if (lines[i, 3] - lines[i, 1]) == 0:
+            lines[i, 4] = 0;
+            lines[i, 5] = lines[i, 1];
+        elif ((lines[i, 2] - lines[i, 0]) == 0):
+            lines[i, 4] = np.sign(lines[i, 3] - lines[i, 1]) * tol;
+            lines[i, 5] = tol;
+
+        else:
+            lines[i, 4] = (lines[i, 3] - lines[i, 1]) / (lines[i, 2] - lines[i, 0]);
+            lines[i, 5] = -lines[i, 4] * lines[i, 0] + lines[i, 1];
+
+    lines[:, 6] = np.sqrt((lines[:, 2] - lines[:, 0])**2 + (lines[:, 3] - lines[:, 1])** 2);
+
+    return lines
+
+def lines_to_vectors_west(lines, inDir, filename):
+
+    x1 = lines[:, 0]
+    z1 = lines[:, 1]
+    x2 = lines[:, 2]
+    z2 = lines[:, 3]
+    slope = lines[:, 4]
+    intercept = lines[:, 5]
+    line_length = lines[:, 6]
+
+    plt.title('WEST Inner Surface Definition')
+
+    for i in range(0,len(x1)):
+        if slope[i]==0: 
+            perpSlope = 1.0e12
+        else:
+            perpSlope = -np.sign(slope[i])/np.abs(slope[i]);
+
+        rPerp = -inDir[i]/np.sqrt(perpSlope*perpSlope+1);
+        zPerp = -inDir[i]*np.sign(perpSlope)*np.sqrt(1-rPerp*rPerp);
+        plt.quiver([x1[i] + (x2[i]-x1[i])/2], [z1[i] + (z2[i]-z1[i])/2], [rPerp/10], [zPerp/10], width=0.0015, scale=5, headwidth=4)
+
+    plt.axis('scaled')
+    plt.savefig(filename)
 
 def removeQuotes(infile='this.cfg',outfile='that.cfg'):
     with open(infile, 'r') as f, open(outfile, 'w') as fo:
