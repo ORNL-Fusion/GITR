@@ -11,7 +11,7 @@ import os
 import io
 import libconf
 
-def readEquilibrium(filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseline2008-li0.70.x4.equ'):
+def readEquilibrium(filename='/Users/Alyssa/Dev/WEST/baserun/west_54034_10p2s_mag.X4.equ'):
 
     rr=0
     zz=0
@@ -58,7 +58,9 @@ def readEquilibrium(filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseli
     print ('Equ data dimensions %i by %i ' %(jm,km)	)
     psi = np.reshape(psi,[len(z),len(r)])
     plt.pcolor(r, z, psi)
-    plt.title('pcolor')
+    plt.xlabel('r')
+    plt.ylabel('z')
+    plt.title('Magnetic Flux')
     # set the limits of the plot to the limits of the data
     plt.axis([r.min(), r.max(), z.min(), z.max()])
     plt.colorbar()
@@ -67,7 +69,9 @@ def readEquilibrium(filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseli
     plt.close()
 
     plt.contour(r,z,psi,100)
-    plt.title('contour')
+    plt.xlabel('r')
+    plt.ylabel('z')
+    plt.title('Magnetic Flux Contours')
     # set the limits of the plot to the limits of the data
     plt.axis([r.min(), r.max(), z.min(), z.max()])
     plt.colorbar()
@@ -82,6 +86,9 @@ def readEquilibrium(filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseli
 
     plt.close()
     plt.pcolor(r,z,br)
+    plt.xlabel('r')
+    plt.ylabel('z')
+    plt.title('Br')
     plt.colorbar()
     print ('Saving br profile as br.png ')
     plt.savefig('br.png')
@@ -89,6 +96,9 @@ def readEquilibrium(filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseli
 
     plt.pcolor(r,z,bz)
     plt.colorbar()
+    plt.xlabel('r')
+    plt.ylabel('z')
+    plt.title('Bz')
     print ('Saving br profile as br.png ')
     plt.savefig('bz.png')
 
@@ -98,6 +108,9 @@ def readEquilibrium(filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseli
 
     plt.close()
     plt.pcolor(r,z,bt)
+    plt.xlabel('r')
+    plt.ylabel('z')
+    plt.title('Bt')
     plt.colorbar()
     print( 'Saving bt profile as bt.png ')
     plt.savefig('bt.png')
@@ -120,6 +133,7 @@ def readEquilibrium(filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseli
     print( 'finishing read equilibirium')
 
     return r,z,br, bz, bt,psi
+
 def findStrikepoint(x1,x2,z1,z2,length,r,z,psi,rmin=5.55,rmax=6.226,zmin=-4.6,zmax=-3.238):
     outerTargetInd = np.where((x1 > rmin) & (x1 < rmax) & (x2 > rmin) & (x2 < rmax) & (z1 > zmin) & (z1 < zmax) & (z2 > zmin) & (z2 < zmax))
     #print 'outerTargetInd', outerTargetInd  
@@ -773,9 +787,9 @@ if __name__ == "__main__":
     #getBfield(rTarg,zTarg,"/Users/tyounkin/Dissertation/ITER/mq3/final/Baseline2008-li0.70.x4.equ","/Users/tyounkin/Code/gitr2/iter/iter_milestone/2d/input/iterGeom2DdirBe0.cfg")
     #process_solps_output_for_gitr()
     #get_solps_species()
-    #readEquilibrium()
+    readEquilibrium()
     #read_b2f_geometry()
     #find_strike_points()
     #read_target_file()
     #get_target_coordinates()
-    make_solps_targ_file()
+    #make_solps_targ_file()
