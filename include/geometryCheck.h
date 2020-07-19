@@ -11,6 +11,7 @@
 #include "Particles.h"
 #include "Surfaces.h"
 #include "surfaceModel.h"
+#include "boris.h"
 #include <cmath>
 
 CUDA_CALLABLE_MEMBER_DEVICE
@@ -47,6 +48,7 @@ float findT(float x0, float x1, float y0, float y1, float intersectionx) {
 
   return t;
 }
+  //template<int HOST=1>
 struct geometry_check {
   Particles *particlesPointer;
   const int nLines;
@@ -89,9 +91,9 @@ struct geometry_check {
         closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
         E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
         Adist(_Adist) {}
-
-  CUDA_CALLABLE_MEMBER_DEVICE
-  void operator()(std::size_t indx) const {
+  //CUDA_CALLABLE_MEMBER_DEVICE
+  __host__ __device__
+  void operator()(std::size_t indx) const  {
     // std::cout << "geometry check particle x" << particlesPointer->x[indx] <<
     // particlesPointer->x[indx]previous <<std::endl; std::cout << "geometry
     // check particle y" << particlesPointer->y[indx] <<
@@ -183,6 +185,24 @@ struct geometry_check {
         }
       }
 #else
+      if (boundaryVector[nLines].periodic_bc_x) {
+        if (particlesPointer->x[indx] < boundaryVector[nLines].periodic_bc_x0) {
+          particlesPointer->x[indx] =
+              boundaryVector[nLines].periodic_bc_x1 -
+              (boundaryVector[nLines].periodic_bc_x0 - particlesPointer->x[indx]);
+          particlesPointer->xprevious[indx] =
+              boundaryVector[nLines].periodic_bc_x1 -
+              (boundaryVector[nLines].periodic_bc_x0 - particlesPointer->x[indx]);
+
+        } else if (particlesPointer->x[indx] > boundaryVector[nLines].periodic_bc_x1) {
+          particlesPointer->x[indx] =
+              boundaryVector[nLines].periodic_bc_x0 +
+              (particlesPointer->x[indx] - boundaryVector[nLines].periodic_bc_x1);
+          particlesPointer->xprevious[indx] =
+              boundaryVector[nLines].periodic_bc_x0 +
+              (particlesPointer->x[indx] - boundaryVector[nLines].periodic_bc_x1);
+        }
+      }
       if (boundaryVector[nLines].periodic) {
         if (particlesPointer->y[indx] < boundaryVector[nLines].y1) {
           particlesPointer->y[indx] =
@@ -234,7 +254,12 @@ struct geometry_check {
       float signDot2 = 0.0;
       float totalSigns = 0.0;
       int nBoundariesCrossed = 0;
+      float nearest_boundary_distance = 1.0e6;
+      float nearest_boundary_index = 0;
+      float temp_position_xyz[3] ={0.0,0.0,0.0};
+      float dist_to_p = 0.0;
       int boundariesCrossed[6] = {0, 0, 0, 0, 0, 0};
+      float dist_to_boundariesCrossed[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
       /*
       if(particlesPointer->xprevious[indx] < 0 ||
       particlesPointer->yprevious[indx] < 0 ||
@@ -426,16 +451,18 @@ struct geometry_check {
           // hitSurface << std::endl;
           if (hitSurface == 1) {
             boundariesCrossed[nBoundariesCrossed] = i;
-            // std::cout << "boundary crossed " << i << std::endl;
-            nBoundariesCrossed++;
-            particlesPointer->hitWall[indx] = 1.0;
-            particlesPointer->xprevious[indx] = p[0];
-            particlesPointer->yprevious[indx] = p[1];
-            particlesPointer->zprevious[indx] = p[2];
-            particlesPointer->x[indx] = p[0];
-            particlesPointer->y[indx] = p[1];
-            particlesPointer->z[indx] = p[2];
-            particlesPointer->wallHit[indx] = i;
+            dist_to_boundariesCrossed[nBoundariesCrossed] = pointToPlaneDistance0;
+            //std::cout << "boundary crossed " << i << std::endl;
+      dist_to_p =
+          std::sqrt((p[0] - xprev) * (p[0] - xprev) + (p[1] - yprev) * (p[1] - yprev) +
+                    (p[2] - zprev) * (p[2] - zprev));
+	    if(dist_to_p < nearest_boundary_distance){
+		    nearest_boundary_distance = dist_to_p;
+              nBoundariesCrossed++;
+	      nearest_boundary_index = i;
+              temp_position_xyz[0] = p[0];
+              temp_position_xyz[1] = p[1];
+              temp_position_xyz[2] = p[2];
             //#if USESURFACEMODEL == 0
             //  #if USE_CUDA > 0
             //    atomicAdd(&boundaryVector[i].impacts,
@@ -445,7 +472,7 @@ struct geometry_check {
             //    particlesPointer->weight[indx];
             //  #endif
             //#endif
-            float E0 =
+              float E0 =
                 0.5 * particlesPointer->amu[indx] * 1.66e-27 *
                 (particlesPointer->vx[indx] * particlesPointer->vx[indx] +
                  particlesPointer->vy[indx] * particlesPointer->vy[indx] +
@@ -478,14 +505,27 @@ struct geometry_check {
             //}
 #else
 #endif
+	    }
           }
         }
+      }
         if (nBoundariesCrossed == 0) {
           particlesPointer->xprevious[indx] = particlesPointer->x[indx];
           particlesPointer->yprevious[indx] = particlesPointer->y[indx];
           particlesPointer->zprevious[indx] = particlesPointer->z[indx];
+          particlesPointer->distTraveled[indx] =
+              particlesPointer->distTraveled[indx] + dpath;
         }
-      }
+	else{
+              particlesPointer->hitWall[indx] = 1.0;
+              particlesPointer->xprevious[indx] = temp_position_xyz[0];
+              particlesPointer->yprevious[indx] = temp_position_xyz[1];
+              particlesPointer->zprevious[indx] = temp_position_xyz[2];
+              particlesPointer->x[indx] = temp_position_xyz[0];
+              particlesPointer->y[indx] = temp_position_xyz[1];
+              particlesPointer->z[indx] = temp_position_xyz[2];
+              particlesPointer->surfaceHit[indx] = nearest_boundary_index;
+	}
 #else // 2D geometry
 #if USECYLSYMM > 0
       float pdim1 = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
@@ -535,7 +575,7 @@ struct geometry_check {
  //particlesPointer->z[indx]<< std::endl;
 #if GEOM_HASH > 0
 #if USECYLSYMM > 0
-      float r_position = std::sqrtf(particlesPointer->xprevious[indx] *
+      float r_position = std::sqrt(particlesPointer->xprevious[indx] *
                                    particlesPointer->xprevious[indx] +
                                particlesPointer->yprevious[indx] *
                                    particlesPointer->yprevious[indx]);
@@ -729,7 +769,7 @@ struct geometry_check {
         {
           particlesPointer->hitWall[indx] = 1.0f;
           particlesPointer->wallIndex[indx] = intersectionIndices[0];
-          particlesPointer->wallHit[indx] = intersectionIndices[0];
+          particlesPointer->surfaceHit[indx] = intersectionIndices[0];
           // particlesPointer->test0[indx] = -100.0;
           if (particle_slope >= tol * 0.75f) 
           {
@@ -845,7 +885,7 @@ struct geometry_check {
           }
 
           particlesPointer->wallIndex[indx] = intersectionIndices[minDistInd];
-          particlesPointer->wallHit[indx] = intersectionIndices[minDistInd];
+          particlesPointer->surfaceHit[indx] = intersectionIndices[minDistInd];
           particlesPointer->hitWall[indx] = 1.0f;
 #if USECYLSYMM > 0
           thetaNew = theta0 + (intersectionx[minDistInd] - pdim1previous) /
@@ -913,8 +953,8 @@ struct geometry_check {
                          particleTrackVector[2] * particleTrackVector[2]);
         E0 = 0.5 * particlesPointer->amu[indx] * 1.6737236e-27 *
              (norm_part * norm_part) / 1.60217662e-19;
-        int wallHitP = particlesPointer->wallHit[indx];
-        boundaryVector[particlesPointer->wallHit[indx]].getSurfaceNormal(
+        int wallHitP = particlesPointer->surfaceHit[indx];
+        boundaryVector[particlesPointer->surfaceHit[indx]].getSurfaceNormal(
             surfaceNormalVector, particlesPointer->y[indx],
             particlesPointer->x[indx]);
         particleTrackVector[0] = particleTrackVector[0] / norm_part;
@@ -931,8 +971,8 @@ struct geometry_check {
         EdistInd = std::floor((E0 - E0dist) / dEdist);
         AdistInd = std::floor((thetaImpact - A0dist) / dAdist);
         int surfaceHit =
-            boundaryVector[particlesPointer->wallHit[indx]].surfaceNumber;
-        int surface = boundaryVector[particlesPointer->wallHit[indx]].surface;
+            boundaryVector[particlesPointer->surfaceHit[indx]].surfaceNumber;
+        int surface = boundaryVector[particlesPointer->surfaceHit[indx]].surface;
         float weight = particlesPointer->weight[indx];
         // particlesPointer->test[indx] = norm_part;
         // particlesPointer->test0[indx] = partDotNormal;
@@ -947,6 +987,7 @@ struct geometry_check {
           if ((EdistInd >= 0) && (EdistInd < nEdist) && (AdistInd >= 0) &&
               (AdistInd < nAdist)) {
 #if USE_CUDA > 0
+#if __CUDA_ARCH__		  
             atomicAdd(
                 &surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                               EdistInd * nAdist + AdistInd],
@@ -956,6 +997,9 @@ struct geometry_check {
             atomicAdd(&surfaces->sumWeightStrike[surfaceHit],
                       particlesPointer->weight[indx]);
             atomicAdd(&surfaces->sumParticlesStrike[surfaceHit], 1);
+#else
+#endif
+		  
 #else
 
             surfaces->energyDistribution[surfaceHit * nEdist * nAdist +

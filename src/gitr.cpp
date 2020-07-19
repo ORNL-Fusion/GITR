@@ -38,13 +38,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
+#include "flags.hpp"
 
 #ifdef __CUDACC__
 #include <curand.h>
 #include <curand_kernel.h>
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 #else
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 #endif
 
 #if USE_MPI
@@ -65,10 +66,10 @@ int main(int argc, char **argv, char **envp) {
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
 
-  //Set default processes per node to 1
+  // Set default processes per node to 1
   int ppn = 1;
 
-  //Set default input file string
+  // Set default input file string
   std::string inputFile = "gitrInput.cfg";
 
 #if USE_MPI > 0
@@ -109,6 +110,9 @@ int main(int argc, char **argv, char **envp) {
   
   // Prepare config files for import
   libconfig::Config cfg, cfg_geom;
+  cfg.setAutoConvert(true);
+  cfg_geom.setAutoConvert(true);
+
   std::string input_path = "input/";
   
   if (world_rank == 0) {
@@ -130,26 +134,39 @@ int main(int argc, char **argv, char **envp) {
     checkFlags(cfg);
 #endif
   }
-
-// show memory usage of GPU
-#if __CUDACC__
-  namespace fsn = std::experimental::filesystem;
-#else
-  namespace fsn = std::experimental::filesystem;
-#endif
-
-print_gpu_memory_usage(world_rank);
-
-  fsn::path output_folder = "output";
-  // Output
-
-  //boost::filesystem::path dir(output_folder);
-  if (!(fsn::exists(output_folder))) {
-    std::cout << "Doesn't Exist in main" << std::endl;
-    if (fsn::create_directory(output_folder)) {
-      std::cout << " Successfully Created " << std::endl;
-    }
-  }
+  
+  auto gitr_flags = new Flags(cfg);
+    std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
+    auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
+    //FIXME: work on new field struct
+    //auto field1 = new Field();
+    //auto pClient = new Field_client(); 
+    //std::cout << "created client " << std::endl;
+    //std::cout << "interp " << (field1->*(field1->fooHandler))(1.0,2.0,3.0) << std::endl;
+    //Field * pField = pClient->getField(); 
+    //std::cout << "created field pointer " << std::endl;
+    //std::cout << "interp2 " << field1->interpolate(1.0,2.0,3.0) << std::endl;
+    ////float interpvalfield  = pField->interpolate();
+    //std::cout << "called interpolate " << std::endl;
+//// show memory usage of GPU
+//#if __CUDACC__
+//  namespace fsn = std::experimental::filesystem;
+//#else
+//  namespace fsn = std::experimental::filesystem;
+//#endif
+//
+//print_gpu_memory_usage(world_rank);
+//
+//  fsn::path output_folder = "output";
+//  // Output
+//
+//  //boost::filesystem::path dir(output_folder);
+//  if (!(fsn::exists(output_folder))) {
+//    std::cout << "Doesn't Exist in main" << std::endl;
+//    if (fsn::create_directory(output_folder)) {
+//      std::cout << " Successfully Created " << std::endl;
+//    }
+//  }
 
   // Background species info
   float background_Z = 0.0, background_amu = 0.0;
@@ -242,11 +259,11 @@ print_gpu_memory_usage(world_rank);
 #if USE_MPI > 0
   MPI_Bcast(&nSurfaces, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #if USE3DTETGEOM > 0
-  const int nBoundaryMembers = 39;
-  int nIntMembers = 5;
+  const int nBoundaryMembers = 41;
+  int nIntMembers = 6;
 #else
-  const int nBoundaryMembers = 37;
-  int nIntMembers = 5;
+  const int nBoundaryMembers = 39;
+  int nIntMembers = 6;
 #endif
   int lengths[nBoundaryMembers] = {0};
   MPI_Aint offsets[nBoundaryMembers] = {};
@@ -449,14 +466,7 @@ print_gpu_memory_usage(world_rank);
      nHashPointsTotal = 0;
      for(int j=0;j<nHashes;j++)
     {
-      if(nHashes > 1)
-      {
         nHashPoints[j] =nR_closeGeom[j]*nY_closeGeom[j]*nZ_closeGeom[j];
-      }
-      else
-      {
-        nHashPoints[j] =nR_closeGeom[j]*nZ_closeGeom[j];
-      }
       nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
       nGeomHash = nGeomHash + nHashPoints[j]*n_closeGeomElements[j];
       nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
@@ -760,27 +770,32 @@ print_gpu_memory_usage(world_rank);
   printf("Time taken          is %6.3f (secs) \n", fs0.count());
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
-      NcFile ncFile_hash("output/geomHash" + std::to_string(i) + ".nc",
-                         NcFile::replace);
-      NcDim hashNR = ncFile_hash.addDim("nR", nR_closeGeom[i]);
+      std::cout << "opening file" << std::endl;
+      netCDF::NcFile ncFile_hash("output/geomHash" + std::to_string(i) + ".nc",
+                         netCDF::NcFile::replace);
+      std::cout << "opened file" << std::endl;
+      netCDF::NcDim hashNR = ncFile_hash.addDim("nR", nR_closeGeom[i]);
 #if USE3DTETGEOM > 0
-      NcDim hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
+      netCDF::NcDim hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
 #endif
-      NcDim hashNZ = ncFile_hash.addDim("nZ", nZ_closeGeom[i]);
-      NcDim hashN = ncFile_hash.addDim("n", n_closeGeomElements[i]);
-      vector<NcDim> geomHashDim;
+      netCDF::NcDim hashNZ = ncFile_hash.addDim("nZ", nZ_closeGeom[i]);
+      netCDF::NcDim hashN = ncFile_hash.addDim("n", n_closeGeomElements[i]);
+      vector<netCDF::NcDim> geomHashDim;
       geomHashDim.push_back(hashNR);
+      std::cout << "created dims" << std::endl;
 #if USE3DTETGEOM > 0
       geomHashDim.push_back(hashNY);
 #endif
       geomHashDim.push_back(hashNZ);
       geomHashDim.push_back(hashN);
-      NcVar hash_gridR = ncFile_hash.addVar("gridR", ncFloat, hashNR);
+      netCDF::NcVar hash_gridR = ncFile_hash.addVar("gridR", netCDF::ncFloat, hashNR);
+      std::cout << "created dims2" << std::endl;
 #if USE3DTETGEOM > 0
-      NcVar hash_gridY = ncFile_hash.addVar("gridY", ncFloat, hashNY);
+      netCDF::NcVar hash_gridY = ncFile_hash.addVar("gridY", netCDF::ncFloat, hashNY);
 #endif
-      NcVar hash_gridZ = ncFile_hash.addVar("gridZ", ncFloat, hashNZ);
-      NcVar hash = ncFile_hash.addVar("hash", ncInt, geomHashDim);
+      netCDF::NcVar hash_gridZ = ncFile_hash.addVar("gridZ", netCDF::ncFloat, hashNZ);
+      netCDF::NcVar hash = ncFile_hash.addVar("hash", netCDF::ncInt, geomHashDim);
+      std::cout << "created vars" << std::endl;
       int ncIndex = 0;
       if (i > 0)
         ncIndex = nR_closeGeom[i - 1];
@@ -801,6 +816,7 @@ print_gpu_memory_usage(world_rank);
       ncFile_hash.close();
     }
   }
+      std::cout << "created vars2" << std::endl;
 #elif GEOM_HASH > 1
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
@@ -813,6 +829,7 @@ print_gpu_memory_usage(world_rank);
         dataIndex = nZ_closeGeom[0];
       getVarFromFile(cfg, input_path + hashFile[i], geomHashCfg, "gridZString",
                      closeGeomGridz[dataIndex]);
+      std::cout << "created vars3" << std::endl;
 #if USE3DTETGEOM > 0
       if (i > 0)
         dataIndex = nY_closeGeom[0];
@@ -826,6 +843,7 @@ print_gpu_memory_usage(world_rank);
                      "closeGeomString", closeGeom[dataIndex]);
     }
   }
+      std::cout << "created vars4" << std::endl;
 #if USE_MPI > 0
   MPI_Bcast(closeGeomGridr.data(), nR_closeGeomTotal, MPI_FLOAT, 0,
             MPI_COMM_WORLD);
@@ -996,25 +1014,25 @@ print_gpu_memory_usage(world_rank);
   fsec0_s fs0_s = finish_clock0_s - start_clock0_s;
   printf("Time taken          is %6.3f (secs) \n", fs0_s.count());
   if (world_rank == 0) {
-    NcFile ncFile_hash_sheath("output/geomHash_sheath.nc", NcFile::replace);
-    NcDim hashNR_sheath = ncFile_hash_sheath.addDim("nR", nR_closeGeom_sheath);
-    NcDim hashNY_sheath = ncFile_hash_sheath.addDim("nY", nY_closeGeom_sheath);
-    NcDim hashNZ_sheath = ncFile_hash_sheath.addDim("nZ", nZ_closeGeom_sheath);
-    NcDim hashN_sheath =
+    netCDF::NcFile ncFile_hash_sheath("output/geomHash_sheath.nc", netCDF::NcFile::replace);
+    netCDF::NcDim hashNR_sheath = ncFile_hash_sheath.addDim("nR", nR_closeGeom_sheath);
+    netCDF::NcDim hashNY_sheath = ncFile_hash_sheath.addDim("nY", nY_closeGeom_sheath);
+    netCDF::NcDim hashNZ_sheath = ncFile_hash_sheath.addDim("nZ", nZ_closeGeom_sheath);
+    netCDF::NcDim hashN_sheath =
         ncFile_hash_sheath.addDim("n", n_closeGeomElements_sheath);
-    vector<NcDim> geomHashDim_sheath;
+    vector<netCDF::NcDim> geomHashDim_sheath;
     geomHashDim_sheath.push_back(hashNR_sheath);
     geomHashDim_sheath.push_back(hashNY_sheath);
     geomHashDim_sheath.push_back(hashNZ_sheath);
     geomHashDim_sheath.push_back(hashN_sheath);
-    NcVar hash_gridR_sheath =
-        ncFile_hash_sheath.addVar("gridR", ncFloat, hashNR_sheath);
-    NcVar hash_gridY_sheath =
-        ncFile_hash_sheath.addVar("gridY", ncFloat, hashNY_sheath);
-    NcVar hash_gridZ_sheath =
-        ncFile_hash_sheath.addVar("gridZ", ncFloat, hashNZ_sheath);
-    NcVar hash_sheath =
-        ncFile_hash_sheath.addVar("hash", ncInt, geomHashDim_sheath);
+    netCDF::NcVar hash_gridR_sheath =
+        ncFile_hash_sheath.addVar("gridR", netCDF::ncFloat, hashNR_sheath);
+    netCDF::NcVar hash_gridY_sheath =
+        ncFile_hash_sheath.addVar("gridY", netCDF::ncFloat, hashNY_sheath);
+    netCDF::NcVar hash_gridZ_sheath =
+        ncFile_hash_sheath.addVar("gridZ", netCDF::ncFloat, hashNZ_sheath);
+    netCDF::NcVar hash_sheath =
+        ncFile_hash_sheath.addVar("hash", netCDF::ncInt, geomHashDim_sheath);
     hash_gridR_sheath.putVar(&closeGeomGridr_sheath[0]);
     hash_gridY_sheath.putVar(&closeGeomGridy_sheath[0]);
     hash_gridZ_sheath.putVar(&closeGeomGridz_sheath[0]);
@@ -2029,6 +2047,8 @@ print_gpu_memory_usage(world_rank);
                               te.data(), biasPotential));
 
   std::cout << "Completed Boundary Init " << std::endl;
+  std::cout << "periodicy "<<boundaries[nLines].periodic << std::endl;
+  std::cout << "periodicx "<<boundaries[nLines].periodic_bc_x << std::endl;
 
   // Efield
   int nR_PreSheathEfield = 1;
@@ -2249,6 +2269,19 @@ print_gpu_memory_usage(world_rank);
       minDist(nR_Bfield * nZ_Bfield);
 
 #if USESHEATHEFIELD > 0
+  float thisE0[3] = {0.0, 0.0, 0.0};
+  float minDist0 = 0.0;
+  int minInd_bnd = 0;
+  for (int i = 0; i < 1000; i++) {
+      minDist0 =
+          getE(0.0, 0.0, 1.0E-6*i, thisE0, boundaries.data(),
+               nLines,
+               nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
+               n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
+               &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
+               &closeGeom_sheath.front(), minInd_bnd);
+      std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
+  }
 #if EFIELD_INTERP == 1
   float thisE[3] = {0.0, 0.0, 0.0};
 
@@ -2850,9 +2883,9 @@ print_gpu_memory_usage(world_rank);
     nActiveParticlesOnRank[i] = nPPerRank[i];
   }
   std::cout << "World rank " << world_rank << " has " << nPPerRank[world_rank]
-            << " starting at " << pStartIndx[world_rank] << std::endl;
-  auto particleArray = new Particles(nParticles);
-  // auto particleArray2 = new Particles(nParticles);
+            << " starting at " << pStartIndx[world_rank] 
+            << " ending at " << pStartIndx[world_rank]+nPPerRank[world_rank] << std::endl;
+  auto particleArray = new Particles(nParticles,1,cfg,gitr_flags);
 
   float x, y, z, E, vtotal, vx, vy, vz, Ex, Ey, Ez, amu, Z, charge, phi, theta,
       Ex_prime, Ez_prime, theta_transform;
@@ -3189,16 +3222,16 @@ print_gpu_memory_usage(world_rank);
     // Return this in event of a problem.
     static const int NC_ERR = 2;
     try {
-      NcFile ncp0("input/" + ncParticleSourceFile, NcFile::read);
-    } catch (NcException &e) {
+	    netCDF::NcFile ncp0("input/" + ncParticleSourceFile, netCDF::NcFile::read);
+    } catch (netCDF::exceptions::NcException &e) {
       e.what();
       cout << "FAILURE*************************************" << endl;
       return NC_ERR;
     }
     std::cout << "finished NcFile ncp0 starting ncp" << std::endl;
-    NcFile ncp("input/" + ncParticleSourceFile, NcFile::read);
+    netCDF::NcFile ncp("input/" + ncParticleSourceFile, netCDF::NcFile::read);
     std::cout << "getting dim nP" << std::endl;
-    NcDim ps_nP(ncp.getDim("nP"));
+    netCDF::NcDim ps_nP(ncp.getDim("nP"));
 
     nPfile = ps_nP.getSize();
     xpfile.resize(nPfile);
@@ -3208,12 +3241,12 @@ print_gpu_memory_usage(world_rank);
     vypfile.resize(nPfile);
     vzpfile.resize(nPfile);
     // std::cout << "nPfile "<< nPfile << std::endl;
-    NcVar ncp_x(ncp.getVar("x"));
-    NcVar ncp_y(ncp.getVar("y"));
-    NcVar ncp_z(ncp.getVar("z"));
-    NcVar ncp_vx(ncp.getVar("vx"));
-    NcVar ncp_vy(ncp.getVar("vy"));
-    NcVar ncp_vz(ncp.getVar("vz"));
+    netCDF::NcVar ncp_x(ncp.getVar("x"));
+    netCDF::NcVar ncp_y(ncp.getVar("y"));
+    netCDF::NcVar ncp_z(ncp.getVar("z"));
+    netCDF::NcVar ncp_vx(ncp.getVar("vx"));
+    netCDF::NcVar ncp_vy(ncp.getVar("vy"));
+    netCDF::NcVar ncp_vz(ncp.getVar("vz"));
     std::cout << "got through NcVar " << std::endl;
     ncp_x.getVar(&xpfile[0]);
     ncp_y.getVar(&ypfile[0]);
@@ -3453,17 +3486,17 @@ print_gpu_memory_usage(world_rank);
   if (world_rank == 0) {
 #endif
     std::cout << "writing particles out file" << std::endl;
-    NcFile ncFile_particles("output/particleSource.nc", NcFile::replace);
-    NcDim pNP = ncFile_particles.addDim("nP", nP);
-    NcVar p_surfNormx = ncFile_particles.addVar("surfNormX", ncFloat, pNP);
-    NcVar p_surfNormy = ncFile_particles.addVar("surfNormY", ncFloat, pNP);
-    NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ", ncFloat, pNP);
-    NcVar p_vx = ncFile_particles.addVar("vx", ncFloat, pNP);
-    NcVar p_vy = ncFile_particles.addVar("vy", ncFloat, pNP);
-    NcVar p_vz = ncFile_particles.addVar("vz", ncFloat, pNP);
-    NcVar p_x = ncFile_particles.addVar("x", ncFloat, pNP);
-    NcVar p_y = ncFile_particles.addVar("y", ncFloat, pNP);
-    NcVar p_z = ncFile_particles.addVar("z", ncFloat, pNP);
+    netCDF::NcFile ncFile_particles("output/particleSource.nc", netCDF::NcFile::replace);
+    netCDF::NcDim pNP = ncFile_particles.addDim("nP", nP);
+    netCDF::NcVar p_surfNormx = ncFile_particles.addVar("surfNormX", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_surfNormy = ncFile_particles.addVar("surfNormY", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_vx = ncFile_particles.addVar("vx", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_vy = ncFile_particles.addVar("vy", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_vz = ncFile_particles.addVar("vz", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_x = ncFile_particles.addVar("x", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_y = ncFile_particles.addVar("y", netCDF::ncFloat, pNP);
+    netCDF::NcVar p_z = ncFile_particles.addVar("z", netCDF::ncFloat, pNP);
     p_surfNormx.putVar(&pSurfNormX[0]);
     p_surfNormy.putVar(&pSurfNormY[0]);
     p_surfNormz.putVar(&pSurfNormZ[0]);
@@ -3574,28 +3607,34 @@ print_gpu_memory_usage(world_rank);
   std::cout << "Beginning random number seeds" << std::endl;
   std::uniform_real_distribution<float> dist(0, 1e6);
 
-#if FIXEDSEEDS == 0
-  std::random_device rd;
-  std::default_random_engine generator(rd());
-  std::default_random_engine generator1(rd());
-  std::default_random_engine generator2(rd());
-  std::default_random_engine generator3(rd());
-  std::default_random_engine generator4(rd());
-  std::default_random_engine generator5(rd());
-  std::default_random_engine generator6(rd());
-#endif
+//if FIXEDSEEDS == 0
+//{
+  //std::random_device rd;
+  //std::default_random_engine generator(getVariable_cfg<int> (cfg,"operators.ionization.seed"));
+  //std::default_random_engine generator1(rd());
+  //std::default_random_engine generator2(rd());
+  //std::default_random_engine generator3(rd());
+  //std::default_random_engine generator4(rd());
+  //std::default_random_engine generator5(rd());
+  //std::default_random_engine generator6(rd());
+//}
 
   thrust::counting_iterator<std::size_t> particleBegin(pStartIndx[world_rank]);
   thrust::counting_iterator<std::size_t> particleEnd(
-      pStartIndx[world_rank] + nActiveParticlesOnRank[world_rank] - 1);
+      pStartIndx[world_rank] + nActiveParticlesOnRank[world_rank] );
   thrust::counting_iterator<std::size_t> particleOne(1);
   auto randInitStart_clock = gitr_time::now();
 
 #if PARTICLESEEDS > 0
-#if USE_CUDA
-  sim::Array<curandState> state1(nParticles);
+#ifdef __CUDACC__
+     typedef curandState rand_type;
 #else
-  sim::Array<std::mt19937> state1(nParticles);
+     typedef std::mt19937 rand_type;
+#endif
+#if USE_CUDA
+  sim::Array<rand_type> state1(nParticles);
+#else
+  sim::Array<rand_type> state1(nParticles);
 #endif
 #if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 ||       \
     USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
@@ -3611,7 +3650,7 @@ print_gpu_memory_usage(world_rank);
                    // world_rank*nP/world_size,particleBegin +
                    // (world_rank+1)*nP/world_size-10,
                    // curandInitialize(&state1[0],randDeviceInit,0));
-                   curandInitialize(&state1.front(), 0));
+                   curandInitialize<>(&state1.front(), 0));
   std::cout << " finished curandInit" << std::endl;
   // curandInitialize cuIn(0);
   // cuIn(0);
@@ -3661,6 +3700,8 @@ print_gpu_memory_usage(world_rank);
       n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
       &closeGeom_sheath.front());
+  //void (*bor)(std::size_t) = &move_boris::operator2;
+  //auto bor1 = *bor;
   geometry_check geometry_check0(
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
@@ -3678,15 +3719,31 @@ print_gpu_memory_usage(world_rank);
                      &gridZ_bins.front(), &net_Bins.front(), dt);
 #endif
 #if USEIONIZATION > 0
-  ionize ionize0(
-      particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
+#if USE_CUDA > 0
+  float *uni;
+  cudaMallocManaged(&uni, sizeof(float));
+#else
+  float *uni = new float[1];
+  *uni = 0;
+#endif
+
+  ionize<rand_type> ionize0(
+      gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front());
+      &rateCoeff_Ionization.front(),field1,uni);
+  //if(gitr_flags.USE_IONIZATION > 0) ionize0.func = &ionize::operator();
+  //else ionize0.func = &ionize::operator1;
+  //void (ionize::*func)(std::size_t) = &ionize::operator();
+  //ionize * ionize_ptr = &ionize0;
+  //void (*func11)(std::size_t)  = &ionize0.operator();
+  //if(gitr_flags.USE_IONIZATION > 0) &func = &ionize::operator1;
+  //else func = NULL;
+  //auto func1 = *func;
 #endif
 #if USERECOMBINATION > 0
-  recombine recombine0(
+  recombine<rand_type> recombine0(
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
@@ -3787,7 +3844,7 @@ print_gpu_memory_usage(world_rank);
         float testTi =
             interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),
                              TempGridz.data(), ti.data());
-        std::cout << "Finished Temperature import " << testVec << std::endl;
+        //std::cout << "Finished Temperature import " << testVec << std::endl;
         //" " << Btest[2] << " " << Btotal << std::endl;
         particleArray->setParticle(0, forceR[i], 0.0, forceZ[j], testTi, 0.0,
                                    0.0, Z, amu, charge + 1.0);
@@ -3832,31 +3889,31 @@ print_gpu_memory_usage(world_rank);
       }
     }
     std::cout << " about to write ncFile_forces " << std::endl;
-    NcFile ncFile_force("output/forces.nc", NcFile::replace);
-    NcDim nc_nRf = ncFile_force.addDim("nR", nR_force);
-    NcDim nc_nZf = ncFile_force.addDim("nZ", nZ_force);
-    vector<NcDim> forceDims;
+    netCDF::NcFile ncFile_force("output/forces.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nRf = ncFile_force.addDim("nR", nR_force);
+    netCDF::NcDim nc_nZf = ncFile_force.addDim("nZ", nZ_force);
+    vector<netCDF::NcDim> forceDims;
     forceDims.push_back(nc_nZf);
     forceDims.push_back(nc_nRf);
-    NcVar forceRf = ncFile_force.addVar("r", ncFloat, nc_nRf);
-    NcVar forceZf = ncFile_force.addVar("z", ncFloat, nc_nZf);
-    NcVar nction = ncFile_force.addVar("tIon", ncFloat, forceDims);
-    NcVar nctrec = ncFile_force.addVar("tRec", ncFloat, forceDims);
-    NcVar dvErf = ncFile_force.addVar("dvEr", ncFloat, forceDims);
-    NcVar dvEzf = ncFile_force.addVar("dvEz", ncFloat, forceDims);
-    NcVar dvEtf = ncFile_force.addVar("dvEt", ncFloat, forceDims);
-    NcVar dvBrf = ncFile_force.addVar("dvBr", ncFloat, forceDims);
-    NcVar dvBzf = ncFile_force.addVar("dvBz", ncFloat, forceDims);
-    NcVar dvBtf = ncFile_force.addVar("dvBt", ncFloat, forceDims);
-    NcVar dvCollrf = ncFile_force.addVar("dvCollr", ncFloat, forceDims);
-    NcVar dvCollzf = ncFile_force.addVar("dvCollz", ncFloat, forceDims);
-    NcVar dvColltf = ncFile_force.addVar("dvCollt", ncFloat, forceDims);
-    NcVar dvITGrf = ncFile_force.addVar("dvITGr", ncFloat, forceDims);
-    NcVar dvITGzf = ncFile_force.addVar("dvITGz", ncFloat, forceDims);
-    NcVar dvITGtf = ncFile_force.addVar("dvITGt", ncFloat, forceDims);
-    NcVar dvETGrf = ncFile_force.addVar("dvETGr", ncFloat, forceDims);
-    NcVar dvETGzf = ncFile_force.addVar("dvETGz", ncFloat, forceDims);
-    NcVar dvETGtf = ncFile_force.addVar("dvETGt", ncFloat, forceDims);
+    netCDF::NcVar forceRf = ncFile_force.addVar("r", netCDF::ncFloat, nc_nRf);
+    netCDF::NcVar forceZf = ncFile_force.addVar("z", netCDF::ncFloat, nc_nZf);
+    netCDF::NcVar nction = ncFile_force.addVar("tIon", netCDF::ncFloat, forceDims);
+    netCDF::NcVar nctrec = ncFile_force.addVar("tRec", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvErf = ncFile_force.addVar("dvEr", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvEzf = ncFile_force.addVar("dvEz", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvEtf = ncFile_force.addVar("dvEt", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvBrf = ncFile_force.addVar("dvBr", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvBzf = ncFile_force.addVar("dvBz", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvBtf = ncFile_force.addVar("dvBt", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvCollrf = ncFile_force.addVar("dvCollr", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvCollzf = ncFile_force.addVar("dvCollz", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvColltf = ncFile_force.addVar("dvCollt", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvITGrf = ncFile_force.addVar("dvITGr", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvITGzf = ncFile_force.addVar("dvITGz", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvITGtf = ncFile_force.addVar("dvITGt", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvETGrf = ncFile_force.addVar("dvETGr", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvETGzf = ncFile_force.addVar("dvETGz", netCDF::ncFloat, forceDims);
+    netCDF::NcVar dvETGtf = ncFile_force.addVar("dvETGt", netCDF::ncFloat, forceDims);
     forceRf.putVar(&forceR[0]);
     forceZf.putVar(&forceZ[0]);
     nction.putVar(&tIon[0]);
@@ -3888,13 +3945,13 @@ print_gpu_memory_usage(world_rank);
          fs1.count());
   float testFlowVec[3] = {0.0f};
 #if USEFIELDALIGNEDVALUES > 0
-  interpFieldAlignedVector(&testFlowVec[0], 1.4981, 0.0, -1.2408, nR_flowV,
+  interpFieldAlignedVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV,
                            nZ_flowV, flowVGridr.data(), flowVGridz.data(),
                            flowVr.data(), flowVz.data(), flowVt.data(),
                            nR_Bfield, nZ_Bfield, bfieldGridr.data(),
                            bfieldGridz.data(), br.data(), bz.data(), by.data());
 #else
-  interp2dVector(&testFlowVec[0], 1.4981, 0.0, -1.2408, nR_flowV, nZ_flowV,
+  interp2dVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV, nZ_flowV,
                  flowVGridr.data(), flowVGridz.data(), flowVr.data(),
                  flowVz.data(), flowVt.data());
 #endif
@@ -3955,6 +4012,7 @@ print_gpu_memory_usage(world_rank);
 #endif
     for (tt; tt < nT; tt++) {
       // dev_tt[0] = tt;
+      //std::cout << " tt " << tt << std::endl;
 #if USE_SORT > 0
       thrust::for_each(thrust::device, tmpInt.begin(), tmpInt.end(), sort0);
 #ifdef __CUDACC__
@@ -3991,7 +4049,7 @@ print_gpu_memory_usage(world_rank);
 #endif
 
 #if USEIONIZATION > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd, ionize0);
+      thrust::for_each(thrust::device, particleBegin, particleEnd,ionize0);
 #ifdef __CUDACC__
       // cudaThreadSynchronize();
 #endif
@@ -4128,6 +4186,7 @@ for(int i=0; i<nP ; i++)
   sim::Array<float> vyGather(nP, 0.0);
   sim::Array<float> vzGather(nP, 0.0);
   sim::Array<float> hitWallGather(nP, 0.0);
+  sim::Array<int> surfaceHitGather(nP, 0.0);
   sim::Array<float> weightGather(nP, 0.0);
   sim::Array<float> chargeGather(nP, 0.0);
   sim::Array<float> firstIonizationTGather(nP, 0.0);
@@ -4138,11 +4197,12 @@ for(int i=0; i<nP ; i++)
   //      x_gather = malloc(sizeof(float)*nP);
   //}
   std::cout << "Reached MPI barrier for gather" << std::endl;
-
+  std::cout << "gather pstart and npperrank " << pStartIndx[world_rank] << " " << nPPerRank[world_rank] << std::endl;
   MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Gather(&particleArray->x[world_rank * nP / world_size], nP / world_size,
-             MPI_FLOAT, &xGather[0], nP / world_size, MPI_FLOAT, 0,
+  MPI_Gather(&particleArray->x[pStartIndx[world_rank]],nPPerRank[world_rank],
+             MPI_FLOAT, &xGather[0], nPPerRank[world_rank], MPI_FLOAT, 0,
              MPI_COMM_WORLD);
+  std::cout << "Passed x"<< world_rank << std::endl;
   MPI_Gather(&particleArray->y[world_rank * nP / world_size], nP / world_size,
              MPI_FLOAT, &yGather[0], nP / world_size, MPI_FLOAT, 0,
              MPI_COMM_WORLD);
@@ -4164,6 +4224,9 @@ for(int i=0; i<nP ; i++)
   MPI_Gather(&particleArray->hitWall[world_rank * nP / world_size],
              nP / world_size, MPI_FLOAT, &hitWallGather[0], nP / world_size,
              MPI_FLOAT, 0, MPI_COMM_WORLD);
+  MPI_Gather(&particleArray->wallHit[world_rank * nP / world_size],
+             nP / world_size, MPI_FLOAT, &surfaceHitGather[0], nP / world_size,
+             MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Gather(&particleArray->weight[world_rank * nP / world_size],
              nP / world_size, MPI_FLOAT, &weightGather[0], nP / world_size,
              MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -4454,22 +4517,24 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     }
     outfile2.close();
     // Write netCDF output for positions
-    NcFile ncFile0("output/positions.nc", NcFile::replace);
-    NcDim nc_nP0 = ncFile0.addDim("nP", nP);
-    vector<NcDim> dims0;
+    netCDF::NcFile ncFile0("output/positions.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nP0 = ncFile0.addDim("nP", nP);
+    vector<netCDF::NcDim> dims0;
     dims0.push_back(nc_nP0);
 
-    NcVar nc_x0 = ncFile0.addVar("x", ncFloat, dims0);
-    NcVar nc_y0 = ncFile0.addVar("y", ncFloat, dims0);
-    NcVar nc_z0 = ncFile0.addVar("z", ncFloat, dims0);
-    NcVar nc_vx0 = ncFile0.addVar("vx", ncFloat, dims0);
-    NcVar nc_vy0 = ncFile0.addVar("vy", ncFloat, dims0);
-    NcVar nc_vz0 = ncFile0.addVar("vz", ncFloat, dims0);
-    NcVar nc_trans0 = ncFile0.addVar("transitTime", ncFloat, dims0);
-    NcVar nc_impact0 = ncFile0.addVar("hitWall", ncFloat, dims0);
-    NcVar nc_weight0 = ncFile0.addVar("weight", ncFloat, dims0);
-    NcVar nc_charge0 = ncFile0.addVar("charge", ncFloat, dims0);
-    NcVar nc_leak0 = ncFile0.addVar("hasLeaked", ncInt, dims0);
+    netCDF::NcVar nc_x0 = ncFile0.addVar("x", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_y0 = ncFile0.addVar("y", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_z0 = ncFile0.addVar("z", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_vx0 = ncFile0.addVar("vx", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_vy0 = ncFile0.addVar("vy", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_vz0 = ncFile0.addVar("vz", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_trans0 = ncFile0.addVar("transitTime", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_impact0 = ncFile0.addVar("hitWall", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_surfHit0 = ncFile0.addVar("surfaceHit", netCDF::ncInt, dims0);
+    netCDF::NcVar nc_weight0 = ncFile0.addVar("weight", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_charge0 = ncFile0.addVar("charge", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_leak0 = ncFile0.addVar("hasLeaked", netCDF::ncInt, dims0);
+    netCDF::NcVar nc_dist0 = ncFile0.addVar("distTraveled", netCDF::ncFloat, dims0);
 #if USE_MPI > 0
     nc_x0.putVar(&xGather[0]);
     nc_y0.putVar(&yGather[0]);
@@ -4479,10 +4544,12 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_vz0.putVar(&vzGather[0]);
     nc_trans0.putVar(&particleArray->transitTime[0]);
     nc_impact0.putVar(&hitWallGather[0]);
+    nc_surfHit0.putVar(&surfaceHitGather[0]);
     nc_weight0.putVar(&weightGather[0]);
     nc_charge0.putVar(&chargeGather[0]);
     nc_leak0.putVar(&hasLeakedGather[0]);
 #else
+  std::cout << "not using mpi output" << std::endl;
   nc_x0.putVar(&particleArray->xprevious[0]);
   nc_y0.putVar(&particleArray->yprevious[0]);
   nc_z0.putVar(&particleArray->zprevious[0]);
@@ -4491,9 +4558,11 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
   nc_vz0.putVar(&particleArray->vz[0]);
   nc_trans0.putVar(&particleArray->transitTime[0]);
   nc_impact0.putVar(&particleArray->hitWall[0]);
+  nc_surfHit0.putVar(&particleArray->surfaceHit[0]);
   nc_weight0.putVar(&particleArray->weight[0]);
   nc_charge0.putVar(&particleArray->charge[0]);
   nc_leak0.putVar(&particleArray->hasLeaked[0]);
+  nc_dist0.putVar(&particleArray->distTraveled[0]);
 #endif
     ncFile0.close();
     // auto particleArray2 = new Particles(1);
@@ -4554,6 +4623,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // weightThreshold[0] << std::endl;
     //}
 #if (USESURFACEMODEL > 0 || FLUX_EA > 0)
+#if USE_MPI > 0
     std::vector<int> surfaceNumbers(nSurfaces, 0);
     int srf = 0;
     for (int i = 0; i < nLines; i++) {
@@ -4563,26 +4633,26 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
         srf = srf + 1;
       }
     }
-    NcFile ncFile1("output/surface.nc", NcFile::replace);
-    NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
-    vector<NcDim> dims1;
+    netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
+    vector<netCDF::NcDim> dims1;
     dims1.push_back(nc_nLines);
 
-    vector<NcDim> dimsSurfE;
+    vector<netCDF::NcDim> dimsSurfE;
     dimsSurfE.push_back(nc_nLines);
-    NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
-    NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
+    netCDF::NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
+    netCDF::NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
     dimsSurfE.push_back(nc_nAngles);
     dimsSurfE.push_back(nc_nEnergies);
-    NcVar nc_grossDep = ncFile1.addVar("grossDeposition", ncFloat, nc_nLines);
-    NcVar nc_grossEro = ncFile1.addVar("grossErosion", ncFloat, nc_nLines);
-    NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", ncFloat, nc_nLines);
-    NcVar nc_spylCounts = ncFile1.addVar("spylCounts", ncInt, nc_nLines);
-    NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", ncInt, nc_nLines);
-    NcVar nc_sumParticlesStrike =
-        ncFile1.addVar("sumParticlesStrike", ncInt, nc_nLines);
-    NcVar nc_sumWeightStrike =
-        ncFile1.addVar("sumWeightStrike", ncFloat, nc_nLines);
+    netCDF::NcVar nc_grossDep = ncFile1.addVar("grossDeposition", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_grossEro = ncFile1.addVar("grossErosion", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_spylCounts = ncFile1.addVar("spylCounts", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_sumParticlesStrike =
+        ncFile1.addVar("sumParticlesStrike", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_sumWeightStrike =
+        ncFile1.addVar("sumWeightStrike", netCDF::ncFloat, nc_nLines);
     nc_grossDep.putVar(&grossDeposition[0]);
     nc_surfNum.putVar(&surfaceNumbers[0]);
     nc_grossEro.putVar(&grossErosion[0]);
@@ -4595,10 +4665,10 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // NcVar nc_surfStartingParticles =
     // ncFile1.addVar("startingParticles",ncFloat,dims1); NcVar nc_surfZ =
     // ncFile1.addVar("Z",ncFloat,dims1);
-    NcVar nc_surfEDist = ncFile1.addVar("surfEDist", ncFloat, dimsSurfE);
-    NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", ncFloat, dimsSurfE);
-    NcVar nc_surfSputtDist =
-        ncFile1.addVar("surfSputtDist", ncFloat, dimsSurfE);
+    netCDF::NcVar nc_surfEDist = ncFile1.addVar("surfEDist", netCDF::ncFloat, dimsSurfE);
+    netCDF::NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", netCDF::ncFloat, dimsSurfE);
+    netCDF::NcVar nc_surfSputtDist =
+        ncFile1.addVar("surfSputtDist", netCDF::ncFloat, dimsSurfE);
     // nc_surfImpacts.putVar(impacts);
     //#if USE3DTETGEOM > 0
     // nc_surfRedeposit.putVar(redeposit);
@@ -4613,29 +4683,91 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
     // nc_surfADistGrid.putVar(&surfaces->gridA[0]);
     ncFile1.close();
+#else
+    std::vector<int> surfaceNumbers(nSurfaces, 0);
+    int srf = 0;
+    for (int i = 0; i < nLines; i++) {
+      if (boundaries[i].surface) {
+        surfaceNumbers[srf] = i;
+
+        srf = srf + 1;
+        surfaces->grossErosion[i] = surfaces->grossErosion[i] + grossErosion[i];
+      }
+    }
+    netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
+    vector<netCDF::NcDim> dims1;
+    dims1.push_back(nc_nLines);
+
+    vector<netCDF::NcDim> dimsSurfE;
+    dimsSurfE.push_back(nc_nLines);
+    netCDF::NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
+    netCDF::NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
+    dimsSurfE.push_back(nc_nAngles);
+    dimsSurfE.push_back(nc_nEnergies);
+    netCDF::NcVar nc_grossDep = ncFile1.addVar("grossDeposition", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_grossEro = ncFile1.addVar("grossErosion", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", netCDF::ncFloat, nc_nLines);
+    netCDF::NcVar nc_spylCounts = ncFile1.addVar("spylCounts", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_sumParticlesStrike =
+        ncFile1.addVar("sumParticlesStrike", netCDF::ncInt, nc_nLines);
+    netCDF::NcVar nc_sumWeightStrike =
+        ncFile1.addVar("sumWeightStrike", netCDF::ncFloat, nc_nLines);
+    nc_grossDep.putVar(&surfaces->grossDeposition[0]);
+    nc_surfNum.putVar(&surfaceNumbers[0]);
+    nc_grossEro.putVar(&surfaces->grossErosion[0]);
+    nc_aveSpyl.putVar(&surfaces->aveSputtYld[0]);
+    nc_spylCounts.putVar(&surfaces->sputtYldCount[0]);
+    nc_sumParticlesStrike.putVar(&surfaces->sumParticlesStrike[0]);
+    nc_sumWeightStrike.putVar(&surfaces->sumWeightStrike[0]);
+    // NcVar nc_surfImpacts = ncFile1.addVar("impacts",ncFloat,dims1);
+    // NcVar nc_surfRedeposit = ncFile1.addVar("redeposit",ncFloat,dims1);
+    // NcVar nc_surfStartingParticles =
+    // ncFile1.addVar("startingParticles",ncFloat,dims1); NcVar nc_surfZ =
+    // ncFile1.addVar("Z",ncFloat,dims1);
+    netCDF::NcVar nc_surfEDist = ncFile1.addVar("surfEDist", netCDF::ncFloat, dimsSurfE);
+    netCDF::NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", netCDF::ncFloat, dimsSurfE);
+    netCDF::NcVar nc_surfSputtDist =
+        ncFile1.addVar("surfSputtDist", netCDF::ncFloat, dimsSurfE);
+    // nc_surfImpacts.putVar(impacts);
+    //#if USE3DTETGEOM > 0
+    // nc_surfRedeposit.putVar(redeposit);
+    //#endif
+    // nc_surfStartingParticles.putVar(startingParticles);
+    // nc_surfZ.putVar(surfZ);
+    nc_surfEDist.putVar(&surfaces->energyDistribution[0]);
+    nc_surfReflDist.putVar(&surfaces->reflDistribution[0]);
+    nc_surfSputtDist.putVar(&surfaces->sputtDistribution[0]);
+    // NcVar nc_surfEDistGrid = ncFile1.addVar("gridE",ncDouble,nc_nEnergies);
+    // nc_surfEDistGrid.putVar(&surfaces->gridE[0]);
+    // NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
+    // nc_surfADistGrid.putVar(&surfaces->gridA[0]);
+    ncFile1.close();
+#endif
 #endif
 #if PARTICLE_TRACKS > 0
 
     // Write netCDF output for histories
-    netCDF::NcFile ncFile_hist("output/history.nc", NcFile::replace);
+    netCDF::NcFile ncFile_hist("output/history.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nT = ncFile_hist.addDim("nT", nHistoriesPerParticle);
     netCDF::NcDim nc_nP = ncFile_hist.addDim("nP", nP);
-    vector<NcDim> dims_hist;
+    vector<netCDF::NcDim> dims_hist;
     dims_hist.push_back(nc_nP);
     dims_hist.push_back(nc_nT);
     // NcDim nc_nPnT = ncFile_hist.addDim("nPnT",nP*nT/subSampleFac);
     // dims_hist.push_back(nc_nPnT);
-    netCDF::NcVar nc_x = ncFile_hist.addVar("x", ncDouble, dims_hist);
-    netCDF::NcVar nc_y = ncFile_hist.addVar("y", ncDouble, dims_hist);
-    netCDF::NcVar nc_z = ncFile_hist.addVar("z", ncDouble, dims_hist);
+    netCDF::NcVar nc_x = ncFile_hist.addVar("x", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_y = ncFile_hist.addVar("y", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_z = ncFile_hist.addVar("z", netCDF::ncDouble, dims_hist);
 
-    netCDF::NcVar nc_v = ncFile_hist.addVar("v", ncDouble, dims_hist);
-    netCDF::NcVar nc_vx = ncFile_hist.addVar("vx", ncDouble, dims_hist);
-    netCDF::NcVar nc_vy = ncFile_hist.addVar("vy", ncDouble, dims_hist);
-    netCDF::NcVar nc_vz = ncFile_hist.addVar("vz", ncDouble, dims_hist);
+    netCDF::NcVar nc_v = ncFile_hist.addVar("v", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_vx = ncFile_hist.addVar("vx", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_vy = ncFile_hist.addVar("vy", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_vz = ncFile_hist.addVar("vz", netCDF::ncDouble, dims_hist);
 
-    netCDF::NcVar nc_charge = ncFile_hist.addVar("charge", ncDouble, dims_hist);
-    netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", ncDouble, dims_hist);
+    netCDF::NcVar nc_charge = ncFile_hist.addVar("charge", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", netCDF::ncDouble, dims_hist);
 #if USE_MPI > 0
     // if(world_rank ==0)
     //{
@@ -4671,14 +4803,14 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 #endif
 #if SPECTROSCOPY > 0
     // Write netCDF output for density data
-    NcFile ncFile("output/spec.nc", NcFile::replace);
-    NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
-    NcDim nc_nR = ncFile.addDim("nR", net_nX);
+    netCDF::NcFile ncFile("output/spec.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
+    netCDF::NcDim nc_nR = ncFile.addDim("nR", net_nX);
 #if SPECTROSCOPY > 2
-    NcDim nc_nY = ncFile.addDim("nY", net_nY);
+    netCDF::NcDim nc_nY = ncFile.addDim("nY", net_nY);
 #endif
-    NcDim nc_nZ = ncFile.addDim("nZ", net_nZ);
-    vector<NcDim> dims;
+    netCDF::NcDim nc_nZ = ncFile.addDim("nZ", net_nZ);
+    vector<netCDF::NcDim> dims;
     dims.push_back(nc_nBins);
     dims.push_back(nc_nZ);
 #if SPECTROSCOPY > 2
@@ -4686,16 +4818,20 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 #endif
     dims.push_back(nc_nR);
 
-    NcVar nc_n = ncFile.addVar("n", ncFloat, dims);
-    NcVar nc_gridR = ncFile.addVar("gridR", ncFloat, nc_nR);
-    NcVar nc_gridZ = ncFile.addVar("gridZ", ncFloat, nc_nZ);
+    netCDF::NcVar nc_n = ncFile.addVar("n", netCDF::ncFloat, dims);
+    netCDF::NcVar nc_gridR = ncFile.addVar("gridR", netCDF::ncFloat, nc_nR);
+    netCDF::NcVar nc_gridZ = ncFile.addVar("gridZ", netCDF::ncFloat, nc_nZ);
     nc_gridR.putVar(&gridX_bins[0]);
     nc_gridZ.putVar(&gridZ_bins[0]);
 #if SPECTROSCOPY > 2
-    NcVar nc_gridY = ncFile.addVar("gridY", ncFloat, nc_nY);
+    netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netCDF::ncFloat, nc_nY);
     nc_gridY.putVar(&gridY_bins[0]);
 #endif
+#if USE_MPI > 0
     nc_n.putVar(&net_BinsTotal[0]);
+#else
+    nc_n.putVar(&net_Bins[0]);
+#endif
     ncFile.close();
 #endif
 #ifdef __CUDACC__
@@ -4731,15 +4867,16 @@ particleArray->test4[i] << std::endl;
   cudaError_t err = cudaDeviceReset();
 // cudaProfilerStop();
 #endif
-#if USE_MPI > 0
-  // Finalize the MPI environment.
-  MPI_Finalize();
-#endif
   if (world_rank == 0) {
     auto gitr_finish_clock = gitr_time::now();
     std::chrono::duration<float> fstotal = gitr_finish_clock - gitr_start_clock;
     printf("Total runtime for GITR is %6.3f (secs) \n", fstotal.count());
   }
+#if USE_MPI > 0
+  // Finalize the MPI environment.
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Finalize();
+#endif
   //#endif
   return 0;
 }

@@ -24,6 +24,7 @@ class Boundary
 {
   public:
     int periodic;
+    int periodic_bc_x;
     int pointLine;
     int surfaceNumber;
     int surface;
@@ -47,7 +48,9 @@ class Boundary
     #else
       float slope_dzdx;
       float intercept_z;
-    #endif     
+    #endif 
+    float periodic_bc_x0;    
+    float periodic_bc_x1;    
     float Z;
     float amu;
     float potential;
@@ -103,9 +106,9 @@ class Boundary
   CUDA_CALLABLE_MEMBER
   void getSurfaceNormal(float B[], float y, float x) {
 #if USE3DTETGEOM > 0
-    B[0] = -a / plane_norm;
-    B[1] = -b / plane_norm;
-    B[2] = -c / plane_norm;
+    B[0] = a / plane_norm;
+    B[1] = b / plane_norm;
+    B[2] = c / plane_norm;
 #else
     float perpSlope = 0.0;
     if (slope_dzdx == 0.0) {

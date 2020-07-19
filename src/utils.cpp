@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string>
 #include <cstring>
-#include <netcdf>
+#include <netcdf.h>
 #include "Boundary.h"
 #include "Particle.h"
 #include "libconfig.h++"
@@ -180,11 +180,49 @@ T getVariable (libconfig::Config &cfg,const std::string& s, T &a)
   a = tmp;
   return a;
 }
-
 template int getVariable(libconfig::Config &cfg,const std::string& s, int &a);
 template float getVariable(libconfig::Config &cfg,const std::string& s, float &a);
 template double getVariable(libconfig::Config &cfg,const std::string& s, double &a);
 template std::string getVariable(libconfig::Config &cfg,const std::string& s, std::string &a);
+
+template <typename T>
+T get_variable(libconfig::Config &cfg, const std::string s) {
+  T tmp;
+  if (cfg.lookupValue(s, tmp)) {
+    std::cout << s << " = " << tmp << std::endl;
+  } else {
+    std::cout << "ERROR: Failed importing " << s << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  return tmp;
+}
+
+template int get_variable(libconfig::Config &cfg, const std::string s);
+template float get_variable(libconfig::Config &cfg, const std::string s);
+template double get_variable(libconfig::Config &cfg, const std::string s);
+template const char* get_variable(libconfig::Config &cfg, const std::string s);
+
+template <typename T=float>
+T getVariable_cfg (libconfig::Config &cfg,const std::string& s)
+{
+  T tmp;
+  if(cfg.lookupValue(s, tmp))
+    {
+      std::cout << s << " = " << tmp << std::endl;
+    }
+  else
+    {
+      std::cout << "ERROR: Failed importing " << s << std:: endl;
+      exit(0);
+    }
+  return tmp;
+}
+
+template int getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+template unsigned int getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+template float getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+template double getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+template std::string getVariable_cfg(libconfig::Config &cfg,const std::string& s);
 
 int getDimFromFile (libconfig::Config &cfg,const std::string& file,const std::string& section,
         const std::string& s)
@@ -502,6 +540,12 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        }
      }   
      std::cout << "finished bound import "  << std::endl;
+       boundaries[nLines].periodic_bc_x0 = geom["periodic_bc_x0"];
+       boundaries[nLines].periodic_bc_x1 = geom["periodic_bc_x1"];
+       boundaries[nLines].periodic_bc_x = geom["periodic_bc_x"];
+       boundaries[nLines].y1 = geom["theta0"];
+       boundaries[nLines].y2 = geom["theta1"];
+       boundaries[nLines].periodic = geom["periodic"];
      #if USECYLSYMM
           std::cout << "Reading cylindrically symmetric boundary characteristics " << std::endl;
        boundaries[nLines].y1 = geom["theta0"];
@@ -627,7 +671,7 @@ int read_ar2Input( string fileName, float *Bfield[]) {
 
     // Check input file exists
 
-    ifstream file(fileName.c_str());
+    std::ifstream file(fileName.c_str());
     if(!file.good()) {
         cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
         exit(1);
@@ -644,11 +688,11 @@ int read_ar2Input( string fileName, float *Bfield[]) {
     NcVar nc_r(nc.getVar("r"));
     NcVar nc_z(nc.getVar("z"));
 
-    vector<float> r;
+    std::vector<float> r;
     r.resize(nR);
     nc_r.getVar(&r[0]);
 
-    vector<float> z;
+    std::vector<float> z;
     z.resize(nZ);
     nc_z.getVar(&z[0]);
 
@@ -676,11 +720,11 @@ int read_ar2Input( string fileName, float *Bfield[]) {
 }
 
 
-int read_profileNs( string fileName, string nxName, string nzName,int &n_x,int &n_z ) {
+int read_profileNs( std::string fileName, std::string nxName, std::string nzName,int &n_x,int &n_z ) {
 
     // Check input file exists
 
-    ifstream file(fileName.c_str());
+    std::ifstream file(fileName.c_str());
     if(!file.good()) {
         cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
         exit(1);
@@ -689,6 +733,7 @@ int read_profileNs( string fileName, string nxName, string nzName,int &n_x,int &
     NcFile nc(fileName.c_str(), NcFile::read);
 
     NcDim nc_nx(nc.getDim(nxName));
+    std::cout << " got dim x " << std::endl;
     NcDim nc_nz(nc.getDim(nzName));
     
     n_x = nc_nx.getSize(); 
@@ -704,7 +749,7 @@ int read_profileNsChar(const char *fileName,const char *nxName,const char *nzNam
     // Check input file exists
 
     //ifstream file(fileName.c_str());
-    ifstream file(fileName);
+    std::ifstream file(fileName);
     if(!file.good()) {
         cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
         exit(1);
@@ -724,25 +769,27 @@ int read_profileNsChar(const char *fileName,const char *nxName,const char *nzNam
 
 }
 
-int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, sim::Array<float>& gridx,string gridzName,
-          sim::Array<float>& gridz,string dataName, sim::Array<float>& data) {
+int read_profiles( std::string fileName, int &n_x, int &n_z,std::string gridxName, sim::Array<float>& gridx,std::string gridzName,
+          sim::Array<float>& gridz,std::string dataName, sim::Array<float>& data) {
 
     // Check input file exists
 
-    ifstream file(fileName.c_str());
+    std::ifstream file(fileName.c_str());
     if(!file.good()) {
         cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
         exit(1);
     }
 
     NcFile nc(fileName.c_str(), NcFile::read);
+    std::cout << " opened file " << std::endl;
 
     NcVar nc_gridx(nc.getVar(gridxName));
     NcVar nc_gridz(nc.getVar(gridzName));
+    std::cout << " got vars " << std::endl;
 
     nc_gridx.getVar(&gridx[0]);
+    std::cout << " got gridx " << std::endl;
     nc_gridz.getVar(&gridz[0]);
-
     NcVar nc_ne(nc.getVar(dataName));
     nc_ne.getVar(&data[0]);
     nc.close();
@@ -750,14 +797,14 @@ int read_profiles( string fileName, int &n_x, int &n_z,string gridxName, sim::Ar
 
 }
 
-int read_profile2d( string fileName,string dataName, sim::Array<float>& data) {
+int read_profile2d( std::string fileName,std::string dataName, sim::Array<float>& data) {
     std::cout << "reading 2d profile" << std::endl;
     //NcError err(2);
     //NcError::Behavior bb= (NcError::Behavior) 0;
     //NcError err(NcError::silent_nonfatal);
     // Check input file exists
 
-    ifstream file(fileName.c_str());
+    std::ifstream file(fileName.c_str());
     if(!file.good()) {
         cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
         exit(1);
@@ -788,11 +835,11 @@ int read_profile2d( string fileName,string dataName, sim::Array<float>& data) {
     return(0);
 
 }
-int read_profile3d( string fileName,string dataName, sim::Array<int>& data) {
+int read_profile3d( std::string fileName,std::string dataName, sim::Array<int>& data) {
 
     // Check input file exists
 
-    ifstream file(fileName.c_str());
+    std::ifstream file(fileName.c_str());
     if(!file.good()) {
         cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
         exit(1);
@@ -807,11 +854,11 @@ int read_profile3d( string fileName,string dataName, sim::Array<int>& data) {
     return(0);
 
 }
-int read_profile1d( string fileName,string gridxName, sim::Array<float>& gridx) {
+int read_profile1d( std::string fileName,std::string gridxName, sim::Array<float>& gridx) {
 
     // Check input file exists
 
-    ifstream file(fileName.c_str());
+    std::ifstream file(fileName.c_str());
     if(!file.good()) {
         cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
         exit(1);
@@ -850,9 +897,9 @@ void OUTPUT(char outname[],int nX, int nY, float **array2d)
 		
 }
 
-int ncdfIO(int rwCode,const std::string& fileName,vector< std::string> dimNames,vector<int> dims,
-        vector< std::string> gridNames,vector<int> gridMapToDims,
-         vector<float*> pointers,vector< std::string> intVarNames,vector<vector<int>> intVarDimMap, vector<int*> intVarPointers)
+int ncdfIO(int rwCode,const std::string& fileName,std::vector< std::string> dimNames,std::vector<int> dims,
+        std::vector< std::string> gridNames,std::vector<int> gridMapToDims,
+         std::vector<float*> pointers,std::vector< std::string> intVarNames,std::vector<std::vector<int>> intVarDimMap, std::vector<int*> intVarPointers)
 {
     std::cout << "readWritecode " << rwCode << std::endl;//0 is read, 1 is write
     if(rwCode == 1)
@@ -887,20 +934,20 @@ int ncdfIO(int rwCode,const std::string& fileName,vector< std::string> dimNames,
           }
        }
 
-       vector<NcDim> theseDims(dims.size());
+       std::vector<NcDim> theseDims(dims.size());
        for(int i=0;i<theseDims.size();i++)
        {
            theseDims[i] = thisFile.addDim(dimNames[i],dims[i]);
        }
 
-       vector<NcVar> theseVars(dims.size());
+       std::vector<NcVar> theseVars(dims.size());
        for(int i=0;i<pointers.size();i++)
        {
            theseVars[i] = thisFile.addVar(gridNames[i],ncDouble,theseDims[gridMapToDims[i]]);
            theseVars[i].putVar(pointers[i]);
        }
-       vector<NcVar> intVars(intVarNames.size());
-       vector<vector<NcDim>> intVarDims(intVarNames.size());
+       std::vector<NcVar> intVars(intVarNames.size());
+       std::vector<std::vector<NcDim>> intVarDims(intVarNames.size());
        for(int i=0;i<intVarNames.size();i++)
        {
            for(int j=0;j<intVarDimMap[i].size();j++)
