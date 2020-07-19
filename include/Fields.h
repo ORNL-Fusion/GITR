@@ -105,7 +105,7 @@ public:
     // Determine field type from dimension names
     const std::string char_r = "r";
     const std::string char_z = "z";
-    if (nD == 2 & dimension_names[0] == char_r & dimension_names[1] == char_z) {
+    if ((nD == 2) & (dimension_names[0] == char_r) & (dimension_names[1] == char_z)) {
       field_type = FieldType_2d_rz;
     }
     function = returnPointerTable(field_type);
