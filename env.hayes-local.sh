@@ -13,3 +13,4 @@ export NETCDFCXX4INCLUDE=/usr/local/Cellar/netcdf/4.7.4_1/include
 export NETCDFLIB=$NETCDFDIR/libnetcdf.dylib
 export NETCDFLIB_CPP=$NETCDFCXX4DIR/libnetcdf-cxx4.dylib
 export PYTHONPATH=$HOME/Dev/GITR/python:$PYTHONPATH
+#export PYTHONPATH=$HOME/Dev/gitr2/python:$PYTHONPATH
