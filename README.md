@@ -42,27 +42,15 @@ We further utilize the more recent CXX-4 components of the NetCDF API (note that
 ### THRUST (https://github.com/thrust/thrust) [1.8.2 tested] or CUDA (https://developer.nvidia.com/cuda-downloads) [Cuda 8 tested]
 The THRUST headers are required and are available either standalone from the THRUST repo (for building on systems without GPUs), or from within the CUDA SDK (for building on systems with GPUs). So if you do not have an nvidia compute GPU, you will still need the THRUST library (unbuilt).
 
-### Boost (https://www.boost.org) [1.61 tested]
-The Boost headers are required and although Boost is a very large library a subset of the library can be installed. After downloading boost.
-```
-./bootstrap.sh --with-toolset=gcc --prefix=/directory/for/boostBuild/ --with-libraries=system,filesystem,chrono,timer
-
-vi tools/build/src/user-config.jam ##to add the following line
-using gcc : : /opt/local/bin/gcc ;
-
-
-./b2 link=shared,static cxxflags="-std=c++14" install
-```
-
 ## Installation
-We utilize a simple machine specific makefile to specify the locations of the above dependencies along with a shell script to pass the proper options to cmake. To build GITR on a new machine you will need to create a copy of an existing file (e.g., `cmakeMachineFiles/CMakeLists.txt`) with the name of your machine as the extension. This can be done from the GITR directory via 
+CMake (and the CMakeLists.txt file) in combination with a machine environment file and a shell script to pass CMake options are used.
 
-`cp cmakeMachineFiles/mac/CMakeLists.txt .`
+Example environment files (e.g. env.mac.sh) are found at the top level of the GITR directory. These files contiain export statements for environment variables that may specify the paths of certain dependencies to assist CMake in locating them.
 
-and then editing the resulting file appropriately. Then we want to copy and modify a makeGITR.sh script  
+Example shell scripts which source then environment file and call CMake with the appropriate options are found in the build directory.  
 
+Once these files are properly configured, GITR can be compiled:
 ```
-cp cmakeMachineFiles/mac/makeGITR.sh build/
 cd build
 ./makeGITRmac.sh
 make
@@ -76,32 +64,19 @@ This file inlcudes
 5. Time stepping information
 6. Desired output
 
-There also exists a folder for processing output data /matlab/PostProcessing and a postProcessing.m routine to be run in order to produce plots of desired output.
-
-
-Alternately for building, a python script can be set up to read the input file (gitrInput.cfg) with the appropriate compile flags and then build the code appropriately. These scripts are also found in the cmakeMachineFiles/... folders as runExamples.py
-
-This script must be adapted to have the correct flags for env file, USE_CUDA
-
-Then the python function buildGITR('/directory/case') can be used to build the code for a specific example/run.
-```
-python
->>> import runExamples
->>> runExamples.buildGITR('../examples/operatorTests/straightLine/2dgeom')
+Various matlab and python scripts are available for post-processing.
 ```
 
 ### Build Options
-The THRUST API provides for single thread CPU (CPP), multi thread OpenMP (OMP), and CUDA (CUDA) targets via the appropriate choice of THRUST policy. Within the top level `CMakeLists.txt` the THRUST policy (which selects either CPU, OPENMP, or GPU) is selected by uncommenting the desired choice as 
+The THRUST API provides options for single thread CPU (CPP), multi thread OpenMP (OMP), and CUDA (CUDA) targets via the appropriate choice of THRUST policy. Within the top level `CMakeLists.txt` the THRUST policy (which selects either CPU, OPENMP, or GPU) is selected by setting line 4 to set(**** 1)
 
-Within CMakeLists.txt set CUDA 1 or OPENMP 1
+Where **** can be set to CUDA or OPENMP 1
 
-Within the makeGITR.sh file or runExamples.py first set the machine specific compile flags
+Within the makeGITR.sh file first set the machine specific compile flags
 ```
     ##Machine specific flags
     USE_CUDA=0
     USE_MPI=1
-    USE_OPENMP=0
-    USE_BOOST=1
  ```
  
 In some cases cmake needs additional help finding the dependencies and specific arguments should be passed.
@@ -117,16 +92,17 @@ The following are examples that could be necessary.
         -DNETCDF_LIBRARY=$NETCDFLIB \
         -DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE \
         -DLIBCONFIGPP_INCLUDE_DIR=/Users/tyounkin/Code/libconfigBuild/include \
-        -DBoost_DIR=/Users/tyounkin/Code/boostBuild \
-        -DBoost_INCLUDE_DIR=/Users/tyounkin/Code/boostBuild/include
 ```
-Also, various code features can be enabled at build time by specifying any of the following within the makeGITR.sh file or using the runExamples.py script. 
+Also, various code features can be enabled at build time by specifying any of the following within the makeGITR.sh script. 
 
 ```
     -DUSEIONIZATION=1 \
     -DUSERECOMBINATION=1 \
     -DUSEPERPDIFFUSION=1 \
     -DUSECOULOMBCOLLISIONS=1 \
+    -DUSEFRICTION=1 \
+    -DUSEANGLESCATTERING=1 \
+    -DUSEHEATING=1 \
     -DUSETHERMALFORCE=1 \
     -DUSESURFACEMODEL=1 \
     -DUSESHEATHEFIELD=1 \
@@ -188,10 +164,7 @@ In most cases you will want to modify the options in the makeGITR.sh script to m
 flags = 
 {
         USE_CUDA=1;
-        USEMPI=0;
         USE_MPI=0;
-        USE_OPENMP=0;
-        USE_BOOST=1;
         USEIONIZATION=0;
         USERECOMBINATION=0;
         USEPERPDIFFUSION=0;

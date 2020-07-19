@@ -14,7 +14,7 @@
 #include "Surfaces.h"
 #include <cmath>
 #include "boris.h"
-
+#include <omp.h>
 #ifdef __CUDACC__
 #include <thrust/random.h>
 #else
@@ -55,7 +55,7 @@ void getBoundaryNormal(Boundary* boundaryVector,int wallIndex,float surfaceNorma
             surfaceNormalVector[2] = surfaceNormalVector[2]/norm_normal;
                 }
 #if USECYLSYMM > 0 
-            float theta = std::atan2f(y,x);
+            float theta = std::atan2(y,x);
             float Sr = surfaceNormalVector[0];
             surfaceNormalVector[0] = std::cos(theta)*Sr;
             surfaceNormalVector[1] = std::sin(theta)*Sr;
@@ -252,21 +252,22 @@ void operator()(std::size_t indx) const {
       float R0 = 0.0;
       float totalYR = 0.0;
       float newWeight = 0.0;
-      int wallHit = particles->wallHit[indx];
+      int wallHit = particles->surfaceHit[indx];
       int surfaceHit = boundaryVector[wallHit].surfaceNumber;
       int surface = boundaryVector[wallHit].surface;
-      if (wallHit > 260)
-        wallHit = 260;
-      if (wallHit < 0)
-        wallHit = 0;
-      if (surfaceHit > 260)
-        surfaceHit = 260;
-      if (surfaceHit < 0)
-        surfaceHit = 0;
-      if (surface > 260)
-        surface = 260;
-      if (surface < 0)
-        surface = 0;
+      ////FIXME
+      //if (wallHit > 260)
+      //  wallHit = 260;
+      //if (wallHit < 0)
+      //  wallHit = 0;
+      //if (surfaceHit > 260)
+      //  surfaceHit = 260;
+      //if (surfaceHit < 0)
+      //  surfaceHit = 0;
+      //if (surface > 260)
+      //  surface = 260;
+      //if (surface < 0)
+      //  surface = 0;
       float eInterpVal = 0.0;
       float aInterpVal = 0.0;
       float weight = particles->weight[indx];
@@ -361,6 +362,7 @@ void operator()(std::size_t indx) const {
             //particle either reflects or deposits
             float sputtProb = Y0/totalYR;
 	    int didReflect = 0;
+            //  std::cout << " total YR " << totalYR << " " << Y0 << " " << R0 << std::endl;
             if(totalYR > 0.0)
             {
             if(r7 > sputtProb) //reflects
@@ -396,6 +398,7 @@ void operator()(std::size_t indx) const {
             #if USE_CUDA > 0
                     atomicAdd(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
             #else
+                    #pragma omp atomic
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
             #endif
                 }
@@ -449,6 +452,7 @@ void operator()(std::size_t indx) const {
                         atomicAdd(&surfaces->sputtYldCount[surfaceHit],1);
                     }
             #else
+                    #pragma omp atomic
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
                     surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit] + newWeight;
                     surfaces->aveSputtYld[surfaceHit] = surfaces->aveSputtYld[surfaceHit] + Y0;
@@ -534,6 +538,7 @@ void operator()(std::size_t indx) const {
         vSampled[0] = V0 * std::sin(aInterpVal * 3.1415 / 180) * std::cos(2.0 * 3.1415 * r10);
         vSampled[1] = V0 * std::sin(aInterpVal * 3.1415 / 180) * std::sin(2.0 * 3.1415 * r10);
         vSampled[2] = V0 * std::cos(aInterpVal * 3.1415 / 180);
+          //std::cout << "vSampled " << vSampled[0] << " " << vSampled[1] << " " << vSampled[2] << std::endl;
         boundaryVector[wallHit].transformToSurface(vSampled, particles->y[indx], particles->x[indx]);
         //float rr = std::sqrt(particles->x[indx]*particles->x[indx] + particles->y[indx]*particles->y[indx]);
         //if (particles->z[indx] < -4.1 && -signPartDotNormal*vSampled[0] > 0.0)
@@ -543,14 +548,15 @@ void operator()(std::size_t indx) const {
         //  std::cout << "Surface Normal" << surfaceNormalVector[0] << " " << surfaceNormalVector[1] << " " << surfaceNormalVector[2] << std::endl;
         //  std::cout << "signPartDotNormal " << signPartDotNormal << std::endl;
         //  std::cout << "Particle hit wall with v " << vx << " " << vy << " " << vz<< std::endl;
-        //  std::cout << "vSampled " << vSampled[0] << " " << vSampled[1] << " " << vSampled[2] << std::endl;
+          //std::cout << "vSampled " << vSampled[0] << " " << vSampled[1] << " " << vSampled[2] << std::endl;
         //  std::cout << "Final transform" << -signPartDotNormal*vSampled[0] << " " << -signPartDotNormal*vSampled[1] << " " << -signPartDotNormal*vSampled[2] << std::endl;
         //  std::cout << "Position of particle0 " << particles->xprevious[indx] << " " << particles->yprevious[indx] << " " << particles->zprevious[indx] << std::endl;
         //  std::cout << "Position of particle " << particles->x[indx] << " " << particles->y[indx] << " " << particles->z[indx] << std::endl;
+          //std::cout << "normal vec " << surfaceNormalVector[0] << " " << surfaceNormalVector[1] << " " << surfaceNormalVector[2]<< " " << boundaryVector[wallHit].inDir << std::endl;
         //  }
-        particles->vx[indx] = -static_cast<float>(boundaryVector[wallHit].inDir) * surfaceNormalVector[0] * vSampled[0];
-        particles->vy[indx] = -static_cast<float>(boundaryVector[wallHit].inDir) * surfaceNormalVector[1] * vSampled[1];
-        particles->vz[indx] = -static_cast<float>(boundaryVector[wallHit].inDir) * surfaceNormalVector[2] * vSampled[2];
+        particles->vx[indx] = -static_cast<float>(boundaryVector[wallHit].inDir)  * vSampled[0];
+        particles->vy[indx] = -static_cast<float>(boundaryVector[wallHit].inDir)  * vSampled[1];
+        particles->vz[indx] = -static_cast<float>(boundaryVector[wallHit].inDir)  * vSampled[2];
         //        //if(particles->test[indx] == 0.0)
         //        //{
         //        //    particles->test[indx] = 1.0;
