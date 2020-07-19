@@ -84,7 +84,7 @@ jobs:
         -DCHECK_COMPATIBILITY=1
         .. &&
         make VERBOSE=1 &&
-        ctest
+        ./tests
     - run: ls build  
       env:
         MY_NAME: "Tim"
