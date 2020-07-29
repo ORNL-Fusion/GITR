@@ -652,6 +652,6 @@ if __name__ == "__main__":
     #nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic()
     #readFtridynSelf()
     #readFtridynBackground()
+    plot_hpic_iead()
     computeSputtYld()
     #printBackgroundDist()
-    #plot_hpic_iead()

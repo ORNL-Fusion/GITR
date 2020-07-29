@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.matlib as ml
@@ -327,7 +327,7 @@ def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-
     print('br size',br.shape)
 
     grad_ti_r,grad_ti_t,grad_ti_z = project_parallel_variable_xyz(grad_ti, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_ti',plot_variables)
-    grad_te_r,grad_te_t,grad_te_z = project_parallel_variable_xyz(grad_ti, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_te',plot_variables)
+    grad_te_r,grad_te_t,grad_te_z = project_parallel_variable_xyz(grad_te, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_te',plot_variables)
 
     e_para = get_dakota_variable(5+ 5*nIonSpecies+6, dak, rdak, zdak, nR, nZ, 'e_para',plot_variables)
     e_perp = get_dakota_variable(5+ 5*nIonSpecies+7, dak, rdak, zdak, nR, nZ, 'e_parp',plot_variables)
@@ -516,7 +516,7 @@ def find_strike_points(solps_geometry_filename='/Users/tyounkin/Dissertation/ITE
     print('sp xy cry',cry[-1,topcut,:])
     return x_x_point,y_x_point, \
            x_inner_strikepoint ,y_inner_strikepoint, \
-           x_outer_strikepoint ,y_outer_strikepoint
+           x_outer_strikepoint ,y_outer_strikepoint, topcut
 
 
 
@@ -524,8 +524,8 @@ def get_target_coordinates(solps_geometry_filename='/Users/tyounkin/Dissertation
     nx, ny, crx, cry, region = read_b2f_geometry(solps_geometry_filename)
 
     geom_shape = crx.shape
-    print('crx_size',crx.shape)
-    print('region_size',region.shape)
+    #print('crx_size',crx.shape)
+    #print('region_size',region.shape)
     bottom_left = 0
     bottom_right = 1
     top_left = 2;
@@ -541,8 +541,8 @@ def get_target_coordinates(solps_geometry_filename='/Users/tyounkin/Dissertation
     #r_outer_target = np.unique(r_outer_target)
     #z_outer_target = np.unique(z_outer_target)
 
-    print('zouter',z_outer_target)
-    print('router',r_outer_target)
+    #print('zouter',z_outer_target)
+    #print('router',r_outer_target)
 
     return r_inner_target,z_inner_target, \
            r_outer_target,z_outer_target
@@ -553,7 +553,7 @@ def read_b2f_geometry(solps_geometry_filename='/Users/tyounkin/Dissertation/ITER
                             field_name='nx,ny')
     nx = int(nxny[0]+2)
     ny = int(nxny[1]+2)
-    print('nx,ny',nx,ny)
+    #print('nx,ny',nx,ny)
     crx = np.zeros((nx, ny, 4))
     cry = np.zeros((nx, ny, 4))
 
@@ -566,10 +566,10 @@ def read_b2f_geometry(solps_geometry_filename='/Users/tyounkin/Dissertation/ITER
         crx[:,:,i] = np.transpose(np.reshape(crx_long[i*nx*ny:(i+1)*nx*ny],(ny,nx)))
         cry[:,:,i] = np.transpose(np.reshape(cry_long[i*nx*ny:(i+1)*nx*ny],(ny,nx)))
 
-    print('crx shape',crx.shape)
+    #print('crx shape',crx.shape)
     region = read_b2f_variable(solps_geometry_filename, \
                             field_name='region')
-    print('firstwhatever',region[0:nx*ny])
+    #print('firstwhatever',region[0:nx*ny])
     region = np.transpose(np.reshape(region[0:nx*ny],(ny,nx)))
 
     return nx,ny,crx,cry,region
@@ -709,51 +709,46 @@ def read_target_file(filename = '/Users/tyounkin/Code/solps-iter-data/build/righ
 def make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
     solps_geom = '/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry', \
     right_target_filename= '/Users/tyounkin/Code/solps-iter-data/build/rightTargOutput'):
+   
     r, z, ti, ni, flux, te, ne = read_target_file(right_target_filename)
+    
     x_x_point, y_x_point, \
     x_inner_strikepoint, y_inner_strikepoint, \
-    x_outer_strikepoint, y_outer_strikepoint = find_strike_points(solps_geom)
+    x_outer_strikepoint, y_outer_strikepoint, topcut = find_strike_points(solps_geom)
+    topcut = topcut - 1; #Because the target coordinates already strip off the ghost cell
 
     r_left_target,z_left_target,r_right_target,z_right_target = get_target_coordinates(solps_geom)
+    print('r strikepoint and target coords',x_outer_strikepoint, r_right_target)
+    print('r strikepoint length',len(r_right_target))
 
     r_minus_r_sep = 0*r_right_target
-    # find the nearest target point
-    distances = np.sqrt(np.multiply((r_right_target -x_outer_strikepoint),(r_right_target-x_outer_strikepoint)) + np.multiply((z_right_target -y_outer_strikepoint),(z_right_target-y_outer_strikepoint)) )
-    min_dist_indx = np.argmin(distances)
-    print('smallest distance r,z',distances[min_dist_indx],r_right_target[min_dist_indx],z_right_target[min_dist_indx])
-    print('xy outer',x_outer_strikepoint,y_outer_strikepoint)
-    if (y_outer_strikepoint>z_right_target[min_dist_indx]):
-        r_minus_r_sep[min_dist_indx] = -distances[min_dist_indx]
-    else:
-        r_minus_r_sep[min_dist_indx] = distances[min_dist_indx]
 
     lengths = np.sqrt(np.multiply((r_right_target[1:] -r_right_target[0:-1]),(r_right_target[1:] -r_right_target[0:-1])) + \
                       np.multiply((z_right_target[1:] -z_right_target[0:-1]),(z_right_target[1:] -z_right_target[0:-1])) )
 
-    print('len r',len(r))
-    print('len lengths',len(lengths))
-    print('len rmrs',len(r_minus_r_sep))
-    for i in range(min_dist_indx+1,len(r_right_target)):
+    for i in range(topcut+1,len(r_right_target)):
         r_minus_r_sep[i] = r_minus_r_sep[i-1]+lengths[i-1]
 
-    for i in range(min_dist_indx-1,-1,-1):
+    for i in range(topcut-1,-1,-1):
         r_minus_r_sep[i] = r_minus_r_sep[i+1]-lengths[i]
 
     print('r_minus_r_sep',r_minus_r_sep)
-    tol = 1e-4
-    condition = np.abs(r - x_outer_strikepoint) <= tol
-    condition2 = np.abs(z - y_outer_strikepoint) <= tol
+    #tol = 1e-4
+    #condition = np.abs(r - x_outer_strikepoint) <= tol
+    #condition2 = np.abs(z - y_outer_strikepoint) <= tol
 
-    rz_ind = np.where(condition & condition2)
-    print('strikepoint',x_outer_strikepoint,y_outer_strikepoint)
-    print('strikepoint rzind',rz_ind)
-    print('strikepoint rz',r,z)
+    #rz_ind = np.where(condition & condition2)
+    #print('strikepoint',x_outer_strikepoint,y_outer_strikepoint)
+    #print('strikepoint rzind',rz_ind)
+    #print('strikepoint rz',r,z)
     plt.close()
     plt.plot(r,z)
     plt.scatter(r,z)
-    plt.scatter(x_outer_strikepoint,y_outer_strikepoint)
-    plt.axis([5.5,5.6,-4.42, -4.36])
+    plt.scatter(r_right_target,z_right_target)
+    #plt.scatter(x_outer_strikepoint,y_outer_strikepoint)
+    #plt.axis([5.5,5.6,-4.42, -4.36])
     plt.savefig('rz_targ.png')
+    plt.show()
 
     with io.open(gitr_geom_filename) as f:
         config = libconf.load(f)
@@ -764,8 +759,8 @@ def make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
     z2 = np.array(config.geom.z2)
 
     i_a, i_b = intersection(x1, z1, r_right_target, z_right_target)
-    i_a = i_a[0:-1]
     print('i_a',i_a)
+    print('len i_a',len(i_a))
     A = np.zeros((len(i_a),10))
     A[:,0] = r_right_target
     A[:,1] = z_right_target
@@ -789,25 +784,20 @@ def make_solps_targ_file_txt(solps_geom = 'b2fgmtry', \
 
     r_left_target,z_left_target,r_right_target,z_right_target = get_target_coordinates(solps_geom)
     
-    rr, zz, r_minus_r_sep, gitr_ind = read_targ_coordinates_file(coords_file)
-    print('len z', len(z_right_target))
-    r_no_guard_cells = r_right_target
-    z_no_guard_cells = z_right_target
+    rr, zz, r_minus_r_sep, gitr_ind, r_midpoint, z_midpoint = read_targ_coordinates_file(coords_file)
     
-    print('len zno', len(z_no_guard_cells))
-    
-    slope = np.zeros(len(r_no_guard_cells)-1)
-    rise = z_no_guard_cells[1:] - z_no_guard_cells[0:-1]
-    run = r_no_guard_cells[1:] - r_no_guard_cells[0:-1]
+    slope = np.zeros(len(rr)-1)
+    rise = zz[1:] - zz[0:-1]
+    run = rr[1:] - rr[0:-1]
     slope = np.divide(rise,run)
     perp_slope = -np.sign(slope)/np.absolute(slope)
     rPerp = np.divide(1.0,np.sqrt(np.multiply(perp_slope,perp_slope)+1))
     zPerp = 1.0*np.sqrt(1-np.multiply(rPerp,rPerp))
     length = np.sqrt(np.multiply(rise,rise)+np.multiply(run,run))
-    print('slope',slope)
-    print('lenslope',len(slope))
-    z_midpoint = 0.5*(z_no_guard_cells[1:] + z_no_guard_cells[0:-1])
-    r_midpoint = 0.5*(r_no_guard_cells[1:] + r_no_guard_cells[0:-1])
+    #print('slope',slope)
+    #print('lenslope',len(slope))
+    #z_midpoint = 0.5*(z_no_guard_cells[1:] + z_no_guard_cells[0:-1])
+    #r_midpoint = 0.5*(r_no_guard_cells[1:] + r_no_guard_cells[0:-1])
     print('rmid', r_midpoint)
     print('zmid', z_midpoint)
 
@@ -846,17 +836,27 @@ def read_targ_coordinates_file(filename = 'right_target_coordinates.txt'):
     data = np.loadtxt(filename, skiprows=0)
 
     r_right_target = data[:,0]
+    #r_right_target = np.append(r_right_target,data[-1,4])
+    #print('rrt length',len(r_right_target),data[-1,4])
     z_right_target = data[:,1]
+    #z_right_target = np.append(z_right_target,data[-1,6])
     r_minus_r_sep = data[:,2]
+    #len_last_segment = np.sqrt((r_right_target[-1] - r_right_target[-2])**2 + (z_right_target[-1] - z_right_target[-2])**2)
+    #print('rmrs length',len(r_minus_r_sep),len_last_segment)
+    #print('data length',len(data[:,0]),len(data[:,1]),len(data[:,2]))
+    #r_minus_r_sep = np.append(data[:,2], len_last_segment)
+    
     gitr_ind = data[:,3]
+    r_midpoint = data[0:-1,8]
+    z_midpoint = data[0:-1,9]
 
-    return r_right_target, z_right_target, r_minus_r_sep, gitr_ind
+    return r_right_target, z_right_target, r_minus_r_sep, gitr_ind, r_midpoint, z_midpoint
 
 if __name__ == "__main__":   
     #rTarg = np.linspace(5,6.5,100)
     #zTarg=np.linspace(0,1,100)
     #getBfield(rTarg,zTarg,"/Users/tyounkin/Dissertation/ITER/mq3/final/Baseline2008-li0.70.x4.equ","/Users/tyounkin/Code/gitr2/iter/iter_milestone/2d/input/iterGeom2DdirBe0.cfg")
-    #process_solps_output_for_gitr()
+    process_solps_output_for_gitr()
     #get_solps_species()
     #readEquilibrium()
     #read_b2f_geometry()
@@ -867,7 +867,8 @@ if __name__ == "__main__":
     #make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
     #solps_geom = '/project/projectdirs/m1709/psi-install-cori/solps_data/mq3/b2fgmtry', \
     #right_target_filename= 'rightTargOutput')
-    make_solps_targ_file_txt(solps_geom = '/project/projectdirs/m1709/psi-install-cori/solps_data/mq3/b2fgmtry', \
-    b_field_file = '/project/projectdirs/m1709/psi-install-cori/solps_data/mq3/Baseline2008-li0.70.x4.equ', \
-    coords_file = 'right_target_coordinates.txt', \
-    right_target_filename= 'rightTargOutput')
+    #make_solps_targ_file_txt(solps_geom='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry',b_field_file = '/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseline2008-li0.70.x4.equ')
+    #solps_geom = '/Users/tyounkin/postDoc/DOE-West/Deuterium/WEST_D_run1/baserun/b2fgmtry', \
+    #b_field_file = '/Users/tyounkin/postDoc/DOE-West/Deuterium/WEST_D_run1/baserun/west_54034_10p2s_mag.X4.equ', \
+    #coords_file = 'right_target_coordinates.txt', \
+    #right_target_filename= 'rightTargOutput')

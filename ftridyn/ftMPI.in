@@ -1,9 +1,9 @@
 beam He
-target W
-nH 1000
+target Al
+nH 10000
 energy_start 1
-energy_end 3
-nE 6
+energy_end 2.5
+nE 20
 Escale log 
 angle_start 0
 angle_end 89.9

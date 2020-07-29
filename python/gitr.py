@@ -21,6 +21,8 @@ import os
 import shutil
 import math
 import scipy.interpolate as scii
+import seaborn as sns
+sns.set()
 
 import solps
 def copy_folder(from_folder, to_folder):
@@ -955,6 +957,7 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
 
     plt.plot(solps_mesh[:, [0, 2]].transpose(), solps_mesh[:, [1, 3]].transpose())
     plt.show()
+    plt.close()
 
     manual_indices = np.array(range(88, 98))
     manual_indices = np.append(manual_indices, range(71, 82))
@@ -970,7 +973,7 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
     # [89:98,72:82,69:71,51,37:45,35,53,52,36,1:34,50,54:68
     # ,83:87,128,88]; Matlab indices
 
-    print(manual_indices)
+    #print(manual_indices)
     r_iter = solps_mesh[manual_indices, 0]
     z_iter = solps_mesh[manual_indices, 1]
     r_iter = np.append(r_iter, solps_mesh[87, 2])
@@ -983,37 +986,82 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
 
     r_iter = np.append(r_iter, r_dome)
     z_iter = np.append(z_iter, z_dome)
-
     plt.plot(r_iter, z_iter)
     plt.scatter(r_iter,z_iter)
-    print('manual geometry size',r_iter.size)
+    plt.title('ITER Geometry Points',fontsize=20)
+    plt.xlabel('r[m]',fontsize=20)
+    plt.ylabel('z[m]',fontsize=20)
+    plt.savefig('iter_rz.png')
+    print('Number of points in ITER Geometry from SOLPS:',r_iter.size)
+
     r_left_target,z_left_target,r_right_target,z_right_target = solps.get_target_coordinates(solps_geom)
-    print('r_right_target',r_right_target)
-    print('z_right_target',z_right_target)
-    print('r_final size before',r_iter.size)
+    plt.scatter(r_left_target,z_left_target)
+    plt.scatter(r_right_target,z_right_target)
+    plt.xlim(4, 6.4)
+    plt.ylim(-5, 2)
+    plt.savefig('iter_rz_targets.png')
+    plt.close()
+    print('number r_right_target:',len(r_right_target))
     r_final, z_final = replace_line_segment(r_right_target, z_right_target, r_iter, z_iter)
-    print('r_final size after',r_final.size)
     r_final, z_final = replace_line_segment(r_left_target, z_left_target, r_final, z_final)
-    print('r_final size after',r_final.size)
-    print(r_final.size)
+    print('Number of points in ITER geometry after adding target:',r_final.size)
+    print('r_final',r_final)
+    plt.plot(r_final, z_final,linewidth=0.4)
+    plt.scatter(r_final,z_final,s=0.4)
+    plt.title('ITER Geometry Points',fontsize=20)
+    plt.xlabel('r[m]',fontsize=20)
+    plt.ylabel('z[m]',fontsize=20)
+    plt.savefig('iter_rz_target_added.png')
 
     Z = np.zeros(len(r_final)+1)
     surfaces = np.zeros(len(r_final)+1)
-    inDir = np.zeros(len(r_final))
+    inDir = np.ones(len(r_final))
 
     i_a, i_b = intersection(r_final, z_final, r_right_target, z_right_target)
-
-    Z[i_b] = 74;
-    surfaces[i_b] = 1;
+    print('number of matches right target', len(i_b))
+    Z[i_a] = 74;
+    surfaces[i_a] = 1;
 
     i_a, i_b = intersection(r_final, z_final, r_left_target, z_left_target)
     print('i_a',i_a)
-    Z[i_b] = 74;
-    surfaces[i_b] = 1;
-    inDir[i_b] = -1;
-
+    print('i_b',i_b)
+    Z[i_a] = 74;
+    surfaces[i_a] = 1;
+    inDir[i_a] = -1;
+   
+    # Manual selection of indices to reverse inDirection
+    inDir[0] = -1;
+    inDir[6:10] = -1;
+    inDir[75:102] = -1;
+    inDir[139:145] = -1;
+    inDir[148] = -1;
+    inDir[154:161] = -1;
+    inDir[164:166] = -1;
 
     lines = gitr_lines_from_points(r_final, z_final)
+    
+    x1 = lines[:, 0]
+    z1 = lines[:, 1]
+    x2 = lines[:, 2]
+    z2 = lines[:, 3]
+    slope = lines[:, 4]
+    intercept = lines[:, 5]
+    line_length = lines[:, 6]
+    print('slope',slope)
+    print('length of lines',len(x1))
+    plt.title('ITER In Direction')
+    for i in range(0,len(x1)):
+        if slope[i]==0:
+            perpSlope = 1.0e12
+        else:
+            perpSlope = -np.sign(slope[i])/np.abs(slope[i]);
+
+        rPerp = -inDir[i]/np.sqrt(perpSlope*perpSlope+1);
+        zPerp = -inDir[i]*np.sign(perpSlope)*np.sqrt(1-rPerp*rPerp);
+        plt.quiver([x1[i] + (x2[i]-x1[i])/2], [z1[i] + (z2[i]-z1[i])/2], [rPerp/10], [zPerp/10], width=0.0015, scale=5, headwidth=4)
+        plt.text(x1[i] + (x2[i]-x1[i])/2 + rPerp/10, z1[i] + (z2[i]-z1[i])/2 + zPerp/10, str(i), fontsize=12)
+    plt.show()
+    plt.savefig('iter_indir.pdf')
 
     lines_to_gitr_geometry(gitr_geometry_filename, lines, Z, surfaces, inDir)
 
@@ -1103,7 +1151,7 @@ def replace_line_segment(x_priority, y_priority, x_base, y_base):
 
     all_close = np.delete(all_close,0)
     remove_indices = np.unique(all_close);
-    print('remove indices',remove_indices)
+    #print('remove indices',remove_indices)
     d1 = np.sqrt(
         np.power((x_priority[0] - x_base[remove_indices[0]]), 2) + np.power((y_priority[0] - y_base[remove_indices[0]]),
                                                                             2));
@@ -1114,7 +1162,7 @@ def replace_line_segment(x_priority, y_priority, x_base, y_base):
         x_priority = np.flip(x_priority, 0)
         y_priority = np.flip(y_priority, 0)
 
-    print('x_priority',x_priority)
+    #print('x_priority',x_priority)
 
     x_final = np.append(x_base[0:(remove_indices[0] - 1)], x_priority)
     x_final = np.append(x_final, x_base[(remove_indices[-1] + 1):]);
@@ -1129,8 +1177,8 @@ def gitr_lines_from_points(r,z):
     lines = np.zeros([nPoints, 7]);
     lines[:, 0] = r;
     lines[:, 1] = z;
-    lines[0:-2, 2] = r[1:-1];
-    lines[0:-2, 3] = z[1: -1];
+    lines[0:-1, 2] = r[1:];
+    lines[0:-1, 3] = z[1:];
     lines[-1, 2] = r[0];
     lines[-1, 3] = z[0];
 
@@ -1443,8 +1491,8 @@ def test_interp():
     #value_interpolated = interp_3d(x_grid,y_grid,z_grid,vals,x_i,y_i,z_i,default_value = 0.0)
     #print(value_interpolated)
 if __name__ == "__main__":
-    test_interp()
-    #make_gitr_geometry_from_solps()
+    #test_interp()
+    make_gitr_geometry_from_solps()
 # asdfanc_show("surface.nc")
 # depositedEdist()
 # if(os.path.exists('output/history.nc')):
