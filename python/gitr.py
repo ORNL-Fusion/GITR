@@ -1071,7 +1071,7 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
     remove_endline_after_comma2(infile=gitr_geometry_filename+"00", outfile=gitr_geometry_filename)
 
 
-def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg', \
+def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitrGeometry.cfg', \
                                   solps_mesh_extra='/Users/Alyssa/Dev/WEST/baserun/mesh.extra', \
                                   solps_geom = '/Users/Alyssa/Dev/WEST/baserun/b2fgmtry'):
     # This program uses the solps-west mesh.extra file in combination
@@ -1118,10 +1118,10 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg
     z_west = solps_mesh[:, [1, 3]].transpose()[0, manual_indices]
 
     plt.plot(r_west, z_west)
-    plt.xlabel('r')
-    plt.ylabel('z')
+    plt.xlabel('r [m]')
+    plt.ylabel('z [m]')
     plt.title('Raw WEST Geometry from SOLPS')
-    plt.savefig('mesh_extra_west.png')
+    plt.savefig('mesh_extra_west.pdf')
 
     #plt.scatter(r,z,s=0.4)
     #plt.savefig('mesh_extra_west_scatter.png')
@@ -1133,7 +1133,7 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg
     plt.plot(r_left_target, z_left_target)
     plt.plot(r_right_target, z_right_target)
     plt.title('Raw WEST Targets from SOLPS')
-    plt.savefig('targets_west.png')
+    plt.savefig('targets_west.pdf')
 
     #integrate target geometry into base geometry
     #uncomment print statements here and in replace_line_segments_west
@@ -1150,10 +1150,10 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg
     plt.plot(r_final, z_final, linewidth=0.1)
     plt.scatter(r_final, z_final, s=0.4)
     #plt.scatter(r_west, z_west, s=0.3)
-    plt.xlabel('r')
-    plt.ylabel('z')
+    plt.xlabel('r [m]')
+    plt.ylabel('z [m]')
     plt.title('Target Geometry Integrated with WEST')
-    plt.savefig('final_west.png')
+    plt.savefig('final_west.pdf')
 
 
     #define interior side of each line segment in the geometry with inDir
@@ -1163,7 +1163,7 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitr_geometry.cfg
 
     #populate lines and check that vectors point inward
     lines = gitr_lines_from_points_west(r_final, z_final)
-    lines_to_vectors_west(lines, inDir, 'vectors_west.png')
+    lines_to_vectors_west(lines, inDir, 'vectors_west.pdf')
 
 
     Z = np.zeros(len(r_final)+1)
