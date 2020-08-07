@@ -268,10 +268,13 @@ def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-
 
     te = get_dakota_variable(2,dak,rdak,zdak,nR,nZ,'te',plot_variables)
     off_grid_inds = np.where(te < -0.5)
+    te[off_grid_inds] = 0.0;
 
     ne = get_dakota_variable(3,dak,rdak,zdak,nR,nZ,'ne',plot_variables)
+    ne[off_grid_inds] = 0.0;
 
     ti = get_dakota_variable(4,dak,rdak,zdak,nR,nZ,'ti',plot_variables)
+    ti[off_grid_inds] = 0.0;
 
     ni = np.zeros((nIonSpecies, nZ, nR))
     v_parallel = np.zeros((nIonSpecies, nZ, nR))
@@ -320,6 +323,9 @@ def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-
 
     print('br size',br.shape)
     vr,vt,vz = project_parallel_variable_xyz(v_parallel_total, br, bphi, bz,rdak,zdak, nR, nZ, 'v',plot_variables)
+    vr[off_grid_inds] = 0.0;
+    vt[off_grid_inds] = 0.0;
+    vz[off_grid_inds] = 0.0;
 
     grad_ti = get_dakota_variable(5+ 5*nIonSpecies+4, dak, rdak, zdak, nR, nZ, 'grad_ti',plot_variables)
     grad_te = get_dakota_variable(5+ 5*nIonSpecies+5, dak, rdak, zdak, nR, nZ, 'grad_te',plot_variables)
@@ -328,9 +334,17 @@ def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-
 
     grad_ti_r,grad_ti_t,grad_ti_z = project_parallel_variable_xyz(grad_ti, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_ti',plot_variables)
     grad_te_r,grad_te_t,grad_te_z = project_parallel_variable_xyz(grad_te, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_te',plot_variables)
+    grad_ti_r[off_grid_inds] = 0.0;
+    grad_ti_t[off_grid_inds] = 0.0;
+    grad_ti_z[off_grid_inds] = 0.0;
+    grad_te_r[off_grid_inds] = 0.0;
+    grad_te_t[off_grid_inds] = 0.0;
+    grad_te_z[off_grid_inds] = 0.0;
 
     e_para = get_dakota_variable(5+ 5*nIonSpecies+6, dak, rdak, zdak, nR, nZ, 'e_para',plot_variables)
     e_perp = get_dakota_variable(5+ 5*nIonSpecies+7, dak, rdak, zdak, nR, nZ, 'e_parp',plot_variables)
+    e_para[off_grid_inds] = 0.0;
+    e_perp[off_grid_inds] = 0.0;
 
     profiles_filename = "profiles.nc"
     if os.path.exists(profiles_filename):
