@@ -4,6 +4,7 @@ from mpi4py import MPI
 #import generate_ftridyn_input_gitr
 #import analyze_ftridyn_simulations_gitr
 import ftridyn
+import subprocess
 import os
 import time
 #import subprocess
@@ -41,7 +42,7 @@ class species_lookup_table:
 	def __init__(self,dataFile):
 		#cwd = os.path.dirname(os.path.realpath(__file__))
 		print('dataFile',dataFile)
-		self.table1 = open(dataFile[0],'r').readlines()[11:130]
+		self.table1 = open(dataFile,'r').readlines()[11:130]
 		self.species_name = []
 		self.ZZ = []
 		self.M = []
@@ -659,34 +660,68 @@ def func1(path,E,a,r,d,specNum):
     #            % (e.returncode))
     #ftridyn.ftridyn_cpmi(name1+name2+'0001.IN')
     #returnCode=0
-    try:
-        #original = sys.stdout
-        f1 =  open('log.txt', 'w')
-        f1.close()
-        f2 =  open('logErr.txt', 'w')
-        f2.close()
-        null_fds = [os.open('log.txt',os.O_RDWR), os.open('logErr.txt',os.O_RDWR)]
-        # save the current file descriptors to a tuple
-        save = os.dup(1), os.dup(2)
-        # put /dev/null fds on 1 and 2
-        os.dup2(null_fds[0], 1)
-        os.dup2(null_fds[1], 2)
-        ftridyn.ftridyn_cpmi(name1+name2+'0001.IN')
-        # restore file descriptors so I can print the results
-        os.dup2(save[0], 1)
-        os.dup2(save[1], 2)
-        # close the temporary fds
-        os.close(null_fds[0])
-        os.close(null_fds[1])
-        os.close(save[0])
-        os.close(save[1])
-        print('ran tridyn')
-        returnCode=0
-    #sys.stdout = original
-    #print 'ftridyn print', mystdout.getValue()
-    except:
-        print("FTRIDYN ERROR!")
-        returnCode=0
+    if d['use_exe']:
+        try:
+            #original = sys.stdout
+            f1 =  open('log.txt', 'w')
+            f1.close()
+            f2 =  open('logErr.txt', 'w')
+            f2.close()
+            null_fds = [os.open('log.txt',os.O_RDWR), os.open('logErr.txt',os.O_RDWR)]
+            # save the current file descriptors to a tuple
+            save = os.dup(1), os.dup(2)
+            # put /dev/null fds on 1 and 2
+            os.dup2(null_fds[0], 1)
+            os.dup2(null_fds[1], 2)
+            #ftridyn.ftridyn_cpmi(name1+name2+'0001.IN')
+            ff = subprocess.check_output(d['exe']+' '+name1+name2+'0001.IN', shell=True)
+            #ff = subprocess.check_output('/Users/tyounkin/Code/ftridyn2/src/shell_FtridynGITR.sh '+ name1+name2+'0001.IN', shell=True)
+            # restore file descriptors so I can print the results
+            os.dup2(save[0], 1)
+            os.dup2(save[1], 2)
+            # close the temporary fds
+            os.close(null_fds[0])
+            os.close(null_fds[1])
+            os.close(save[0])
+            os.close(save[1])
+            print('ran tridyn')
+            returnCode=0
+        #sys.stdout = original
+        #print 'ftridyn print', mystdout.getValue()
+        except subprocess.CalledProcessError as e:
+            sys.stderr.write("'ls' failed, returned code %d (check 'errors.txt')\n" % (e.returncode))
+#        except:
+#            print("FTRIDYN ERROR!")
+            returnCode=0
+    else:    
+        try:
+            #original = sys.stdout
+            f1 =  open('log.txt', 'w')
+            f1.close()
+            f2 =  open('logErr.txt', 'w')
+            f2.close()
+            null_fds = [os.open('log.txt',os.O_RDWR), os.open('logErr.txt',os.O_RDWR)]
+            # save the current file descriptors to a tuple
+            save = os.dup(1), os.dup(2)
+            # put /dev/null fds on 1 and 2
+            os.dup2(null_fds[0], 1)
+            os.dup2(null_fds[1], 2)
+            ftridyn.ftridyn_cpmi(name1+name2+'0001.IN')
+            # restore file descriptors so I can print the results
+            os.dup2(save[0], 1)
+            os.dup2(save[1], 2)
+            # close the temporary fds
+            os.close(null_fds[0])
+            os.close(null_fds[1])
+            os.close(save[0])
+            os.close(save[1])
+            print('ran tridyn')
+            returnCode=0
+        #sys.stdout = original
+        #print 'ftridyn print', mystdout.getValue()
+        except:
+            print("FTRIDYN ERROR!")
+            returnCode=0
     #print('path, returncode', path, p)
     #file = open(path+'/log.txt','w') 
     #file.write(str(stdoutdata)) 
@@ -857,13 +892,15 @@ def main(func,argv):
                     if(split[0] == 'beam' or split[0]=='target' or split[0]=='Escale' or split[0]=='exe' or split[0]=='data'):
                         for j in range(1,len(split)):
                             d[split[0]].append(split[j])
-                    elif(split[0] == 'nE' or split[0] == 'nA' or split[0]=='nR' or split[0]=='nEdist' or split[0]=='nEdist_ref' or split[0]=='nAdist' or split[0]=='nH'):
+                    elif(split[0] == 'nE' or split[0] == 'nA' or split[0]=='nR' or split[0]=='nEdist' or split[0]=='nEdist_ref' or split[0]=='nAdist' or split[0]=='nH' or split[0]=='use_exe'):
                         d[split[0]] = int(split[1])
                     else:
                         d[split[0]] = float(split[1])
         print(d)
         d['Escale'] = d['Escale'][0]
         d['target'] = d['target'][0]
+        d['exe'] = d['exe'][0]
+        d['data'] = d['data'][0]
         if(d['Escale'] == 'log'):
             energy = np.logspace(d['energy_start'],d['energy_end'],d['nE'])
         else:
@@ -962,11 +999,18 @@ def main(func,argv):
                     nenergyRef = np.loadtxt(pathString+"/"+"energyRef.out", dtype='float')
                     eDistributionRef[specNum,i,j,:] = nenergyRef
                     totalIndex = totalIndex+1
-	#for i in range(d['nS']):	    
+	#for i in range(d['nS']):
+        if d['beam'][-1] == d['target']:
+            nS_background = d['nS']-1
+            save_self = 1
+        else:
+            nS_background = d['nS']
+            save_self = 0
+
         rootgrp = netCDF4.Dataset("ftridynBackground"+".nc", "w", format="NETCDF4")
         ne = rootgrp.createDimension("nE", len(energy))
         na = rootgrp.createDimension("nA", len(angle))
-        ns = rootgrp.createDimension("nS", d['nS']-1)
+        ns = rootgrp.createDimension("nS", nS_background)
         nedistgrid = rootgrp.createDimension("nEdistBins", nEgrid)
         nedistgridref = rootgrp.createDimension("nEdistBinsRef", nEgrid_ref)
         nadistgrid = rootgrp.createDimension("nAdistBins", nAgrid)
@@ -992,57 +1036,58 @@ def main(func,argv):
         edistegridref[:] = eDistEgridRef
         phigrid[:] = phiGrid
         thetagrid[:] = thetaGrid
-        spyld[:] = sputt[0:(d['nS']-1),:,:]
-        rfyld[:] = refl[0:(d['nS']-1),:,:]
-        cosxdist[:] = cosXDistribution[0:(d['nS']-1),:,:,:]
-        cosydist[:] = cosYDistribution[0:(d['nS']-1),:,:,:]
+        spyld[:] = sputt[0:(nS_background),:,:]
+        rfyld[:] = refl[0:(nS_background),:,:]
+        cosxdist[:] = cosXDistribution[0:(nS_background),:,:,:]
+        cosydist[:] = cosYDistribution[0:(nS_background),:,:,:]
         #coszdist[:] = cosZDistribution[0:d['nS'],:,:,:]
-        cosxdistref[:] = cosXDistributionRef[0:(d['nS']-1),:,:,:]
-        cosydistref[:] = cosYDistributionRef[0:(d['nS']-1),:,:,:]
+        cosxdistref[:] = cosXDistributionRef[0:(nS_background),:,:,:]
+        cosydistref[:] = cosYDistributionRef[0:(nS_background),:,:,:]
         #coszdistref[:] = cosZDistributionRef[0:d['nS'],:,:,:]
-        edist[:] = eDistribution[0:(d['nS']-1),:,:,:]
-        edistref[:] = eDistributionRef[0:(d['nS']-1),:,:,:]
+        edist[:] = eDistribution[0:(nS_background),:,:,:]
+        edistref[:] = eDistributionRef[0:(nS_background),:,:,:]
         rootgrp.close()
         
-        rootgrp = netCDF4.Dataset("ftridynSelf"+".nc", "w", format="NETCDF4")
-        ne = rootgrp.createDimension("nE", len(energy))
-        na = rootgrp.createDimension("nA", len(angle))
-        nedistgrid = rootgrp.createDimension("nEdistBins", nEgrid)
-        nedistgridref = rootgrp.createDimension("nEdistBinsRef", nEgrid_ref)
-        nadistgrid = rootgrp.createDimension("nAdistBins", nAgrid)
-        spyld = rootgrp.createVariable("spyld","f8",("nE","nA"))
-        rfyld = rootgrp.createVariable("rfyld","f8",("nE","nA"))
-        ee = rootgrp.createVariable("E","f8",("nE"))
-        aa = rootgrp.createVariable("A","f8",("nA"))
-        cosxdist = rootgrp.createVariable("cosXDist","f8",("nE","nA","nAdistBins"))
-        cosydist = rootgrp.createVariable("cosYDist","f8",("nE","nA","nAdistBins"))
-        #coszdist = rootgrp.createVariable("cosZDist","f8",("nE","nA","nAdistBins"))
-        cosxdistref = rootgrp.createVariable("cosXDistRef","f8",("nE","nA","nAdistBins"))
-        cosydistref = rootgrp.createVariable("cosYDistRef","f8",("nE","nA","nAdistBins"))
-        #coszdistref = rootgrp.createVariable("cosZDistRef","f8",("nE","nA","nAdistBins"))
-        edist = rootgrp.createVariable("energyDist","f8",("nE","nA","nEdistBins"))
-        edistref = rootgrp.createVariable("energyDistRef","f8",("nE","nA","nEdistBinsRef"))
-        edistegrid = rootgrp.createVariable("eDistEgrid","f8",("nEdistBins")) 
-        edistegridref = rootgrp.createVariable("eDistEgridRef","f8",("nEdistBinsRef")) 
-        phigrid = rootgrp.createVariable("phiGrid","f8",("nAdistBins")) 
-        thetagrid = rootgrp.createVariable("thetaGrid","f8",("nAdistBins")) 
-        phigrid[:] = phiGrid
-        thetagrid[:] = thetaGrid
-        ee[:] = energy
-        aa[:] = angle
-        edistegrid[:] = eDistEgrid
-        edistegridref[:] = eDistEgridRef
-        spyld[:] = sputt[-1,:,:]
-        rfyld[:] = refl[-1,:,:]
-        cosxdist[:] = cosXDistribution[-1,:,:,:]
-        cosydist[:] = cosYDistribution[-1,:,:,:]
-        #coszdist[:] = cosZDistribution[-1,:,:,:]
-        cosxdistref[:] = cosXDistributionRef[-1,:,:,:]
-        cosydistref[:] = cosYDistributionRef[-1,:,:,:]
-        #coszdistref[:] = cosZDistributionRef[-1,:,:,:]
-        edist[:] = eDistribution[-1,:,:,:]
-        edistref[:] = eDistributionRef[-1,:,:,:]
-        rootgrp.close()
+        if save_self:
+            rootgrp = netCDF4.Dataset("ftridynSelf"+".nc", "w", format="NETCDF4")
+            ne = rootgrp.createDimension("nE", len(energy))
+            na = rootgrp.createDimension("nA", len(angle))
+            nedistgrid = rootgrp.createDimension("nEdistBins", nEgrid)
+            nedistgridref = rootgrp.createDimension("nEdistBinsRef", nEgrid_ref)
+            nadistgrid = rootgrp.createDimension("nAdistBins", nAgrid)
+            spyld = rootgrp.createVariable("spyld","f8",("nE","nA"))
+            rfyld = rootgrp.createVariable("rfyld","f8",("nE","nA"))
+            ee = rootgrp.createVariable("E","f8",("nE"))
+            aa = rootgrp.createVariable("A","f8",("nA"))
+            cosxdist = rootgrp.createVariable("cosXDist","f8",("nE","nA","nAdistBins"))
+            cosydist = rootgrp.createVariable("cosYDist","f8",("nE","nA","nAdistBins"))
+            #coszdist = rootgrp.createVariable("cosZDist","f8",("nE","nA","nAdistBins"))
+            cosxdistref = rootgrp.createVariable("cosXDistRef","f8",("nE","nA","nAdistBins"))
+            cosydistref = rootgrp.createVariable("cosYDistRef","f8",("nE","nA","nAdistBins"))
+            #coszdistref = rootgrp.createVariable("cosZDistRef","f8",("nE","nA","nAdistBins"))
+            edist = rootgrp.createVariable("energyDist","f8",("nE","nA","nEdistBins"))
+            edistref = rootgrp.createVariable("energyDistRef","f8",("nE","nA","nEdistBinsRef"))
+            edistegrid = rootgrp.createVariable("eDistEgrid","f8",("nEdistBins")) 
+            edistegridref = rootgrp.createVariable("eDistEgridRef","f8",("nEdistBinsRef")) 
+            phigrid = rootgrp.createVariable("phiGrid","f8",("nAdistBins")) 
+            thetagrid = rootgrp.createVariable("thetaGrid","f8",("nAdistBins")) 
+            phigrid[:] = phiGrid
+            thetagrid[:] = thetaGrid
+            ee[:] = energy
+            aa[:] = angle
+            edistegrid[:] = eDistEgrid
+            edistegridref[:] = eDistEgridRef
+            spyld[:] = sputt[-1,:,:]
+            rfyld[:] = refl[-1,:,:]
+            cosxdist[:] = cosXDistribution[-1,:,:,:]
+            cosydist[:] = cosYDistribution[-1,:,:,:]
+            #coszdist[:] = cosZDistribution[-1,:,:,:]
+            cosxdistref[:] = cosXDistributionRef[-1,:,:,:]
+            cosydistref[:] = cosYDistributionRef[-1,:,:,:]
+            #coszdistref[:] = cosZDistributionRef[-1,:,:,:]
+            edist[:] = eDistribution[-1,:,:,:]
+            edistref[:] = eDistributionRef[-1,:,:,:]
+            rootgrp.close()
 
         exec_time = time.time()
         print("Execution of FTRIDYN Cases took --- %s seconds ---" % (exec_time - start_time))
