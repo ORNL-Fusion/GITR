@@ -136,7 +136,7 @@ int main(int argc, char **argv, char **envp) {
   }
   auto gitr_flags = new Flags(cfg);
     std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
-    auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
+    //auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     //FIXME: work on new field struct
     //auto field1 = new Field();
     //auto pClient = new Field_client(); 
@@ -393,11 +393,11 @@ int main(int argc, char **argv, char **envp) {
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
 #if GEOM_HASH == 1
-  nR_closeGeomTotal = 0;
-  nY_closeGeomTotal = 0;
-  nZ_closeGeomTotal = 0;
-  nHashPointsTotal = 0;
-  nGeomHash = 0;
+  //nR_closeGeomTotal = 0;
+  //nY_closeGeomTotal = 0;
+  //nZ_closeGeomTotal = 0;
+  //nHashPointsTotal = 0;
+  //nGeomHash = 0;
   if (world_rank == 0) {
     getVariable(cfg, geomHashCfg + "nHashes", nHashes);
   }
@@ -437,6 +437,8 @@ int main(int argc, char **argv, char **envp) {
       getVariable(cfg,geomHashCfg+"nR_closeGeom",nR_closeGeom[0]);
       getVariable(cfg,geomHashCfg+"nZ_closeGeom",nZ_closeGeom[0]);
       getVariable(cfg,geomHashCfg+"n_closeGeomElements",n_closeGeomElements[0]);
+        std::cout << "else hash nr ny nz total " << n_closeGeomElements[0] << " "
+        << nR_closeGeom[0]  << " " << nZ_closeGeom[0]<< std::endl;
     }
      for(int j=0;j<nHashes;j++)
     {
@@ -602,7 +604,7 @@ int main(int argc, char **argv, char **envp) {
     closeGeomGridr[i] = (hashX1[nHash] - hashX0[nHash]) * (i - hashSum) /
                             (nR_closeGeom[nHash] - 1) +
                         hashX0[nHash];
-    // std::cout << "gridX "<< closeGeomGridr[i] << std::endl;
+     //std::cout << "gridX "<< closeGeomGridr[i] << std::endl;
   }
   nHash = 0;
   hashSum = 0;
@@ -614,7 +616,7 @@ int main(int argc, char **argv, char **envp) {
     closeGeomGridy[j] = (hashY1[nHash] - hashY0[nHash]) * (j - hashSum) /
                             (nY_closeGeom[nHash] - 1) +
                         hashY0[nHash];
-    // std::cout << "gridY "<< closeGeomGridy[j] << std::endl;
+     //std::cout << "gridY "<< closeGeomGridy[j] << std::endl;
   }
   nHash = 0;
   hashSum = 0;
@@ -626,7 +628,7 @@ int main(int argc, char **argv, char **envp) {
     closeGeomGridz[k] = (hashZ1[nHash] - hashZ0[nHash]) * (k - hashSum) /
                             (nZ_closeGeom[nHash] - 1) +
                         hashZ0[nHash];
-    // std::cout << "gridz "<< closeGeomGridz[k] << std::endl;
+     //std::cout << "gridz "<< closeGeomGridz[k] << std::endl;
   }
 
   std::cout << "about to create iterator1 " << std::endl;
@@ -678,14 +680,22 @@ int main(int argc, char **argv, char **envp) {
   typedef std::chrono::high_resolution_clock Time0;
   typedef std::chrono::duration<float> fsec0;
   auto start_clock0 = Time0::now();
+  
+  std::cout << "geo1 numbers " << nLines << " "
+        << nHashes  << " " << nR_closeGeom[0] <<  " "
+        << nY_closeGeom[0]  << " " << nZ_closeGeom[0] <<" "
+        << n_closeGeomElements[0] << std::endl;
+  
   hashGeom geo1(nLines, nHashes, boundaries.data(), closeGeomGridr.data(),
                 closeGeomGridy.data(), closeGeomGridz.data(),
                 n_closeGeomElements.data(), closeGeom.data(),
                 nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data());
+  std::cout << "nHashPoints start stop " << world_rank * nHashMeshPointsPerProcess << " "
+        << world_rank * nHashMeshPointsPerProcess + hashMeshIncrements[world_rank] - 1<< std::endl;
   thrust::for_each(thrust::device,
                    lines0 + world_rank * nHashMeshPointsPerProcess,
                    lines0 + world_rank * nHashMeshPointsPerProcess +
-                       hashMeshIncrements[world_rank] - 1,
+                       hashMeshIncrements[world_rank],
                    geo1);
 // for(int i=0;i<nR_closeGeom*nY_closeGeom*nZ_closeGeom;i++)
 //{
@@ -2279,7 +2289,7 @@ int main(int argc, char **argv, char **envp) {
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), minInd_bnd);
-      std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
+      //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
   }
 #if EFIELD_INTERP == 1
   float thisE[3] = {0.0, 0.0, 0.0};
@@ -3731,7 +3741,7 @@ int main(int argc, char **argv, char **envp) {
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(),field1,uni);
+      &rateCoeff_Ionization.front(),uni);
   //if(gitr_flags.USE_IONIZATION > 0) ionize0.func = &ionize::operator();
   //else ionize0.func = &ionize::operator1;
   //void (ionize::*func)(std::size_t) = &ionize::operator();
