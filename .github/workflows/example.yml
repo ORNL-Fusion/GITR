@@ -85,6 +85,7 @@ jobs:
         .. &&
         make VERBOSE=1 &&
         cd ../examples/pointPlaneDeposit/3d &&
+        mkdir output &&
         ../../../build/GITR
       env:
         MY_NAME: "Tim"
