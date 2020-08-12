@@ -21,9 +21,10 @@ import os
 import shutil
 import math
 import scipy.interpolate as scii
+import seaborn as sns
+sns.set()
 
 import solps
-
 def copy_folder(from_folder, to_folder):
     copy_tree(from_folder, to_folder)
 
@@ -116,8 +117,10 @@ def plot2dGeom(filename="gitrGeometry.cfg"):
     y2 = config.geom.y2
     ys1 = np.ones(x1.size) * y1
     ys2 = np.ones(x1.size) * y2
+    slope = np.array(config.geom.slope)
+    inDir = np.array(config.geom.inDir)
     # if plt.fignum_exists(num=1):
-    plt.plot(np.append(x1, x1[0]), np.append(z1, z1[0]), linewidth=2.0, color='k')
+    #plt.plot(np.append(x1, x1[0]), np.append(z1, z1[0]), linewidth=2.0, color='k')
     # else:
     #    fig = plt.figure()
     #    #fig.patch.set_facecolor('black')
@@ -129,7 +132,7 @@ def plot2dGeom(filename="gitrGeometry.cfg"):
     #    plt.savefig('geomPlot.png')
     #    print('config', config)
     #    print('x1 ', x1)
-    return x1, x2, z1, z2, length, Z
+    return x1, x2, z1, z2, length, Z, slope, inDir
 
 
 def read3dGeom(filename="gitrGeometry.cfg"):
@@ -954,6 +957,7 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
 
     plt.plot(solps_mesh[:, [0, 2]].transpose(), solps_mesh[:, [1, 3]].transpose())
     plt.show()
+    plt.close()
 
     manual_indices = np.array(range(88, 98))
     manual_indices = np.append(manual_indices, range(71, 82))
@@ -969,7 +973,7 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
     # [89:98,72:82,69:71,51,37:45,35,53,52,36,1:34,50,54:68
     # ,83:87,128,88]; Matlab indices
 
-    print(manual_indices)
+    #print(manual_indices)
     r_iter = solps_mesh[manual_indices, 0]
     z_iter = solps_mesh[manual_indices, 1]
     r_iter = np.append(r_iter, solps_mesh[87, 2])
@@ -982,37 +986,82 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
 
     r_iter = np.append(r_iter, r_dome)
     z_iter = np.append(z_iter, z_dome)
-
     plt.plot(r_iter, z_iter)
     plt.scatter(r_iter,z_iter)
-    print('manual geometry size',r_iter.size)
+    plt.title('ITER Geometry Points',fontsize=20)
+    plt.xlabel('r[m]',fontsize=20)
+    plt.ylabel('z[m]',fontsize=20)
+    plt.savefig('iter_rz.png')
+    print('Number of points in ITER Geometry from SOLPS:',r_iter.size)
+
     r_left_target,z_left_target,r_right_target,z_right_target = solps.get_target_coordinates(solps_geom)
-    print('r_right_target',r_right_target)
-    print('z_right_target',z_right_target)
-    print('r_final size before',r_iter.size)
+    plt.scatter(r_left_target,z_left_target)
+    plt.scatter(r_right_target,z_right_target)
+    plt.xlim(4, 6.4)
+    plt.ylim(-5, 2)
+    plt.savefig('iter_rz_targets.png')
+    plt.close()
+    print('number r_right_target:',len(r_right_target))
     r_final, z_final = replace_line_segment(r_right_target, z_right_target, r_iter, z_iter)
-    print('r_final size after',r_final.size)
     r_final, z_final = replace_line_segment(r_left_target, z_left_target, r_final, z_final)
-    print('r_final size after',r_final.size)
-    print(r_final.size)
+    print('Number of points in ITER geometry after adding target:',r_final.size)
+    print('r_final',r_final)
+    plt.plot(r_final, z_final,linewidth=0.4)
+    plt.scatter(r_final,z_final,s=0.4)
+    plt.title('ITER Geometry Points',fontsize=20)
+    plt.xlabel('r[m]',fontsize=20)
+    plt.ylabel('z[m]',fontsize=20)
+    plt.savefig('iter_rz_target_added.png')
 
     Z = np.zeros(len(r_final)+1)
     surfaces = np.zeros(len(r_final)+1)
-    inDir = np.zeros(len(r_final))
+    inDir = np.ones(len(r_final))
 
     i_a, i_b = intersection(r_final, z_final, r_right_target, z_right_target)
-
-    Z[i_b] = 74;
-    surfaces[i_b] = 1;
+    print('number of matches right target', len(i_b))
+    Z[i_a] = 74;
+    surfaces[i_a] = 1;
 
     i_a, i_b = intersection(r_final, z_final, r_left_target, z_left_target)
     print('i_a',i_a)
-    Z[i_b] = 74;
-    surfaces[i_b] = 1;
-    inDir[i_b] = -1;
-
+    print('i_b',i_b)
+    Z[i_a] = 74;
+    surfaces[i_a] = 1;
+    inDir[i_a] = -1;
+   
+    # Manual selection of indices to reverse inDirection
+    inDir[0] = -1;
+    inDir[6:10] = -1;
+    inDir[75:102] = -1;
+    inDir[139:145] = -1;
+    inDir[148] = -1;
+    inDir[154:161] = -1;
+    inDir[164:166] = -1;
 
     lines = gitr_lines_from_points(r_final, z_final)
+    
+    x1 = lines[:, 0]
+    z1 = lines[:, 1]
+    x2 = lines[:, 2]
+    z2 = lines[:, 3]
+    slope = lines[:, 4]
+    intercept = lines[:, 5]
+    line_length = lines[:, 6]
+    print('slope',slope)
+    print('length of lines',len(x1))
+    plt.title('ITER In Direction')
+    for i in range(0,len(x1)):
+        if slope[i]==0:
+            perpSlope = 1.0e12
+        else:
+            perpSlope = -np.sign(slope[i])/np.abs(slope[i]);
+
+        rPerp = -inDir[i]/np.sqrt(perpSlope*perpSlope+1);
+        zPerp = -inDir[i]*np.sign(perpSlope)*np.sqrt(1-rPerp*rPerp);
+        plt.quiver([x1[i] + (x2[i]-x1[i])/2], [z1[i] + (z2[i]-z1[i])/2], [rPerp/10], [zPerp/10], width=0.0015, scale=5, headwidth=4)
+        plt.text(x1[i] + (x2[i]-x1[i])/2 + rPerp/10, z1[i] + (z2[i]-z1[i])/2 + zPerp/10, str(i), fontsize=12)
+    plt.show()
+    plt.savefig('iter_indir.pdf')
 
     lines_to_gitr_geometry(gitr_geometry_filename, lines, Z, surfaces, inDir)
 
@@ -1102,7 +1151,7 @@ def replace_line_segment(x_priority, y_priority, x_base, y_base):
 
     all_close = np.delete(all_close,0)
     remove_indices = np.unique(all_close);
-    print('remove indices',remove_indices)
+    #print('remove indices',remove_indices)
     d1 = np.sqrt(
         np.power((x_priority[0] - x_base[remove_indices[0]]), 2) + np.power((y_priority[0] - y_base[remove_indices[0]]),
                                                                             2));
@@ -1113,7 +1162,7 @@ def replace_line_segment(x_priority, y_priority, x_base, y_base):
         x_priority = np.flip(x_priority, 0)
         y_priority = np.flip(y_priority, 0)
 
-    print('x_priority',x_priority)
+    #print('x_priority',x_priority)
 
     x_final = np.append(x_base[0:(remove_indices[0] - 1)], x_priority)
     x_final = np.append(x_final, x_base[(remove_indices[-1] + 1):]);
@@ -1128,8 +1177,8 @@ def gitr_lines_from_points(r,z):
     lines = np.zeros([nPoints, 7]);
     lines[:, 0] = r;
     lines[:, 1] = z;
-    lines[0:-2, 2] = r[1:-1];
-    lines[0:-2, 3] = z[1: -1];
+    lines[0:-1, 2] = r[1:];
+    lines[0:-1, 3] = z[1:];
     lines[-1, 2] = r[0];
     lines[-1, 3] = z[0];
 
@@ -1152,7 +1201,297 @@ def gitr_lines_from_points(r,z):
     lines[:, 6] = np.sqrt((lines[:, 2] - lines[:, 0])**2 + (lines[:, 3] - lines[:, 1])** 2);
 
     return lines
+def interp_1d(x_grid,vals,x_i,default_value = 0.0):
+    #print(len(x_grid),len(vals),len(x_i))
+    try:
+        val_shape = len(vals.shape)
+    except:
+        val_shape = 1
+
+    if(val_shape>1):
+        print('ERROR: interp_1d values is not 1D')
+        return -1
+    
+    if(len(x_grid) != len(vals)):
+        print('ERROR: interp_1d grid length does not match values')
+        return -1
+
+    interp_vals = 0*np.array(x_i)
+    
+    xi_scalar = is_scalar(x_i)
+
+    if is_scalar(x_i):
+        x_i = [x_i]
+        nPoints = 1
+    else:
+        nPoints = len(x_i)
+
+    x_grid_rep = np.matlib.repmat(x_grid, nPoints, 1)
+    x_i_rep = np.transpose(np.matlib.repmat(x_i, len(x_grid), 1))
+    x_grid_shift = np.subtract(x_grid_rep,x_i_rep)
+    where_negative = np.where(x_grid_shift <= 0.0)
+    index_row = np.unique(where_negative[:][0])
+    index_column0 = np.where(where_negative[:][1] == 0)
+    index_column0 = np.append(where_negative[1][index_column0[0][1:]-1],where_negative[1][-1])
+    top_end = np.where(index_column0 == len(x_grid)-1)
+    index_column0[top_end] = index_column0[top_end] -1
+    #print('ic',index_column0)
+    index_column1 = index_column0 + 1
+    dx = x_grid[index_column1] - x_grid[index_column0]
+
+    if xi_scalar:
+        interp_vals = (vals[index_column0]*(x_grid[index_column1] - x_i) + vals[index_column1]*(x_i - x_grid[index_column0]))/dx
+    else:
+        interp_vals[index_row] = (vals[index_column0]*(x_grid[index_column1] - x_i[index_row]) + vals[index_column1]*(x_i[index_row] - x_grid[index_column0]))/dx
+    
+
+    #for i in range(nPoints):
+    #    if ((x_i[i] < x_grid[0]) or (x_i[i] > x_grid[-1])):
+    #        if xi_scalar:
+    #            interp_vals = default_value
+    #        else:    
+    #            interp_vals[i] = default_value
+    #    else:    
+    #        x_grid_shift = x_grid - x_i[i]
+    #        where_negative = np.where(x_grid_shift <= 0.0)
+
+    #        index_x0 = where_negative[0][-1]
+    #        index_x1 = index_x0+1
+
+    #        dx = x_grid[index_x1] - x_grid[index_x0]
+
+    #        value_interpolated = (vals[index_x0]*(x_grid[index_x1] - x_i[i]) + vals[index_x1]*(x_i[i] - x_grid[index_x0]))/dx
+    #        if xi_scalar:
+    #            interp_vals = value_interpolated
+    #        else:    
+    #            #print('xi',x_i)
+    #            #print('interp_vals',interp_vals)
+    #            #print('val_inter', value_interpolated)
+    #            interp_vals[i] = value_interpolated
+
+    return interp_vals
+
+def interp_2d(x_grid,y_grid,vals,x_i,y_i,default_value = 0.0):
+    # find the y indices
+    try:
+        val_shape = vals.shape
+        x_len = len(x_grid)
+        y_len = len(y_grid)
+    except:
+        val_shape = [1,1]
+        x_len = 1
+        y_len = 1
+
+    if(len(val_shape) != 2):
+        print('ERROR: interp_2d values are not 2d')
+        return -1
+    
+    if(val_shape[0] != x_len):
+        print('ERROR: interp_2d values dimension 1 do not match x_grid')
+        return -1
+    
+    if(val_shape[1] != y_len):
+        print('ERROR: interp_2d values dimension 2 do not match y_grid')
+        return -1
+    
+    interp_vals = np.zeros((len(x_i),len(y_i)))
+    
+    xi_scalar = is_scalar(x_i)
+    
+    if is_scalar(y_i):
+        x_i = np.array([x_i])
+        y_i = np.array([y_i])
+        nPoints = 1
+    else:
+        nPoints = len(x_i)
+    
+    for i in range(nPoints):
+    #for i, value in np.ndenumerate(y_i):
+        if ((x_i[i] < x_grid[0]) or (x_i[i] > x_grid[-1])):
+            if xi_scalar:
+                interp_vals = default_value
+            else:    
+                interp_vals[i,:] = default_value
+        else:    
+            # do two 1d interp in x
+            x_grid_shift = x_grid - x_i[i]
+            where_negative = np.where(x_grid_shift <= 0.0)
+
+            index_x0 = where_negative[0][-1]
+            index_x1 = index_x0+1
+            dx = x_grid[index_x1] - x_grid[index_x0]
+
+            val_interp_x0 = interp_1d(y_grid,vals[index_x0,:],y_i,default_value)
+            val_interp_x1 = interp_1d(y_grid,vals[index_x1,:],y_i,default_value)
+            # do one 1d interp in y
+            value_interpolated = (val_interp_x0*(x_grid[index_x1] - x_i[i]) + val_interp_x1*(x_i[i] - x_grid[index_x0]))/dx
+            if xi_scalar:
+                interp_vals = value_interpolated
+            else:    
+                interp_vals[i,:] = value_interpolated
+
+    return interp_vals
+            
+def interp_3d(x_grid,y_grid,z_grid,vals,x_i,y_i,z_i,default_value = 0.0):
+    
+    try:
+        val_shape = vals.shape
+        x_len = len(x_grid)
+        y_len = len(y_grid)
+        z_len = len(z_grid)
+    except:
+        val_shape = [1,1,1]
+        x_len = 1
+        y_len = 1
+        z_len = 1
+
+    if(len(val_shape) != 3):
+        print('ERROR: interp_3d values are not 2d')
+        return -1
+    
+    if(val_shape[0] != x_len):
+        print('ERROR: interp_3d values dimension 1 do not match x_grid')
+        return -1
+    
+    if(val_shape[1] != y_len):
+        print('ERROR: interp_3d values dimension 2 do not match y_grid')
+        return -1
+    
+    if(val_shape[2] != z_len):
+        print('ERROR: interp_3d values dimension 3 do not match z_grid')
+        return -1
+    
+    interp_vals = np.zeros((len(x_i),len(y_i),len(z_i)))
+    
+    xi_scalar = is_scalar(x_i)
+    # find the y indices
+    
+    if is_scalar(x_i):
+        x_i = np.array([x_i])
+        y_i = np.array([y_i])
+        z_i = np.array([z_i])
+        nPoints = 1
+    else:
+        nPoints = len(x_i)
+    
+    for i in range(nPoints):
+        if ((x_i[i] < x_grid[0]) or (x_i[i] > x_grid[-1])):
+            if xi_scalar:
+                interp_vals = default_value
+            else:    
+                interp_vals[i,:,:] = default_value
+        else:    
+            # do two 2d interp in xy
+            x_grid_shift = x_grid - x_i[i]
+            where_negative = np.where(x_grid_shift <= 0.0)
+
+            index_x0 = where_negative[0][-1]
+            index_x1 = index_x0+1
+            if (x_i[i] == x_grid[-1]):
+                index_x0 = index_x0 - 1 
+                index_x1 = index_x1 - 1 
+
+            dx = x_grid[index_x1] - x_grid[index_x0]
+            val_interp_x0 = interp_2d(y_grid,z_grid,vals[index_x0,:,:],y_i,z_i,default_value)
+            val_interp_x1 = interp_2d(y_grid,z_grid,vals[index_x1,:,:],y_i,z_i,default_value)
+            # do one 1d interp in z
+            value_interpolated = (val_interp_x0*(x_grid[index_x1] - x_i[i]) + val_interp_x1*(x_i[i] - x_grid[index_x0]))/dx
+            if xi_scalar:
+                interp_vals = value_interpolated
+            else:    
+                interp_vals[i,:,:] = value_interpolated
+
+    return interp_vals
+
+def is_scalar(variable):
+    try:
+        shape = variable.shape
+        if (len(shape) == 0):
+            return True
+        else:
+            return False
+    except:
+        try:
+            len(variable)
+            return False
+        except:
+            return True
+
+def test_interp():
+    nX = 20
+    nY = 30
+    nZ = 40
+    x_grid = np.linspace(0.0,1.0,nX)
+    vals = np.cos(x_grid)
+    x_i = np.array([0.5, -0.1, 0.6])
+    value_interpolated = interp_1d(x_grid,vals,x_i,default_value = 0.0)
+    print(value_interpolated)
+    
+    y_grid = np.linspace(0.0,2.0,nY)
+    vals = np.zeros((nX,nY))
+    for i in range(nX):
+        for j in range(nY):
+            vals[i,j] = np.cos(x_grid[i])*np.cos(y_grid[j])
+
+    y_i = np.array([0.2, -0.1, 0.8, 1.2])
+    value_interpolated = interp_2d(x_grid,y_grid,vals,x_i,y_i,default_value = 0.0)
+    print(value_interpolated)
+    print(value_interpolated.shape)
+
+    z_i = np.array([0.1, -0.1, 1.8, 2.2, 2.9]);
+    z_grid = np.linspace(0.0,3.0,nZ)
+    vals = np.zeros((nX,nY,nZ))
+    for i in range(nX):
+        for j in range(nY):
+            for k in range(nZ):
+                vals[i,j,k] = np.cos(x_grid[i])*np.cos(y_grid[j])*np.cos(z_grid[k])
+    for i in range(1000):
+        value_interpolated = interp_3d(x_grid,y_grid,z_grid,vals,x_i,y_i,z_i,default_value = 0.0)
+    print(value_interpolated)
+    print(value_interpolated.shape)
+    
+    #vals = np.cos(x_grid)
+    #x_i = np.array([0.5, -0.1, 0.6])
+    #value_interpolated = interp_1d(x_grid,vals,x_i,default_value = 0.0)
+    #print(value_interpolated)
+    #
+    #vals = np.zeros((nX,nY))
+    #for i in range(nX):
+    #    for j in range(nY):
+    #        vals[i,j] = np.cos(x_grid[i])*np.cos(y_grid[j])
+
+    #x_i = np.zeros((2,3))
+    #y_i = np.zeros((2,3))
+    #x_i[0,:] = [0.5, -0.1, 0.6]
+    #x_i[1,:] = [0.2, 0.1, 0.9]
+
+    #y_i[0,:] = [0.2, -0.1, 0.8]
+    #y_i[1,:] = [0.4, 1.1, 1.8]
+    #value_interpolated = interp_2d(x_grid,y_grid,vals,x_i,y_i,default_value = 0.0)
+    #print(value_interpolated)
+    #
+    #vals = np.zeros((nX,nY,nZ))
+    #for i in range(nX):
+    #    for j in range(nY):
+    #        for k in range(nZ):
+    #            vals[i,j,k] = np.cos(x_grid[i])*np.cos(y_grid[j])*np.cos(z_grid[k])
+    #
+    #x_i = np.zeros((2,3))
+    #y_i = np.zeros((2,3))
+    #z_i = np.zeros((2,3))
+    #x_i[0,:] = [0.5, -0.1, 0.6]
+    #x_i[1,:] = [0.2, 0.1, 0.9]
+
+    #y_i[0,:] = [0.2, -0.1, 0.8]
+    #y_i[1,:] = [0.4, 1.1, 1.8]
+    #
+    #z_i[0,:] = [0.1, -0.1, 1.8];
+    #z_i[1,:] = [2.4, 1.1, 0.8];
+    #
+    #value_interpolated = interp_3d(x_grid,y_grid,z_grid,vals,x_i,y_i,z_i,default_value = 0.0)
+    #print(value_interpolated)
 if __name__ == "__main__":
+    #test_interp()
     make_gitr_geometry_from_solps()
 # asdfanc_show("surface.nc")
 # depositedEdist()

@@ -1,11 +1,15 @@
 % close all
 % clear all
 
-file = 'ftridynBackground.nc';
+file = 'ftridynSelf.nc';
 ncid = netcdf.open(file,'NC_NOWRITE');
 [dimname, nE] = netcdf.inqDim(ncid,0);
 [dimname, nA] = netcdf.inqDim(ncid,1);
+if strcmp(file,'ftridynBackground.nc')
 [dimname, nS] = netcdf.inqDim(ncid,2);
+else
+    nS = 1;
+end
 energy = ncread(file,'E');
 angle = ncread(file,'A');
 spyld = ncread(file,'spyld');
@@ -46,7 +50,7 @@ h.EdgeColor = 'none';
 colorbar
 % set(gca, 'YDir', 'normal')
  set(gca, 'XScale', 'log')
-title({'Sputtering Yield N on W','As a Function of Energy and Angle'})
+title({'Sputtering Yield Kr on W','As a Function of Energy and Angle'})
 xlabel('E [eV]') % x-axis label
 ylabel('Angle [degrees]') % y-axis label
 set(gca,'fontsize',16)

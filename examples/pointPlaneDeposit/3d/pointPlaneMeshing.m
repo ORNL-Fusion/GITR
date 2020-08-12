@@ -60,7 +60,7 @@ X = [planes((plotSet),1),planes((plotSet),4),planes((plotSet),7)];
 Y = [planes((plotSet),2),planes((plotSet),5),planes((plotSet),8)];
 Z = [planes((plotSet),3),planes((plotSet),6),planes((plotSet),9)];
 
-[X,Y,Z] = refineXYZ(X,Y,Z,4)
+[X,Y,Z] = refineXYZ(X,Y,Z,6)
 planes = [X(:,1) Y(:,1) Z(:,1) X(:,2) Y(:,2) Z(:,2) X(:,3) Y(:,3) Z(:,3)];
 figure(10)
 patch(transpose(X),transpose(Y),transpose(Z),'g','FaceAlpha',.3,'EdgeColor','k')%'none')
