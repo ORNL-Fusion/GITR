@@ -2427,8 +2427,10 @@ int main(int argc, char **argv, char **envp) {
   sim::Array<double> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
   sim::Array<double> net_BinsTotal((nBins + 1) * net_nX * net_nZ, 0.0);
 #else
-  sim::Array<double> net_Bins((nBins + 1) * net_nX * net_nY * net_nZ);
-  sim::Array<double> net_BinsTotal((nBins + 1) * net_nX * net_nY * net_nZ);
+  std::cout << "initializing 3d spec arrays " << std::endl;
+  sim::Array<double> net_Bins((nBins + 1) * net_nX * net_nY * net_nZ, 0.0);
+  sim::Array<double> net_BinsTotal((nBins + 1) * net_nX * net_nY * net_nZ, 0.0);
+  std::cout << "initialized 3d spec arrays " << std::endl;
 #endif
 
   /*
