@@ -79,7 +79,7 @@ struct ionize {
   // int& tt;
   int xx1;
   T *state;
-  Field *field1;
+  //Field *field1;
 
   float  * random_uniform_number;
 //#if __CUDA_ARCH__
@@ -98,7 +98,7 @@ struct ionize {
          float *_ne, int _nR_Temp, int _nZ_Temp, float *_TempGridr,
          float *_TempGridz, float *_te, int _nTemperaturesIonize,
          int _nDensitiesIonize, float *_gridTemperature_Ionization,
-         float *_gridDensity_Ionization, float *_rateCoeff_Ionization, Field *_field1, float *  _random_uniform_number)
+         float *_gridDensity_Ionization, float *_rateCoeff_Ionization, float *  _random_uniform_number)
       :
 
         flags(_flags), particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
@@ -111,7 +111,7 @@ struct ionize {
         gridTemperature_Ionization(_gridTemperature_Ionization),
         rateCoeff_Ionization(_rateCoeff_Ionization),
         dt(_dt),
-        state(_state),field1(_field1),random_uniform_number{_random_uniform_number} {
+        state(_state),random_uniform_number{_random_uniform_number} {
   }
 
   CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
