@@ -1,1 +1,4 @@
 iter/iter_milestone/2d_setup/setup/assets/Baseline2008-li0.70.x4.equ filter=lfs diff=lfs merge=lfs -text
+iter/iter_milestone/2d_setup/setup/assets/b2fgmtry filter=lfs diff=lfs merge=lfs -text
+iter/iter_milestone/2d_setup/setup/assets/b2fstate filter=lfs diff=lfs merge=lfs -text
+iter/iter_milestone/2d_setup/setup/assets/dakota filter=lfs diff=lfs merge=lfs -text
