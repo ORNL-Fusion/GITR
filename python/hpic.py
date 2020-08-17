@@ -355,13 +355,13 @@ def readFtridynBackground(fname='ftridynBackground.nc'):
     plt.xlabel('E[eV]')
     plt.savefig('Edist.png')
     return E,A,spyld,eDistEgrid,energyDist,phiGrid,cosXdist
-def computeSputtYld(plots=False,hpic_zipfile='hpic_ieads',solps_inds = [3,4],nEdistPts=40):
+def computeSputtYld(plots=False,hpic_zipfile='hpic_ieads',solps_inds = [3,4],nEdistPts=40,ftridyn_background_file = 'ftridynBackground.nc'):
     #plot_hpic_iead()
     nSpec = len(solps_inds)
     with zipfile.ZipFile(hpic_zipfile+'.zip', 'r') as zipObj:
         # Extract all the contents of zip file in current directory
         zipObj.extractall()
-    Energy,Angle,spyld,eDistEgrid,energyDist,phiGrid,cosXdist=readFtridynBackground()
+    Energy,Angle,spyld,eDistEgrid,energyDist,phiGrid,cosXdist=readFtridynBackground(ftridyn_background_file)
     RmRs,r,z,nE,nA,nLocations,nSpecies,Z,A,dens,flux,gridE,gridA,IEAD=readHpic(hpic_zipfile,solps_inds)
         
     RmRs = RmRs[0]
