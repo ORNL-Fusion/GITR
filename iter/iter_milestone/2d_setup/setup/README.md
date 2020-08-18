@@ -9,3 +9,5 @@ Then the ```iter_2d_setup.py``` script can be run:
 
 This will produce the input needed for GITR based on other code outputs located in the assets foler.
 The inputs are then copied into the inputs folder.
+
+![Coupled Simulation Particle Source](ParticleSource.png)
