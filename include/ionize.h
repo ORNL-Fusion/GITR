@@ -117,7 +117,7 @@ struct ionize {
   CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
   void operator()(std::size_t indx) {
       //std::cout << "index " <<indx  << std::endl;
-    if (flags->USE_IONIZATION) {
+    //if (flags->USE_IONIZATION) {
       //std::cout << " charge xyz nR nZ " << particlesPointer->charge[indx] << 
       // " " <<  particlesPointer->x[indx] << " " << 
       //    particlesPointer->y[indx] << " " <<  particlesPointer->z[indx] << 
@@ -136,6 +136,7 @@ struct ionize {
       float P = expf(-dt / tion);
       float P1 = 1.0 - P;
       float r1 = get_rand(state,indx);
+      //std::cout << "tion P r1" << tion << " " << P << " " << r1 << std::endl;
       if (particlesPointer->hitWall[indx] == 0.0) {
         float r1 = get_rand(state,indx);
 	random_uniform_number[0] = r1;
@@ -151,7 +152,7 @@ struct ionize {
               particlesPointer->firstIonizationT[indx] + dt;
         }
       }
-    }
+    //}
   }
 };
 

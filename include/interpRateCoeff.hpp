@@ -38,6 +38,7 @@ float rateCoeffInterp(int charge, float te, float ne,int nT, int nD, float* rate
     //{
         indN = std::floor((logn - rateGrid_Densp[0])/d_n );
     //}
+    //std::cout << "d_T d_n " << d_T << " " << d_n << std::endl;
     //std::cout << "Indices density, temp " << indN << " " <<indT<<std::endl;
     //std::cout << "charge " << charge << std::endl;
     //std::cout << "Lower value " << Ratesp[charge*nT*nD + indT*nD + indN] << std::endl;
@@ -47,22 +48,28 @@ if(indN < 0 || indN > nD-2)
 {indN = 0;}
 if(charge > 74-1)
 {charge = 0;}
-        float aT = std::pow(10.0f,rateGrid_Tempp[indT+1]) - te;
+    
+    float aT = std::pow(10.0f,rateGrid_Tempp[indT+1]) - te;
     float bT = te - std::pow(10.0f,rateGrid_Tempp[indT]);
     float abT = aT+bT;
+    //std::cout << "a b abT " << aT << " " << bT << " " << abT << std::endl;
 
     float aN = std::pow(10.0f,rateGrid_Densp[indN+1]) - ne;
     float bN = ne - std::pow(10.0f, rateGrid_Densp[indN]);
     float abN = aN + bN;
-
+    //std::cout << "a b abN " << aN << " " << bN << " " << abN << std::endl;
+    aT = aT/abT;
+    bT = bT/abT;
+    aN = aN/abN;
+    bN = bN/abN;
     //float interp_value = Rates[charge*rateGrid_Temp.size()*rateGrid_Dens.size()            + indT*rateGrid_Dens.size() + indN];
 
-    float fx_z1 = (aN*std::pow(10.0f,Ratesp[charge*nT*nD + indT*nD + indN]) 
-            + bN*std::pow(10.0f,Ratesp[charge*nT*nD            + indT*nD + indN + 1]))/abN;
+    float fx_z1 = aN*std::pow(10.0f,Ratesp[charge*nT*nD + indT*nD + indN]) 
+                + bN*std::pow(10.0f,Ratesp[charge*nT*nD + indT*nD + indN + 1]);
     
-    float fx_z2 = (aN*std::pow(10.0f,Ratesp[charge*nT*nD            + (indT+1)*nD + indN]) 
-            + bN*std::pow(10.0f,Ratesp[charge*nT*nD            + (indT+1)*nD + indN+1]))/abN;
-    float fxz = (aT*fx_z1+bT*fx_z2)/abT;
+    float fx_z2 = aN*std::pow(10.0f,Ratesp[charge*nT*nD            + (indT+1)*nD + indN]) 
+                + bN*std::pow(10.0f,Ratesp[charge*nT*nD            + (indT+1)*nD + indN+1]);
+    float fxz = aT*fx_z1+bT*fx_z2;
     //std::cout << "fxz1 and 2 " << fx_z1 << " " << fx_z2<< " "<< fxz << std::endl;
     //printf ("floats:%i %e  \n",charge,fxz);
     return fxz;    
@@ -90,6 +97,7 @@ float interpRateCoeff2d ( int charge, float x, float y, float z,int nx, int nz, 
     //std::cout << "nlocal" << nlocal << std::endl;
     //std::cout << "Interpolating RC " << std::endl;
     float RClocal = rateCoeffInterp(charge,tlocal,nlocal,nT_Rates,nD_Rates,rateGrid_Temp, rateGrid_Dens, Rates);
+    //std::cout << " RC "<< RClocal << std::endl;
     float tion = 1/(RClocal*nlocal);
     if(tlocal == 0.0 || nlocal == 0.0) tion=1.0e12;
     //std::cout << "Returning " << std::endl;
