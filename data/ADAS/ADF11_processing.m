@@ -5,12 +5,12 @@ addpath(genpath('../../matlab'));
 
 constants
 
-Z = 13;
+Z = 74;
 
 %Ionization
-file_inz = 'scd89_al.dat';
+file_inz = 'scd50_w.dat';
 %Recombination
-file_rcmb = 'acd89_al.dat';
+file_rcmb = 'acd50_w.dat';
 
 [IonizationTemp, IonizationDensity, IonizationRateCoeff, IonizationChargeState] = ADF11(file_inz);
 [RecombinationTemp, RecombinationDensity, RecombinationRateCoeff, RecombinationChargeState] = ADF11(file_rcmb);
@@ -27,8 +27,8 @@ RecombinationData.RateCoeff = 10.^RecombinationRateCoeff./1e6;
 RecombinationData.ChargeState = RecombinationChargeState;
 
 
-save('Processed/Al/IonizationData.mat','IonizationData');
-save('Processed/Al/RecombinationData.mat','RecombinationData');
+save('Processed/W/IonizationData.mat','IonizationData');
+save('Processed/W/RecombinationData.mat','RecombinationData');
 
 %Open the file
 ncid = netcdf.create(['ADAS_Rates_Al.nc'],'NC_WRITE')
