@@ -1,0 +1,15 @@
+export LIBCONFIGDIR=/usr/local/libconfig-1.7.2
+export LIBCONFIGPP_INCLUDE=$LIBCONFIGDIR/include
+export PATH=$PATH:$LIBCONFIGPP_INCLUDE
+export THRUST_DIR=/usr/local/thrust
+export THRUST_INCLUDE_DIR=$THRUST_DIR
+export NETCDF_DIR=/usr
+export NETCDFCXX_DIR=/usr/local/netcdf
+export NETCDFDIR=$NETCDF_DIR/lib64
+export NETCDFCXX4DIR=$NETCDFCXX_DIR/lib
+export NETCDFINCLUDE=$NETCDF_DIR/include
+export NETCDFCXX4INCLUDE=$NETCDFCXX_DIR/include
+export NETCDFLIB=$NETCDFDIR/libnetcdf.so
+export NETCDFLIB_CPP=$NETCDFCXX4DIR/libnetcdf_c++4.so
+export Boost_DIR=/usr/local/boost_1_67_0
+export Boost_INCLUDE_DIR=$Boost_DIR
