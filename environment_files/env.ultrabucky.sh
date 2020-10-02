@@ -1,0 +1,11 @@
+export THRUST_DIR=/usr/include/thrust
+#export THRUST_INCLUDE_DIRS=/usr/include/thrust
+export LIBCONFIGPP_INCLUDE=/usr/lib/x86_64-linux-gnu
+export NETCDFCXX4INCLUDE=/home/jjl/lib/NETCDF_CXX/include
+export NETCDFLIB_CPP=/home/jjl/lib/NETCDF_CXX/lib/libnetcdf_c++4.so
+export NETCDFDIR=/home/jjl/lib/NETCDF
+export NETCDFINCLUDE=$NETCDFDIR/include
+export NETCDFLIB=$NETCDFDIR/lib/libnetcdf.so
+export Boost_DIR=/home/jjl/lib/boost_1_70_0
+export Boost_INCLUDE_DIR=$Boost_DIR
+#export Boost_LIBRARY_DIR=$Boost_DIR/stage/lib
