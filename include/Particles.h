@@ -24,6 +24,8 @@
 #endif
 
 #include <random>
+#include <math.h>
+#include <cmath>
 
 class Particles : public ManagedAllocation {
 public:
@@ -230,7 +232,7 @@ public:
     zprevious{nParticles,0.0},
     v{nParticles, 0.0}, 
     vx{nParticles,std::sqrt(static_cast<float>(2.0*getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
-		    1.602e-19/getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27))*
+        1.602e-19/getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27))*
     std::cos(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.theta"))*
     std::sin(getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.phi"))}, 
     vy{nParticles,std::sqrt(static_cast<float>(2.0*getVariable_cfg<float> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
