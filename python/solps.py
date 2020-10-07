@@ -374,10 +374,16 @@ def process_solps_output_for_gitr(dakota_filename = '/Users/Alyssa/Dev/solps-ite
 
     grad_ti_r,grad_ti_t,grad_ti_z = project_parallel_variable_xyz(grad_ti, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_ti',plot_variables)
     grad_te_r,grad_te_t,grad_te_z = project_parallel_variable_xyz(grad_te, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_te',plot_variables)
-
+    grad_ti_r[off_grid_inds] = 0.0;
+    grad_ti_t[off_grid_inds] = 0.0;
+    grad_ti_z[off_grid_inds] = 0.0;
+    grad_te_r[off_grid_inds] = 0.0;
+    grad_te_t[off_grid_inds] = 0.0;
+    grad_te_z[off_grid_inds] = 0.0;
     e_para = get_dakota_variable(5+ 5*nIonSpecies+6, dak, rdak, zdak, nR, nZ, 'e_para',plot_variables)
     e_perp = get_dakota_variable(5+ 5*nIonSpecies+7, dak, rdak, zdak, nR, nZ, 'e_perp',plot_variables)
-
+    e_para[off_grid_inds] = 0.0;
+    e_perp[off_grid_inds] = 0.0;
     profiles_filename = "profiles.nc"
     if os.path.exists(profiles_filename):
         os.remove(profiles_filename)
