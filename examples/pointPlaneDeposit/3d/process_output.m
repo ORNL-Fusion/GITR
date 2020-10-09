@@ -28,8 +28,8 @@ grossDep = ncread(file,'grossDeposition');
 grossEro = ncread(file,'grossErosion');
 
 edist = ncread(file,'surfEDist');
-Egrid = linspace(0,1000,200);
-Agrid = linspace(0,90,30);
+Egrid = linspace(0,1000,1000);
+Agrid = linspace(0,90,90);
 sumWeightStrike = ncread(file,'sumWeightStrike');
 aveSpyl = ncread(file,'aveSpyl');
 spylCounts = ncread(file,'spylCounts');
@@ -62,28 +62,37 @@ Z = [transpose(z1),transpose(z2),transpose(z3)];
 
 indices_to_plot = 1:1:length(X);
 indices_to_plot(find(abs(y1+0.015)<0.0001 & abs(y2+0.0150)<0.001 & abs(y3+0.015)< 0.001)) = [];
+% indices_to_plot(find(abs(z1-0.03)<0.0001 & abs(z2-0.03)<0.001 & abs(z3-0.03)< 0.001)) = [];
 X = X(indices_to_plot,:);
 Y = Y(indices_to_plot,:);
 Z = Z(indices_to_plot,:);
 grossDep = grossDep(indices_to_plot);
+grossDep = 184/1e5*grossDep;
 % patch(transpose(X(surface,:)),transpose(Y(surface,:)),transpose(Z(surface,:)),grossDep(surface),'FaceAlpha',.3)
-patch(X',Y',Z',grossDep,'FaceAlpha',1,'EdgeAlpha', 0.3)%,impacts(surface)
-title('Deposited Impurity Mass (per face) [g]')
-xlabel('X [m]')
-ylabel('Y [m]')
-zlabel('Z [m]')
+patch(X',Y',Z',grossDep,'FaceAlpha',0.5,'EdgeAlpha', 1)%,impacts(surface)
+title('Gross Deposited Impurity Mass [amu/s]')
+xlabel('x [m]')
+ylabel('y [m]')
+zlabel('z [m]')
 axis tight
 cb1 = colorbar
+set(gca,'ColorScale','log')
 set(gca,'fontsize',16)
 set(cb1,'fontsize',14);
 % axis equal
     figure(3)
-    edist2d = reshape(sum(edist,3),30,200);
-h = pcolor(Egrid,Agrid,(edist2d))
+    edist2d = reshape(sum(edist,3),90,1000);
+h = pcolor(Egrid,Agrid,edist2d)
 h.EdgeColor = 'none';
-colorbar
+cb1 = colorbar
+set(gca,'ColorScale','log')
 axis([5 1000 0 90])
  set(gca, 'XScale', 'log')
+ title({'Summed Surface W Ion','Energy-Angle Distribution'})
+xlabel('Energy [eV]')
+ylabel('Angle [deg]')
+set(gca,'fontsize',16)
+set(cb1,'fontsize',14);
 
 file = 'output/history.nc';
 x = ncread(file,'x');
@@ -96,7 +105,35 @@ charge = ncread(file,'charge');
 sizeArray = size(x);
 nP = sizeArray(2);
 
-hold on
-for i=1:100
-plot3(x(:,i),y(:,i),z(:,i))
-end
+% figure(2)
+% hold on
+% for i=1:10
+% plot3(x(:,i),y(:,i),z(:,i),'r')
+% end
+
+specFile = 'output/spec.nc'
+dens = ncread(specFile,'n');
+gridR = ncread(specFile,'gridR');
+gridY = ncread(specFile,'gridY');
+gridZ = ncread(specFile,'gridZ');
+
+figure(4)
+slice1 = dens(:,:,:,end);
+slice1 = reshape(slice1,length(gridR),length(gridY),length(gridZ));
+slice1 = sum(slice1,2);
+slice1 = reshape(slice1,length(gridR),length(gridZ));
+dV = (gridR(2) - gridR(1))*(gridZ(2) - gridZ(1))*(gridY(2) - gridY(1))
+slice1 = 1/1e5*1e-10/dV*slice1./length(gridY);
+p = pcolor(gridR,gridZ,slice1')
+p.EdgeColor = 'none';
+hold on 
+plot([-0.015, 0.015],[-0.00866025403784439,0.00866025403784439],'w','lineWidth',2)
+axis equal
+axis([-0.015 0.015 -0.01 0.02])
+title({'W Impurity Density (All Charges)', 'Averaged in y-direction [m^{-3}]'})
+xlabel('x [m]') % x-axis label
+ylabel('z [m]') % y-axis label
+set(gca,'fontsize',16)
+colorbar
+set(gca,'ColorScale','log')
+% caxis([0 200000])

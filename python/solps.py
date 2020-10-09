@@ -1,17 +1,21 @@
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.matlib as ml
 import gitr
 import scipy.interpolate as scii
+from scipy.interpolate import griddata
 import netCDF4
 import math
 import os
 import io
 import libconf
+import solps
 
-def readEquilibrium(filename='/Users/Alyssa/Dev/WEST/baserun/west_54034_10p2s_mag.X4.equ'):
+def readEquilibrium(filename='/Users/Alyssa/Dev/WEST/baserun/west_54034_10p2s_mag.X4.equ', \
+    solps_mesh_extra = '/Users/Alyssa/Dev/WEST/baserun/mesh.extra', \
+    solps_geom = '/Users/Alyssa/Dev/WEST/baserun/b2fgmtry'):
 
     rr=0
     zz=0
@@ -53,30 +57,42 @@ def readEquilibrium(filename='/Users/Alyssa/Dev/WEST/baserun/west_54034_10p2s_ma
                                 ll=[float(i) for i in l]
                                 r = np.concatenate([r, ll])
                             rr=1;
-    
-    
+
+
+    #get geometry to plot on top of magnetic fields / fluxes
+    solps_mesh = np.loadtxt(solps_mesh_extra)
+    r_geom = solps_mesh[:, [0,2]].transpose()
+    z_geom = solps_mesh[:, [1,3]].transpose()
+    r_left_target,z_left_target,r_right_target,z_right_target = solps.get_target_coordinates(solps_geom)
+
     print ('Equ data dimensions %i by %i ' %(jm,km)	)
     psi = np.reshape(psi,[len(z),len(r)])
     plt.pcolor(r, z, psi)
-    plt.xlabel('r')
-    plt.ylabel('z')
+    plt.plot(r_geom, z_geom, 'k-')
+    plt.plot(r_left_target, z_left_target, 'g-')
+    plt.plot(r_right_target, z_right_target, 'r-')
+    plt.xlabel('r [m]')
+    plt.ylabel('z [m]')
     plt.title('Magnetic Flux')
     # set the limits of the plot to the limits of the data
     plt.axis([r.min(), r.max(), z.min(), z.max()])
-    plt.colorbar()
+    plt.colorbar(label='Flux [Wb/rad')
     print( 'Saving psi function as psi.png ')
     plt.savefig('psi.png')
     plt.close()
 
     plt.contour(r,z,psi,100)
-    plt.xlabel('r')
-    plt.ylabel('z')
+    plt.plot(r_geom, z_geom, 'k-')
+    plt.plot(r_left_target, z_left_target, 'g-')
+    plt.plot(r_right_target, z_right_target, 'r-')
+    plt.xlabel('r [m]')
+    plt.ylabel('z [m]')
     plt.title('Magnetic Flux Contours')
     # set the limits of the plot to the limits of the data
     plt.axis([r.min(), r.max(), z.min(), z.max()])
-    plt.colorbar()
+    plt.colorbar(label='Flux [Wb/rad]')
     print ('Saving psi contour as psiContour.png ')
-    plt.savefig('psiContour.png')
+    plt.savefig('psiContour.pdf')
 
     print('Take gradients of magnetic flux to produce magnetic field')
     [gradz,gradr] = np.gradient(np.array(psi),z[1]-z[0],r[1]-r[0])
@@ -86,19 +102,25 @@ def readEquilibrium(filename='/Users/Alyssa/Dev/WEST/baserun/west_54034_10p2s_ma
 
     plt.close()
     plt.pcolor(r,z,br)
-    plt.xlabel('r')
-    plt.ylabel('z')
+    plt.plot(r_geom, z_geom, 'k-')
+    plt.plot(r_left_target, z_left_target, 'g-')
+    plt.plot(r_right_target, z_right_target, 'r-')
+    plt.xlabel('r [m]')
+    plt.ylabel('z [m]')
     plt.title('Br')
-    plt.colorbar()
+    plt.colorbar(label='B field [T]')
     print ('Saving br profile as br.png ')
     plt.savefig('br.png')
     plt.close()
 
     plt.pcolor(r,z,bz)
-    plt.colorbar()
-    plt.xlabel('r')
-    plt.ylabel('z')
+    plt.plot(r_geom, z_geom, 'k-')
+    plt.plot(r_left_target, z_left_target, 'g-')
+    plt.plot(r_right_target, z_right_target, 'r-')
+    plt.xlabel('r [m]')
+    plt.ylabel('z [m]')
     plt.title('Bz')
+    plt.colorbar(label='B field [T]')
     print ('Saving br profile as br.png ')
     plt.savefig('bz.png')
 
@@ -108,10 +130,13 @@ def readEquilibrium(filename='/Users/Alyssa/Dev/WEST/baserun/west_54034_10p2s_ma
 
     plt.close()
     plt.pcolor(r,z,bt)
-    plt.xlabel('r')
-    plt.ylabel('z')
+    plt.plot(r_geom, z_geom, 'k-')
+    plt.plot(r_left_target, z_left_target, 'g-')
+    plt.plot(r_right_target, z_right_target, 'r-')
+    plt.xlabel('r [m]')
+    plt.ylabel('z [m]')
     plt.title('Bt')
-    plt.colorbar()
+    plt.colorbar(label='B field [T]')
     print( 'Saving bt profile as bt.png ')
     plt.savefig('bt.png')
     plt.close()
@@ -122,11 +147,13 @@ def readEquilibrium(filename='/Users/Alyssa/Dev/WEST/baserun/west_54034_10p2s_ma
     brr = rootgrp.createVariable("br","f8",("nZ","nR"))
     btt = rootgrp.createVariable("bt","f8",("nZ","nR"))
     bzz = rootgrp.createVariable("bz","f8",("nZ","nR"))
+    psii = rootgrp.createVariable("psi","f8",("nZ","nR"))
     rr = rootgrp.createVariable("r","f8",("nR"))
     zz = rootgrp.createVariable("z","f8",("nZ"))
     brr[:] = br
     btt[:] = bt
     bzz[:] = bz
+    psii[:] = psi
     rr[:] = r
     zz[:] = z
     rootgrp.close()
@@ -265,9 +292,9 @@ def getBfield(rTarg,zTarg, \
     plt.savefig('bangle.png')
     return rSep,bAngle,bMag
 
-def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-iter-data/build/dakota', \
-                                  nR = 500, nZ = 1000, plot_variables=1, \
-                                  b2fstate_filename = '/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fstate'):
+def process_solps_output_for_gitr(dakota_filename = '/Users/Alyssa/Dev/solps-iter-data/build/dakota', \
+                                  nR = 500, nZ = 1000, plot_variables=0, \
+                                  b2fstate_filename = '/Users/Alyssa/Dev/WEST/helium/b2fstate'):
     nIonSpecies, am, zamin, zn = get_solps_species(b2fstate_filename)
 
     dak = np.loadtxt(dakota_filename)
@@ -281,10 +308,13 @@ def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-
 
     te = get_dakota_variable(2,dak,rdak,zdak,nR,nZ,'te',plot_variables)
     off_grid_inds = np.where(te < -0.5)
+    te[off_grid_inds] = 0.0;
 
     ne = get_dakota_variable(3,dak,rdak,zdak,nR,nZ,'ne',plot_variables)
+    ne[off_grid_inds] = 0.0;
 
     ti = get_dakota_variable(4,dak,rdak,zdak,nR,nZ,'ti',plot_variables)
+    ti[off_grid_inds] = 0.0;
 
     ni = np.zeros((nIonSpecies, nZ, nR))
     v_parallel = np.zeros((nIonSpecies, nZ, nR))
@@ -333,6 +363,9 @@ def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-
 
     print('br size',br.shape)
     vr,vt,vz = project_parallel_variable_xyz(v_parallel_total, br, bphi, bz,rdak,zdak, nR, nZ, 'v',plot_variables)
+    vr[off_grid_inds] = 0.0;
+    vt[off_grid_inds] = 0.0;
+    vz[off_grid_inds] = 0.0;
 
     grad_ti = get_dakota_variable(5+ 5*nIonSpecies+4, dak, rdak, zdak, nR, nZ, 'grad_ti',plot_variables)
     grad_te = get_dakota_variable(5+ 5*nIonSpecies+5, dak, rdak, zdak, nR, nZ, 'grad_te',plot_variables)
@@ -340,11 +373,17 @@ def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-
     print('br size',br.shape)
 
     grad_ti_r,grad_ti_t,grad_ti_z = project_parallel_variable_xyz(grad_ti, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_ti',plot_variables)
-    grad_te_r,grad_te_t,grad_te_z = project_parallel_variable_xyz(grad_ti, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_te',plot_variables)
-
+    grad_te_r,grad_te_t,grad_te_z = project_parallel_variable_xyz(grad_te, br, bphi, bz,rdak,zdak, nR, nZ, 'grad_te',plot_variables)
+    grad_ti_r[off_grid_inds] = 0.0;
+    grad_ti_t[off_grid_inds] = 0.0;
+    grad_ti_z[off_grid_inds] = 0.0;
+    grad_te_r[off_grid_inds] = 0.0;
+    grad_te_t[off_grid_inds] = 0.0;
+    grad_te_z[off_grid_inds] = 0.0;
     e_para = get_dakota_variable(5+ 5*nIonSpecies+6, dak, rdak, zdak, nR, nZ, 'e_para',plot_variables)
-    e_perp = get_dakota_variable(5+ 5*nIonSpecies+7, dak, rdak, zdak, nR, nZ, 'e_parp',plot_variables)
-
+    e_perp = get_dakota_variable(5+ 5*nIonSpecies+7, dak, rdak, zdak, nR, nZ, 'e_perp',plot_variables)
+    e_para[off_grid_inds] = 0.0;
+    e_perp[off_grid_inds] = 0.0;
     profiles_filename = "profiles.nc"
     if os.path.exists(profiles_filename):
         os.remove(profiles_filename)
@@ -366,8 +405,12 @@ def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-
     nee = rootgrp.createVariable("ne", "f8", ("nZ", "nR"))
     tii = rootgrp.createVariable("ti", "f8", ("nZ", "nR"))
     nii = rootgrp.createVariable("ni", "f8", ("nZ", "nR"))
+    nii1 = rootgrp.createVariable("ni1","f8", ("nZ", "nR"))
+    nii2 = rootgrp.createVariable("ni2","f8", ("nZ", "nR"))
     mass = rootgrp.createVariable("mass", "f8", ("nZ", "nR"))
     charge = rootgrp.createVariable("charge", "f8", ("nZ", "nR"))
+    v_para1 = rootgrp.createVariable("v_para1", "f8", ("nZ", "nR"))
+    v_para2 = rootgrp.createVariable("v_para2", "f8", ("nZ", "nR"))
     vrr = rootgrp.createVariable("vr", "f8", ("nZ", "nR"))
     vzz = rootgrp.createVariable("vz", "f8", ("nZ", "nR"))
     vpp = rootgrp.createVariable("vp", "f8", ("nZ", "nR"))
@@ -384,8 +427,12 @@ def process_solps_output_for_gitr(dakota_filename = '/Users/tyounkin/Code/solps-
     nee[:] = ne
     tii[:] = ti
     nii[:] = ni_total
+    nii1[:] = ni[1]
+    nii2[:] = ni[2]
     mass[:] = aveMass
     charge[:] = aveCharge
+    v_para1[:] = v_parallel[1]
+    v_para2[:] = v_parallel[2]
     vrr[:] = vr
     vpp[:] = vt
     vzz[:] = vz
@@ -523,9 +570,13 @@ def find_strike_points(solps_geometry_filename='/Users/tyounkin/Dissertation/ITE
     y_inner_strikepoint = cry[1,topcut,bottom_left]
     x_outer_strikepoint = crx[-1,topcut,bottom_left]
     y_outer_strikepoint = cry[-1,topcut,bottom_left]
+
+    print('sp xy',x_outer_strikepoint,y_outer_strikepoint)
+    print('sp xy crx',crx[-1,topcut,:])
+    print('sp xy cry',cry[-1,topcut,:])
     return x_x_point,y_x_point, \
            x_inner_strikepoint ,y_inner_strikepoint, \
-           x_outer_strikepoint ,y_outer_strikepoint
+           x_outer_strikepoint ,y_outer_strikepoint, topcut
 
 
 
@@ -540,17 +591,17 @@ def get_target_coordinates(solps_geometry_filename='/Users/tyounkin/Dissertation
     top_left = 2;
     top_right = 3;
 
-    r_inner_target = crx[0,:,[bottom_right, top_right]]
-    z_inner_target = cry[0,:,[bottom_right, top_right]]
-    r_outer_target = crx[-1,:,[bottom_left, top_left]]
-    z_outer_target = cry[-1,:,[bottom_left, top_left]]
+    r_inner_target = crx[0,1:,bottom_right] #[bottom_right, top_right]]
+    z_inner_target = cry[0,1:,bottom_right] #[bottom_right, top_right]]
+    r_outer_target = crx[-1,1:,bottom_left] #[bottom_left, top_left]]
+    z_outer_target = cry[-1,1:,bottom_left] #[bottom_left, top_left]]
 
     r_inner_target = np.append(r_inner_target[0,:], r_inner_target[1,-1])
     z_inner_target = np.append(z_inner_target[0,:], z_inner_target[1,-1])
     r_outer_target = np.append(r_outer_target[0,:], r_outer_target[1,-1])
     z_outer_target = np.append(z_outer_target[0,:], z_outer_target[1,-1])
 
-    #print('r_inner_target', r_inner_target)
+    #print('r_inner_target',r_inner_target)
     #print('z_inner_target',z_inner_target)
     #print('r_outer_target',r_outer_target)
     #print('z_outer_target',z_outer_target)
@@ -674,21 +725,26 @@ def get_solps_species(solps_state_filename='/Users/tyounkin/Dissertation/ITER/mq
     #zamin.insert(3, 1.0)
     #am.insert(3, 3.0)
     nIonSpecies = len(zn)
+    species_index = [int(i) for i in range(nIonSpecies)]
 
-    print('nIonSpecies', nIonSpecies)
-    species_file = open("speciesList.txt", "w")
-    species_file.write('SpeciesIndex   Z   Mass   Charge\n')
-    print('Existing species for current SOLPS run:\n')
-    print('SpeciesIndex   Z   Mass   Charge\n')
-    for i in range(nIonSpecies):
-        print('%f       %f        %f      %f \n' % (i, zn[i], am[i], zamin[i]))
-        species_file.write('%f       %f        %f      %f \n' % (i, zn[i], am[i], zamin[i]))
+    array = np.array((species_index,zn,am,zamin))
+    array = np.transpose(array)
+    print(array)
+    np.savetxt('speciesList.txt',array,header='SpeciesIndex   Z   Mass   Charge', delimiter=' ') 
+    #print('nIonSpecies', nIonSpecies)
+    #species_file = open("speciesList.txt", "w")
+    #species_file.write('SpeciesIndex   Z   Mass   Charge\n')
+    #print('Existing species for current SOLPS run:\n')
+    #print('SpeciesIndex   Z   Mass   Charge\n')
+    #for i in range(nIonSpecies):
+    #    print('%f %f %f %f \n' % (i, zn[i], am[i], zamin[i]))
+    #    species_file.write('%f %f %f %f \n' % (i, zn[i], am[i], zamin[i]))
 
-    species_file.close()
+    #species_file.close()
 
     return nIonSpecies, am,zamin, zn
 
-def read_target_file(filename = '/Users/tyounkin/Code/solps-iter-data/build/rightTargOutput' ):
+def read_target_file(filename = '/Users/Alyssa/Dev/solps-iter-data/build/rightTargOutput' ):
     # target files contain
     # r,z,ti,
     # ni for nSpecies,
@@ -703,7 +759,6 @@ def read_target_file(filename = '/Users/tyounkin/Code/solps-iter-data/build/righ
     ti = target[:,2]
     ni = np.zeros((target_shape[0],nSpecies))
     flux = np.zeros((target_shape[0],nSpecies))
-
     for i in range(nSpecies):
         ni[:,i] = target[:,3+i]
         flux[:,i] = target[:,3+nSpecies+i]
@@ -713,54 +768,49 @@ def read_target_file(filename = '/Users/tyounkin/Code/solps-iter-data/build/righ
 
     return r,z,ti,ni,flux,te,ne
 
-def make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
-    solps_geom = '/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry', \
-    right_target_filename= '/Users/tyounkin/Code/solps-iter-data/build/rightTargOutput'):
+def make_solps_targ_coord_file(gitr_geom_filename='/Users/Alyssa/Dev/GITR/west/helium/input/gitrGeometry.cfg', \
+    solps_geom = '/Users/Alyssa/Dev/WEST/baserun/b2fgmtry', \
+    coords_file = '/Users/Alyssa/Dev/GITR/west/helium/input/right_target_coordinates.txt', \
+    right_target_filename= '/Users/Alyssa/Dev/solps-iter-data/build/rightTargOutput'):
     r, z, ti, ni, flux, te, ne = read_target_file(right_target_filename)
+
     x_x_point, y_x_point, \
     x_inner_strikepoint, y_inner_strikepoint, \
-    x_outer_strikepoint, y_outer_strikepoint = find_strike_points(solps_geom)
+    x_outer_strikepoint, y_outer_strikepoint, topcut = find_strike_points(solps_geom)
+    topcut = topcut - 1; #Because the target coordinates already strip off the ghost cell
 
     r_left_target,z_left_target,r_right_target,z_right_target = get_target_coordinates(solps_geom)
+    print('r strikepoint and target coords',x_outer_strikepoint, r_right_target)
+    print('r strikepoint length',len(r_right_target))
 
     r_minus_r_sep = 0*r_right_target
-    # find the nearest target point
-    distances = np.sqrt(np.multiply((r_right_target -x_outer_strikepoint),(r_right_target-x_outer_strikepoint)) + np.multiply((z_right_target -y_outer_strikepoint),(z_right_target-y_outer_strikepoint)) )
-    min_dist_indx = np.argmin(distances)
-    print('smallest distance r,z',distances[min_dist_indx],r_right_target[min_dist_indx],z_right_target[min_dist_indx])
-    print('xy outer',x_outer_strikepoint,y_outer_strikepoint)
-    if (y_outer_strikepoint>z_right_target[min_dist_indx]):
-        r_minus_r_sep[min_dist_indx] = -distances[min_dist_indx]
-    else:
-        r_minus_r_sep[min_dist_indx] = distances[min_dist_indx]
 
     lengths = np.sqrt(np.multiply((r_right_target[1:] -r_right_target[0:-1]),(r_right_target[1:] -r_right_target[0:-1])) + \
                       np.multiply((z_right_target[1:] -z_right_target[0:-1]),(z_right_target[1:] -z_right_target[0:-1])) )
 
-    print('len r',len(r))
-    print('len lengths',len(lengths))
-    print('len rmrs',len(r_minus_r_sep))
-    for i in range(min_dist_indx+1,len(r_right_target)):
+    for i in range(topcut+1,len(r_right_target)):
         r_minus_r_sep[i] = r_minus_r_sep[i-1]+lengths[i-1]
 
-    for i in range(min_dist_indx-1,-1,-1):
+    for i in range(topcut-1,-1,-1):
         r_minus_r_sep[i] = r_minus_r_sep[i+1]-lengths[i]
 
     print('r_minus_r_sep',r_minus_r_sep)
-    tol = 1e-4
-    condition = np.abs(r - x_outer_strikepoint) <= tol
-    condition2 = np.abs(z - y_outer_strikepoint) <= tol
+    #tol = 1e-4
+    #condition = np.abs(r - x_outer_strikepoint) <= tol
+    #condition2 = np.abs(z - y_outer_strikepoint) <= tol
 
-    rz_ind = np.where(condition & condition2)
-    print('strikepoint',x_outer_strikepoint,y_outer_strikepoint)
-    print('strikepoint rzind',rz_ind)
-    print('strikepoint rz',r,z)
+    #rz_ind = np.where(condition & condition2)
+    #print('strikepoint',x_outer_strikepoint,y_outer_strikepoint)
+    #print('strikepoint rzind',rz_ind)
+    #print('strikepoint rz',r,z)
     plt.close()
     plt.plot(r,z)
     plt.scatter(r,z)
-    plt.scatter(x_outer_strikepoint,y_outer_strikepoint)
-    plt.axis([5.5,5.6,-4.42, -4.36])
+    plt.scatter(r_right_target,z_right_target)
+    #plt.scatter(x_outer_strikepoint,y_outer_strikepoint)
+    #plt.axis([5.5,5.6,-4.42, -4.36])
     plt.savefig('rz_targ.png')
+    plt.show()
 
     with io.open(gitr_geom_filename) as f:
         config = libconf.load(f)
@@ -771,25 +821,118 @@ def make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
     z2 = np.array(config.geom.z2)
 
     i_a, i_b = intersection(x1, z1, r_right_target, z_right_target)
-
     print('i_a',i_a)
-    A = np.zeros((len(i_a),4))
+    A = np.zeros((len(i_a),10))
     A[:,0] = r_right_target
     A[:,1] = z_right_target
     A[:,2] = r_minus_r_sep
     A[:,3] = i_a
+    A[:,4] = x1[i_a]
+    A[:,5] = x2[i_a]
+    A[:,6] = z1[i_a]
+    A[:,7] = z2[i_a]
+    A[:,8] = 0.5*(x1[i_a]+x2[i_a])
+    A[:,9] = 0.5*(z1[i_a]+z2[i_a])
 
-    np.savetxt('right_target_coordinates.txt',A,header='r,z,r_minus_r_sep,gitr_index')
+    np.savetxt(coords_file,A,header='r,z,r_minus_r_sep,gitr_index,x1,x2,z1,z2,xmid,zmid')
+
+def make_solps_targ_file(solps_geom = '/Users/Alyssa/Dev/WEST/baserun/b2fgmtry', \
+    b_field_file = '/Users/Alyssa/Dev/WEST/baserun/west_54034_10p2s_mag.X4.equ', \
+    coords_file = '/Users/Alyssa/Dev/GITR/west/helium/input/right_target_coordinates.txt', \
+    right_target_filename= '/Users/Alyssa/Dev/solps-iter-data/build/rightTargOutput'):
+
+    r, z, ti, ni, flux, te, ne = read_target_file(right_target_filename)
+
+    r_left_target,z_left_target,r_right_target,z_right_target = get_target_coordinates(solps_geom)
+
+    rr, zz, r_minus_r_sep, gitr_ind, r_midpoint, z_midpoint = read_targ_coordinates_file(coords_file)
+
+    slope = np.zeros(len(rr)-1)
+    rise = zz[1:] - zz[0:-1]
+    run = rr[1:] - rr[0:-1]
+    slope = np.divide(rise,run)
+    perp_slope = -np.sign(slope)/np.absolute(slope)
+    rPerp = np.divide(1.0,np.sqrt(np.multiply(perp_slope,perp_slope)+1))
+    zPerp = 1.0*np.sqrt(1-np.multiply(rPerp,rPerp))
+    length = np.sqrt(np.multiply(rise,rise)+np.multiply(run,run))
+    #print('slope',slope)
+    #print('lenslope',len(slope))
+    #z_midpoint = 0.5*(z_no_guard_cells[1:] + z_no_guard_cells[0:-1])
+    #r_midpoint = 0.5*(r_no_guard_cells[1:] + r_no_guard_cells[0:-1])
+    print('rmid', r_midpoint)
+    print('zmid', z_midpoint)
+
+    r, z, br, bz, bt, psi = readEquilibrium(b_field_file)
+    
+    btot = np.sqrt(np.multiply(br,br) + np.multiply(bz,bz) + np.multiply(bt,bt))
+
+    #f = scii.interp2d(r,z,btot)
+    #btarg = f(r_midpoint,z_midpoint)
+    grid_r, grid_z = np.meshgrid(r,z)
+    print(grid_r.shape, grid_z.shape, btot.shape)
+    btarg = scii.griddata((grid_r.flatten(),grid_z.flatten()), btot.flatten(), (r_midpoint, z_midpoint), method='linear')
+    brtarg = scii.griddata((grid_r.flatten(),grid_z.flatten()), br.flatten(), (r_midpoint, z_midpoint), method='linear')
+    bztarg = scii.griddata((grid_r.flatten(),grid_z.flatten()), bz.flatten(), (r_midpoint, z_midpoint), method='linear')
+    
+    angle = 180.0/np.pi*np.arccos(np.divide(np.multiply(brtarg,rPerp) + np.multiply(bztarg,zPerp),btarg))
+
+    len_rmid = len(r_midpoint)-2
+    A = np.zeros((len(r_midpoint)-2,3))
+    A[:,0] = r_minus_r_sep[1:-2] + 0.5*length[1:-1]
+    A[:,1] = r_midpoint[1:-1]
+    A[:,2] = z_midpoint[1:-1]
+
+    A = np.hstack((A,np.reshape(te,(len_rmid,1))))
+    A = np.hstack((A,np.reshape(ti,(len_rmid,1))))
+    A = np.hstack((A,flux))
+    A = np.hstack((A,ni))
+    A = np.hstack((A,np.reshape(btarg[1:-1],(len_rmid,1))))
+    A = np.hstack((A,np.reshape(angle[1:-1],(len_rmid,1))))
+
+    print('fshpe',flux.shape)
+    np.savetxt('solpsTarg.txt',A,delimiter=',',header='R-Rsep, r, z, Te, Ti, Flux (for each species), n (for each species), Btot, Bangle')
+
+def read_targ_coordinates_file(filename = 'right_target_coordinates.txt'):
+    
+    data = np.loadtxt(filename, skiprows=0)
+
+    r_right_target = data[:,0]
+    #r_right_target = np.append(r_right_target,data[-1,4])
+    #print('rrt length',len(r_right_target),data[-1,4])
+    z_right_target = data[:,1]
+    #z_right_target = np.append(z_right_target,data[-1,6])
+    r_minus_r_sep = data[:,2]
+    #len_last_segment = np.sqrt((r_right_target[-1] - r_right_target[-2])**2 + (z_right_target[-1] - z_right_target[-2])**2)
+    #print('rmrs length',len(r_minus_r_sep),len_last_segment)
+    #print('data length',len(data[:,0]),len(data[:,1]),len(data[:,2]))
+    #r_minus_r_sep = np.append(data[:,2], len_last_segment)
+    
+    gitr_ind = data[:,3]
+    r_midpoint = data[0:-1,8]
+    z_midpoint = data[0:-1,9]
+
+    return r_right_target, z_right_target, r_minus_r_sep, gitr_ind, r_midpoint, z_midpoint
+
+
 
 if __name__ == "__main__":   
     #rTarg = np.linspace(5,6.5,100)
     #zTarg=np.linspace(0,1,100)
     #getBfield(rTarg,zTarg,"/Users/tyounkin/Dissertation/ITER/mq3/final/Baseline2008-li0.70.x4.equ","/Users/tyounkin/Code/gitr2/iter/iter_milestone/2d/input/iterGeom2DdirBe0.cfg")
-    #process_solps_output_for_gitr()
+    process_solps_output_for_gitr()
     #get_solps_species()
     readEquilibrium()
     #read_b2f_geometry()
     #find_strike_points()
     #read_target_file()
     #get_target_coordinates()
+    #make_solps_targ_coord_file()
     #make_solps_targ_file()
+    #make_solps_targ_file(gitr_geom_filename='gitr_geometry.cfg', \
+    #solps_geom = '/project/projectdirs/m1709/psi-install-cori/solps_data/mq3/b2fgmtry', \
+    #right_target_filename= 'rightTargOutput')
+    #make_solps_targ_file_txt(solps_geom='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry',b_field_file = '/Users/tyounkin/Dissertation/ITER/mq3/solps/Baseline2008-li0.70.x4.equ')
+    #solps_geom = '/Users/tyounkin/postDoc/DOE-West/Deuterium/WEST_D_run1/baserun/b2fgmtry', \
+    #b_field_file = '/Users/tyounkin/postDoc/DOE-West/Deuterium/WEST_D_run1/baserun/west_54034_10p2s_mag.X4.equ', \
+    #coords_file = 'right_target_coordinates.txt', \
+    #right_target_filename= 'rightTargOutput')
