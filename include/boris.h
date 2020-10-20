@@ -465,8 +465,8 @@ float getE ( float x0, float y, float z, float E[], Boundary *boundaryVector, in
         //}
        }
     if(isnan(directionUnitVector[0]) || isnan(directionUnitVector[1]) || isnan(directionUnitVector[2])){
-	    printf("minDist %f \n", minDistance);
-	    printf("directionV %f %f %f \n", directionUnitVector[0],directionUnitVector[1],directionUnitVector[2]);
+	    //printf("minDist %f \n", minDistance);
+	    //printf("directionV %f %f %f \n", directionUnitVector[0],directionUnitVector[1],directionUnitVector[2]);
 	    directionUnitVector[0] = 0.0;
 	    directionUnitVector[1] = 0.0;
 	    directionUnitVector[2] = 0.0;
