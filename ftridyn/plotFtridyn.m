@@ -1,7 +1,7 @@
 % close all
 % clear all
 
-file = 'ftridynSelf.nc';
+file = 'ftridynBackground.nc';
 ncid = netcdf.open(file,'NC_NOWRITE');
 [dimname, nE] = netcdf.inqDim(ncid,0);
 [dimname, nA] = netcdf.inqDim(ncid,1);
@@ -19,8 +19,10 @@ cosxDistRef = ncread(file,'cosXDistRef');
 cosyDist = ncread(file,'cosYDist');
 % coszDist = ncread(file,'cosZDist');
 eDist = ncread(file,'energyDist');
-eDistRef = ncread(file,'energyDistRef');
+% eDistRef = ncread(file,'energyDistRef');
 eDistEgrid = ncread(file,'eDistEgrid');
+phiGrid = ncread(file,'phiGrid');
+thetaGrid = ncread(file,'thetaGrid');
 % eDistEgridRef = ncread(file,'eDistEgridRef');
 % thisEdistRef = reshape(eDistRef(:,1,:),500,[]);
 % figure(100)
@@ -39,6 +41,13 @@ colorbar
  set(gca, 'XScale', 'log')
     end
 end
+figure(10)
+plot(eDistEgrid,eDist(:,10,43,1))
+figure(11)
+plot(phiGrid,cosxDist(:,10,43,1))
+figure(12)
+plot(thetaGrid,cosyDist(:,35,50,1))
+
 Y0=interpn(energy,angle,spyld',250,0);
 R0=interpn(energy,angle,rfyld',250,0);
 yr = Y0+R0;
