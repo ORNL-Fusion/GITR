@@ -328,4 +328,6 @@ def SFTanalysis(cases=['D']):
 
 if __name__ == "__main__":
     get_profilesF()
+
     get_profilesD()
+

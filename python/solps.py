@@ -601,6 +601,7 @@ def get_target_coordinates(solps_geometry_filename='/Users/tyounkin/Dissertation
     r_outer_target = np.append(r_outer_target[0,:], r_outer_target[1,-1])
     z_outer_target = np.append(z_outer_target[0,:], z_outer_target[1,-1])
 
+
     #print('r_inner_target', r_inner_target)
     #print('z_inner_target',z_inner_target)
     #print('r_outer_target',r_outer_target)
@@ -921,7 +922,7 @@ if __name__ == "__main__":
     #getBfield(rTarg,zTarg,"/Users/tyounkin/Dissertation/ITER/mq3/final/Baseline2008-li0.70.x4.equ","/Users/tyounkin/Code/gitr2/iter/iter_milestone/2d/input/iterGeom2DdirBe0.cfg")
     process_solps_output_for_gitr()
     #get_solps_species()
-    #readEquilibrium()
+    readEquilibrium()
     #read_b2f_geometry()
     #find_strike_points()
     #read_target_file()

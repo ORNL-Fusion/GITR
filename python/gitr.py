@@ -1126,6 +1126,7 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitrGeometry.cfg'
     #plt.scatter(r,z,s=0.4)
     #plt.savefig('mesh_extra_west_scatter.png')
 
+
     #get target geometries from solps
     #print('manual geometry size',r_west.size)
     r_left_target,z_left_target,r_right_target,z_right_target = solps.get_target_coordinates(solps_geom)
@@ -1167,7 +1168,7 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitrGeometry.cfg'
 
     Z = np.zeros(len(r_final)+1)
     surfaces = np.zeros(len(r_final)+1)
-    plt.savefig('final_west.pdf')
+
 
 
     Z = np.zeros(len(r_final)+1)
@@ -1180,9 +1181,11 @@ def make_gitr_geometry_from_solps_west(gitr_geometry_filename='gitrGeometry.cfg'
     i_a, i_b = intersection(r_final, z_final, r_right_target, z_right_target)
     Z[i_b] = 74;
     surfaces[i_b] = 1;
+
     inDir[i_b] = -1;
 
     lines = gitr_lines_from_points(r_final, z_final)
+
 
     lines_to_gitr_geometry(gitr_geometry_filename, lines, Z, surfaces, inDir)
 
@@ -1695,6 +1698,7 @@ def test_interp():
 if __name__ == "__main__":
     #test_interp()
     #make_gitr_geometry_from_solps()
+
     #make_gitr_geometry_from_solps_west()
 #test_interp()
 #make_gitr_geometry_from_solps()
@@ -1715,3 +1719,22 @@ if __name__ == "__main__":
 # piscesProcessing()
 # modifyInputParam()
 # nc_readSurface()
+
+    make_gitr_geometry_from_solps_west()
+    #asdfanc_show("surface.nc")
+    #depositedEdist()
+    #if(os.path.exists('output/history.nc')):
+    #nc_plotHist('output/history.nc')
+    #if(os.path.exists('output/spec.nc')):
+    #nc_plotSpec('output/spec.nc')
+    #iter2dProcessing()
+    #iter3dProcessingQ4()
+    #printHeDist()
+    #nc_plotSpec3D()
+    #nc_plotPositions()
+    #nc_plotVz()
+    #plotPitch()
+    #piscesProcessing()
+    #modifyInputParam()
+    #nc_readSurface()
+
