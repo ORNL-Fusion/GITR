@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(gitr)
 
 set(OPENMP 1)
+set(APPLE 1)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
@@ -47,6 +48,7 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DUSESURFACEMODEL=${USESURFACEMODEL}
         -DUSESHEATHEFIELD=${USESHEATHEFIELD}
         -DBIASED_SURFACE=${BIASED_SURFACE}
+        -DUSE_SURFACE_POTENTIAL=${USE_SURFACE_POTENTIAL}
         -DUSEPRESHEATHEFIELD=${USEPRESHEATHEFIELD}
         -DBFIELD_INTERP=${BFIELD_INTERP}
         -DLC_INTERP=${LC_INTERP}
@@ -102,6 +104,25 @@ if (${CUDA})
 endif ()
 
 # setup for OpenMP backend
+if(APPLE AND OPENMP)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+        set(OpenMP_C "${CMAKE_C_COMPILER}")
+        set(OpenMP_C_FLAGS "-fopenmp=libomp -Wno-unused-command-line-argument")
+        set(OpenMP_C_LIB_NAMES "libomp" "libgomp" "libiomp5")
+        set(OpenMP_libomp_LIBRARY ${OpenMP_C_LIB_NAMES})
+        set(OpenMP_libgomp_LIBRARY ${OpenMP_C_LIB_NAMES})
+        set(OpenMP_libiomp5_LIBRARY ${OpenMP_C_LIB_NAMES})
+    endif()
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      set(OpenMP_CXX "${CMAKE_CXX_COMPILER}")
+      set(OpenMP_CXX_FLAGS "-fopenmp=libomp -Wno-unused-command-line-argument")
+      set(OpenMP_CXX_LIB_NAMES "libomp" "libgomp" "libiomp5")
+      set(OpenMP_libomp_LIBRARY ${OpenMP_CXX_LIB_NAMES})
+      set(OpenMP_libgomp_LIBRARY ${OpenMP_CXX_LIB_NAMES})
+      set(OpenMP_libiomp5_LIBRARY ${OpenMP_CXX_LIB_NAMES})
+    endif()
+endif()
+
 if (${OPENMP})
     ADD_EXECUTABLE(tests test/file_io_tests.cpp)
     ADD_EXECUTABLE(coulomb_tests test/coulomb_tests.cpp)
