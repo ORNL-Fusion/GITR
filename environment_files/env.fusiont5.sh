@@ -1,4 +1,4 @@
-export PATH=/home/tqd/Code/cmakebuild/bin:PATH:$HOME/Code/pythonbuild/bin:$HOME/Code/openmpiBuild/bin:/home/tqd/Code/llvm-project/build/bin
+export PATH=/home/tqd/Code/cmakebuild/bin:$PATH:$HOME/Code/pythonbuild/bin:$HOME/Code/openmpiBuild/bin:/home/tqd/Code/llvm-project/build/bin
 export CMAKE_SOURCE_DIR=../
 export  NETCDF=$HOME/Code/netcdfcbuild 
 export  NETCDFCXX4=$HOME/Code/netcdfcxxbuild  
