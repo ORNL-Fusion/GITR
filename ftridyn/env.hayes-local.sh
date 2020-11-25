@@ -3,6 +3,7 @@
 export PYTHONPATH=/Users/Alyssa/Dev/fractal-tridyn/utils/:$PYTHONPATH
 export PYTHONPATH=/Users/Alyssa/Dev/fractal-tridyn/src/:$PYTHONPATH
 export PYTHONPATH=/Users/Alyssa/Dev/GITR/ftridyn/:$PYTHONPATH
+export FTRIDYN_PATH=/Users/Alyssa/Dev/fractal-tridyn
 #export PYTHONPATH=$HOME/Code/FtridynFromPython/build:$PYTHONPATH
 
 

@@ -181,7 +181,7 @@ def findStrikepoint(x1,x2,z1,z2,length,r,z,psi,rmin=5.55,rmax=6.226,zmin=-4.6,zm
     return rsep, zsep, targInds, sepBoundary2
 def interpolateBfield(r,z,br, bz, bt,psi,rTarget,zTarget,geometryFile='/global/homes/t/tyounkin/atomIPS/atom-install-edison/GITR/iter/iter_milestone/2d/input/iter2dRefinedOuterTarget.cfg',rmin=5.55,rmax=6.226,zmin=-4.6,zmax=-3.238):
     print ('Beginning interpolate B-field')
-    x1,x2,z1,z2,length,Z = gitr.plot2dGeom(geometryFile) 
+    x1,x2,z1,z2,length,Z,slope,inDir = gitr.plot2dGeom(geometryFile) 
     print( 'Finding outer target strike point')
     rsep,zsep,targInds,sepBoundary = findStrikepoint(x1,x2,z1,z2,length,r,z,psi,rmin,rmax,zmin,zmax)
     nS = len(rTarget)
@@ -596,10 +596,10 @@ def get_target_coordinates(solps_geometry_filename='/Users/tyounkin/Dissertation
     r_outer_target = crx[-1,1:,bottom_left] #[bottom_left, top_left]]
     z_outer_target = cry[-1,1:,bottom_left] #[bottom_left, top_left]]
 
-    r_inner_target = np.append(r_inner_target[0,:], r_inner_target[1,-1])
-    z_inner_target = np.append(z_inner_target[0,:], z_inner_target[1,-1])
-    r_outer_target = np.append(r_outer_target[0,:], r_outer_target[1,-1])
-    z_outer_target = np.append(z_outer_target[0,:], z_outer_target[1,-1])
+    #r_inner_target = np.append(r_inner_target[0,:], r_inner_target[1,-1])
+    #z_inner_target = np.append(z_inner_target[0,:], z_inner_target[1,-1])
+    #r_outer_target = np.append(r_outer_target[0,:], r_outer_target[1,-1])
+    #z_outer_target = np.append(z_outer_target[0,:], z_outer_target[1,-1])
 
     #print('r_inner_target',r_inner_target)
     #print('z_inner_target',z_inner_target)

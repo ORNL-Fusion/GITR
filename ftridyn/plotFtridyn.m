@@ -31,7 +31,7 @@ thetaGrid = ncread(file,'thetaGrid');
 % thisEdistRef = eDistRef(:,:,10)
 % figure(101)
 % plot(eDistEgridRef,thisEdistRef)
-if( nS > 1)
+if( nS >= 1)
     for i=1:nS
     this_spyld = spyld(:,:,i)
     figure(i)
