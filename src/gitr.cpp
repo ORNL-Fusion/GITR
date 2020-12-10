@@ -4477,19 +4477,13 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), closestBoundaryIndex);
-      // std::cout << "Starting surf minDistance and closestBoundaryIndex " <<
-      // closestBoundaryIndex << " " <<
-      //    minDistance << std::endl;
-      // std::cout << "Particle starting z and boundary z " << pz[j] << " " <<
-      //    boundaries[closestBoundaryIndex].z1 << std::endl;
+      
       if (boundaries[closestBoundaryIndex].Z > 0.0) {
-        // std::cout << "Starting surfNumber and Z " <<
-        // boundaries[closestBoundaryIndex].surfaceNumber << " " <<
-        //    boundaries[closestBoundaryIndex].Z << std::endl;
         surfIndex = boundaries[closestBoundaryIndex].surfaceNumber;
         grossErosion[surfIndex] = grossErosion[surfIndex] + 1.0;
       }
     }
+    
     //#if PARTICLE_SOURCE == 1
     // int ring1 = 0;
     // int ring2 = 0;
@@ -4629,7 +4623,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // tmpWeight = weights1[i];
     // weights1[i] = pair1[100-1-i].second;
     // weights1[100-1-i] = tmpWeight;
-    //}
+   //}
     // for(int i=0;i<100;i++)
     //{
     // std::cout << "weights "  << " " << weights1[i] << " " <<
@@ -4703,10 +4697,10 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
       if (boundaries[i].surface) {
         surfaceNumbers[srf] = i;
 
+        surfaces->grossErosion[srf] = surfaces->grossErosion[srf] + grossErosion[srf];
         srf = srf + 1;
-        surfaces->grossErosion[i] = surfaces->grossErosion[i] + grossErosion[i];
       }
-    }
+    }  
     netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
     vector<netCDF::NcDim> dims1;
@@ -4716,8 +4710,8 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     dimsSurfE.push_back(nc_nLines);
     netCDF::NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
     netCDF::NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
-    dimsSurfE.push_back(nc_nAngles);
     dimsSurfE.push_back(nc_nEnergies);
+    dimsSurfE.push_back(nc_nAngles);
     netCDF::NcVar nc_grossDep = ncFile1.addVar("grossDeposition", netCDF::ncFloat, nc_nLines);
     netCDF::NcVar nc_grossEro = ncFile1.addVar("grossErosion", netCDF::ncFloat, nc_nLines);
     netCDF::NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", netCDF::ncFloat, nc_nLines);
