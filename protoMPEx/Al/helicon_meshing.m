@@ -1,21 +1,32 @@
 clear all
 close all
+%Check Ftridyn file
+
 
 % plasma_file = 'assets/Beers_Helicon_3D_100kW_LowDensity_Plasma.txt';
-plasma_file = 'assets/Beers_Helicon_3D_100kW_HighDensity_Plasma.txt';
+% plasma_file = 'assets/Beers_Helicon_3D_100kW_HighDensity_Plasma.txt';
+ plasma_file = 'assets/Beers_Helicon_3D_100kW_LowDensityHighTe_Plasma.txt';
+% plasma_file = 'assets/Beers_Helicon_3D_100kW_HighDensityHighTe_Plasma.txt';
+
 % surface_file = 'assets/Beers_Helicon_3D_100kW_LowDensity_HeliconData_LayerMiddle9.xlsx';
+ surface_file = 'assets/Beers_Helicon_3D_100kW_LowDensity_HeliconData_LayerMiddle7_MagCase.xlsx';
+% surface_file = 'assets/Beers_Helicon_3D_100kW_HighDensity_HeliconData_LayerMiddle6.xlsx';
 % surface_file = 'assets/Beers_Helicon_3D_100kW_HighDensity_HeliconData_LayerMiddle11_MagCase.xlsx';
- surface_file = 'assets/Beers_Helicon_3D_100kW_HighDensity_HeliconData_LayerMiddle6.xlsx';
-% surface_file = 'assets/Beers_Helicon_3D_100kW_LowDensity_HeliconData_LayerMiddle7_MagCase.xlsx';
+% surface_file ='assets/Beers_Helicon_3D_100kW_LowDensity_HeliconData_LayerMiddle_100V.xlsx';
+%surface_file ='assets/Beers_Helicon_3D_100kW_HighDensity_HeliconData_LayerMiddle_100V.xlsx';
+%surface_file ='assets/Beers_Helicon_3D_100kW_LowDensity_HeliconData_LayerMiddle_500V.xlsx';
+%surface_file ='assets/Beers_Helicon_3D_100kW_HighDensity_HeliconData_LayerMiddle_500V.xlsx';
+%surface_file ='assets/Beers_Helicon_3D_100kW_LowDensity_HeliconData_LayerMiddle_1kV.xlsx';
+%surface_file ='assets/Beers_Helicon_3D_100kW_HighDensity_HeliconData_LayerMiddle_1kV.xlsx';
 
 radius = 0.06256;
 model = createpde;
-importGeometry(model,'helicon_6p256cm.stl');% Import STL file
+importGeometry(model,'assets/helicon_6p256cm.stl');% Import STL file
 figure(2)
 pdegplot(model,'FaceLabels','on') %Plot stl 
 
 tic %time meshing - for high resolution this is a large cost
-mesh = generateMesh(model,'GeometricOrder','linear','Hmax',0.01);% Options Hmax and Hmin can be set, linear order can also be used
+mesh = generateMesh(model,'GeometricOrder','linear','Hmax',0.005);% Options Hmax and Hmin can be set, linear order can also be used
 figure(1)
 pdeplot3D(model,'FaceAlpha',0.5)
 
@@ -369,11 +380,11 @@ ylabel('z [m]') % y-axis label
 set(gca,'fontsize',16)
 
 
-file = 'ftridynBackground.nc';
+file = 'assets/ftridynBackground.nc';
 ncid = netcdf.open(file,'NC_NOWRITE');
 [dimname, nE] = netcdf.inqDim(ncid,0);
 [dimname, nA] = netcdf.inqDim(ncid,1);
-if strcmp(file,'ftridynBackground.nc')
+if strcmp(file,'assets/ftridynBackground.nc')
 [dimname, nS] = netcdf.inqDim(ncid,2);
 else
     nS = 1;
@@ -395,6 +406,8 @@ thetaGrid = ncread(file,'thetaGrid');
 thisEdistRef = reshape(eDistRef(:,1,:),length(eDistEgridRef),[]);
 % figure(100)
 % plot(eDistEgridRef,thisEdistRef)
+
+spyld=reshape(spyld(:,:,1),length(angle),length(energy));
 
 figure(113)
 h = pcolor(energy,angle,spyld)
@@ -441,14 +454,50 @@ plotSet = find(surfs>0);
 X = [planes((plotSet),1),planes((plotSet),4),planes((plotSet),7)];
 Y = [planes((plotSet),2),planes((plotSet),5),planes((plotSet),8)];
 Z = [planes((plotSet),3),planes((plotSet),6),planes((plotSet),9)];
-THETA = atan2(Y,X);
-ss=sum(sign(THETA),2);
-swit = find((abs(ss) < 3) & (abs(THETA(:,1)) > 1));
-THETA(swit,:) = ss(swit).*abs(THETA(swit,:) );
+% THETA = atan2(Y,X);
+% ss=sum(sign(THETA),2);
+% swit = find((abs(ss) < 3) & (abs(THETA(:,1)) > 1));
+% THETA(swit,:) = ss(swit).*abs(THETA(swit,:) );
+THETA = 0*Z;
+for ii=1:length(THETA)
+    %     if ii==2457
+%     if ii==4859
+%         ii
+%     end
+    THETA(ii,:) = atan2d(Y(ii,:),X(ii,:));
+    diff21 = abs(THETA(ii,2) - THETA(ii,1));
+    diff31 = abs(THETA(ii,3) - THETA(ii,1));
+    diff32 = abs(THETA(ii,3) - THETA(ii,2));
+    
+    maxdiff = max([diff21,diff31,diff32]);
+    if maxdiff > 90
+        if THETA(ii,1)>0
+            % THETA(ii,1)=THETA(ii,1)+360;
+            %     end
+            if THETA(ii,2)<0
+                THETA(ii,2)=THETA(ii,2)+360;
+            end
+            if THETA(ii,3)<0
+                THETA(ii,3)=THETA(ii,3)+360;
+            end
+        end
+        if THETA(ii,1)<0
+            % THETA(ii,1)=THETA(ii,1)+360;
+            %     end
+            if THETA(ii,2)>0
+                THETA(ii,2)=THETA(ii,2)-360;
+            end
+            if THETA(ii,3)>0
+                THETA(ii,3)=THETA(ii,3)-360;
+            end
+        end
+    end
+end
+THETA=THETA+180;
 
 figure(103)
-% patch(transpose(THETA),transpose(Z),0*transpose(Z),flux(plotSet).*Y0(plotSet),'FaceAlpha',1,'EdgeColor','k')
-patch(transpose(X),transpose(Y),transpose(Z),flux(plotSet).*Y0(plotSet),'FaceAlpha',1,'EdgeColor','k')
+patch(transpose(THETA),transpose(Z),0*transpose(Z),flux(plotSet).*Y0(plotSet),'FaceAlpha',1,'EdgeColor','k')
+% patch(transpose(X),transpose(Y),transpose(Z),flux(plotSet).*Y0(plotSet),'FaceAlpha',1,'EdgeColor','k')
 
 colorbar
 title({'D eroded Al Flux [m^{-2}s^{-1}]','Low Flux Case'})
@@ -462,13 +511,15 @@ zz = 0.0;
 distance = sqrt((centroid(:,1) - xx).^2 + (centroid(:,2) - yy).^2 + (centroid(:,3) - zz).^2);
 [v i] = min(distance);
 
-nP = 10000;
-erosion = flux.*Y0;
+nP = 100000;
+erosion = flux.*Y0.*area';
 
 erosion_inds = find(erosion);
 erosion_sub = erosion(erosion_inds);
 erosion_sub_cdf = cumsum(erosion_sub);
+erosion_rate=erosion_sub_cdf(end);
 erosion_sub_cdf = erosion_sub_cdf./erosion_sub_cdf(end);
+
 % plot(erosion_sub_cdf)
 
 rand1 = rand(nP,1);
@@ -575,6 +626,27 @@ netcdf.putVar(ncid, vyVar, vy_sample);
 netcdf.putVar(ncid, vzVar, vz_sample);
 
 netcdf.close(ncid);
+%% check erosion pattern
+theta_sample = atan2d(y_sample,x_sample)+180;
+
+walls = find(surfs ==1);
+
+wall_bins = zeros(1,length(walls));
+for i=1:length(wall_bins)
+    ind = walls(i);
+  in = inpolygon(theta_sample,z_sample,THETA(i,:),Z(ind,:));
+  wall_bins(i) = sum(length(find(in)));
+end
+figure(201)
+patch(transpose(THETA),transpose(Z(walls,:)),0*transpose(Z(walls,:)),wall_bins,'FaceAlpha',1,'EdgeColor','k')
+% patch(transpose(X),transpose(Y),transpose(Z),flux(plotSet).*Y0(plotSet),'FaceAlpha',1,'EdgeColor','k')
+
+colorbar
+title({'Sampled Erosion'})
+xlabel('Theta [radian]') % x-axis label
+ylabel('z [m]') % y-axis label
+set(gca,'fontsize',16)
+save('erosion0.mat','wall_bins');
 function samples = sample_triangle(x,y,z,nP)
 x_transform = x - x(1);
 y_transform = y - y(1);

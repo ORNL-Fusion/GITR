@@ -1,9 +1,10 @@
 % fileID = fopen('Beers_Helicon_3D_100kW_HighDensity_Plasma-2.txt','r');
-fileID = fopen('Beers_Helicon_3D_100kW_LowDensity_Plasma.txt','r');
+%fileID = fopen('Beers_Helicon_3D_100kW_LowDensity_Plasma.txt','r');
 fileID = fopen(plasma_file,'r');
 A = fscanf(fileID, '%f');
 fclose(fileID);
 A = reshape(A,17,[]);
+Aorg=A;
 
 extras = 102:102:102000;
 A(:,extras) = [];
@@ -22,12 +23,19 @@ br = reshape(A(13,:),nY,nZ);
 
 dens = reshape(A(14,:),nY,nZ);
 electron_temp = reshape(A(15,:),nY,nZ);
+
 ion_temp = reshape(A(16,:),nY,nZ);
 slice = dens;
 figure(1)
 h = pcolor(y,z,dens')
 h.EdgeColor = 'none';
 colorbar
+
+% figure
+% h = pcolor(y,z,electron_temp')
+% h.EdgeColor = 'none';
+% colorbar
+
 
 val = interpn(y,z,dens,0,0);
 % set(gca, 'YDir', 'normal')
@@ -80,6 +88,8 @@ bz_interp(isnan(bz_interp)) = 0;
 te_interp(isnan(te_interp)) = 0;
 ti_interp(isnan(ti_interp)) = 0;
 ne_interp(isnan(ne_interp)) = 0;
+
+%%
 
 ncid = netcdf.create(['./profilesHelicon.nc'],'NC_WRITE')
 
