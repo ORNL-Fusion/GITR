@@ -435,7 +435,7 @@ X = [planes((plotSet),1),planes((plotSet),4),planes((plotSet),7)];
 Y = [planes((plotSet),2),planes((plotSet),5),planes((plotSet),8)];
 Z = [planes((plotSet),3),planes((plotSet),6),planes((plotSet),9)];
 figure(102)
-patch(transpose(X),transpose(Y),transpose(Z),e_value,'FaceAlpha',1,'EdgeColor','none')
+patch(transpose(X),transpose(Y),transpose(Z),element_angle,'FaceAlpha',1,'EdgeColor','none')
 colorbar
 xlabel('X [m]')
 ylabel('Y [m]')
@@ -511,7 +511,7 @@ zz = 0.0;
 distance = sqrt((centroid(:,1) - xx).^2 + (centroid(:,2) - yy).^2 + (centroid(:,3) - zz).^2);
 [v i] = min(distance);
 
-nP = 100000;
+nP = 1000000;
 erosion = flux.*Y0.*area';
 
 erosion_inds = find(erosion);
@@ -527,12 +527,12 @@ rand1 = rand(nP,1);
 element = interp1([0, erosion_sub_cdf],0:1:length(erosion_sub_cdf),rand1);
 
 element_ceil = ceil(element);
-x_sample = [];
-y_sample = [];
-z_sample = [];
-vx_sample = [];
-vy_sample = [];
-vz_sample = [];
+x_sample = zeros(1,nP);
+y_sample = zeros(1,nP);
+z_sample = zeros(1,nP);
+vx_sample = zeros(1,nP);
+vy_sample = zeros(1,nP);
+vz_sample = zeros(1,nP);
 m = 27;
 % meanE = 4.0;
 % v = sqrt(2*meanE*1.602e-19/m/1.66e-27);
@@ -567,43 +567,62 @@ plotSet = 1:length(planes);
 X = [planes((plotSet),1),planes((plotSet),4),planes((plotSet),7)];
 Y = [planes((plotSet),2),planes((plotSet),5),planes((plotSet),8)];
 Z = [planes((plotSet),3),planes((plotSet),6),planes((plotSet),9)];
-for i=1:nP
-i
-ind = erosion_inds(element_ceil(i));
- x_tri = X(erosion_inds(element_ceil(i)),:);
- y_tri = Y(erosion_inds(element_ceil(i)),:);
- z_tri = Z(erosion_inds(element_ceil(i)),:);
-    parVec = [x_tri(2) - x_tri(1); y_tri(2) - y_tri(1) ; z_tri(2) - z_tri(1)];
-    parVec = parVec./norm(parVec);
-samples = sample_triangle(x_tri,y_tri,z_tri,1);
+particle_counts = histcounts(erosion_inds(element_ceil),0.5:1:(length(plane_norm)+0.5));
+nP0 = 0;
 
-normal = inDir(ind)*(-abcd(ind,1:3)/plane_norm(ind));
-x_sample = [x_sample; samples(1) + buffer*normal(1)];
-y_sample = [y_sample; samples(2) + buffer*normal(2)];
-z_sample = [z_sample; samples(3) + buffer*normal(3)];
+for i=1:length(particle_counts)
+    if particle_counts(i) > 0
+% i
+% ind = erosion_inds(element_ceil);
+ x_tri = X(i,:);
+ y_tri = Y(i,:);
+ z_tri = Z(i,:);
+    parVec = [x_tri(2) - x_tri(1), y_tri(2) - y_tri(1) , z_tri(2) - z_tri(1)];
+    parVec = parVec./norm(parVec);
+samples = sample_triangle(x_tri,y_tri,z_tri,particle_counts(i));
+
+normal = inDir(i)*(-abcd(i,1:3)/plane_norm(i));
+
+v_inds = nP0+1:nP0+particle_counts(i);
+
+x_sample(v_inds) = samples(:,1) + buffer*normal(1);
+y_sample(v_inds) = samples(:,2) + buffer*normal(2);
+z_sample(v_inds) = samples(:,3) + buffer*normal(3);
 
 parVec2 = cross(parVec,normal);
-newV = vx(i)*parVec' + vy(i)*parVec2 + vz(i)*normal;
+
+newV = vx(v_inds)'.*parVec + vy(v_inds)'.*parVec2 + vz(v_inds)'.*normal;
 % newV = v(i)*normal;
-vx_sample = [vx_sample; newV(1)];
-vy_sample = [vy_sample; newV(2)];
-vz_sample = [vz_sample; newV(3)];
+vx_sample(v_inds) = newV(:,1);
+vy_sample(v_inds) = newV(:,2);
+vz_sample(v_inds) = newV(:,3);
 
-
+nP0 = nP0+particle_counts(i)
+    end
 end
+
+index_array = 1:1:nP;
+index_array(randperm(length(index_array)));
+x_sample = x_sample(index_array);
+y_sample = y_sample(index_array);
+z_sample = z_sample(index_array);
+vx_sample = vx_sample(index_array);
+vy_sample = vy_sample(index_array);
+vz_sample = vz_sample(index_array);
 
 figure(103)
 hold on
 theta_sample = atan2(y_sample,x_sample);
-scatter3(x_sample,y_sample,z_sample,'k')
+% scatter3(x_sample,y_sample,z_sample,'k')
 % scatter3(theta_sample,z_sample,0*z_sample,'r')
 % quiver3(x_sample,y_sample,z_sample,vx_sample./10./v,vy_sample./10./v,vz_sample./10./v)
 % quiver3(0*vx',0*vx',0*vx',vx'./v,vy'./v,vz'./v)
 
-xlabel('X [m]')
-ylabel('Y [m]')
+xlabel('Theta [degrees]')
+ylabel('z [m]')
 zlabel('Z [m]')
-title('Sample Particle Positions')
+title('Eroded Flux')
+axis([0 360 -0.2 0.2])
 
 ncid = netcdf.create(['./particle_source_helicon.nc'],'NC_WRITE')
  
@@ -627,26 +646,26 @@ netcdf.putVar(ncid, vzVar, vz_sample);
 
 netcdf.close(ncid);
 %% check erosion pattern
-theta_sample = atan2d(y_sample,x_sample)+180;
-
-walls = find(surfs ==1);
-
-wall_bins = zeros(1,length(walls));
-for i=1:length(wall_bins)
-    ind = walls(i);
-  in = inpolygon(theta_sample,z_sample,THETA(i,:),Z(ind,:));
-  wall_bins(i) = sum(length(find(in)));
-end
-figure(201)
-patch(transpose(THETA),transpose(Z(walls,:)),0*transpose(Z(walls,:)),wall_bins,'FaceAlpha',1,'EdgeColor','k')
-% patch(transpose(X),transpose(Y),transpose(Z),flux(plotSet).*Y0(plotSet),'FaceAlpha',1,'EdgeColor','k')
-
-colorbar
-title({'Sampled Erosion'})
-xlabel('Theta [radian]') % x-axis label
-ylabel('z [m]') % y-axis label
-set(gca,'fontsize',16)
-save('erosion0.mat','wall_bins');
+% theta_sample = atan2d(y_sample,x_sample)+180;
+% 
+% walls = find(surfs ==1);
+% 
+% wall_bins = zeros(1,length(walls));
+% for i=1:length(wall_bins)
+%     ind = walls(i);
+%   in = inpolygon(theta_sample,z_sample,THETA(i,:),Z(ind,:));
+%   wall_bins(i) = sum(length(find(in)));
+% end
+% figure(201)
+% patch(transpose(THETA),transpose(Z(walls,:)),0*transpose(Z(walls,:)),wall_bins,'FaceAlpha',1,'EdgeColor','k')
+% % patch(transpose(X),transpose(Y),transpose(Z),flux(plotSet).*Y0(plotSet),'FaceAlpha',1,'EdgeColor','k')
+% 
+% colorbar
+% title({'Sampled Erosion'})
+% xlabel('Theta [radian]') % x-axis label
+% ylabel('z [m]') % y-axis label
+% set(gca,'fontsize',16)
+% save('erosion0.mat','wall_bins');
 function samples = sample_triangle(x,y,z,nP)
 x_transform = x - x(1);
 y_transform = y - y(1);
