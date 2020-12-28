@@ -283,9 +283,9 @@ void getSlowDownDirections2 (float parallel_direction[], float perp_direction1[]
     ex2 = ex2/exnorm;
     ex3 = ex3/exnorm;
     
-    if(isnan(ex1) || isnan(ex2) || isnan(ex3)){
-       printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
-    }
+    //if(isnan(ex1) || isnan(ex2) || isnan(ex3)){
+    //   printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
+    //}
     // Find the second perpendicular direction 
     // by taking the cross product
     // (ez1,ez2,ez3)x(ex1,ex2,ex3)
