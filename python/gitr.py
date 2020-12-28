@@ -911,6 +911,7 @@ def nc_readSurface(filename='output/surface.nc'):
     EAdist = EAdist.reshape(nE, nA)
     plt.pcolor(EAdist)
     plt.colorbar()
+    plt.show()
     plt.savefig('EAdist.png')
     return grossDep, grossEro, sumWeightStrike, E, A, EAdist, surfaceNumbers, surfEdist
 

@@ -1,8 +1,8 @@
-beam He
-target Al
+beam D
+target Si
 nH 10000
 energy_start 1
-energy_end 2.5
+energy_end 3.2
 nE 20
 Escale log 
 angle_start 0
