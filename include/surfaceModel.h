@@ -421,6 +421,7 @@ void operator()(std::size_t indx) const {
             //    particles->test3[indx] = r9;
             //}            
                 //std::cout << " particle sputters with " << eInterpVal << aInterpVal <<  std::endl;
+		//printf("particle sputters with E A %f %f \n", eInterpVal, aInterpVal);
                   //newWeight=(Y0/sputtProb)*weight;
 		  newWeight=weight*totalYR;
     #if FLUX_EA > 0
@@ -430,6 +431,7 @@ void operator()(std::size_t indx) const {
                  (AdistInd >= 0) && (AdistInd < nAdist))
               {
                 //std::cout << " particle sputters with " << EdistInd << AdistInd <<  std::endl;
+		//printf("particle sputters with E A %i %i \n", EdistInd, AdistInd);
             #if USE_CUDA > 0
                   atomicAdd(&surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd],newWeight);
             #else      
