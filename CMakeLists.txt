@@ -1,15 +1,31 @@
 cmake_minimum_required(VERSION 3.1)
 project(gitr)
 
-set(CUDA 1)
+set(OPENMP 1)
 set(APPLE 0)
-set(_MPI 0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
 set(CXX_STANDARD_REQUIRED TRUE)
-set(CMAKE_CXX_FLAGS "-O3")
-set(CMAKE_C_FLAGS "-O3")
+
+# Captain! New code here
+include( CMake/download_goodies.cmake )
+
+# see if you can set the variable here and then just pass it in rather than set it in the parameter list
+set( libconfig_external "libconfig" )
+
+# empty string as build command should make it not happen
+# desired behavior: empty string = skip that step. But empty string apparently leads to undefined
+# and undefined variable means default steps. So, you need to include a variable value called
+# "skip_step" and if the string matches, set that to the empty string in the external_add
+download_goodies( name "${libconfig_external}"
+                  prefix "/libconfig"
+                  git_repository "git@github.com:hyperrealm/libconfig.git"
+                  cmake_args "" 
+                  build_command ""
+                  install_command "" ) #Captain! With these empty strings, it should not build
+# end new code
+
 # Set source files
 file(GLOB SRC_FILES src/*.cpp)
 file(GLOB TEST_FILES src/*.cpp test/tests_general.cpp)
@@ -26,22 +42,19 @@ include_directories( ${HEADER_DIRS})
 find_package(Thrust REQUIRED)
 find_package(NetCDF COMPONENTS CXX REQUIRED)
 find_package(LibConfig)
-IF (_MPI)
-  find_package(MPI REQUIRED)
-  IF (MPI_FOUND)
+find_package(MPI)
+IF (MPI_FOUND)
     include_directories(SYSTEM ${MPI_INCLUDE_PATH})
-  endif()
 endif()
 find_package(OpenMP REQUIRED)
 # Add includes
 include_directories(${NETCDF_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
-#include_directories(${THRUST_INCLUDE_DIRS})
+include_directories(${THRUST_INCLUDE_DIRS})
 include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 add_definitions(-DUSE_PARALLEL -DHAS_NETCDF_PAR_H)
 # Simulation defines
 add_definitions(-DUSE_CUDA=${USE_CUDA}
-	-DUSE_DOUBLE=${USE_DOUBLE}
         -DUSE_MPI=${USE_MPI}
         -DUSEIONIZATION=${USEIONIZATION}
         -DUSERECOMBINATION=${USERECOMBINATION}
@@ -163,10 +176,8 @@ endif ()
 target_link_libraries(GITR ${NETCDF_CXX_LIBRARIES})
 target_link_libraries(GITR ${NETCDF_C_LIBRARIES})
 target_link_libraries(GITR ${LIBCONFIGPP_LIBRARIES})
-IF (_MPI)
-  target_link_libraries(GITR ${MPI_C_LIBRARIES})
-  target_link_libraries(GITR ${MPI_CXX_LIBRARIES})
-endif()
+target_link_libraries(GITR ${MPI_C_LIBRARIES})
+target_link_libraries(GITR ${MPI_CXX_LIBRARIES})
 target_link_libraries(GITR YourLib)
 #target_link_libraries(GITR "-lstdc++fs")
 #test comment
@@ -174,39 +185,30 @@ target_link_libraries(tests YourLib)
 target_link_libraries(tests ${NETCDF_CXX_LIBRARIES})
 target_link_libraries(tests ${NETCDF_C_LIBRARIES})
 target_link_libraries(tests ${LIBCONFIGPP_LIBRARIES})
-IF (_MPI)
-  target_link_libraries(tests ${MPI_C_LIBRARIES})
-  target_link_libraries(tests ${MPI_CXX_LIBRARIES})
-endif()
+target_link_libraries(tests ${MPI_C_LIBRARIES})
+target_link_libraries(tests ${MPI_CXX_LIBRARIES})
 #target_link_libraries(tests "-lstdc++fs")
 
 #target_link_libraries(geom_test YourLib)
 #target_link_libraries(geom_test ${NETCDF_CXX_LIBRARIES})
 #target_link_libraries(geom_test ${NETCDF_C_LIBRARIES})
 #target_link_libraries(geom_test ${LIBCONFIGPP_LIBRARIES})
-IF (_MPI)
-  #target_link_libraries(geom_test ${MPI_C_LIBRARIES})
-  #target_link_libraries(geom_test ${MPI_CXX_LIBRARIES})
-endif()
+#target_link_libraries(geom_test ${MPI_C_LIBRARIES})
+#target_link_libraries(geom_test ${MPI_CXX_LIBRARIES})
 ##target_link_libraries(tests "-lstdc++fs")
 target_link_libraries(coulomb_tests YourLib)
 target_link_libraries(coulomb_tests ${NETCDF_CXX_LIBRARIES})
 target_link_libraries(coulomb_tests ${NETCDF_C_LIBRARIES})
 target_link_libraries(coulomb_tests ${LIBCONFIGPP_LIBRARIES})
-IF (_MPI)
-  target_link_libraries(coulomb_tests ${MPI_C_LIBRARIES})
-  target_link_libraries(coulomb_tests ${MPI_CXX_LIBRARIES})
-endif()
+target_link_libraries(coulomb_tests ${MPI_C_LIBRARIES})
+target_link_libraries(coulomb_tests ${MPI_CXX_LIBRARIES})
 #target_link_libraries(coulomb_tests "-lstdc++fs")
 target_link_libraries(field_tests YourLib)
 target_link_libraries(field_tests ${NETCDF_CXX_LIBRARIES})
 target_link_libraries(field_tests ${NETCDF_C_LIBRARIES})
 target_link_libraries(field_tests ${LIBCONFIGPP_LIBRARIES})
-IF (_MPI)
-  target_link_libraries(field_tests ${MPI_C_LIBRARIES})
-  target_link_libraries(field_tests ${MPI_CXX_LIBRARIES})
-endif()
-
+target_link_libraries(field_tests ${MPI_C_LIBRARIES})
+target_link_libraries(field_tests ${MPI_CXX_LIBRARIES})
 enable_testing()
 add_test(TestName tests)
 add_test(Coulomb_tests coulomb_tests)
@@ -215,10 +217,8 @@ add_test(field_tests field_tests)
 #target_link_libraries(atomic_tests ${NETCDF_CXX_LIBRARIES})
 #target_link_libraries(atomic_tests ${NETCDF_C_LIBRARIES})
 #target_link_libraries(atomic_tests ${LIBCONFIGPP_LIBRARIES})
-IF (_MPI)
 #target_link_libraries(atomic_tests ${MPI_C_LIBRARIES})
 #target_link_libraries(atomic_tests ${MPI_CXX_LIBRARIES})
-endif()
 ###target_link_libraries(atomic_tests "-lstdc++fs")
 enable_testing()
 add_test(TestName tests)
