@@ -4237,7 +4237,7 @@ for(int i=0; i<nP ; i++)
   MPI_Gather(&particleArray->hitWall[world_rank * nP / world_size],
              nP / world_size, MPI_FLOAT, &hitWallGather[0], nP / world_size,
              MPI_FLOAT, 0, MPI_COMM_WORLD);
-  MPI_Gather(&particleArray->wallHit[world_rank * nP / world_size],
+  MPI_Gather(&particleArray->hitWall[world_rank * nP / world_size],
              nP / world_size, MPI_FLOAT, &surfaceHitGather[0], nP / world_size,
              MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Gather(&particleArray->weight[world_rank * nP / world_size],
