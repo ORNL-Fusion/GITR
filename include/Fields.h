@@ -10,7 +10,8 @@
 #include "array.h"
 #if USE_MPI > 0
 #include "mpi.h"
-#include <netcdf_par.h>
+#include "netcdf.h"
+#include "netcdf_par.h"
 #endif
 #include "utils.h"
 #include <cstdlib>
