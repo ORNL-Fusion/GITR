@@ -3,7 +3,7 @@
 from mpi4py import MPI
 #import generate_ftridyn_input_gitr
 #import analyze_ftridyn_simulations_gitr
-import ftridyn
+#import ftridyn
 import subprocess
 import os
 import time
@@ -706,7 +706,7 @@ def func1(path,E,a,r,d,specNum):
             # put /dev/null fds on 1 and 2
             os.dup2(null_fds[0], 1)
             os.dup2(null_fds[1], 2)
-            ftridyn.ftridyn_cpmi(name1+name2+'0001.IN')
+            #ftridyn.ftridyn_cpmi(name1+name2+'0001.IN')
             # restore file descriptors so I can print the results
             os.dup2(save[0], 1)
             os.dup2(save[1], 2)
@@ -1094,6 +1094,6 @@ def main(func,argv):
 
 if __name__ == "__main__":
     print('Argument List:', str(sys.argv[1:]))
-    print('Using ftridyn library from ', ftridyn.__file__)
+    #print('Using ftridyn library from ', ftridyn.__file__)
     main(func1,sys.argv[1:])
     #main(func2)

@@ -1,4 +1,5 @@
 export LIBCONFIGPP_INCLUDE=/usr/local/include
+export LIBCONFIGLIB=/opt/local/lib/libconfig++.dylib
 export THRUST_INCLUDE_DIRS=$HOME/Code/thrust/include
 export THRUST_DIR=$HOME/code/thrust/
 export PATH=/usr/local/Cellar/netcdf/4.6.1_1/:$PATH
