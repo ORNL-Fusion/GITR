@@ -1,6 +1,13 @@
-import matplotlib
-#matplotlib.use('Agg')
+import tkinter
 import matplotlib.pyplot as plt
+import matplotlib
+from sys import platform
+if platform == "linux" or platform == "linux2":
+    # linux
+    matplotlib.use('TkAgg')
+elif platform == "darwin":
+    # OS X
+    matplotlib.use('TkAgg')
 import numpy as np
 import numpy.matlib as ml
 import gitr
@@ -581,30 +588,27 @@ def find_strike_points(solps_geometry_filename='/Users/tyounkin/Dissertation/ITE
 
 
 def get_target_coordinates(solps_geometry_filename='/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry'):
+
+    # Get number of mesh elements in x and y (SOLPS coordinates), nx, ny.
+    # As well as the coordinates of the corners, crx, cry, 
+    # and the region number from solps_geometry_filename
     nx, ny, crx, cry, region = read_b2f_geometry(solps_geometry_filename)
+    print('Number of SOLPS gridpoints in x: ', nx)
+    print('Number of SOLPS gridpoints in y: ', ny)
 
     geom_shape = crx.shape
-    #print('crx_size',crx.shape)
-    #print('region_size',region.shape)
     bottom_left = 0
     bottom_right = 1
     top_left = 2;
     top_right = 3;
 
-    r_inner_target = crx[0,1:,bottom_right] #[bottom_right, top_right]]
-    z_inner_target = cry[0,1:,bottom_right] #[bottom_right, top_right]]
-    r_outer_target = crx[-1,1:,bottom_left] #[bottom_left, top_left]]
-    z_outer_target = cry[-1,1:,bottom_left] #[bottom_left, top_left]]
-
-    r_inner_target = np.append(r_inner_target[0,:], r_inner_target[1,-1])
-    z_inner_target = np.append(z_inner_target[0,:], z_inner_target[1,-1])
-    r_outer_target = np.append(r_outer_target[0,:], r_outer_target[1,-1])
-    z_outer_target = np.append(z_outer_target[0,:], z_outer_target[1,-1])
-
-    #print('r_inner_target',r_inner_target)
-    #print('z_inner_target',z_inner_target)
-    #print('r_outer_target',r_outer_target)
-    #print('z_outer_target',z_outer_target)
+    r_inner_target = crx[0,1:,bottom_right]
+    z_inner_target = cry[0,1:,bottom_right]
+    r_outer_target = crx[-1,1:,bottom_left]
+    z_outer_target = cry[-1,1:,bottom_left]
+    print('Number of inner and outer target points (should be ny-1): ',r_inner_target.size)
+    # Therefore there should be ny-2 line segments from the solps mesh to
+    # be introduced to the gitr geometry
 
     return r_inner_target,z_inner_target, \
            r_outer_target,z_outer_target
