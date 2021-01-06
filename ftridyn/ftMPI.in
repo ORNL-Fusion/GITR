@@ -1,5 +1,5 @@
 beam D
-target Si
+target Al
 nH 10000
 energy_start 1
 energy_end 3.2
@@ -7,7 +7,7 @@ nE 20
 Escale log 
 angle_start 0
 angle_end 89.9
-nA 6
+nA 9
 roughness_start 1.0
 roughness_end 1.0
 nR 1
@@ -16,6 +16,6 @@ maxEdist 20.0
 nEdist_ref 120
 maxEdist_ref 1000
 nAdist 50
-use_exe 0
-exe /Users/tyounkin/Code/ftridyn2/src/shell_FtridynGITR.sh
-data /Users/tyounkin/Code/gitr2/ftridyn/table1.txt
+use_exe 1
+exe /Users/tqd/Code/GITR/ftridyn/shell_Ftridyn.sh
+data /Users/tqd/Code/fractal-tridyn/utils/table1.txt

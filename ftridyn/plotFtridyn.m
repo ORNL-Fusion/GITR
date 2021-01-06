@@ -1,7 +1,7 @@
-% close all
-% clear all
+close all
+clear all
 
-file = 'ftridynBackground.nc';
+file = 'ftridynBackgroundDSi.nc';
 ncid = netcdf.open(file,'NC_NOWRITE');
 [dimname, nE] = netcdf.inqDim(ncid,0);
 [dimname, nA] = netcdf.inqDim(ncid,1);
@@ -40,6 +40,30 @@ h.EdgeColor = 'none';
 colorbar
  set(gca, 'XScale', 'log')
     end
+else
+        this_spyld = spyld
+    figure(1)
+h = pcolor(energy,angle,this_spyld)
+h.EdgeColor = 'none';
+colorbar
+ set(gca, 'XScale', 'log')
+ set(gca, 'ColorScale', 'log')
+  xlabel('Energy [eV]')
+ ylabel('Angle [degrees]')
+
+title({'Sputtering Yield','D on Si'})
+ figure(2)
+ semilogy(energy,this_spyld(1,:),'LineWidth',2)
+ hold on
+ for i=2:length(angle)
+     semilogy(energy,this_spyld(i,:),'LineWidth',2)
+ end
+ xlabel('Energy [eV]')
+ ylabel('Yield')
+legend(cellstr(num2str(energy)))
+title({'Sputtering Yield','D on Si'})
+ legend
+ axis([0 max(energy) 2e-4 3e-1])
 end
 figure(10)
 plot(eDistEgrid,eDist(:,10,43,1))
