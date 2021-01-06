@@ -1,15 +1,21 @@
 # python library tools for gitr
 
+show_plots = True
 from distutils.dir_util import copy_tree
 import sys
+from sys import platform
+import tkinter
+import matplotlib.pyplot as plt
+import matplotlib
+if platform == "linux" or platform == "linux2":
+    # linux
+    matplotlib.use('TkAgg')
+elif platform == "darwin":
+    # OS X
+    matplotlib.use('TkAgg')
 # sys.path.append('/home/tqd/code/netcdf4-python')
 import netCDF4
 import numpy as np
-# import Tkinter
-import matplotlib
-# matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-#matplotlib.use('agg')
 # import cv2
 import io, libconf
 # from mpl_toolkits.mplot3d import Axes3D
@@ -948,9 +954,10 @@ def plotPitch(filename='positions.nc'):
     plt.savefig('vs.png')
 
 
-def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
-                                  solps_mesh_extra='/Users/tyounkin/Downloads/mesh.extra.iter', \
-                                  solps_geom = '/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry'):
+def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg',
+        solps_mesh_extra='/Users/tyounkin/Downloads/mesh.extra.iter',
+        solps_geom = '/Users/tyounkin/Dissertation/ITER/mq3/solps/b2fgmtry',
+        show_plots=True):
     # This program uses the solps-iter mesh.extra file in combination
     # with the inner and outer (left and right) divertor target
     # coordinates which come from the solps-iter-data interpolation
@@ -961,12 +968,25 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
     # This geometry is then written to a config (cfg) file for
     # use in GITR simulation
 
+    # Import the mesh extra file as a numpy array
+    # This file is in the form of 4 columns, and n rows
+    # The n rows represent the number of line segments making up 
+    # the geometry
     solps_mesh = np.loadtxt(solps_mesh_extra)
+    size_mesh = solps_mesh.shape
+    print('Successfully read ', solps_mesh_extra)
+    print(solps_mesh_extra, ' contains ', size_mesh[0], ' rows, and ', size_mesh[1], 'columns')
 
-    plt.plot(solps_mesh[:, [0, 2]].transpose(), solps_mesh[:, [1, 3]].transpose())
-    plt.show()
+    # Plotting the line segments this way will show all of the line segments
+    # independently. They are not necessarily in order
+    plt.plot(solps_mesh[:, [0, 2]].transpose(), solps_mesh[:, [1, 3]].transpose(),'k-o',markersize=2)
+    plt.title(solps_mesh_extra)
+    if show_plots:
+        plt.show()
     plt.close()
 
+    # At this stage, indices of line segments must be manually selected
+    # to keep aspects of the surface mesh, and order them properly
     manual_indices = np.array(range(88, 98))
     manual_indices = np.append(manual_indices, range(71, 82))
     manual_indices = np.append(manual_indices, range(68, 71))
@@ -978,15 +998,20 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
     manual_indices = np.append(manual_indices, range(53, 68))
     manual_indices = np.append(manual_indices, range(82, 87))
     manual_indices = np.append(manual_indices, [127, 87])
+    # Matlab indices
     # [89:98,72:82,69:71,51,37:45,35,53,52,36,1:34,50,54:68
-    # ,83:87,128,88]; Matlab indices
+    # ,83:87,128,88];
 
-    #print(manual_indices)
+    # Put the first two r, z columns into separate vectors
+    # then append the end of the final line segment.
+    # This structure makes up the divertor and first wall structures.
     r_iter = solps_mesh[manual_indices, 0]
     z_iter = solps_mesh[manual_indices, 1]
     r_iter = np.append(r_iter, solps_mesh[87, 2])
     z_iter = np.append(z_iter, solps_mesh[87, 3])
 
+    # Specifying manual indices for the dome structure
+    # which will be appended to the divertor/wall structure
     r_dome = solps_mesh[range(98, 117), 0]
     z_dome = solps_mesh[range(98, 117), 1]
     r_dome = np.append(r_dome, solps_mesh[134, 0])
@@ -994,26 +1019,36 @@ def make_gitr_geometry_from_solps(gitr_geometry_filename='gitr_geometry.cfg', \
 
     r_iter = np.append(r_iter, r_dome)
     z_iter = np.append(z_iter, z_dome)
-    plt.plot(r_iter, z_iter)
-    plt.scatter(r_iter,z_iter)
+
+    # Plot the manually selected indices in order of their line segments
+    wall_geo, = plt.plot(np.append(r_iter, r_iter[0]), np.append(z_iter, z_iter[0]),'k-o',markersize=2, label='Iter wall geometry')
+    plt.title(solps_mesh_extra)
     plt.title('ITER Geometry Points',fontsize=20)
     plt.xlabel('r[m]',fontsize=20)
     plt.ylabel('z[m]',fontsize=20)
+    #if show_plots:
+    #    plt.show()
     plt.savefig('iter_rz.png')
     print('Number of points in ITER Geometry from SOLPS:',r_iter.size)
 
+    # Obtain inner and outer (left and right) divertor target coordinates
+    # from the solps computational mesh
     r_left_target,z_left_target,r_right_target,z_right_target = solps.get_target_coordinates(solps_geom)
-    plt.scatter(r_left_target,z_left_target)
-    plt.scatter(r_right_target,z_right_target)
-    plt.xlim(4, 6.4)
-    plt.ylim(-5, 2)
+
+    inner_plot, = plt.plot(r_left_target,z_left_target,'b-o',markersize=2, label='Inner divertor')
+    outer_plot, = plt.plot(r_right_target,z_right_target,'r-o',markersize=2, label='Outer divertor')
+    plt.legend([wall_geo, inner_plot, outer_plot], ['Iter wall geometry','Inner divertor', 'Outer divertor'])
+    if show_plots:
+        plt.show()
     plt.savefig('iter_rz_targets.png')
     plt.close()
-    print('number r_right_target:',len(r_right_target))
+   
+    # Replace points from the mesh extra with points
+    # that are in the domain of right/left target
     r_final, z_final = replace_line_segment(r_right_target, z_right_target, r_iter, z_iter)
     r_final, z_final = replace_line_segment(r_left_target, z_left_target, r_final, z_final)
     print('Number of points in ITER geometry after adding target:',r_final.size)
-    print('r_final',r_final)
+    
     plt.plot(r_final, z_final,linewidth=0.4)
     plt.scatter(r_final,z_final,s=0.4)
     plt.title('ITER Geometry Points',fontsize=20)
@@ -1454,10 +1489,14 @@ def replace_line_segment(x_priority, y_priority, x_base, y_base):
     y_final = y_base;
 
     all_close = np.array(0);
+    
     for i in range(len(x_priority) - 1):
-        distances = np.sqrt(np.power(x_priority[i] - x_base, 2) + np.power(y_priority[i] - y_base, 2));
-        condition = (distances < np.sqrt(
-            np.power((x_priority[i] - x_priority[i + 1]), 2) + np.power((y_priority[i] - y_priority[i + 1]), 2)));
+        distances = np.sqrt(np.power(x_priority[i] - x_base, 2) +
+                    np.power(y_priority[i] - y_base, 2));
+
+        condition = (distances < np.sqrt(np.power((x_priority[i] - x_priority[i + 1]), 2) +
+                                         np.power((y_priority[i] - y_priority[i + 1]), 2)));
+        
         close_ones = np.where(condition)[0];
         all_close = np.append(all_close,close_ones);
 
@@ -1465,10 +1504,12 @@ def replace_line_segment(x_priority, y_priority, x_base, y_base):
     remove_indices = np.unique(all_close);
     #print('remove indices',remove_indices)
     d1 = np.sqrt(
-        np.power((x_priority[0] - x_base[remove_indices[0]]), 2) + np.power((y_priority[0] - y_base[remove_indices[0]]),
-                                                                            2));
-    d2 = np.sqrt(np.power((x_priority[0] - x_base[remove_indices[-1]]), 2) + np.power(
-        (y_priority[0] - y_base[remove_indices[-1]]), 2));
+            np.power((x_priority[0] - x_base[remove_indices[0]]), 2) +
+            np.power((y_priority[0] - y_base[remove_indices[0]]),2));
+
+    d2 = np.sqrt(
+            np.power((x_priority[0] - x_base[remove_indices[-1]]), 2) +
+            np.power((y_priority[0] - y_base[remove_indices[-1]]), 2));
 
     if (d2 < d1):
         x_priority = np.flip(x_priority, 0)
@@ -1476,6 +1517,7 @@ def replace_line_segment(x_priority, y_priority, x_base, y_base):
 
     #print('x_priority',x_priority)
 
+    # Insert the prioritized points into the proper place in the array
     x_final = np.append(x_base[0:(remove_indices[0] - 1)], x_priority)
     x_final = np.append(x_final, x_base[(remove_indices[-1] + 1):]);
     y_final = np.append(y_base[0:(remove_indices[0] - 1)], y_priority)
