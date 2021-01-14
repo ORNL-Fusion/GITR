@@ -8,6 +8,21 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
 set(CXX_STANDARD_REQUIRED TRUE)
 
+# Captain! New code here
+include( CMake/download_goodies.cmake )
+
+# see if you can set the variable here and then just pass it in rather than set it in the parameter list
+set( libconfig_external "libconfig" )
+
+# empty string as build command should make it not happen
+download_goodies( name "${libconfig_external}"
+                  prefix "/libconfig"
+                  git_repository "git@github.com:hyperrealm/libconfig.git"
+                  cmake_args "" 
+                  build_command ""
+                  install_command "" ) #Captain! With these empty strings, it should not build
+# end new code
+
 # Set source files
 file(GLOB SRC_FILES src/*.cpp)
 file(GLOB TEST_FILES src/*.cpp test/tests_general.cpp)
