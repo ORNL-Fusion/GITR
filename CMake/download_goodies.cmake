@@ -17,13 +17,24 @@ cmake_parse_arguments( "${prepend_string}"
                        "${key_multi_val}"
                        "${ARGN}" )
 
-#message( STATUS "Ahoy, Captain!")
-#message( STATUS "name: ${external_name}")
-#message( STATUS "prefix: ${external_prefix}")
 message( STATUS "build_command: ${external_build_command}")
 message( STATUS "install_command: ${external_install_command}")
 
-# If build_command not set, 
+if( NOT DEFINED external_build_command )
+  message( STATUS "Captain! external_build_command not defined. Setting to empty string:")
+  set( external_build_command "" )
+  if( DEFINED external_build_command )
+    message( STATUS "external_build_command set to: ${external_build_command}")
+  endif()
+endif()
+
+if( NOT DEFINED external_install_command )
+  message( STATUS "Captain! external_install_command not defined. Setting to empty string:")
+  set( external_install_command "" )
+  if( DEFINED external_install_command )
+    message( STATUS "external_install_command set to: ${external_install_command}")
+  endif()
+endif()
 
 # empty strings handled differently than variables set to empty strings
 ExternalProject_Add( ${external_name} 
