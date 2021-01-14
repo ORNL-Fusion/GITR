@@ -15,6 +15,9 @@ include( CMake/download_goodies.cmake )
 set( libconfig_external "libconfig" )
 
 # empty string as build command should make it not happen
+# desired behavior: empty string = skip that step. But empty string apparently leads to undefined
+# and undefined variable means default steps. So, you need to include a variable value called
+# "skip_step" and if the string matches, set that to the empty string in the external_add
 download_goodies( name "${libconfig_external}"
                   prefix "/libconfig"
                   git_repository "git@github.com:hyperrealm/libconfig.git"
