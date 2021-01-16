@@ -9,21 +9,39 @@ set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
 set(CXX_STANDARD_REQUIRED TRUE)
 
 # Captain! New code here
-include( CMake/download_goodies.cmake )
+# header only library, skip the build as well as install
+include( ExternalProject )
+set( thrust_external "thrust" )
+ExternalProject_Add( thrust
+                     PREFIX "/thrust" 
+                     GIT_REPOSITORY "git@github.com:NVIDIA/thrust.git" 
+                     CONFIGURE_COMMAND ""
+                     BUILD_COMMAND ""
+                     INSTALL_COMMAND "" )
 
-# see if you can set the variable here and then just pass it in rather than set it in the parameter list
+# skip the install on all these
 set( libconfig_external "libconfig" )
+ExternalProject_Add( libconfig
+                     PREFIX "/libconfig"
+                     GIT_REPOSITORY "git@github.com:hyperrealm/libconfig.git" 
+                     INSTALL_COMMAND "" )
 
-# empty string as build command should make it not happen
-# desired behavior: empty string = skip that step. But empty string apparently leads to undefined
-# and undefined variable means default steps. So, you need to include a variable value called
-# "skip_step" and if the string matches, set that to the empty string in the external_add
-download_goodies( name "${libconfig_external}"
-                  prefix "/libconfig"
-                  git_repository "git@github.com:hyperrealm/libconfig.git"
-                  cmake_args "" 
-                  build_command ""
-                  install_command "" ) #Captain! With these empty strings, it should not build
+# for now, leave the install command
+set( netcdf-c_external "netcdf-c" )
+ExternalProject_Add( netcdf-c
+                     PREFIX "/netcdf-c"
+                     GIT_REPOSITORY "git@github.com:Unidata/netcdf-c.git"
+                     CMAKE_ARGS "-DENABLE_DAP=OFF" )
+
+# do not configure, just build
+set( netcdf-cxx4_external "netcdf-cxx4" )
+ExternalProject_Add( netcdf-cxx4
+                     PREFIX "/netcdf-cxx4"
+                     GIT_REPOSITORY "git@github.com:Unidata/netcdf-cxx4.git" )
+
+add_dependencies( netcdf-cxx4 netcdf-c )
+# Captain! Abort here
+
 # end new code
 
 # Set source files
@@ -38,6 +56,8 @@ message("${TEST_FILES}")
 file(GLOB HEADER_FILES include/*.h include/*.hpp test/tests_general.hpp)
 file(GLOB HEADER_DIRS include test)
 add_library(YourLib ${TEST_FILES})
+# Captain!
+add_dependencies( YourLib thrust netcdf-c netcdf-cxx4 libconfig )
 include_directories( ${HEADER_DIRS})
 find_package(Thrust REQUIRED)
 find_package(NetCDF COMPONENTS CXX REQUIRED)
@@ -144,8 +164,11 @@ endif()
 
 if (${OPENMP})
     ADD_EXECUTABLE(tests test/file_io_tests.cpp)
+    add_dependencies( tests thrust netcdf-c netcdf-cxx4 libconfig )
     ADD_EXECUTABLE(coulomb_tests test/coulomb_tests.cpp)
+    add_dependencies( coulomb_tests thrust netcdf-c netcdf-cxx4 libconfig )
     ADD_EXECUTABLE(field_tests test/field_tests.cpp)
+    add_dependencies( field_tests thrust netcdf-c netcdf-cxx4 libconfig )
     #ADD_EXECUTABLE(atomic_tests test/atomic_tests.cpp)
     #ADD_EXECUTABLE(geom_test test/geometry_tests.cpp)
     Message("Enabling OpenMP backend")
@@ -166,6 +189,9 @@ if (${CPP_PAR})
     add_executable(GITR ${SRC_FILES})
     add_definitions("-x c++ -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP -DCPP_PAR -Wno-unused-local-typedef")
 endif ()
+
+# Captain! Add dependencies
+add_dependencies( GITR thrust netcdf-c netcdf-cxx4 libconfig )
 
 # Add debug libraries
 if (${CUDA_DEBUG})
