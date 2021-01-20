@@ -8,5 +8,4 @@ jobs:
     steps:
     - name: action_step
       id: ahoy
-      uses: actions/checkout@v2
       uses: stonecoldhughes/gitr_ci_action@master
