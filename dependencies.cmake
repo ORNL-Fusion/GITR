@@ -7,6 +7,7 @@ set( dependencies "" )
 find_package(Thrust)
 if( NOT THRUST_FOUND )
 
+message( "Ahoy, Captain! Downloading thrust..." )
 ExternalProject_Add( thrust
                      PREFIX "/thrust" 
                      GIT_REPOSITORY "git@github.com:NVIDIA/thrust.git" 
@@ -22,6 +23,7 @@ endif()
 find_package(LibConfig)
 if( NOT LIBCONFIG_FOUND )
 
+message( "Ahoy, Captain! Downloading libconfig..." )
 ExternalProject_Add( libconfig
                      PREFIX "/libconfig"
                      GIT_REPOSITORY "git@github.com:hyperrealm/libconfig.git" 
@@ -36,6 +38,7 @@ endif()
 
 find_package(NetCDF COMPONENTS CXX)
 if( NOT NETCDF_FOUND )
+message( "Ahoy, Captain! Downloading netcdf-c and netcdf-cxx4..." )
 ExternalProject_Add( netcdf-c
                      PREFIX "/netcdf-c"
                      GIT_REPOSITORY "git@github.com:Unidata/netcdf-c.git"
