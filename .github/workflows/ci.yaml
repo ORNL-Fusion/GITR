@@ -1,0 +1,11 @@
+# This file defines the CI build step for GITR
+name: GITR CI
+on: push
+jobs:
+  ahoy_captain_job:
+    runs_on: ubuntu-20.04
+    name: try to build
+    steps:
+    - name: action_step
+      id: ahoy
+      uses: stonecoldhughes/gitr_ci_action@master
