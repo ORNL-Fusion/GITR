@@ -1,5 +1,6 @@
 # This file defines the CI build step for GITR
-# What if you try to run a script here instead of the entrypoint?
+# Captain! Embed the action in the repo instead of having it be a public one
+# Captain! Cache the steps to make it run faster. This can be tested.
 name: GITR CI
 on: push
 jobs:
