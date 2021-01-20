@@ -10,21 +10,25 @@ jobs:
       with : 
         repository : Unidata/netcdf-c
         path : netcdf-c
+        token : ${{ secrets.public_access }}
     - name : clone_netcdf_cxx_repo
       uses : actions/checkout@v2
       with : 
         repository : Unidata/netcdf-cxx4
         path : netcdf-cxx4
+        token : ${{ secrets.public_access }}
     - name : clone_libconfig_repo
       uses : actions/checkout@v2
       with : 
         repository : hyperrealm/libconfig
         path : libconfig
+        token : ${{ secrets.public_access }}
     - name : clone_thrust_repo
       uses : actions/checkout@v2
       with :
         repository : NVIDIA/thrust
         path : thrust
+        token : ${{ secrets.public_access }}
     - name : clone_gitr_repo
       uses: actions/checkout@v2
     - name: build_gitr_action
