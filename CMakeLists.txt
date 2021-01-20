@@ -10,38 +10,7 @@ set(CXX_STANDARD_REQUIRED TRUE)
 
 # Captain! New code here
 # header only library, skip the build as well as install
-include( ExternalProject )
-set( thrust_external "thrust" )
-ExternalProject_Add( thrust
-                     PREFIX "/thrust" 
-                     GIT_REPOSITORY "git@github.com:NVIDIA/thrust.git" 
-                     CONFIGURE_COMMAND ""
-                     BUILD_COMMAND ""
-                     INSTALL_COMMAND "" )
-
-# skip the install on all these
-set( libconfig_external "libconfig" )
-ExternalProject_Add( libconfig
-                     PREFIX "/libconfig"
-                     GIT_REPOSITORY "git@github.com:hyperrealm/libconfig.git" 
-                     INSTALL_COMMAND "" )
-
-# for now, leave the install command
-set( netcdf-c_external "netcdf-c" )
-ExternalProject_Add( netcdf-c
-                     PREFIX "/netcdf-c"
-                     GIT_REPOSITORY "git@github.com:Unidata/netcdf-c.git"
-                     CMAKE_ARGS "-DENABLE_DAP=OFF" )
-
-# do not configure, just build
-set( netcdf-cxx4_external "netcdf-cxx4" )
-ExternalProject_Add( netcdf-cxx4
-                     PREFIX "/netcdf-cxx4"
-                     GIT_REPOSITORY "git@github.com:Unidata/netcdf-cxx4.git" )
-
-add_dependencies( netcdf-cxx4 netcdf-c )
-# Captain! Abort here
-
+include( dependencies.cmake )
 # end new code
 
 # Set source files
@@ -57,11 +26,10 @@ file(GLOB HEADER_FILES include/*.h include/*.hpp test/tests_general.hpp)
 file(GLOB HEADER_DIRS include test)
 add_library(YourLib ${TEST_FILES})
 # Captain!
-add_dependencies( YourLib thrust netcdf-c netcdf-cxx4 libconfig )
+if( dependencies )
+add_dependencies( YourLib ${dependencies} )
+endif()
 include_directories( ${HEADER_DIRS})
-find_package(Thrust REQUIRED)
-find_package(NetCDF COMPONENTS CXX REQUIRED)
-find_package(LibConfig)
 find_package(MPI)
 IF (MPI_FOUND)
     include_directories(SYSTEM ${MPI_INCLUDE_PATH})
@@ -164,11 +132,17 @@ endif()
 
 if (${OPENMP})
     ADD_EXECUTABLE(tests test/file_io_tests.cpp)
-    add_dependencies( tests thrust netcdf-c netcdf-cxx4 libconfig )
+if( dependencies )
+add_dependencies( tests ${dependencies} )
+endif()
     ADD_EXECUTABLE(coulomb_tests test/coulomb_tests.cpp)
-    add_dependencies( coulomb_tests thrust netcdf-c netcdf-cxx4 libconfig )
+if( dependencies )
+add_dependencies( coulomb_tests ${dependencies} )
+endif()
     ADD_EXECUTABLE(field_tests test/field_tests.cpp)
-    add_dependencies( field_tests thrust netcdf-c netcdf-cxx4 libconfig )
+if( dependencies )
+add_dependencies( field_tests ${dependencies} )
+endif()
     #ADD_EXECUTABLE(atomic_tests test/atomic_tests.cpp)
     #ADD_EXECUTABLE(geom_test test/geometry_tests.cpp)
     Message("Enabling OpenMP backend")
@@ -191,7 +165,9 @@ if (${CPP_PAR})
 endif ()
 
 # Captain! Add dependencies
-add_dependencies( GITR thrust netcdf-c netcdf-cxx4 libconfig )
+if( dependencies )
+add_dependencies( GITR ${dependencies} )
+endif()
 
 # Add debug libraries
 if (${CUDA_DEBUG})
