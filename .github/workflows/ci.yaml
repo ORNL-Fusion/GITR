@@ -1,6 +1,3 @@
-# This file defines the CI build step for GITR
-# Captain! Embed the action in the repo instead of having it be a public one
-# Captain! Cache the steps to make it run faster. This can be tested.
 name: GITR CI
 on: push
 jobs:
@@ -8,6 +5,26 @@ jobs:
     runs-on: ubuntu-20.04
     name: try to build
     steps:
+    - name : clone_netcdf_repo
+      uses : actions/checkout@v2
+      with : 
+        repository : Unidata/netcdf-c
+        path : netcdf-c
+    - name : clone_netcdf_cxx_repo
+      uses : actions/checkout@v2
+      with : 
+        repository : Unidata/netcdf-cxx4
+        path : netcdf-cxx4
+    - name : clone_libconfig_repo
+      uses : actions/checkout@v2
+      with : 
+        repository : hyperrealm/libconfig
+        path : libconfig
+    - name : clone_thrust_repo
+      uses : actions/checkout@v2
+      with :
+        repository : NVIDIA/thrust
+        path : thrust
     - name : clone_gitr_repo
       uses: actions/checkout@v2
     - name: build_gitr_action
