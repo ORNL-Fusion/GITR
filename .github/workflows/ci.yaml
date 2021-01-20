@@ -3,7 +3,7 @@ name: GITR CI
 on: push
 jobs:
   ahoy_captain_job:
-    runs_on: ubuntu-20.04
+    runs-on: ubuntu-20.04
     name: try to build
     steps:
     - name: action_step
