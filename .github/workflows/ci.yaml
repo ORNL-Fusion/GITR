@@ -19,6 +19,7 @@ jobs:
         path : netcdf-c
         token : ${{ secrets.PUBLIC_ACCESS }}
     - id : build_install_netcdf_repo
+      name : cmake_netcdf_repo
       run : |
         echo "::set-output name=netcdf_library::${GITHUB_WORKSPACE}"
         pushd ${GITHUB_WORKSPACE}/netcdf-c
