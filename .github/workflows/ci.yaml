@@ -5,6 +5,9 @@ jobs:
     runs-on: ubuntu-20.04
     name: build gitr
     steps:
+    - uses : actions/checkout@v2
+      with : 
+        ref : update/build_system
     - id : build_gitr_action
       name: build_gitr_action
       uses: stonecoldhughes/gitr_ci_action@master
