@@ -28,6 +28,7 @@ jobs:
         cmake -DENABLE_DAP=OFF ..
         make -j
         make install
+        ls /usr/local/lib
 
   build_gitr:
     runs-on: ubuntu-20.04
