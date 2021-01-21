@@ -25,7 +25,7 @@ jobs:
         pushd ${GITHUB_WORKSPACE}/netcdf-c
         mkdir build
         pushd build
-        cmake -DENABLE_DAP=OFF
+        cmake -DENABLE_DAP=OFF ..
         make -j
         make install
 
