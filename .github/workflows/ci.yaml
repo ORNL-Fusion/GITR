@@ -1,35 +1,60 @@
 name: GITR CI
 on: push
 jobs:
-  ahoy_captain_job:
+  clone_dependencies:
     runs-on: ubuntu-20.04
-    name: try to build
+    name: clone dependencies
+    outputs :
+      netcdf_library : ${{ steps.clone_netcdf_repo.outputs.netcdf_library }}
     steps:
-    - name : clone_netcdf_repo
+    - id : clone_netcdf_repo
+      name : clone_netcdf_repo
       uses : actions/checkout@v2
       with : 
         repository : Unidata/netcdf-c
         path : netcdf-c
         token : ${{ secrets.PUBLIC_ACCESS }}
+      run : |
+        echo "::set-output name=netcdf_library::${GITHUB_WORKSPACE}"
+        pushd ${GITHUB_WORKSPACE}/netcdf-c
+        mkdir build
+        pushd build
+        cmake -DENABLE_DAP=OFF
+        make -j
+        make install
+
     - name : clone_netcdf_cxx_repo
       uses : actions/checkout@v2
       with : 
         repository : Unidata/netcdf-cxx4
         path : netcdf-cxx4
         token : ${{ secrets.PUBLIC_ACCESS }}
+
     - name : clone_libconfig_repo
       uses : actions/checkout@v2
       with : 
         repository : hyperrealm/libconfig
         path : libconfig
         token : ${{ secrets.PUBLIC_ACCESS }}
+
     - name : clone_thrust_repo
       uses : actions/checkout@v2
       with :
         repository : NVIDIA/thrust
         path : thrust
         token : ${{ secrets.PUBLIC_ACCESS }}
-    - name : clone_gitr_repo
+
+  build_gitr:
+    runs-on: ubuntu-20.04
+    name: build gitr
+    needs : clone_dependencies
+    steps:
+    - id : output_location
+      run : |
+        echo Captain! netcdf location: ${{ needs.clone_dependencies.outputs.netcdf_library }}
+        
+    - id : call_checkoutv2
       uses: actions/checkout@v2
-    - name: build_gitr_action
+    - id : build_gitr_action
+      name: build_gitr_action
       uses: stonecoldhughes/gitr_ci_action@master
