@@ -575,6 +575,9 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[i].intercept_z = geom["intercept"][i];
        boundaries[i].length = geom["length"][i];
        //std::cout << "got Z slope length " << std::endl;
+  #if USE_SURFACE_POTENTIAL > 0
+       boundaries[i].potential = geom["potential"][i];
+  #endif
 
     boundaries[i].a = boundaries[i].z2 - boundaries[i].z1;
     boundaries[i].b = 0.0;
