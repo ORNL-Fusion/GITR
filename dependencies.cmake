@@ -8,11 +8,14 @@ find_package(Thrust)
 if( NOT THRUST_FOUND )
 
 set( prefix "${CMAKE_CURRENT_SOURCE_DIR}/external" )
-
+#Force the user to include a repo access token? Or just get one from the GITR homepage? That
+#option seems better...
+#To make this work, you'll need to put the personal access token in that environment var
+set( git_repo "https://$ENV{REPO_ACCESS_TOKEN}:x-oauth-basic@github.com/NVIDIA/thrust.git" )
 message( "Ahoy, Captain! Downloading thrust..." )
 ExternalProject_Add( thrust
                      PREFIX "${prefix}/thrust" 
-                     GIT_REPOSITORY "git@github.com:NVIDIA/thrust.git" 
+                     GIT_REPOSITORY "${git_repo}"
                      CONFIGURE_COMMAND ""
                      BUILD_COMMAND ""
                      INSTALL_COMMAND "" )
@@ -21,6 +24,9 @@ set( THRUST_INCLUDE_DIR "${prefix}/thrust/src/thrust" )
 find_package(Thrust REQUIRED)
 list( APPEND dependencies thrust )
 endif()
+
+#Captain!
+return()
 
 
 find_package(LibConfig)

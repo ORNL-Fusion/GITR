@@ -8,10 +8,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
 set(CXX_STANDARD_REQUIRED TRUE)
 
-# Captain! New code here
-# header only library, skip the build as well as install
 include( dependencies.cmake )
-# end new code
+#Captain!
+return()
 
 # Set source files
 file(GLOB SRC_FILES src/*.cpp)
