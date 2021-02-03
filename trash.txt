@@ -1,6 +1,254 @@
-Ahoy, Captain!
-Ahoy
-Captain
-ahoy
-fetch
-another
+./include/hashGeom.h:170:#if USE_CUDA
+./include/hashGeom.h:355:#if USE_CUDA
+./include/sortParticles.h:25:#ifdef USE_CUDA
+./include/ompPrint.h:32:#if USE_CUDA
+./include/hashGeomSheath.h:95:#if USE_CUDA
+./include/hashGeomSheath.h:235:#if USE_CUDA
+./include/surfaceModel.h:387:            #if USE_CUDA > 0
+./include/surfaceModel.h:398:            #if USE_CUDA > 0
+./include/surfaceModel.h:435:            #if USE_CUDA > 0
+./include/surfaceModel.h:448:            #if USE_CUDA > 0
+./include/surfaceModel.h:472:            #if USE_CUDA > 0
+./include/surfaceModel.h:488:            #if USE_CUDA > 0
+./include/surfaceModel.h:504:            #if USE_CUDA > 0
+./include/surfaceModel.h:519:#if USE_CUDA > 0
+./include/geometryCheck.h:350:#if USE_CUDA
+./include/geometryCheck.h:467:            //  #if USE_CUDA > 0
+./include/geometryCheck.h:483:#if USE_CUDA > 0
+./include/geometryCheck.h:989:#if USE_CUDA > 0
+./include/spectroscopy.h:14:#if USE_CUDA >0
+./include/spectroscopy.h:120:#if USE_CUDA >0
+./iter/iter_setup/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./iter/iterSimple/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./iter/iterSimple/input/gitrInput.cfg:400:        USE_CUDA=1;
+./iter/cube/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./iter/cube/input/gitrInput.cfg:400:        USE_CUDA=1;
+./iter/iter_milestoneQ4/3d/input/gitrInput.cfg:471:        USE_CUDA=1;
+./iter/iter_milestoneQ4/2d/input/gitrInput.cfg:480:        USE_CUDA=1;
+./iter/iter_milestone/3d/input/gitrInput.cfg:470:        USE_CUDA=1;
+./iter/iter_milestone/2d_setup/input/gitrInput.cfg:468:        USE_CUDA=0;
+./iter/iter_milestone/2d/input/gitrInput.cfg:466:        USE_CUDA=1;
+./iter/iter_milestone/2d_redo/input/gitrInput.cfg:468:        USE_CUDA=0;
+./iter/neon/2d/input/gitrInput.cfg:264:        USE_CUDA=1;
+./CMakeLists.txt:42:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./examples/pointPlane/3d/input/gitrInput.cfg:458:        USE_CUDA=1;
+./examples/pointPlane/2d/input/gitrInput.cfg:436:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput50.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput110.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput10.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput80.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput130.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput20.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput60.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput30.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput40.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput100.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput120.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput70.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseE/input/gitrInput90.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseD/input/gitrInput.cfg:442:        USE_CUDA=1;
+./examples/SFT/caseC/input/gitrInput.cfg:441:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput50.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput110.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput10.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput80.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput130.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput20.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput60.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput30.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput40.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput100.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput120.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput70.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/test100/input/gitrInput90.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput50.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput110.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput10.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput80.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput130.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput20.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput60.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput30.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput40.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput100.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput120.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput70.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseB/input/gitrInput90.cfg:445:        USE_CUDA=1;
+./examples/SFT/test/input/gitrInput.cfg:441:        USE_CUDA=1;
+./examples/SFT/caseA/2d/input/gitrInput1200.cfg:441:        USE_CUDA=1;
+./examples/SFT/caseA/2d/input/gitrInput1000.cfg:441:        USE_CUDA=1;
+./examples/SFT/caseA/2d/input/gitrInput750.cfg:443:        USE_CUDA=1;
+./examples/SFT/caseA/2d/input/gitrInput1400.cfg:441:        USE_CUDA=1;
+./examples/SFT/caseA/2d/input/gitrInput900.cfg:441:        USE_CUDA=1;
+./examples/SFT/caseA/2d/input/gitrInput.cfg:443:        USE_CUDA=1;
+./examples/SFT/caseF/input/gitrInput50.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseF/input/gitrInput25.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseF/input/gitrInput35.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseF/input/gitrInput20.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseF/input/gitrInput30.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseF/input/gitrInput40.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseF/input/gitrInput45.cfg:445:        USE_CUDA=1;
+./examples/SFT/caseF/input/gitrInput.cfg:445:        USE_CUDA=1;
+./examples/perp_diffusion_test_toroidal/input/gitrInput.cfg:292:        USE_CUDA=1;
+./examples/field_line_trace/CMakeLists.txt:53:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./examples/field_line_trace/input/gitrInput.cfg:292:        USE_CUDA=1;
+./examples/d3dTutorial/CMakeLists.txt:53:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./examples/d3dTutorial/input/gitrInput.cfg:292:        USE_CUDA=1;
+./examples/operatorTests/straightLine/3DgeomVertex/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./examples/operatorTests/straightLine/3DgeomVertex/input/gitrInput.cfg:406:        USE_CUDA=1;
+./examples/operatorTests/straightLine/2DgeomCyl/input/gitrInput.cfg:395:        USE_CUDA=1;
+./examples/operatorTests/straightLine/3Dgeom/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./examples/operatorTests/straightLine/3Dgeom/input/gitrInput.cfg:395:        USE_CUDA=1;
+./examples/operatorTests/straightLine/2DgeomCylPeriodic/input/gitrInput.cfg:395:        USE_CUDA=1;
+./examples/operatorTests/straightLine/2Dgeom/input/gitrInput.cfg:395:        USE_CUDA=1;
+./examples/operatorTests/straightLine/3DgeomHash/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./examples/operatorTests/straightLine/3DgeomHash/input/gitrInput.cfg:432:        USE_CUDA=1;
+./examples/operatorTests/straightLine/2DgeomPeriodic/input/gitrInput.cfg:395:        USE_CUDA=1;
+./examples/operatorTests/collisions/input/gitrInput.cfg:404:        USE_CUDA=1;
+./examples/operatorTests/ionization/input/gitrInput.cfg:396:        USE_CUDA=1;
+./examples/operatorTests/singleParticleMotion/gyroMotion/input/gitrInput.cfg:395:        USE_CUDA=1;
+./examples/pointPlaneDeposit/3d/input/gitrInput.cfg:362:        USE_CUDA=1;
+./examples/pointPlaneDeposit/2d/input/gitrInput.cfg:436:        USE_CUDA=1;
+./examples/impacts/input/gitrInput.cfg:281:    USE_CUDA = 1;
+./examples/rough/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./examples/rough/input/gitrInput.cfg:394:        USE_CUDA=1;
+./examples/perp_diffusion_test/CMakeLists.txt:53:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./examples/perp_diffusion_test/input/gitrInput.cfg:292:        USE_CUDA=1;
+./pisces/piscesLowFlux/updated/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./pisces/piscesLowFlux/updated/input/gitrInput.cfg:388:        USE_CUDA=1;
+./pisces/full3d/hmin1/gitrInput.cfg:321:        USE_CUDA=0;
+./pisces/full3d/hmin05/gitrInput.cfg:321:        USE_CUDA=1;
+./pisces/full3d/hmin2/hashed/gitrInput.cfg:321:        USE_CUDA=1;
+./pisces/full3d/hmin2/constPlasma/gitrInput.cfg:321:        USE_CUDA=1;
+./pisces/full3d/hmin2/gitrInput.cfg:321:        USE_CUDA=1;
+./pisces/full3d/gitrInput.cfg:321:        USE_CUDA=1;
+./pisces/axisym2d/gitrInput.cfg:321:        USE_CUDA=0;
+./pisces/piscNew2/gitrInput.cfg:372:        USE_CUDA=1;
+./pisces/final/he1inch/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./pisces/final/he1inch/input/gitrInput.cfg:461:        USE_CUDA=1;
+./pisces/final/uq/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./pisces/final/uq/input/gitrInput.cfg:482:        USE_CUDA=0;
+./pisces/final/heD/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./pisces/final/heD/input/gitrInput.cfg:471:        USE_CUDA=1;
+./pisces/final/lowFlux/input/gitrInput.cfg:484:        USE_CUDA=1;
+./pisces/final/highFlux/makeGITRfusiont5_pisces.sh:20:    -DUSE_CUDA=1 \
+./pisces/final/highFlux/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./pisces/final/highFlux/input/gitrInput.cfg:484:        USE_CUDA=1;
+./README.md:78:    USE_CUDA=0
+./README.md:166:        USE_CUDA=1;
+./west/gitrInput.cfg:441:        USE_CUDA=1;
+./protoMPEx/Al/makeGITR_helicon.sh:15:    -DUSE_CUDA=0 \
+./protoMPEx/Al/input/gitrInput.cfg:484:        USE_CUDA=1;
+./protoMPEx/W/pillars/input/gitrInput.cfg:484:        USE_CUDA=1;
+./protoMPEx/W/makeGITRmac.sh:17:    -DUSE_CUDA=0 \
+./protoMPEx/W/input/gitrInput.cfg:484:        USE_CUDA=1;
+./protoMPEx/W/makeGITRproto.sh:17:    -DUSE_CUDA=0 \
+./protoMPEx/makeGITR.sh:8:    -DUSE_CUDA=1 \
+./protoMPEx/makeGITR_titan.sh:7:    -DUSE_CUDA=1 \
+./protoMPEx/input/gitrInput.cfg~:422:        USE_CUDA=1;
+./protoMPEx/input/gitrInput.cfg:423:        USE_CUDA=1;
+./src/gitr.cpp:103:#if USE_CUDA > 0
+./src/gitr.cpp:664:#if USE_CUDA > 0
+./src/gitr.cpp:706:#if USE_CUDA
+./src/gitr.cpp:776:#if USE_CUDA
+./src/gitr.cpp:995:#if USE_CUDA
+./src/gitr.cpp:1021:#if USE_CUDA
+./src/gitr.cpp:1053:#if USE_CUDA
+./src/gitr.cpp:1209:#if USE_CUDA
+./src/gitr.cpp:1251:#if USE_CUDA
+./src/gitr.cpp:1424:#if USE_CUDA
+./src/gitr.cpp:3571:#if USE_CUDA > 0
+./src/gitr.cpp:3647:#if USE_CUDA
+./src/gitr.cpp:3654:#if USE_CUDA
+./src/gitr.cpp:3684:#if USE_CUDA
+./src/gitr.cpp:3698:#if USE_CUDA > 0
+./src/gitr.cpp:3735:#if USE_CUDA > 0
+./src/gitr.cpp:4147:#if USE_CUDA
+./src/gitr.cpp:4152:#if USE_CUDA
+./src/utils.cpp:69:    const char *flags0[] = {//"flags.USE_CUDA",
+./src/utils.cpp:90:        int flagValues[] =  {//USE_CUDA, USE_MPI,
+./src/utils.cpp:126:#if USE_CUDA
+./cmakeMachineFiles/titan/CMakeLists.txt:35:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./cmakeMachineFiles/bgrs/CMakeLists.txt:35:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./cmakeMachineFiles/bgrs/makeGITRbgrs.sh:15:    -DUSE_CUDA=1 \
+./cmakeMachineFiles/cori/CMakeLists.txt:38:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./cmakeMachineFiles/cori/runExamples.py:13:    USE_CUDA=0
+./cmakeMachineFiles/cori/runExamples.py:35:    if(USE_CUDA!=config.flags.USE_CUDA):
+./cmakeMachineFiles/cori/runExamples.py:37:    code_flags = "-DUSE_CUDA="+str(USE_CUDA)
+./cmakeMachineFiles/cori/runExamples.py:123:    print(USE_CUDA)
+./cmakeMachineFiles/fusiont5/CMakeLists.txt:31:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./cmakeMachineFiles/fusiont5/makeGITRfusiont5.sh:17:    -DUSE_CUDA=1 \
+./cmakeMachineFiles/r2d2/CMakeLists.txt:37:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./cmakeMachineFiles/r2d2/runExamples.py:13:    USE_CUDA=0
+./cmakeMachineFiles/r2d2/runExamples.py:36:    if(USE_CUDA!=config.flags.USE_CUDA):
+./cmakeMachineFiles/r2d2/runExamples.py:38:    code_flags = "-DUSE_CUDA="+str(USE_CUDA)
+./cmakeMachineFiles/r2d2/runExamples.py:124:    print(USE_CUDA)
+./cmakeMachineFiles/r2d2/makeGITRr2d2.sh:17:    -DUSE_CUDA=0 \
+./cmakeMachineFiles/ultrabucky/CMakeLists.txt:37:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./cmakeMachineFiles/ultrabucky/makeGITRultrabucky.sh:16:    -DUSE_CUDA=0 \
+./cmakeMachineFiles/eos/CMakeLists.txt:38:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./cmakeMachineFiles/gpuFusion/CMakeLists.txt:35:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./cmakeMachineFiles/gpuFusion/runExamples.py:13:    USE_CUDA=1
+./cmakeMachineFiles/gpuFusion/runExamples.py:27:    if(USE_CUDA!=config.flags.USE_CUDA):
+./cmakeMachineFiles/gpuFusion/runExamples.py:29:    code_flags = "-DUSE_CUDA="+str(USE_CUDA)
+./cmakeMachineFiles/gpuFusion/runExamples.py:126:    print(USE_CUDA)
+./cmakeMachineFiles/gpuFusion/makeGITR.sh:9:    -DUSE_CUDA=1 \
+./cmakeMachineFiles/edison/CMakeLists.txt:36:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./cmakeMachineFiles/edison/runExamples.py:13:    USE_CUDA=0
+./cmakeMachineFiles/edison/runExamples.py:35:    if(USE_CUDA!=config.flags.USE_CUDA):
+./cmakeMachineFiles/edison/runExamples.py:37:    code_flags = "-DUSE_CUDA="+str(USE_CUDA)
+./cmakeMachineFiles/edison/runExamples.py:125:    print(USE_CUDA)
+./cmakeMachineFiles/mac/CMakeLists.txt:38:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./cmakeMachineFiles/mac/CMakeLists-1.txt:37:add_definitions(-DUSE_CUDA=${USE_CUDA}
+./cmakeMachineFiles/mac/makeGITRmac.sh:16:    -DUSE_CUDA=0 \
+./cmakeMachineFiles/mac/runExamples.py:14:    USE_CUDA=0
+./cmakeMachineFiles/mac/runExamples.py:36:    if(USE_CUDA!=config.flags.USE_CUDA):
+./cmakeMachineFiles/mac/runExamples.py:38:    code_flags = "-DUSE_CUDA="+str(USE_CUDA)
+./cmakeMachineFiles/mac/runExamples.py:134:    print(USE_CUDA)
+./cmakeMachineFiles/mac/runExamples-1.py:14:    USE_CUDA=0
+./cmakeMachineFiles/mac/runExamples-1.py:36:    if(USE_CUDA!=config.flags.USE_CUDA):
+./cmakeMachineFiles/mac/runExamples-1.py:38:    code_flags = "-DUSE_CUDA="+str(USE_CUDA)
+./cmakeMachineFiles/mac/runExamples-1.py:126:    print(USE_CUDA)
+./test/coulomb.cfg:401:        USE_CUDA=1;
+./test/ionize.cfg:401:        USE_CUDA=1;
+./test/ionize1.cfg:401:        USE_CUDA=1;
+./build/makeGITRhayes-local.sh:15:    -DUSE_CUDA=0 \
+./build/runExamples.py:14:    USE_CUDA=0
+./build/runExamples.py:36:    if(USE_CUDA!=config.flags.USE_CUDA):
+./build/runExamples.py:38:    code_flags = "-DUSE_CUDA="+str(USE_CUDA)
+./build/runExamples.py:134:    print(USE_CUDA)
+./build/make_scripts/makeGITR_helicon.sh:22:    -DUSE_CUDA=1 \
+./build/make_scripts/makeGITRhayes-local.sh:15:    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITRCori.sh:12:-DUSE_CUDA=0 \
+./build/make_scripts/makeGITRmac_tests.sh:15:    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITRfusiont5.sh:20:    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITRpointplane.sh:15:    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITRmac.sh:15:    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITR.sh:9:    -DUSE_CUDA=1 \
+./build/make_scripts/makeGITR_titan.sh:7:    -DUSE_CUDA=1 \
+./build/make_scripts/makeGITRactions.sh:16:#    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITRmac_iterMq3.sh:15:    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITR_eos.sh:16:    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITREdison.sh:15:    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITRtutorial.sh:18:    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITRproto.sh:17:    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITRiter.sh:15:    -DUSE_CUDA=0 \
+./build/make_scripts/makeGITRbgrs.sh:15:    -DUSE_CUDA=1 \
+./build/make_scripts/makeGITRr2d2.sh:17:    -DUSE_CUDA=0 \
+./build/CMakeFiles/tests.dir/DependInfo.cmake:54:  "USE_CUDA=0"
+./build/CMakeFiles/tests.dir/flags.make:7:CXX_DEFINES = -DBFIELD_INTERP=0 -DBIASED_SURFACE=0 -DCHECK_COMPATIBILITY=1 -DDENSITY_INTERP=0 -DEFIELD_INTERP=0 -DFIXEDSEEDS=0 -DFLOWV_INTERP=2 -DFLUX_EA=1 -DFORCE_EVAL=0 -DGENERATE_LC=0 -DGEOM_HASH=0 -DGEOM_HASH_SHEATH=0 -DGEOM_TRACE=0 -DGRADT_INTERP=0 -DHAS_NETCDF_PAR_H -DLC_INTERP=0 -DODEINT=0 -DPARTICLESEEDS=1 -DPARTICLE_SOURCE=0 -DPARTICLE_SOURCE_ANGLE=0 -DPARTICLE_SOURCE_ENERGY=0 -DPARTICLE_SOURCE_FILE=1 -DPARTICLE_SOURCE_SPACE=0 -DPARTICLE_TRACKS=0 -DPRESHEATH_INTERP=0 -DSPECTROSCOPY=0 -DTEMP_INTERP=0 -DUSE3DTETGEOM=0 -DUSEANGLESCATTERING=1 -DUSECOULOMBCOLLISIONS=1 -DUSECYLSYMM=0 -DUSEFIELDALIGNEDVALUES=0 -DUSEFRICTION=1 -DUSEHEATING=1 -DUSEIONIZATION=0 -DUSEPERPDIFFUSION=0 -DUSEPRESHEATHEFIELD=0 -DUSERECOMBINATION=0 -DUSESHEATHEFIELD=0 -DUSESURFACEMODEL=0 -DUSETHERMALFORCE=0 -DUSE_CUDA=0 -DUSE_MPI=1 -DUSE_PARALLEL -DUSE_SORT=0 -DUSE_SURFACE_POTENTIAL=0
+./build/CMakeFiles/YourLib.dir/DependInfo.cmake:60:  "USE_CUDA=0"
+./build/CMakeFiles/YourLib.dir/flags.make:7:CXX_DEFINES = -DBFIELD_INTERP=0 -DBIASED_SURFACE=0 -DCHECK_COMPATIBILITY=1 -DDENSITY_INTERP=0 -DEFIELD_INTERP=0 -DFIXEDSEEDS=0 -DFLOWV_INTERP=2 -DFLUX_EA=1 -DFORCE_EVAL=0 -DGENERATE_LC=0 -DGEOM_HASH=0 -DGEOM_HASH_SHEATH=0 -DGEOM_TRACE=0 -DGRADT_INTERP=0 -DHAS_NETCDF_PAR_H -DLC_INTERP=0 -DODEINT=0 -DPARTICLESEEDS=1 -DPARTICLE_SOURCE=0 -DPARTICLE_SOURCE_ANGLE=0 -DPARTICLE_SOURCE_ENERGY=0 -DPARTICLE_SOURCE_FILE=1 -DPARTICLE_SOURCE_SPACE=0 -DPARTICLE_TRACKS=0 -DPRESHEATH_INTERP=0 -DSPECTROSCOPY=0 -DTEMP_INTERP=0 -DUSE3DTETGEOM=0 -DUSEANGLESCATTERING=1 -DUSECOULOMBCOLLISIONS=1 -DUSECYLSYMM=0 -DUSEFIELDALIGNEDVALUES=0 -DUSEFRICTION=1 -DUSEHEATING=1 -DUSEIONIZATION=0 -DUSEPERPDIFFUSION=0 -DUSEPRESHEATHEFIELD=0 -DUSERECOMBINATION=0 -DUSESHEATHEFIELD=0 -DUSESURFACEMODEL=0 -DUSETHERMALFORCE=0 -DUSE_CUDA=0 -DUSE_MPI=1 -DUSE_PARALLEL -DUSE_SORT=0 -DUSE_SURFACE_POTENTIAL=0
+./build/CMakeFiles/field_tests.dir/DependInfo.cmake:54:  "USE_CUDA=0"
+./build/CMakeFiles/field_tests.dir/flags.make:7:CXX_DEFINES = -DBFIELD_INTERP=0 -DBIASED_SURFACE=0 -DCHECK_COMPATIBILITY=1 -DDENSITY_INTERP=0 -DEFIELD_INTERP=0 -DFIXEDSEEDS=0 -DFLOWV_INTERP=2 -DFLUX_EA=1 -DFORCE_EVAL=0 -DGENERATE_LC=0 -DGEOM_HASH=0 -DGEOM_HASH_SHEATH=0 -DGEOM_TRACE=0 -DGRADT_INTERP=0 -DHAS_NETCDF_PAR_H -DLC_INTERP=0 -DODEINT=0 -DPARTICLESEEDS=1 -DPARTICLE_SOURCE=0 -DPARTICLE_SOURCE_ANGLE=0 -DPARTICLE_SOURCE_ENERGY=0 -DPARTICLE_SOURCE_FILE=1 -DPARTICLE_SOURCE_SPACE=0 -DPARTICLE_TRACKS=0 -DPRESHEATH_INTERP=0 -DSPECTROSCOPY=0 -DTEMP_INTERP=0 -DUSE3DTETGEOM=0 -DUSEANGLESCATTERING=1 -DUSECOULOMBCOLLISIONS=1 -DUSECYLSYMM=0 -DUSEFIELDALIGNEDVALUES=0 -DUSEFRICTION=1 -DUSEHEATING=1 -DUSEIONIZATION=0 -DUSEPERPDIFFUSION=0 -DUSEPRESHEATHEFIELD=0 -DUSERECOMBINATION=0 -DUSESHEATHEFIELD=0 -DUSESURFACEMODEL=0 -DUSETHERMALFORCE=0 -DUSE_CUDA=0 -DUSE_MPI=1 -DUSE_PARALLEL -DUSE_SORT=0 -DUSE_SURFACE_POTENTIAL=0
+./build/CMakeFiles/GITR.dir/DependInfo.cmake:60:  "USE_CUDA=0"
+./build/CMakeFiles/GITR.dir/flags.make:7:CXX_DEFINES = -DBFIELD_INTERP=0 -DBIASED_SURFACE=0 -DCHECK_COMPATIBILITY=1 -DDENSITY_INTERP=0 -DEFIELD_INTERP=0 -DFIXEDSEEDS=0 -DFLOWV_INTERP=2 -DFLUX_EA=1 -DFORCE_EVAL=0 -DGENERATE_LC=0 -DGEOM_HASH=0 -DGEOM_HASH_SHEATH=0 -DGEOM_TRACE=0 -DGRADT_INTERP=0 -DHAS_NETCDF_PAR_H -DLC_INTERP=0 -DODEINT=0 -DPARTICLESEEDS=1 -DPARTICLE_SOURCE=0 -DPARTICLE_SOURCE_ANGLE=0 -DPARTICLE_SOURCE_ENERGY=0 -DPARTICLE_SOURCE_FILE=1 -DPARTICLE_SOURCE_SPACE=0 -DPARTICLE_TRACKS=0 -DPRESHEATH_INTERP=0 -DSPECTROSCOPY=0 -DTEMP_INTERP=0 -DUSE3DTETGEOM=0 -DUSEANGLESCATTERING=1 -DUSECOULOMBCOLLISIONS=1 -DUSECYLSYMM=0 -DUSEFIELDALIGNEDVALUES=0 -DUSEFRICTION=1 -DUSEHEATING=1 -DUSEIONIZATION=0 -DUSEPERPDIFFUSION=0 -DUSEPRESHEATHEFIELD=0 -DUSERECOMBINATION=0 -DUSESHEATHEFIELD=0 -DUSESURFACEMODEL=0 -DUSETHERMALFORCE=0 -DUSE_CUDA=0 -DUSE_MPI=1 -DUSE_PARALLEL -DUSE_SORT=0 -DUSE_SURFACE_POTENTIAL=0
+./build/CMakeFiles/coulomb_tests.dir/DependInfo.cmake:54:  "USE_CUDA=0"
+./build/CMakeFiles/coulomb_tests.dir/flags.make:7:CXX_DEFINES = -DBFIELD_INTERP=0 -DBIASED_SURFACE=0 -DCHECK_COMPATIBILITY=1 -DDENSITY_INTERP=0 -DEFIELD_INTERP=0 -DFIXEDSEEDS=0 -DFLOWV_INTERP=2 -DFLUX_EA=1 -DFORCE_EVAL=0 -DGENERATE_LC=0 -DGEOM_HASH=0 -DGEOM_HASH_SHEATH=0 -DGEOM_TRACE=0 -DGRADT_INTERP=0 -DHAS_NETCDF_PAR_H -DLC_INTERP=0 -DODEINT=0 -DPARTICLESEEDS=1 -DPARTICLE_SOURCE=0 -DPARTICLE_SOURCE_ANGLE=0 -DPARTICLE_SOURCE_ENERGY=0 -DPARTICLE_SOURCE_FILE=1 -DPARTICLE_SOURCE_SPACE=0 -DPARTICLE_TRACKS=0 -DPRESHEATH_INTERP=0 -DSPECTROSCOPY=0 -DTEMP_INTERP=0 -DUSE3DTETGEOM=0 -DUSEANGLESCATTERING=1 -DUSECOULOMBCOLLISIONS=1 -DUSECYLSYMM=0 -DUSEFIELDALIGNEDVALUES=0 -DUSEFRICTION=1 -DUSEHEATING=1 -DUSEIONIZATION=0 -DUSEPERPDIFFUSION=0 -DUSEPRESHEATHEFIELD=0 -DUSERECOMBINATION=0 -DUSESHEATHEFIELD=0 -DUSESURFACEMODEL=0 -DUSETHERMALFORCE=0 -DUSE_CUDA=0 -DUSE_MPI=1 -DUSE_PARALLEL -DUSE_SORT=0 -DUSE_SURFACE_POTENTIAL=0
+./build/CMakeCache.txt:455:USE_CUDA:UNINITIALIZED=0
+./backup_CMakeLists.txt:42:add_definitions(-DUSE_CUDA=${USE_CUDA}
+grep: input file './trash.txt' is also the output
+Binary file ./.CMakeLists.txt.swp matches

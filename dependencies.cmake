@@ -11,7 +11,7 @@ set( prefix "${CMAKE_CURRENT_SOURCE_DIR}/external" )
 #Force the user to include a repo access token? Or just get one from the GITR homepage? That
 #option seems better...
 #To make this work, you'll need to put the personal access token in that environment var
-message( "Ahoy, Captain! Downloading thrust..." )
+message( "Downloading thrust..." )
 ExternalProject_Add( thrust
                      PREFIX "${prefix}/thrust" 
                      GIT_REPOSITORY "https://github.com/NVIDIA/thrust.git"
@@ -27,7 +27,7 @@ endif()
 find_package(LibConfig)
 if( NOT LIBCONFIG_FOUND )
 
-message( "Ahoy, Captain! Downloading libconfig..." )
+message( "Downloading libconfig..." )
 ExternalProject_Add( libconfig
                      PREFIX "${prefix}/libconfig"
                      GIT_REPOSITORY "https://github.com/hyperrealm/libconfig.git" 
@@ -42,7 +42,7 @@ endif()
 
 find_package(NetCDF COMPONENTS CXX)
 if( NOT NETCDF_FOUND )
-message( "Ahoy, Captain! Downloading netcdf-c and netcdf-cxx4..." )
+message( "Downloading netcdf-c and netcdf-cxx4..." )
 ExternalProject_Add( netcdf-c
                      PREFIX "${prefix}/netcdf-c"
                      GIT_REPOSITORY "https://github.com/Unidata/netcdf-c.git"
@@ -59,4 +59,8 @@ set( NETCDF_CXX_LIBRARY "/usr/local/lib/libnetcdf-cxx4.so" )
 set( NETCDF_INCLUDE_DIR "${prefix}/netcdf-c/src/netcdf-c/include" )
 find_package(NetCDF COMPONENTS CXX REQUIRED)
 list( APPEND dependencies netcdf-c netcdf-cxx4 )
+endif()
+
+if( dependencies )
+  add_dependencies( GITR ${dependencies} )
 endif()
