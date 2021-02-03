@@ -9,8 +9,6 @@ set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
 set(CXX_STANDARD_REQUIRED TRUE)
 
 include( dependencies.cmake )
-#Captain!
-return()
 
 # Set source files
 file(GLOB SRC_FILES src/*.cpp)

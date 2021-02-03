@@ -11,11 +11,10 @@ set( prefix "${CMAKE_CURRENT_SOURCE_DIR}/external" )
 #Force the user to include a repo access token? Or just get one from the GITR homepage? That
 #option seems better...
 #To make this work, you'll need to put the personal access token in that environment var
-set( git_repo "https://$ENV{REPO_ACCESS_TOKEN}:x-oauth-basic@github.com/NVIDIA/thrust.git" )
 message( "Ahoy, Captain! Downloading thrust..." )
 ExternalProject_Add( thrust
                      PREFIX "${prefix}/thrust" 
-                     GIT_REPOSITORY "${git_repo}"
+                     GIT_REPOSITORY "https://github.com/NVIDIA/thrust.git"
                      CONFIGURE_COMMAND ""
                      BUILD_COMMAND ""
                      INSTALL_COMMAND "" )
@@ -25,17 +24,13 @@ find_package(Thrust REQUIRED)
 list( APPEND dependencies thrust )
 endif()
 
-#Captain!
-return()
-
-
 find_package(LibConfig)
 if( NOT LIBCONFIG_FOUND )
 
 message( "Ahoy, Captain! Downloading libconfig..." )
 ExternalProject_Add( libconfig
                      PREFIX "${prefix}/libconfig"
-                     GIT_REPOSITORY "git@github.com:hyperrealm/libconfig.git" 
+                     GIT_REPOSITORY "https://github.com/hyperrealm/libconfig.git" 
                      INSTALL_COMMAND "" )
 set( LIBCONFIG_INCLUDE_DIR "${prefix}/libconfig/src/libconfig/lib" )
 set( LIBCONFIG_LIBRARY "${prefix}/libconfig/src/libconfig-build/out/libconfig.so" )
@@ -50,12 +45,12 @@ if( NOT NETCDF_FOUND )
 message( "Ahoy, Captain! Downloading netcdf-c and netcdf-cxx4..." )
 ExternalProject_Add( netcdf-c
                      PREFIX "${prefix}/netcdf-c"
-                     GIT_REPOSITORY "git@github.com:Unidata/netcdf-c.git"
+                     GIT_REPOSITORY "https://github.com/Unidata/netcdf-c.git"
                      CMAKE_ARGS "-DENABLE_DAP=OFF" )
 
 ExternalProject_Add( netcdf-cxx4
                      PREFIX "${prefix}/netcdf-cxx4"
-                     GIT_REPOSITORY "git@github.com:Unidata/netcdf-cxx4.git" )
+                     GIT_REPOSITORY "https://github.com/Unidata/netcdf-cxx4.git" )
 
 add_dependencies( netcdf-cxx4 netcdf-c )
 set( NETCDF_LIBRARY "/usr/local/lib/libnetcdf.so" )
