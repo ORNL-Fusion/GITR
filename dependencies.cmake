@@ -61,6 +61,13 @@ find_package(NetCDF COMPONENTS CXX REQUIRED)
 list( APPEND dependencies netcdf-c netcdf-cxx4 )
 endif()
 
+find_package(MPI)
+if(MPI_FOUND)
+target_include_directories(GITR SYSTEM PUBLIC ${MPI_INCLUDE_PATH})
+elseif()
+message( FATAL_ERROR "MPI was not found" )
+endif()
+
 if( dependencies )
   add_dependencies( GITR ${dependencies} )
 endif()

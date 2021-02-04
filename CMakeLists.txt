@@ -11,6 +11,8 @@ include( src/add_source_files.cmake )
 target_include_directories( GITR PRIVATE include )
 
 include( dependencies.cmake )
+
+# link required libraries
 #Old code below
 
 set(OPENMP 1)
@@ -36,10 +38,10 @@ if( dependencies )
 add_dependencies( YourLib ${dependencies} )
 endif()
 include_directories( ${HEADER_DIRS})
-find_package(MPI)
-IF (MPI_FOUND)
-    include_directories(SYSTEM ${MPI_INCLUDE_PATH})
-endif()
+#find_package(MPI)
+#IF (MPI_FOUND)
+#    include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+#endif()
 find_package(OpenMP REQUIRED)
 # Add includes
 include_directories(${NETCDF_INCLUDE_DIRS})

@@ -8,4 +8,7 @@ set( sources
      setup.cpp
      utils.cpp)
 
+# use a list operation to prepend the directory
+list( TRANSFORM sources PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/src/" OUTPUT_VARIABLE sources )
+
 target_sources( GITR PRIVATE ${sources} )
