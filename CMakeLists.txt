@@ -3,14 +3,32 @@ project(gitr)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 
-# Provide no source files yet. You will add sources later.
-add_executable( GITR "" )
+# not yet implemented - define build-options
+include( CMake/define_options.cmake )
 
-include( src/add_source_files.cmake )
+# add detailed instructions on how to add a new component
+# put this in a CMake/define_entrypoint_target.cmake
+# declare the main executable and necessary include
+add_executable( GITR src/gitr.cpp )
 
 target_include_directories( GITR PRIVATE include )
 
-include( dependencies.cmake )
+# define singleton source components - change to "targets"
+include( CMake/define_source_components.cmake )
+
+enable_testing()
+
+# define singleton test components
+include( CMake/define_test_components.cmake )
+
+# include dependencies
+include( CMake/dependencies.cmake )
+
+# not yet implemented link the targets together as needed
+include( CMake/crosslink_components.cmake )
+
+# not yet implemented - this will call "add_test"
+include( CMake/register_tests.cmake )
 
 # link required libraries
 #Old code below
