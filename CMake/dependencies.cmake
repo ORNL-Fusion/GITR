@@ -20,7 +20,7 @@ ExternalProject_Add( thrust_download
                      BUILD_COMMAND ""
                      INSTALL_COMMAND "" )
 
-set( THRUST_INCLUDE_DIR "${prefix}/thrust/src/thrust" )
+set( THRUST_INCLUDE_DIR "${prefix}/thrust/src/thrust_download" )
 find_package(Thrust REQUIRED)
 
 add_library( thrust INTERFACE )
@@ -37,10 +37,10 @@ ExternalProject_Add( libconfig_download
                      PREFIX "${prefix}/libconfig"
                      GIT_REPOSITORY "https://github.com/hyperrealm/libconfig.git" 
                      INSTALL_COMMAND "" )
-set( LIBCONFIG_INCLUDE_DIR "${prefix}/libconfig/src/libconfig/lib" )
-set( LIBCONFIG_LIBRARY "${prefix}/libconfig/src/libconfig-build/out/libconfig.so" )
-set( LIBCONFIGPP_INCLUDE_DIR "${prefix}/libconfig/src/libconfig/lib" )
-set( LIBCONFIGPP_LIBRARY "${prefix}/libconfig/src/libconfig-build/out/libconfig++.so" )
+set( LIBCONFIG_INCLUDE_DIR "${prefix}/libconfig/src/libconfig_download/lib" )
+set( LIBCONFIG_LIBRARY "${prefix}/libconfig/src/libconfig_download-build/out/libconfig.so" )
+set( LIBCONFIGPP_INCLUDE_DIR "${prefix}/libconfig/src/libconfig_download/lib" )
+set( LIBCONFIGPP_LIBRARY "${prefix}/libconfig/src/libconfig_download-build/out/libconfig++.so" )
 find_package(LibConfig REQUIRED)
 add_library( libconfig INTERFACE )
 add_dependencies( libconfig libconfig_download )
@@ -68,9 +68,9 @@ ExternalProject_Add( netcdf-cxx4_download
 
 add_dependencies( netcdf-cxx4_download netcdf-c_download )
 set( NETCDF_LIBRARY "/usr/local/lib/libnetcdf.so" )
-set( NETCDF_CXX_INCLUDE_DIR "${prefix}/netcdf-cxx4/src/netcdf-cxx4/cxx4" )
+set( NETCDF_CXX_INCLUDE_DIR "${prefix}/netcdf-cxx4/src/netcdf-cxx4_download/cxx4" )
 set( NETCDF_CXX_LIBRARY "/usr/local/lib/libnetcdf-cxx4.so" )
-set( NETCDF_INCLUDE_DIR "${prefix}/netcdf-c/src/netcdf-c/include" )
+set( NETCDF_INCLUDE_DIR "${prefix}/netcdf-c/src/netcdf-c_download/include" )
 find_package(NetCDF COMPONENTS CXX REQUIRED)
 add_library( netcdf INTERFACE )
 add_dependencies( netcdf netcdf_c_download netcdf-cxx4_download )
@@ -81,7 +81,7 @@ endif()
 
 find_package(MPI)
 if(MPI_FOUND)
-target_include_directories(GITR SYSTEM PUBLIC ${MPI_INCLUDE_PATH})
+include_directories(GITR SYSTEM PUBLIC ${MPI_INCLUDE_PATH})
 elseif()
 message( FATAL_ERROR "MPI was not found" )
 endif()

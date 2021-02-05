@@ -7,7 +7,8 @@ target_include_directories( catch2 INTERFACE
                             test/include 
                             external/test/include )
 
-add_library( test_utils test/src/test_utils.cpp )
+add_library( test_utils test/src/test_utils.cpp test/include/test_utils.hpp )
+target_include_directories( test_utils PUBLIC ${CMAKE_SOURCE_DIR} )
 
 # does this propagate the includes from the catch2 interface target?
 # is a target_include_directories() needed here too?

@@ -1,4 +1,4 @@
 #define CATCH_CONFIG_MAIN
-#include "tests_general.hpp"
-#include "catch.hpp"
+#include "test/include/test_utils.hpp"
+#include "external/test/include/catch.hpp"
 

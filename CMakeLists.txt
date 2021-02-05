@@ -1,10 +1,15 @@
 cmake_minimum_required(VERSION 3.13)
 project(gitr)
 
+# point cmake to the find_package modules 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 
-# not yet implemented - define build-options
+# not yet implemented - define -D style build-options
 include( CMake/define_options.cmake )
+
+# for now, hardcode compile definitions CPU build only.
+# This will need to be changed for a CUDA build
+add_compile_definitions( THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP )
 
 # add detailed instructions on how to add a new component
 # put this in a CMake/define_entrypoint_target.cmake
@@ -16,6 +21,7 @@ target_include_directories( GITR PRIVATE include )
 # define singleton source components - change to "targets"
 include( CMake/define_source_components.cmake )
 
+# move into register_tests.cmake  
 enable_testing()
 
 # define singleton test components
@@ -30,43 +36,6 @@ include( CMake/crosslink_components.cmake )
 # not yet implemented - this will call "add_test"
 include( CMake/register_tests.cmake )
 
-# link required libraries
-#Old code below
-
-set(OPENMP 1)
-set(APPLE 0)
-
-set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
-set(CXX_STANDARD_REQUIRED TRUE)
-
-# Set source files
-file(GLOB SRC_FILES src/*.cpp)
-file(GLOB TEST_FILES src/*.cpp test/tests_general.cpp)
-file(GLOB TEST_FILE_IO test/file_io_tests.cpp)
-file(GLOB TEST_COULOMB test/coulomb_tests.cpp)
-file(GLOB TEST_FIELD test/field_tests.cpp)
-#file(GLOB TEST_ATOMIC test/atomic_tests.cpp)
-list (REMOVE_ITEM TEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/gitr.cpp)
-message("${TEST_FILES}")
-file(GLOB HEADER_FILES include/*.h include/*.hpp test/tests_general.hpp)
-file(GLOB HEADER_DIRS include test)
-add_library(YourLib ${TEST_FILES})
-# Captain!
-if( dependencies )
-add_dependencies( YourLib ${dependencies} )
-endif()
-include_directories( ${HEADER_DIRS})
-#find_package(MPI)
-#IF (MPI_FOUND)
-#    include_directories(SYSTEM ${MPI_INCLUDE_PATH})
-#endif()
-find_package(OpenMP REQUIRED)
-# Add includes
-include_directories(${NETCDF_INCLUDE_DIRS})
-include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
-include_directories(${THRUST_INCLUDE_DIRS})
-include_directories(${LIBCONFIGPP_INCLUDE_DIR})
-add_definitions(-DUSE_PARALLEL -DHAS_NETCDF_PAR_H)
 # Simulation defines
 add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DUSE_MPI=${USE_MPI}
@@ -112,6 +81,44 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
         -DFORCE_EVAL=${FORCE_EVAL}
         -DUSE_SORT=${USE_SORT}
         -DCHECK_COMPATIBILITY=${CHECK_COMPATIBILITY})
+return()
+# link required libraries
+#Old code below
+
+set(OPENMP 1)
+set(APPLE 0)
+
+set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
+set(CXX_STANDARD_REQUIRED TRUE)
+
+# Set source files
+file(GLOB SRC_FILES src/*.cpp)
+file(GLOB TEST_FILES src/*.cpp test/tests_general.cpp)
+file(GLOB TEST_FILE_IO test/file_io_tests.cpp)
+file(GLOB TEST_COULOMB test/coulomb_tests.cpp)
+file(GLOB TEST_FIELD test/field_tests.cpp)
+#file(GLOB TEST_ATOMIC test/atomic_tests.cpp)
+list (REMOVE_ITEM TEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/gitr.cpp)
+message("${TEST_FILES}")
+file(GLOB HEADER_FILES include/*.h include/*.hpp test/tests_general.hpp)
+file(GLOB HEADER_DIRS include test)
+add_library(YourLib ${TEST_FILES})
+# Captain!
+if( dependencies )
+add_dependencies( YourLib ${dependencies} )
+endif()
+include_directories( ${HEADER_DIRS})
+#find_package(MPI)
+#IF (MPI_FOUND)
+#    include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+#endif()
+find_package(OpenMP REQUIRED)
+# Add includes
+include_directories(${NETCDF_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
+include_directories(${THRUST_INCLUDE_DIRS})
+include_directories(${LIBCONFIGPP_INCLUDE_DIR})
+add_definitions(-DUSE_PARALLEL -DHAS_NETCDF_PAR_H)
 
 # Setup for CUDA backend
 if (${CUDA})

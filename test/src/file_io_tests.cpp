@@ -3,7 +3,7 @@
 #include <libconfig.h++>
 #include <stdio.h>
 #include "utils.h"
-#include "tests_general.hpp"
+#include "test/include/test_utils.hpp"
 #include "Particles.h"
 #include "geometryCheck.h"
 TEST_CASE("Factorials are computed", "[factorial]") {
