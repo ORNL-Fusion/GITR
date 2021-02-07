@@ -24,7 +24,7 @@ foreach( component IN LISTS test_components )
 
 add_library( ${component} test/src/${component}.cpp )
 
-target_include_directories( ${component} PRIVATE include )
+target_include_directories( ${component} PUBLIC include )
 
 endforeach()
 

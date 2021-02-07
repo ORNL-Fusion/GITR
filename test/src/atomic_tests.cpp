@@ -185,11 +185,27 @@ TEST_CASE("Atomic physics", "tests") {
 
     sim::Array<float> dev_f(1,-1.0);
     ionize<rand_type> ionize0(
-      gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
-      &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
-      &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
-      &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(),field1, &dev_f.front());
+      gitr_flags,
+      particleArray, 
+      dt,
+      &state1.front(),
+      nR_Dens,
+      nZ_Dens,
+      &DensGridr.front(),
+      &DensGridz.front(),
+      &ne.front(),
+      nR_Temp,
+      nZ_Temp,
+      &TempGridr.front(),
+      &TempGridz.front(), 
+      &te.front(),
+      nTemperaturesIonize,
+      nDensitiesIonize,
+      &gridTemperature_Ionization.front(),
+      &gridDensity_Ionization.front(),
+      &rateCoeff_Ionization.front(),
+      &dev_f.front());
+
   std::vector<float> values(nParticles,0.0);
   for (int i=0;i<nParticles;i++)
   {
@@ -390,7 +406,7 @@ TEST_CASE("Atomic physics", "tests") {
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(),field1, &dev_f.front());
+      &rateCoeff_Ionization.front(), &dev_f.front());
   std::vector<float> values(nParticles,0.0);
   for (int i=0;i<nParticles;i++)
   {
@@ -599,7 +615,7 @@ TEST_CASE("Atomic physics", "tests") {
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(),field1,&dev_f.front());
+      &rateCoeff_Ionization.front(),&dev_f.front());
   recombine<rand_type> recombine0(
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
