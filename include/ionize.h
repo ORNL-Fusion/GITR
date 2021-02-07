@@ -88,17 +88,31 @@ struct ionize {
 //  std::mt19937 *state;
 //#endif
   ionize() : dt(0.0){};
-  ionize(Flags *_flags, Particles *_particlesPointer, float _dt,T *_state,
+  ionize(Flags *_flags, 
+         Particles *_particlesPointer,
+         float _dt,
+         T *_state,
 //#if __CUDA_ARCH__
 //         curandState *_state,
 //#else
 //         std::mt19937 *_state,
 //#endif
-         int _nR_Dens, int _nZ_Dens, float *_DensGridr, float *_DensGridz,
-         float *_ne, int _nR_Temp, int _nZ_Temp, float *_TempGridr,
-         float *_TempGridz, float *_te, int _nTemperaturesIonize,
-         int _nDensitiesIonize, float *_gridTemperature_Ionization,
-         float *_gridDensity_Ionization, float *_rateCoeff_Ionization, float *  _random_uniform_number)
+         int _nR_Dens, 
+         int _nZ_Dens, 
+         float *_DensGridr,
+         float *_DensGridz,
+         float *_ne, 
+         int _nR_Temp,
+         int _nZ_Temp,
+         float *_TempGridr,
+         float *_TempGridz, 
+         float *_te, 
+         int _nTemperaturesIonize,
+         int _nDensitiesIonize, 
+         float *_gridTemperature_Ionization,
+         float *_gridDensity_Ionization, 
+         float *_rateCoeff_Ionization, 
+         float *  _random_uniform_number)
       :
 
         flags(_flags), particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
