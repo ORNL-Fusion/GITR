@@ -14,25 +14,21 @@ target_include_directories( test_utils PUBLIC ${CMAKE_SOURCE_DIR} )
 # is a target_include_directories() needed here too?
 target_link_libraries( test_utils PUBLIC catch2 )
 
-set( test_components 
-     atomic_tests
-     coulomb_tests
-     field_tests
-     file_io_tests )
-
-foreach( component IN LISTS test_components )
+set( component 
+     atomic_tests )
 
 add_executable( ${component} test/src/${component}.cpp )
+target_include_directories( ${component} PUBLIC include )
 
 if( USE_CUDA )
 set_source_files_properties( test/src/${component}.cpp PROPERTIES LANGUAGE CUDA )
-# does this even do anything?
-set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
-endif()
+set_target_properties( ${component} PROPERTIES LINKER_LANGUAGE CUDA )
 
-target_include_directories( ${component} PUBLIC include )
-
+# mark all files in the include directory as sources and link them
+# use the dreaded glob...
+file( GLOB source_files include/* test/include/* )
+foreach( source_file IN LISTS source_files )
+target_sources( ${component} PUBLIC ${source_file} )
+set_source_files_properties( ${source_file} PROPERTIES LANGUAGE CUDA )
 endforeach()
-
-# Each component will get the include directories from catch2 when they link against it
-# since it is an interface
+endif()

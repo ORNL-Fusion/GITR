@@ -7,7 +7,7 @@
 #define CUDA_CALLABLE_MEMBER
 #endif
 
-#include "Particle.h"
+#include "Particles.h"
 #include <cmath>
 
 #if USE_DOUBLE

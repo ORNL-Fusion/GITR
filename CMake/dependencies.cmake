@@ -7,9 +7,11 @@ include( ExternalProject )
 # to target_link_libraries
 set( dependencies "" )
 
+# The CUDA Toolkit's built-in thrust library appears to have been found
 find_package(Thrust)
 if( NOT THRUST_FOUND )
 
+if( NOT USE_CUDA )
 set( prefix "${CMAKE_CURRENT_SOURCE_DIR}/external" )
 
 message( "Downloading thrust..." )
@@ -21,6 +23,9 @@ ExternalProject_Add( thrust_download
                      INSTALL_COMMAND "" )
 
 set( THRUST_INCLUDE_DIR "${prefix}/thrust/src/thrust_download" )
+else()
+set( THRUST_INCLUDE_DIR "${CUDAToolkit_INCLUDE_DIRS}" )
+endif()
 find_package(Thrust REQUIRED)
 
 add_library( thrust INTERFACE )
@@ -86,7 +91,7 @@ endif()
 
 find_package(MPI)
 if(MPI_FOUND)
-include_directories(GITR SYSTEM PUBLIC ${MPI_INCLUDE_PATH})
+include_directories(SYSTEM PUBLIC ${MPI_INCLUDE_PATH})
 elseif()
 message( FATAL_ERROR "MPI was not found" )
 endif()
@@ -94,7 +99,8 @@ endif()
 # ensure that all targets in ${dependencies} is built before any source targets
 if( dependencies )
 
-  add_dependencies( GITR ${dependencies} )
+  # Captain! Comment out for now with GPU codepath
+  #add_dependencies( GITR ${dependencies} )
 
   foreach( component IN LISTS source_components test_components )
   # does this really have to be dereferenced?

@@ -7,22 +7,14 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 # not yet implemented - define -D style build-options
 include( CMake/define_options.cmake )
 
+if( NOT USE_CUDA )
+
 # for now, hardcode compile definitions CPU build only.
-# This will need to be changed for a CUDA build
-add_compile_definitions( THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP )
-
-# add detailed instructions on how to add a new component
-# put this in a CMake/define_entrypoint_target.cmake
-# declare the main executable and necessary include
-add_executable( GITR src/gitr.cpp )
-
-target_include_directories( GITR PRIVATE include )
+# move this into system_config_backend
+include( CMake/configure_hardware.cmake )
 
 # define singleton source components - change to "targets"
 include( CMake/define_source_components.cmake )
-
-# move into register_tests.cmake  
-enable_testing()
 
 # define singleton test components
 include( CMake/define_test_components.cmake )
@@ -36,54 +28,16 @@ include( CMake/crosslink_components.cmake )
 # not yet implemented - this will call "add_test"
 include( CMake/register_tests.cmake )
 
-# Simulation defines
-add_definitions(-DUSE_CUDA=${USE_CUDA}
-        -DUSE_MPI=${USE_MPI}
-        -DUSEIONIZATION=${USEIONIZATION}
-        -DUSERECOMBINATION=${USERECOMBINATION}
-        -DUSEPERPDIFFUSION=${USEPERPDIFFUSION}
-        -DUSECOULOMBCOLLISIONS=${USECOULOMBCOLLISIONS}
-        -DUSEFRICTION=${USEFRICTION}
-        -DUSEANGLESCATTERING=${USEANGLESCATTERING}
-        -DUSEHEATING=${USEHEATING}
-        -DUSETHERMALFORCE=${USETHERMALFORCE}
-        -DUSESURFACEMODEL=${USESURFACEMODEL}
-        -DUSESHEATHEFIELD=${USESHEATHEFIELD}
-        -DBIASED_SURFACE=${BIASED_SURFACE}
-        -DUSE_SURFACE_POTENTIAL=${USE_SURFACE_POTENTIAL}
-        -DUSEPRESHEATHEFIELD=${USEPRESHEATHEFIELD}
-        -DBFIELD_INTERP=${BFIELD_INTERP}
-        -DLC_INTERP=${LC_INTERP}
-        -DGENERATE_LC=${GENERATE_LC}
-        -DEFIELD_INTERP=${EFIELD_INTERP}
-        -DPRESHEATH_INTERP=${PRESHEATH_INTERP}
-        -DDENSITY_INTERP=${DENSITY_INTERP}
-        -DTEMP_INTERP=${TEMP_INTERP}
-        -DFLOWV_INTERP=${FLOWV_INTERP}
-        -DGRADT_INTERP=${GRADT_INTERP}
-        -DODEINT=${ODEINT}
-        -DFIXEDSEEDS=${FIXEDSEEDS}
-        -DPARTICLESEEDS=${PARTICLESEEDS}
-        -DGEOM_TRACE=${GEOM_TRACE}
-        -DGEOM_HASH=${GEOM_HASH}
-        -DGEOM_HASH_SHEATH=${GEOM_HASH_SHEATH}
-        -DPARTICLE_TRACKS=${PARTICLE_TRACKS}
-        -DPARTICLE_SOURCE=${PARTICLE_SOURCE}
-        -DPARTICLE_SOURCE_SPACE=${PARTICLE_SOURCE_SPACE}
-        -DPARTICLE_SOURCE_ENERGY=${PARTICLE_SOURCE_ENERGY}
-        -DPARTICLE_SOURCE_ANGLE=${PARTICLE_SOURCE_ANGLE}
-        -DPARTICLE_SOURCE_FILE=${PARTICLE_SOURCE_FILE}
-        -DSPECTROSCOPY=${SPECTROSCOPY}
-        -DUSE3DTETGEOM=${USE3DTETGEOM}
-        -DUSECYLSYMM=${USECYLSYMM}
-        -DUSEFIELDALIGNEDVALUES=${USEFIELDALIGNEDVALUES}
-        -DFLUX_EA=${FLUX_EA}
-        -DFORCE_EVAL=${FORCE_EVAL}
-        -DUSE_SORT=${USE_SORT}
-        -DCHECK_COMPATIBILITY=${CHECK_COMPATIBILITY})
+# debugging codepath for GPU build - add one thing at a time
+else()
+include( CMake/configure_hardware.cmake )
+include( CMake/gpu.cmake )
+include( CMake/dependencies.cmake )
+target_link_libraries( atomic_tests PUBLIC test_utils thrust libconfig netcdf )
+endif()
+
+# everything below this line is for reference reading only
 return()
-# link required libraries
-#Old code below
 
 set(OPENMP 1)
 set(APPLE 0)
@@ -121,6 +75,7 @@ include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 add_definitions(-DUSE_PARALLEL -DHAS_NETCDF_PAR_H)
 
 # Setup for CUDA backend
+# Ahoy, Captain!
 if (${CUDA})
     Message("Enabling CUDA backend")
     find_package(CUDA REQUIRED)

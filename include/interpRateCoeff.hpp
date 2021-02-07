@@ -9,6 +9,7 @@
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
 
+#include "interp2d.hpp"
 #include <thrust/device_vector.h>
 #include <vector>
 #include <cmath>

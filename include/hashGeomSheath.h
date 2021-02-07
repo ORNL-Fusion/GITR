@@ -11,6 +11,7 @@
 
 #include "Particles.h"
 #include "Boundary.h"
+#include "boris.h"
 #ifdef __CUDACC__
 #include <thrust/random.h>
 #include <curand_kernel.h>

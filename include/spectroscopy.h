@@ -17,7 +17,7 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 #if USE_CUDA >0
-#if __CUDA_ARCH__ < 600
+//#if __CUDA_ARCH__ < 600
 __device__ double atomicAdd1(double* address, double val)
 {
     unsigned long long int* address_as_ull =
@@ -33,7 +33,7 @@ __device__ double atomicAdd1(double* address, double val)
                  
                           return __longlong_as_double(old);
                           }
-                          #endif
+                          //#endif __CUDA_ARCH__ < 600
 //__device__ double atomicAdd(double* address, double val)
 //{
 //   unsigned long long int* address_as_ull =
