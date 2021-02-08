@@ -18,7 +18,7 @@ include( CMake/define_source_components.cmake )
 enable_testing()
 
 # define singleton test components
-include( CMake/define_test_components.cmake )
+# include( CMake/define_test_components.cmake )
 
 # include dependencies
 include( CMake/dependencies.cmake )
@@ -69,6 +69,7 @@ include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 add_definitions(-DUSE_PARALLEL -DHAS_NETCDF_PAR_H)
 
 # Setup for CUDA backend
+# Ahoy, Captain!
 if (${CUDA})
     Message("Enabling CUDA backend")
     find_package(CUDA REQUIRED)

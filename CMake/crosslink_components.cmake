@@ -36,8 +36,8 @@ target_link_libraries( GITR utils )
 target_link_libraries( GITR flags )
 
 # link test targets
-target_link_libraries( coulomb_tests test_utils libconfig thrust )
-target_link_libraries( atomic_tests test_utils )
-target_link_libraries( field_tests test_utils )
-target_link_libraries( file_io_tests test_utils )
+#target_link_libraries( coulomb_tests test_utils libconfig thrust )
+#target_link_libraries( atomic_tests test_utils )
+#target_link_libraries( field_tests test_utils )
+#target_link_libraries( file_io_tests test_utils )
 

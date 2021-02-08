@@ -43,7 +43,7 @@ public:
   FunctionHandler<Field> function;
 
   CUDA_CALLABLE_MEMBER
-  Field()
+    Field()
       : field_type{FieldType_2d_xz}, nD{0}, dimensions{3, 0}, x{2, 0.0}, y{3,
                                                                            0.0},
         z{3, 0.0}, values{9, 0.0}, function{returnPointerTable(1)} {};
@@ -69,16 +69,16 @@ public:
 
     int err, status, ncid, groupid, cmode, val_id, r_id, retval;
     cmode = NC_NOWRITE;
-#if USE_MPI == 1
-    /* Captain! This causes an error - ompi_mpi_comm_world is undefined in device code */
-    /* I think this stuff can't be in a CUDA member function... */
     /*
+#if USE_MPI == 1
     err = nc_open_par(ncfilename.c_str(), cmode, MPI_COMM_WORLD, MPI_INFO_NULL,
                       &ncid);
-    */
 #else
     err = nc_open(ncfilename.c_str(), cmode, &ncid);
 #endif
+    */
+    /* Captain! Line below added instead of mess above */
+    err = nc_open(ncfilename.c_str(), cmode, &ncid);
     err = nc_inq_varid(ncid, ncvarname.c_str(), &val_id);
 
     // get number of dimensions
