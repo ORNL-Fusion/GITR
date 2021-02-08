@@ -7,6 +7,8 @@ include( ExternalProject )
 # to target_link_libraries
 set( dependencies "" )
 
+# The CUDA Toolkit's built-in thrust library appears to have been found
+if( NOT USE_CUDA )
 find_package(Thrust)
 if( NOT THRUST_FOUND )
 
@@ -28,6 +30,7 @@ add_dependencies( thrust thrust_download )
 target_include_directories( thrust INTERFACE ${THRUST_INCLUDE_DIR} )
 list( APPEND dependencies thrust )
 include_directories( ${THRUST_INCLUDE_DIR} )
+endif()
 endif()
 
 find_package(LibConfig)

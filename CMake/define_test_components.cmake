@@ -22,7 +22,12 @@ set( test_components
 
 foreach( component IN LISTS test_components )
 
-add_library( ${component} test/src/${component}.cpp )
+add_executable( ${component} test/src/${component}.cpp )
+
+if( USE_CUDA )
+set_source_files_properties( test/src/${component}.cpp PROPERTIES LANGUAGE CUDA )
+set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
+endif()
 
 target_include_directories( ${component} PUBLIC include )
 

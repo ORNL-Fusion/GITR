@@ -11,13 +11,6 @@ include( CMake/define_options.cmake )
 # move this into system_config_backend
 include( CMake/configure_hardware.cmake )
 
-# add detailed instructions on how to add a new component
-# put this in a CMake/define_entrypoint_target.cmake
-# declare the main executable and necessary include
-add_executable( GITR src/gitr.cpp )
-
-target_include_directories( GITR PRIVATE include )
-
 # define singleton source components - change to "targets"
 include( CMake/define_source_components.cmake )
 

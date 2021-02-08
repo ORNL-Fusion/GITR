@@ -70,8 +70,12 @@ public:
     int err, status, ncid, groupid, cmode, val_id, r_id, retval;
     cmode = NC_NOWRITE;
 #if USE_MPI == 1
+    /* Captain! This causes an error - ompi_mpi_comm_world is undefined in device code */
+    /* I think this stuff can't be in a CUDA member function... */
+    /*
     err = nc_open_par(ncfilename.c_str(), cmode, MPI_COMM_WORLD, MPI_INFO_NULL,
                       &ncid);
+    */
 #else
     err = nc_open(ncfilename.c_str(), cmode, &ncid);
 #endif
