@@ -8,6 +8,7 @@
 #endif
 #include "Particles.h"
 #include "Boundary.h"
+#include "boris.h"
 #include <cmath>
 
 struct field_line_trace {

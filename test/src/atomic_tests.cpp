@@ -1,5 +1,6 @@
 #include "test/include/test_utils.hpp"
 #include "ionize.h"
+/*
 #include "recombine.h"
 #include "utils.h"
 #include <thrust/execution_policy.h>
@@ -23,7 +24,6 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin) {
     }
     return true;
 }
-
 TEST_CASE("Atomic physics", "tests") {
   SECTION("ionize - test fixed random seeds")
   {
@@ -686,3 +686,4 @@ auto gitr_start_clock = gitr_time::now();
   
   }
 }
+*/

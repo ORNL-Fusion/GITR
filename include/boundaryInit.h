@@ -2,6 +2,8 @@
 #define _BOUNDARYINIT_
 
 
+#include "boris.h"
+#include "interp2d.hpp"
 #include "Particle.h"
 #include "Boundary.h"
 #ifdef __CUDACC__

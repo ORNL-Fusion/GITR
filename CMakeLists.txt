@@ -7,6 +7,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 # not yet implemented - define -D style build-options
 include( CMake/define_options.cmake )
 
+if( NOT USE_CUDA )
+
 # for now, hardcode compile definitions CPU build only.
 # move this into system_config_backend
 include( CMake/configure_hardware.cmake )
@@ -14,11 +16,8 @@ include( CMake/configure_hardware.cmake )
 # define singleton source components - change to "targets"
 include( CMake/define_source_components.cmake )
 
-# move into register_tests.cmake  
-enable_testing()
-
 # define singleton test components
-# include( CMake/define_test_components.cmake )
+include( CMake/define_test_components.cmake )
 
 # include dependencies
 include( CMake/dependencies.cmake )
@@ -29,9 +28,16 @@ include( CMake/crosslink_components.cmake )
 # not yet implemented - this will call "add_test"
 include( CMake/register_tests.cmake )
 
+# debugging codepath for GPU build - add one thing at a time
+else()
+include( CMake/configure_hardware.cmake )
+include( CMake/gpu.cmake )
+include( CMake/dependencies.cmake )
+target_link_libraries( atomic_tests PUBLIC test_utils thrust libconfig netcdf )
+endif()
+
+# everything below this line is for reference reading only
 return()
-# link required libraries
-#Old code below
 
 set(OPENMP 1)
 set(APPLE 0)
