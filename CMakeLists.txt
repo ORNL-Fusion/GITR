@@ -58,7 +58,6 @@ message("${TEST_FILES}")
 file(GLOB HEADER_FILES include/*.h include/*.hpp test/tests_general.hpp)
 file(GLOB HEADER_DIRS include test)
 add_library(YourLib ${TEST_FILES})
-# Captain!
 if( dependencies )
 add_dependencies( YourLib ${dependencies} )
 endif()
@@ -152,7 +151,6 @@ if (${CPP_PAR})
     add_definitions("-x c++ -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP -DCPP_PAR -Wno-unused-local-typedef")
 endif ()
 
-# Captain! Add dependencies
 #if( dependencies )
 #add_dependencies( GITR ${dependencies} )
 #endif()
