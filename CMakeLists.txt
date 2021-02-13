@@ -4,12 +4,14 @@ project(gitr)
 # point cmake to the find_package modules 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 
-# not yet implemented - define -D style build-options
 include( CMake/define_options.cmake )
 
 # for now, hardcode compile definitions CPU build only.
 # move this into system_config_backend
 include( CMake/configure_hardware.cmake )
+
+# CPU mode
+if( NOT USE_CUDA )
 
 # add detailed instructions on how to add a new component
 # put this in a CMake/define_entrypoint_target.cmake
@@ -36,6 +38,11 @@ include( CMake/crosslink_components.cmake )
 # not yet implemented - this will call "add_test"
 include( CMake/register_tests.cmake )
 
+# GPU mode
+else()
+endif()
+
+# all code below this exists for referencing the original state of the CMake.
 return()
 # link required libraries
 #Old code below
