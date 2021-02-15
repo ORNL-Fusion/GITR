@@ -23,7 +23,7 @@
 # link source targets
 target_link_libraries( interp2d thrust )
 target_link_libraries( flags libconfig thrust )
-target_link_libraries( utils libconfig thrust )
+target_link_libraries( utils libconfig thrust interp2d netcdf )
 
 # Can any of these be deleted?
 target_link_libraries( GITR interp2d )
@@ -36,8 +36,8 @@ target_link_libraries( GITR utils )
 target_link_libraries( GITR flags )
 
 # link test targets
-target_link_libraries( coulomb_tests test_utils libconfig thrust )
-target_link_libraries( atomic_tests test_utils )
-target_link_libraries( field_tests test_utils )
-target_link_libraries( file_io_tests test_utils )
+target_link_libraries( coulomb_tests test_utils libconfig thrust interp2d utils flags netcdf )
+target_link_libraries( atomic_tests test_utils interp2d libconfig utils flags netcdf )
+target_link_libraries( field_tests test_utils interp2d libconfig utils netcdf )
+target_link_libraries( file_io_tests test_utils libconfig utils flags )
 

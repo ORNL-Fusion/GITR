@@ -22,7 +22,7 @@ TEST_CASE("Field struct", "tests") {
     std::string inputFile = "ionize1.cfg";
     libconfig::Config cfg;
     cfg.setAutoConvert(true);
-    std::string input_path = "../test/";
+    std::string input_path = "../test/test_data/";
     importLibConfig(cfg, input_path + inputFile);
     //auto gitr_flags = new Flags(cfg);
     auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
@@ -39,7 +39,7 @@ TEST_CASE("Field struct", "tests") {
     std::string inputFile = "ionize.cfg";
     libconfig::Config cfg;
     cfg.setAutoConvert(true);
-    std::string input_path = "../test/";
+    std::string input_path = "../test/test_data/";
     importLibConfig(cfg, input_path + inputFile);
     //auto gitr_flags = new Flags(cfg);
     auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");

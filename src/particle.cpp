@@ -6,6 +6,7 @@
 using namespace std;
 
 
+/* Ahoy! Does not appear to be used anywhere in the codbase */
 void Particle::BorisMove(double dt,double xMinV,double xMaxV,double yMin,double yMax,double zMin,double zMax)
 {
 

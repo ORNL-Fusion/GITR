@@ -26,7 +26,7 @@
 
 //CUDA_CALLABLE_MEMBER
 
-class Particle  {
+class Particle {
 	public:
 	    float x;
 	    float y;

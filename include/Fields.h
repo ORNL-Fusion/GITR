@@ -176,6 +176,17 @@ public:
     int x_index = std::floor((x - this->x[0]) / dx);
     int y_index = std::floor((y - this->y[0]) / dy);
     
+    /* Ahoy! Line below causes a segfault. x_index + 1 = 2 I think and x is only 1 long */
+    /* The plan: Get a test to build that shows heavy calculations. Use that test for profiling
+       and determining a consistent input interface. Get a couple tests of various sizes */
+    /* It looks like x_index is where the x value is closest to? Assuming a uniform distribution? */
+    /* This may be an off by 1 error? It's measuring from the right side, definitely an
+       off-by-1 with this small test case. Get test cases to compile, research the inputs,
+       come up with a plan for making the input interface. Email Tim, David, and Alyssa
+       with the plan, and with test cases. Set up a profiling run. Mention that the plan
+       is to get a few test cases working, then profile, then modify CUDA functions as
+       needed. The GPU build system will have to evolve as this process unfolds. */
+       /* You'll need to test it with 2 and three */
     float value_y0 =
         ((this->x[x_index + 1] - x) * this->values[x_index * ny + y_index] +
          (x - this->x[x_index]) * this->values[(x_index + 1) * ny + y_index]) /

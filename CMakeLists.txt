@@ -10,6 +10,9 @@ include( CMake/define_options.cmake )
 # move this into system_config_backend
 include( CMake/configure_hardware.cmake )
 
+# debug symbols
+add_compile_options( -g )
+
 # CPU mode
 if( NOT USE_CUDA )
 
@@ -22,9 +25,6 @@ target_include_directories( GITR PRIVATE include )
 
 # define singleton source components - change to "targets"
 include( CMake/define_source_components.cmake )
-
-# move into register_tests.cmake  
-enable_testing()
 
 # define singleton test components
 include( CMake/define_test_components.cmake )

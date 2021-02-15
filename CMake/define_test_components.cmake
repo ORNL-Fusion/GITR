@@ -22,7 +22,7 @@ set( test_components
 
 foreach( component IN LISTS test_components )
 
-add_library( ${component} test/src/${component}.cpp )
+add_executable( ${component} test/src/${component}.cpp )
 
 target_include_directories( ${component} PUBLIC include )
 
