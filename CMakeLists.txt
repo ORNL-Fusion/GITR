@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.1)
 project(gitr)
 
-set(OPENMP 1)
+set(CUDA 1)
 set(APPLE 0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
 set(CXX_STANDARD_REQUIRED TRUE)
+
+include( CMake/dependencies.cmake )
 
 # Set source files
 file(GLOB SRC_FILES src/*.cpp)
@@ -84,6 +86,8 @@ add_definitions(-DUSE_CUDA=${USE_CUDA}
 # Setup for CUDA backend
 if (${CUDA})
     Message("Enabling CUDA backend")
+#    set( CUDA_TOOLKIT_ROOT_DIR 
+#/home/dg6/spack/opt/spack/linux-ubuntu18.04-skylake_avx512/gcc-7.4.0/cuda-10.2.89-hzby2dvk7t7hh4tbqtx66uexreoc2ih3 )
     find_package(CUDA REQUIRED)
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     set(CUDA_SEPARABLE_COMPILATION TRUE)
@@ -102,6 +106,12 @@ if (${CUDA})
     CUDA_ADD_EXECUTABLE(field_tests ${TEST_FIELD} ${TEST_FILES})
     #CUDA_ADD_EXECUTABLE(atomic_tests ${TEST_ATOMIC} ${TEST_FILES})
     cuda_add_executable(GITR ${SRC_FILES})
+    if( dependencies )
+    add_dependencies( GITR ${dependencies} )
+    add_dependencies( tests ${dependencies} )
+    add_dependencies( coulomb_tests ${dependencies} )
+    add_dependencies( field_tests ${dependencies} )
+    endif()
 endif ()
 
 # setup for OpenMP backend
