@@ -15,7 +15,7 @@ The code is manifested in the time stepping of a particle with a set of initial 
 ## Program Files
 The program is organized into C++, matLab, and python files. The C++ are the buildable program (located in src and include directories), with the matlab and python scripts (located in the matlab/python directory) being used to generate inputs, run benchmarks, and post process outputs. The build directory contains scripts used to compile the GITR executable via passing cmake arguments.
 ```
-. (CMakeLists.txt, machine environment files, etc.)
+. (CMakeLists.txt, LICENSE, README, etc.)
 ├── build (Contains sh scripts used to compile GITR by passing cmake the proper arguments executable is built here)
 ├── cmakeMachineFiles (example CMake files for different machines and configurations)
 ├── examples (operator tests and simulation setup examples)
@@ -43,6 +43,102 @@ We further utilize the more recent CXX-4 components of the NetCDF API (note that
 The THRUST headers are required and are available either standalone from the THRUST repo (for building on systems without GPUs), or from within the CUDA SDK (for building on systems with GPUs). So if you do not have an nvidia compute GPU, you will still need the THRUST library (unbuilt).
 
 ## Installation
+
+### Quickstart
+```
+git clone https://github.com/ORNL-Fusion/GITR.git
+cd GITR
+
+sudo apt-get -y install libnetcdf-dev
+dpkg -L libnetcdf-dev
+wget https://github.com/Unidata/netcdf-cxx4/archive/v4.3.1.tar.gz
+tar -xvzf v4.3.1.tar.gz
+mkdir netcdfcxxbuild
+h5cc -showconfig
+dpkg -L libhdf5-dev
+export CPPFLAGS="-I/usr/include/hdf5/serial"
+export CFLAGS="-I/usr/include/hdf5/serial"
+mkdir netcdf-cxx4-4.3.1/build && cd netcdf-cxx4-4.3.1/build && cmake -DCMAKE_CPP_FLAGS=-I/usr/include/hdf5/serial -DCMAKE_C_FLAGS=-I/usr/include/hdf5/serial -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/netcdfcxxbuild .. && make VERBOSE=1 && ctest && make install
+
+git clone https://github.com/thrust/thrust.git
+dpkg -L libnetcdf-dev
+export NETCDF_DIR_LIB=$GITHUB_WORKSPACE/netcdfcxxbuild/lib
+export NETCDF_DIR_INC=$GITHUB_WORKSPACE/netcdfcxxbuild/include
+ls netcdfcxxbuild
+ls netcdfcxxbuild/lib
+ls netcdfcxxbuild/include
+ls netcdfcxxbuild/bin
+echo $NETCDF_DIR_LIB
+echo $NETCDF_DIR_INC
+sudo apt-get -y install libconfig++-dev
+dpkg -L libconfig++-dev
+cd build
+```
+
+The following is a collection of runtime options which can be copied into a bash script:
+```
+#!/bin/bash
+        cmake 
+        -DCMAKE_CPP_FLAGS=-I$GITHUB_WORKSPACE/netcdfcxxbuild/include
+        -DTHRUST_INCLUDE_DIR=$GITHUB_WORKSPACE/thrust
+        -DNETCDF_CXX_INCLUDE_DIR=$GITHUB_WORKSPACE/netcdfcxxbuild/include
+        -DNETCDF_CXX_LIBRARY=$GITHUB_WORKSPACE/netcdfcxxbuild/lib/libnetcdf-cxx4.so
+        -DNETCDF_LIBRARIES=$NETCDF_DIR_LIB/libnetcdf.dylib
+        -DNETCDF_INCLUDE_DIRS=$NETCDF_DIR_INC
+        -DLIBCONFIGPP_INCLUDE_DIR=/usr/include
+        -DUSE_CUDA=0
+        -DUSE_MPI=0
+        -DUSEIONIZATION=0
+        -DUSERECOMBINATION=0
+        -DUSEPERPDIFFUSION=0
+        -DUSECOULOMBCOLLISIONS=1
+        -DUSEFRICTION=1
+        -DUSEANGLESCATTERING=1
+        -DUSEHEATING=1
+        -DUSETHERMALFORCE=0
+        -DUSESURFACEMODEL=0
+        -DUSESHEATHEFIELD=0
+        -DBIASED_SURFACE=0
+        -DUSE_SURFACE_POTENTIAL=0
+        -DUSEPRESHEATHEFIELD=0
+        -DBFIELD_INTERP=2
+        -DLC_INTERP=0
+        -DGENERATE_LC=0
+        -DEFIELD_INTERP=0
+        -DPRESHEATH_INTERP=0
+        -DDENSITY_INTERP=0
+        -DTEMP_INTERP=0
+        -DFLOWV_INTERP=0
+        -DGRADT_INTERP=0
+        -DODEINT=0
+        -DFIXEDSEEDS=1
+        -DPARTICLESEEDS=1
+        -DGEOM_TRACE=0
+        -DGEOM_HASH=0
+        -DGEOM_HASH_SHEATH=0
+        -DPARTICLE_TRACKS=1
+        -DPARTICLE_SOURCE_SPACE=0
+        -DPARTICLE_SOURCE_ENERGY=0
+        -DPARTICLE_SOURCE_ANGLE=0
+        -DPARTICLE_SOURCE_FILE=0
+        -DSPECTROSCOPY=2
+        -DUSE3DTETGEOM=0
+        -DUSECYLSYMM=1
+        -DUSEFIELDALIGNEDVALUES=0
+        -DFLUX_EA=0
+        -DFORCE_EVAL=0
+        -DUSE_SORT=0
+        -DCHECK_COMPATIBILITY=1
+        .. 
+```
+The code can then be compiled and tests can be run:
+
+```
+        make VERBOSE=1
+        ctest
+```        
+        
+### Details
 CMake (and the CMakeLists.txt file) in combination with a machine environment file and a shell script to pass CMake options are used.
 
 Example environment files (e.g. env.mac.sh) are found at the top level of the GITR directory. These files contiain export statements for environment variables that may specify the paths of certain dependencies to assist CMake in locating them.
