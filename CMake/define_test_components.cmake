@@ -4,8 +4,7 @@
 add_library( catch2 INTERFACE )
 
 target_include_directories( catch2 INTERFACE 
-                            test/include 
-                            external/test/include )
+                            test/include )
 
 add_library( test_utils test/src/test_utils.cpp test/include/test_utils.hpp )
 target_include_directories( test_utils PUBLIC ${CMAKE_SOURCE_DIR} )
@@ -30,7 +29,7 @@ set_source_files_properties( test/src/${component}.cpp PROPERTIES LANGUAGE CUDA 
 set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
 endif()
 
-target_include_directories( ${component} PUBLIC include )
+target_include_directories( ${component} PUBLIC include test/include )
 
 endforeach()
 

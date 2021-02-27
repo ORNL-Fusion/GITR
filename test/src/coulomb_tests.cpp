@@ -1,4 +1,4 @@
-#include "test/include/test_utils.hpp"
+#include "test_utils.hpp"
 #include "coulombCollisions.h"
 #include "curandInitialize.h"
 #include "curandInitialize2.h"

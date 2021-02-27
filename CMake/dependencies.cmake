@@ -89,18 +89,19 @@ target_link_libraries( netcdf INTERFACE ${NETCDF_LIBRARY} ${NETCDF_CXX_LIBRARY} 
 list( APPEND dependencies netcdf )
 endif()
 
-find_package(MPI)
+if( GITR_USE_MPI )
+include( FindMPI )
 if(MPI_FOUND)
-include_directories(SYSTEM PUBLIC ${MPI_INCLUDE_PATH})
-elseif()
+add_library( mpi INTERFACE )
+target_include_directories( mpi INTERFACE ${MPI_CXX_INCLUDE_DIRS} ${MPI_C_INCLUDE_DIRS})
+target_link_libraries( mpi INTERFACE ${MPI_CXX_LIBRARIES} ${MPI_C_LIBRARIES} )
+else()
 message( FATAL_ERROR "MPI was not found" )
 endif()
+endif()
 
-# ensure that all targets in ${dependencies} is built before any source targets
+# ensure that all targets in ${dependencies} are built first
 if( dependencies )
-
-  # Captain! Comment out for now with GPU codepath
-  #add_dependencies( GITR ${dependencies} )
 
   foreach( component IN LISTS source_components test_components )
   # does this really have to be dereferenced?
@@ -108,3 +109,11 @@ if( dependencies )
   endforeach()
 
 endif()
+
+# ensure that all targets in ${source_components} are built before any test targets
+foreach( component IN LISTS test_components )
+  add_dependencies( ${component} ${source_components})
+endforeach()
+
+# ensure that all source targets are built before GITR
+add_dependencies( GITR ${source_components} )

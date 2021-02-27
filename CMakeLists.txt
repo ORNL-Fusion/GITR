@@ -57,7 +57,6 @@ message("${TEST_FILES}")
 file(GLOB HEADER_FILES include/*.h include/*.hpp test/tests_general.hpp)
 file(GLOB HEADER_DIRS include test)
 add_library(YourLib ${TEST_FILES})
-# Captain!
 if( dependencies )
 add_dependencies( YourLib ${dependencies} )
 endif()
@@ -75,7 +74,6 @@ include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 add_definitions(-DUSE_PARALLEL -DHAS_NETCDF_PAR_H)
 
 # Setup for CUDA backend
-# Ahoy, Captain!
 if (${CUDA})
     Message("Enabling CUDA backend")
     find_package(CUDA REQUIRED)
@@ -151,11 +149,6 @@ if (${CPP_PAR})
     #add_executable(GITR ${SRC_FILES})
     add_definitions("-x c++ -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP -DCPP_PAR -Wno-unused-local-typedef")
 endif ()
-
-# Captain! Add dependencies
-#if( dependencies )
-#add_dependencies( GITR ${dependencies} )
-#endif()
 
 # Add debug libraries
 if (${CUDA_DEBUG})

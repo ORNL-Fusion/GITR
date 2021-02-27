@@ -1,6 +1,5 @@
-#include "test/include/test_utils.hpp"
+#include "test_utils.hpp"
 #include "ionize.h"
-/*
 #include "recombine.h"
 #include "utils.h"
 #include <thrust/execution_policy.h>
@@ -686,4 +685,3 @@ auto gitr_start_clock = gitr_time::now();
   
   }
 }
-*/
