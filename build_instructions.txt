@@ -1,0 +1,18 @@
+note: this file is located in the "root" directory of GITR
+
+1. Load the CUDA module. Navigate to /home/share. You will see a file called env.fusiont6.
+   > source env.fusiont6
+
+2. From within GITR/build, run the build script "cmake.sh" provided in GITR root directory
+   > cd build
+   > bash ../cmake.sh
+
+   note: some of the automatically installed dependencies must install things in system
+         locations like /usr/local/lib. If you do not have permissions to create files there,
+         the OS will say no and the build will fail.
+         
+         solution: sudo bash ../cmake.sh
+
+
+3. run coulomb_tests
+   > ./coulomb_tests

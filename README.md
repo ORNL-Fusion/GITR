@@ -1,6 +1,26 @@
 # GITR
 Global Impurity Transport Code
 
+## New build instructions:
+This branch contains a new build system for GITR. It currently does not support GPUs.
+To see the list of preprocessor macros configured and defined by CMake at build time,
+examine GITR/CMake/define\_options.cmake. Default values can be overriden on the cmake
+command line via -D style options. To build, create a "build\_directory", and run
+cmake -S /path/to/GITR -B /path/to/build\_directory -D{whatever option you want to override}
+The built files should be in that build\_directory
+
+## Directory layout map
+CMake - contains small build-modules called by the top-level CMakeLists.txt build system
+spec.
+
+external - contains all 3rd party dependencies GITR relies on
+
+include - headers for GITR source code and h-file source code
+src - includes .cpp GITR source code
+test\_include - headers for GITR unit tests
+test\_src - GITR unit test source code
+test\_data - unit test data
+
 ## Description
 The GITR program takes background plasma profiles, equilibrium, geometry, and surface model and performs large scale simulation of plasma induced erosion, plasma transport of those impurities, self-sputtering, and redeposition.
 

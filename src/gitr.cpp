@@ -23,7 +23,7 @@
 #include "recombine.h"
 #include "spectroscopy.h"
 #include "surfaceModel.h"
-#include "testRoutineCuda.h"
+//#include "testRoutineCuda.h"
 #include "thermalForce.h"
 #include "utils.h"
 #include <algorithm>

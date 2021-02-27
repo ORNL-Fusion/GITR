@@ -3,7 +3,7 @@
 #include <libconfig.h++>
 #include <stdio.h>
 #include "utils.h"
-#include "test/include/test_utils.hpp"
+#include "test_utils.hpp"
 #include "Particles.h"
 #include "geometryCheck.h"
 #if USE_DOUBLE
