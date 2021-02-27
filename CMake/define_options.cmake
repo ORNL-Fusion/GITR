@@ -1,11 +1,23 @@
 # GITR source is designed around build-time configuration. Thus, all preprocessor variables
 # used in the code must be defined through CMake. This anti-pattern should be replaced with
-# runtime configuration... but currently this is what we're stuck with
+# runtime configuration... but pending massive refactoring this is what we're stuck with
 
 # for each preprocessor macro, set the value of the macro to the value of a corresponding 
 # -D option. If it is not overridden on the command line, its default value will be used:
 
+# This allows the option to be modified via the command line
+# alternatively, set options as strings then convert to integers? They are already strings...
+# Captain! declare these as "cache" string variables. Currently they are just normal.
+# look up CMake "set" command for more details
+option( GITR_USE_CUDA "enable GPU support for GITR" OFF )
+if( GITR_USE_CUDA )
+set( GITR_USE_CUDA 1 )
+else()
 set( GITR_USE_CUDA 0 )
+endif()
+message( STATUS "Captain! GITR_USE_CUDA: ${GITR_USE_CUDA}" )
+
+
 set( GITR_USE_MPI 1 )
 set( GITR_USE_IONIZATION 0 )
 set( GITR_USER_COMBINATION 0 )
@@ -49,10 +61,6 @@ set( GITR_FLUX_EA 1 )
 set( GITR_FORCE_EVAL 0 )
 set( GITR_USE_SORT 0 )
 set( GITR_CHECK_COMPATIBILITY 1 )
-
-# You thought these variables could be used directly? Lol. CMake implicitly converts the values
-# of options into either "ON" or "OFF", but the preprocessor macros expect an int: 0 or 1.
-# Iterate through th
 
 add_compile_definitions( USE_CUDA=${GITR_USE_CUDA}
         USE_MPI=${GITR_USE_MPI}

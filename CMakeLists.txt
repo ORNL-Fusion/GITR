@@ -4,10 +4,12 @@ project(gitr)
 # point cmake to the find_package modules 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 
-# not yet implemented - define -D style build-options
 include( CMake/define_options.cmake )
 
-if( NOT USE_CUDA )
+include( CMake/dependencies.cmake )
+
+# code path for CPU mode
+if( NOT GITR_USE_CUDA )
 
 # for now, hardcode compile definitions CPU build only.
 # move this into system_config_backend
@@ -19,8 +21,8 @@ include( CMake/define_source_components.cmake )
 # define singleton test components
 include( CMake/define_test_components.cmake )
 
-# include dependencies
-include( CMake/dependencies.cmake )
+# Make sure everything is built before attempting to link
+include( CMake/enforce_build_order.cmake )
 
 # not yet implemented link the targets together as needed
 include( CMake/crosslink_components.cmake )
@@ -28,15 +30,12 @@ include( CMake/crosslink_components.cmake )
 # not yet implemented - this will call "add_test"
 include( CMake/register_tests.cmake )
 
-# debugging codepath for GPU build - add one thing at a time
-else()
-include( CMake/configure_hardware.cmake )
-include( CMake/gpu.cmake )
-include( CMake/dependencies.cmake )
-target_link_libraries( atomic_tests PUBLIC test_utils thrust libconfig netcdf )
+# code path for GPU mode
+elseif( GITR_USE_CUDA )
+message( STATUS "Ahoy, Captain! GPU mode not enabled :)" )
 endif()
 
-# everything below this line is for reference reading only
+# everything below this line is for reference reading only - delete later
 return()
 
 set(OPENMP 1)

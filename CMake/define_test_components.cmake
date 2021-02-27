@@ -4,9 +4,9 @@
 add_library( catch2 INTERFACE )
 
 target_include_directories( catch2 INTERFACE 
-                            test/include )
+                            test_include )
 
-add_library( test_utils test/src/test_utils.cpp test/include/test_utils.hpp )
+add_library( test_utils test_src/test_utils.cpp test_include/test_utils.hpp )
 target_include_directories( test_utils PUBLIC ${CMAKE_SOURCE_DIR} )
 
 # does this propagate the includes from the catch2 interface target?
@@ -21,15 +21,15 @@ set( test_components
 
 foreach( component IN LISTS test_components )
 
-add_executable( ${component} test/src/${component}.cpp )
+add_executable( ${component} test_src/${component}.cpp )
 
 if( USE_CUDA )
-set_source_files_properties( test/src/${component}.cpp PROPERTIES LANGUAGE CUDA )
+set_source_files_properties( test_src/${component}.cpp PROPERTIES LANGUAGE CUDA )
 # does this even do anything?
 set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
 endif()
 
-target_include_directories( ${component} PUBLIC include test/include )
+target_include_directories( ${component} PUBLIC include test_include )
 
 endforeach()
 
