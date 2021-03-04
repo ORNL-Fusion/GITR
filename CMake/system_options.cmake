@@ -1,5 +1,3 @@
-# Change this file to "compiler_options.cmake" and the other "user_options.cmake"
-
 if( GITR_USE_CUDA )
 
   add_compile_definitions( THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA )
