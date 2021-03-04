@@ -8,14 +8,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 
 include( CMake/user_options.cmake )
 
+include( CMake/system_options.cmake )
+
 include( CMake/dependencies.cmake )
 
 # code path for CPU mode
 if( NOT GITR_USE_CUDA )
-
-# for now, hardcode compile definitions CPU build only.
-# move this into system_config_backend
-include( CMake/system_options.cmake )
 
 # define singleton source components - change to "targets"
 include( CMake/define_source_components.cmake )
