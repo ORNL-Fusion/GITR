@@ -1,4 +1,4 @@
-# Build-time options - most of these should be converted to runtime options in the future.
+# Anti-pattern: build-time options - these will be converted to runtime options in the future
 
 # String description for each option
 set( description "(no description added - see define_options.cmake)" )
