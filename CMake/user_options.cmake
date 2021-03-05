@@ -5,7 +5,7 @@ set( description "(no description added - see define_options.cmake)" )
 set( GITR_USE_CUDA 0 CACHE STRING "${description}" )
 set( GITR_USE_MPI 1 CACHE STRING "${description}" )
 set( GITR_USE_IONIZATION 0 CACHE STRING "${description}" )
-set( GITR_USER_COMBINATION 0 CACHE STRING "${description}" )
+set( GITR_USE_RECOMBINATION 0 CACHE STRING "${description}" )
 set( GITR_USE_PERP_DIFFUSION 0 CACHE STRING "${description}" )
 set( GITR_USE_COULOMB_COLLISIONS 1 CACHE STRING "${description}" )
 set( GITR_USE_FRICTION 1 CACHE STRING "${description}" )
@@ -51,7 +51,7 @@ add_compile_definitions(
         USE_CUDA=${GITR_USE_CUDA}
         USE_MPI=${GITR_USE_MPI}
         USEIONIZATION=${GITR_USE_IONIZATION}
-        USERECOMBINATION=${GITR_USER_COMBINATION}
+        USERECOMBINATION=${GITR_USE_RECOMBINATION}
         USEPERPDIFFUSION=${GITR_USE_PERP_DIFFUSION}
         USECOULOMBCOLLISIONS=${GITR_USE_COULOMB_COLLISIONS}
         USEFRICTION=${GITR_USE_FRICTION}
