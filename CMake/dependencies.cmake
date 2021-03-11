@@ -137,7 +137,7 @@ endif()
 
 add_library( netcdf INTERFACE )
 
-if( TARGET netcdf_c_download AND TARGET netcdf-cxx4_download )
+if( TARGET netcdf-c_download AND TARGET netcdf-cxx4_download )
   add_dependencies( netcdf netcdf_c_download netcdf-cxx4_download )
 endif()
 
