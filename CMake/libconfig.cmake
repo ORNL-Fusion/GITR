@@ -8,11 +8,20 @@ if( NOT LIBCONFIG_FOUND )
 
   set( libconfig_url "https://github.com/hyperrealm/libconfig.git" )
 
-  ExternalProject_Add( libconfig_download
-                       DOWNLOAD_COMMAND git clone ${libconfig_url} ${prefix}/libconfig
-                       CONFIGURE_COMMAND cmake -S ${prefix}/libconfig -B ${prefix}/libconfig_build -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
-                       BUILD_COMMAND cmake --build ${prefix}/libconfig_build -- -j
-                       INSTALL_COMMAND cmake --install ${prefix}/libconfig_build ) 
+  if( EXISTS ${prefix}/libconfig )
+    ExternalProject_Add( libconfig_download
+                         DOWNLOAD_COMMAND ""
+                         CONFIGURE_COMMAND cmake -S ${prefix}/libconfig -B ${prefix}/libconfig_build -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
+                         BUILD_COMMAND cmake --build ${prefix}/libconfig_build -- -j
+                         INSTALL_COMMAND cmake --install ${prefix}/libconfig_build ) 
+  else()
+    ExternalProject_Add( libconfig_download
+                         DOWNLOAD_COMMAND git clone ${libconfig_url} ${prefix}/libconfig
+                         CONFIGURE_COMMAND cmake -S ${prefix}/libconfig -B ${prefix}/libconfig_build -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
+                         BUILD_COMMAND cmake --build ${prefix}/libconfig_build -- -j
+                         INSTALL_COMMAND cmake --install ${prefix}/libconfig_build ) 
+  endif()
+
 
   set( LIBCONFIG_INCLUDE_DIR 
        "${prefix}/libconfig_install/include" 
