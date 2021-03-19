@@ -1,6 +1,6 @@
 # Add thrust
 
-if( NOT USE_CUDA )
+if( NOT GITR_USE_CUDA )
 
   message( "Downloading thrust..." )
 

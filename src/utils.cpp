@@ -128,6 +128,7 @@ void checkFlags(libconfig::Config &cfg)
                   }
               }
 }
+/*
 void print_gpu_memory_usage(const int world_rank)
 {
 #if USE_CUDA
@@ -170,6 +171,7 @@ void print_gpu_memory_usage(const int world_rank)
   }
 #endif
 }
+*/
 
 template <typename T>
 T getVariable (libconfig::Config &cfg,const std::string& s, T &a)

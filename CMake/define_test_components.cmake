@@ -15,7 +15,6 @@ target_link_libraries( test_utils PUBLIC catch2 )
 
 set( test_components 
      atomic_tests
-     coulomb_tests
      field_tests
      file_io_tests )
 
@@ -26,3 +25,20 @@ foreach( component IN LISTS test_components )
   target_include_directories( ${component} PUBLIC include test_include )
 
 endforeach()
+
+if( GITR_USE_CUDA )
+
+  set( cuda_test_components 
+       coulomb_tests )
+
+  foreach( component IN LISTS cuda_test_components )
+
+    add_executable( ${component} test_src/${component}.cpp )
+    target_include_directories( ${component} PUBLIC include test_include )
+    set_source_files_properties( test_src/${component}.cpp PROPERTIES LANGUAGE CUDA )
+    set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
+    target_compile_options( ${component} PUBLIC --expt-relaxed-constexpr )
+
+  endforeach()
+
+endif()

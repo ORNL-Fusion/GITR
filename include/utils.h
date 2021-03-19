@@ -27,7 +27,7 @@ typedef float gitr_precision;
 #endif
 void  read_comand_line_args(const int argc,char** argv,int& ppn,std::string& inputFile);
 void checkFlags(libconfig::Config &cfg);
-void print_gpu_memory_usage(const int world_rank);
+//void print_gpu_memory_usage(const int world_rank);
 
 struct randInit
 {
