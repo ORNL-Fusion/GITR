@@ -11,6 +11,7 @@
 
 #include "Particles.h"
 #include "ionize.h"
+#include "flags.hpp"
 #ifdef __CUDACC__
 #include <thrust/random.h>
 #include <curand_kernel.h>
@@ -41,7 +42,8 @@ struct recombine {
   float* gridDensity_Recombination;
   float* gridTemperature_Recombination;
   float* rateCoeff_Recombination;
-  const float dt;
+  Flags* gitr_flags;
+  float dt;
   float tion;
   T *state;
 
@@ -51,7 +53,7 @@ struct recombine {
      float* _DensGridz,float* _ne,int _nR_Temp, int _nZ_Temp,
      float* _TempGridr, float* _TempGridz,float* _te,int _nTemperaturesRecomb,
      int _nDensitiesRecomb,float* _gridTemperature_Recombination,float* _gridDensity_Recombination,
-     float* _rateCoeff_Recombination) : 
+     float* _rateCoeff_Recombination, Flags* _gitr_flags) : 
     particlesPointer(_particlesPointer),
 
                                                nR_Dens(_nR_Dens),
@@ -69,6 +71,7 @@ struct recombine {
                                                gridDensity_Recombination(_gridDensity_Recombination),
                                                gridTemperature_Recombination(_gridTemperature_Recombination),
                                                rateCoeff_Recombination(_rateCoeff_Recombination),
+					       gitr_flags(_gitr_flags),
                                                dt(_dt), // JDL missing tion?
                                                state(_state) {
   }
@@ -76,12 +79,10 @@ struct recombine {
   
   CUDA_CALLABLE_MEMBER_DEVICE 
   void operator()(std::size_t indx) { 
-      //std::cout << "rec index " <<indx  << std::endl;
-      //if(indx > 1000)
-      //{
-      // std::cout << "wtf " <<indx  << std::endl;
-      //} 
-  float P1 = 0.0f;
+  double P1 = 0.0;
+    if (gitr_flags->USE_ADAPTIVE_DT) {
+	    dt = particlesPointer->dt[indx];
+    }
       if(particlesPointer->charge[indx] > 0)
     {
        tion = interpRateCoeff2d ( particlesPointer->charge[indx]-1, particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
@@ -89,14 +90,27 @@ struct recombine {
        P1 = 1.0-P;
     }
 
-  if(particlesPointer->hitWall[indx] == 0.0)
+    if (gitr_flags->USE_ADAPTIVE_DT) {
+  if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx])
 	{        
-        float r1 = get_rand(state,indx);
+        double r1 = get_rand_double(state,indx);
 	if(r1 <= P1)
 	{
         particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;
 	}         
    }	
+    }
+    else
+    {
+  if(particlesPointer->hitWall[indx] == 0.0)
+	{        
+        double r1 = get_rand_double(state,indx);
+	if(r1 <= P1)
+	{
+        particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;
+	}         
+   }	
+    }
 
   } 
 };

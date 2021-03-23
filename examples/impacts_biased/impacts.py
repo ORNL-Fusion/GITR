@@ -57,7 +57,7 @@ def setup_case(Zi = 1, amu_i = 2, charge_i = 1,
     vy0 = np.interp(random.rand(int(nP)),fv1CDF,vgrid);
     vz0 = np.abs(np.interp(random.rand(int(nP)),fv1CDF,vgrid));
     print('vx0',vx0)
-    plt.hist(vx0, bins=30)
+    #plt.hist(vx0, bins=30)
     #plt.show()
 
     xdir = [np.cos(np.deg2rad(phi)), 0 , -np.sin(np.deg2rad(phi))];
@@ -70,7 +70,7 @@ def setup_case(Zi = 1, amu_i = 2, charge_i = 1,
     vx = xdir[0]*vx0 + ydir[0]*vy0 + zdir[0]*vz0;
     vy = xdir[1]*vx0 + ydir[1]*vy0 + zdir[1]*vz0;
     vz = xdir[2]*vx0 + ydir[2]*vy0 + zdir[2]*vz0;
-    plt.hist(vz)
+    #plt.hist(vz)
     #plt.show()
 
     x = np.zeros(int(nP));
@@ -107,13 +107,13 @@ def WEST_case(location = 18, ion_charge = 1, filename = '/Users/tqd/Code/GITR/we
                nP = 1e5, nT = 5e3, dt = 1.0e-9,height_factor = 4,
                filename = "input/gitrInput.cfg")
 
-def ProtoMPEx_case(surface_potential = 500, sheath_factor = 2.0):
+def ProtoMPEx_case(surface_potential = 1000, T=4, n=5e18, sheath_factor = 1.0):
     setup_case(Zi = 1, amu_i = 2, charge_i = 1,
                Zb = 1, amu_b = 2, charge_b = 1,
-               Ti = 4, ni = 5e18,
-               Te = 4, ne = 5e18,
+               Ti = T, ni = n,
+               Te = T, ne = n,
                Bmag = 0.1, phi = 180-85,
-               nP = 1e4, nT = 5e4, dt = 5.0e-10,height_factor = 5*sheath_factor,
+               nP = 1e4, nT = 5e5, dt = 5.0e-10,height_factor = 5*sheath_factor,
                filename = "input/gitrInput.cfg")
     
     with io.open('input/gitrGeometry.cfg') as f:
@@ -130,6 +130,28 @@ def ProtoMPEx_case(surface_potential = 500, sheath_factor = 2.0):
     with io.open('input/gitrInput.cfg', 'w') as f:
         libconf.dump(config, f)
 
+def ProtoMPEx_case_O(surface_potential = 1000, T=4, n=5e18, sheath_factor = 1.0):
+    setup_case(Zi = 8, amu_i = 16, charge_i = 1,
+               Zb = 1, amu_b = 2, charge_b = 1,
+               Ti = T, ni = n,
+               Te = T, ne = n,
+               Bmag = 0.1, phi = 180-85,
+               nP = 1e4, nT = 2e6, dt = 1.0e-9,height_factor = 5*sheath_factor,
+               filename = "input/gitrInput.cfg")
+    
+    with io.open('input/gitrGeometry.cfg') as f:
+        config = libconf.load(f)
+        config['geom']['potential'][0] = surface_potential
+
+    with io.open('input/gitrGeometry.cfg', 'w') as f:
+        libconf.dump(config, f)
+    
+    with io.open('input/gitrInput.cfg') as f:
+        config = libconf.load(f)
+        config['backgroundPlasmaProfiles']['sheath_factor'] = sheath_factor
+    
+    with io.open('input/gitrInput.cfg', 'w') as f:
+        libconf.dump(config, f)
 if __name__ == "__main__":
     #WEST_case()
     #setup_case(Zi = 1, amu_i = 1, charge_i = 1,

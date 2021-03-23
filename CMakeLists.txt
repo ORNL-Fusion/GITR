@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.1)
 project(gitr)
 
-set(OPENMP 1)
-set(APPLE 1)
+set(CUDA 1)
+set(APPLE 0)
 set(_MPI 0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
@@ -35,7 +35,7 @@ find_package(OpenMP REQUIRED)
 # Add includes
 include_directories(${NETCDF_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
-include_directories(${THRUST_INCLUDE_DIRS})
+#include_directories(${THRUST_INCLUDE_DIRS})
 include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 add_definitions(-DUSE_PARALLEL -DHAS_NETCDF_PAR_H)
 # Simulation defines

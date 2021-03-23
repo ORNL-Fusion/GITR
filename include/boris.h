@@ -14,6 +14,7 @@
 #include "Particles.h"
 #include "Boundary.h"
 #include "interp2d.hpp"
+#include "flags.hpp"
 #include <algorithm>
 
 CUDA_CALLABLE_MEMBER
@@ -782,6 +783,8 @@ struct move_boris {
     float* closeGeomGridy_sheath;
     float* closeGeomGridz_sheath;
     int* closeGeom_sheath; 
+    Flags* gitr_flags;
+
     const float span;
     const int nLines;
     float magneticForce[3];
@@ -800,7 +803,7 @@ struct move_boris {
             float * _EfieldRDevicePointer,
             float * _EfieldZDevicePointer,
             float * _EfieldTDevicePointer,
-            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr,float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom)
+            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, float *_closeGeomGridr,float *_closeGeomGridy, float *_closeGeomGridz, int *_closeGeom, Flags* _gitr_flags)
         
 : particlesPointer(_particlesPointer),
         boundaryVector(_boundaryVector),
@@ -828,6 +831,8 @@ struct move_boris {
         closeGeomGridy_sheath(_closeGeomGridy),
         closeGeomGridz_sheath(_closeGeomGridz),
         closeGeom_sheath(_closeGeom),
+	gitr_flags(_gitr_flags),
+
         span(_span),
         nLines(_nLines),
         magneticForce{0.0, 0.0, 0.0},
@@ -835,60 +840,55 @@ struct move_boris {
 
 CUDA_CALLABLE_MEMBER    
 void operator()(std::size_t indx) { 
-#ifdef __CUDACC__
-#else
-float initTime = 0.0f;
-float interpETime = 0.0f;
-float interpBTime = 0.0f;
-float operationsTime = 0.0f;
-#endif
-            float v_minus[3]= {0.0f, 0.0f, 0.0f};
-            float v_prime[3]= {0.0f, 0.0f, 0.0f};
-            float position[3]= {0.0f, 0.0f, 0.0f};
-	        float v[3]= {0.0f, 0.0f, 0.0f};
-	        float E[3] = {0.0f, 0.0f, 0.0f};
+  float v_minus[3]= {0.0f, 0.0f, 0.0f};
+  float v_prime[3]= {0.0f, 0.0f, 0.0f};
+  float position0[3]= {0.0f, 0.0f, 0.0f};
+  float position[3]= {0.0f, 0.0f, 0.0f};
+  float v0[3]= {0.0f, 0.0f, 0.0f};
+  float v_dt[3]= {0.0f, 0.0f, 0.0f};
+  float v_half_dt[3]= {0.0f, 0.0f, 0.0f};
+  float v[3]= {0.0f, 0.0f, 0.0f};
+  float E[3] = {0.0f, 0.0f, 0.0f};
 #if USEPRESHEATHEFIELD > 0
-            float PSE[3] = {0.0f, 0.0f, 0.0f};
+  float PSE[3] = {0.0f, 0.0f, 0.0f};
 #endif
-	        float B[3] = {0.0f,0.0f,0.0f};
-	        float dt = span;
-	        float Bmag = 0.0f;
-	        float q_prime = 0.0f;
-            float coeff = 0.0f;
-            int nSteps = std::floor( span / dt + 0.5f);
+  float B[3] = {0.0f,0.0f,0.0f};
+  float Bmag = 0.0f;
+  float gyrofrequency = 0.0;
+  float q_prime = 0.0f;
+  float coeff = 0.0f;
 #if USESHEATHEFIELD > 0
-            float minDist = 0.0f;
-            int closestBoundaryIndex;
+  float minDist = 0.0f;
+  int closestBoundaryIndex;
 #endif
+
 #if ODEINT ==	0 
-        if(particlesPointer->hasLeaked[indx] == 0)
-	{
-	  if(particlesPointer->zprevious[indx] > particlesPointer->leakZ[indx])
-	  {
-	    particlesPointer->hasLeaked[indx] = 1;
-	  }
-	}
-	        float qpE[3] = {0.0f,0.0f,0.0f};
-	        float vmxB[3] = {0.0f,0.0f,0.0f};
-	        float vpxB[3] = {0.0f,0.0f,0.0f};
-	        float qp_vmxB[3] = {0.0f,0.0f,0.0f};
-	        float c_vpxB[3] = {0.0f,0.0f,0.0f};
-            vectorAssign(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],position);
+  float qpE[3] = {0.0f,0.0f,0.0f};
+  float vmxB[3] = {0.0f,0.0f,0.0f};
+  float vpxB[3] = {0.0f,0.0f,0.0f};
+  float qp_vmxB[3] = {0.0f,0.0f,0.0f};
+  float c_vpxB[3] = {0.0f,0.0f,0.0f};
+  vectorAssign(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],position);
+  vectorAssign(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],position0);
+  vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v0);
             
-            for ( int s=0; s<nSteps; s++ ) 
-            {
+  float dt = particlesPointer->dt[indx];
+  float vMag_dt = 0.0;
+  float vMag_half_dt = 0.0;
+  float half_dt = 0.5*dt;
+  float new_dt = 0.0;
+  float new_advance = false;
 #if USESHEATHEFIELD > 0
-	          minDist = getE(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],E,boundaryVector,nLines,nR_closeGeom_sheath,
-                          nY_closeGeom_sheath,nZ_closeGeom_sheath,
-                              n_closeGeomElements_sheath,closeGeomGridr_sheath,
-                              closeGeomGridy_sheath,
-                                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex);
-              //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
-              //std::cout << "Charge and Hitwall " << particlesPointer->charge[indx] << " " <<
-               // particlesPointer->hitWall[indx]  << std::endl;
+  minDist = getE(position[0], position[1], position[2],
+		  E,boundaryVector,nLines,nR_closeGeom_sheath,
+                  nY_closeGeom_sheath,nZ_closeGeom_sheath,
+                  n_closeGeomElements_sheath,closeGeomGridr_sheath,
+                  closeGeomGridy_sheath,
+                  closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex);
 #endif
 
 #if USEPRESHEATHEFIELD > 0
+/*
 #if LC_INTERP==3
               
 	        //float PSE2[3] = {0.0f, 0.0f, 0.0f};
@@ -904,83 +904,188 @@ float operationsTime = 0.0f;
               //PSE[0] = 1.23;
 
 #else
-                 interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
+*/
+  interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer);
                  
-                 vectorAdd(E,PSE,E);
+  vectorAdd(E,PSE,E);
               //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
-#endif
+//#endif
 #endif              
-                interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
+  interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer);        
-                //std::cout << "Bfield and mass " <<B[0] << " " <<  B[1] <<" "<< B[2]<< " " << particlesPointer->amu[indx] << std::endl;    
-                Bmag = vectorNorm(B);
-	            q_prime = particlesPointer->charge[indx]*1.60217662e-19f/(particlesPointer->amu[indx]*1.6737236e-27f)*dt*0.5f;
-                //std::cout << "charge, amu , dt " << particlesPointer->charge[indx] << " " << particlesPointer->amu[indx]<< " " << dt << std::endl;
-                coeff = 2.0f*q_prime/(1.0f+(q_prime*Bmag)*(q_prime*Bmag));
-                //std::cout << " Bmag " << Bmag << std::endl;
-                //std::cout << " qprime coeff " << q_prime << " " << coeff << std::endl;
-                vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v);
-                //std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
-                //v_minus = v + q_prime*E;
-               vectorScalarMult(q_prime,E,qpE);
-               vectorAdd(v,qpE,v_minus);
-               this->electricForce[0] = 2.0*qpE[0];
-	       //std::cout << "e force " << q_prime << " " << PSE[0] << " " << PSE[1] << " " << PSE[2] << std::endl;
-               this->electricForce[1] = 2.0*qpE[1];
-               this->electricForce[2] = 2.0*qpE[2];
-               //v_prime = v_minus + q_prime*(v_minus x B)
-                vectorCrossProduct(v_minus,B,vmxB);
-                vectorScalarMult(q_prime,vmxB,qp_vmxB);
-                vectorAdd(v_minus,qp_vmxB,v_prime);       
-               this->magneticForce[0] = qp_vmxB[0];
-               this->magneticForce[1] = qp_vmxB[1];
-               this->magneticForce[2] = qp_vmxB[2];
-                
-                //v = v_minus + coeff*(v_prime x B)
-                vectorCrossProduct(v_prime, B, vpxB);
-                vectorScalarMult(coeff,vpxB,c_vpxB);
-                vectorAdd(v_minus, c_vpxB, v);
-                
-                //v = v + q_prime*E
-                vectorAdd(v,qpE,v);
-       //particlesPointer->test[indx] = Bmag; 
-       //particlesPointer->test0[indx] = v[0]; 
-       //particlesPointer->test1[indx] = v[1]; 
-       //particlesPointer->test2[indx] = v[2];
-       /* float ti_eV = 50.0;
-	//std::cout << "ti dens tau_s " << ti_eV << " " << density << " " << tau_s << endl;
-	float vTherm = sqrt(2*ti_eV*1.602e-19/particlesPointer->amu[indx]/1.66e-27);
-
-      if(abs(v[2]) > vTherm)
-      {
-          v[2] = std::copysign(1.0,v[2])*vTherm;
-          v[0] = 0.0;
-          v[1] = 0.0;
-      }
-                float vxy00 = sqrt(vTherm*vTherm - v[2]*v[2]);
-                float vxy01 = sqrt(v[1]*v[1]+ v[0]*v[0]);
-		//std::cout << "vzNew vxy0 vxy " << vzNew << " " << vxy0 << " " << vxy << endl;
-               v[0] = v[0]/vxy01*vxy00;///velocityCollisionsNorm; 
-		       v[1] = v[1]/vxy01*vxy00;///velocityCollisionsNorm;
-
-          */
+  Bmag = vectorNorm(B);
+  gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19f*Bmag/(particlesPointer->amu[indx]*1.6737236e-27f);
+  q_prime = particlesPointer->charge[indx]*1.60217662e-19f/(particlesPointer->amu[indx]*1.6737236e-27f)*dt*0.5f;
+    coeff = 2.0f*q_prime/(1.0f+(q_prime*Bmag)*(q_prime*Bmag));
+    vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v);
+    vectorScalarMult(q_prime,E,qpE);
+    vectorAdd(v,qpE,v_minus);
+    this->electricForce[0] = 2.0*qpE[0];
+    this->electricForce[1] = 2.0*qpE[1];
+    this->electricForce[2] = 2.0*qpE[2];
+    
+    //v_prime = v_minus + q_prime*(v_minus x B)
+    vectorCrossProduct(v_minus,B,vmxB);
+    vectorScalarMult(q_prime,vmxB,qp_vmxB);
+    vectorAdd(v_minus,qp_vmxB,v_prime);       
+    this->magneticForce[0] = qp_vmxB[0];
+    this->magneticForce[1] = qp_vmxB[1];
+    this->magneticForce[2] = qp_vmxB[2];
+     
+     //v = v_minus + coeff*(v_prime x B)
+     vectorCrossProduct(v_prime, B, vpxB);
+     vectorScalarMult(coeff,vpxB,c_vpxB);
+     vectorAdd(v_minus, c_vpxB, v);
+     
+     //v = v + q_prime*E
+     vectorAdd(v,qpE,v);
 	       
-           if(particlesPointer->hitWall[indx] == 0.0)
-            {
-                //std::cout << "updating r and v " << std::endl;
-                particlesPointer->x[indx] = position[0] + v[0] * dt;
-                particlesPointer->y[indx] = position[1] + v[1] * dt;
-                particlesPointer->z[indx] = position[2] + v[2] * dt;
-                particlesPointer->vx[indx] = v[0];
-                particlesPointer->vy[indx] = v[1];
-                particlesPointer->vz[indx] = v[2];    
-              
-//std::cout << "velocity " << v[0] << " " << v[1] << " " << v[2] << std::endl;
-    	    }
-            }
+  if(gitr_flags->USE_ADAPTIVE_DT)
+  {
+    vectorAssign(v[0],v[1],v[2],v_dt);
+    vMag_dt = vectorNorm(v_dt);
+    
+    vectorAssign(v0[0],v0[1],v0[2],v);
+   
+    // First step of half_dt
+    q_prime = particlesPointer->charge[indx]*1.60217662e-19f/(particlesPointer->amu[indx]*1.6737236e-27f)*half_dt*0.5f;
+    coeff = 2.0f*q_prime/(1.0f+(q_prime*Bmag)*(q_prime*Bmag));
+    
+    //v = v + q_prime*E
+    vectorScalarMult(q_prime,E,qpE);
+    vectorAdd(v,qpE,v_minus);
+    
+    //v_prime = v_minus + q_prime*(v_minus x B)
+    vectorCrossProduct(v_minus,B,vmxB);
+    vectorScalarMult(q_prime,vmxB,qp_vmxB);
+    vectorAdd(v_minus,qp_vmxB,v_prime);       
+     
+     //v = v_minus + coeff*(v_prime x B)
+     vectorCrossProduct(v_prime, B, vpxB);
+     vectorScalarMult(coeff,vpxB,c_vpxB);
+     vectorAdd(v_minus, c_vpxB, v);
+     
+     //v = v + q_prime*E
+     vectorAdd(v,qpE,v);
+     
+     position[0] = position[0] + v[0] * half_dt;
+     position[1] = position[1] + v[1] * half_dt;
+     position[2] = position[2] + v[2] * half_dt;
+    
+     // second step of half_dt
+#if USESHEATHEFIELD > 0
+  minDist = getE(position[0], position[1], position[2],
+		  E,boundaryVector,nLines,nR_closeGeom_sheath,
+                  nY_closeGeom_sheath,nZ_closeGeom_sheath,
+                  n_closeGeomElements_sheath,closeGeomGridr_sheath,
+                  closeGeomGridy_sheath,
+                  closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex);
+#endif
+
+#if USEPRESHEATHEFIELD > 0
+  interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
+                     EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
+                     EfieldZDevicePointer,EfieldTDevicePointer);
+                 
+  vectorAdd(E,PSE,E);
+#endif              
+  interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
+                    BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
+                    BfieldZDevicePointer,BfieldTDevicePointer);        
+  Bmag = vectorNorm(B);
+    q_prime = particlesPointer->charge[indx]*1.60217662e-19f/(particlesPointer->amu[indx]*1.6737236e-27f)*half_dt*0.5f;
+    coeff = 2.0f*q_prime/(1.0f+(q_prime*Bmag)*(q_prime*Bmag));
+    
+    //v = v + q_prime*E
+    vectorScalarMult(q_prime,E,qpE);
+    vectorAdd(v,qpE,v_minus);
+    
+    //v_prime = v_minus + q_prime*(v_minus x B)
+    vectorCrossProduct(v_minus,B,vmxB);
+    vectorScalarMult(q_prime,vmxB,qp_vmxB);
+    vectorAdd(v_minus,qp_vmxB,v_prime);       
+     
+     //v = v_minus + coeff*(v_prime x B)
+     vectorCrossProduct(v_prime, B, vpxB);
+     vectorScalarMult(coeff,vpxB,c_vpxB);
+     vectorAdd(v_minus, c_vpxB, v);
+     
+     //v = v + q_prime*E
+     vectorAdd(v,qpE,v);
+     
+     position[0] = position[0] + v[0] * half_dt;
+     position[1] = position[1] + v[1] * half_dt;
+     position[2] = position[2] + v[2] * half_dt;
+    
+     vMag_half_dt = vectorNorm(v);
+     float error_tolerance = 1.0e-7;
+     float velocity_error = std::abs(vMag_dt - vMag_half_dt)/vMag_half_dt;
+     if(velocity_error <= error_tolerance)
+     {
+       new_advance = true;
+     }
+     else
+     {
+       new_advance = false;
+     }
+
+     float max_term = std::max(std::sqrt(error_tolerance/(2*velocity_error)),0.3f);
+     float min_term = std::min(max_term,2.0f);
+     new_dt = 0.9*dt*min_term;
+     if (new_dt< span)
+     {
+      new_dt = span;
+      new_advance = true;
+     }
+
+     if ( new_dt > 0.34/gyrofrequency)
+     {
+      new_dt = 0.34/gyrofrequency;
+      new_advance = true;
+     }
+     
+     if (particlesPointer->charge[indx]==0)
+     {
+      new_dt = span;
+      new_advance = true;
+     }
+
+     if((new_advance == true) && (particlesPointer->hitWall[indx] == 0.0))
+     {
+          particlesPointer->x[indx] = position[0];
+          particlesPointer->y[indx] = position[1];
+          particlesPointer->z[indx] = position[2];
+          particlesPointer->vx[indx] = v[0];
+          particlesPointer->vy[indx] = v[1];
+          particlesPointer->vz[indx] = v[2];    
+          particlesPointer->time[indx] = particlesPointer->time[indx]+dt;    
+          particlesPointer->dt[indx] = new_dt;    
+          particlesPointer->advance[indx] = new_advance;    
+     }
+     else if((new_advance == false) && (particlesPointer->hitWall[indx] == 0.0))
+     {
+          particlesPointer->dt[indx] = new_dt;    
+          particlesPointer->advance[indx] = new_advance;    
+     }
+  }
+  else
+  {
+    
+     if(particlesPointer->hitWall[indx] == 0.0)
+      {
+          particlesPointer->x[indx] = position[0] + v[0] * dt;
+          particlesPointer->y[indx] = position[1] + v[1] * dt;
+          particlesPointer->z[indx] = position[2] + v[2] * dt;
+          particlesPointer->vx[indx] = v[0];
+          particlesPointer->vy[indx] = v[1];
+          particlesPointer->vz[indx] = v[2];    
+      }
+  }
+
+           
 #endif
 
 #if ODEINT == 1

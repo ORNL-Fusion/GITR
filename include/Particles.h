@@ -85,6 +85,9 @@ public:
   sim::Array<float> weight;
   sim::Array<float> firstIonizationZ;
   sim::Array<float> firstIonizationT;
+  sim::Array<float> dt;
+  sim::Array<double> time;
+  sim::Array<bool> advance;
 
   //  void BorisMove(double dt, double xMinV, double xMaxV, double yMin, double
   //  yMax, double zMin, double zMax);
@@ -132,7 +135,7 @@ public:
 
   CUDA_CALLABLE_MEMBER
   void setParticleV(int indx, float x, float y, float z, float Vx, float Vy,
-                    float Vz, float Z, float amu, float charge) {
+                    float Vz, float Z, float amu, float charge,float dt) {
     int indTmp = indx;
     this->index[indx] = indTmp;
     this->xprevious[indx] = x;
@@ -150,6 +153,7 @@ public:
     this->vy[indx] = Vy;
     this->vz[indx] = Vz;
     this->v[indx] = std::sqrt(Vx * Vx + Vy * Vy + Vz * Vz);
+    this->dt[indx] = dt;
   };
   CUDA_CALLABLE_MEMBER
   void swapP(int indx, int n) {
@@ -271,7 +275,10 @@ public:
     distanceTraveled{nParticles,0.0}, 
     weight{nParticles, 1.0}, 
     firstIonizationZ{nParticles, 0.0},
-    firstIonizationT{nParticles, 0.0} {};
+    firstIonizationT{nParticles, 0.0},
+    dt{nParticles,0.0},
+    time{nParticles,0.0},
+    advance{nParticles,false} {};
   
   //CUDA_CALLABLE_MEMBER_DEVICE
   //      #if __CUDACC__  

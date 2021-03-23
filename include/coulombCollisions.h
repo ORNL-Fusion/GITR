@@ -14,6 +14,7 @@
 #include "interp2d.hpp"
 #include "boris.h"
 #include "array.h"
+#include "flags.hpp"
 
 #ifdef __CUDACC__
 #include <thrust/random.h>
@@ -420,7 +421,7 @@ void getSlowDownDirections (float parallel_direction[], float perp_direction1[],
 
 struct coulombCollisions { 
     Particles *particlesPointer;
-    const float dt;
+    float dt;
     int nR_flowV;
     int nY_flowV;
     int nZ_flowV;
@@ -450,6 +451,7 @@ struct coulombCollisions {
     float * BfieldR;
     float * BfieldZ;
     float * BfieldT;
+    Flags* gitr_flags;
     float dv[3];
 #if __CUDACC__
             curandState *state;
@@ -473,7 +475,7 @@ struct coulombCollisions {
                         int _nR_Bfield, int _nZ_Bfield,
                         float * _BfieldGridR ,float * _BfieldGridZ ,
                         float * _BfieldR ,float * _BfieldZ ,
-                 float * _BfieldT )
+                 float * _BfieldT, Flags* _gitr_flags )
       : particlesPointer(_particlesPointer),
         dt(_dt),
         nR_flowV(_nR_flowV),
@@ -505,6 +507,7 @@ struct coulombCollisions {
         BfieldR(_BfieldR),
         BfieldZ(_BfieldZ),
         BfieldT(_BfieldT),
+	gitr_flags(_gitr_flags),
         dv{0.0f, 0.0f, 0.0f},
         state(_state) {
   }
@@ -512,7 +515,11 @@ CUDA_CALLABLE_MEMBER_DEVICE
 void operator()(std::size_t indx)  { 
 
 	    if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
-        { 
+        {
+	       if(gitr_flags->USE_ADAPTIVE_DT)
+	       {
+	          dt = particlesPointer->dt[indx];	   
+	       }	  
         float pi = 3.14159265;   
 	float k_boltz = 1.38e-23*11604/1.66e-27;
 	float T_background = 0.0;
@@ -667,10 +674,21 @@ void operator()(std::size_t indx)  {
       float vx_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[0] + std::abs(n2)*(coeff_perp1 * perp_direction1[0] + coeff_perp2 * perp_direction2[0])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[0];
       float vy_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[1] + std::abs(n2)*(coeff_perp1 * perp_direction1[1] + coeff_perp2 * perp_direction2[1])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[1];
       float vz_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[2] + std::abs(n2)*(coeff_perp1 * perp_direction1[2] + coeff_perp2 * perp_direction2[2])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[2];
-
+      if(gitr_flags->USE_ADAPTIVE_DT)
+      {
+	      if (particlesPointer->advance[indx])
+	      {
       particlesPointer->vx[indx] = vx_relative + flowVelocity[0]; 
       particlesPointer->vy[indx] = vy_relative + flowVelocity[1]; 
       particlesPointer->vz[indx] = vz_relative + flowVelocity[2];
+	      }
+      }
+      else
+      {
+      particlesPointer->vx[indx] = vx_relative + flowVelocity[0]; 
+      particlesPointer->vy[indx] = vy_relative + flowVelocity[1]; 
+      particlesPointer->vz[indx] = vz_relative + flowVelocity[2];
+      }
 
       vx = particlesPointer->vx[indx];
       vy = particlesPointer->vy[indx];

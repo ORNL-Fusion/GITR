@@ -241,7 +241,7 @@ TEST_CASE("Coulomb collision", "tests") {
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
-      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front());
+      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags);
     
     std::cout << "created functors " << std::endl; 
     std::cout << "starting collisions " << std::endl; 
@@ -395,7 +395,7 @@ auto gitr_start_clock = gitr_time::now();
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
-      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front());
+      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags);
     
     std::cout << "created functors " << std::endl; 
     std::cout << "starting collisions " << std::endl; 

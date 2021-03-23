@@ -55,6 +55,7 @@ struct hashGeom {
     
    CUDA_CALLABLE_MEMBER_DEVICE 
    void operator()(std::size_t indx) const {
+      //printf(" indx %i \n", indx);
       int nHash=0;
     //std::cout << "nHashes "<<nHashes << std::endl;
       int hashSum=0;
@@ -170,7 +171,7 @@ struct hashGeom {
 #if USE_CUDA
            float *minDist  = new float[n_closeGeomElements[nHash]];
            for(int i1=0;i1<n_closeGeomElements[nHash];i1++){ minDist[i1] = 1.0e6;}
-           //float minDist[10] = {1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6,1.0e6};
+           //float minDist[n_closeGeomElements[nHash]] = {1.0e6};
 #else
            sim::Array<float> minDist(n_closeGeomElements[nHash],1e6);      
 #endif

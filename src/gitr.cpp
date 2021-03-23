@@ -3479,7 +3479,7 @@ int main(int argc, char **argv, char **envp) {
     // z << " "
     // << vx << " " << vy << " " << vz << " " << Z << " " << amu << " " <<
     // charge << " "  << std::endl;
-    particleArray->setParticleV(i, x, y, z, vx, vy, vz, Z, amu, charge);
+    particleArray->setParticleV(i, x, y, z, vx, vy, vz, Z, amu, charge,dt);
 #if PARTICLE_SOURCE_SPACE > 0
     pSurfNormX[i] =
         -boundaries[currentSegment].a / boundaries[currentSegment].plane_norm;
@@ -3712,7 +3712,7 @@ int main(int argc, char **argv, char **envp) {
       nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
       n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-      &closeGeom_sheath.front());
+      &closeGeom_sheath.front(),gitr_flags);
   //void (*bor)(std::size_t) = &move_boris::operator2;
   //auto bor1 = *bor;
   geometry_check geometry_check0(
@@ -3761,7 +3761,7 @@ int main(int argc, char **argv, char **envp) {
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
-      gridDensity_Recombination.data(), rateCoeff_Recombination.data());
+      gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags);
 #endif
 #if USEPERPDIFFUSION > 0
   crossFieldDiffusion crossFieldDiffusion0(
@@ -3777,7 +3777,7 @@ int main(int argc, char **argv, char **envp) {
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-      &bfieldGridz.front(), &br.front(), &bz.front(), &by.front());
+      &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(),gitr_flags);
 
 #endif
 #if USETHERMALFORCE > 0
@@ -4542,6 +4542,8 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_charge0 = ncFile0.addVar("charge", netCDF::ncFloat, dims0);
     netCDF::NcVar nc_leak0 = ncFile0.addVar("hasLeaked", netCDF::ncInt, dims0);
     netCDF::NcVar nc_dist0 = ncFile0.addVar("distTraveled", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_time0 = ncFile0.addVar("time", netCDF::ncFloat, dims0);
+    netCDF::NcVar nc_dt0 = ncFile0.addVar("dt", netCDF::ncFloat, dims0);
 #if USE_MPI > 0
     nc_x0.putVar(&xGather[0]);
     nc_y0.putVar(&yGather[0]);
@@ -4570,6 +4572,8 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
   nc_charge0.putVar(&particleArray->charge[0]);
   nc_leak0.putVar(&particleArray->hasLeaked[0]);
   nc_dist0.putVar(&particleArray->distTraveled[0]);
+  nc_time0.putVar(&particleArray->time[0]);
+  nc_dt0.putVar(&particleArray->dt[0]);
 #endif
     ncFile0.close();
     // auto particleArray2 = new Particles(1);

@@ -14,7 +14,7 @@
 #include "boris.h"
 #include <cmath>
 
-CUDA_CALLABLE_MEMBER_DEVICE
+__host__ __device__
 float findT(float x0, float x1, float y0, float y1, float intersectionx) {
 
   float a, b, c, a1, a2, t=0, discriminant, realPart, imaginaryPart;
@@ -92,7 +92,7 @@ struct geometry_check {
         E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
         Adist(_Adist) {}
   //CUDA_CALLABLE_MEMBER_DEVICE
-  __host__ __device__
+ __host__  __device__
   void operator()(std::size_t indx) const  {
     // std::cout << "geometry check particle x" << particlesPointer->x[indx] <<
     // particlesPointer->x[indx]previous <<std::endl; std::cout << "geometry

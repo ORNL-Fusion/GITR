@@ -54,6 +54,27 @@ float get_rand(std::minstd_rand *state,int indx)
 	return r1;
 }
 
+#if __CUDA_ARCH__
+CUDA_CALLABLE_MEMBER_DEVICE
+double get_rand_double(curandState *state,int indx)
+{
+        curandState localState = state[indx];
+        double r1 = curand_uniform_double(&localState);
+        state[indx] = localState;
+	return r1;
+}
+#endif
+
+CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
+double get_rand_double(std::mt19937 *state,int indx)
+{
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
+	std::mt19937 this_state = state[indx];
+        double r1 = dist(this_state);
+	state[indx] = this_state;
+	return r1;
+}
+
 template <typename T=std::mt19937> 
 struct ionize {
   Flags *flags;
@@ -73,7 +94,7 @@ struct ionize {
   float *gridDensity_Ionization;
   float *gridTemperature_Ionization;
   float *rateCoeff_Ionization;
-  const float dt;
+  float dt;
   float tion;
   void (ionize::*func)(std::size_t);
   // int& tt;
@@ -87,7 +108,7 @@ struct ionize {
 //#else
 //  std::mt19937 *state;
 //#endif
-  ionize() : dt(0.0){};
+  //ionize() : dt(0.0){};
   ionize(Flags *_flags, Particles *_particlesPointer, float _dt,T *_state,
 //#if __CUDA_ARCH__
 //         curandState *_state,
@@ -126,6 +147,9 @@ struct ionize {
           // TempGridr, TempGridz, te, DensGridr, DensGridz, ne,
           //nTemperaturesIonize, nDensitiesIonize, gridTemperature_Ionization,
           //gridDensity_Ionization, rateCoeff_Ionization);
+    if (flags->USE_ADAPTIVE_DT) {
+	    dt = particlesPointer->dt[indx];
+    }
       tion = interpRateCoeff2d(
           particlesPointer->charge[indx], particlesPointer->x[indx],
           particlesPointer->y[indx], particlesPointer->z[indx], nR_Temp,
@@ -134,23 +158,28 @@ struct ionize {
           gridDensity_Ionization, rateCoeff_Ionization);
       //float interp1 = field1->interpolate(1.0,2.0,3.0);
       float P = expf(-dt / tion);
-      float P1 = 1.0 - P;
-      float r1 = get_rand(state,indx);
-      if (particlesPointer->hitWall[indx] == 0.0) {
-        float r1 = get_rand(state,indx);
-	random_uniform_number[0] = r1;
+      double P1 = 1.0 - P;
+      double r1 = get_rand_double(state,indx);
+      //printf("dt P1 r1 %f %f %f \n", dt, P1, r1);
+    if (flags->USE_ADAPTIVE_DT) {
+      if (particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx]) {
+        double r1 = get_rand_double(state,indx);
+	//random_uniform_number[0] = r1;
         if (r1 <= P1) {
           particlesPointer->charge[indx] = particlesPointer->charge[indx] + 1;
         }
-        if (particlesPointer->firstIonizationZ[indx] == 0.0) {
-          particlesPointer->firstIonizationZ[indx] = particlesPointer->z[indx];
-        }
-      } else {
-        if (particlesPointer->firstIonizationZ[indx] == 0.0) {
-          particlesPointer->firstIonizationT[indx] =
-              particlesPointer->firstIonizationT[indx] + dt;
+      }
+    }
+	    else{
+      if (particlesPointer->hitWall[indx] == 0.0) {
+        double r1 = get_rand_double(state,indx);
+	//random_uniform_number[0] = r1;
+        if (r1 <= P1) {
+      //printf("did ionize, adding one \n");
+          particlesPointer->charge[indx] = particlesPointer->charge[indx] + 1;
         }
       }
+	    }
     }
   }
 };

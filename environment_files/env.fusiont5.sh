@@ -10,7 +10,7 @@ export  NETCDFLIB=$NETCDFDIR/libnetcdf.so
 export  NETCDFLIB_CPP=$NETCDFCXX4DIR/libnetcdf_c++4.so
 export PATH=$PATH:/$NETCDF/bin
 
-export LIBCONFIGDIR=$HOME/Code/libconfigbuild
+export LIBCONFIGDIR=$HOME/Code/libconfig/libconfigBuild
 export LIBCONFIGLIB=$LIBCONFIGDIR/lib/libconfig++.so
 export LIBCONFIGPP_LIBRARIES=lconfig++
 export LIBCONFIGPP_LIBRARY=lconfig++
