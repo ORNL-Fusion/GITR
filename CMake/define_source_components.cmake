@@ -3,59 +3,70 @@
 # serial modules
 
 add_executable( GITR src/gitr.cpp )
+
+# extra compile options for CUDA
 if( GITR_USE_CUDA )
 
   set_source_files_properties( src/gitr.cpp PROPERTIES LANGUAGE CUDA )
-  set_target_properties( GITR PROPERTIES COMPILE_FLAGS "-dc" )
-  target_include_directories( GITR PUBLIC include )
-  target_compile_options( GITR PUBLIC --expt-relaxed-constexpr )
+  set_target_properties( GITR PROPERTIES LINKER_LANGUAGE CUDA )
+  set_property(TARGET GITR PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+  target_compile_options( GITR PRIVATE --expt-relaxed-constexpr )
 
 endif()
 
-target_include_directories( GITR PRIVATE include )
+target_include_directories( GITR PUBLIC include )
 
-set( source_components 
+# CPU targets
+set( cpu_targets
      efield_interp
-     interp2d
      particle
      utils
      flags
      setup)
 
-foreach( component IN LISTS source_components )
+# Captain! remove random_uniform_numbers - that refactoring 
+# can wait until later. See if you can split up ionize
+# Just with preprocessor directives
+set( gpu_targets
+     surface_model
+     interp2d
+     spectroscopy )
+
+if( NOT GITR_USE_CUDA )
+
+  set( cpu_targets ${cpu_targets} ${gpu_targets} )
+
+endif()
+
+foreach( component IN LISTS cpu_targets )
 
   add_library( ${component} src/${component}.cpp )
-
-  if( USE_CUDA )
-
-    set_source_files_properties( src/${component}.cpp PROPERTIES LANGUAGE CUDA )
-    set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
-
-  endif()
 
   target_include_directories( ${component} PUBLIC include )
 
 endforeach()
 
-# Add sources not in standard locations
-
-target_sources( interp2d PUBLIC include/interp2d.hpp )
-
-# Compile cuda modules here
+# Compile gpu_targets
 if( GITR_USE_CUDA )
 
-  set( cuda_source_components 
-       surface_model 
-       spectroscopy )
-
-  foreach( component IN LISTS cuda_source_components )
+  foreach( component IN LISTS gpu_targets )
 
     add_library( ${component} src/${component}.cpp )
     set_source_files_properties( src/${component}.cpp PROPERTIES LANGUAGE CUDA )
     set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
     target_include_directories( ${component} PUBLIC include )
-    target_compile_options( ${component} PUBLIC --expt-relaxed-constexpr )
+    target_compile_options( ${component} PRIVATE --expt-relaxed-constexpr )
 
   endforeach()
 
 endif()
+
+# Currently being developed - ionize GPU component
+
+set( component ionize )
+add_library( ${component} include/ionize.h )
+set_source_files_properties( include/ionize.h PROPERTIES LANGUAGE CUDA )
+set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
+set_target_properties( ${component} PROPERTIES LINKER_LANGUAGE CUDA )
+target_include_directories( ${component} PUBLIC include )
+target_compile_options( ${component} PUBLIC --expt-relaxed-constexpr )

@@ -4,7 +4,7 @@
 # before linking 
 if( dependencies )
 
-  foreach( component IN LISTS source_components test_components )
+  foreach( component IN LISTS cpu_targets gpu_targets )
 
     add_dependencies( ${component} ${dependencies} )
 
@@ -12,11 +12,12 @@ if( dependencies )
 
 endif()
 
-# ensure that all targets in ${source_components} are built before any test targets
+# ensure that test targets are built after source targets
+#foreach( target IN LISTS cpu_test_targets gpu_test_targets )
 
-foreach( component IN LISTS test_components )
-  add_dependencies( ${component} ${source_components})
-endforeach()
+#  add_dependencies( ${target} ${cpu_targets} ${gpu_targets} )
+
+#endforeach()
 
 # ensure that all source targets are built before GITR
-add_dependencies( GITR ${source_components} )
+add_dependencies( GITR ${cpu_targets} ${gpu_targets} )

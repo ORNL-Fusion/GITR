@@ -27,30 +27,11 @@ typedef float gitr_precision;
 #endif
 void  read_comand_line_args(const int argc,char** argv,int& ppn,std::string& inputFile);
 void checkFlags(libconfig::Config &cfg);
-//void print_gpu_memory_usage(const int world_rank);
 
-struct randInit
-{
-	const int streamIndex;
-
-    randInit(int _streamIndex) : streamIndex(_streamIndex) {}
-  template <typename T>
-  CUDA_CALLABLE_MEMBER_DEVICE
-  T operator()(T &strm, gitr_precision &seed) {
-    #ifdef __CUDACC__
-    curandState s;
-    curand_init(seed, 0, 0, &s);
-    #else
-    std::mt19937 s(seed);
-    #endif
-    //p.seed0 = seed;
-    //streams = s;
-    return s;
-    }
-};
 void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, gitr_precision *array2d);
 void OUTPUT1d(std::string folder,std::string outname,int nX, gitr_precision *array2d);
 void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, gitr_precision *array3d);
+
 void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, int *array2d);
 void OUTPUT1d(std::string folder,std::string outname,int nX, int *array2d);
 void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, int *array3d);

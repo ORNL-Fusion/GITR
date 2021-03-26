@@ -13,12 +13,21 @@ target_include_directories( test_utils PUBLIC ${CMAKE_SOURCE_DIR} )
 
 target_link_libraries( test_utils PUBLIC catch2 )
 
-set( test_components 
-     atomic_tests
-     field_tests
+set( cpu_test_targets
      file_io_tests )
 
-foreach( component IN LISTS test_components )
+set( gpu_test_targets
+     coulomb_tests 
+     field_tests
+     atomic_tests )
+
+if( NOT GITR_USE_CUDA )
+
+  set( cpu_test_targets ${cpu_test_targets} ${gpu_test_targets} )
+
+endif()
+
+foreach( component IN LISTS cpu_test_targets )
 
   add_executable( ${component} test_src/${component}.cpp )
 
@@ -28,10 +37,7 @@ endforeach()
 
 if( GITR_USE_CUDA )
 
-  set( cuda_test_components 
-       coulomb_tests )
-
-  foreach( component IN LISTS cuda_test_components )
+  foreach( component IN LISTS gpu_test_targets )
 
     add_executable( ${component} test_src/${component}.cpp )
     target_include_directories( ${component} PUBLIC include test_include )
