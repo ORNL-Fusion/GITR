@@ -24,12 +24,11 @@ set( cpu_targets
      flags
      setup)
 
-# Captain! remove random_uniform_numbers - that refactoring 
-# can wait until later. See if you can split up ionize
-# Just with preprocessor directives
 set( gpu_targets
      surface_model
      interp2d
+     interpRateCoeff
+     ionize
      spectroscopy )
 
 if( NOT GITR_USE_CUDA )
@@ -60,13 +59,3 @@ if( GITR_USE_CUDA )
   endforeach()
 
 endif()
-
-# Currently being developed - ionize GPU component
-
-set( component ionize )
-add_library( ${component} include/ionize.h )
-set_source_files_properties( include/ionize.h PROPERTIES LANGUAGE CUDA )
-set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
-set_target_properties( ${component} PROPERTIES LINKER_LANGUAGE CUDA )
-target_include_directories( ${component} PUBLIC include )
-target_compile_options( ${component} PUBLIC --expt-relaxed-constexpr )

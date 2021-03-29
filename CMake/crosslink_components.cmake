@@ -1,19 +1,34 @@
 # Link previously defined CMake compilation "targets" together as needed
 # link source targets
-target_link_libraries( interp2d thrust )
-target_link_libraries( flags libconfig thrust )
-target_link_libraries( utils libconfig thrust interp2d netcdf )
+target_link_libraries( ionize interpRateCoeff )
 
-# Captain! Conditionally link based on whether the GITR_USE_<comonent> clause is enabled
+target_link_libraries( interp2d thrust )
+
+target_link_libraries( flags libconfig thrust )
+
+target_link_libraries( utils 
+                       libconfig
+                       thrust
+                       interp2d
+                       netcdf )
+
+# Captain! Conditionally link based on whether the GITR_USE_<component> clause is enabled
 target_link_libraries( GITR 
+                       ionize
                        interp2d
                        netcdf 
                        spectroscopy
                        libconfig
                        utils
                        flags
-                       mpi
-                       CUDA::cudart )
+                       mpi )
+
+if( GITR_USE_CUDA )
+
+  target_link_libraries( GITR 
+                         CUDA::cudart )
+
+endif()
 
 # link test targets
 #target_link_libraries( coulomb_tests 

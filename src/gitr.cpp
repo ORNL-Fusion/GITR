@@ -14,7 +14,7 @@
 #include "hashGeomSheath.h"
 #include "history.h"
 #include "interp2d.hpp"
-#include "interpRateCoeff.hpp"
+//#include "interpRateCoeff.hpp"
 #include "interpolate.h"
 #include "ionize.h"
 #include <cmath>
@@ -4032,7 +4032,6 @@ int main(int argc, char **argv, char **envp) {
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
 #endif
-
     for (tt; tt < nT; tt++) {
 #if USE_SORT > 0
        dev_tt[0] = tt;
