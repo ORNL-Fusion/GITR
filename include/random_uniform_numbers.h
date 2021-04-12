@@ -21,7 +21,6 @@
 #include "array.h"
 
 /* Declarations */
-/* Captain! Declare global init function here */
 
 /* random number generator for each particle */
 /* This makes no attempt to utilize MPI - that will come later */

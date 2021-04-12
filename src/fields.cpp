@@ -35,7 +35,7 @@ Field::Field(libconfig::Config &cfg, std::string field_name) {
 
     int err, status, ncid, groupid, cmode, val_id, r_id, retval;
     cmode = NC_NOWRITE;
-    /* Captain! This does not compile in device code - MPI calls cannot be made from device
+    /* This does not compile in device code - MPI calls cannot be made from device
        code comment out for now and make not not to run with MPI */
        /*
 #if USE_MPI == 1

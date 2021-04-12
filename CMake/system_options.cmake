@@ -18,7 +18,7 @@ if( GITR_USE_CUDA )
 
   include_directories( ${CUDAToolkit_INCLUDE_DIRS} )
 
-  # Captain! Is this correct? Could this be causing an issue if it is the wrong version?
+  # Take care that this indicates the correct version
   set( CMAKE_CUDA_ARCHITECTURES 70 )
 
   #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA --std=c++14 -O3 --expt-relaxed-constexpr --expt-extended-lambda) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared

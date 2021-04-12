@@ -12,7 +12,7 @@ target_link_libraries( utils
                        interp2d
                        netcdf )
 
-# Captain! Conditionally link based on whether the GITR_USE_<component> clause is enabled
+# Improvement: Conditionally link based on whether the GITR_USE_<component> clause is enabled
 target_link_libraries( GITR 
                        ionize
                        interp2d

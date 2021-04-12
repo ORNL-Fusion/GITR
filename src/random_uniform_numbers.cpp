@@ -20,7 +20,6 @@ random_uniform_numbers::random_uniform_numbers( long n_particles )
 {
   #if USE_CUDA
 
-  /* Captain! Move this into a global function */
   device_rand_init( n_particles );
                       
   #else
