@@ -10,33 +10,39 @@
 #include "Boundary.h"
 #include <cmath>
 
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
+
 struct field_line_trace {
-    float BfieldFactor; 
+    gitr_precision BfieldFactor; 
     Particles *particles;
-    float dr;
+    gitr_precision dr;
     Boundary *boundaries;
     int nLines;
     int nR_Lc;
     int nZ_Lc;
-    float* gridRLc;
-    float* gridZLc;
-    float* Lc;
+    gitr_precision* gridRLc;
+    gitr_precision* gridZLc;
+    gitr_precision* Lc;
             int nR_Bfield;
             int nZ_Bfield;
-            float * BfieldGridR;
-            float * BfieldGridZ;
-            float * BfieldR;
-            float * BfieldZ;
-            float * BfieldT;
+            gitr_precision * BfieldGridR;
+            gitr_precision * BfieldGridZ;
+            gitr_precision * BfieldR;
+            gitr_precision * BfieldZ;
+            gitr_precision * BfieldT;
             
-    field_line_trace(float _BfieldFactor,Particles* _particles,float _dr,Boundary* _boundaries,int _nLines, int _nR_Lc, int _nZ_Lc, 
-            float* _gridRLc, float* _gridZLc, float* _Lc,
+    field_line_trace(gitr_precision _BfieldFactor,Particles* _particles,gitr_precision _dr,Boundary* _boundaries,int _nLines, int _nR_Lc, int _nZ_Lc, 
+            gitr_precision* _gridRLc, gitr_precision* _gridZLc, gitr_precision* _Lc,
             int _nR_Bfield, int _nZ_Bfield,
-            float * _BfieldGridR,
-            float * _BfieldGridZ,
-            float * _BfieldR,
-            float * _BfieldZ,
-            float * _BfieldT)
+            gitr_precision * _BfieldGridR,
+            gitr_precision * _BfieldGridZ,
+            gitr_precision * _BfieldR,
+            gitr_precision * _BfieldZ,
+            gitr_precision * _BfieldT)
         
             : BfieldFactor(_BfieldFactor),particles(_particles),dr(_dr),boundaries(_boundaries),nLines(_nLines),
         nR_Lc(_nR_Lc),nZ_Lc(_nZ_Lc),
@@ -46,22 +52,22 @@ struct field_line_trace {
 
 CUDA_CALLABLE_MEMBER    
 void operator()(std::size_t indx) const { 
-    float B[3] = {0.0f,0.0f,0.0f};
-    float Bnorm[3] = {0.0f,0.0f,0.0f};
-    float Bmag = 0.0f;
-    float particleDistance = 0.0f;
-    float k1[3] = {0.0,0.0,0.0};
-    float k2[3] = {0.0,0.0,0.0};
-    float k3[3] = {0.0,0.0,0.0};
-    float k4[3] = {0.0,0.0,0.0};
-    float x0 = 0.0f;
-    float y0 = 0.0f;
-    float z0 = 0.0f;
-    float x = 0.0f;
-    float y = 0.0f;
-    float z = 0.0f;
+    gitr_precision B[3] = {0.0f,0.0f,0.0f};
+    gitr_precision Bnorm[3] = {0.0f,0.0f,0.0f};
+    gitr_precision Bmag = 0.0f;
+    gitr_precision particleDistance = 0.0f;
+    gitr_precision k1[3] = {0.0,0.0,0.0};
+    gitr_precision k2[3] = {0.0,0.0,0.0};
+    gitr_precision k3[3] = {0.0,0.0,0.0};
+    gitr_precision k4[3] = {0.0,0.0,0.0};
+    gitr_precision x0 = 0.0f;
+    gitr_precision y0 = 0.0f;
+    gitr_precision z0 = 0.0f;
+    gitr_precision x = 0.0f;
+    gitr_precision y = 0.0f;
+    gitr_precision z = 0.0f;
 
-    float dr_fac = BfieldFactor*dr;
+    gitr_precision dr_fac = BfieldFactor*dr;
 
 if(particles->hitWall[indx] == 0.0)
 {

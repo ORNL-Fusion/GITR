@@ -20,6 +20,12 @@
 #include <random>
 #endif
 
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
+
 class Boundary 
 {
   public:
@@ -29,62 +35,62 @@ class Boundary
     int surfaceNumber;
     int surface;
     int inDir;
-    float x1;
-    float y1;
-    float z1;
-    float x2;
-    float y2;
-    float z2;
-    float a;
-    float b;
-    float c;
-    float d;
-    float plane_norm; //16
+    gitr_precision x1;
+    gitr_precision y1;
+    gitr_precision z1;
+    gitr_precision x2;
+    gitr_precision y2;
+    gitr_precision z2;
+    gitr_precision a;
+    gitr_precision b;
+    gitr_precision c;
+    gitr_precision d;
+    gitr_precision plane_norm; //16
     #if USE3DTETGEOM > 0
-      float x3;
-      float y3;
-      float z3;
-      float area;
+      gitr_precision x3;
+      gitr_precision y3;
+      gitr_precision z3;
+      gitr_precision area;
     #else
-      float slope_dzdx;
-      float intercept_z;
+      gitr_precision slope_dzdx;
+      gitr_precision intercept_z;
     #endif 
-    float periodic_bc_x0;    
-    float periodic_bc_x1;    
-    float Z;
-    float amu;
-    float potential;
-    float ChildLangmuirDist;
+    gitr_precision periodic_bc_x0;    
+    gitr_precision periodic_bc_x1;    
+    gitr_precision Z;
+    gitr_precision amu;
+    gitr_precision potential;
+    gitr_precision ChildLangmuirDist;
     #ifdef __CUDACC__
     //curandState streams[7];
     #else
     //std::mt19937 streams[7];
     #endif
 	
-    float hitWall;
-    float length;
-    float distanceToParticle;
-    float angle;
-    float fd;
-    float density;
-    float ti;
-    float ne;
-    float te;
-    float debyeLength;
-    float larmorRadius;
-    float flux;
-    float startingParticles;
-    float impacts;
-    float redeposit;
+    gitr_precision hitWall;
+    gitr_precision length;
+    gitr_precision distanceToParticle;
+    gitr_precision angle;
+    gitr_precision fd;
+    gitr_precision density;
+    gitr_precision ti;
+    gitr_precision ne;
+    gitr_precision te;
+    gitr_precision debyeLength;
+    gitr_precision larmorRadius;
+    gitr_precision flux;
+    gitr_precision startingParticles;
+    gitr_precision impacts;
+    gitr_precision redeposit;
 
     CUDA_CALLABLE_MEMBER
-    void getSurfaceParallel(float A[],float y,float x)
+    void getSurfaceParallel(gitr_precision A[],gitr_precision y,gitr_precision x)
     {
 #if USE3DTETGEOM > 0
-    float norm = std::sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
+    gitr_precision norm = std::sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
     A[1] = (y2 - y1) / norm;
 #else
-    float norm = std::sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
+    gitr_precision norm = std::sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
     A[1] = 0.0;
 #endif
         //std::cout << "surf par calc " << x2 << " " << x1 << " " << norm << std::endl;
@@ -93,8 +99,8 @@ class Boundary
 #if USE3DTETGEOM > 0
 #else
 #if USECYLSYMM > 0
-    float theta = std::atan2(y, x);
-    float B[3] = {0.0f};
+    gitr_precision theta = std::atan2(y, x);
+    gitr_precision B[3] = {0.0f};
     B[0] = std::cos(theta) * A[0] - std::sin(theta) * A[1];
     B[1] = std::sin(theta) * A[0] + std::cos(theta) * A[1];
     A[0] = B[0];
@@ -104,23 +110,23 @@ class Boundary
     }
 
   CUDA_CALLABLE_MEMBER
-  void getSurfaceNormal(float B[], float y, float x) {
+  void getSurfaceNormal(gitr_precision B[], gitr_precision y, gitr_precision x) {
 #if USE3DTETGEOM > 0
     B[0] = a / plane_norm;
     B[1] = b / plane_norm;
     B[2] = c / plane_norm;
 #else
-    float perpSlope = 0.0;
+    gitr_precision perpSlope = 0.0;
     if (slope_dzdx == 0.0) {
       perpSlope = 1.0e12;
     } else {
       perpSlope = -std::copysign(1.0, slope_dzdx) / std::abs(slope_dzdx);
     }
-    float Br = 1.0f / std::sqrt(perpSlope * perpSlope + 1.0);
-    float Bt = 0.0;
+    gitr_precision Br = 1.0f / std::sqrt(perpSlope * perpSlope + 1.0);
+    gitr_precision Bt = 0.0;
     B[2] = std::copysign(1.0,perpSlope) * std::sqrt(1 - Br * Br);
 #if USECYLSYMM > 0
-    float theta = std::atan2(y, x);
+    gitr_precision theta = std::atan2(y, x);
     B[0] = std::cos(theta) * Br - std::sin(theta) * Bt;
     B[1] = std::sin(theta) * Br + std::cos(theta) * Bt;
 #else
@@ -134,12 +140,12 @@ class Boundary
 #endif
     }
     CUDA_CALLABLE_MEMBER
-        void transformToSurface(float C[],float y, float x)
+        void transformToSurface(gitr_precision C[],gitr_precision y, gitr_precision x)
         {
-            float X[3] = {0.0f};
-            float Y[3] = {0.0f};
-            float Z[3] = {0.0f};
-            float tmp[3] = {0.0f};
+            gitr_precision X[3] = {0.0f};
+            gitr_precision Y[3] = {0.0f};
+            gitr_precision Z[3] = {0.0f};
+            gitr_precision tmp[3] = {0.0f};
             getSurfaceParallel(X,y,x);
             getSurfaceNormal(Z,y,x);
             Y[0] = Z[1]*X[2] - Z[2]*X[1]; 

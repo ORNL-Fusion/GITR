@@ -23,6 +23,12 @@
 #endif
 
 #include "interpRateCoeff.hpp"
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
+
 #if __CUDA_ARCH__
 CUDA_CALLABLE_MEMBER_DEVICE
 float get_rand(curandState *state,int indx)
@@ -81,45 +87,45 @@ struct ionize {
   Particles *particlesPointer;
   int nR_Dens;
   int nZ_Dens;
-  float *DensGridr;
-  float *DensGridz;
-  float *ne;
+  gitr_precision *DensGridr;
+  gitr_precision *DensGridz;
+  gitr_precision *ne;
   int nR_Temp;
   int nZ_Temp;
-  float *TempGridr;
-  float *TempGridz;
-  float *te;
+  gitr_precision *TempGridr;
+  gitr_precision *TempGridz;
+  gitr_precision *te;
   int nTemperaturesIonize;
   int nDensitiesIonize;
-  float *gridDensity_Ionization;
-  float *gridTemperature_Ionization;
-  float *rateCoeff_Ionization;
-  float dt;
-  float tion;
+  gitr_precision *gridDensity_Ionization;
+  gitr_precision *gridTemperature_Ionization;
+  gitr_precision *rateCoeff_Ionization;
+  gitr_precision dt;
+  gitr_precision tion;
   void (ionize::*func)(std::size_t);
   // int& tt;
   int xx1;
   T *state;
   //Field *field1;
 
-  float  * random_uniform_number;
+  gitr_precision  * random_uniform_number;
 //#if __CUDA_ARCH__
 //  curandState *state;
 //#else
 //  std::mt19937 *state;
 //#endif
   //ionize() : dt(0.0){};
-  ionize(Flags *_flags, Particles *_particlesPointer, float _dt,T *_state,
+  ionize(Flags *_flags, Particles *_particlesPointer, gitr_precision _dt,T *_state,
 //#if __CUDA_ARCH__
 //         curandState *_state,
 //#else
 //         std::mt19937 *_state,
 //#endif
-         int _nR_Dens, int _nZ_Dens, float *_DensGridr, float *_DensGridz,
-         float *_ne, int _nR_Temp, int _nZ_Temp, float *_TempGridr,
-         float *_TempGridz, float *_te, int _nTemperaturesIonize,
-         int _nDensitiesIonize, float *_gridTemperature_Ionization,
-         float *_gridDensity_Ionization, float *_rateCoeff_Ionization, float *  _random_uniform_number)
+         int _nR_Dens, int _nZ_Dens, gitr_precision *_DensGridr, gitr_precision *_DensGridz,
+         gitr_precision *_ne, int _nR_Temp, int _nZ_Temp, gitr_precision *_TempGridr,
+         gitr_precision *_TempGridz, gitr_precision *_te, int _nTemperaturesIonize,
+         int _nDensitiesIonize, gitr_precision *_gridTemperature_Ionization,
+         gitr_precision *_gridDensity_Ionization, gitr_precision *_rateCoeff_Ionization, gitr_precision *  _random_uniform_number)
       :
 
         flags(_flags), particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
@@ -156,14 +162,14 @@ struct ionize {
           nZ_Temp, TempGridr, TempGridz, te, DensGridr, DensGridz, ne,
           nTemperaturesIonize, nDensitiesIonize, gridTemperature_Ionization,
           gridDensity_Ionization, rateCoeff_Ionization);
-      //float interp1 = field1->interpolate(1.0,2.0,3.0);
-      float P = expf(-dt / tion);
-      double P1 = 1.0 - P;
-      double r1 = get_rand_double(state,indx);
+      //gitr_precision interp1 = field1->interpolate(1.0,2.0,3.0);
+      gitr_precision P = expf(-dt / tion);
+      gitr_precision P1 = 1.0 - P;
+      gitr_precision r1 = get_rand_double(state,indx);
       //printf("dt P1 r1 %f %f %f \n", dt, P1, r1);
     if (flags->USE_ADAPTIVE_DT) {
       if (particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx]) {
-        double r1 = get_rand_double(state,indx);
+        gitr_precision r1 = get_rand_double(state,indx);
 	//random_uniform_number[0] = r1;
         if (r1 <= P1) {
           particlesPointer->charge[indx] = particlesPointer->charge[indx] + 1;
@@ -172,7 +178,7 @@ struct ionize {
     }
 	    else{
       if (particlesPointer->hitWall[indx] == 0.0) {
-        double r1 = get_rand_double(state,indx);
+        gitr_precision r1 = get_rand_double(state,indx);
 	//random_uniform_number[0] = r1;
         if (r1 <= P1) {
       //printf("did ionize, adding one \n");

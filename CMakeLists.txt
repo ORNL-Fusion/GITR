@@ -8,7 +8,8 @@ set(_MPI 0)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 set(CMAKE_CXX_STANDARD 17) # Doesn't set NVCC C++ standard
 set(CXX_STANDARD_REQUIRED TRUE)
-
+set(CMAKE_CXX_FLAGS "-O3")
+set(CMAKE_C_FLAGS "-O3")
 # Set source files
 file(GLOB SRC_FILES src/*.cpp)
 file(GLOB TEST_FILES src/*.cpp test/tests_general.cpp)
@@ -40,6 +41,7 @@ include_directories(${LIBCONFIGPP_INCLUDE_DIR})
 add_definitions(-DUSE_PARALLEL -DHAS_NETCDF_PAR_H)
 # Simulation defines
 add_definitions(-DUSE_CUDA=${USE_CUDA}
+	-DUSE_DOUBLE=${USE_DOUBLE}
         -DUSE_MPI=${USE_MPI}
         -DUSEIONIZATION=${USEIONIZATION}
         -DUSERECOMBINATION=${USERECOMBINATION}

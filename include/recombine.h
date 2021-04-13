@@ -23,37 +23,42 @@
 #endif
 
 #include "interpRateCoeff.hpp"
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
 
 template <typename T=std::mt19937> 
 struct recombine { 
   Particles *particlesPointer;
   int nR_Dens;
   int nZ_Dens;
-  float* DensGridr;
-  float* DensGridz;
-  float* ne;
+  gitr_precision* DensGridr;
+  gitr_precision* DensGridz;
+  gitr_precision* ne;
   int nR_Temp;
   int nZ_Temp;
-  float* TempGridr;
-  float* TempGridz;
-  float* te;
+  gitr_precision* TempGridr;
+  gitr_precision* TempGridz;
+  gitr_precision* te;
   int nTemperaturesRecomb;
   int nDensitiesRecomb;
-  float* gridDensity_Recombination;
-  float* gridTemperature_Recombination;
-  float* rateCoeff_Recombination;
+  gitr_precision* gridDensity_Recombination;
+  gitr_precision* gridTemperature_Recombination;
+  gitr_precision* rateCoeff_Recombination;
   Flags* gitr_flags;
-  float dt;
-  float tion;
+  gitr_precision dt;
+  gitr_precision tion;
   T *state;
 
-  recombine(Particles *_particlesPointer, float _dt,
+  recombine(Particles *_particlesPointer, gitr_precision _dt,
       T *_state,
-     int _nR_Dens,int _nZ_Dens,float* _DensGridr,
-     float* _DensGridz,float* _ne,int _nR_Temp, int _nZ_Temp,
-     float* _TempGridr, float* _TempGridz,float* _te,int _nTemperaturesRecomb,
-     int _nDensitiesRecomb,float* _gridTemperature_Recombination,float* _gridDensity_Recombination,
-     float* _rateCoeff_Recombination, Flags* _gitr_flags) : 
+     int _nR_Dens,int _nZ_Dens,gitr_precision* _DensGridr,
+     gitr_precision* _DensGridz,gitr_precision* _ne,int _nR_Temp, int _nZ_Temp,
+     gitr_precision* _TempGridr, gitr_precision* _TempGridz,gitr_precision* _te,int _nTemperaturesRecomb,
+     int _nDensitiesRecomb,gitr_precision* _gridTemperature_Recombination,gitr_precision* _gridDensity_Recombination,
+     gitr_precision* _rateCoeff_Recombination, Flags* _gitr_flags) : 
     particlesPointer(_particlesPointer),
 
                                                nR_Dens(_nR_Dens),
@@ -79,21 +84,21 @@ struct recombine {
   
   CUDA_CALLABLE_MEMBER_DEVICE 
   void operator()(std::size_t indx) { 
-  double P1 = 0.0;
+  gitr_precision P1 = 0.0;
     if (gitr_flags->USE_ADAPTIVE_DT) {
 	    dt = particlesPointer->dt[indx];
     }
       if(particlesPointer->charge[indx] > 0)
     {
        tion = interpRateCoeff2d ( particlesPointer->charge[indx]-1, particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
-       float P = expf(-dt/tion);
+       gitr_precision P = expf(-dt/tion);
        P1 = 1.0-P;
     }
 
     if (gitr_flags->USE_ADAPTIVE_DT) {
   if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx])
 	{        
-        double r1 = get_rand_double(state,indx);
+        gitr_precision r1 = get_rand_double(state,indx);
 	if(r1 <= P1)
 	{
         particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;
@@ -104,7 +109,7 @@ struct recombine {
     {
   if(particlesPointer->hitWall[indx] == 0.0)
 	{        
-        double r1 = get_rand_double(state,indx);
+        gitr_precision r1 = get_rand_double(state,indx);
 	if(r1 <= P1)
 	{
         particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;

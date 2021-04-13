@@ -24,16 +24,22 @@
 #include "interpRateCoeff.hpp"
 #include <cmath>
 
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
+
 struct hashGeom {
    //int k;
    int nLines; 
    int nHashes;
    Boundary* boundary;
-   float* x;
-   float* y;
-   float* z;
+   gitr_precision* x;
+   gitr_precision* y;
+   gitr_precision* z;
    int* n_closeGeomElements;
-   //float* minDist;
+   //gitr_precision* minDist;
    int* closeGeom;
    int* nR;
    int* nY;
@@ -42,10 +48,10 @@ struct hashGeom {
 
    hashGeom( int _nLines,int _nHashes,
                 Boundary* _boundary,
-                float* _x,
-                float* _y, 
-                float* _z, 
-                int* _n_closeGeomElements,//float *_minDist,
+                gitr_precision* _x,
+                gitr_precision* _y, 
+                gitr_precision* _z, 
+                int* _n_closeGeomElements,//gitr_precision *_minDist,
                 int *_closeGeom,
                 int* _nR, int* _nY, int* _nZ)
                :  nLines(_nLines),nHashes(_nHashes),boundary(_boundary), x(_x), y(_y), z(_z), 
@@ -95,21 +101,21 @@ struct hashGeom {
     //std::cout << "nYhashSum " << nYhashSum << std::endl;
     //std::cout << "nZhashSum " << nZhashSum << std::endl;
     #if USE3DTETGEOM > 0
-       float kk = (indx-nHashPoints)/(nR[nHash]*nY[nHash]);
+       gitr_precision kk = (indx-nHashPoints)/(nR[nHash]*nY[nHash]);
     //std::cout << "kk " << kk << std::endl;
         
        int k = std::floor(kk);
     //std::cout << "k " << k << std::endl;
        int jjj = (indx-nHashPoints) - k*nR[nHash]*nY[nHash];
     //std::cout << "jjj " << jjj << std::endl;
-       float jj = 1.0*jjj/nR[nHash];
+       gitr_precision jj = 1.0*jjj/nR[nHash];
     //std::cout << "jj " << jj << std::endl;
        int j = std::floor(jj);
     //std::cout << "j " << j << std::endl;
        int i = (indx-nHashPoints)- j*nR[nHash] - k*(nR[nHash]*nY[nHash]);
     //std::cout << "i " << i << std::endl;
 
-       //float jj = indx/nR;
+       //gitr_precision jj = indx/nR;
        //int j = floor(jj);
        //int i = indx - j*nR;
        //int xyzIndx = k*nR*nY + indx;
@@ -119,9 +125,9 @@ struct hashGeom {
        //std::cout << "ijk " << i << " " << j << " "<< k << std::endl;
        int xyzIndx = indx;
        int buffIndx = hashSum+(k*(nR[nHash]*nY[nHash])+j*nR[nHash]+i)*n_closeGeomElements[nHash] ;
-       float x0 = x[nRhashSum+i];
-       float y0 = y[nYhashSum+j];
-       float z0 = z[nZhashSum+k];
+       gitr_precision x0 = x[nRhashSum+i];
+       gitr_precision y0 = y[nYhashSum+j];
+       gitr_precision z0 = z[nZhashSum+k];
       //std::cout << "point "  << nHash << " " <<   x0 << " " <<  y0 << " "
       //     <<  z0 << std::endl;
      #else
@@ -131,49 +137,49 @@ struct hashGeom {
       nYhashSum=0;
       nZhashSum=0;
       nHashPoints=0;
-       float kk = indx/(nR[0]);
+       gitr_precision kk = indx/(nR[0]);
        int k = std::floor(kk);
        int i = indx - k*(nR[0]);
-       float x0 = x[i];
-       float y0 = 0.0;
-       float z0 = z[k];
+       gitr_precision x0 = x[i];
+       gitr_precision y0 = 0.0;
+       gitr_precision z0 = z[k];
        int xyzIndx = indx;
        int buffIndx=(k*(nR[0])+ i)*n_closeGeomElements[0];
       //std::cout << "point "  <<nHash<< " " <<   x0 << " " <<  z0 << " "
       //     <<  buffIndx << std::endl;
        
      #endif
-       //float minDist[n_closeGeomElements] = {0.0};
+       //gitr_precision minDist[n_closeGeomElements] = {0.0};
        //for(int i1=0;i1<n_closeGeomElements; i1++)
        //{
        //  minDist[i1] = 1.0e6;
        //  //closeGeom[indx*n_closeGeomElements + i1] = indx;
        //}
-       float A[3] = {0.0,0.0,0.0};
-            float B[3] = {0.0,0.0,0.0};
-            float C[3] = {0.0,0.0,0.0};
-            float AB[3] = {0.0,0.0,0.0};
-            float AC[3] = {0.0,0.0,0.0};
-            float BC[3] = {0.0,0.0,0.0};
-            float CA[3] = {0.0,0.0,0.0};
-            float p[3] = {0.0,0.0,0.0};
-            float Ap[3] = {0.0,0.0,0.0};
-            float Bp[3] = {0.0,0.0,0.0};
-            float Cp[3] = {0.0,0.0,0.0};
-            float normalVector[3] = {0.0,0.0,0.0};
-            float crossABAp[3] = {0.0,0.0,0.0};
-            float crossBCBp[3] = {0.0,0.0,0.0};
-            float crossCACp[3] = {0.0,0.0,0.0};
-            float signDot0 = 0.0;
-            float signDot1 = 0.0;
-            float signDot2 = 0.0;
-            float totalSigns = 0.0;
+       gitr_precision A[3] = {0.0,0.0,0.0};
+            gitr_precision B[3] = {0.0,0.0,0.0};
+            gitr_precision C[3] = {0.0,0.0,0.0};
+            gitr_precision AB[3] = {0.0,0.0,0.0};
+            gitr_precision AC[3] = {0.0,0.0,0.0};
+            gitr_precision BC[3] = {0.0,0.0,0.0};
+            gitr_precision CA[3] = {0.0,0.0,0.0};
+            gitr_precision p[3] = {0.0,0.0,0.0};
+            gitr_precision Ap[3] = {0.0,0.0,0.0};
+            gitr_precision Bp[3] = {0.0,0.0,0.0};
+            gitr_precision Cp[3] = {0.0,0.0,0.0};
+            gitr_precision normalVector[3] = {0.0,0.0,0.0};
+            gitr_precision crossABAp[3] = {0.0,0.0,0.0};
+            gitr_precision crossBCBp[3] = {0.0,0.0,0.0};
+            gitr_precision crossCACp[3] = {0.0,0.0,0.0};
+            gitr_precision signDot0 = 0.0;
+            gitr_precision signDot1 = 0.0;
+            gitr_precision signDot2 = 0.0;
+            gitr_precision totalSigns = 0.0;
 #if USE_CUDA
-           float *minDist  = new float[n_closeGeomElements[nHash]];
+           gitr_precision *minDist  = new gitr_precision[n_closeGeomElements[nHash]];
            for(int i1=0;i1<n_closeGeomElements[nHash];i1++){ minDist[i1] = 1.0e6;}
-           //float minDist[n_closeGeomElements[nHash]] = {1.0e6};
+           //gitr_precision minDist[n_closeGeomElements[nHash]] = {1.0e6};
 #else
-           sim::Array<float> minDist(n_closeGeomElements[nHash],1e6);      
+           sim::Array<gitr_precision> minDist(n_closeGeomElements[nHash],1e6);      
 #endif
      for(int l=0; l<nLines; l++)
      {
@@ -185,19 +191,19 @@ struct hashGeom {
       //     <<  boundary[l].z2 << std::endl;
       //std::cout << "xyz 3 "  <<  boundary[l].x3 << " " <<  boundary[l].y3 << " "
       //     <<  boundary[l].z3 << std::endl;
-      float a = boundary[l].a;
-      float b = boundary[l].b;
-      float c = boundary[l].c;
-      float d = boundary[l].d;
+      gitr_precision a = boundary[l].a;
+      gitr_precision b = boundary[l].b;
+      gitr_precision c = boundary[l].c;
+      gitr_precision d = boundary[l].d;
       //std::cout << "abcd "  << a << " " <<b << " "
        //    <<  c << " " <<d << std::endl;
     #if USE3DTETGEOM > 0
-      float plane_norm = boundary[l].plane_norm;
-      float t = -(a*x0 + b*y0 + c*z0 + d)/(a*a + b*b + c*c);
+      gitr_precision plane_norm = boundary[l].plane_norm;
+      gitr_precision t = -(a*x0 + b*y0 + c*z0 + d)/(a*a + b*b + c*c);
       p[0] = a*t + x0;
       p[1] = b*t + y0;
       p[2] = c*t + z0;
-      float perpDist = std::sqrt((x0-p[0])*(x0-p[0]) + (y0-p[1])*(y0-p[1]) + (z0-p[2])*(z0-p[2]));
+      gitr_precision perpDist = std::sqrt((x0-p[0])*(x0-p[0]) + (y0-p[1])*(y0-p[1]) + (z0-p[2])*(z0-p[2]));
     #endif
 
       vectorAssign(boundary[l].x1, boundary[l].y1, 
@@ -238,12 +244,12 @@ struct hashGeom {
    p[0] = x0;
    p[1] = y0;
    p[2] = z0;
-   float pA[3] = {0.0};
-   float cEdge1[3] = {0.0};
-   float dEdge1[3] = {0.0};
+   gitr_precision pA[3] = {0.0};
+   gitr_precision cEdge1[3] = {0.0};
+   gitr_precision dEdge1[3] = {0.0};
    vectorSubtract(A,p,pA);
-   float cEdge1mag = vectorDotProduct(pA,AB)/vectorDotProduct(AB,AB);
-   float distE1 = 1.0e6;
+   gitr_precision cEdge1mag = vectorDotProduct(pA,AB)/vectorDotProduct(AB,AB);
+   gitr_precision distE1 = 1.0e6;
    if(cEdge1mag < 0.0 && cEdge1mag > -1.0)
    {
     vectorScalarMult(cEdge1mag,AB,cEdge1);
@@ -254,50 +260,50 @@ struct hashGeom {
     //   " " << cEdge1mag << " " << cEdge1[0] << " " << cEdge1[1] << " " << cEdge1[2] << " "
     //   << dEdge1[0] << " " <<dEdge1[1] << " " << dEdge1[2] << std::endl;
  #if USE3DTETGEOM > 0
-   float pB[3] = {0.0};
-   float cEdge2[3] = {0.0};
-   float dEdge2[3] = {0.0};
+   gitr_precision pB[3] = {0.0};
+   gitr_precision cEdge2[3] = {0.0};
+   gitr_precision dEdge2[3] = {0.0};
    vectorSubtract(B,p,pB);
-   float cEdge2mag = vectorDotProduct(pB,BC)/vectorDotProduct(BC,BC);
-   float distE2 = 1.0e6;
+   gitr_precision cEdge2mag = vectorDotProduct(pB,BC)/vectorDotProduct(BC,BC);
+   gitr_precision distE2 = 1.0e6;
    if(cEdge2mag < 0.0 && cEdge2mag > -1.0)
    {
     vectorScalarMult(cEdge2mag,BC,cEdge2);
     vectorSubtract(pB,cEdge2,dEdge2);
     distE2 = std::sqrt(vectorDotProduct(dEdge2,dEdge2));
    }
-   float pC[3] = {0.0};
-   float cEdge3[3] = {0.0};
-   float dEdge3[3] = {0.0};
+   gitr_precision pC[3] = {0.0};
+   gitr_precision cEdge3[3] = {0.0};
+   gitr_precision dEdge3[3] = {0.0};
    vectorSubtract(C,p,pC);
-   float cEdge3mag = vectorDotProduct(pC,CA)/vectorDotProduct(CA,CA);
-   float distE3 = 1.0e6;
+   gitr_precision cEdge3mag = vectorDotProduct(pC,CA)/vectorDotProduct(CA,CA);
+   gitr_precision distE3 = 1.0e6;
    if(cEdge3mag < 0.0 && cEdge3mag > -1.0)
    {
     vectorScalarMult(cEdge3mag,CA,cEdge3);
     vectorSubtract(pC,cEdge3,dEdge3);
     distE3 = std::sqrt(vectorDotProduct(dEdge3,dEdge3));
    }
-          float minEdge = std::min(distE1,distE2);
+          gitr_precision minEdge = std::min(distE1,distE2);
           minEdge = std::min(distE3,minEdge);
 #else
           //
-          float minEdge = distE1;
+          gitr_precision minEdge = distE1;
 #endif
       //std::cout << "edgeDistances " << distE1 << " " << distE2 << " " << distE3 << std::endl;
-        float d1 =std::sqrt((x0 - boundary[l].x1)*(x0 - boundary[l].x1)
+        gitr_precision d1 =std::sqrt((x0 - boundary[l].x1)*(x0 - boundary[l].x1)
                 +  (y0 - boundary[l].y1)*(y0 - boundary[l].y1)
                 +  (z0 - boundary[l].z1)*(z0 - boundary[l].z1));
-        float d2 =std::sqrt((x0 - boundary[l].x2)*(x0 - boundary[l].x2)
+        gitr_precision d2 =std::sqrt((x0 - boundary[l].x2)*(x0 - boundary[l].x2)
                 +  (y0 - boundary[l].y2)*(y0 - boundary[l].y2)
                 +  (z0 - boundary[l].z2)*(z0 - boundary[l].z2));
           #if USE3DTETGEOM > 0
-            float d3 =std::sqrt((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
+            gitr_precision d3 =std::sqrt((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
                     +  (y0 - boundary[l].y3)*(y0 - boundary[l].y3)
                     +  (z0 - boundary[l].z3)*(z0 - boundary[l].z3));
           #endif
       //std::cout << " point Distances " << d3 << " " << d2 << " " << d1 << std::endl;
-          float minOf3 = std::min(d1,d2);
+          gitr_precision minOf3 = std::min(d1,d2);
           minOf3 = std::min(minOf3,minEdge);
         //std::cout << "min of two " << minOf3 << std::endl;
           #if USE3DTETGEOM > 0

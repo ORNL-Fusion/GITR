@@ -14,10 +14,16 @@
 #include "boris.h"
 #include <cmath>
 
-__host__ __device__
-float findT(float x0, float x1, float y0, float y1, float intersectionx) {
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
 
-  float a, b, c, a1, a2, t=0, discriminant, realPart, imaginaryPart;
+__host__ __device__
+gitr_precision findT(gitr_precision x0, gitr_precision x1, gitr_precision y0, gitr_precision y1, gitr_precision intersectionx) {
+
+  gitr_precision a, b, c, a1, a2, t=0, discriminant, realPart, imaginaryPart;
   a = (x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0);
   b = 2.0 * x0 * (x1 - x0) + 2.0 * y0 * (y1 - y0);
   c = x0 * x0 + y0 * y0 - intersectionx * intersectionx;
@@ -54,32 +60,32 @@ struct geometry_check {
   const int nLines;
   Boundary *boundaryVector;
   Surfaces *surfaces;
-  float dt;
+  gitr_precision dt;
   // int& tt;
   int nHashes;
   int *nR_closeGeom;
   int *nY_closeGeom;
   int *nZ_closeGeom;
   int *n_closeGeomElements;
-  float *closeGeomGridr;
-  float *closeGeomGridy;
-  float *closeGeomGridz;
+  gitr_precision *closeGeomGridr;
+  gitr_precision *closeGeomGridy;
+  gitr_precision *closeGeomGridz;
   int *closeGeom;
   int nEdist;
-  float E0dist;
-  float Edist;
+  gitr_precision E0dist;
+  gitr_precision Edist;
   int nAdist;
-  float A0dist;
-  float Adist;
+  gitr_precision A0dist;
+  gitr_precision Adist;
 
   geometry_check(Particles *_particlesPointer, int _nLines,
-                 Boundary *_boundaryVector, Surfaces *_surfaces, float _dt,
+                 Boundary *_boundaryVector, Surfaces *_surfaces, gitr_precision _dt,
                  int _nHashes, int *_nR_closeGeom, int *_nY_closeGeom,
                  int *_nZ_closeGeom, int *_n_closeGeomElements,
-                 float *_closeGeomGridr, float *_closeGeomGridy,
-                 float *_closeGeomGridz, int *_closeGeom, int _nEdist,
-                 float _E0dist, float _Edist, int _nAdist, float _A0dist,
-                 float _Adist)
+                 gitr_precision *_closeGeomGridr, gitr_precision *_closeGeomGridy,
+                 gitr_precision *_closeGeomGridz, int *_closeGeom, int _nEdist,
+                 gitr_precision _E0dist, gitr_precision _Edist, int _nAdist, gitr_precision _A0dist,
+                 gitr_precision _Adist)
       :
 
         particlesPointer(_particlesPointer), nLines(_nLines),
@@ -103,41 +109,41 @@ struct geometry_check {
     // check particle hitwall" << p.hitWall <<std::endl;
     if (particlesPointer->hitWall[indx] == 0.0) {
       int hitSurface = 0;
-      float x = particlesPointer->x[indx];
-      float y = particlesPointer->y[indx];
-      float z = particlesPointer->z[indx];
-      float xprev = particlesPointer->xprevious[indx];
-      float yprev = particlesPointer->yprevious[indx];
-      float zprev = particlesPointer->zprevious[indx];
-      float dpath =
+      gitr_precision x = particlesPointer->x[indx];
+      gitr_precision y = particlesPointer->y[indx];
+      gitr_precision z = particlesPointer->z[indx];
+      gitr_precision xprev = particlesPointer->xprevious[indx];
+      gitr_precision yprev = particlesPointer->yprevious[indx];
+      gitr_precision zprev = particlesPointer->zprevious[indx];
+      gitr_precision dpath =
           std::sqrt((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev) +
                     (z - zprev) * (z - zprev));
 #if FLUX_EA > 0
-      float dEdist = (Edist - E0dist) / static_cast<float>(nEdist);
-      float dAdist = (Adist - A0dist) / static_cast<float>(nAdist);
+      gitr_precision dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
+      gitr_precision dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
       int AdistInd = 0;
       int EdistInd = 0;
 #endif
-      float vxy[3] = {0.0f};
-      float vtheta[3] = {0.0f};
+      gitr_precision vxy[3] = {0.0f};
+      gitr_precision vtheta[3] = {0.0f};
 #if USECYLSYMM > 0
       if (boundaryVector[nLines].periodic) // if periodic
       {
-        float pi = 3.14159265;
-        float theta =
+        gitr_precision pi = 3.14159265;
+        gitr_precision theta =
             std::atan2(particlesPointer->y[indx], particlesPointer->x[indx]);
-        float thetaPrev = std::atan2(particlesPointer->yprevious[indx],
+        gitr_precision thetaPrev = std::atan2(particlesPointer->yprevious[indx],
                                  particlesPointer->xprevious[indx]);
-        // float vtheta =
+        // gitr_precision vtheta =
         // std::atan2(particlesPointer->vy[indx],particlesPointer->vx[indx]);
-        float rprev = std::sqrt(particlesPointer->xprevious[indx] *
+        gitr_precision rprev = std::sqrt(particlesPointer->xprevious[indx] *
                                particlesPointer->xprevious[indx] +
                            particlesPointer->yprevious[indx] *
                                particlesPointer->yprevious[indx]);
-        float r = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
+        gitr_precision r = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
                        particlesPointer->y[indx] * particlesPointer->y[indx]);
-        float rHat[3] = {0.0f};
-        float vr[3] = {0.0f};
+        gitr_precision rHat[3] = {0.0f};
+        gitr_precision vr[3] = {0.0f};
         rHat[0] = particlesPointer->x[indx];
         rHat[1] = particlesPointer->y[indx];
 
@@ -145,11 +151,11 @@ struct geometry_check {
         vxy[0] = particlesPointer->vx[indx];
         vxy[1] = particlesPointer->vy[indx];
         vectorScalarMult(vectorDotProduct(rHat, vxy), rHat, vr);
-        float vrMag = vectorNorm(vr);
+        gitr_precision vrMag = vectorNorm(vr);
         vectorSubtract(vxy, vr, vtheta);
-        float vthetaMag = vectorNorm(vtheta);
-        float vx0 = 0.0;
-        float vy0 = 0.0;
+        gitr_precision vthetaMag = vectorNorm(vtheta);
+        gitr_precision vx0 = 0.0;
+        gitr_precision vy0 = 0.0;
         if (theta <= boundaryVector[nLines].y1) {
           particlesPointer->xprevious[indx] =
               r * std::cos(boundaryVector[nLines].y2 + theta);
@@ -224,42 +230,42 @@ struct geometry_check {
 #endif
 #if USE3DTETGEOM > 0
 
-      float a = 0.0;
-      float b = 0.0;
-      float c = 0.0;
-      float d = 0.0;
-      float plane_norm = 0.0;
-      float pointToPlaneDistance0 = 0.0;
-      float pointToPlaneDistance1 = 0.0;
-      float signPoint0 = 0.0;
-      float signPoint1 = 0.0;
-      float t = 0.0;
-      float A[3] = {0.0, 0.0, 0.0};
-      float B[3] = {0.0, 0.0, 0.0};
-      float C[3] = {0.0, 0.0, 0.0};
-      float AB[3] = {0.0, 0.0, 0.0};
-      float AC[3] = {0.0, 0.0, 0.0};
-      float BC[3] = {0.0, 0.0, 0.0};
-      float CA[3] = {0.0, 0.0, 0.0};
-      float p[3] = {0.0, 0.0, 0.0};
-      float Ap[3] = {0.0, 0.0, 0.0};
-      float Bp[3] = {0.0, 0.0, 0.0};
-      float Cp[3] = {0.0, 0.0, 0.0};
-      float normalVector[3] = {0.0, 0.0, 0.0};
-      float crossABAp[3] = {0.0, 0.0, 0.0};
-      float crossBCBp[3] = {0.0, 0.0, 0.0};
-      float crossCACp[3] = {0.0, 0.0, 0.0};
-      float signDot0 = 0.0;
-      float signDot1 = 0.0;
-      float signDot2 = 0.0;
-      float totalSigns = 0.0;
+      gitr_precision a = 0.0;
+      gitr_precision b = 0.0;
+      gitr_precision c = 0.0;
+      gitr_precision d = 0.0;
+      gitr_precision plane_norm = 0.0;
+      gitr_precision pointToPlaneDistance0 = 0.0;
+      gitr_precision pointToPlaneDistance1 = 0.0;
+      gitr_precision signPoint0 = 0.0;
+      gitr_precision signPoint1 = 0.0;
+      gitr_precision t = 0.0;
+      gitr_precision A[3] = {0.0, 0.0, 0.0};
+      gitr_precision B[3] = {0.0, 0.0, 0.0};
+      gitr_precision C[3] = {0.0, 0.0, 0.0};
+      gitr_precision AB[3] = {0.0, 0.0, 0.0};
+      gitr_precision AC[3] = {0.0, 0.0, 0.0};
+      gitr_precision BC[3] = {0.0, 0.0, 0.0};
+      gitr_precision CA[3] = {0.0, 0.0, 0.0};
+      gitr_precision p[3] = {0.0, 0.0, 0.0};
+      gitr_precision Ap[3] = {0.0, 0.0, 0.0};
+      gitr_precision Bp[3] = {0.0, 0.0, 0.0};
+      gitr_precision Cp[3] = {0.0, 0.0, 0.0};
+      gitr_precision normalVector[3] = {0.0, 0.0, 0.0};
+      gitr_precision crossABAp[3] = {0.0, 0.0, 0.0};
+      gitr_precision crossBCBp[3] = {0.0, 0.0, 0.0};
+      gitr_precision crossCACp[3] = {0.0, 0.0, 0.0};
+      gitr_precision signDot0 = 0.0;
+      gitr_precision signDot1 = 0.0;
+      gitr_precision signDot2 = 0.0;
+      gitr_precision totalSigns = 0.0;
       int nBoundariesCrossed = 0;
-      float nearest_boundary_distance = 1.0e6;
-      float nearest_boundary_index = 0;
-      float temp_position_xyz[3] ={0.0,0.0,0.0};
-      float dist_to_p = 0.0;
+      gitr_precision nearest_boundary_distance = 1.0e6;
+      gitr_precision nearest_boundary_index = 0;
+      gitr_precision temp_position_xyz[3] ={0.0,0.0,0.0};
+      gitr_precision dist_to_p = 0.0;
       int boundariesCrossed[6] = {0, 0, 0, 0, 0, 0};
-      float dist_to_boundariesCrossed[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+      gitr_precision dist_to_boundariesCrossed[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
       /*
       if(particlesPointer->xprevious[indx] < 0 ||
       particlesPointer->yprevious[indx] < 0 ||
@@ -271,10 +277,10 @@ struct geometry_check {
       }
        */
 
-      float p0[3] = {particlesPointer->xprevious[indx],
+      gitr_precision p0[3] = {particlesPointer->xprevious[indx],
                      particlesPointer->yprevious[indx],
                      particlesPointer->zprevious[indx]};
-      float p1[3] = {particlesPointer->x[indx], particlesPointer->y[indx],
+      gitr_precision p1[3] = {particlesPointer->x[indx], particlesPointer->y[indx],
                      particlesPointer->z[indx]};
 #if GEOM_HASH > 0
       // find which hash
@@ -285,7 +291,7 @@ struct geometry_check {
       int rHashInd1 = 0;
       int yHashInd1 = 0;
       int zHashInd1 = 0;
-      float r_position = particlesPointer->xprevious[indx];
+      gitr_precision r_position = particlesPointer->xprevious[indx];
       for (int i = 0; i < nHashes; i++) {
         rHashInd1 = nR_closeGeom[i] - 1;
         yHashInd1 = nY_closeGeom[i] - 1;
@@ -328,9 +334,9 @@ struct geometry_check {
         yHashInd = nY_closeGeom[nHash - 1];
       if (nHash > 0)
         zHashInd = nZ_closeGeom[nHash - 1];
-      float dr = closeGeomGridr[rHashInd + 1] - closeGeomGridr[rHashInd];
-      float dz = closeGeomGridz[zHashInd + 1] - closeGeomGridz[zHashInd];
-      float dy = closeGeomGridy[yHashInd + 1] - closeGeomGridy[yHashInd];
+      gitr_precision dr = closeGeomGridr[rHashInd + 1] - closeGeomGridr[rHashInd];
+      gitr_precision dz = closeGeomGridz[zHashInd + 1] - closeGeomGridz[zHashInd];
+      gitr_precision dy = closeGeomGridy[yHashInd + 1] - closeGeomGridy[yHashInd];
       int rInd = std::floor((r_position - closeGeomGridr[rHashInd]) / dr + 0.5f);
       int zInd = std::floor(
           (particlesPointer->zprevious[indx] - closeGeomGridz[zHashInd]) / dz +
@@ -472,7 +478,7 @@ struct geometry_check {
             //    particlesPointer->weight[indx];
             //  #endif
             //#endif
-              float E0 =
+              gitr_precision E0 =
                 0.5 * particlesPointer->amu[indx] * 1.66e-27 *
                 (particlesPointer->vx[indx] * particlesPointer->vx[indx] +
                  particlesPointer->vy[indx] * particlesPointer->vy[indx] +
@@ -481,16 +487,16 @@ struct geometry_check {
             // std::cout << "Energy of particle that hit surface " << E0 <<
             // std::endl;
 #if USE_CUDA > 0
-            // float surfNormal[3] = {0.0f};
-            // float partNormal[3] = {0.0f};
-            // float partDotNormal = 0.0f;
+            // gitr_precision surfNormal[3] = {0.0f};
+            // gitr_precision partNormal[3] = {0.0f};
+            // gitr_precision partDotNormal = 0.0f;
             // partNormal[0] = particlesPointer->vx[indx];
             // partNormal[1] = particlesPointer->vy[indx];
             // partNormal[2] = particlesPointer->vz[indx];
             // getBoundaryNormal(boundaryVector,i,surfNormal,particlesPointer->x[indx],particlesPointer->y[indx]);
             // vectorNormalize(partNormal,partNormal);
             // partDotNormal = vectorDotProduct(partNormal,surfNormal);
-            // float thetaImpact = acos(partDotNormal)*180.0/3.1415;
+            // gitr_precision thetaImpact = acos(partDotNormal)*180.0/3.1415;
             // if(E0 < surfaces->E && E0> surfaces->E0)
             //{
             //    int tally_index = floor((E0-surfaces->E0)/surfaces->dE);
@@ -528,44 +534,44 @@ struct geometry_check {
 	}
 #else // 2D geometry
 #if USECYLSYMM > 0
-      float pdim1 = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
+      gitr_precision pdim1 = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
                          particlesPointer->y[indx] * particlesPointer->y[indx]);
-      float pdim1previous = std::sqrt(particlesPointer->xprevious[indx] *
+      gitr_precision pdim1previous = std::sqrt(particlesPointer->xprevious[indx] *
                                      particlesPointer->xprevious[indx] +
                                  particlesPointer->yprevious[indx] *
                                      particlesPointer->yprevious[indx]);
-      float theta0 = std::atan2(particlesPointer->yprevious[indx],
+      gitr_precision theta0 = std::atan2(particlesPointer->yprevious[indx],
                             particlesPointer->xprevious[indx]);
-      float theta1 =
+      gitr_precision theta1 =
           std::atan2(particlesPointer->y[indx], particlesPointer->x[indx]);
-      float thetaNew = 0;
-      float rNew = 0;
-      float xNew = 0;
-      float yNew = 0;
+      gitr_precision thetaNew = 0;
+      gitr_precision rNew = 0;
+      gitr_precision xNew = 0;
+      gitr_precision yNew = 0;
 #else
-      float pdim1 = particlesPointer->x[indx];
-      float pdim1previous = particlesPointer->xprevious[indx];
+      gitr_precision pdim1 = particlesPointer->x[indx];
+      gitr_precision pdim1previous = particlesPointer->xprevious[indx];
 #endif
-      float particle_slope =
+      gitr_precision particle_slope =
           (particlesPointer->z[indx] - particlesPointer->zprevious[indx]) /
           (pdim1 - pdim1previous);
-      float particle_intercept =
+      gitr_precision particle_intercept =
           -particle_slope * pdim1 + particlesPointer->z[indx];
-      float intersectionx[2] = {};
-      // intersectionx = new float[nPoints];
-      float intersectiony[2] = {};
-      // intersectiony = new float[nPoints];
-      float distances[2] = {};
-      // distances = new float[nPoints];
+      gitr_precision intersectionx[2] = {};
+      // intersectionx = new gitr_precision[nPoints];
+      gitr_precision intersectiony[2] = {};
+      // intersectiony = new gitr_precision[nPoints];
+      gitr_precision distances[2] = {};
+      // distances = new gitr_precision[nPoints];
       int intersectionIndices[2] = {};
-      float tol_small = 1e-12f;
-      float tol = 1e12f;
+      gitr_precision tol_small = 1e-12f;
+      gitr_precision tol = 1e12f;
       int nIntersections = 0;
-      float signPoint;
-      float signPoint0;
-      float signLine1;
-      float signLine2;
-      float minDist = 1e12f;
+      gitr_precision signPoint;
+      gitr_precision signPoint0;
+      gitr_precision signLine1;
+      gitr_precision signLine2;
+      gitr_precision minDist = 1e12f;
       int minDistInd = 0;
  //std::cout << "particle slope " << particle_slope << " " << particle_intercept
  //<< std::endl; std::cout << "r " << boundaryVector[0].x1 << " " <<
@@ -575,15 +581,15 @@ struct geometry_check {
  //particlesPointer->z[indx]<< std::endl;
 #if GEOM_HASH > 0
 #if USECYLSYMM > 0
-      float r_position = std::sqrt(particlesPointer->xprevious[indx] *
+      gitr_precision r_position = std::sqrt(particlesPointer->xprevious[indx] *
                                    particlesPointer->xprevious[indx] +
                                particlesPointer->yprevious[indx] *
                                    particlesPointer->yprevious[indx]);
 #else
-      float r_position = particlesPointer->xprevious[indx];
+      gitr_precision r_position = particlesPointer->xprevious[indx];
 #endif
-      float dr = closeGeomGridr[1] - closeGeomGridr[0];
-      float dz = closeGeomGridz[1] - closeGeomGridz[0];
+      gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
+      gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
       int rInd = std::floor((r_position - closeGeomGridr[0]) / dr + 0.5f);
       int zInd = std::floor(
           (particlesPointer->zprevious[indx] - closeGeomGridz[0]) / dz + 0.5f);
@@ -774,11 +780,11 @@ struct geometry_check {
           if (particle_slope >= tol * 0.75f) 
           {
 #if USECYLSYMM > 0
-            float x0 = particlesPointer->xprevious[indx];
-            float x1 = particlesPointer->x[indx];
-            float y0 = particlesPointer->yprevious[indx];
-            float y1 = particlesPointer->y[indx];
-            float tt = findT(x0, x1, y0, y1, intersectionx[0]);
+            gitr_precision x0 = particlesPointer->xprevious[indx];
+            gitr_precision x1 = particlesPointer->x[indx];
+            gitr_precision y0 = particlesPointer->yprevious[indx];
+            gitr_precision y1 = particlesPointer->y[indx];
+            gitr_precision tt = findT(x0, x1, y0, y1, intersectionx[0]);
             xNew = x0 + (x1 - x0) * tt;
             yNew = y0 + (y1 - y0) * tt;
             rNew = std::sqrt(xNew * xNew + yNew * yNew);
@@ -810,11 +816,11 @@ struct geometry_check {
           else 
           {
 #if USECYLSYMM > 0
-            float x0 = particlesPointer->xprevious[indx];
-            float x1 = particlesPointer->x[indx];
-            float y0 = particlesPointer->yprevious[indx];
-            float y1 = particlesPointer->y[indx];
-            float tt = findT(x0, x1, y0, y1, intersectionx[0]);
+            gitr_precision x0 = particlesPointer->xprevious[indx];
+            gitr_precision x1 = particlesPointer->x[indx];
+            gitr_precision y0 = particlesPointer->yprevious[indx];
+            gitr_precision y1 = particlesPointer->y[indx];
+            gitr_precision tt = findT(x0, x1, y0, y1, intersectionx[0]);
             xNew = x0 + (x1 - x0) * tt;
             yNew = y0 + (y1 - y0) * tt;
             rNew = std::sqrt(xNew * xNew + yNew * yNew);
@@ -824,7 +830,7 @@ struct geometry_check {
             //std::cout << " tt xnew ynew " << tt << " " << xNew << " " << yNew << std::endl;
             particlesPointer->yprevious[indx] = yNew;
             particlesPointer->y[indx] = yNew;
-            // float rrr  =
+            // gitr_precision rrr  =
             // std::sqrt(particlesPointer->x[indx]*particlesPointer->x[indx] +
             // particlesPointer->y[indx]*particlesPointer->y[indx]);
             // if(particlesPointer->z[indx]< -4.1 & rrr > 5.5543)
@@ -939,12 +945,12 @@ struct geometry_check {
       if (particlesPointer->hitWall[indx] == 1.0) {
 
 #if (FLUX_EA > 0 && USESURFACEMODEL == 0)
-        float E0 = 0.0;
-        float thetaImpact = 0.0;
-        float particleTrackVector[3] = {0.0f};
-        float surfaceNormalVector[3] = {0.0f};
-        float norm_part = 0.0;
-        float partDotNormal = 0.0;
+        gitr_precision E0 = 0.0;
+        gitr_precision thetaImpact = 0.0;
+        gitr_precision particleTrackVector[3] = {0.0f};
+        gitr_precision surfaceNormalVector[3] = {0.0f};
+        gitr_precision norm_part = 0.0;
+        gitr_precision partDotNormal = 0.0;
         particleTrackVector[0] = particlesPointer->vx[indx];
         particleTrackVector[1] = particlesPointer->vy[indx];
         particleTrackVector[2] = particlesPointer->vz[indx];
@@ -973,7 +979,7 @@ struct geometry_check {
         int surfaceHit =
             boundaryVector[particlesPointer->surfaceHit[indx]].surfaceNumber;
         int surface = boundaryVector[particlesPointer->surfaceHit[indx]].surface;
-        float weight = particlesPointer->weight[indx];
+        gitr_precision weight = particlesPointer->weight[indx];
         // particlesPointer->test[indx] = norm_part;
         // particlesPointer->test0[indx] = partDotNormal;
         // particlesPointer->test1[indx] = particleTrackVector[0];

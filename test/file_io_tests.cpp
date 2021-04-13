@@ -6,6 +6,11 @@
 #include "tests_general.hpp"
 #include "Particles.h"
 #include "geometryCheck.h"
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
 TEST_CASE("Factorials are computed", "[factorial]") {
   SECTION("int")
   {
@@ -22,7 +27,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "this thing values " << this_thing << std::endl;
     REQUIRE(this_thing == 1);
   }
-  SECTION("float")
+  SECTION("gitr_precision")
   {
     std::cout << "starting test " << std::endl;
     typedef double P;
@@ -31,11 +36,11 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "about to importLibConfig " << std::endl;
     importLibConfig(cfg, file);
     std::cout << "imported cfg " << std::endl;
-    const std::string var1 = "stuff.float";
-    float this_thing=0;
+    const std::string var1 = "stuff.gitr_precision";
+    gitr_precision this_thing=0;
     getVariable(cfg, var1,this_thing);
     std::cout << "this thing values " << this_thing << std::endl;
-    float tol = 1e-3;
+    gitr_precision tol = 1e-3;
     REQUIRE_THAT(this_thing,
                      Catch::Matchers::WithinAbs(0.12345, tol));
   }
@@ -48,7 +53,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "about to importLibConfig " << std::endl;
     importLibConfig(cfg, file);
     std::cout << "imported cfg " << std::endl;
-    const std::string var1 = "stuff.float";
+    const std::string var1 = "stuff.gitr_precision";
     double this_thing=0;
     getVariable(cfg, var1,this_thing);
     std::cout << "this thing values " << this_thing << std::endl;
@@ -105,17 +110,17 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   sim::Array<int> nHashPoints(nHashes, 0);
   sim::Array<int> n_closeGeomElements(nHashes, 0);
   int nEdist = 1;
-  float E0dist = 0.0;
-  float Edist = 0.0;
+  gitr_precision E0dist = 0.0;
+  gitr_precision Edist = 0.0;
   int nAdist = 1;
-  float A0dist = 0.0;
-  float Adist = 0.0;
+  gitr_precision A0dist = 0.0;
+  gitr_precision Adist = 0.0;
   auto surfaces = new Surfaces(nSurfaces, nEdist, nAdist);
   surfaces->setSurface(nEdist, E0dist, Edist, nAdist, A0dist, Adist);
-  sim::Array<float> closeGeomGridr(1),
+  sim::Array<gitr_precision> closeGeomGridr(1),
       closeGeomGridy(1), closeGeomGridz(1);
   sim::Array<int> closeGeom(1, 0);
-  float dt = 1.0e9;
+  gitr_precision dt = 1.0e9;
   geometry_check geometry_check0(
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
@@ -160,17 +165,17 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   sim::Array<int> nHashPoints(nHashes, 0);
   sim::Array<int> n_closeGeomElements(nHashes, 0);
   int nEdist = 1;
-  float E0dist = 0.0;
-  float Edist = 0.0;
+  gitr_precision E0dist = 0.0;
+  gitr_precision Edist = 0.0;
   int nAdist = 1;
-  float A0dist = 0.0;
-  float Adist = 0.0;
+  gitr_precision A0dist = 0.0;
+  gitr_precision Adist = 0.0;
   auto surfaces = new Surfaces(nSurfaces, nEdist, nAdist);
   surfaces->setSurface(nEdist, E0dist, Edist, nAdist, A0dist, Adist);
-  sim::Array<float> closeGeomGridr(1),
+  sim::Array<gitr_precision> closeGeomGridr(1),
       closeGeomGridy(1), closeGeomGridz(1);
   sim::Array<int> closeGeom(1, 0);
-  float dt = 1.0e9;
+  gitr_precision dt = 1.0e9;
   geometry_check geometry_check0(
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
@@ -246,17 +251,17 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   sim::Array<int> nHashPoints(nHashes, 0);
   sim::Array<int> n_closeGeomElements(nHashes, 0);
   int nEdist = 1;
-  float E0dist = 0.0;
-  float Edist = 0.0;
+  gitr_precision E0dist = 0.0;
+  gitr_precision Edist = 0.0;
   int nAdist = 1;
-  float A0dist = 0.0;
-  float Adist = 0.0;
+  gitr_precision A0dist = 0.0;
+  gitr_precision Adist = 0.0;
   auto surfaces = new Surfaces(nSurfaces, nEdist, nAdist);
   surfaces->setSurface(nEdist, E0dist, Edist, nAdist, A0dist, Adist);
-  sim::Array<float> closeGeomGridr(1),
+  sim::Array<gitr_precision> closeGeomGridr(1),
       closeGeomGridy(1), closeGeomGridz(1);
   sim::Array<int> closeGeom(1, 0);
-  float dt = 1.0e9;
+  gitr_precision dt = 1.0e9;
   geometry_check geometry_check0(
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),

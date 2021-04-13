@@ -23,75 +23,81 @@
 #endif
 #include <fenv.h>
 
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
+
 CUDA_CALLABLE_MEMBER
-void getSlowDownFrequencies ( float& nu_friction, float& nu_deflection, float& nu_parallel,
-			 	float& nu_energy, float x, float y,float z, float vx, float vy, float vz,float charge, float amu, 
+void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_deflection, gitr_precision& nu_parallel,
+			 	gitr_precision& nu_energy, gitr_precision x, gitr_precision y,gitr_precision z, gitr_precision vx, gitr_precision vy, gitr_precision vz,gitr_precision charge, gitr_precision amu, 
                 
     int nR_flowV,
     int nZ_flowV,
-    float* flowVGridr,
-    float* flowVGridz,
-    float* flowVr,
-    float* flowVz,
-    float* flowVt,
+    gitr_precision* flowVGridr,
+    gitr_precision* flowVGridz,
+    gitr_precision* flowVr,
+    gitr_precision* flowVz,
+    gitr_precision* flowVt,
     int nR_Dens,
     int nZ_Dens,
-    float* DensGridr,
-    float* DensGridz,
-    float* ni,
+    gitr_precision* DensGridr,
+    gitr_precision* DensGridz,
+    gitr_precision* ni,
     int nR_Temp,
     int nZ_Temp,
-    float* TempGridr,
-    float* TempGridz,
-    float* ti, float* te,float background_Z, float background_amu,
+    gitr_precision* TempGridr,
+    gitr_precision* TempGridz,
+    gitr_precision* ti, gitr_precision* te,gitr_precision background_Z, gitr_precision background_amu,
                         int nR_Bfield, int nZ_Bfield,
-                        float* BfieldGridR ,float* BfieldGridZ ,
-                        float* BfieldR ,float* BfieldZ ,
-                 float* BfieldT,float &T_background 
+                        gitr_precision* BfieldGridR ,gitr_precision* BfieldGridZ ,
+                        gitr_precision* BfieldR ,gitr_precision* BfieldZ ,
+                 gitr_precision* BfieldT,gitr_precision &T_background 
                 ) {
 int feenableexcept(FE_INVALID | FE_OVERFLOW);			
-        float Q = 1.60217662e-19;
-        float EPS0 = 8.854187e-12;
-	float pi = 3.14159265;
-        float MI = 1.6737236e-27;	
-        float ME = 9.10938356e-31;
+        gitr_precision Q = 1.60217662e-19;
+        gitr_precision EPS0 = 8.854187e-12;
+	gitr_precision pi = 3.14159265;
+        gitr_precision MI = 1.6737236e-27;	
+        gitr_precision ME = 9.10938356e-31;
         
-	float te_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te);
-        float ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
+	gitr_precision te_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te);
+        gitr_precision ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
 	
 	T_background = ti_eV;
-        float density = interp2dCombined(x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
+        gitr_precision density = interp2dCombined(x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
             //std::cout << "ion t and n " << te_eV << "  " << density << std::endl;
 	//printf ("te ti dens %f %f %f \n", te_eV, ti_eV, density);
-	float flowVelocity[3]= {0.0f};
-	float relativeVelocity[3] = {0.0, 0.0, 0.0};
-	float velocityNorm = 0.0f;
-	float lam_d;
-	float lam;
-	float gam_electron_background;
-	float gam_ion_background;
-	float a_electron = 0.0;
-	float a_ion = 0.0;
-	float xx;
-	float psi_prime;
-	float psi_psiprime;
-	float psi;
-	float xx_e;
-	float psi_prime_e;
-	float psi_psiprime_e;
-	float psi_psiprime_psi2x = 0.0;
-	float psi_psiprime_psi2x_e = 0.0;
-	float psi_e;
-	float nu_0_i;
-	float nu_0_e;
-    float nu_friction_i; 
-    float nu_deflection_i;
-    float nu_parallel_i; 
-    float nu_energy_i;
-    float nu_friction_e; 
-    float nu_deflection_e;
-    float nu_parallel_e; 
-    float nu_energy_e;
+	gitr_precision flowVelocity[3]= {0.0f};
+	gitr_precision relativeVelocity[3] = {0.0, 0.0, 0.0};
+	gitr_precision velocityNorm = 0.0f;
+	gitr_precision lam_d;
+	gitr_precision lam;
+	gitr_precision gam_electron_background;
+	gitr_precision gam_ion_background;
+	gitr_precision a_electron = 0.0;
+	gitr_precision a_ion = 0.0;
+	gitr_precision xx;
+	gitr_precision psi_prime;
+	gitr_precision psi_psiprime;
+	gitr_precision psi;
+	gitr_precision xx_e;
+	gitr_precision psi_prime_e;
+	gitr_precision psi_psiprime_e;
+	gitr_precision psi_psiprime_psi2x = 0.0;
+	gitr_precision psi_psiprime_psi2x_e = 0.0;
+	gitr_precision psi_e;
+	gitr_precision nu_0_i;
+	gitr_precision nu_0_e;
+    gitr_precision nu_friction_i; 
+    gitr_precision nu_deflection_i;
+    gitr_precision nu_parallel_i; 
+    gitr_precision nu_energy_i;
+    gitr_precision nu_friction_e; 
+    gitr_precision nu_deflection_e;
+    gitr_precision nu_parallel_e; 
+    gitr_precision nu_energy_e;
                 
 #if FLOWV_INTERP == 3
         interp3dVector (&flowVelocity[0], x,y,z,nR_flowV,nY_flowV,nZ_flowV,
@@ -244,10 +250,10 @@ if(gam_electron_background < 0.0) gam_electron_background=0.0;
     //}
 }
 CUDA_CALLABLE_MEMBER
-void getSlowDownDirections2 (float parallel_direction[], float perp_direction1[], float perp_direction2[],
-        float vx, float vy, float vz)
+void getSlowDownDirections2 (gitr_precision parallel_direction[], gitr_precision perp_direction1[], gitr_precision perp_direction2[],
+        gitr_precision vx, gitr_precision vy, gitr_precision vz)
 {
-	float v = std::sqrt(vx*vx + vy*vy + vz*vz);
+	gitr_precision v = std::sqrt(vx*vx + vy*vy + vz*vz);
 	if(v == 0.0)
 	{
 		v = 1.0;
@@ -255,23 +261,23 @@ void getSlowDownDirections2 (float parallel_direction[], float perp_direction1[]
 		vx = 0.0;
 		vy = 0.0;
 	}
-        float ez1 = vx/v;
-        float ez2 = vy/v;
-        float ez3 = vz/v;
+        gitr_precision ez1 = vx/v;
+        gitr_precision ez2 = vy/v;
+        gitr_precision ez3 = vz/v;
     
     // Get perpendicular velocity unit vectors
     // this comes from a cross product of
     // (ez1,ez2,ez3)x(0,0,1)
-    float ex1 = ez2;
-    float ex2 = -ez1;
-    float ex3 = 0.0;
+    gitr_precision ex1 = ez2;
+    gitr_precision ex2 = -ez1;
+    gitr_precision ex3 = 0.0;
     
     // The above cross product will be zero for particles
     // with a pure z-directed (ez3) velocity
     // here we find those particles and get the perpendicular 
     // unit vectors by taking the cross product
     // (ez1,ez2,ez3)x(0,1,0) instead
-    float exnorm = std::sqrt(ex1*ex1 + ex2*ex2);
+    gitr_precision exnorm = std::sqrt(ex1*ex1 + ex2*ex2);
     if(std::abs(exnorm) < 1.0e-12){
     ex1 = -ez3;
     ex2 = 0.0;
@@ -290,9 +296,9 @@ void getSlowDownDirections2 (float parallel_direction[], float perp_direction1[]
     // Find the second perpendicular direction 
     // by taking the cross product
     // (ez1,ez2,ez3)x(ex1,ex2,ex3)
-    float ey1 = ez2*ex3 - ez3*ex2;
-    float ey2 = ez3*ex1 - ez1*ex3;
-    float ey3 = ez1*ex2 - ez2*ex1;
+    gitr_precision ey1 = ez2*ex3 - ez3*ex2;
+    gitr_precision ey2 = ez3*ex1 - ez1*ex3;
+    gitr_precision ey3 = ez1*ex2 - ez2*ex1;
     parallel_direction[0] = ez1; 
     parallel_direction[1] = ez2;
     parallel_direction[2] = ez3;
@@ -307,31 +313,31 @@ void getSlowDownDirections2 (float parallel_direction[], float perp_direction1[]
 }
 
 CUDA_CALLABLE_MEMBER
-void getSlowDownDirections (float parallel_direction[], float perp_direction1[], float perp_direction2[],
-        float xprevious, float yprevious, float zprevious,float vx, float vy, float vz,
+void getSlowDownDirections (gitr_precision parallel_direction[], gitr_precision perp_direction1[], gitr_precision perp_direction2[],
+        gitr_precision xprevious, gitr_precision yprevious, gitr_precision zprevious,gitr_precision vx, gitr_precision vy, gitr_precision vz,
     int nR_flowV,
     int nY_flowV,
     int nZ_flowV,
-    float* flowVGridr,
-    float* flowVGridy,
-    float* flowVGridz,
-    float* flowVr,
-    float* flowVz,
-    float* flowVt,
+    gitr_precision* flowVGridr,
+    gitr_precision* flowVGridy,
+    gitr_precision* flowVGridz,
+    gitr_precision* flowVr,
+    gitr_precision* flowVz,
+    gitr_precision* flowVt,
     
                         int nR_Bfield, int nZ_Bfield,
-                        float* BfieldGridR ,float* BfieldGridZ ,
-                        float* BfieldR ,float* BfieldZ ,
-                 float* BfieldT 
+                        gitr_precision* BfieldGridR ,gitr_precision* BfieldGridZ ,
+                        gitr_precision* BfieldR ,gitr_precision* BfieldZ ,
+                 gitr_precision* BfieldT 
     ) {
-	        float flowVelocity[3]= {0.0f};
-                float relativeVelocity[3] = {0.0, 0.0, 0.0};
-                float B[3] = {0.0f};
-                float Bmag = 0.0;
-		float B_unit[3] = {0.0};
-		float velocityRelativeNorm;
-		float s1;
-		float s2;
+	        gitr_precision flowVelocity[3]= {0.0f};
+                gitr_precision relativeVelocity[3] = {0.0, 0.0, 0.0};
+                gitr_precision B[3] = {0.0f};
+                gitr_precision Bmag = 0.0;
+		gitr_precision B_unit[3] = {0.0};
+		gitr_precision velocityRelativeNorm;
+		gitr_precision s1;
+		gitr_precision s2;
         interp2dVector(&B[0],xprevious,yprevious,zprevious,nR_Bfield,nZ_Bfield,
                                        BfieldGridR,BfieldGridZ,BfieldR,BfieldZ,BfieldT);
         Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
@@ -421,61 +427,61 @@ void getSlowDownDirections (float parallel_direction[], float perp_direction1[],
 
 struct coulombCollisions { 
     Particles *particlesPointer;
-    float dt;
+    gitr_precision dt;
     int nR_flowV;
     int nY_flowV;
     int nZ_flowV;
-    float* flowVGridr;
-    float* flowVGridy;
-    float* flowVGridz;
-    float* flowVr;
-    float* flowVz;
-    float* flowVt;
+    gitr_precision* flowVGridr;
+    gitr_precision* flowVGridy;
+    gitr_precision* flowVGridz;
+    gitr_precision* flowVr;
+    gitr_precision* flowVz;
+    gitr_precision* flowVt;
     int nR_Dens;
     int nZ_Dens;
-    float* DensGridr;
-    float* DensGridz;
-    float* ni;
+    gitr_precision* DensGridr;
+    gitr_precision* DensGridz;
+    gitr_precision* ni;
     int nR_Temp;
     int nZ_Temp;
-    float* TempGridr;
-    float* TempGridz;
-    float* ti;
-    float* te;
-    float background_Z;
-    float background_amu;
+    gitr_precision* TempGridr;
+    gitr_precision* TempGridz;
+    gitr_precision* ti;
+    gitr_precision* te;
+    gitr_precision background_Z;
+    gitr_precision background_amu;
     int nR_Bfield;
     int nZ_Bfield;
-    float * BfieldGridR;
-    float * BfieldGridZ;
-    float * BfieldR;
-    float * BfieldZ;
-    float * BfieldT;
+    gitr_precision * BfieldGridR;
+    gitr_precision * BfieldGridZ;
+    gitr_precision * BfieldR;
+    gitr_precision * BfieldZ;
+    gitr_precision * BfieldT;
     Flags* gitr_flags;
-    float dv[3];
+    gitr_precision dv[3];
 #if __CUDACC__
             curandState *state;
 #else
             std::mt19937 *state;
 #endif
 
-    coulombCollisions(Particles *_particlesPointer,float _dt, 
+    coulombCollisions(Particles *_particlesPointer,gitr_precision _dt, 
 #if __CUDACC__
                             curandState *_state,
 #else
                             std::mt19937 *_state,
 #endif
-            int _nR_flowV,int _nY_flowV, int _nZ_flowV,    float* _flowVGridr,float* _flowVGridy,
-                float* _flowVGridz,float* _flowVr,
-                        float* _flowVz,float* _flowVt,
-                        int _nR_Dens,int _nZ_Dens,float* _DensGridr,
-                            float* _DensGridz,float* _ni,int _nR_Temp, int _nZ_Temp,
-                        float* _TempGridr, float* _TempGridz,float* _ti,float* _te,
-                        float _background_Z, float _background_amu,
+            int _nR_flowV,int _nY_flowV, int _nZ_flowV,    gitr_precision* _flowVGridr,gitr_precision* _flowVGridy,
+                gitr_precision* _flowVGridz,gitr_precision* _flowVr,
+                        gitr_precision* _flowVz,gitr_precision* _flowVt,
+                        int _nR_Dens,int _nZ_Dens,gitr_precision* _DensGridr,
+                            gitr_precision* _DensGridz,gitr_precision* _ni,int _nR_Temp, int _nZ_Temp,
+                        gitr_precision* _TempGridr, gitr_precision* _TempGridz,gitr_precision* _ti,gitr_precision* _te,
+                        gitr_precision _background_Z, gitr_precision _background_amu,
                         int _nR_Bfield, int _nZ_Bfield,
-                        float * _BfieldGridR ,float * _BfieldGridZ ,
-                        float * _BfieldR ,float * _BfieldZ ,
-                 float * _BfieldT, Flags* _gitr_flags )
+                        gitr_precision * _BfieldGridR ,gitr_precision * _BfieldGridZ ,
+                        gitr_precision * _BfieldR ,gitr_precision * _BfieldZ ,
+                 gitr_precision * _BfieldT, Flags* _gitr_flags )
       : particlesPointer(_particlesPointer),
         dt(_dt),
         nR_flowV(_nR_flowV),
@@ -520,32 +526,32 @@ void operator()(std::size_t indx)  {
 	       {
 	          dt = particlesPointer->dt[indx];	   
 	       }	  
-        float pi = 3.14159265;   
-	float k_boltz = 1.38e-23*11604/1.66e-27;
-	float T_background = 0.0;
-		float nu_friction = 0.0;
-		float nu_deflection = 0.0;
-		float nu_parallel = 0.0;
-		float nu_energy = 0.0;
-		float flowVelocity[3]= {0.0f};
-		float vUpdate[3]= {0.0f};
-		float relativeVelocity[3] = {0.0f};
-		float velocityCollisions[3]= {0.0f};	
-		float velocityRelativeNorm;	
-		float parallel_direction[3] = {0.0f};
-		float parallel_direction_lab[3] = {0.0f};
-		float perp_direction1[3] = {0.0f};
-		float perp_direction2[3] = {0.0f};
-		float parallel_contribution;
-		float dv_perp1[3] = {0.0f};
-		float dv_perp2[3] = {0.0f};
-        float x = particlesPointer->xprevious[indx];
-        float y = particlesPointer->yprevious[indx];
-        float z = particlesPointer->zprevious[indx];
-        float vx = particlesPointer->vx[indx];
-        float vy = particlesPointer->vy[indx];
-        float vz = particlesPointer->vz[indx];
-        float vPartNorm = 0.0f;
+        gitr_precision pi = 3.14159265;   
+	gitr_precision k_boltz = 1.38e-23*11604/1.66e-27;
+	gitr_precision T_background = 0.0;
+		gitr_precision nu_friction = 0.0;
+		gitr_precision nu_deflection = 0.0;
+		gitr_precision nu_parallel = 0.0;
+		gitr_precision nu_energy = 0.0;
+		gitr_precision flowVelocity[3]= {0.0f};
+		gitr_precision vUpdate[3]= {0.0f};
+		gitr_precision relativeVelocity[3] = {0.0f};
+		gitr_precision velocityCollisions[3]= {0.0f};	
+		gitr_precision velocityRelativeNorm;	
+		gitr_precision parallel_direction[3] = {0.0f};
+		gitr_precision parallel_direction_lab[3] = {0.0f};
+		gitr_precision perp_direction1[3] = {0.0f};
+		gitr_precision perp_direction2[3] = {0.0f};
+		gitr_precision parallel_contribution;
+		gitr_precision dv_perp1[3] = {0.0f};
+		gitr_precision dv_perp2[3] = {0.0f};
+        gitr_precision x = particlesPointer->xprevious[indx];
+        gitr_precision y = particlesPointer->yprevious[indx];
+        gitr_precision z = particlesPointer->zprevious[indx];
+        gitr_precision vx = particlesPointer->vx[indx];
+        gitr_precision vy = particlesPointer->vy[indx];
+        gitr_precision vz = particlesPointer->vz[indx];
+        gitr_precision vPartNorm = 0.0f;
 #if FLOWV_INTERP == 3 
         interp3dVector (&flowVelocity[0], particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_flowV,nY_flowV,nZ_flowV,
                 flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
@@ -569,7 +575,7 @@ void operator()(std::size_t indx)  {
 	        relativeVelocity[0] = vx - flowVelocity[0];
         	relativeVelocity[1] = vy - flowVelocity[1];
         	relativeVelocity[2] = vz - flowVelocity[2];
-		float vRel2 = relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2];
+		gitr_precision vRel2 = relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2];
         	velocityRelativeNorm = vectorNorm(relativeVelocity);
 
 #if PARTICLESEEDS > 0
@@ -577,36 +583,36 @@ void operator()(std::size_t indx)  {
         //int plus_minus1 = 1;//floor(curand_uniform(&particlesPointer->streams_collision1[indx]) + 0.5)*2 -1;
 		//int plus_minus2 = 1;//floor(curand_uniform(&particlesPointer->streams_collision2[indx]) + 0.5)*2 -1;
 		//int plus_minus3 = 1;//floor(curand_uniform(&particlesPointer->streams_collision3[indx]) + 0.5)*2 -1;
-            float n1 = curand_normal(&state[indx]);
-            float n2 = curand_normal(&state[indx]);
-            float r1 = curand_uniform(&state[indx]);
-            float r2 = curand_uniform(&state[indx]);
-            float r3 = curand_uniform(&state[indx]);
-            float xsi = curand_uniform(&state[indx]);
+            gitr_precision n1 = curand_normal(&state[indx]);
+            gitr_precision n2 = curand_normal(&state[indx]);
+            gitr_precision r1 = curand_uniform(&state[indx]);
+            gitr_precision r2 = curand_uniform(&state[indx]);
+            gitr_precision r3 = curand_uniform(&state[indx]);
+            gitr_precision xsi = curand_uniform(&state[indx]);
 #else
-            std::normal_distribution<float> distribution(0.0,1.0);
-            std::uniform_real_distribution<float> dist(0.0, 1.0);
-            float n1 = distribution(state[indx]);
-            float n2 = distribution(state[indx]);
-            float r1 = dist(state[indx]);
-            float r2 = dist(state[indx]);
-            float r3 = dist(state[indx]);
-            float xsi = dist(state[indx]);
+            std::normal_distribution<gitr_precision> distribution(0.0,1.0);
+            std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
+            gitr_precision n1 = distribution(state[indx]);
+            gitr_precision n2 = distribution(state[indx]);
+            gitr_precision r1 = dist(state[indx]);
+            gitr_precision r2 = dist(state[indx]);
+            gitr_precision r3 = dist(state[indx]);
+            gitr_precision xsi = dist(state[indx]);
 #endif
 #else
 #if __CUDACC__
-            //float plus_minus1 = floor(curand_uniform(&state[3]) + 0.5)*2-1;
-            //float plus_minus2 = floor(curand_uniform(&state[4]) + 0.5)*2-1;
-            //float plus_minus3 = floor(curand_uniform(&state[5]) + 0.5)*2-1;
-            float n1 = curand_normal(&state[indx]);
-            float n2 = curand_normal(&state[indx]);
-            float xsi = curand_uniform(&state[indx]);
+            //gitr_precision plus_minus1 = floor(curand_uniform(&state[3]) + 0.5)*2-1;
+            //gitr_precision plus_minus2 = floor(curand_uniform(&state[4]) + 0.5)*2-1;
+            //gitr_precision plus_minus3 = floor(curand_uniform(&state[5]) + 0.5)*2-1;
+            gitr_precision n1 = curand_normal(&state[indx]);
+            gitr_precision n2 = curand_normal(&state[indx]);
+            gitr_precision xsi = curand_uniform(&state[indx]);
 #else
             std::normal_distribution<double> distribution(0.0,1.0);
-            std::uniform_real_distribution<float> dist(0.0, 1.0);
-            float n1 = distribution(state[indx]);
-            float n2 = distribution(state[indx]);
-            float xsi = dist(state[indx]);
+            std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
+            gitr_precision n1 = distribution(state[indx]);
+            gitr_precision n2 = distribution(state[indx]);
+            gitr_precision xsi = dist(state[indx]);
 #endif
 #endif
       getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
@@ -645,17 +651,17 @@ void operator()(std::size_t indx)  {
       getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );
       
-      float ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti);
-      float density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni);
+      gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti);
+      gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni);
       
       if(nu_parallel <=0.0) nu_parallel = 0.0;
-      float coeff_par = n1 * std::sqrt(2.0*nu_parallel * dt);
-      float cosXsi = cos(2.0 * pi * xsi) - 0.0028;
+      gitr_precision coeff_par = n1 * std::sqrt(2.0*nu_parallel * dt);
+      gitr_precision cosXsi = cos(2.0 * pi * xsi) - 0.0028;
       if(cosXsi > 1.0) cosXsi = 1.0;
-      float sinXsi = sin(2.0 * pi * xsi);
+      gitr_precision sinXsi = sin(2.0 * pi * xsi);
       if(nu_deflection <=0.0) nu_deflection = 0.0;
-      float coeff_perp1 = cosXsi * std::sqrt(nu_deflection * dt*0.5);
-      float coeff_perp2 = sinXsi * std::sqrt(nu_deflection * dt*0.5);
+      gitr_precision coeff_perp1 = cosXsi * std::sqrt(nu_deflection * dt*0.5);
+      gitr_precision coeff_perp2 = sinXsi * std::sqrt(nu_deflection * dt*0.5);
 #if USEFRICTION == 0
       //drag = 0.0;
 #endif
@@ -668,12 +674,12 @@ void operator()(std::size_t indx)  {
       nu_energy = 0.0;
 #endif
       
-      float nuEdt = nu_energy * dt;
+      gitr_precision nuEdt = nu_energy * dt;
       if (nuEdt < -1.0) nuEdt = -1.0;
       
-      float vx_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[0] + std::abs(n2)*(coeff_perp1 * perp_direction1[0] + coeff_perp2 * perp_direction2[0])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[0];
-      float vy_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[1] + std::abs(n2)*(coeff_perp1 * perp_direction1[1] + coeff_perp2 * perp_direction2[1])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[1];
-      float vz_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[2] + std::abs(n2)*(coeff_perp1 * perp_direction1[2] + coeff_perp2 * perp_direction2[2])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[2];
+      gitr_precision vx_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[0] + std::abs(n2)*(coeff_perp1 * perp_direction1[0] + coeff_perp2 * perp_direction2[0])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[0];
+      gitr_precision vy_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[1] + std::abs(n2)*(coeff_perp1 * perp_direction1[1] + coeff_perp2 * perp_direction2[1])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[1];
+      gitr_precision vz_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[2] + std::abs(n2)*(coeff_perp1 * perp_direction1[2] + coeff_perp2 * perp_direction2[2])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[2];
       if(gitr_flags->USE_ADAPTIVE_DT)
       {
 	      if (particlesPointer->advance[indx])

@@ -11,6 +11,11 @@
 #include "Boundary.h"
 #include <cmath>
 #include <vector>
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
 #if USE_CUDA >0
 #if __CUDA_ARCH__ < 600
 __device__ double atomicAdd1(double* address, double val)
@@ -44,40 +49,42 @@ __device__ double atomicAdd1(double* address, double val)
 #endif
 
 struct spec_bin { 
+    Flags *flags;
     Particles *particlesPointer;
     const int nBins;
     int nX;
     int nY;
     int nZ;
-    float *gridX;
-    float *gridY;
-    float *gridZ;
+    gitr_precision *gridX;
+    gitr_precision *gridY;
+    gitr_precision *gridZ;
     double *bins;
-    float dt;
+    gitr_precision dt;
 
-    spec_bin(Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, float *_gridX,float *_gridY,float *_gridZ,
-           double * _bins, float _dt) : 
-        particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
+    spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
+           double * _bins, gitr_precision _dt) : 
+        flags(_flags), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
         dt(_dt) {}
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const { 
 //    int indx_X = 0;
 //    int indx_Z = 0;
-    float dx = 0.0f;
-    float dy = 0.0f;
-    float dz = 0.0f;
-    float x = particlesPointer->xprevious[indx];
-    float y = particlesPointer->yprevious[indx];
-    float z = particlesPointer->zprevious[indx];
+    gitr_precision dx = 0.0f;
+    gitr_precision dy = 0.0f;
+    gitr_precision dz = 0.0f;
+    gitr_precision x = particlesPointer->xprevious[indx];
+    gitr_precision y = particlesPointer->yprevious[indx];
+    gitr_precision z = particlesPointer->zprevious[indx];
+    gitr_precision dt_particle = 0.0;
 	    //printf ("z %f \n", z);
 #if SPECTROSCOPY > 2
-    float dim1 = particlesPointer->xprevious[indx];
+    gitr_precision dim1 = particlesPointer->xprevious[indx];
 #else
   #if USECYLSYMM > 0
-    float dim1 = std::sqrt(x*x + y*y);
+    gitr_precision dim1 = std::sqrt(x*x + y*y);
     #else
-    float dim1 = x;
+    gitr_precision dim1 = x;
     #endif
 #endif
 
@@ -113,10 +120,21 @@ void operator()(std::size_t indx) const {
               //std::cout << "dz " << dz << std::endl;
               //std::cout << "ind x " << indx_X << "ind z " << indx_Z << std::endl;
               int charge = std::floor(particlesPointer->charge[indx]);
+              gitr_precision specWeight = 0.0;
               if(particlesPointer->hitWall[indx]== 0.0)
               {
-                  float specWeight = particlesPointer->weight[indx];
+                if (flags->USE_ADAPTIVE_DT) {
+	          if(particlesPointer->advance[indx])
+		  {
+	            dt_particle = particlesPointer->dt[indx];
+		    specWeight = particlesPointer->weight[indx]*dt_particle/dt;
+		  }
+                }
+		else
+		{
+                  specWeight = particlesPointer->weight[indx];
 		  //printf ("Characters: %f \n", specWeight);
+		}
 #if USE_CUDA >0
               //for 2d
               /*

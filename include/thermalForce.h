@@ -10,45 +10,51 @@
 #include "Particle.h"
 #include <cmath>
 
-struct thermalForce { 
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
 
+struct thermalForce { 
+    Flags* flags;
     Particles *p;
-    const float dt;
-    float background_amu;
+    const gitr_precision dt;
+    gitr_precision background_amu;
     int nR_gradT;
     int nZ_gradT;
-    float* gradTGridr;
-    float* gradTGridz;
-    float* gradTiR;
-    float* gradTiZ;
-    float* gradTiT;
-    float* gradTeR;
-    float* gradTeZ;
-    float* gradTeT;
+    gitr_precision* gradTGridr;
+    gitr_precision* gradTGridz;
+    gitr_precision* gradTiR;
+    gitr_precision* gradTiZ;
+    gitr_precision* gradTiT;
+    gitr_precision* gradTeR;
+    gitr_precision* gradTeZ;
+    gitr_precision* gradTeT;
             int nR_Bfield;
             int nZ_Bfield;
-            float * BfieldGridRDevicePointer;
-            float * BfieldGridZDevicePointer;
-            float * BfieldRDevicePointer;
-            float * BfieldZDevicePointer;
-            float * BfieldTDevicePointer;
-	    float dv_ITGx=0.0;
-	    float dv_ITGy=0.0;
-	    float dv_ITGz=0.0;
-	    float dv_ETGx=0.0;
-	    float dv_ETGy=0.0;
-	    float dv_ETGz=0.0;
+            gitr_precision * BfieldGridRDevicePointer;
+            gitr_precision * BfieldGridZDevicePointer;
+            gitr_precision * BfieldRDevicePointer;
+            gitr_precision * BfieldZDevicePointer;
+            gitr_precision * BfieldTDevicePointer;
+	    gitr_precision dv_ITGx=0.0;
+	    gitr_precision dv_ITGy=0.0;
+	    gitr_precision dv_ITGz=0.0;
+	    gitr_precision dv_ETGx=0.0;
+	    gitr_precision dv_ETGy=0.0;
+	    gitr_precision dv_ETGz=0.0;
             
-    thermalForce(Particles *_p,float _dt, float _background_amu,int _nR_gradT, int _nZ_gradT, float* _gradTGridr, float* _gradTGridz,
-            float* _gradTiR, float* _gradTiZ, float* _gradTiT, float* _gradTeR, float* _gradTeZ,float* _gradTeT,
+    thermalForce(Flags* _flags,Particles *_p,gitr_precision _dt, gitr_precision _background_amu,int _nR_gradT, int _nZ_gradT, gitr_precision* _gradTGridr, gitr_precision* _gradTGridz,
+            gitr_precision* _gradTiR, gitr_precision* _gradTiZ, gitr_precision* _gradTiT, gitr_precision* _gradTeR, gitr_precision* _gradTeZ,gitr_precision* _gradTeT,
             int _nR_Bfield, int _nZ_Bfield,
-            float * _BfieldGridRDevicePointer,
-            float * _BfieldGridZDevicePointer,
-            float * _BfieldRDevicePointer,
-            float * _BfieldZDevicePointer,
-            float * _BfieldTDevicePointer)
+            gitr_precision * _BfieldGridRDevicePointer,
+            gitr_precision * _BfieldGridZDevicePointer,
+            gitr_precision * _BfieldRDevicePointer,
+            gitr_precision * _BfieldZDevicePointer,
+            gitr_precision * _BfieldTDevicePointer)
         
-            : p(_p), dt(_dt), background_amu(_background_amu),nR_gradT(_nR_gradT),nZ_gradT(_nZ_gradT),
+            : flags(_flags),p(_p), dt(_dt), background_amu(_background_amu),nR_gradT(_nR_gradT),nZ_gradT(_nZ_gradT),
         gradTGridr(_gradTGridr), gradTGridz(_gradTGridz),
         gradTiR(_gradTiR), gradTiZ(_gradTiZ),gradTiT(_gradTiT), gradTeR(_gradTeR), gradTeZ(_gradTeZ),gradTeT(_gradTeT), 
              nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
@@ -57,20 +63,31 @@ struct thermalForce {
 CUDA_CALLABLE_MEMBER    
 void operator()(std::size_t indx)  { 
     if ((p->hitWall[indx] == 0.0) && (p->charge[indx] > 0.0)) {
-      float MI = 1.6737236e-27;
-      float alpha;
-      float beta;
-      float mu;
-      float gradTe[3] = {0.0, 0.0, 0.0};
-      float gradTi[3] = {0.0, 0.0, 0.0};
-      float B[3] = {0.0, 0.0, 0.0};
-      float B_unit[3] = {0.0, 0.0, 0.0};
-      float Bmag = 0.0;
-      float gradTiPar = 0.0;
-      float dv_ITG[3] = {};
-      float dv_ETG[3] = {};
-      float vNorm = 0.0;
-      float vNorm2 = 0.0;
+      gitr_precision MI = 1.6737236e-27;
+      gitr_precision alpha;
+      gitr_precision beta;
+      gitr_precision mu;
+      gitr_precision gradTe[3] = {0.0, 0.0, 0.0};
+      gitr_precision gradTi[3] = {0.0, 0.0, 0.0};
+      gitr_precision B[3] = {0.0, 0.0, 0.0};
+      gitr_precision B_unit[3] = {0.0, 0.0, 0.0};
+      gitr_precision Bmag = 0.0;
+      gitr_precision gradTiPar = 0.0;
+      gitr_precision dv_ITG[3] = {};
+      gitr_precision dv_ETG[3] = {};
+      gitr_precision vNorm = 0.0;
+      gitr_precision vNorm2 = 0.0;
+      gitr_precision dt_step = dt;
+                if (flags->USE_ADAPTIVE_DT) {
+	          if(p->advance[indx])
+		  {
+	            dt_step = p->dt[indx];
+		  }
+		  else
+		  {
+	            dt_step = 0.0;
+		  }
+                }
       // std:cout << " grad Ti interp " << std::endl;
       interp2dVector(&gradTi[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,
                      gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT);
@@ -89,13 +106,13 @@ void operator()(std::size_t indx)  {
         B_unit[1] = B[1]/Bmag;
         B_unit[2] = B[2]/Bmag;
 
-	dv_ETG[0] = 1.602e-19*dt/(p->amu[indx]*MI)*(alpha*(gradTe[0]));
-	dv_ETG[1] = 1.602e-19*dt/(p->amu[indx]*MI)*(alpha*(gradTe[1]));
-	dv_ETG[2] = 1.602e-19*dt/(p->amu[indx]*MI)*(alpha*(gradTe[2]));
+	dv_ETG[0] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[0]));
+	dv_ETG[1] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[1]));
+	dv_ETG[2] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[2]));
 
-	dv_ITG[0] = 1.602e-19*dt/(p->amu[indx]*MI)*(beta*(gradTi[0]))*B_unit[0];
-	dv_ITG[1] = 1.602e-19*dt/(p->amu[indx]*MI)*(beta*(gradTi[1]))*B_unit[1];
-	dv_ITG[2] = 1.602e-19*dt/(p->amu[indx]*MI)*(beta*(gradTi[2]))*B_unit[2];
+	dv_ITG[0] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[0]))*B_unit[0];
+	dv_ITG[1] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[1]))*B_unit[1];
+	dv_ITG[2] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[2]))*B_unit[2];
 	dv_ITGx = dv_ITG[0];
 	dv_ITGy = dv_ITG[1];
 	dv_ITGz = dv_ITG[2];
@@ -107,17 +124,17 @@ void operator()(std::size_t indx)  {
     //std::cout << "ETG " << dv_ETG[0] << " " << dv_ETG[1] << " " << dv_ETG[2] << std::endl;
     //std::cout << "v before thermal force " << p->vx[indx] << " " << p->vy[indx] << " " << p->vz[indx] << std::endl;
     /*
-    float theta = atan2(p->yprevious,p->xprevious);
-    float Ar = -1;
-    float At = 0.0;
-    float Az = 1;
+    gitr_precision theta = atan2(p->yprevious,p->xprevious);
+    gitr_precision Ar = -1;
+    gitr_precision At = 0.0;
+    gitr_precision Az = 1;
     gradTi[0] = cos(theta)*Ar - sin(theta)*At;
     gradTi[1] = sin(theta)*Ar + cos(theta)*At;
     gradTi[2] = Az;
     */
-    float vx = p->vx[indx];
-    float vy = p->vy[indx];
-    float vz = p->vz[indx];
+    gitr_precision vx = p->vx[indx];
+    gitr_precision vy = p->vy[indx];
+    gitr_precision vz = p->vz[indx];
         vNorm = std::sqrt(vx*vx + vy*vy + vz*vz);
     p->vD[indx] = dv_ITG[2];    
 	//std::cout << "gradTi Parallel " << gradTiPar << std::endl;
@@ -127,7 +144,7 @@ void operator()(std::size_t indx)  {
 	//p->vz[indx] = p->vz[indx] +dv_ITG[2];//alpha*(gradTe[2])		
         //vNorm2 = sqrt(p->vx[indx]*p->vx[indx] + p->vy[indx]*p->vy[indx] + p->vz[indx]*p->vz[indx]);
 		//SFT
-        float k1 = dv_ITG[2] - dt*p->nu_s[indx]
+        gitr_precision k1 = dv_ITG[2] - dt_step*p->nu_s[indx]
                     *(dv_ITG[2]);
         p->vx[indx] = vx + dv_ITG[0];///velocityCollisionsNorm;   	
 		p->vy[indx] = vy + dv_ITG[1];///velocityCollisionsNorm;   	

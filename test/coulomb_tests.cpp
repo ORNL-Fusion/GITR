@@ -5,53 +5,58 @@
 #include "Fields.h"
 #include <thrust/execution_policy.h>
 #include <fstream>
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
 
 TEST_CASE("Coulomb collision", "tests") {
   SECTION("Frequency")
   {
 
-    float nu_friction = 0.0;
-    float nu_deflection = 0.0;
-    float nu_parallel = 0.0;
-    float nu_energy = 0.0;
-    float x = 0.0;
-    float y = 0.0;
-    float z = 0.0;
-    float vx = 3226.0;
-    float vy = 0.0;
-    float vz = 0.0;
-    float charge = 1.0;
-    float amu = 184.0;
+    gitr_precision nu_friction = 0.0;
+    gitr_precision nu_deflection = 0.0;
+    gitr_precision nu_parallel = 0.0;
+    gitr_precision nu_energy = 0.0;
+    gitr_precision x = 0.0;
+    gitr_precision y = 0.0;
+    gitr_precision z = 0.0;
+    gitr_precision vx = 3226.0;
+    gitr_precision vy = 0.0;
+    gitr_precision vz = 0.0;
+    gitr_precision charge = 1.0;
+    gitr_precision amu = 184.0;
     int nR_flowV = 1;
     int nZ_flowV = 1;
-    sim::Array<float> flowVGridr(1, 0.0);
-    sim::Array<float> flowVGridz(1, 0.0);
-    sim::Array<float> flowVr(1, 0.0);
-    sim::Array<float> flowVz(1, 0.0);
-    sim::Array<float> flowVt(1, 0.0);
+    sim::Array<gitr_precision> flowVGridr(1, 0.0);
+    sim::Array<gitr_precision> flowVGridz(1, 0.0);
+    sim::Array<gitr_precision> flowVr(1, 0.0);
+    sim::Array<gitr_precision> flowVz(1, 0.0);
+    sim::Array<gitr_precision> flowVt(1, 0.0);
     int nR_Dens = 1;
     int nZ_Dens = 1;
-    sim::Array<float> DensGridr(1, 0.0);
-    sim::Array<float> DensGridz(1, 0.0);
-    sim::Array<float> ni(1, 1.0e19);
+    sim::Array<gitr_precision> DensGridr(1, 0.0);
+    sim::Array<gitr_precision> DensGridz(1, 0.0);
+    sim::Array<gitr_precision> ni(1, 1.0e19);
     int nR_Temp = 1;
     int nZ_Temp = 1;
-    sim::Array<float> TempGridr(1, 0.0);
-    sim::Array<float> TempGridz(1, 0.0);
-    sim::Array<float> ti(1,20.0);
-    sim::Array<float> te(1,20.0);
-    float background_Z = 1.0;
-    float background_amu = 2.0;
+    sim::Array<gitr_precision> TempGridr(1, 0.0);
+    sim::Array<gitr_precision> TempGridz(1, 0.0);
+    sim::Array<gitr_precision> ti(1,20.0);
+    sim::Array<gitr_precision> te(1,20.0);
+    gitr_precision background_Z = 1.0;
+    gitr_precision background_amu = 2.0;
     int nR_Bfield = 1;
     int nZ_Bfield = 1;
-    sim::Array<float> BfieldGridR(1,0.0);
-    sim::Array<float> BfieldGridZ(1,0.0);
-    sim::Array<float> BfieldR(1,0.0);
-    sim::Array<float> BfieldZ(1,0.0);
-    sim::Array<float> BfieldT(1,0.0);
-    float T_background  = 20.0;
+    sim::Array<gitr_precision> BfieldGridR(1,0.0);
+    sim::Array<gitr_precision> BfieldGridZ(1,0.0);
+    sim::Array<gitr_precision> BfieldR(1,0.0);
+    sim::Array<gitr_precision> BfieldZ(1,0.0);
+    sim::Array<gitr_precision> BfieldT(1,0.0);
+    gitr_precision T_background  = 20.0;
     int nT = 1000;
-    float dt = 1.0e-5;
+    gitr_precision dt = 1.0e-5;
     //for(int i=0;i<nT;i++)
     //{
       getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
@@ -85,49 +90,49 @@ TEST_CASE("Coulomb collision", "tests") {
   SECTION("Frequency Evolution")
   {
 
-    float nu_friction = 0.0;
-    float nu_deflection = 0.0;
-    float nu_parallel = 0.0;
-    float nu_energy = 0.0;
-    float x = 0.0;
-    float y = 0.0;
-    float z = 0.0;
-    float vx = 0.0;
-    float vy = 0.0;
-    float vz = 3226.0;
-    float charge = 1.0;
-    float amu = 184.0;
+    gitr_precision nu_friction = 0.0;
+    gitr_precision nu_deflection = 0.0;
+    gitr_precision nu_parallel = 0.0;
+    gitr_precision nu_energy = 0.0;
+    gitr_precision x = 0.0;
+    gitr_precision y = 0.0;
+    gitr_precision z = 0.0;
+    gitr_precision vx = 0.0;
+    gitr_precision vy = 0.0;
+    gitr_precision vz = 3226.0;
+    gitr_precision charge = 1.0;
+    gitr_precision amu = 184.0;
     int nR_flowV = 1;
     int nZ_flowV = 1;
-    sim::Array<float> flowVGridr(1, 0.0);
-    sim::Array<float> flowVGridz(1, 0.0);
-    sim::Array<float> flowVr(1, 2000.0);
-    sim::Array<float> flowVz(1, 0.0);
-    sim::Array<float> flowVt(1, 0.0);
+    sim::Array<gitr_precision> flowVGridr(1, 0.0);
+    sim::Array<gitr_precision> flowVGridz(1, 0.0);
+    sim::Array<gitr_precision> flowVr(1, 2000.0);
+    sim::Array<gitr_precision> flowVz(1, 0.0);
+    sim::Array<gitr_precision> flowVt(1, 0.0);
     int nR_Dens = 1;
     int nZ_Dens = 1;
-    sim::Array<float> DensGridr(1, 0.0);
-    sim::Array<float> DensGridz(1, 0.0);
-    sim::Array<float> ni(1, 1.0e19);
+    sim::Array<gitr_precision> DensGridr(1, 0.0);
+    sim::Array<gitr_precision> DensGridz(1, 0.0);
+    sim::Array<gitr_precision> ni(1, 1.0e19);
     int nR_Temp = 1;
     int nZ_Temp = 1;
-    sim::Array<float> TempGridr(1, 0.0);
-    sim::Array<float> TempGridz(1, 0.0);
-    sim::Array<float> ti(1,20.0);
-    sim::Array<float> te(1,20.0);
-    float background_Z = 1.0;
-    float background_amu = 2.0;
+    sim::Array<gitr_precision> TempGridr(1, 0.0);
+    sim::Array<gitr_precision> TempGridz(1, 0.0);
+    sim::Array<gitr_precision> ti(1,20.0);
+    sim::Array<gitr_precision> te(1,20.0);
+    gitr_precision background_Z = 1.0;
+    gitr_precision background_amu = 2.0;
     int nR_Bfield = 1;
     int nZ_Bfield = 1;
-    sim::Array<float> BfieldGridR(1,0.0);
-    sim::Array<float> BfieldGridZ(1,0.0);
-    sim::Array<float> BfieldR(1,0.0);
-    sim::Array<float> BfieldZ(1,0.0);
-    sim::Array<float> BfieldT(1,0.0);
-    float T_background  = 20.0;
+    sim::Array<gitr_precision> BfieldGridR(1,0.0);
+    sim::Array<gitr_precision> BfieldGridZ(1,0.0);
+    sim::Array<gitr_precision> BfieldR(1,0.0);
+    sim::Array<gitr_precision> BfieldZ(1,0.0);
+    sim::Array<gitr_precision> BfieldT(1,0.0);
+    gitr_precision T_background  = 20.0;
     int nT = 1000;
-    float dt = 1.0e-5;
-    float v_drift = 0.0;
+    gitr_precision dt = 1.0e-5;
+    gitr_precision v_drift = 0.0;
     for(int i=0;i<nT;i++)
     {
       getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
@@ -187,49 +192,49 @@ TEST_CASE("Coulomb collision", "tests") {
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
                    curandInitialize<>(&state1.front(), 0));
     
-    float x = 0.0;
-    float y = 0.0;
-    float z = 0.0;
-    float vx = 0.0;
-    float vy = 0.0;
-    float vz = 3226.0;
-    float charge = 1.0;
-    float amu = 184.0;
+    gitr_precision x = 0.0;
+    gitr_precision y = 0.0;
+    gitr_precision z = 0.0;
+    gitr_precision vx = 0.0;
+    gitr_precision vy = 0.0;
+    gitr_precision vz = 3226.0;
+    gitr_precision charge = 1.0;
+    gitr_precision amu = 184.0;
     int nR_flowV = 1;
     int nY_flowV = 1;
     int nZ_flowV = 1;
-    sim::Array<float> flowVGridr(1, 0.0);
-    sim::Array<float> flowVGridy(1, 0.0);
-    sim::Array<float> flowVGridz(1, 0.0);
-    sim::Array<float> flowVr(1, 0.0);
-    sim::Array<float> flowVz(1, 0.0);
-    sim::Array<float> flowVt(1, 0.0);
+    sim::Array<gitr_precision> flowVGridr(1, 0.0);
+    sim::Array<gitr_precision> flowVGridy(1, 0.0);
+    sim::Array<gitr_precision> flowVGridz(1, 0.0);
+    sim::Array<gitr_precision> flowVr(1, 0.0);
+    sim::Array<gitr_precision> flowVz(1, 0.0);
+    sim::Array<gitr_precision> flowVt(1, 0.0);
     int nR_Dens = 1;
     int nZ_Dens = 1;
-    sim::Array<float> DensGridr(1, 0.0);
-    sim::Array<float> DensGridz(1, 0.0);
-    sim::Array<float> ni(1, 1.0e19);
-    sim::Array<float> ne(1, 1.0e19);
+    sim::Array<gitr_precision> DensGridr(1, 0.0);
+    sim::Array<gitr_precision> DensGridz(1, 0.0);
+    sim::Array<gitr_precision> ni(1, 1.0e19);
+    sim::Array<gitr_precision> ne(1, 1.0e19);
     int nR_Temp = 1;
     int nZ_Temp = 1;
-    sim::Array<float> TempGridr(1, 0.0);
-    sim::Array<float> TempGridz(1, 0.0);
-    sim::Array<float> ti(1,20.0);
-    sim::Array<float> te(1,20.0);
-    float background_Z = 1.0;
-    float background_amu = 2.0;
+    sim::Array<gitr_precision> TempGridr(1, 0.0);
+    sim::Array<gitr_precision> TempGridz(1, 0.0);
+    sim::Array<gitr_precision> ti(1,20.0);
+    sim::Array<gitr_precision> te(1,20.0);
+    gitr_precision background_Z = 1.0;
+    gitr_precision background_amu = 2.0;
     int nR_Bfield = 1;
     int nZ_Bfield = 1;
-    sim::Array<float> BfieldGridR(1,0.0);
-    sim::Array<float> BfieldGridZ(1,0.0);
-    sim::Array<float> BfieldR(1,0.0);
-    sim::Array<float> BfieldZ(1,0.0);
-    sim::Array<float> BfieldT(1,0.0);
-    float T_background  = 20.0;
+    sim::Array<gitr_precision> BfieldGridR(1,0.0);
+    sim::Array<gitr_precision> BfieldGridZ(1,0.0);
+    sim::Array<gitr_precision> BfieldR(1,0.0);
+    sim::Array<gitr_precision> BfieldZ(1,0.0);
+    sim::Array<gitr_precision> BfieldT(1,0.0);
+    gitr_precision T_background  = 20.0;
     
     
     //Adjust
-    float dt = getVariable_cfg<float> (cfg,"timeStep.dt");
+    gitr_precision dt = getVariable_cfg<gitr_precision> (cfg,"timeStep.dt");
     int nT = getVariable_cfg<int> (cfg,"timeStep.nT");
     std::cout << "here 1 " << std::endl; 
     auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
@@ -253,7 +258,7 @@ auto gitr_start_clock = gitr_time::now();
     thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,coulombCollisions0);
   }
   auto finish_clock0nc = gitr_time::now();
-  typedef std::chrono::duration<float> fsec0nc;
+  typedef std::chrono::duration<gitr_precision> fsec0nc;
   fsec0nc fs0nc = finish_clock0nc - gitr_start_clock;
   printf("Time taken for geometry import is %6.3f (secs) \n", fs0nc.count());
     std::cout << "finished ionization " << std::endl; 
@@ -262,13 +267,13 @@ auto gitr_start_clock = gitr_time::now();
   //  std::cout << "particle charge " << i << " " << particleArray->charge[i] << std::endl;
   //}
   
-  //std::sort(particleArray->vx.begin(), particleArray->vx.end(), std::less<float>());
+  //std::sort(particleArray->vx.begin(), particleArray->vx.end(), std::less<gitr_precision>());
   int n_bins = 40;
-  float v_max = 1.5e4;
-  float v_min = -1.5e4;
-  float dv = (v_max - v_min)/n_bins;
-  float mse = 0.0;
-  std::vector<float> velocity_counts(n_bins,0);
+  gitr_precision v_max = 1.5e4;
+  gitr_precision v_min = -1.5e4;
+  gitr_precision dv = (v_max - v_min)/n_bins;
+  gitr_precision mse = 0.0;
+  std::vector<gitr_precision> velocity_counts(n_bins,0);
   for(int i=0; i< nParticles; i++)
   {
     int bin_number = std::floor((particleArray->vx[i] - v_min)/(v_max - v_min)*n_bins);	  
@@ -278,17 +283,17 @@ auto gitr_start_clock = gitr_time::now();
     }
   }
   //Analytic constants
-  float B = 5.1831e-09*amu/T_background;
+  gitr_precision B = 5.1831e-09*amu/T_background;
   std::cout << "velocity gitr analytic" << std::endl;
   for(int i=0; i<n_bins; i++)
   {
-	  float this_v = v_min + (i+0.5)*dv;
-	  float analytic = std::sqrt(B/3.141592653589793)*std::exp(-B*this_v*this_v);
-	  float gitr = 1.0/nParticles*velocity_counts[i]/dv;
+	  gitr_precision this_v = v_min + (i+0.5)*dv;
+	  gitr_precision analytic = std::sqrt(B/3.141592653589793)*std::exp(-B*this_v*this_v);
+	  gitr_precision gitr = 1.0/nParticles*velocity_counts[i]/dv;
      std::cout <<this_v << " " << gitr << " " << analytic << std::endl;
      mse = mse + std::pow(gitr-analytic,2)/n_bins;
   }
-  float tolerance = 1.0e-11;
+  gitr_precision tolerance = 1.0e-11;
   printf("mse and tol %e %e ", mse, tolerance);
   REQUIRE(mse <= tolerance);
   }
@@ -337,53 +342,53 @@ auto gitr_start_clock = gitr_time::now();
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
                    curandInitialize2<>(&state1.front(),&seed.front(), &sequence.front(),&offset.front()));
     
-    float nu_friction = 0.0;
-    float nu_deflection = 0.0;
-    float nu_parallel = 0.0;
-    float nu_energy = 0.0;
-    float x = 0.0;
-    float y = 0.0;
-    float z = 0.0;
-    float vx = 0.0;
-    float vy = 2645.0;
-    float vz = 2645.0;//4580.0;
-    float charge = 1.0;
-    float amu = 184.0;
+    gitr_precision nu_friction = 0.0;
+    gitr_precision nu_deflection = 0.0;
+    gitr_precision nu_parallel = 0.0;
+    gitr_precision nu_energy = 0.0;
+    gitr_precision x = 0.0;
+    gitr_precision y = 0.0;
+    gitr_precision z = 0.0;
+    gitr_precision vx = 0.0;
+    gitr_precision vy = 2645.0;
+    gitr_precision vz = 2645.0;//4580.0;
+    gitr_precision charge = 1.0;
+    gitr_precision amu = 184.0;
     int nR_flowV = 1;
     int nY_flowV = 1;
     int nZ_flowV = 1;
-    sim::Array<float> flowVGridr(1, 0.0);
-    sim::Array<float> flowVGridy(1, 0.0);
-    sim::Array<float> flowVGridz(1, 0.0);
-    sim::Array<float> flowVr(1, 2000.0);
-    sim::Array<float> flowVz(1, 0.0);
-    sim::Array<float> flowVt(1, 0.0);
+    sim::Array<gitr_precision> flowVGridr(1, 0.0);
+    sim::Array<gitr_precision> flowVGridy(1, 0.0);
+    sim::Array<gitr_precision> flowVGridz(1, 0.0);
+    sim::Array<gitr_precision> flowVr(1, 2000.0);
+    sim::Array<gitr_precision> flowVz(1, 0.0);
+    sim::Array<gitr_precision> flowVt(1, 0.0);
     int nR_Dens = 1;
     int nZ_Dens = 1;
-    sim::Array<float> DensGridr(1, 0.0);
-    sim::Array<float> DensGridz(1, 0.0);
-    sim::Array<float> ni(1, 1.0e19);
-    sim::Array<float> ne(1, 1.0e19);
+    sim::Array<gitr_precision> DensGridr(1, 0.0);
+    sim::Array<gitr_precision> DensGridz(1, 0.0);
+    sim::Array<gitr_precision> ni(1, 1.0e19);
+    sim::Array<gitr_precision> ne(1, 1.0e19);
     int nR_Temp = 1;
     int nZ_Temp = 1;
-    sim::Array<float> TempGridr(1, 0.0);
-    sim::Array<float> TempGridz(1, 0.0);
-    sim::Array<float> ti(1,20.0);
-    sim::Array<float> te(1,20.0);
-    float background_Z = 1.0;
-    float background_amu = 2.0;
+    sim::Array<gitr_precision> TempGridr(1, 0.0);
+    sim::Array<gitr_precision> TempGridz(1, 0.0);
+    sim::Array<gitr_precision> ti(1,20.0);
+    sim::Array<gitr_precision> te(1,20.0);
+    gitr_precision background_Z = 1.0;
+    gitr_precision background_amu = 2.0;
     int nR_Bfield = 1;
     int nZ_Bfield = 1;
-    sim::Array<float> BfieldGridR(1,0.0);
-    sim::Array<float> BfieldGridZ(1,0.0);
-    sim::Array<float> BfieldR(1,0.0);
-    sim::Array<float> BfieldZ(1,0.0);
-    sim::Array<float> BfieldT(1,0.0);
-    float T_background  = 20.0;
+    sim::Array<gitr_precision> BfieldGridR(1,0.0);
+    sim::Array<gitr_precision> BfieldGridZ(1,0.0);
+    sim::Array<gitr_precision> BfieldR(1,0.0);
+    sim::Array<gitr_precision> BfieldZ(1,0.0);
+    sim::Array<gitr_precision> BfieldT(1,0.0);
+    gitr_precision T_background  = 20.0;
     
     
     //Adjust
-    float dt = getVariable_cfg<float> (cfg,"timeStep.dt");
+    gitr_precision dt = getVariable_cfg<gitr_precision> (cfg,"timeStep.dt");
     int nT = getVariable_cfg<int> (cfg,"timeStep.nT");
     std::cout << "here 1 " << std::endl; 
     auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
@@ -401,8 +406,8 @@ auto gitr_start_clock = gitr_time::now();
     std::cout << "starting collisions " << std::endl; 
     typedef std::chrono::high_resolution_clock gitr_time;
     auto gitr_start_clock = gitr_time::now();
-    float ave_vx = 0.0;
-    float v_total = 0.0;
+    gitr_precision ave_vx = 0.0;
+    gitr_precision v_total = 0.0;
     std::ofstream myfile;
   myfile.open ("drag.txt");
     for(int i=0; i<nT; i++)
@@ -440,16 +445,16 @@ auto gitr_start_clock = gitr_time::now();
     }
   myfile.close();
     auto finish_clock0nc = gitr_time::now();
-    typedef std::chrono::duration<float> fsec0nc;
+    typedef std::chrono::duration<gitr_precision> fsec0nc;
     fsec0nc fs0nc = finish_clock0nc - gitr_start_clock;
     printf("Time taken for geometry import is %6.3f (secs) \n", fs0nc.count());
     std::cout << "finished ionization " << std::endl; 
     int n_bins = 40;
-    float v_max = 1.5e4;
-    float v_min = -1.5e4;
-    float dv = (v_max - v_min)/n_bins;
-    float mse = 0.0;
-    std::vector<float> velocity_counts(n_bins,0);
+    gitr_precision v_max = 1.5e4;
+    gitr_precision v_min = -1.5e4;
+    gitr_precision dv = (v_max - v_min)/n_bins;
+    gitr_precision mse = 0.0;
+    std::vector<gitr_precision> velocity_counts(n_bins,0);
     for(int i=0; i< nParticles; i++)
     {
       int bin_number = std::floor((particleArray->vx[i] - v_min)/(v_max - v_min)*n_bins);	  
@@ -459,17 +464,17 @@ auto gitr_start_clock = gitr_time::now();
       }
     }
     //Analytic constants
-    float B = 5.1831e-09*amu/T_background;
+    gitr_precision B = 5.1831e-09*amu/T_background;
     std::cout << "velocity gitr analytic" << std::endl;
     for(int i=0; i<n_bins; i++)
     {
-            float this_v = v_min + (i+0.5)*dv;
-            float analytic = std::sqrt(B/3.141592653589793)*std::exp(-B*this_v*this_v);
-            float gitr = 1.0/nParticles*velocity_counts[i]/dv;
+            gitr_precision this_v = v_min + (i+0.5)*dv;
+            gitr_precision analytic = std::sqrt(B/3.141592653589793)*std::exp(-B*this_v*this_v);
+            gitr_precision gitr = 1.0/nParticles*velocity_counts[i]/dv;
        std::cout <<this_v << " " << gitr << " " << analytic << std::endl;
        mse = mse + std::pow(gitr-analytic,2)/n_bins;
     }
-    float tolerance = 1.0e-12;
+    gitr_precision tolerance = 1.0e-12;
     printf("ave_vx %e \n", ave_vx);
     REQUIRE(ave_vx == Approx(flowVr[0]).margin(100.0));
   }

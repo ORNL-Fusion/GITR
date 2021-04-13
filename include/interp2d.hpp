@@ -13,33 +13,39 @@
 #include <vector>
 #include "math.h"
 //using namespace std;
+
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
 CUDA_CALLABLE_MEMBER
 
-float interp2d ( float x, float z,int nx, int nz,
-    float* gridx,float* gridz,float* data );
+gitr_precision interp2d ( gitr_precision x, gitr_precision z,int nx, int nz,
+    gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data );
 
 CUDA_CALLABLE_MEMBER
 
-float interp2dCombined ( float x, float y, float z,int nx, int nz,
-    float* gridx,float* gridz,float* data );
+gitr_precision interp2dCombined ( gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
+    gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data );
 CUDA_CALLABLE_MEMBER
 
-float interp3d ( float x, float y, float z,int nx,int ny, int nz,
-    float* gridx,float* gridy, float* gridz,float* data );
+gitr_precision interp3d ( gitr_precision x, gitr_precision y, gitr_precision z,int nx,int ny, int nz,
+    gitr_precision* gridx,gitr_precision* gridy, gitr_precision* gridz,gitr_precision* data );
 CUDA_CALLABLE_MEMBER
-void interp3dVector (float* field, float x, float y, float z,int nx,int ny, int nz,
-        float* gridx,float* gridy,float* gridz,float* datar, float* dataz, float* datat );
+void interp3dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx,int ny, int nz,
+        gitr_precision* gridx,gitr_precision* gridy,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat );
 CUDA_CALLABLE_MEMBER
-void interp2dVector (float* field, float x, float y, float z,int nx, int nz,
-float* gridx,float* gridz,float* datar, float* dataz, float* datat );
+void interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
+gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat );
 CUDA_CALLABLE_MEMBER
-void interpFieldAlignedVector (float* field, float x, float y, float z,int nx, int nz,
-        float* gridx,float* gridz,float* datar, float* dataz, float* datat,
-        int nxB, int nzB, float* gridxB,float* gridzB,float* datarB,float* datazB, float* datatB);
+void interpFieldAlignedVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
+        gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat,
+        int nxB, int nzB, gitr_precision* gridxB,gitr_precision* gridzB,gitr_precision* datarB,gitr_precision* datazB, gitr_precision* datatB);
 CUDA_CALLABLE_MEMBER
-float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data,int &lowInd);
+gitr_precision interp1dUnstructured(gitr_precision samplePoint,int nx, gitr_precision max_x, gitr_precision* data,int &lowInd);
 CUDA_CALLABLE_MEMBER
-float interp1dUnstructured2(float samplePoint,int nx, float *xdata, float* data);
+gitr_precision interp1dUnstructured2(gitr_precision samplePoint,int nx, gitr_precision *xdata, gitr_precision* data);
 CUDA_CALLABLE_MEMBER
-float interp2dUnstructured(float x,float y,int nx,int ny, float *xgrid,float *ygrid, float* data);
+gitr_precision interp2dUnstructured(gitr_precision x,gitr_precision y,int nx,int ny, gitr_precision *xgrid,gitr_precision *ygrid, gitr_precision* data);
 #endif

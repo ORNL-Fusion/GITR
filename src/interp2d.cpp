@@ -13,26 +13,32 @@
 
 #include <cmath>
 
+#if USE_DOUBLE
+typedef double gitr_precision;
+#else
+typedef float gitr_precision;
+#endif
+
 CUDA_CALLABLE_MEMBER
 
-float interp2d ( float x, float z,int nx, int nz,
-    float* gridx,float* gridz,float* data ) {
+gitr_precision interp2d ( gitr_precision x, gitr_precision z,int nx, int nz,
+    gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data ) {
     
-    float fxz = 0.0;
-    float fx_z1 = 0.0;
-    float fx_z2 = 0.0; 
+    gitr_precision fxz = 0.0;
+    gitr_precision fx_z1 = 0.0;
+    gitr_precision fx_z2 = 0.0; 
     if(nx*nz == 1)
     {
         fxz = data[0];
     }
     else{
-    float dim1 = x;
-    float d_dim1 = gridx[1] - gridx[0];
-    float dz = gridz[1] - gridz[0];
+    gitr_precision dim1 = x;
+    gitr_precision d_dim1 = gridx[1] - gridx[0];
+    gitr_precision dz = gridz[1] - gridz[0];
     int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
     int j = std::floor((z - gridz[0])/dz);
     
-    //float interp_value = data[i + j*nx];
+    //gitr_precision interp_value = data[i + j*nx];
     if (i < 0) i =0;
     if (j< 0 ) j=0;
     if (i >=nx-1 && j>=nz-1)
@@ -64,28 +70,28 @@ float interp2d ( float x, float z,int nx, int nz,
 
     return fxz;
 }
-float interp2dCombined ( float x, float y, float z,int nx, int nz,
-    float* gridx,float* gridz,float* data ) {
+gitr_precision interp2dCombined ( gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
+    gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data ) {
     
-    float fxz = 0.0;
-    float fx_z1 = 0.0;
-    float fx_z2 = 0.0; 
+    gitr_precision fxz = 0.0;
+    gitr_precision fx_z1 = 0.0;
+    gitr_precision fx_z2 = 0.0; 
     if(nx*nz == 1)
     {
         fxz = data[0];
     }
     else{
 #if USECYLSYMM > 0
-    float dim1 = std::sqrt(x*x + y*y);
+    gitr_precision dim1 = std::sqrt(x*x + y*y);
 #else
-    float dim1 = x;
+    gitr_precision dim1 = x;
 #endif    
-    float d_dim1 = gridx[1] - gridx[0];
-    float dz = gridz[1] - gridz[0];
+    gitr_precision d_dim1 = gridx[1] - gridx[0];
+    gitr_precision dz = gridz[1] - gridz[0];
     int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
     int j = std::floor((z - gridz[0])/dz);
     
-    //float interp_value = data[i + j*nx];
+    //gitr_precision interp_value = data[i + j*nx];
     if (i < 0) i=0;
     if (j < 0) j=0;
     if (i >=nx-1 && j>=nz-1)
@@ -118,16 +124,16 @@ float interp2dCombined ( float x, float y, float z,int nx, int nz,
 
 CUDA_CALLABLE_MEMBER
 
-float interp3d ( float x, float y, float z,int nx,int ny, int nz,
-    float* gridx,float* gridy, float* gridz,float* data ) {
+gitr_precision interp3d ( gitr_precision x, gitr_precision y, gitr_precision z,int nx,int ny, int nz,
+    gitr_precision* gridx,gitr_precision* gridy, gitr_precision* gridz,gitr_precision* data ) {
     //std::cout << "xyz " << x << " "<<y << " " << z<< std::endl;
     //std::cout << "nxyz " << nx << " "<<ny << " " << nz<< std::endl;
     
-    float fxyz = 0.0;
+    gitr_precision fxyz = 0.0;
 
-    float dx = gridx[1] - gridx[0];
-    float dy = gridy[1] - gridy[0];
-    float dz = gridz[1] - gridz[0];
+    gitr_precision dx = gridx[1] - gridx[0];
+    gitr_precision dy = gridy[1] - gridy[0];
+    gitr_precision dz = gridz[1] - gridz[0];
     
     int i = std::floor((x - gridx[0])/dx);//addition of 0.5 finds nearest gridpoint
     int j = std::floor((y - gridy[0])/dy);
@@ -146,8 +152,8 @@ float interp3d ( float x, float y, float z,int nx,int ny, int nz,
       //  << " " << j << " " << k << std::endl;
     //if(j <0 || j>ny-1) j=0;
     //if(k <0 || k>nz-1) k=0;
-    float fx_z0 = (data[i + j*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + k*nx*ny]*(x-gridx[i]))/dx;
-    float fx_z1 = (data[i + j*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
+    gitr_precision fx_z0 = (data[i + j*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + k*nx*ny]*(x-gridx[i]))/dx;
+    gitr_precision fx_z1 = (data[i + j*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + j*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
     //std::cout << "dataInd 1 2 3 4 " << i + j*nx + k*nx*ny << " "<<i+1 + j*nx + k*nx*ny << " " << i + j*nx + (k+1)*nx*ny<< " " << i +1 + j*nx + (k+1)*nx*ny
     //    << std::endl;
 
@@ -155,12 +161,12 @@ float interp3d ( float x, float y, float z,int nx,int ny, int nz,
     //    << std::endl;
     
     //std::cout << "fxz0 fxz1 " << fx_z0 << " "<<fx_z1 << std::endl;
-    float fxy_z0 = (data[i + (j+1)*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + (j+1)*nx + k*nx*ny]*(x-gridx[i]))/dx;
-    float fxy_z1 = (data[i + (j+1)*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + (j+1)*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
+    gitr_precision fxy_z0 = (data[i + (j+1)*nx + k*nx*ny]*(gridx[i+1]-x) + data[i +1 + (j+1)*nx + k*nx*ny]*(x-gridx[i]))/dx;
+    gitr_precision fxy_z1 = (data[i + (j+1)*nx + (k+1)*nx*ny]*(gridx[i+1]-x) + data[i +1 + (j+1)*nx + (k+1)*nx*ny]*(x-gridx[i]))/dx;
     //std::cout << "fxyz0 fxyz1 " << fxy_z0 << " "<<fxy_z1 << std::endl;
 
-    float fxz0 = (fx_z0*(gridz[k+1] - z) + fx_z1*(z-gridz[k]))/dz;
-    float fxz1 = (fxy_z0*(gridz[k+1] - z) + fxy_z1*(z-gridz[k]))/dz;
+    gitr_precision fxz0 = (fx_z0*(gridz[k+1] - z) + fx_z1*(z-gridz[k]))/dz;
+    gitr_precision fxz1 = (fxy_z0*(gridz[k+1] - z) + fxy_z1*(z-gridz[k]))/dz;
     //std::cout << "fxz0 fxz1 " << fxz0 << " "<<fxz1 << std::endl;
 
     fxyz = (fxz0*(gridy[j+1] - y) + fxz1*(y-gridy[j]))/dy;
@@ -171,22 +177,22 @@ float interp3d ( float x, float y, float z,int nx,int ny, int nz,
 }
 
 CUDA_CALLABLE_MEMBER
-void interp3dVector (float* field, float x, float y, float z,int nx,int ny, int nz,
-        float* gridx,float* gridy,float* gridz,float* datar, float* dataz, float* datat ) {
+void interp3dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx,int ny, int nz,
+        gitr_precision* gridx,gitr_precision* gridy,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat ) {
 
     field[0] =  interp3d (x,y,z,nx,ny,nz,gridx, gridy,gridz,datar );
     field[1] =  interp3d (x,y,z,nx,ny,nz,gridx, gridy,gridz,datat );
     field[2] =  interp3d (x,y,z,nx,ny,nz,gridx, gridy,gridz,dataz );
 }
 CUDA_CALLABLE_MEMBER
-void interp2dVector (float* field, float x, float y, float z,int nx, int nz,
-float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {
+void interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
+gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat ) {
 
-   float Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar);
-   float At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat);
+   gitr_precision Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar);
+   gitr_precision At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat);
    field[2] = interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz);
 #if USECYLSYMM > 0
-            float theta = std::atan2(y,x);   
+            gitr_precision theta = std::atan2(y,x);   
             field[0] = std::cos(theta)*Ar - std::sin(theta)*At;
             field[1] = std::sin(theta)*Ar + std::cos(theta)*At;
 #else
@@ -196,14 +202,14 @@ float* gridx,float* gridz,float* datar, float* dataz, float* datat ) {
 
 }
 CUDA_CALLABLE_MEMBER
-void interpFieldAlignedVector (float* field, float x, float y, float z,int nx, int nz,
-float* gridx,float* gridz,float* datar, float* dataz, float* datat,
-int nxB, int nzB, float* gridxB,float* gridzB,float* datarB,float* datazB, float* datatB) {
+void interpFieldAlignedVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
+gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat,
+int nxB, int nzB, gitr_precision* gridxB,gitr_precision* gridzB,gitr_precision* datarB,gitr_precision* datazB, gitr_precision* datatB) {
 
-   float Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar);
-   float B[3] = {0.0};
-   float B_unit[3] = {0.0};
-   float Bmag = 0.0;
+   gitr_precision Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar);
+   gitr_precision B[3] = {0.0};
+   gitr_precision B_unit[3] = {0.0};
+   gitr_precision Bmag = 0.0;
    interp2dVector (&B[0],x,y,z,nxB,nzB,
                    gridxB,gridzB,datarB,datazB,datatB);
    Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
@@ -218,11 +224,11 @@ int nxB, int nzB, float* gridxB,float* gridzB,float* datarB,float* datazB, float
 
 }
 CUDA_CALLABLE_MEMBER
-float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data,int &lowInd)
+gitr_precision interp1dUnstructured(gitr_precision samplePoint,int nx, gitr_precision max_x, gitr_precision* data,int &lowInd)
 {
     int done = 0;
     int low_index = 0;
-    float interpolated_value = 0.0;
+    gitr_precision interpolated_value = 0.0;
 
     for(int i=0;i<nx;i++)
     {
@@ -268,11 +274,11 @@ float interp1dUnstructured(float samplePoint,int nx, float max_x, float* data,in
     return interpolated_value;
 }
 CUDA_CALLABLE_MEMBER
-float interp1dUnstructured2(float samplePoint,int nx, float *xdata, float* data)
+gitr_precision interp1dUnstructured2(gitr_precision samplePoint,int nx, gitr_precision *xdata, gitr_precision* data)
 {
     int done = 0;
     int low_index = 0;
-    float interpolated_value = 0.0;
+    gitr_precision interpolated_value = 0.0;
 
     for(int i=0;i<nx;i++)
     {
@@ -292,22 +298,22 @@ float interp1dUnstructured2(float samplePoint,int nx, float *xdata, float* data)
     return interpolated_value;
 }
 CUDA_CALLABLE_MEMBER
-float interp2dUnstructured(float x,float y,int nx,int ny, float *xgrid,float *ygrid, float* data)
+gitr_precision interp2dUnstructured(gitr_precision x,gitr_precision y,int nx,int ny, gitr_precision *xgrid,gitr_precision *ygrid, gitr_precision* data)
 {
     int doneX = 0;
     int doneY = 0;
     int xInd = 0;
-    float xDiffUp = 0.0;
-    float xDiffDown = 0.0;
+    gitr_precision xDiffUp = 0.0;
+    gitr_precision xDiffDown = 0.0;
     int yInd = 0;
-    float dx;
-    float yLowValue; 
-    float yHighValue;
-    float yDiffUp;
-    float yDiffDown; 
-    float dy;
-    float fxy=0.0;
-    float factor = 1.0;
+    gitr_precision dx;
+    gitr_precision yLowValue; 
+    gitr_precision yHighValue;
+    gitr_precision yDiffUp;
+    gitr_precision yDiffDown; 
+    gitr_precision dy;
+    gitr_precision fxy=0.0;
+    gitr_precision factor = 1.0;
 
     if(x >= xgrid[0] && x<= xgrid[nx-1])
     {
