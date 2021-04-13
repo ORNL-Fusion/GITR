@@ -4,7 +4,7 @@ include( ExternalProject )
 
 set( dependencies "" )
 
-set( prefix "${CMAKE_CURRENT_SOURCE_DIR}/external" )
+set( prefix "${CMAKE_BINARY_DIR}/external" )
 
 # Thrust
 
@@ -34,6 +34,11 @@ if( GITR_USE_MPI )
     add_library( mpi INTERFACE )
     target_include_directories( mpi INTERFACE ${MPI_CXX_INCLUDE_DIRS} ${MPI_C_INCLUDE_DIRS})
     target_link_libraries( mpi INTERFACE ${MPI_CXX_LIBRARIES} ${MPI_C_LIBRARIES} )
+
+    set( MPI_CXX_INCLUDE_DIRS ${MPI_CXX_INCLUDE_DIRS} CACHE PATH "" FORCE )
+    set( MPI_C_INCLUDE_DIRS ${MPI_C_INCLUDE_DIRS} CACHE PATH "" FORCE )
+    set( MPI_CXX_LIBRARIES ${MPI_CXX_LIBRARIES} CACHE FILEPATH "" FORCE )
+    set( MPI_C_LIBRARIES ${MPI_C_LIBRARIES} CACHE FILEPATH "" FORCE )
 
   else()
 
