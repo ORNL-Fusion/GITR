@@ -16,7 +16,7 @@ endif()
 
 target_include_directories( GITR PUBLIC include )
 
-# CPU targets
+# CPU-only targets
 set( cpu_targets
      efield_interp
      particle
@@ -24,11 +24,13 @@ set( cpu_targets
      flags
      setup)
 
+# conditionally compile as GPU targets
 set( gpu_targets
      surface_model
      interp2d
      interpRateCoeff
      ionize
+     boris
      spectroscopy )
 
 if( NOT GITR_USE_CUDA )

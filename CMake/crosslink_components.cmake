@@ -20,6 +20,8 @@ target_link_libraries( GITR
                        spectroscopy
                        libconfig
                        utils
+                       boris
+                       surface_model
                        flags
                        mpi )
 
