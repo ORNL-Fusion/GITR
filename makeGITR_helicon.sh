@@ -1,23 +1,24 @@
 #!/bin/bash
 source ../environment_files/env.fusiont5.sh
 
-cmake -DTHRUST_INCLUDE_DIRS=$HOME/Code/thrust \
+# Link it to the dependencies in an out-of-source build of GITR_fork
+cmake -DTHRUST_INCLUDE_DIRS=/home/dg6/spack/opt/spack/linux-ubuntu18.04-skylake_avx512/gcc-7.4.0/cuda-10.2.89-hzby2dvk7t7hh4tbqtx66uexreoc2ih3/include \
     -DCMAKE_C_COMPILER=gcc \
     -DCMAKE_CXX_COMPILER=g++ \
-    -DTHRUST_INCLUDE_DIR=$HOME/Code/thrust \
+    -DTHRUST_INCLUDE_DIR=/home/dg6/spack/opt/spack/linux-ubuntu18.04-skylake_avx512/gcc-7.4.0/cuda-10.2.89-hzby2dvk7t7hh4tbqtx66uexreoc2ih3/include \
     -DNETCDF_DIR=$NETCDF \
     -DNETCDF_CXX_ROOT=$NETCDFCXX4 \
-    -DNETCDF_LIBRARIES=$NETCDFLIB \
-    -DNETCDF_INCLUDE_DIRS=$NETCDFINCLUDE \
-    -DNETCDF_CXX_INCLUDE_DIR=$NETCDFCXX4INCLUDE \
-    -DNETCDF_CXX_LIBRARY=$NETCDFLIBCXX_CPP \
-    -DNETCDF_INCLUDE_DIR=$NETCDFINCLUDE \
-    -DNETCDF_LIBRARY=$NETCDFLIB \
-    -DNETCDF_CXX_LIBRARY=$NETCDFLIB_CPP \
-    -DLIBCONFIGPP_LIBRARY=$LIBCONFIGLIB \
-    -DLIBCONFIGPP_INCLUDE_DIR=$LIBCONFIG_INCLUDE_DIR \
-    -DMPI_C_LIBRARIES=/home/tqd/Code/openmpiBuild/lib/libmpi.so \
-    -DMPI_lib_LIBRARY=/home/tqd/Code/openmpiBuild/lib/libmpi.so \
+    -DNETCDF_LIBRARIES=/home/5n4/build/external/netcdf-c-install/lib/libnetcdf.so \
+    -DNETCDF_INCLUDE_DIRS=/home/5n4/build/external/netcdf-c/include \
+    -DNETCDF_CXX_INCLUDE_DIR=/home/5n4/build/external/netcdf-cxx4-install/include \
+    -DNETCDF_CXX_LIBRARY=/home/5n4/build/external/netcdf-cxx4-install/lib/libnetcdf-cxx4.so\
+    -DNETCDF_INCLUDE_DIR=/home/5n4/build/external/netcdf-c-install/include \
+    -DNETCDF_LIBRARY=/home/5n4/build/external/netcdf-c-install/lib/libnetcdf.so \
+    -DNETCDF_CXX_LIBRARY=/home/5n4/build/external/netcdf-cxx4-install/lib/libnetcdf-cxx4.so \
+    -DLIBCONFIGPP_LIBRARY=/home/5n4/build/external/libconfig_install/lib/libconfig++.so \
+    -DLIBCONFIGPP_INCLUDE_DIR=/home/5n4/build/external/libconfig_install/include \
+    -DMPI_C_LIBRARIES=/home/dg6/spack/opt/spack/linux-ubuntu18.04-skylake_avx512/gcc-7.4.0/openmpi-3.1.5-s4r4ogvq4koshpy62bjvslz7bu33upxu/lib/libmpi.so \
+    -DMPI_lib_LIBRARY=/home/dg6/spack/opt/spack/linux-ubuntu18.04-skylake_avx512/gcc-7.4.0/openmpi-3.1.5-s4r4ogvq4koshpy62bjvslz7bu33upxu/lib/libmpi.so \
     -DUSE_CUDA=1 \
     -DUSE_MPI=0 \
     -DUSEIONIZATION=1 \
