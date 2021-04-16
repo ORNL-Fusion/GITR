@@ -31,7 +31,7 @@ __device__ double atomicAdd1(double* address, double val)
 //}
 #endif
 
-    spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
+spec_bin::spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
            double * _bins, gitr_precision _dt) : 
         flags(_flags), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
         dt(_dt) {}
@@ -138,5 +138,4 @@ void spec_bin::operator()(std::size_t indx) const {
 #endif
               }
         }
-    }
     }

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef _IONIZE_
-#define _IONIZE_
 
 #ifdef __CUDACC__
 #define CUDA_CALLABLE_MEMBER_DEVICE __device__
@@ -30,7 +28,7 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 
-#if __CUDA_ARCH__
+#if USE_CUDA
 CUDA_CALLABLE_MEMBER_DEVICE
 float get_rand(curandState *state,int indx);
 
@@ -39,13 +37,17 @@ float get_rand(curandState *state,int indx);
 CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
 float get_rand(std::mt19937 *state,int indx);
 
-#if __CUDA_ARCH__
-CUDA_CALLABLE_MEMBER_DEVICE
-double get_rand_double(curandState *state,int indx);
 #endif
 
-CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
+#if USE_CUDA
+CUDA_CALLABLE_MEMBER_DEVICE
+double get_rand_double(curandState *state,int indx);
+
+#else
+
 double get_rand_double(std::mt19937 *state,int indx);
+
+#endif
 
 template <typename T=std::mt19937> 
 struct ionize {
@@ -92,7 +94,7 @@ struct ionize {
          int _nDensitiesIonize, gitr_precision *_gridTemperature_Ionization,
          gitr_precision *_gridDensity_Ionization, gitr_precision *_rateCoeff_Ionization, gitr_precision *  _random_uniform_number);
 
-  CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
+  CUDA_CALLABLE_MEMBER_DEVICE
   void operator()(std::size_t indx);
 };
 
@@ -100,4 +102,3 @@ struct ionize {
 //__global__ void ionize_kernel(ionize<curandState> i0, std::size_t indx) {
 //   i0(indx);
 //}
-#endif

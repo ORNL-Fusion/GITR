@@ -992,8 +992,10 @@ void move_boris::operator()(std::size_t indx)
        new_advance = false;
      }
 
-     gitr_precision max_term = std::max(std::sqrt(error_tolerance/(2*velocity_error)),0.3);
-     gitr_precision min_term = std::min(max_term,2.0);
+     gitr_precision max_term =
+     std::max(static_cast<double>(std::sqrt(error_tolerance/(2*velocity_error))), 0.3);
+
+     gitr_precision min_term = std::min(static_cast<double>(max_term), 2.0);
      new_dt = 0.9*dt*min_term;
      if (new_dt< span)
      {

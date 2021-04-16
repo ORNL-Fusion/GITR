@@ -3,6 +3,7 @@
 
 #if USE_CUDA
 
+/* I think these "get_rand" functions are never actually called */
 CUDA_CALLABLE_MEMBER_DEVICE
 float get_rand(curandState *state,int indx)
 {
@@ -37,7 +38,6 @@ double get_rand_double(curandState *state,int indx)
 }
 #endif
 
-CUDA_CALLABLE_MEMBER_HOST CUDA_CALLABLE_MEMBER_DEVICE
 double get_rand_double(std::mt19937 *state,int indx)
 {
         std::uniform_real_distribution<double> dist(0.0, 1.0);
