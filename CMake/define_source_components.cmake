@@ -31,6 +31,7 @@ set( gpu_targets
      interpRateCoeff
      ionize
      boris
+     hashGeom
      spectroscopy )
 
 if( NOT GITR_USE_CUDA )
@@ -45,6 +46,10 @@ foreach( component IN LISTS cpu_targets )
 
   target_include_directories( ${component} PUBLIC include )
 
+  if( debug )
+    target_compile_options( ${component} PRIVATE -g )
+  endif()
+
 endforeach()
 
 # Compile gpu_targets
@@ -57,6 +62,10 @@ if( GITR_USE_CUDA )
     set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
     target_include_directories( ${component} PUBLIC include )
     target_compile_options( ${component} PRIVATE --expt-relaxed-constexpr )
+
+    if( debug )
+      target_compile_options( ${component} PRIVATE -G )
+    endif()
 
   endforeach()
 

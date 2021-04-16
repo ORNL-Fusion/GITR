@@ -23,6 +23,7 @@ target_link_libraries( GITR
                        boris
                        surface_model
                        flags
+                       hashGeom
                        mpi )
 
 if( GITR_USE_CUDA )

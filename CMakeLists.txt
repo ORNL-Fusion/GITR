@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.13)
 
 project( gitr CXX )
 
+set( debug 0 )
+
 set( CMAKE_CXX_STANDARD 17 )
 
 # point cmake to the find_package modules 

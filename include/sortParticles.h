@@ -10,14 +10,12 @@
 #endif
 
 #include "Particles.h"
-#ifdef __CUDACC__
 #include <thrust/execution_policy.h>
 #include <thrust/sequence.h>
 #include <thrust/transform.h>
 #include <thrust/functional.h>
 #include <thrust/sort.h>
 #include <thrust/binary_search.h>
-#endif
 
 #ifdef __GNUC__ 
 #include <stdlib.h>

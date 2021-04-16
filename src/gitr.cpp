@@ -116,7 +116,7 @@ int main(int argc, char **argv, char **envp) {
   int world_rank = 0;
   int world_size = 1;
 #endif
- cudaSetDevice(1); 
+ //cudaSetDevice(1); 
   // Prepare config files for import
   libconfig::Config cfg, cfg_geom;
   cfg.setAutoConvert(true);

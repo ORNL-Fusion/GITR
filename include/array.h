@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 #pragma once
 
-#if defined(CUDA)
+#if USE_CUDA > 0
 #include "cuda_runtime.h"
 #endif
 
@@ -50,7 +50,7 @@ namespace sim {
 
     // @todo constexpr in c++14
     T *alloc_data() {
-#if defined(CUDA)
+#if USE_CUDA > 0
       T* data;
       auto err = cudaMallocManaged(&data, sizeof(T)*capacity_);
       if(err != cudaSuccess){
@@ -64,7 +64,7 @@ namespace sim {
 
     // @todo constexpr in c++14
     void free_data() {
-#if defined(CUDA)
+#if USE_CUDA > 0
       cudaFree((void*)data_);
 #else
       delete[] data_;

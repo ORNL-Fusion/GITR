@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 #pragma once
 
-#if defined(CUDA)
+#if USE_CUDA > 0
 #include "cuda_runtime.h"
 #endif
 
@@ -50,7 +50,7 @@ public:
   /*! new operator
    */
   static void *operator new(std::size_t size) {
-#if defined(CUDA)
+#if USE_CUDA > 0
     void* data;
     auto err = cudaMallocManaged(&data, size);
     if(err != cudaSuccess) {
@@ -71,7 +71,7 @@ public:
   /*! delete operator
    */
   static void operator delete(void *block) {
-#if defined(CUDA)
+#if USE_CUDA > 0
     cudaFree((void*)block);
 #else
     ::operator delete(block);
