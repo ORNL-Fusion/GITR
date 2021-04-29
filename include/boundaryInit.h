@@ -101,6 +101,9 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         {
           theta = std::abs(theta - (3.14159265359));
         }
+	b.unit_vec0 = b.inDir*b.a/b.plane_norm; //
+        b.unit_vec1 = b.inDir*b.b/b.plane_norm; //
+        b.unit_vec2 = b.inDir*b.c/b.plane_norm;
 #else
         gitr_precision br = B[0];
         gitr_precision bt = B[1];
@@ -115,6 +118,12 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         b.angle = theta*180.0/3.14159265359;
         b.debyeLength = std::sqrt(8.854187e-12*b.te/(b.ne*std::pow(background_Z,2)*1.60217662e-19));
 	//std::cout << "debyeLength " << b.debyeLength << std::endl;
+	gitr_precision angle = b.angle;
+	gitr_precision sheath_fac = 3.0;
+	gitr_precision norm = std::acos(std::pow(std::exp(1),-sheath_fac));
+	gitr_precision fd = 1.0+std::log(std::cos(angle/90.0*norm))/sheath_fac;
+	if(fd < 0.0) fd = 0.0;
+	b.fd = fd;
 	if(b.ne == 0.0) b.debyeLength = 1e12f;
         b.larmorRadius = 1.44e-4*std::sqrt(background_amu*b.ti/2)/(background_Z*norm_B);
         b.flux = 0.25*b.density*std::sqrt(8.0*b.ti*1.602e-19/(3.1415*background_amu));

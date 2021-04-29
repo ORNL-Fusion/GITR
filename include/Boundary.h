@@ -82,6 +82,9 @@ class Boundary
     gitr_precision startingParticles;
     gitr_precision impacts;
     gitr_precision redeposit;
+    gitr_precision unit_vec0;
+    gitr_precision unit_vec1;
+    gitr_precision unit_vec2;
 
     CUDA_CALLABLE_MEMBER
     void getSurfaceParallel(gitr_precision A[],gitr_precision y,gitr_precision x)
@@ -100,7 +103,7 @@ class Boundary
 #else
 #if USECYLSYMM > 0
     gitr_precision theta = std::atan2(y, x);
-    gitr_precision B[3] = {0.0f};
+    gitr_precision B[3] = {0.0};
     B[0] = std::cos(theta) * A[0] - std::sin(theta) * A[1];
     B[1] = std::sin(theta) * A[0] + std::cos(theta) * A[1];
     A[0] = B[0];
@@ -122,7 +125,7 @@ class Boundary
     } else {
       perpSlope = -std::copysign(1.0, slope_dzdx) / std::abs(slope_dzdx);
     }
-    gitr_precision Br = 1.0f / std::sqrt(perpSlope * perpSlope + 1.0);
+    gitr_precision Br = 1.0 / std::sqrt(perpSlope * perpSlope + 1.0);
     gitr_precision Bt = 0.0;
     B[2] = std::copysign(1.0,perpSlope) * std::sqrt(1 - Br * Br);
 #if USECYLSYMM > 0
@@ -142,10 +145,10 @@ class Boundary
     CUDA_CALLABLE_MEMBER
         void transformToSurface(gitr_precision C[],gitr_precision y, gitr_precision x)
         {
-            gitr_precision X[3] = {0.0f};
-            gitr_precision Y[3] = {0.0f};
-            gitr_precision Z[3] = {0.0f};
-            gitr_precision tmp[3] = {0.0f};
+            gitr_precision X[3] = {0.0};
+            gitr_precision Y[3] = {0.0};
+            gitr_precision Z[3] = {0.0};
+            gitr_precision tmp[3] = {0.0};
             getSurfaceParallel(X,y,x);
             getSurfaceNormal(Z,y,x);
             Y[0] = Z[1]*X[2] - Z[2]*X[1]; 

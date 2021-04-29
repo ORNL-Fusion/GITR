@@ -44,7 +44,7 @@ void vectorAssign(gitr_precision a, gitr_precision b,gitr_precision c, gitr_prec
 CUDA_CALLABLE_MEMBER
 gitr_precision vectorNorm(gitr_precision A[])
 {
-    gitr_precision norm = 0.0f;
+    gitr_precision norm = 0.0;
     norm = std::sqrt(A[0]*A[0] + A[1]*A[1] + A[2]*A[2]);
 
     return norm;
@@ -53,7 +53,7 @@ gitr_precision vectorNorm(gitr_precision A[])
 CUDA_CALLABLE_MEMBER
 void vectorNormalize(gitr_precision A[],gitr_precision B[])
 {
-    gitr_precision norm = 0.0f;
+    gitr_precision norm = 0.0;
     norm = std::sqrt(A[0]*A[0] + A[1]*A[1] + A[2]*A[2]);
     B[0] = A[0]/norm;
     B[1] = A[1]/norm;
@@ -71,7 +71,7 @@ gitr_precision vectorDotProduct(gitr_precision A[], gitr_precision B[])
 CUDA_CALLABLE_MEMBER
 void vectorCrossProduct(gitr_precision A[], gitr_precision B[], gitr_precision C[])
 {
-    gitr_precision tmp[3] = {0.0f,0.0f,0.0f};
+    gitr_precision tmp[3] = {0.0,0.0,0.0};
     tmp[0] = A[1]*B[2] - A[2]*B[1];
     tmp[1] = A[2]*B[0] - A[0]*B[2];
     tmp[2] = A[0]*B[1] - A[1]*B[0];
@@ -87,13 +87,13 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
          int&  closestBoundaryIndex) {
 #if USE3DTETGEOM > 0
-    gitr_precision Emag = 0.0f;
-    gitr_precision Er = 0.0f;
-    gitr_precision Et = 0.0f;
+    gitr_precision Emag = 0.0;
+    gitr_precision Er = 0.0;
+    gitr_precision Et = 0.0;
       gitr_precision p0[3] = {x0,y,z};
-    gitr_precision angle = 0.0f;
-	gitr_precision fd = 0.0f;
-	gitr_precision pot = 0.0f;
+    gitr_precision angle = 0.0;
+	gitr_precision fd = 0.0;
+	gitr_precision pot = 0.0;
       gitr_precision a = 0.0;
       gitr_precision b = 0.0;
       gitr_precision c = 0.0;
@@ -121,53 +121,53 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
       gitr_precision p0AB[3] = {0.0,0.0,0.0};
       gitr_precision p0BC[3] = {0.0,0.0,0.0};
       gitr_precision p0CA[3] = {0.0,0.0,0.0};
-      gitr_precision p0Anorm = 0.0f;
-      gitr_precision p0Bnorm = 0.0f;
-      gitr_precision p0Cnorm = 0.0f;
+      gitr_precision p0Anorm = 0.0;
+      gitr_precision p0Bnorm = 0.0;
+      gitr_precision p0Cnorm = 0.0;
       gitr_precision normalVector[3] = {0.0,0.0,0.0};
       gitr_precision crossABAp[3] = {0.0,0.0,0.0};
       gitr_precision crossBCBp[3] = {0.0,0.0,0.0};
       gitr_precision crossCACp[3] = {0.0,0.0,0.0};
-      gitr_precision directionUnitVector[3] = {0.0f,0.0f,0.0f};
-      gitr_precision dot0 = 0.0f;
-      gitr_precision dot1 = 0.0f;
-      gitr_precision dot2 = 0.0f;
+      gitr_precision directionUnitVector[3] = {0.0,0.0,0.0};
+      gitr_precision dot0 = 0.0;
+      gitr_precision dot1 = 0.0;
+      gitr_precision dot2 = 0.0;
 
-      gitr_precision normAB = 0.0f;
-      gitr_precision normBC = 0.0f;
-      gitr_precision normCA = 0.0f;
-      gitr_precision ABhat[3] = {0.0f,0.0f,0.0f};
-      gitr_precision BChat[3] = {0.0f,0.0f,0.0f};
-      gitr_precision CAhat[3] = {0.0f,0.0f,0.0f};
-      gitr_precision tAB = 0.0f;
-      gitr_precision tBC = 0.0f;
-      gitr_precision tCA = 0.0f;
-      gitr_precision projP0AB[3] = {0.0f,0.0f,0.0f};
-      gitr_precision projP0BC[3] = {0.0f,0.0f,0.0f};
-      gitr_precision projP0CA[3] = {0.0f,0.0f,0.0f};
-      gitr_precision p0ABdist = 0.0f;
-      gitr_precision p0BCdist = 0.0f;
-      gitr_precision p0CAdist = 0.0f;
-      gitr_precision perpDist = 0.0f;
+      gitr_precision normAB = 0.0;
+      gitr_precision normBC = 0.0;
+      gitr_precision normCA = 0.0;
+      gitr_precision ABhat[3] = {0.0,0.0,0.0};
+      gitr_precision BChat[3] = {0.0,0.0,0.0};
+      gitr_precision CAhat[3] = {0.0,0.0,0.0};
+      gitr_precision tAB = 0.0;
+      gitr_precision tBC = 0.0;
+      gitr_precision tCA = 0.0;
+      gitr_precision projP0AB[3] = {0.0,0.0,0.0};
+      gitr_precision projP0BC[3] = {0.0,0.0,0.0};
+      gitr_precision projP0CA[3] = {0.0,0.0,0.0};
+      gitr_precision p0ABdist = 0.0;
+      gitr_precision p0BCdist = 0.0;
+      gitr_precision p0CAdist = 0.0;
+      gitr_precision perpDist = 0.0;
       gitr_precision signDot0 = 0.0;
       gitr_precision signDot1 = 0.0;
       gitr_precision signDot2 = 0.0;
       gitr_precision totalSigns = 0.0;
-      gitr_precision minDistance = 1e12f;
+      gitr_precision minDistance = 1.0e12;
       int nBoundariesCrossed = 0;
       int boundariesCrossed[6] = {0,0,0,0,0,0};
         int minIndex=0;
-      gitr_precision distances[7] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
-      gitr_precision normals[21] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,
-                           0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,
-                           0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+      gitr_precision distances[7] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+      gitr_precision normals[21] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,
+                           0.0,0.0,0.0,0.0,0.0,0.0,0.0,
+                           0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 #if GEOM_HASH_SHEATH > 0
   gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
   gitr_precision dy = closeGeomGridy[1] - closeGeomGridy[0];
   gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
-  int rInd = std::floor((x0 - closeGeomGridr[0])/dr + 0.5f);
-  int yInd = std::floor((y - closeGeomGridy[0])/dy + 0.5f);
-  int zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5f);
+  int rInd = std::floor((x0 - closeGeomGridr[0])/dr + 0.5);
+  int yInd = std::floor((y - closeGeomGridy[0])/dy + 0.5);
+  int zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
   int i;
   if(rInd < 0 || rInd >= nR_closeGeom)
     rInd =0;
@@ -286,9 +286,9 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
          tAB = vectorDotProduct(p0A,ABhat);
          tBC = vectorDotProduct(p0B,BChat);
          tCA = vectorDotProduct(p0C,CAhat);
-         tAB = -1*tAB;
-         tBC = -1*tBC;
-         tCA = -1*tCA;
+         tAB = -1.0*tAB;
+         tBC = -1.0*tBC;
+         tCA = -1.0*tCA;
          /*
          std::cout << "A " << A[0] << " " << A[1] << " " << A[2] << std::endl;   
          std::cout << "B " << B[0] << " " << B[1] << " " << B[2] << std::endl;   
@@ -314,7 +314,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
          }
          else
          {
-             p0ABdist = 1e12f;
+             p0ABdist = 1.0e12;
              distances[4] = p0ABdist;   
          } 
          
@@ -333,7 +333,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
          }
          else
          {
-             p0BCdist = 1e12f;
+             p0BCdist = 1.0e12;
              distances[5] = p0BCdist;   
 
          } 
@@ -353,7 +353,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
          }
          else
          {
-             p0CAdist = 1e12f;
+             p0CAdist = 1.0e12;
              distances[6] = p0CAdist;   
          } 
 
@@ -373,14 +373,14 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
                 //    " " << directionUnitVector[2] << std::endl;
                 //std::cout << "perp distance " << std::endl;
              distances[0] = perpDist;   
-             normals[0] = normalVector[0];
-             normals[1] = normalVector[1];
-             normals[2] = normalVector[2];
+             normals[0] = boundaryVector[i].unit_vec0; //normalVector[0];
+             normals[1] = boundaryVector[i].unit_vec1; //normalVector[1];
+             normals[2] = boundaryVector[i].unit_vec2; //normalVector[2];
              //}
          }
          else
          {
-             perpDist = 1e12f;
+             perpDist = 1.0e12;
              distances[0] = perpDist;   
              /*
              if (p0Anorm < p0Bnorm)
@@ -469,25 +469,25 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
       //std::cout << "min dist " << minDistance << std::endl;
 #else //2dGeom     
                 
-    gitr_precision Emag = 0.0f;
-	gitr_precision fd = 0.0f;
-	gitr_precision pot = 0.0f;
+    gitr_precision Emag = 0.0;
+	gitr_precision fd = 0.0;
+	gitr_precision pot = 0.0;
     int minIndex = 0;
-    gitr_precision minDistance = 1e12f;
+    gitr_precision minDistance = 1e12;
     int direction_type;
-    gitr_precision tol = 1e12f;
+    gitr_precision tol = 1e12;
     gitr_precision point1_dist;
     gitr_precision point2_dist;
     gitr_precision perp_dist;
-    gitr_precision directionUnitVector[3] = {0.0f,0.0f,0.0f};
+    gitr_precision directionUnitVector[3] = {0.0,0.0,0.0};
     gitr_precision vectorMagnitude;
-    gitr_precision max = 0.0f;
-    gitr_precision min = 0.0f;
-    gitr_precision angle = 0.0f;
-    gitr_precision Er = 0.0f;
-    gitr_precision Et = 0.0f;
-    gitr_precision Bfabsfperp = 0.0f;
-    gitr_precision distanceToParticle = 0.0f;
+    gitr_precision max = 0.0;
+    gitr_precision min = 0.0;
+    gitr_precision angle = 0.0;
+    gitr_precision Er = 0.0;
+    gitr_precision Et = 0.0;
+    gitr_precision Bfabsfperp = 0.0;
+    gitr_precision distanceToParticle = 0.0;
     int pointLine=0;
 //#if EFIELD_INTERP ==1
 #if USECYLSYMM > 0
@@ -499,8 +499,8 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
 #if GEOM_HASH_SHEATH > 0
   gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
   gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
-  int rInd = std::floor((x - closeGeomGridr[0])/dr + 0.5f);
-  int zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5f);
+  int rInd = std::floor((x - closeGeomGridr[0])/dr + 0.5);
+  int zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
   if(rInd >= nR_closeGeom) rInd = nR_closeGeom -1;
   if(zInd >= nZ_closeGeom) zInd = nZ_closeGeom -1;
   if(rInd < 0) rInd = 0;
@@ -527,10 +527,10 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
             point2_dist = std::sqrt((x - boundaryVector[j].x2)*(x - boundaryVector[j].x2) + 
                                         (z - boundaryVector[j].z2)*(z - boundaryVector[j].z2));
             perp_dist = (boundaryVector[j].slope_dzdx*x - z + boundaryVector[j].intercept_z)/
-                std::sqrt(boundaryVector[j].slope_dzdx*boundaryVector[j].slope_dzdx + 1.0f);   
+                std::sqrt(boundaryVector[j].slope_dzdx*boundaryVector[j].slope_dzdx + 1.0);   
 	
 	
-          if (std::abs(boundaryVector[j].slope_dzdx) >= tol*0.75f)
+          if (std::abs(boundaryVector[j].slope_dzdx) >= tol*0.75)
 	  {
 	   perp_dist = x0 - boundaryVector[j].x1;
 	  }
@@ -631,22 +631,22 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     {
         if (boundaryVector[minIndex].slope_dzdx == 0)
         {
-            directionUnitVector[0] = 0.0f;
-            directionUnitVector[1] = 0.0f;
-            directionUnitVector[2] = 1.0f * std::copysign(1.0,boundaryVector[minIndex].z1 - z);
+            directionUnitVector[0] = 0.0;
+            directionUnitVector[1] = 0.0;
+            directionUnitVector[2] = 1.0 * std::copysign(1.0,boundaryVector[minIndex].z1 - z);
         }
-        else if (std::abs(boundaryVector[minIndex].slope_dzdx)>= 0.75f*tol)
+        else if (std::abs(boundaryVector[minIndex].slope_dzdx)>= 0.75*tol)
         {
             
             directionUnitVector[0] = boundaryVector[minIndex].x1 - x;
-            directionUnitVector[1] = 0.0f;
-            directionUnitVector[2] = 0.0f;
+            directionUnitVector[1] = 0.0;
+            directionUnitVector[2] = 0.0;
         }
         else
         {
-            directionUnitVector[0] = 1.0f * std::copysign(1.0,(z - boundaryVector[minIndex].intercept_z)/(boundaryVector[minIndex].slope_dzdx) - x0);
-            directionUnitVector[1] = 0.0f;
-            directionUnitVector[2] = 1.0f * std::copysign(1.0,perp_dist)/(boundaryVector[minIndex].slope_dzdx);
+            directionUnitVector[0] = 1.0 * std::copysign(1.0,(z - boundaryVector[minIndex].intercept_z)/(boundaryVector[minIndex].slope_dzdx) - x0);
+            directionUnitVector[1] = 0.0;
+            directionUnitVector[2] = 1.0 * std::copysign(1.0,perp_dist)/(boundaryVector[minIndex].slope_dzdx);
         //std::cout << "sign boundarVec.slope  sign perp_dist " << sgn(boundaryVector[minIndex].slope_dzdx) << " " << sgn(perp_dist) << std::endl;
         }
         //std::cout << "direction_type 1 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
@@ -654,14 +654,14 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     else if (direction_type == 2)
     {
         directionUnitVector[0] = (boundaryVector[minIndex].x1 - x);
-        directionUnitVector[1] = 0.0f;
+        directionUnitVector[1] = 0.0;
         directionUnitVector[2] = (boundaryVector[minIndex].z1 - z);
         //std::cout << "direction_type 2 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     }
     else
     {
         directionUnitVector[0] = (boundaryVector[minIndex].x2 - x);
-        directionUnitVector[1] = 0.0f;
+        directionUnitVector[1] = 0.0;
         directionUnitVector[2] = (boundaryVector[minIndex].z2 - z);
         //std::cout << "direction_type 3 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     }
@@ -671,7 +671,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
-    //gitr_precision surfaceNormalVector[3] = {0.0f};
+    //gitr_precision surfaceNormalVector[3] = {0.0};
     //boundaryVector[minIndex].getSurfaceNormal(surfaceNormalVector,y,x);
     //directionUnitVector[0]= boundaryVector[minIndex].inDir*surfaceNormalVector[0];
     //directionUnitVector[1]= boundaryVector[minIndex].inDir*surfaceNormalVector[1];
@@ -684,23 +684,18 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
 #endif   
 #if BIASED_SURFACE > 0
     pot = boundaryVector[minIndex].potential;
-    Emag = pot/(2.0f*boundaryVector[minIndex].ChildLangmuirDist)*expf(-minDistance/(2.0f*boundaryVector[minIndex].ChildLangmuirDist));
+    Emag = pot/(2.0*boundaryVector[minIndex].ChildLangmuirDist)*exp(-minDistance/(2.0*boundaryVector[minIndex].ChildLangmuirDist));
 #else 
     angle = boundaryVector[minIndex].angle;    
-    fd  =  0.98992f + 5.1220E-03f * angle  -
-           7.0040E-04f  * std::pow(angle,2.0f) +
-           3.3591E-05f  * std::pow(angle,3.0f) -
-           8.2917E-07f  * std::pow(angle,4.0f) +
-           9.5856E-09f  * std::pow(angle,5.0f) -
-           4.2682E-11f  * std::pow(angle,6.0f);
+    fd  = boundaryVector[minIndex].fd;
     pot = boundaryVector[minIndex].potential;
      //std::cout << "potential and debye length " << pot << " " << boundaryVector[minIndex].debyeLength << " " << pot/boundaryVector[minIndex].debyeLength << std::endl;
     //std::cout << " larmorRad " << boundaryVector[minIndex].larmorRadius << std::endl;
         gitr_precision debyeLength = boundaryVector[minIndex].debyeLength;
         gitr_precision larmorRadius = boundaryVector[minIndex].larmorRadius;
-        Emag = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength))+ (1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius) );
-        gitr_precision part1 = pot*(fd/(2.0f * boundaryVector[minIndex].debyeLength)*expf(-minDistance/(2.0f * boundaryVector[minIndex].debyeLength)));
-        gitr_precision part2 = pot*(1.0f - fd)/(boundaryVector[minIndex].larmorRadius)*expf(-minDistance/boundaryVector[minIndex].larmorRadius);
+        Emag = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength))+ (1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
+        gitr_precision part1 = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)));
+        gitr_precision part2 = pot*(1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius);
         //if(isnan(Emag)){
 	//printf("Emag %f ", Emag);
 	//}
@@ -710,15 +705,16 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
         //std::cout << "fd " << fd << std::endl;
         //std::cout << "minDistance " << minDistance << std::endl;
 #endif
-    if(minDistance == 0.0f || boundaryVector[minIndex].larmorRadius == 0.0f)
+    if(minDistance == 0.0 || boundaryVector[minIndex].larmorRadius == 0.0)
     {
-        Emag = 0.0f;
-        directionUnitVector[0] = 0.0f;
-        directionUnitVector[1] = 0.0f;
-        directionUnitVector[2] = 0.0f;
+        Emag = 0.0;
+        directionUnitVector[0] = 0.0;
+        directionUnitVector[1] = 0.0;
+        directionUnitVector[2] = 0.0;
 
     }
-        Er = Emag*directionUnitVector[0];
+        
+	Er = Emag*directionUnitVector[0];
         Et = Emag*directionUnitVector[1];
         E[2] = Emag*directionUnitVector[2];
         //std::cout << "Emag " << Emag << std::endl;
@@ -800,34 +796,35 @@ move_boris::move_boris(Particles *_particlesPointer, gitr_precision _span, Bound
 CUDA_CALLABLE_MEMBER    
 void move_boris::operator()(std::size_t indx)
 {
-  gitr_precision v_minus[3]= {0.0f, 0.0f, 0.0f};
-  gitr_precision v_prime[3]= {0.0f, 0.0f, 0.0f};
-  gitr_precision position0[3]= {0.0f, 0.0f, 0.0f};
-  gitr_precision position[3]= {0.0f, 0.0f, 0.0f};
-  gitr_precision v0[3]= {0.0f, 0.0f, 0.0f};
-  gitr_precision v_dt[3]= {0.0f, 0.0f, 0.0f};
-  gitr_precision v_half_dt[3]= {0.0f, 0.0f, 0.0f};
-  gitr_precision v[3]= {0.0f, 0.0f, 0.0f};
-  gitr_precision E[3] = {0.0f, 0.0f, 0.0f};
+  gitr_precision v_minus[3]= {0.0, 0.0, 0.0};
+  gitr_precision v_prime[3]= {0.0, 0.0, 0.0};
+  gitr_precision v_h[3]= {0.0, 0.0, 0.0};
+  gitr_precision position0[3]= {0.0, 0.0, 0.0};
+  gitr_precision position[3]= {0.0, 0.0, 0.0};
+  gitr_precision v0[3]= {0.0, 0.0, 0.0};
+  gitr_precision v_dt[3]= {0.0, 0.0, 0.0};
+  gitr_precision v_half_dt[3]= {0.0, 0.0, 0.0};
+  gitr_precision v[3]= {0.0, 0.0, 0.0};
+  gitr_precision E[3] = {0.0, 0.0, 0.0};
 #if USEPRESHEATHEFIELD > 0
-  gitr_precision PSE[3] = {0.0f, 0.0f, 0.0f};
+  gitr_precision PSE[3] = {0.0, 0.0, 0.0};
 #endif
-  gitr_precision B[3] = {0.0f,0.0f,0.0f};
-  gitr_precision Bmag = 0.0f;
+  gitr_precision B[3] = {0.0,0.0,0.0};
+  gitr_precision Bmag = 0.0;
   gitr_precision gyrofrequency = 0.0;
-  gitr_precision q_prime = 0.0f;
-  gitr_precision coeff = 0.0f;
+  gitr_precision q_prime = 0.0;
+  gitr_precision coeff = 0.0;
 #if USESHEATHEFIELD > 0
-  gitr_precision minDist = 0.0f;
+  gitr_precision minDist = 0.0;
   int closestBoundaryIndex;
 #endif
 
 #if ODEINT ==	0 
-  gitr_precision qpE[3] = {0.0f,0.0f,0.0f};
-  gitr_precision vmxB[3] = {0.0f,0.0f,0.0f};
-  gitr_precision vpxB[3] = {0.0f,0.0f,0.0f};
-  gitr_precision qp_vmxB[3] = {0.0f,0.0f,0.0f};
-  gitr_precision c_vpxB[3] = {0.0f,0.0f,0.0f};
+  gitr_precision qpE[3] = {0.0,0.0,0.0};
+  gitr_precision vmxB[3] = {0.0,0.0,0.0};
+  gitr_precision vpxB[3] = {0.0,0.0,0.0};
+  gitr_precision qp_vmxB[3] = {0.0,0.0,0.0};
+  gitr_precision c_vpxB[3] = {0.0,0.0,0.0};
   vectorAssign(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],position);
   vectorAssign(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],position0);
   vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v0);
@@ -851,7 +848,7 @@ void move_boris::operator()(std::size_t indx)
 /*
 #if LC_INTERP==3
               
-	        //gitr_precision PSE2[3] = {0.0f, 0.0f, 0.0f};
+	        //gitr_precision PSE2[3] = {0.0, 0.0, 0.0};
                  interp3dVector(PSE,position[0], position[1], position[2],nR_Efield,nY_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridYDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer);
@@ -877,31 +874,52 @@ void move_boris::operator()(std::size_t indx)
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer);        
   Bmag = vectorNorm(B);
-  gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19f*Bmag/(particlesPointer->amu[indx]*1.6737236e-27f);
-  q_prime = particlesPointer->charge[indx]*1.60217662e-19f/(particlesPointer->amu[indx]*1.6737236e-27f)*dt*0.5f;
-    coeff = 2.0f*q_prime/(1.0f+(q_prime*Bmag)*(q_prime*Bmag));
+  gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
+  q_prime = 9.572528104401468e7*particlesPointer->charge[indx]/(particlesPointer->amu[indx])*dt*0.5;
+    coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
     vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v);
-    vectorScalarMult(q_prime,E,qpE);
-    vectorAdd(v,qpE,v_minus);
-    this->electricForce[0] = 2.0*qpE[0];
-    this->electricForce[1] = 2.0*qpE[1];
-    this->electricForce[2] = 2.0*qpE[2];
+        //vectorScalarMult(q_prime,E,qpE);
+    qpE[0] = q_prime*E[0];
+    qpE[1] = q_prime*E[1];
+    qpE[2] = q_prime*E[2];
+    //v_minus = v + q_prime*E
+    //vectorAdd(v,qpE,v_minus);
+     v_minus[0] = v[0] + qpE[0];
+     v_minus[1] = v[1] + qpE[1];
+     v_minus[2] = v[2] + qpE[2];
+    //this->electricForce[0] = 2.0*qpE[0];
+    //this->electricForce[1] = 2.0*qpE[1];
+    //this->electricForce[2] = 2.0*qpE[2];
     
     //v_prime = v_minus + q_prime*(v_minus x B)
     vectorCrossProduct(v_minus,B,vmxB);
     vectorScalarMult(q_prime,vmxB,qp_vmxB);
     vectorAdd(v_minus,qp_vmxB,v_prime);       
-    this->magneticForce[0] = qp_vmxB[0];
-    this->magneticForce[1] = qp_vmxB[1];
-    this->magneticForce[2] = qp_vmxB[2];
+    //this->magneticForce[0] = qp_vmxB[0];
+    //this->magneticForce[1] = qp_vmxB[1];
+    //this->magneticForce[2] = qp_vmxB[2];
      
      //v = v_minus + coeff*(v_prime x B)
      vectorCrossProduct(v_prime, B, vpxB);
      vectorScalarMult(coeff,vpxB,c_vpxB);
-     vectorAdd(v_minus, c_vpxB, v);
+     vectorAdd(v_minus, c_vpxB, v_h);
      
      //v = v + q_prime*E
-     vectorAdd(v,qpE,v);
+     //vectorAdd(v,qpE,v);
+     v[0] = v_h[0] + qpE[0];
+     v[1] = v_h[1] + qpE[1];
+     v[2] = v_h[2] + qpE[2];
+  //if(indx == 0){
+  //printf("qprime qpexyz %.16e %.16e %.16e %.16e ",q_prime, qpE[0], qpE[1],qpE[2]);
+  //////printf("vhxyz %.16e %.16e %.16e ",v_h[0], v_h[1], v_h[2]);
+  //////printf("vmxyz %.16e %.16e %.16e ",v_minus[0], v_minus[1], v_minus[2]);
+  ////printf("xyz %.16e %.16e %.16e ",position0[0], position0[1], position0[2]);
+  ////printf("vxyz %.16e %.16e %.16e ",v[0], v[1], v[2]);
+  ////printf("vmxyz %.16e %.16e %.16e ",v_minus[0], v_minus[1], v_minus[2]);
+  ////printf("vpxyz %.16e %.16e %.16e ",v_prime[0], v_prime[1], v_prime[2]);
+  ////printf("vpxBxyz %.16e %.16e %.16e ",vpxB[0], vpxB[1], vpxB[2]);
+  ////printf("c_vpxBxyz %.16e %.16e %.16e \n",c_vpxB[0], c_vpxB[1], c_vpxB[2]);
+  //}
 	       
   if(gitr_flags->USE_ADAPTIVE_DT)
   {
@@ -911,8 +929,8 @@ void move_boris::operator()(std::size_t indx)
     vectorAssign(v0[0],v0[1],v0[2],v);
    
     // First step of half_dt
-    q_prime = particlesPointer->charge[indx]*1.60217662e-19f/(particlesPointer->amu[indx]*1.6737236e-27f)*half_dt*0.5f;
-    coeff = 2.0f*q_prime/(1.0f+(q_prime*Bmag)*(q_prime*Bmag));
+    q_prime = particlesPointer->charge[indx]*1.60217662e-19/(particlesPointer->amu[indx]*1.6737236e-27)*half_dt*0.5;
+    coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
     
     //v = v + q_prime*E
     vectorScalarMult(q_prime,E,qpE);
@@ -956,8 +974,8 @@ void move_boris::operator()(std::size_t indx)
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer);        
   Bmag = vectorNorm(B);
-    q_prime = particlesPointer->charge[indx]*1.60217662e-19f/(particlesPointer->amu[indx]*1.6737236e-27f)*half_dt*0.5f;
-    coeff = 2.0f*q_prime/(1.0f+(q_prime*Bmag)*(q_prime*Bmag));
+    q_prime = particlesPointer->charge[indx]*1.60217662e-19/(particlesPointer->amu[indx]*1.6737236e-27)*half_dt*0.5;
+    coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
     
     //v = v + q_prime*E
     vectorScalarMult(q_prime,E,qpE);
@@ -1047,7 +1065,6 @@ void move_boris::operator()(std::size_t indx)
       }
   }
 
-           
 #endif
 
 #if ODEINT == 1

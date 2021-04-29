@@ -230,7 +230,7 @@ int main(int argc, char **argv, char **envp) {
   MPI_Bcast(bfieldGridz.data(), nZ_Bfield, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-  gitr_precision Btest[3] = {0.0f};
+  gitr_precision Btest[3] = {0.0};
   interp2dVector(&Btest[0], 5.5, 0.0, -4.0, nR_Bfield, nZ_Bfield,
                  bfieldGridr.data(), bfieldGridz.data(), br.data(), bz.data(),
                  by.data());
@@ -3965,7 +3965,7 @@ int main(int argc, char **argv, char **envp) {
   std::chrono::duration<gitr_precision> fs1 = start_clock - gitr_start_clock;
   printf("Initialize time for node %i          is %6.3f (secs) \n", world_rank,
          fs1.count());
-  gitr_precision testFlowVec[3] = {0.0f};
+  gitr_precision testFlowVec[3] = {0.0};
 #if USEFIELDALIGNEDVALUES > 0
   interpFieldAlignedVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV,
                            nZ_flowV, flowVGridr.data(), flowVGridz.data(),
@@ -4019,11 +4019,11 @@ int main(int argc, char **argv, char **envp) {
     // std::cout << "created d_vec and cmalloc, starting init " << std::endl;
     // for(int k=0;k<1000;k++)
     //{   //std::cout << "k " << k << std::endl;
-    //    d_vec2[k] = 1.0f;
+    //    d_vec2[k] = 1.0;
     //}
     // for(int k=0;k<1000;k++)
     //{   //std::cout << "k " << k << std::endl;
-    //    //d_vec2[k] = 1.0f;
+    //    //d_vec2[k] = 1.0;
     // thrust::sort(thrust::device,d_vec.begin()+world_rank*nN/world_size,
     // d_vec.begin()+ (world_rank+1)*nN/world_size-1); // sort data on the device
     //}
@@ -4479,7 +4479,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     int closestBoundaryIndex = 0;
     int surfIndex = 0;
     gitr_precision minDistance = 0.0;
-    gitr_precision thisE[3] = {0.0f};
+    gitr_precision thisE[3] = {0.0};
     for (int j = 0; j < nP; j++) {
       minDistance =
           getE(px[j], py[j], pz[j], thisE, boundaries.data(), nLines,
