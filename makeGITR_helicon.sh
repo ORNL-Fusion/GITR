@@ -1,6 +1,3 @@
-#!/bin/bash
-source ../environment_files/env.fusiont5.sh
-
 # Link it to the dependencies in an out-of-source build of GITR_fork
 cmake -DTHRUST_INCLUDE_DIRS=/home/dg6/spack/opt/spack/linux-ubuntu18.04-skylake_avx512/gcc-7.4.0/cuda-10.2.89-hzby2dvk7t7hh4tbqtx66uexreoc2ih3/include \
     -DCMAKE_C_COMPILER=gcc \
@@ -30,7 +27,7 @@ cmake -DTHRUST_INCLUDE_DIRS=/home/dg6/spack/opt/spack/linux-ubuntu18.04-skylake_
     -DUSEHEATING=1 \
     -DUSETHERMALFORCE=0 \
     -DUSESURFACEMODEL=1 \
-    -DUSESHEATHEFIELD=1 \
+    -DUSESHEATHEFIELD=0 \
     -DUSE_SURFACE_POTENTIAL=1 \
     -DBIASED_SURFACE=0 \
     -DUSEPRESHEATHEFIELD=0 \
