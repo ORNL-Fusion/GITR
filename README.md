@@ -74,6 +74,7 @@ Configure build system with CMake. Physics operators can be activated via **-D**
 or
 
 > cd GITR/build;
+
 > cmake -D*option_name* ..
 
 The list of options can be viewed in:
