@@ -32,15 +32,6 @@ fields and profiles of the background.
 ├── test_include    ---> C++ unit test header files
 └── test_src        ---> C++ unit test source files
 ```
-
-## New build instructions:
-This branch contains a new build system for GITR. It currently does not support GPUs.
-To see the list of preprocessor macros configured and defined by CMake at build time,
-examine GITR/CMake/define\_options.cmake. Default values can be overriden on the cmake
-command line via -D style options. To build, create a "build\_directory", and run
-cmake -S /path/to/GITR -B /path/to/build\_directory -D{whatever option you want to override}
-The built files should be in that build\_directory
-
 ## Dependencies 
 
 - cmake version 3.13 or newer required
