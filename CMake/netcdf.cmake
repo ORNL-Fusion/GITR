@@ -11,15 +11,15 @@ if( NOT NETCDF_FOUND )
   if( EXISTS ${prefix}/netcdf-c )
     ExternalProject_Add( netcdf-c_download
                          DOWNLOAD_COMMAND ""
-                         CONFIGURE_COMMAND cmake -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install
-                         BUILD_COMMAND cmake --build ${prefix}/netcdf-c-build -- -j
-                         INSTALL_COMMAND cmake --install ${prefix}/netcdf-c-build )
+                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install
+                         BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/netcdf-c-build -- -j
+                         INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-c-build )
   else()
     ExternalProject_Add( netcdf-c_download
                          DOWNLOAD_COMMAND git clone ${netcdf-c-url} ${prefix}/netcdf-c
-                         CONFIGURE_COMMAND cmake -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install
-                         BUILD_COMMAND cmake --build ${prefix}/netcdf-c-build -- -j
-                         INSTALL_COMMAND cmake --install ${prefix}/netcdf-c-build )
+                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install
+                         BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/netcdf-c-build -- -j
+                         INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-c-build )
 
   endif()
 
@@ -28,16 +28,16 @@ if( NOT NETCDF_FOUND )
     # No need to install this one
     ExternalProject_Add( netcdf-cxx4_download
                          DOWNLOAD_COMMAND ""
-                         CONFIGURE_COMMAND PATH=${prefix}/netcdf-c-install/bin:$ENV{PATH} cmake -S ${prefix}/netcdf-cxx4 -B ${prefix}/netcdf-cxx4-build -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-cxx4-install
-                         BUILD_COMMAND cmake --build ${prefix}/netcdf-cxx4-build -- -j
-                         INSTALL_COMMAND cmake --install ${prefix}/netcdf-cxx4-build )
+                         CONFIGURE_COMMAND PATH=${prefix}/netcdf-c-install/bin:$ENV{PATH} ${CMAKE_COMMAND} -S ${prefix}/netcdf-cxx4 -B ${prefix}/netcdf-cxx4-build -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-cxx4-install
+                         BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/netcdf-cxx4-build -- -j
+                         INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-cxx4-build )
   else()
     # No need to install this one
     ExternalProject_Add( netcdf-cxx4_download
                          DOWNLOAD_COMMAND git clone ${netcdf-cxx4-url} ${prefix}/netcdf-cxx4
-                         CONFIGURE_COMMAND PATH=${prefix}/netcdf-c-install/bin:$ENV{PATH} cmake -S ${prefix}/netcdf-cxx4 -B ${prefix}/netcdf-cxx4-build -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-cxx4-install
-                         BUILD_COMMAND cmake --build ${prefix}/netcdf-cxx4-build -- -j
-                         INSTALL_COMMAND cmake --install ${prefix}/netcdf-cxx4-build )
+                         CONFIGURE_COMMAND PATH=${prefix}/netcdf-c-install/bin:$ENV{PATH} ${CMAKE_COMMAND} -S ${prefix}/netcdf-cxx4 -B ${prefix}/netcdf-cxx4-build -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-cxx4-install
+                         BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/netcdf-cxx4-build -- -j
+                         INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-cxx4-build )
   endif()
 
   add_dependencies( netcdf-cxx4_download netcdf-c_download )

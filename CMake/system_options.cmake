@@ -8,9 +8,7 @@ if( GITR_USE_CUDA )
 
   set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 
-  set( CMAKE_CUDA_COMPILER 
-  /home/dg6/spack/opt/spack/linux-ubuntu18.04-skylake_avx512/gcc-7.4.0/cuda-10.2.89-hzby2dvk7t7hh4tbqtx66uexreoc2ih3/bin/nvcc )
-
+  # Note: CMAKE_CUDA_COMPILER must be set so that the enable_language() call succeeds
   enable_language( CUDA )
 
   # Later: enforce minimum requirement

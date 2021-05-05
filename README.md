@@ -44,16 +44,33 @@ The built files should be in that build\_directory
 ## Dependencies 
 
 - cmake version 3.13 or newer required
+- **CUDA**
+  - Enabled by default, disable with -DGITR_USE_CUDA=0
+  - Requires existing installation. Set:
+    - -DCMAKE_CUDA_COMPILER=/path/to/nvcc
 - [libconfig](https://github.com/hyperrealm/libconfig)
   - consumes human-readable input config files
+  - to use existing installation, set:
+    - -DLIBCONFIG_INCLUDE_DIR=/path/to/libconfig/include (libconfig headers)
+    - -DLIBCONFIG_LIBRARY=/path/to/libconfig.so
+    - -DLIBCONFIGPP_INCLUDE_DIR=/path/to/libconfig++/include (libconfig headers)
+    - -DLIBCONFIGPP_LIBRARY=/path/to/libconfig++.so
 - [netcdf-c](https://github.com/Unidata/netcdf-c)
   - input/output raw data format
-- [netcdf-xx4](https://github.com/Unidata/netcdf-cxx4)
+  - to use existing installation set:
+    - -DNETCDF_LIBRARY=/path/to/libnetcdf.so
+    - -DNETCDF_INCLUDE_DIR=/path/to/netcdf-c/include (netcdf-c headers)
+- [netcdf-cxx4](https://github.com/Unidata/netcdf-cxx4)
   - C++ extensions to netcdf-c
+  - to use an existing installation, set:
+    - -DNETCDF_CXX_LIBRARY=/path/to/libnetcdf-cxx4.so
+    - -DNETCDF_CXX_INCLUDE_DIR=/path/to/netcdf-cxx4/include (netcdf-c headers)
 - [thrust](https://github.com/thrust/thrust)
   - header-only library
     - included in CUDA installation if gpu support enabled
-    - included explicitly if cpu-only build
+  - to use existing installation, set:
+    - -DTHRUST_INCLUDE_DIR=/path/to/thrust
+    - this should only be necessary if CUDA is disabled
 
 ## Installation
 
@@ -71,12 +88,6 @@ or
 The list of options can be viewed in:
 
 > CMake/user_options.cmake
-
-### Manually-supplied dependencies
-If the user has their own pre-installed set of dependencies, point GITR to them by setting the
-following specific arguments on the command line:
-*Not yet implemented - Put the same list of dependencies but include the variables needed to
-point the find() command to it*
 
 ### Build
 

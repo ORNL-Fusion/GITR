@@ -11,15 +11,15 @@ if( NOT LIBCONFIG_FOUND )
   if( EXISTS ${prefix}/libconfig )
     ExternalProject_Add( libconfig_download
                          DOWNLOAD_COMMAND ""
-                         CONFIGURE_COMMAND cmake -S ${prefix}/libconfig -B ${prefix}/libconfig_build -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
-                         BUILD_COMMAND cmake --build ${prefix}/libconfig_build -- -j
-                         INSTALL_COMMAND cmake --install ${prefix}/libconfig_build ) 
+                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/libconfig -B ${prefix}/libconfig_build -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
+                         BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/libconfig_build -- -j
+                         INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/libconfig_build ) 
   else()
     ExternalProject_Add( libconfig_download
                          DOWNLOAD_COMMAND git clone ${libconfig_url} ${prefix}/libconfig
-                         CONFIGURE_COMMAND cmake -S ${prefix}/libconfig -B ${prefix}/libconfig_build -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
-                         BUILD_COMMAND cmake --build ${prefix}/libconfig_build -- -j
-                         INSTALL_COMMAND cmake --install ${prefix}/libconfig_build ) 
+                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/libconfig -B ${prefix}/libconfig_build -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
+                         BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/libconfig_build -- -j
+                         INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/libconfig_build ) 
   endif()
 
 
