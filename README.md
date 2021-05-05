@@ -1,6 +1,9 @@
 # GITR
 Global Impurity Transport Code
 
+### Note for legacy GITR users:
+For reference, please visit the archived copy of the GITR project - [GITR_legacy](https://github.com/ORNL-Fusion/GITR_legacy)
+
 ## Description
 The GITR program takes background plasma profiles, equilibrium, geometry, and surface model 
 and performs large scale simulation of plasma induced erosion, plasma transport of those 
@@ -14,6 +17,7 @@ Beginning from a set of initial conditions, the code steps each particle through
 operators until certain conditions on the particles are reached (crossing a 
 boundary or timing out). The operators acting on the particles are dependent on the prescibed 
 fields and profiles of the background.
+
 
 ![Trace Impurity Transport](images/TraceImp.png)
 
