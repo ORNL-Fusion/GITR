@@ -24,6 +24,8 @@ fields and profiles of the background.
 ```
 . Top Level: Top level build system file **CMakeLists.txt**, LICENSE file, README.md (this file)
 ├── CMake           ---> build system files
+├── docs            ---> more detailed documentation 
+├── dev_docs        ---> documentation for developers
 ├── images          ---> repo visuals for websites and presentations
 ├── include         ---> C++ header files
 ├── src             ---> C++ source files
@@ -74,7 +76,7 @@ The list of options can be viewed in:
 If the user has their own pre-installed set of dependencies, point GITR to them by setting the
 following specific arguments on the command line:
 *Not yet implemented - Put the same list of dependencies but include the variables needed to
-point the find() command to it. Find minimum working set*
+point the find() command to it*
 
 ### Build
 
@@ -112,3 +114,9 @@ Search the GitHub discussions tab for existing threads or start a new one.
 ## Contribute
 
 Fork this repository, branch off of *dev*, and open a merge request into *dev*.
+
+## Release Notes
+
+Navigate to
+
+> GITR/docs/release_notes.md
