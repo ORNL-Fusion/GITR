@@ -85,6 +85,7 @@ The list of options can be viewed in:
 Once the project is configured, compile:
 
 > cd build
+
 > make -j
 
 ### Run
