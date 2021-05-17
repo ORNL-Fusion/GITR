@@ -27,6 +27,7 @@ list( APPEND dependencies netcdf )
 # MPI
 
 if( GITR_USE_MPI )
+
   include( FindMPI )
 
   if(MPI_FOUND)

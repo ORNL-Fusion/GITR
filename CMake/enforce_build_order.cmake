@@ -13,11 +13,11 @@ if( dependencies )
 endif()
 
 # ensure that test targets are built after source targets
-#foreach( target IN LISTS cpu_test_targets gpu_test_targets )
+foreach( target IN LISTS cpu_test_targets gpu_test_targets )
 
-#  add_dependencies( ${target} ${cpu_targets} ${gpu_targets} )
+  add_dependencies( ${target} ${cpu_targets} ${gpu_targets} )
 
-#endforeach()
+endforeach()
 
 # ensure that all source targets are built before GITR
 add_dependencies( GITR ${cpu_targets} ${gpu_targets} )
