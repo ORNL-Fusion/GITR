@@ -22,6 +22,7 @@ set( cpu_targets
      particle
      utils
      flags
+     config_interface
      setup)
 
 # conditionally compile as GPU targets

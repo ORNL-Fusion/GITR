@@ -1,0 +1,2 @@
+/* This file is processed by CMake */
+#cmakedefine LIBCONFIG_UNIT_TEST_FILE "${LIBCONFIG_UNIT_TEST_FILE}"

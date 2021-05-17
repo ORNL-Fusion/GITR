@@ -37,6 +37,7 @@ if( GITR_USE_MPI )
 endif()
 
 # link test targets
+target_link_libraries( config_interface_tests test_utils libconfig config_interface )
 #target_link_libraries( coulomb_tests 
 #                       test_utils libconfig thrust interp2d utils flags netcdf mpi )
 #target_link_libraries( atomic_tests test_utils interp2d utils flags mpi )
