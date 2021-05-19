@@ -1,5 +1,27 @@
 #include "config_interface.h"
 
+libconfig_string_query::libconfig_string_query( std::string libconfig_file )
+{
+  /* open the file */
+  try
+  {
+    cfg.readFile("example.cfg");
+  }
+
+  catch(const libconfig::FileIOException &fioex)
+  {
+    std::cerr << "I/O error while reading file." << std::endl;
+  }
+
+  catch(const libconfig::ParseException &pex)
+  {
+    std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+              << " - " << pex.getError() << std::endl;
+  }
+}
+
+/* Captain! Old code below */
+
 std::string config_interface::ahoy() const
 {
   return "Ahoy!";
