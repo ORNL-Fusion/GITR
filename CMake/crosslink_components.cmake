@@ -23,14 +23,17 @@ target_link_libraries( GITR
                        boris
                        surface_model
                        flags
-                       hashGeom
-                       mpi )
+                       hashGeom )
 
 if( GITR_USE_CUDA )
 
   target_link_libraries( GITR 
                          CUDA::cudart )
 
+endif()
+
+if( GITR_USE_MPI )
+  target_link_libraries( GITR mpi )
 endif()
 
 # link test targets
