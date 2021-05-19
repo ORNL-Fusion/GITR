@@ -1,4 +1,4 @@
-name: CMake
+name: Build GITR
 
 on:
   workflow_dispatch:
