@@ -1,5 +1,7 @@
-# GITR
+# GITR 
 Global Impurity Transport Code
+
+[![Build GITR](https://github.com/stonecoldhughes/GITR/actions/workflows/cmake.yml/badge.svg?branch=main)](https://github.com/stonecoldhughes/GITR/actions/workflows/cmake.yml)
 
 ## Description
 The GITR program takes background plasma profiles, equilibrium, geometry, and surface model 
