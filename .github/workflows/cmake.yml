@@ -1,24 +1,34 @@
-name: Build GITR
+name : Build GITR
 
-on:
-  workflow_dispatch:
-  push:
+on :
+  workflow_dispatch :
 
-env:
+  push :
 
-  BUILD_TYPE: Debug
+    branches :
+      - 'dev'
+      - 'main'
 
-jobs:
+  pull_request :
 
-  build:
+    branches :
+      - 'main'
 
-    runs-on: ubuntu-latest
+env :
 
-    steps:
+  BUILD_TYPE : Debug
 
-    - uses: actions/checkout@v2
+jobs :
 
-      with:
+  build :
+
+    runs-on : ubuntu-latest
+
+    steps :
+
+    - uses : actions/checkout@v2
+
+      with :
         ref : main
         
     - name : Install system dependencies
@@ -26,12 +36,12 @@ jobs:
       run : |
         sudo apt-get install -y libhdf5-dev
         
-    - name: Configure CMake
+    - name : Configure CMake
 
-      run: |
+      run : |
         cmake -B ${{github.workspace}}/build -DGITR_USE_CUDA=0 -DGITR_USE_MPI=0
 
-    - name: Build
+    - name : Build
 
-      run: |
+      run : |
         cmake --build ${{github.workspace}}/build -- -j
