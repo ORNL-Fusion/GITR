@@ -51,8 +51,17 @@ class impurity_particle_source final : public config_module_base
 {
   public:
 
+  /* define all the fields of the class here */
+  enum class fields : int
+  {
+    nP,
+    source_binding_energy
+  };
+
+  impurity_particle_source( std::string const module_path = "impurityParticleSource" );
+
   /* get config sub-module */
-  std::shared_ptr< config_module_base > get( int key );
+  std::shared_ptr< config_module_base > get( int key ) override;
 
   /* get a config value */
   void get( int key, double &val ) override;
@@ -63,6 +72,14 @@ class impurity_particle_source final : public config_module_base
 
   private:
 
+  template< typename T >
+  void emulate_template( int key, T &val );
+
+  std::unordered_map< int, std::shared_ptr< config_module_base > >
+  submodules;
+
+  std::unordered_map< int, std::string > lookup;
+
   class libconfig_string_query const &query;
 };
 
@@ -72,41 +89,4 @@ class gitr_config_interface : public config_module_base
 
   /* define the mapping */
   gitr_config_interface();
-
-  /* define scoped enums to refer to the various config modules */
-
-  std::string ahoy() const;
 };
-
-/*
-
-Ok... how about instead of that... we just put the root setting in there?
-
-Goals: separate libconfig from this. 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-*/
