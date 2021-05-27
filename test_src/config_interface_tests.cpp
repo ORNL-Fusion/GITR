@@ -1,7 +1,9 @@
 #include <iostream>
 #include "test_utils.hpp"
 #include "config_interface.h"
-/* contains filepath of unit testing files */
+
+/* auto-generated header contains filepath of unit testing files
+   defines LIBCONFIG_UNIT_TEST_FILE */
 #include "test_data_filepath.hpp"
 
 TEST_CASE( "Simulation Configuration" )
@@ -28,17 +30,17 @@ TEST_CASE( "Simulation Configuration" )
     std::string config_path = "impurityParticleSource"
 
     /* constructor should create all the submodules necessary underneath itself */
-    class impurity_particle_source config_module( config_path );
+    class impurity_particle_source impurity_config( config_path );
 
     /* get a value from this config module */
     int source_material_z = 0;
 
-    config_module.get( config_module::source_material_z, source_material_z );
+    impurity_config.get( impurity_config::source_material_z, source_material_z );
 
     REQUIRE( source_material_z == 13 )
 
     /* get a child module and obtain a value from it */
-    auto ionization = config_module.get( config_module::ionization );
+    auto ionization = impurity_config.get( impurity_config::ionization );
 
     std::string dense_grid = "";
 
