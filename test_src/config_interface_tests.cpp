@@ -9,15 +9,15 @@
 TEST_CASE( "Simulation Configuration" )
 {
   /* Open the file and get a field out */
-  class libconfig_string_query libconfig_string_query( LIBCONFIG_UNIT_TEST_FILE );
+  class libconfig_string_query query( LIBCONFIG_UNIT_TEST_FILE );
 
   SECTION( "read raw libconfig data" )
   {
-    std::string query = "surfaces.flux.E";
+    std::string search = "surfaces.flux.E";
 
     double e = 0;
     
-    libconfig_string_query( query, e );
+    query( search, e );
 
     REQUIRE( e == 1000 );
   }
@@ -27,26 +27,26 @@ TEST_CASE( "Simulation Configuration" )
      then you can stop for today */
   SECTION( "config_module" )
   {
-    std::string config_path = "impurityParticleSource"
-
     /* constructor should create all the submodules necessary underneath itself */
-    class impurity_particle_source impurity_config( config_path );
+    class impurity_particle_source impurity_particle_source( query );
 
     /* get a value from this config module */
     int source_material_z = 0;
 
-    impurity_config.get( impurity_config::source_material_z, source_material_z );
+    impurity_particle_source
+    .get( impurity_particle_source::source_material_z, source_material_z );
 
-    REQUIRE( source_material_z == 13 )
+    REQUIRE( source_material_z == 13 );
 
     /* get a child module and obtain a value from it */
-    auto ionization = impurity_config.get( impurity_config::ionization );
+    auto ionization =
+    impurity_particle_source.get( impurity_particle_source::ionization );
 
-    std::string dense_grid = "";
+    std::string dense_grid_string = "";
 
-    ionization.get( ionization::dense_grid, dense_grid );
+    ionization->get( ionization_process::dense_grid_string, dense_grid_string );
 
-    REQUIRE( dense_grid == "gridDensity_Ionization" );
+    REQUIRE( dense_grid_string == "n_Densities_Ionize" );
   }
 
   /* for the final test, create a top-level class that includes this one and another one */
