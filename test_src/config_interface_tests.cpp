@@ -42,11 +42,26 @@ TEST_CASE( "Simulation Configuration" )
     auto ionization =
     impurity_particle_source.get( impurity_particle_source::ionization );
 
+    auto recombination =
+    impurity_particle_source.get( impurity_particle_source::recombination );
+
     std::string dense_grid_string = "";
 
     ionization->get( ionization_process::dense_grid_string, dense_grid_string );
 
     REQUIRE( dense_grid_string == "n_Densities_Ionize" );
+
+    recombination->get( ionization_process::dense_grid_string, dense_grid_string );
+
+    REQUIRE( dense_grid_string == "n_Densities_Recombine" );
+
+    class use use( query );
+
+    int spectroscopy = 0;
+
+    use.get( use::spectroscopy, spectroscopy );
+
+    REQUIRE( spectroscopy == 3);
   }
 
   /* for the final test, create a top-level class that includes this one and another one */
