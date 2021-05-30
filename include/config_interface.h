@@ -14,6 +14,9 @@
    of the configuration and the I/O details of obtaining it
    */
 
+/* Captain! How should the local vs full module path be handled? How about functions
+   that concatenate and return vs just getting the local path? */
+
 /* extensibility note: augment this to derive from a string query base class */
 class libconfig_string_query
 {
@@ -38,12 +41,14 @@ class libconfig_string_query
   libconfig::Config cfg;
 };
 
+/* Captain! Can you use reflection to generate the names of the fields based on the
+   key? */
 class config_module_base
 {
   public:
 
   config_module_base( class libconfig_string_query const &query,
-                      std::string module_path = "" );
+                      std::string module_path = "");
 
   /* get config sub-module */
   std::shared_ptr< config_module_base > get( int key );
@@ -51,6 +56,9 @@ class config_module_base
   /* a config value */
   template< typename T >
   void get( int key, T &val );
+
+  template< typename T >
+  void generate_sub_module( int key );
 
   protected:
 
@@ -91,9 +99,6 @@ class ionization_process final : public config_module_base
 
   ionization_process( class libconfig_string_query const &query,
                       std::string module_path );
-
-  ionization_process( std::string module_path = 
-  "this module represents several instances" );
 };
 
 class impurity_particle_source final : public config_module_base
@@ -104,11 +109,72 @@ class impurity_particle_source final : public config_module_base
   enum : int
   {
     source_material_z,
-    ionization
+    ionization,
+    recombination
   };
 
   impurity_particle_source( class libconfig_string_query const &query,
-                      std::string module_path = "impurityParticleSource" );
+                            std::string module_path = "impurityParticleSource" );
+};
+
+/* Captain! Filling in these now */
+class use final : public config_module_base
+{
+  public:
+
+  enum : int
+  {
+    use_cuda,
+    use_openmp,
+    use_mpi,
+    /* Captain! Can the next 2 be combined into 1? */
+    useionization,
+    use_ionization,
+    userecombination,
+    useperpdiffusion,
+    usecoulombcollisions,
+    usefriction,
+    useanglescattering,
+    useheating,
+    usethermalforce,
+    usesurfacemodel,
+    usesheathefield,
+    biased_surface,
+    usepresheathefield,
+    bfield_interp,
+    lc_interp,
+    generate_lc,
+    efield_interp,
+    presheath_interp,
+    density_interp,
+    temp_interp,
+    flowv_interp,
+    gradt_interp,
+    odeint,
+    fixedseeds,
+    fixed_seeds,
+    particleseeds ,
+    geom_trace ,
+    geom_hash,
+    geom_hash_sheath,
+    particle_tracks,
+    particle_source_space,
+    particle_source_energy,
+    particle_source_angle,
+    particle_source_file,
+    spectroscopy,
+    use3dtetgeom,
+    flux_ea,
+    usecylsymm,
+    usefieldalignedvalues,
+    force_eval,
+    check_compatibility,
+    use_sort,
+    use_adaptive_dt
+  };
+
+  use( class libconfig_string_query const &query,
+       std::string module_path = "flags" );
 };
 
 /* top-level config module */
