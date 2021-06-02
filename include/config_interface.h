@@ -55,7 +55,7 @@ class config_module_base
 
   /* a config value */
   template< typename T >
-  void get( int key, T &val );
+  T get( int key );
 
   template< typename T >
   void generate_sub_module( int key );
@@ -124,9 +124,9 @@ class use final : public config_module_base
 
   enum : int
   {
-    use_cuda,
+    cuda,
     use_openmp,
-    use_mpi,
+    mpi,
     /* Captain! Can the next 2 be combined into 1? */
     useionization,
     use_ionization,
@@ -168,7 +168,7 @@ class use final : public config_module_base
     usecylsymm,
     usefieldalignedvalues,
     force_eval,
-    check_compatibility,
+    compatibility_check,
     use_sort,
     use_adaptive_dt
   };
