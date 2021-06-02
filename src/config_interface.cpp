@@ -20,24 +20,9 @@ libconfig_string_query::libconfig_string_query( std::string libconfig_file )
   }
 }
 
-/* get a config submodule */
-std::shared_ptr< config_module_base >
-config_module_base::get( int key )
-{
-  auto access = sub_modules.find( key );
-
-  if( access == sub_modules.end() )
-  {
-    std::cout << "error: config_module key not found" << std::endl;
-    exit( 0 );
-  }
-
-  return access->second;
-}
-
 /* geta config value */
 template< typename T >
-void config_module_base::get( int key, T &val )
+T config_module_base::get( int key )
 {
   auto access = lookup.find( key );
   if( access == lookup.end() )
@@ -46,7 +31,11 @@ void config_module_base::get( int key, T &val )
     exit(0);
   }
 
+  T val;
+
   query( get_module_path() + "." + access->second, val );
+  
+  return val;
 }
 
 impurity_particle_source::
@@ -102,9 +91,9 @@ use::use( class libconfig_string_query const &query,
   :
   config_module_base( query, module_path )
 {
-  lookup[ use::use_cuda ] = "USE_CUDA";
+  lookup[ use::cuda ] = "USE_CUDA";
   lookup[ use::use_openmp ] = "USE_OPENMP";
-  lookup[ use::use_mpi ] = "USE_MPI";
+  lookup[ use::mpi ] = "USE_MPI";
   lookup[ use::useionization ] = "USEIONIZATION";
   lookup[ use::use_ionization ] = "USE_IONIZATION";
   lookup[ use::userecombination ] = "USERECOMBINATION";
@@ -145,7 +134,7 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::usecylsymm ] = "USECYLSYMM";
   lookup[ use::usefieldalignedvalues ] = "USEFIELDALIGNEDVALUES";
   lookup[ use::force_eval ] = "FORCE_EVAL";
-  lookup[ use::check_compatibility ] = "CHECK_COMPATIBILITY";
+  lookup[ use::compatibility_check ] = "CHECK_COMPATIBILITY";
   lookup[ use::use_sort ] = "USE_SORT";
   lookup[ use::use_adaptive_dt ] = "USE_ADAPTIVE_DT";
 }
@@ -158,7 +147,24 @@ config_module_base::config_module_base( class libconfig_string_query const &quer
 { }
 
 /* explicit instantiations of that template */
-template void config_module_base::get<int>( int key, int &val );
-template void config_module_base::get<float>( int key, float &val );
-template void config_module_base::get<double>( int key, double &val );
-template void config_module_base::get<std::string>( int key, std::string &val ); 
+template int config_module_base::get<int>( int key );
+template float config_module_base::get<float>( int key );
+template double config_module_base::get<double>( int key );
+template bool config_module_base::get<bool>( int key );
+template std::string config_module_base::get<std::string>( int key ); 
+
+/* get a config submodule */
+template<>
+std::shared_ptr< config_module_base >
+config_module_base::get( int key )
+{
+  auto access = sub_modules.find( key );
+
+  if( access == sub_modules.end() )
+  {
+    std::cout << "error: config_module key not found" << std::endl;
+    exit( 0 );
+  }
+
+  return access->second;
+}

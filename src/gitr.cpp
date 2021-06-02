@@ -61,6 +61,7 @@
 #include <thrust/sequence.h>
 #include <thrust/sort.h>
 #include <thrust/transform.h>
+#include "config_interface.h"
 
 #if USE_DOUBLE
 typedef double gitr_precision;
@@ -74,6 +75,8 @@ netCDF::NcType netcdf_precision = netCDF::ncFloat;
 int main(int argc, char **argv, char **envp) {
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
+  class libconfig_string_query query( "input/gitrInput.cfg" );
+  class use use( query );
 
   // Set default processes per node to 1
   int ppn = 1;
