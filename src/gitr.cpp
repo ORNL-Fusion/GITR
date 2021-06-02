@@ -433,7 +433,6 @@ int main(int argc, char **argv, char **envp) {
   sim::Array<int> nHashPoints(nHashes, 0);
   sim::Array<int> n_closeGeomElements(nHashes, 0);
 
-  /* Captain! */
   if(geom_hash)
   {
   if (world_rank == 0) {
@@ -470,7 +469,8 @@ int main(int argc, char **argv, char **envp) {
       nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
       nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
     }
-    #if USE3DTETGEOM > 0
+    if(use3dtetgeom)
+    {
      if(nHashes > 1)
     {
       for(int i=0; i<nHashes;i++)
@@ -482,7 +482,7 @@ int main(int argc, char **argv, char **envp) {
     {
       getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom[0]);
     }
-    #endif
+    }
      nGeomHash = 0;
      nR_closeGeomTotal = 0;
      nY_closeGeomTotal = 0;
@@ -517,7 +517,9 @@ int main(int argc, char **argv, char **envp) {
 #endif
   }
 
-#if GEOM_HASH > 1
+std::vector<std::string> hashFile;
+if( geom_hash > 1 )
+{
   if (world_rank == 0) {
     getVariable(cfg, geomHashCfg + "nHashes", nHashes);
   }
@@ -525,7 +527,6 @@ int main(int argc, char **argv, char **envp) {
   MPI_Bcast(&nHashes, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-  std::vector<std::string> hashFile;
   if (world_rank == 0) {
 	  libconfig::Setting &geomHash = cfg.lookup("geometry_hash");
     for (int i = 0; i < nHashes; i++) {
@@ -543,15 +544,18 @@ int main(int argc, char **argv, char **envp) {
           cfg, input_path + hashFile[i], geomHashCfg, "nearestNelementsString");
       nGeomHash = nGeomHash +
                   nR_closeGeom[i] * nZ_closeGeom[i] * n_closeGeomElements[i];
-#if USE3DTETGEOM > 0
-      nY_closeGeom[i] = getDimFromFile(cfg, input_path + hashFile[i],
-                                       geomHashCfg, "gridNyString");
-      nGeomHash = nGeomHash -
-                  nR_closeGeom[i] * nZ_closeGeom[i] * n_closeGeomElements[i] +
-                  nY_closeGeom[i] * nR_closeGeom[i] * nZ_closeGeom[i] *
-                      n_closeGeomElements[i];
-      nY_closeGeomTotal = nY_closeGeomTotal + nY_closeGeom[i];
-#endif
+
+      if( use3dtetgeom > 0 )
+      {
+        nY_closeGeom[i] = getDimFromFile(cfg, input_path + hashFile[i],
+                                         geomHashCfg, "gridNyString");
+        nGeomHash = nGeomHash -
+                    nR_closeGeom[i] * nZ_closeGeom[i] * n_closeGeomElements[i] +
+                    nY_closeGeom[i] * nR_closeGeom[i] * nZ_closeGeom[i] *
+                        n_closeGeomElements[i];
+        nY_closeGeomTotal = nY_closeGeomTotal + nY_closeGeom[i];
+      }
+
       nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[i];
       nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[i];
     }
@@ -570,7 +574,7 @@ int main(int argc, char **argv, char **envp) {
   MPI_Barrier(MPI_COMM_WORLD);
   std::cout << "finished mpibacast" << std::endl;
 #endif
-#endif
+}
 
   std::cout << "allocating closGeomGrids " << nR_closeGeomTotal << " "
             << nY_closeGeomTotal << " " << nZ_closeGeomTotal << " " << nGeomHash
@@ -580,7 +584,8 @@ int main(int argc, char **argv, char **envp) {
   sim::Array<int> closeGeom(nGeomHash, 0);
   std::cout << "allocating closGeomGrids finished" << std::endl;
 
-#if GEOM_HASH == 1
+if( geom_hash == 1 )
+{
   sim::Array<gitr_precision> hashX0(nHashes, 0.0), hashX1(nHashes, 0.0),
       hashY0(nHashes, 0.0), hashY1(nHashes, 0.0), hashZ0(nHashes, 0.0),
       hashZ1(nHashes, 0.0);
@@ -592,20 +597,22 @@ int main(int argc, char **argv, char **envp) {
         hashX1[i] = geomHash["hashX1"][i];
         hashZ0[i] = geomHash["hashZ0"][i];
         hashZ1[i] = geomHash["hashZ1"][i];
-#if USE3DTETGEOM > 0
-        hashY0[i] = geomHash["hashY0"][i];
-        hashY1[i] = geomHash["hashY1"][i];
-#endif
+        if( use3dtetgeom > 0 )
+        {
+          hashY0[i] = geomHash["hashY0"][i];
+          hashY1[i] = geomHash["hashY1"][i];
+        }
       }
     } else {
       getVariable(cfg, geomHashCfg + "hashX0", hashX0[0]);
       getVariable(cfg, geomHashCfg + "hashX1", hashX1[0]);
       getVariable(cfg, geomHashCfg + "hashZ0", hashZ0[0]);
       getVariable(cfg, geomHashCfg + "hashZ1", hashZ1[0]);
-#if USE3DTETGEOM > 0
+      if( use3dtetgeom > 0 )
+      {
       getVariable(cfg, geomHashCfg + "hashY0", hashY0[0]);
       getVariable(cfg, geomHashCfg + "hashY1", hashY1[0]);
-#endif
+      }
     }
   }
 #if USE_MPI > 0
@@ -740,9 +747,11 @@ int main(int argc, char **argv, char **envp) {
   if (world_rank == 0) {
     for (int ii = 0; ii < nHashes; ii++) {
       for (int i = 0; i < nR_closeGeom[ii]; i++) {
-#if USE3DTETGEOM
-        for (int j = 0; j < nY_closeGeom[ii]; j++) {
-#endif
+        /* Why is a lambda used here? Conditionals were previously preprocessor directives,
+           and control flow cannot be replicated by just swapping them out with if statements */
+        auto f_0 =
+        [ & ]()-> void
+        {
           for (int k = 0; k < nZ_closeGeom[ii]; k++) {
             if (hashPoint == hashMeshIncrements[closeGeomPointProcIndex]) {
               closeGeomPointIndex[closeGeomPointProcIndex + 1] =
@@ -757,9 +766,15 @@ int main(int argc, char **argv, char **envp) {
             closeGeomPoint = closeGeomPoint + n_closeGeomElements[ii];
             closeGeomPointTotal = closeGeomPointTotal + n_closeGeomElements[ii];
           }
-#if USE3DTETGEOM
+        };
+
+        if(use3dtetgeom)
+        {
+          for (int j = 0; j < nY_closeGeom[ii]; j++)
+          {
+            f_0();
+          }
         }
-#endif
       }
     }
 
@@ -807,24 +822,15 @@ int main(int argc, char **argv, char **envp) {
                          netCDF::NcFile::replace);
       std::cout << "opened file" << std::endl;
       netCDF::NcDim hashNR = ncFile_hash.addDim("nR", nR_closeGeom[i]);
-#if USE3DTETGEOM > 0
-      netCDF::NcDim hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
-#endif
       netCDF::NcDim hashNZ = ncFile_hash.addDim("nZ", nZ_closeGeom[i]);
       netCDF::NcDim hashN = ncFile_hash.addDim("n", n_closeGeomElements[i]);
       vector<netCDF::NcDim> geomHashDim;
       geomHashDim.push_back(hashNR);
       std::cout << "created dims" << std::endl;
-#if USE3DTETGEOM > 0
-      geomHashDim.push_back(hashNY);
-#endif
       geomHashDim.push_back(hashNZ);
       geomHashDim.push_back(hashN);
       netCDF::NcVar hash_gridR = ncFile_hash.addVar("gridR", netcdf_precision, hashNR);
       std::cout << "created dims2" << std::endl;
-#if USE3DTETGEOM > 0
-      netCDF::NcVar hash_gridY = ncFile_hash.addVar("gridY", netcdf_precision, hashNY);
-#endif
       netCDF::NcVar hash_gridZ = ncFile_hash.addVar("gridZ", netcdf_precision, hashNZ);
       netCDF::NcVar hash = ncFile_hash.addVar("hash", netCDF::ncInt, geomHashDim);
       std::cout << "created vars" << std::endl;
@@ -832,11 +838,15 @@ int main(int argc, char **argv, char **envp) {
       if (i > 0)
         ncIndex = nR_closeGeom[i - 1];
       hash_gridR.putVar(&closeGeomGridr[ncIndex]);
-#if USE3DTETGEOM > 0
-      if (i > 0)
-        ncIndex = nY_closeGeom[i - 1];
-      hash_gridY.putVar(&closeGeomGridy[ncIndex]);
-#endif
+      if( use3dtetgeom > 0 )
+      {
+        netCDF::NcDim hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
+        geomHashDim.push_back(hashNY);
+        netCDF::NcVar hash_gridY = ncFile_hash.addVar("gridY", netcdf_precision, hashNY);
+        if (i > 0)
+          ncIndex = nY_closeGeom[i - 1];
+        hash_gridY.putVar(&closeGeomGridy[ncIndex]);
+      }
 
       if (i > 0)
         ncIndex = nZ_closeGeom[i - 1];
@@ -849,7 +859,9 @@ int main(int argc, char **argv, char **envp) {
     }
   }
       std::cout << "created vars2" << std::endl;
-#elif GEOM_HASH > 1
+}
+else if( geom_hash > 1 )
+{
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
       int dataIndex = 0;
@@ -862,12 +874,13 @@ int main(int argc, char **argv, char **envp) {
       getVarFromFile(cfg, input_path + hashFile[i], geomHashCfg, "gridZString",
                      closeGeomGridz[dataIndex]);
       std::cout << "created vars3" << std::endl;
-#if USE3DTETGEOM > 0
-      if (i > 0)
-        dataIndex = nY_closeGeom[0];
-      getVarFromFile(cfg, input_path + hashFile[i], geomHashCfg, "gridYString",
-                     closeGeomGridy[dataIndex]);
-#endif
+      if( use3dtetgeom > 0 )
+      {
+        if (i > 0)
+          dataIndex = nY_closeGeom[0];
+        getVarFromFile(cfg, input_path + hashFile[i], geomHashCfg, "gridYString",
+                       closeGeomGridy[dataIndex]);
+      }
       if (i > 0)
         dataIndex = nR_closeGeom[0] * nY_closeGeom[0] * nZ_closeGeom[0] *
                     n_closeGeomElements[0];
@@ -886,7 +899,7 @@ int main(int argc, char **argv, char **envp) {
   MPI_Bcast(closeGeom.data(), nGeomHash, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+}
 
   int nR_closeGeom_sheath = 1;
   int nY_closeGeom_sheath = 1;
@@ -894,7 +907,9 @@ int main(int argc, char **argv, char **envp) {
   int n_closeGeomElements_sheath = 1;
   int nGeomHash_sheath = 1;
   std::string geomHashSheathCfg = "geometry_sheath.";
-#if GEOM_HASH_SHEATH == 1
+int geom_hash_sheath = use.get<int>( use::geom_hash_sheath );
+if( geom_hash_sheath == 1 )
+{
   if (world_rank == 0) {
     getVariable(cfg, geomHashSheathCfg + "nR_closeGeom", nR_closeGeom_sheath);
     getVariable(cfg, geomHashSheathCfg + "nZ_closeGeom", nZ_closeGeom_sheath);
@@ -902,10 +917,11 @@ int main(int argc, char **argv, char **envp) {
                 n_closeGeomElements_sheath);
     nGeomHash_sheath =
         nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
-#if USE3DTETGEOM > 0
-    getVariable(cfg, geomHashSheathCfg + "nY_closeGeom", nY_closeGeom_sheath);
-    nGeomHash_sheath = nY_closeGeom_sheath * nGeomHash_sheath;
-#endif
+    if( use3dtetgeom > 0 )
+    {
+      getVariable(cfg, geomHashSheathCfg + "nY_closeGeom", nY_closeGeom_sheath);
+      nGeomHash_sheath = nY_closeGeom_sheath * nGeomHash_sheath;
+    }
   }
 #if USE_MPI > 0
   MPI_Bcast(&nR_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -915,10 +931,11 @@ int main(int argc, char **argv, char **envp) {
   MPI_Bcast(&nGeomHash_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+}
 
-#if GEOM_HASH_SHEATH > 1
-  std::string hashFile_sheath;
+std::string hashFile_sheath;
+if( geom_hash_sheath > 1 )
+{
   if (world_rank == 0) {
     getVariable(cfg, geomHashSheathCfg + "fileString", hashFile_sheath);
     nR_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
@@ -930,11 +947,12 @@ int main(int argc, char **argv, char **envp) {
                        "nearestNelementsString");
     nGeomHash_sheath =
         nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
-#if USE3DTETGEOM > 0
-    nY_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
-                                         geomHashSheathCfg, "gridNyString");
-    nGeomHash_sheath = nY_closeGeom_sheath * nGeomHash_sheath;
-#endif
+    if( use3dtetgeom > 0 )
+    {
+      nY_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
+                                           geomHashSheathCfg, "gridNyString");
+      nGeomHash_sheath = nY_closeGeom_sheath * nGeomHash_sheath;
+    }
   }
 #if USE_MPI > 0
   MPI_Bcast(&nR_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -944,14 +962,15 @@ int main(int argc, char **argv, char **envp) {
   MPI_Bcast(&nGeomHash_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+}
 
   sim::Array<gitr_precision> closeGeomGridr_sheath(nR_closeGeom_sheath),
       closeGeomGridy_sheath(nY_closeGeom_sheath),
       closeGeomGridz_sheath(nZ_closeGeom_sheath);
   sim::Array<int> closeGeom_sheath(nGeomHash_sheath);
 
-#if GEOM_HASH_SHEATH == 1
+  if( geom_hash_sheath == 1 )
+  {
   gitr_precision hashX0_s, hashX1_s, hashY0_s, hashY1_s, hashZ0_s, hashZ1_s;
   if (world_rank == 0) {
     getVariable(cfg, geomHashSheathCfg + "hashX0", hashX0_s);
@@ -1074,7 +1093,9 @@ int main(int argc, char **argv, char **envp) {
 #if USE_CUDA
   cudaDeviceSynchronize();
 #endif
-#elif GEOM_HASH_SHEATH > 1
+}
+else if( geom_hash_sheath > 1 )
+{
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
@@ -1100,7 +1121,7 @@ int main(int argc, char **argv, char **envp) {
             MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+}
 
   int nR_Lc = 1;
   int nY_Lc = 1;
@@ -1111,7 +1132,10 @@ int main(int argc, char **argv, char **envp) {
   std::string connLengthCfg = "connectionLength.";
   std::string lcFile;
   if (world_rank == 0) {
-#if GENERATE_LC > 0
+/* Captain! */
+int generate_lc = use.get<int>( use::generate_lc );
+if( generate_lc > 0 )
+{
     getVariable(cfg, connLengthCfg + "fileString", lcFile);
     getVariable(cfg, connLengthCfg + "nX", nR_Lc);
     getVariable(cfg, connLengthCfg + "nY", nY_Lc);
@@ -1124,17 +1148,21 @@ int main(int argc, char **argv, char **envp) {
     getVariable(cfg, connLengthCfg + "netz1", z1_Lc);
     getVariable(cfg, connLengthCfg + "nTraceSteps", nTraceSteps);
     getVariable(cfg, connLengthCfg + "dr", dr);
-#else
-#if LC_INTERP > 1
-    nR_Lc =
-        getDimFromFile(cfg, input_path + lcFile, connLengthCfg, "gridNrString");
-    nY_Lc =
-        getDimFromFile(cfg, input_path + lcFile, connLengthCfg, "gridNyString");
-    nZ_Lc =
-        getDimFromFile(cfg, input_path + lcFile, connLengthCfg, "gridNzString");
-#endif
-#endif
+}
+else
+{
+  int lc_interp = use.get<int>( use::lc_interp );
+  if( lc_interp > 1 )
+  {
+      nR_Lc =
+          getDimFromFile(cfg, input_path + lcFile, connLengthCfg, "gridNrString");
+      nY_Lc =
+          getDimFromFile(cfg, input_path + lcFile, connLengthCfg, "gridNyString");
+      nZ_Lc =
+          getDimFromFile(cfg, input_path + lcFile, connLengthCfg, "gridNzString");
   }
+}
+}
 #if USE_MPI > 0
   MPI_Bcast(&nR_Lc, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&nY_Lc, 1, MPI_INT, 0, MPI_COMM_WORLD);
