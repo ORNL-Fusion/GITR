@@ -2156,6 +2156,7 @@ if( flowv_interp == 1 )
   int nPSEs = 1;
   std::string PSECfg = "backgroundPlasmaProfiles.Efield.";
 // sim::Array<float> preSheathEGridy(1);
+/* Captain! If-begin */
 #if USEPRESHEATHEFIELD > 0
 
   std::cout << "Using presheath Efield " << std::endl;
@@ -2350,6 +2351,7 @@ if( flowv_interp == 1 )
   sim::Array<gitr_precision> PSEr(nPSEs), PSEz(nPSEs), PSEt(nPSEs);
 
 #endif
+/* Captain! If-end */
   std::string outnamePSEfieldR = "PSEfieldR.m";
   std::string outnamePSEfieldZ = "PSEfieldZ.m";
   std::string outnamePSEGridR = "PSEgridR.m";
