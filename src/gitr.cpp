@@ -142,9 +142,6 @@ int main(int argc, char **argv, char **envp) {
     std::cout << "Successfully staged input and geometry file " << std::endl;
 
 // check binary compatibility with input file
-#if CHECK_COMPATIBILITY > 0
-    checkFlags(cfg);
-#endif
   }
   auto gitr_flags = new Flags(cfg);
     std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
@@ -271,13 +268,17 @@ int main(int argc, char **argv, char **envp) {
   }
 #if USE_MPI > 0
   MPI_Bcast(&nSurfaces, 1, MPI_INT, 0, MPI_COMM_WORLD);
-#if USE3DTETGEOM > 0
-  const int nBoundaryMembers = 41;
+  int use3dtetgeom = use.get<int>( use::use3dtetgeom );
+  int nBoundaryMembers;
+  if(use3dtetgeom)
+  {
+    nBoundaryMembers = 41;
+  }
+  else
+  {
+    int nBoundaryMembers = 39;
+  }
   int nIntMembers = 6;
-#else
-  const int nBoundaryMembers = 39;
-  int nIntMembers = 6;
-#endif
   int lengths[nBoundaryMembers] = {0};
   MPI_Aint offsets[nBoundaryMembers] = {};
   MPI_Datatype types[nBoundaryMembers] = {};
@@ -298,7 +299,9 @@ int main(int argc, char **argv, char **envp) {
 #endif
 
   gitr_precision biasPotential = 0.0;
-#if BIASED_SURFACE > 0
+  int biased_surface = use.get<int>(use::biased_surface);
+  if(biased_surface)
+  {
   if (world_rank == 0) {
     getVariable(cfg, "backgroundPlasmaProfiles.biasPotential", biasPotential);
   }
@@ -306,7 +309,7 @@ int main(int argc, char **argv, char **envp) {
   MPI_Bcast(&biasPotential, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+  }
 
   // create Surface data structures
   int nEdist = 1;
@@ -315,7 +318,9 @@ int main(int argc, char **argv, char **envp) {
   int nAdist = 1;
   gitr_precision A0dist = 0.0;
   gitr_precision Adist = 0.0;
-#if FLUX_EA > 0
+  int flux_ea = use.get<int>(use::flux_ea);
+  if(flux_ea)
+  {
   if (world_rank == 0) {
     getVariable(cfg, "surfaces.flux.nE", nEdist);
     getVariable(cfg, "surfaces.flux.E0", E0dist);
@@ -382,7 +387,7 @@ int main(int argc, char **argv, char **envp) {
   MPI_Bcast(&Adist, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+  }
   auto surfaces = new Surfaces(nSurfaces, nEdist, nAdist);
   surfaces->setSurface(nEdist, E0dist, Edist, nAdist, A0dist, Adist);
 
@@ -406,7 +411,9 @@ int main(int argc, char **argv, char **envp) {
   int nHashPointsTotal = 1;
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
-#if GEOM_HASH == 1
+  int geom_hash = use.get<int>( use::geom_hash);
+  if(geom_hash)
+  {
   //nR_closeGeomTotal = 0;
   //nY_closeGeomTotal = 0;
   //nZ_closeGeomTotal = 0;
@@ -419,14 +426,16 @@ int main(int argc, char **argv, char **envp) {
   MPI_Bcast(&nHashes, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+  }
   sim::Array<int> nR_closeGeom(nHashes, 0);
   sim::Array<int> nY_closeGeom(nHashes, 0);
   sim::Array<int> nZ_closeGeom(nHashes, 0);
   sim::Array<int> nHashPoints(nHashes, 0);
   sim::Array<int> n_closeGeomElements(nHashes, 0);
 
-#if GEOM_HASH == 1
+  /* Captain! */
+  if(geom_hash)
+  {
   if (world_rank == 0) {
     importHashNs(cfg, input_path, nHashes, "geometry_hash", nR_closeGeom.data(),
                  nY_closeGeom.data(), nZ_closeGeom.data(),
@@ -506,7 +515,7 @@ int main(int argc, char **argv, char **envp) {
   MPI_Barrier(MPI_COMM_WORLD);
   std::cout << " mpi broadcast hash finished" << std::endl;
 #endif
-#endif
+  }
 
 #if GEOM_HASH > 1
   if (world_rank == 0) {
