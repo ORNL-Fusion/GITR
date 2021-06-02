@@ -63,6 +63,8 @@
 #include <thrust/transform.h>
 #include "config_interface.h"
 
+using namespace netCDF;
+
 #if USE_DOUBLE
 typedef double gitr_precision;
 netCDF::NcType netcdf_precision = netCDF::ncDouble;
@@ -132,6 +134,7 @@ int main(int argc, char **argv, char **envp) {
     std::cout << "Open configuration file " << input_path << inputFile
               << std::endl;
     importLibConfig(cfg, input_path + inputFile);
+    checkFlags( cfg );
 
     // Parse and read geometry file
     std::string geomFile;
@@ -1131,9 +1134,9 @@ else if( geom_hash_sheath > 1 )
   int nTraceSteps;
   std::string connLengthCfg = "connectionLength.";
   std::string lcFile;
-  if (world_rank == 0) {
-/* Captain! */
 int generate_lc = use.get<int>( use::generate_lc );
+int lc_interp = use.get<int>( use::lc_interp );
+if (world_rank == 0) {
 if( generate_lc > 0 )
 {
     getVariable(cfg, connLengthCfg + "fileString", lcFile);
@@ -1151,7 +1154,6 @@ if( generate_lc > 0 )
 }
 else
 {
-  int lc_interp = use.get<int>( use::lc_interp );
   if( lc_interp > 1 )
   {
       nR_Lc =
@@ -1178,16 +1180,22 @@ else
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-#if USE3DTETGEOM > 0
+/* Captain! This one has something to do with generate_lc */
+if( use3dtetgeom > 0 )
+{
   nTracers = nR_Lc * nY_Lc * nZ_Lc;
-#else
+}
+else
+{
   nTracers = nR_Lc * nZ_Lc;
-#endif
+}
 
   sim::Array<gitr_precision> Lc(nTracers), s(nTracers);
   sim::Array<gitr_precision> gridRLc(nR_Lc), gridYLc(nY_Lc), gridZLc(nZ_Lc);
   sim::Array<int> noIntersectionNodes(nTracers);
-#if GENERATE_LC > 0
+
+if( generate_lc > 0 )
+{
   gitr_precision lcBuffer = 0.0;
   // if( !boost::filesystem::exists( lcFile ) )
   // {
@@ -1222,8 +1230,9 @@ else
   std::cout << "Creating tracer particles" << std::endl;
   thrust::counting_iterator<std::size_t> lcBegin(pair.first);
   thrust::counting_iterator<std::size_t> lcEnd(pair.second - 1);
-  auto forwardTracerParticles = new Particles(nTracers);
-  auto backwardTracerParticles = new Particles(nTracers);
+  /* Captain! Added new arguments to this Particles constructor */
+  auto forwardTracerParticles = new Particles(nTracers, 1, cfg, gitr_flags );
+  auto backwardTracerParticles = new Particles(nTracers, 1, cfg, gitr_flags );
   int addIndex = 0;
   std::cout << "Initializing tracer particles" << std::endl;
 
@@ -1238,6 +1247,8 @@ else
         forwardTracerParticles->setParticle(addIndex, gridRLc[i], gridYLc[j],
                                             gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0,
                                             0.0);
+        /* Captain! This one segfaults... but not the first one */
+        std::cout << "Ahoy, Captain! addIndex: " << addIndex << "nTracers: " << nTracers << std::endl;
         backwardTracerParticles->setParticle(addIndex, gridRLc[i], gridYLc[j],
                                              gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0,
                                              0.0);
@@ -1474,9 +1485,10 @@ else
   cudaDeviceSynchronize();
 #endif
   //}
-#endif
+}
 
-#if LC_INTERP > 1
+if( lc_interp > 1 )
+{
   std::cout << "Importing pre-existing connection length file" << std::endl;
   getVariable(cfg, connLengthCfg + "fileString", lcFile);
   getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "gridRString",
@@ -1487,7 +1499,7 @@ else
                  gridZLc);
   getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "LcString", Lc);
   getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "SString", s);
-#endif
+}
 
   // Background Plasma Temperature Initialization
   int nR_Temp = 1;
@@ -1495,22 +1507,26 @@ else
   int nZ_Temp = 1;
   int n_Temp = 1;
   std::string tempCfg = "backgroundPlasmaProfiles.Temperature.";
-#if TEMP_INTERP > 0
+int temp_interp = use.get<int>(use::temp_interp);
   std::string tempFile;
+if(temp_interp > 0 )
+{
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
     getVariable(cfg, tempCfg + "fileString", tempFile);
     nR_Temp =
         getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNrString");
-#if TEMP_INTERP > 1
+        if(temp_interp > 1 )
+        {
     nZ_Temp =
         getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNzString");
-#endif
-#if TEMP_INTERP > 2
+        }
+        if( temp_interp > 2 )
+        {
     nY_Temp =
         getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNyString");
-#endif
+        }
 #if USE_MPI > 0
   }
   MPI_Bcast(&nR_Temp, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -1518,7 +1534,7 @@ else
   MPI_Bcast(&nZ_Temp, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+}
 
   sim::Array<gitr_precision> TempGridr(nR_Temp), TempGridz(nZ_Temp), TempGridy(nY_Temp);
   n_Temp = nR_Temp * nY_Temp * nZ_Temp;
@@ -1527,24 +1543,29 @@ else
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-#if TEMP_INTERP == 0
+    if( temp_interp == 0 )
+    {
     getVariable(cfg, tempCfg + "ti", ti[0]);
     getVariable(cfg, tempCfg + "te", te[0]);
-#else
+    }
+    else
+    {
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridRString",
                  TempGridr[0]);
-#if TEMP_INTERP > 1
+  if( temp_interp > 1 )
+  {
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridZString",
                  TempGridz[0]);
-#endif
-#if TEMP_INTERP > 2
+  }
+  if( temp_interp > 2 )
+  {
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridYString",
                  TempGridy[0]);
-#endif
+  }
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "IonTempString", ti[0]);
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "ElectronTempString",
                  te[0]);
-#endif
+    }
 #if USE_MPI > 0
   }
 
@@ -1567,22 +1588,26 @@ else
   int nZ_Dens = 1;
   int n_Dens = 1;
   std::string densCfg = "backgroundPlasmaProfiles.Density.";
-#if DENSITY_INTERP > 0
+  int density_interp = use.get<int>( use::density_interp );
   std::string densFile;
+  if( density_interp > 0 )
+  {
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
     getVariable(cfg, densCfg + "fileString", densFile);
     nR_Dens =
         getDimFromFile(cfg, input_path + densFile, densCfg, "gridNrString");
-#if DENSITY_INTERP > 1
+        if( density_interp > 1 )
+        {
     nZ_Dens =
         getDimFromFile(cfg, input_path + densFile, densCfg, "gridNzString");
-#endif
-#if DENSITY_INTERP > 2
+        }
+        if(density_interp > 2 )
+        {
     nY_Dens =
         getDimFromFile(cfg, input_path + densFile, densCfg, "gridNyString");
-#endif
+        }
 #if USE_MPI > 0
   }
   MPI_Bcast(&nR_Dens, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -1590,7 +1615,7 @@ else
   MPI_Bcast(&nZ_Dens, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+  }
 
   sim::Array<gitr_precision> DensGridr(nR_Dens), DensGridz(nZ_Dens), DensGridy(nY_Dens);
   n_Dens = nR_Dens * nY_Dens * nZ_Dens;
@@ -1599,25 +1624,28 @@ else
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-#if DENSITY_INTERP == 0
+if( density_interp == 0 )
+{
     getVariable(cfg, densCfg + "ni", ni[0]);
     getVariable(cfg, densCfg + "ne", ne[0]);
-#else
+    } else {
   getVarFromFile(cfg, input_path + densFile, densCfg, "gridRString",
                  DensGridr[0]);
-#if DENSITY_INTERP > 1
+  if( density_interp > 1 )
+  {
   getVarFromFile(cfg, input_path + densFile, densCfg, "gridZString",
                  DensGridz[0]);
-#endif
-#if DENSITY_INTERP > 2
+  }
+  if( density_interp > 2 )
+  {
   getVarFromFile(cfg, input_path + densFile, densCfg, "gridYString",
                  DensGridy[0]);
-#endif
+  }
   getVarFromFile(cfg, input_path + densFile, densCfg, "IonDensityString",
                  ni[0]);
   getVarFromFile(cfg, input_path + densFile, densCfg, "ElectronDensityString",
                  ne[0]);
-#endif
+}
     std::cout << "Finished density import "
               << interp2dCombined(5.5, 0.0, -4.4, nR_Dens, nZ_Dens,
                                   &DensGridr.front(), &DensGridz.front(),
@@ -1658,13 +1686,16 @@ else
   int nZ_flowV = 1;
   int n_flowV = 1;
   std::string flowVCfg = "backgroundPlasmaProfiles.FlowVelocity.";
-#if FLOWV_INTERP == 1
+  int flowv_interp = use.get<int>( use::flowv_interp );
+  if( flowv_interp == 1 )
+  {
   nR_flowV = nR_Lc;
   nY_flowV = nY_Lc;
   nZ_flowV = nZ_Lc;
-#endif
-#if FLOWV_INTERP > 1
+  }
   std::string flowVFile;
+  if( flowv_interp > 1 )
+  {
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
@@ -1673,10 +1704,11 @@ else
         getDimFromFile(cfg, input_path + flowVFile, flowVCfg, "gridNrString");
     nZ_flowV =
         getDimFromFile(cfg, input_path + flowVFile, flowVCfg, "gridNzString");
-#if FLOWV_INTERP > 2
+    if( flowv_interp > 2 )
+    {
     nY_flowV =
         getDimFromFile(cfg, input_path + flowVFile, flowVCfg, "gridNyString");
-#endif
+    }
 #if USE_MPI > 0
   }
   MPI_Bcast(&nR_flowV, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -1684,8 +1716,7 @@ else
   MPI_Bcast(&nZ_flowV, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
-
+}
   sim::Array<gitr_precision> flowVGridr(nR_flowV), flowVGridy(nY_flowV),
       flowVGridz(nZ_flowV);
   n_flowV = nR_flowV * nY_flowV * nZ_flowV;
@@ -1694,12 +1725,16 @@ else
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-#if FLOWV_INTERP == 0
+  if( flowv_interp == 0 )
+  {
     getVariable(cfg, flowVCfg + "flowVr", flowVr[0]);
     getVariable(cfg, flowVCfg + "flowVy", flowVt[0]);
     getVariable(cfg, flowVCfg + "flowVz", flowVz[0]);
-#else
-#if FLOWV_INTERP > 1
+  }
+  else
+  {
+    if( flowv_interp > 1 )
+    {
   getVarFromFile(cfg, input_path + flowVFile, flowVCfg, "gridRString",
                  flowVGridr[0]);
   getVarFromFile(cfg, input_path + flowVFile, flowVCfg, "gridZString",
@@ -1710,12 +1745,13 @@ else
                  flowVt[0]);
   getVarFromFile(cfg, input_path + flowVFile, flowVCfg, "flowVzString",
                  flowVz[0]);
-#endif
-#if FLOWV_INTERP > 2
+    }
+    if( flowv_interp > 2 )
+    {
   getVarFromFile(cfg, input_path + flowVFile, flowVCfg, "gridYString",
                  flowVGridy[0]);
-#endif
-#endif
+    }
+  }
 #if USE_MPI > 0
   }
   MPI_Bcast(flowVGridr.data(), nR_flowV, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -1726,7 +1762,8 @@ else
   MPI_Bcast(flowVz.data(), n_flowV, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#if FLOWV_INTERP == 1
+if( flowv_interp == 1 )
+{
   for (int i = 0; i < nR_flowV; i++) {
     std::cout << " !!! gridRLc " << gridRLc[i] << std::endl;
   }
@@ -1739,11 +1776,12 @@ else
   }
   std::cout << " !!! flowvgridr0 " << flowVGridr[0] << std::endl;
   int nFlowVs = nR_Lc * nZ_Lc;
-#if LC_INTERP == 3
+  if( lc_interp == 3 )
+  {
   for (int i = 0; i < nY_flowV; i++)
     flowVGridy[i] = gridYLc[i];
   nFlowVs = nR_Lc * nY_Lc * nZ_Lc;
-#endif
+  }
   gitr_precision thisY = 0.0;
   gitr_precision cs0 = 0.0;
   gitr_precision teLocal = 0.0;
@@ -1756,6 +1794,7 @@ else
   gitr_precision absS = 0.0;
   std::cout << "Beginning analytic flowV calculation " << std::endl;
   for (int i = 0; i < nR_Lc; i++) {
+/* Captain! Here. You need Tim's help to test with LC_INTERP = 3 */
 #if LC_INTERP == 3
     for (int k = 0; k < nY_Lc; k++) {
       thisY = flowVGridy[k];
@@ -1886,7 +1925,7 @@ else
   OUTPUT2d(profiles_folder, outnameFlowVz, nR_flowV, nZ_flowV, &flowVz.front());
   OUTPUT2d(profiles_folder, outnameFlowVt, nR_flowV, nZ_flowV, &flowVt.front());
 #endif
-#endif
+}
 
   // Background plasma temperature gradient field intitialization
   int nR_gradT = 1;
