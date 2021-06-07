@@ -1794,7 +1794,6 @@ if( flowv_interp == 1 )
   gitr_precision absS = 0.0;
   std::cout << "Beginning analytic flowV calculation " << std::endl;
   for (int i = 0; i < nR_Lc; i++) {
-/* Captain! Here. You need Tim's help to test with LC_INTERP = 3 */
 #if LC_INTERP == 3
     for (int k = 0; k < nY_Lc; k++) {
       thisY = flowVGridy[k];
