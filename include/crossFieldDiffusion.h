@@ -16,15 +16,25 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 
+/* How do particles move perpendicular to the B field */
 struct crossFieldDiffusion { 
+  /* control flow */
     Flags* flags;
+    /* particles we are operating on - changing their positions */
     Particles *particlesPointer;
+    /* prior to time adaptivity dt was a constant, now it can adapt */
     const gitr_precision dt;
+    /* how large is the step */
+    /* most unknown thing is plasma physics! right here */
 	const gitr_precision diffusionCoefficient;
     int nR_Bfield;
     int nZ_Bfield;
+    /* 2D grid - describes Bfield spacial domain */
     gitr_precision * BfieldGridRDevicePointer;
     gitr_precision * BfieldGridZDevicePointer;
+    /* particles are diffusing perpendicular to */
+    /* ( R0, Z0, T0 ) ----> particle 0? No! map each particle into where it belongs spacially
+       in that vector field  */
     gitr_precision * BfieldRDevicePointer;
     gitr_precision * BfieldZDevicePointer;
     gitr_precision * BfieldTDevicePointer;
@@ -57,6 +67,10 @@ struct crossFieldDiffusion {
         state(_state) {
   }
 
+/* Monte Carlo solution to diffusion equation - we need this tested */
+/* semi-non-deterministic test - tolerance type test */
+/* straight field lines */
+/* diffusion equation - start particles at a known point. */
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const { 
 
@@ -112,6 +126,8 @@ void operator()(std::size_t indx) const {
             gitr_precision r3=dist(state[2]);
 #endif
 #endif
+            /* magnitude of spacial step for 1 particle? */
+            /* m^2 / sec units for diffusionCoefficient */
 		step = std::sqrt(2*diffusionCoefficient*dt_step);
 #if USEPERPDIFFUSION > 1
     gitr_precision plus_minus1 = floor(r4 + 0.5)*2 - 1;
