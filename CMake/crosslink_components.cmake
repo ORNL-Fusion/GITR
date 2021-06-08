@@ -12,6 +12,8 @@ target_link_libraries( utils
                        interp2d
                        netcdf )
 
+target_link_libraries( boris thrust )
+
 # Improvement: Conditionally link based on whether the GITR_USE_<component> clause is enabled
 target_link_libraries( GITR 
                        ionize
@@ -40,8 +42,8 @@ endif()
 
 # link test targets
 target_link_libraries( config_interface_tests test_utils libconfig config_interface )
-#target_link_libraries( coulomb_tests 
-#                       test_utils libconfig thrust interp2d utils flags netcdf mpi )
+target_link_libraries( coulomb_tests 
+                       test_utils libconfig thrust interp2d utils flags netcdf mpi boris fields )
 #target_link_libraries( atomic_tests test_utils interp2d utils flags mpi )
-#target_link_libraries( field_tests test_utils interp2d libconfig utils netcdf mpi fields )
-#target_link_libraries( file_io_tests test_utils libconfig utils flags )
+target_link_libraries( field_tests test_utils interp2d libconfig utils netcdf mpi fields boris )
+target_link_libraries( file_io_tests test_utils libconfig utils flags boris )
