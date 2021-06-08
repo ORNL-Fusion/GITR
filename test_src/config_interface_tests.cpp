@@ -9,7 +9,7 @@
 TEST_CASE( "Simulation Configuration" )
 {
   /* Open the file and get a field out */
-  class libconfig_string_query query( LIBCONFIG_UNIT_TEST_FILE );
+  class libconfig_string_query query( CONFIG_INTERFACE_UNIT_TEST_FILE );
 
   SECTION( "read raw libconfig data" )
   {

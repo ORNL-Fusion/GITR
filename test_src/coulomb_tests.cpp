@@ -5,6 +5,7 @@
 #include "Fields.h"
 #include <thrust/execution_policy.h>
 #include <fstream>
+#include "test_data_filepath.hpp"
 #if USE_DOUBLE
 typedef double gitr_precision;
 #else
@@ -170,7 +171,7 @@ TEST_CASE("Coulomb collision", "tests") {
     libconfig::Config cfg;
     cfg.setAutoConvert(true);
     std::string file = "../test/coulomb.cfg";
-    importLibConfig(cfg, file);
+    importLibConfig(cfg, COULOMB_UNIT_TEST_FILE );
     std::string input_path = "../test/";
   
     auto gitr_flags = new Flags(cfg);
@@ -303,7 +304,7 @@ auto gitr_start_clock = gitr_time::now();
     libconfig::Config cfg;
     cfg.setAutoConvert(true);
     std::string file = "../test/coulomb.cfg";
-    importLibConfig(cfg, file);
+    importLibConfig(cfg, COULOMB_UNIT_TEST_FILE );
     std::string input_path = "../test/";
   
     auto gitr_flags = new Flags(cfg);

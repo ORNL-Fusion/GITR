@@ -6,16 +6,11 @@
 
 #include "libconfig.h++"
 
-/* instead of yagni, make an extendability note */
-
 /* This class wraps the libconfig object and inserts
    a key-string mapping in between. This creates an
    internal separation between the internal representation
    of the configuration and the I/O details of obtaining it
    */
-
-/* Captain! How should the local vs full module path be handled? How about functions
-   that concatenate and return vs just getting the local path? */
 
 /* extensibility note: augment this to derive from a string query base class */
 class libconfig_string_query
@@ -41,8 +36,6 @@ class libconfig_string_query
   libconfig::Config cfg;
 };
 
-/* Captain! Can you use reflection to generate the names of the fields based on the
-   key? */
 class config_module_base
 {
   public:
@@ -78,14 +71,10 @@ class config_module_base
   class libconfig_string_query const &query;
 };
 
-/* Captain! Move the derived stuff into different files! Then you can implement these
-   specifically for the unit tests and migrate them over to the main codebase if
-   they end up being useful. Also add documentation about how to add new configurations */
 class ionization_process final : public config_module_base
 {
   public:
 
-  /* Captain! Document this */
   enum : int
   {
     file_string,
@@ -105,7 +94,6 @@ class impurity_particle_source final : public config_module_base
 {
   public:
 
-  /* Captain! Document this */
   enum : int
   {
     source_material_z,
@@ -117,7 +105,6 @@ class impurity_particle_source final : public config_module_base
                             std::string module_path = "impurityParticleSource" );
 };
 
-/* Captain! Filling in these now */
 class use final : public config_module_base
 {
   public:
@@ -127,7 +114,6 @@ class use final : public config_module_base
     cuda,
     use_openmp,
     mpi,
-    /* Captain! Can the next 2 be combined into 1? */
     useionization,
     use_ionization,
     userecombination,
