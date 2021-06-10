@@ -69,26 +69,7 @@ TEST_CASE("Atomic physics", "tests") {
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
                    curandInitialize<>(&state1.front(), 0));
     
-    // GITR particle initial conditions
-    gitr_precision x = 0.0;
-    gitr_precision y = 0.0;
-    gitr_precision z = 0.0;
-    gitr_precision vx = 3226.0;
-    gitr_precision vy = 0.0;
-    gitr_precision vz = 0.0;
-    gitr_precision charge = 1.0;
-    gitr_precision amu = 184.0;
-    
     // GITR background fields
-    // flow velocity = 0
-    int nR_flowV = 1;
-    int nZ_flowV = 1;
-    sim::Array<gitr_precision> flowVGridr(1, 0.0);
-    sim::Array<gitr_precision> flowVGridz(1, 0.0);
-    sim::Array<gitr_precision> flowVr(1, 0.0);
-    sim::Array<gitr_precision> flowVz(1, 0.0);
-    sim::Array<gitr_precision> flowVt(1, 0.0);
-
     // Density = 1e19 m^{-3}
     int nR_Dens = 1;
     int nZ_Dens = 1;
@@ -105,19 +86,6 @@ TEST_CASE("Atomic physics", "tests") {
     sim::Array<gitr_precision> ti(1,20.0);
     sim::Array<gitr_precision> te(1,20.0);
     
-    // Background ion species charge and mass
-    gitr_precision background_Z = 1.0;
-    gitr_precision background_amu = 2.0;
-
-    // B-field (zero)
-    int nR_Bfield = 1;
-    int nZ_Bfield = 1;
-    sim::Array<gitr_precision> BfieldGridR(1,0.0);
-    sim::Array<gitr_precision> BfieldGridZ(1,0.0);
-    sim::Array<gitr_precision> BfieldR(1,0.0);
-    sim::Array<gitr_precision> BfieldZ(1,0.0);
-    sim::Array<gitr_precision> BfieldT(1,0.0);
-    
     // Ionization coefficients
     int nCS_Ionize = 1, nCS_Recombine = 1;
     std::string ionizeNDens,ionizeNTemp, recombNDens, recombNTemp;
@@ -126,7 +94,6 @@ TEST_CASE("Atomic physics", "tests") {
       *recombDensGrid, *recombTempGrid, *recombRCvarChar;
     std::string ionizeFile, recombFile;
     int nTemperaturesIonize = 1, nDensitiesIonize = 1;
-    int i0, i1, i2, i3, i4;
     int nTemperaturesRecombine = 1, nDensitiesRecombine = 1;
     if (cfg.lookupValue("impurityParticleSource.ionization.fileString",
                         ionizeFile) &&
@@ -175,23 +142,23 @@ TEST_CASE("Atomic physics", "tests") {
           << "ERROR: Could not get ionization string info from input file "
           << std::endl;
     }
-    i0 = read_profileNs(input_path + ionizeFile, ionizeNcs, recombNcs,
-                        nCS_Ionize, nCS_Recombine);
+    read_profileNs(input_path + ionizeFile, ionizeNcs, recombNcs,
+                   nCS_Ionize, nCS_Recombine);
 
-    i1 = read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
-                        nDensitiesIonize, nTemperaturesIonize);
+    read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
+                   nDensitiesIonize, nTemperaturesIonize);
 
-    i3 = read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
-                        nDensitiesRecombine, nTemperaturesRecombine);
+    read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
+                   nDensitiesRecombine, nTemperaturesRecombine);
     sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
                                          nDensitiesIonize);
     sim::Array<gitr_precision> gridTemperature_Ionization(nTemperaturesIonize),
       gridDensity_Ionization(nDensitiesIonize);
     
-    i2 = read_profiles(
-        input_path + ionizeFile, nTemperaturesIonize, nDensitiesIonize,
-        ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
-        gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
+    read_profiles(
+      input_path + ionizeFile, nTemperaturesIonize, nDensitiesIonize,
+      ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
+      gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
     
     // Time step for this test
     gitr_precision dt = 1.0e-5;
@@ -301,23 +268,6 @@ TEST_CASE("Atomic physics", "tests") {
 
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end, rand2);
     
-    gitr_precision x = 0.0;
-    gitr_precision y = 0.0;
-    gitr_precision z = 0.0;
-    gitr_precision vx = 3226.0;
-    gitr_precision vy = 0.0;
-    gitr_precision vz = 0.0;
-    gitr_precision charge = 1.0;
-    gitr_precision amu = 184.0;
-    
-    int nR_flowV = 1;
-    int nZ_flowV = 1;
-    sim::Array<gitr_precision> flowVGridr(1, 0.0);
-    sim::Array<gitr_precision> flowVGridz(1, 0.0);
-    sim::Array<gitr_precision> flowVr(1, 0.0);
-    sim::Array<gitr_precision> flowVz(1, 0.0);
-    sim::Array<gitr_precision> flowVt(1, 0.0);
-    
     int nR_Dens = 1;
     int nZ_Dens = 1;
     sim::Array<gitr_precision> DensGridr(1, 0.0);
@@ -331,16 +281,6 @@ TEST_CASE("Atomic physics", "tests") {
     sim::Array<gitr_precision> TempGridz(1, 0.0);
     sim::Array<gitr_precision> ti(1,20.0);
     sim::Array<gitr_precision> te(1,20.0);
-    gitr_precision background_Z = 1.0;
-    gitr_precision background_amu = 2.0;
-    
-    int nR_Bfield = 1;
-    int nZ_Bfield = 1;
-    sim::Array<gitr_precision> BfieldGridR(1,0.0);
-    sim::Array<gitr_precision> BfieldGridZ(1,0.0);
-    sim::Array<gitr_precision> BfieldR(1,0.0);
-    sim::Array<gitr_precision> BfieldZ(1,0.0);
-    sim::Array<gitr_precision> BfieldT(1,0.0);
   
     int nCS_Ionize = 1, nCS_Recombine = 1;
     const char *ionizeNcs, *ionizeNDens, *ionizeNTemp, *ionizeDensGrid,
@@ -348,7 +288,6 @@ TEST_CASE("Atomic physics", "tests") {
       *recombDensGrid, *recombTempGrid, *recombRCvarChar;
     std::string ionizeFile, recombFile;
     int nTemperaturesIonize = 1, nDensitiesIonize = 1;
-    int i0, i1, i2, i3, i4;
     int nTemperaturesRecombine = 1, nDensitiesRecombine = 1;
     if (cfg.lookupValue("impurityParticleSource.ionization.fileString",
                         ionizeFile) &&
@@ -396,19 +335,20 @@ TEST_CASE("Atomic physics", "tests") {
           << "ERROR: Could not get ionization string info from input file "
           << std::endl;
     }
-    i0 = read_profileNs(input_path + ionizeFile, ionizeNcs, recombNcs,
-                        nCS_Ionize, nCS_Recombine);
+    read_profileNs(input_path + ionizeFile, ionizeNcs, recombNcs,
+                   nCS_Ionize, nCS_Recombine);
 
-    i1 = read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
-                        nDensitiesIonize, nTemperaturesIonize);
+    read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
+                   nDensitiesIonize, nTemperaturesIonize);
 
-    i3 = read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
-                        nDensitiesRecombine, nTemperaturesRecombine);
+    read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
+                   nDensitiesRecombine, nTemperaturesRecombine);
     sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
                                          nDensitiesIonize);
     sim::Array<gitr_precision> gridTemperature_Ionization(nTemperaturesIonize),
       gridDensity_Ionization(nDensitiesIonize);
-    i2 = read_profiles(
+    
+    read_profiles(
         input_path + ionizeFile, nTemperaturesIonize, nDensitiesIonize,
         ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
         gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
@@ -509,23 +449,6 @@ TEST_CASE("Atomic physics", "tests") {
     curandInitialize2<rand_type> rand2(&state1.front(),&seed.front(), &sequence.front(),&offset.front());
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,rand2);
     
-    gitr_precision x = 0.0;
-    gitr_precision y = 0.0;
-    gitr_precision z = 0.0;
-    gitr_precision vx = 3226.0;
-    gitr_precision vy = 0.0;
-    gitr_precision vz = 0.0;
-    gitr_precision charge = 1.0;
-    gitr_precision amu = 184.0;
-    
-    int nR_flowV = 1;
-    int nZ_flowV = 1;
-    sim::Array<gitr_precision> flowVGridr(1, 0.0);
-    sim::Array<gitr_precision> flowVGridz(1, 0.0);
-    sim::Array<gitr_precision> flowVr(1, 0.0);
-    sim::Array<gitr_precision> flowVz(1, 0.0);
-    sim::Array<gitr_precision> flowVt(1, 0.0);
-    
     int nR_Dens = 1;
     int nZ_Dens = 1;
     sim::Array<gitr_precision> DensGridr(1, 0.0);
@@ -539,23 +462,13 @@ TEST_CASE("Atomic physics", "tests") {
     sim::Array<gitr_precision> TempGridz(1, 0.0);
     sim::Array<gitr_precision> ti(1,20.0);
     sim::Array<gitr_precision> te(1,20.0);
-    gitr_precision background_Z = 1.0;
-    gitr_precision background_amu = 2.0;
-    
-    int nR_Bfield = 1;
-    int nZ_Bfield = 1;
-    sim::Array<gitr_precision> BfieldGridR(1,0.0);
-    sim::Array<gitr_precision> BfieldGridZ(1,0.0);
-    sim::Array<gitr_precision> BfieldR(1,0.0);
-    sim::Array<gitr_precision> BfieldZ(1,0.0);
-    sim::Array<gitr_precision> BfieldT(1,0.0);
+
     int nCS_Ionize = 1, nCS_Recombine = 1;
     const char *ionizeNcs, *ionizeNDens, *ionizeNTemp, *ionizeDensGrid,
       *ionizeTempGrid, *ionizeRCvarChar, *recombNcs, *recombNDens, *recombNTemp,
       *recombDensGrid, *recombTempGrid, *recombRCvarChar;
     std::string ionizeFile, recombFile;
     int nTemperaturesIonize = 1, nDensitiesIonize = 1;
-    int i0, i1, i2, i3, i4;
     int nTemperaturesRecombine = 1, nDensitiesRecombine = 1;
     if (cfg.lookupValue("impurityParticleSource.ionization.fileString",
                         ionizeFile) &&
@@ -600,14 +513,14 @@ TEST_CASE("Atomic physics", "tests") {
           << "ERROR: Could not get ionization string info from input file "
           << std::endl;
     }
-    i0 = read_profileNs(input_path + ionizeFile, ionizeNcs, recombNcs,
-                        nCS_Ionize, nCS_Recombine);
+    read_profileNs(input_path + ionizeFile, ionizeNcs, recombNcs,
+                   nCS_Ionize, nCS_Recombine);
 
-    i1 = read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
-                        nDensitiesIonize, nTemperaturesIonize);
+    read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
+                   nDensitiesIonize, nTemperaturesIonize);
 
-    i3 = read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
-                        nDensitiesRecombine, nTemperaturesRecombine);
+    read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
+                   nDensitiesRecombine, nTemperaturesRecombine);
   
     sim::Array<gitr_precision> gridTemperature_Ionization(nTemperaturesIonize),
       gridDensity_Ionization(nDensitiesIonize);
@@ -617,15 +530,15 @@ TEST_CASE("Atomic physics", "tests") {
       gridDensity_Recombination(nDensitiesRecombine);
     sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
                                          nDensitiesIonize);
-    i4 = read_profiles(
-        input_path + recombFile, nTemperaturesRecombine, nDensitiesRecombine,
-        recombTempGrid, gridTemperature_Recombination, recombDensGrid,
-        gridDensity_Recombination, recombRCvarChar, rateCoeff_Recombination);
+    read_profiles(
+      input_path + recombFile, nTemperaturesRecombine, nDensitiesRecombine,
+      recombTempGrid, gridTemperature_Recombination, recombDensGrid,
+      gridDensity_Recombination, recombRCvarChar, rateCoeff_Recombination);
     
-    i2 = read_profiles(
-        input_path + ionizeFile, nTemperaturesIonize, nDensitiesIonize,
-        ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
-        gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
+    read_profiles(
+      input_path + ionizeFile, nTemperaturesIonize, nDensitiesIonize,
+      ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
+      gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
     
     gitr_precision dt = getVariable_cfg<gitr_precision> (cfg,"timeStep.dt");
     int nT = getVariable_cfg<int> (cfg,"timeStep.nT");
@@ -687,7 +600,6 @@ TEST_CASE("Atomic physics", "tests") {
     gold[8] = 0.00742343038943;
     gold[9] = 0.00012814360176;
 
-    gitr_precision scale = 0.02;
     gitr_precision margin = 500.0/nParticles;
     gitr_precision epsilon = 0.05;
     REQUIRE(compareVectors<gitr_precision>(charge_counts,gold,epsilon,margin));
