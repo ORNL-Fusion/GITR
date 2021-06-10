@@ -58,20 +58,8 @@ public:
   sim::Array<gitr_precision> leakZ;
 #ifdef __CUDACC__
   sim::Array<curandState> stream_ionize;
-  //sim::Array<curandState> streams_rec;
-  //sim::Array<curandState> streams_collision1;
-  //sim::Array<curandState> streams_collision2;
-  //sim::Array<curandState> streams_collision3;
-  //sim::Array<curandState> streams_diff;
-  //sim::Array<curandState> streams_surf;
 #else
   sim::Array<std::mt19937> stream_ionize;
-  //sim::Array<std::mt19937> streams_rec;
-  //sim::Array<std::mt19937> streams_collision1;
-  //sim::Array<std::mt19937> streams_collision2;
-  //sim::Array<std::mt19937> streams_collision3;
-  //sim::Array<std::mt19937> streams_diff;
-  //sim::Array<std::mt19937> streams_surf;
 #endif
 
   sim::Array<gitr_precision> hitWall;
@@ -95,13 +83,11 @@ public:
   sim::Array<gitr_precision> time;
   sim::Array<bool> advance;
 
-  //  void BorisMove(double dt, double xMinV, double xMaxV, double yMin, double
-  //  yMax, double zMin, double zMax);
-
-  //  void Ionization(double dt);
   CUDA_CALLABLE_MEMBER
-  void setParticle(int indx, gitr_precision x, gitr_precision y, gitr_precision z, gitr_precision Ex, gitr_precision Ey,
-                   gitr_precision Ez, gitr_precision Z, gitr_precision amu, gitr_precision charge) {
+  void setParticle(int indx, gitr_precision x, gitr_precision y, gitr_precision z,
+                   gitr_precision Ex, gitr_precision Ey, gitr_precision Ez,
+                   gitr_precision Z, gitr_precision amu, gitr_precision charge) 
+  {
 
     // this->index[indx] = indx;
     this->xprevious[indx] = x;
@@ -116,10 +102,6 @@ public:
     /* Captain! This segfaults */
     this->hitWall[indx] = 0.0;
     this->wallIndex[indx] = 0;
-    //        float Ex,Ey,Ez;
-    //        Ex = E*cos(theta)*sin(phi);
-    //        Ey = E*sin(theta)*sin(phi);
-    //        Ez = E*cos(phi);
     this->vx[indx] =
         Ex / std::abs(Ex) *
         std::sqrt(2.0 * std::abs(Ex) * 1.60217662e-19 / (amu * 1.6737236e-27));
@@ -136,13 +118,14 @@ public:
       this->vy[indx] = 0.0;
     if (Ez == 0.0)
       this->vz[indx] = 0.0;
-    // std::cout << " velocity " << this->vx[indx] << " " << this->vy[indx] << "
-    // " << this->vz[indx] << std::endl;
   };
 
   CUDA_CALLABLE_MEMBER
-  void setParticleV(int indx, gitr_precision x, gitr_precision y, gitr_precision z, gitr_precision Vx, gitr_precision Vy,
-                    gitr_precision Vz, gitr_precision Z, gitr_precision amu, gitr_precision charge,gitr_precision dt) {
+  void setParticleV(int indx, gitr_precision x, gitr_precision y, gitr_precision z,
+                    gitr_precision Vx, gitr_precision Vy, gitr_precision Vz,
+                    gitr_precision Z, gitr_precision amu, gitr_precision charge,
+                    gitr_precision dt)
+  {
     int indTmp = indx;
     this->index[indx] = indTmp;
     this->xprevious[indx] = x;
@@ -162,8 +145,10 @@ public:
     this->v[indx] = std::sqrt(Vx * Vx + Vy * Vy + Vz * Vz);
     this->dt[indx] = dt;
   };
+
   CUDA_CALLABLE_MEMBER
-  void swapP(int indx, int n) {
+  void swapP(int indx, int n)
+  {
     int iT = this->index[indx];
     gitr_precision xT = this->x[indx];
     gitr_precision yT = this->y[indx];
@@ -264,103 +249,70 @@ public:
   };
   
   CUDA_CALLABLE_MEMBER
-  Particles(std::size_t nP,std::size_t nStreams,libconfig::Config &cfg, Flags *gitr_flags) : 
+  Particles(std::size_t nP,std::size_t nStreams,libconfig::Config &cfg, Flags *gitr_flags) :
     nParticles{getVariable_cfg<unsigned int> (cfg,"impurityParticleSource.nP")},
-    index{nParticles, 0}, 
-    x{nP,0.0}, 
-    y{nP,0.0}, 
-    z{nP,0.0}, 
+    index{nParticles, 0},
+    x{nP,0.0},
+    y{nP,0.0},
+    z{nP,0.0},
     xprevious{nParticles,0.0},
-    yprevious{nParticles,0.0}, 
+    yprevious{nParticles,0.0},
     zprevious{nParticles,0.0},
-    v{nParticles, 0.0}, 
-    vx{nParticles,std::sqrt(static_cast<gitr_precision>(2.0*getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
-        1.602e-19/getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27))*
-    std::cos(getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.theta"))*
-    std::sin(getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.phi"))}, 
-    vy{nParticles,std::sqrt(static_cast<gitr_precision>(2.0*getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
-		    1.602e-19/getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27))*
-    std::sin(getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.theta"))*
-    std::sin(getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.phi"))}, 
-    vz{nParticles,std::sqrt(static_cast<gitr_precision>(2.0*getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.energy_eV")*
-		    1.602e-19/getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27))*
-    std::cos(getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.phi"))}, 
-    Z{nParticles},
-    amu{nParticles,getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.impurity_amu")}, 
-    charge{nParticles,getVariable_cfg<gitr_precision> (cfg,"impurityParticleSource.initialConditions.charge")}, 
-    newVelocity{nParticles}, 
-    nu_s{nParticles}, 
-    vD{nParticles, 0.0}, 
-    tt{nParticles, 0}, 
-    hasLeaked{nParticles, 0}, 
-    leakZ{nParticles,0.0}, 
+    v{nParticles, 0.0},
+    vx{nParticles,std::sqrt(static_cast<gitr_precision>(2.0*getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.energy_eV")*
+          1.602e-19/getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27))*
+          std::cos(getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.theta"))*
+          std::sin(getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.phi"))},
+    vy{nParticles,std::sqrt(static_cast<gitr_precision>(2.0*getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.energy_eV")*
+          1.602e-19/getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27))*
+          std::sin(getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.theta"))*
+          std::sin(getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.phi"))},
+    vz{nParticles,std::sqrt(static_cast<gitr_precision>(2.0*getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.energy_eV")*
+          1.602e-19/getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27))*
+          std::cos(getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.phi"))},
+    Z{nParticles,0.0},
+    amu{nParticles,getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.impurity_amu")},
+    charge{nParticles,getVariable_cfg<gitr_precision>
+          (cfg,"impurityParticleSource.initialConditions.charge")},
+    newVelocity{nParticles},
+    nu_s{nParticles},
+    vD{nParticles, 0.0},
+    tt{nParticles, 0},
+    hasLeaked{nParticles, 0},
+    leakZ{nParticles,0.0},
     stream_ionize{nParticles},
-
-//streams_rec{nStreams},streams_collision1{nStreams},streams_collision2{nStreams},
-  //    streams_collision3{nStreams},streams_diff{nStreams},streams_surf{nStreams},
     hitWall{nParticles, 0.0},
     surfaceHit{nParticles, -1},
-    firstCollision{nParticles, 1}, 
-    transitTime{nParticles, 0.0}, 
+    firstCollision{nParticles, 1},
+    transitTime{nParticles, 0.0},
     distTraveled{nParticles, 0.0},
     wallIndex{nParticles,0},
-    perpDistanceToSurface{nParticles,0.0}, 
-    test{nParticles, 0.0}, 
+    perpDistanceToSurface{nParticles,0.0},
+    test{nParticles, 0.0},
     test0{nParticles, 0.0},
-    test1{nParticles, 0.0}, 
-    test2{nParticles, 0.0}, 
-    test3{nParticles, 0.0}, 
+    test1{nParticles, 0.0},
+    test2{nParticles, 0.0},
+    test3{nParticles, 0.0},
     test4{nParticles, 0.0},
-    distanceTraveled{nParticles,0.0}, 
-    weight{nParticles, 1.0}, 
+    distanceTraveled{nParticles,0.0},
+    weight{nParticles, 1.0},
     firstIonizationZ{nParticles, 0.0},
     firstIonizationT{nParticles, 0.0},
     dt{nParticles,0.0},
     time{nParticles,0.0},
     advance{nParticles,false} {};
-  
-  //CUDA_CALLABLE_MEMBER_DEVICE
-  //      #if __CUDACC__  
-  //sim::Array<curandState> initialize_random_streams(int nStreams,libconfig::Config &cfg, Flags *gitr_flags)
-  //{
-  //        sim::Array<curandState> stream(nStreams);	  
-  //      #else      
-  //sim::Array<std::mt19937> initialize_random_streams(int nStreams,libconfig::Config &cfg, Flags *gitr_flags)
-  //{
-  //  sim::Array<std::mt19937> stream(nStreams);
-  //#endif
-//
-//    if(gitr_flags->FIXED_SEEDS)
-//    {
-//      int seed0 = getVariable_cfg<int> (cfg,"operators.ionization.seed");
-//      for (int i =0;i < nParticles; i++) 
-//      {
-//        #if __CUDACC__  
-//          curand_init(i, 0, 0, &stream[i]);
-//        #else      
-//          std::mt19937 s0(seed0+i);
-//          stream_ionize[i] = s0;
-//        #endif
-//      }
-//    }
-//    else
-//    {
-//      
-//      std::random_device randDeviceInit;
-//      for (int i =0;i < nStreams; i++) 
-//      {
-//        #if __CUDACC__  
-//          curand_init(clock64(), 0, 0, &stream[i]);
-//        #else      
-//          std::mt19937 s0(randDeviceInit());
-//          stream[i] = s0;
-//        #endif
-//      }
-//    }
-//     
-//    return stream;
-//  }
-
 };
 
 #endif
