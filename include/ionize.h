@@ -49,7 +49,7 @@ double get_rand_double(std::mt19937 *state,int indx);
 
 #endif
 
-template <typename T=std::mt19937> 
+template <typename T=std::mt19937>
 struct ionize {
   Flags *flags;
   Particles *particlesPointer;
@@ -71,34 +71,18 @@ struct ionize {
   gitr_precision dt;
   gitr_precision tion;
   void (ionize::*func)(std::size_t);
-  // int& tt;
   int xx1;
   T *state;
-  //Field *field1;
-
   gitr_precision  * random_uniform_number;
-//#if __CUDA_ARCH__
-//  curandState *state;
-//#else
-//  std::mt19937 *state;
-//#endif
+  
   ionize(Flags *_flags, Particles *_particlesPointer, gitr_precision _dt,T *_state,
-//#if __CUDA_ARCH__
-//         curandState *_state,
-//#else
-//         std::mt19937 *_state,
-//#endif
          int _nR_Dens, int _nZ_Dens, gitr_precision *_DensGridr, gitr_precision *_DensGridz,
          gitr_precision *_ne, int _nR_Temp, int _nZ_Temp, gitr_precision *_TempGridr,
          gitr_precision *_TempGridz, gitr_precision *_te, int _nTemperaturesIonize,
          int _nDensitiesIonize, gitr_precision *_gridTemperature_Ionization,
-         gitr_precision *_gridDensity_Ionization, gitr_precision *_rateCoeff_Ionization, gitr_precision *  _random_uniform_number);
+         gitr_precision *_gridDensity_Ionization, gitr_precision *_rateCoeff_Ionization,
+         gitr_precision *  _random_uniform_number);
 
   CUDA_CALLABLE_MEMBER_DEVICE
   void operator()(std::size_t indx);
 };
-
-//template <typename T=std::mt19937> 
-//__global__ void ionize_kernel(ionize<curandState> i0, std::size_t indx) {
-//   i0(indx);
-//}

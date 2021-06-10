@@ -29,8 +29,8 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 
-template <typename T=std::mt19937> 
-struct recombine { 
+template <typename T=std::mt19937>
+struct recombine {
   Particles *particlesPointer;
   int nR_Dens;
   int nZ_Dens;
@@ -59,65 +59,69 @@ struct recombine {
      gitr_precision* _TempGridr, gitr_precision* _TempGridz,gitr_precision* _te,int _nTemperaturesRecomb,
      int _nDensitiesRecomb,gitr_precision* _gridTemperature_Recombination,gitr_precision* _gridDensity_Recombination,
      gitr_precision* _rateCoeff_Recombination, Flags* _gitr_flags) : 
-    particlesPointer(_particlesPointer),
+     particlesPointer(_particlesPointer),
 
-                                               nR_Dens(_nR_Dens),
-                                               nZ_Dens(_nZ_Dens),
-                                               DensGridr(_DensGridr),
-                                               DensGridz(_DensGridz),
-                                               ne(_ne),
-                                               nR_Temp(_nR_Temp),
-                                               nZ_Temp(_nZ_Temp),
-                                               TempGridr(_TempGridr),
-                                               TempGridz(_TempGridz),
-                                               te(_te),
-                                               nTemperaturesRecomb(_nTemperaturesRecomb),
-                                               nDensitiesRecomb(_nDensitiesRecomb),
-                                               gridDensity_Recombination(_gridDensity_Recombination),
-                                               gridTemperature_Recombination(_gridTemperature_Recombination),
-                                               rateCoeff_Recombination(_rateCoeff_Recombination),
-					       gitr_flags(_gitr_flags),
-                                               dt(_dt), // JDL missing tion?
-                                               state(_state) {
-  }
+     nR_Dens(_nR_Dens),
+     nZ_Dens(_nZ_Dens),
+     DensGridr(_DensGridr),
+     DensGridz(_DensGridz),
+     ne(_ne),
+     nR_Temp(_nR_Temp),
+     nZ_Temp(_nZ_Temp),
+     TempGridr(_TempGridr),
+     TempGridz(_TempGridz),
+     te(_te),
+     nTemperaturesRecomb(_nTemperaturesRecomb),
+     nDensitiesRecomb(_nDensitiesRecomb),
+     gridDensity_Recombination(_gridDensity_Recombination),
+     gridTemperature_Recombination(_gridTemperature_Recombination),
+     rateCoeff_Recombination(_rateCoeff_Recombination),
+     gitr_flags(_gitr_flags),
+     dt(_dt),
+     state(_state) {}
  
   
-  CUDA_CALLABLE_MEMBER_DEVICE 
-  void operator()(std::size_t indx) { 
-  gitr_precision P1 = 0.0;
-    if (gitr_flags->USE_ADAPTIVE_DT) {
-	    dt = particlesPointer->dt[indx];
-    }
-      if(particlesPointer->charge[indx] > 0)
+  CUDA_CALLABLE_MEMBER_DEVICE
+  void operator()(std::size_t indx)
+  {
+    gitr_precision P1 = 0.0;
+      
+    if (gitr_flags->USE_ADAPTIVE_DT)
     {
-       tion = interpRateCoeff2d ( particlesPointer->charge[indx]-1, particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
-       gitr_precision P = expf(-dt/tion);
-       P1 = 1.0-P;
+      dt = particlesPointer->dt[indx];
+    }
+    
+    if(particlesPointer->charge[indx] > 0)
+    {
+      tion = interpRateCoeff2d ( particlesPointer->charge[indx]-1, particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
+      gitr_precision P = expf(-dt/tion);
+      P1 = 1.0-P;
     }
 
-    if (gitr_flags->USE_ADAPTIVE_DT) {
-  if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx])
-	{        
+    if (gitr_flags->USE_ADAPTIVE_DT)
+    {
+      if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx])
+      {
         gitr_precision r1 = get_rand_double(state,indx);
-	if(r1 <= P1)
-	{
-        particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;
-	}         
-   }	
+        if(r1 <= P1)
+        {
+          particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;
+        }
+      }
     }
     else
     {
-  if(particlesPointer->hitWall[indx] == 0.0)
-	{        
+      if(particlesPointer->hitWall[indx] == 0.0)
+      {
         gitr_precision r1 = get_rand_double(state,indx);
-	if(r1 <= P1)
-	{
-        particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;
-	}         
-   }	
+        if(r1 <= P1)
+        {
+          particlesPointer->charge[indx] = particlesPointer->charge[indx]-1;
+        }
+      }
     }
 
-  } 
+  }
 };
 
 #endif
