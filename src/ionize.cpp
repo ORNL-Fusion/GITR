@@ -113,7 +113,7 @@ void ionize< T >::operator()(std::size_t indx) {
     if (flags->USE_ADAPTIVE_DT) {
       if (particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx]) {
         gitr_precision r1 = get_rand_double(state,indx);
-	//random_uniform_number[0] = r1;
+	random_uniform_number[0] = r1;
         if (r1 <= P1) {
           particlesPointer->charge[indx] = particlesPointer->charge[indx] + 1;
         }
@@ -122,7 +122,7 @@ void ionize< T >::operator()(std::size_t indx) {
 	    else{
       if (particlesPointer->hitWall[indx] == 0.0) {
         gitr_precision r1 = get_rand_double(state,indx);
-	//random_uniform_number[0] = r1;
+	random_uniform_number[0] = r1;
         if (r1 <= P1) {
       //printf("did ionize, adding one \n");
           particlesPointer->charge[indx] = particlesPointer->charge[indx] + 1;

@@ -250,12 +250,12 @@ TEST_CASE("Coulomb collision", "tests") {
       &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags);
     
     std::cout << "created functors " << std::endl; 
-    std::cout << "starting collisions " << std::endl; 
+    std::cout << "starting collisions 1" << std::endl; 
 typedef std::chrono::high_resolution_clock gitr_time;
 auto gitr_start_clock = gitr_time::now();
   for(int i=0; i<nT; i++)
   {
-	  //if(i%(nT/100) == 0) std::cout << 100.0f*i/nT << " % done" << std::endl;
+	  if(i%(nT/100) == 0) std::cout << 100.0f*i/nT << " % done" << std::endl;
     thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,coulombCollisions0);
   }
   auto finish_clock0nc = gitr_time::now();
@@ -404,7 +404,7 @@ auto gitr_start_clock = gitr_time::now();
       &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags);
     
     std::cout << "created functors " << std::endl; 
-    std::cout << "starting collisions " << std::endl; 
+    std::cout << "starting collisions 2" << std::endl; 
     typedef std::chrono::high_resolution_clock gitr_time;
     auto gitr_start_clock = gitr_time::now();
     gitr_precision ave_vx = 0.0;
@@ -434,8 +434,7 @@ auto gitr_start_clock = gitr_time::now();
 	   vx = vx - nu_friction*dt*(vx - flowVr[0]); 
 	   vy = vy - nu_friction*dt*(vy - flowVt[0]); 
 	   vz = vz - nu_friction*dt*(vz - flowVz[0]); 
-          //if(i%(nT/1000) == 0){
-        	  //std::cout << 100.0f*i/nT << " % done" << std::endl;
+          if(i%(nT/100) == 0) std::cout << 100.0f*i/nT << " % done" << std::endl;
         	  for(int j=0;j<nParticles;j++){
         		  ave_vx = ave_vx + particleArray->vx[j]; 
         	  }
