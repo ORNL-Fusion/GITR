@@ -12,6 +12,31 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 
+template <typename T=double>
+bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
+{
+  if (a.size() != b.size()) return false;
+  for (size_t i = 0; i < a.size(); i++) 
+  {
+    
+    bool margin_check = (a[i] != Approx(b[i]).margin(margin));
+    bool epsilon_check = (a[i] != Approx(b[i]).epsilon(epsilon));
+    
+    if (margin_check && epsilon_check)
+    {
+      
+      std::cout << "margin epsilon " <<
+        margin_check << " " << epsilon_check << std::endl; 
+      std::cout << "Element " << i << 
+        " " << a[i] << " Should == " << b[i] << std::endl;
+      
+      return false;
+    }
+  }
+  
+  return true;
+}
+
 TEST_CASE("Coulomb collision", "tests") {
   SECTION("Frequency")
   {
@@ -28,6 +53,7 @@ TEST_CASE("Coulomb collision", "tests") {
     gitr_precision vz = 0.0;
     gitr_precision charge = 1.0;
     gitr_precision amu = 184.0;
+
     int nR_flowV = 1;
     int nZ_flowV = 1;
     sim::Array<gitr_precision> flowVGridr(1, 0.0);
@@ -35,19 +61,23 @@ TEST_CASE("Coulomb collision", "tests") {
     sim::Array<gitr_precision> flowVr(1, 0.0);
     sim::Array<gitr_precision> flowVz(1, 0.0);
     sim::Array<gitr_precision> flowVt(1, 0.0);
+
     int nR_Dens = 1;
     int nZ_Dens = 1;
     sim::Array<gitr_precision> DensGridr(1, 0.0);
     sim::Array<gitr_precision> DensGridz(1, 0.0);
     sim::Array<gitr_precision> ni(1, 1.0e19);
+
     int nR_Temp = 1;
     int nZ_Temp = 1;
     sim::Array<gitr_precision> TempGridr(1, 0.0);
     sim::Array<gitr_precision> TempGridz(1, 0.0);
     sim::Array<gitr_precision> ti(1,20.0);
     sim::Array<gitr_precision> te(1,20.0);
+
     gitr_precision background_Z = 1.0;
     gitr_precision background_amu = 2.0;
+
     int nR_Bfield = 1;
     int nZ_Bfield = 1;
     sim::Array<gitr_precision> BfieldGridR(1,0.0);
@@ -56,11 +86,8 @@ TEST_CASE("Coulomb collision", "tests") {
     sim::Array<gitr_precision> BfieldZ(1,0.0);
     sim::Array<gitr_precision> BfieldT(1,0.0);
     gitr_precision T_background  = 20.0;
-    int nT = 1000;
-    gitr_precision dt = 1.0e-5;
-    //for(int i=0;i<nT;i++)
-    //{
-      getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
+    
+    getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
                              x, y, z,
                              vx, vy, vz,
                              charge, amu,
@@ -82,10 +109,21 @@ TEST_CASE("Coulomb collision", "tests") {
       std::cout << "nu_deflection " << nu_deflection << std::endl;
       std::cout << "nu_parallel " << nu_parallel << std::endl;
       std::cout << "nu_energy " << nu_energy << std::endl;
-      vx = vx*(1.0-nu_energy*dt/2.0);
-     // std::cout << "time and new velocity " << i*dt << " " << vx << std::endl;
-    //}
+    std::vector<gitr_precision> vals(4,0.0);
+    vals[0] = nu_friction;
+    vals[1] = nu_deflection;
+    vals[2] = nu_parallel;
+    vals[3] = nu_energy;
 
+    std::vector<gitr_precision> gold(4,0.0);
+    gold[0] = 762.588;
+    gold[1] = 3023.49;
+    gold[2] = 1508.46;
+    gold[3] = -3006.78;
+
+    gitr_precision margin = 0.01;
+    gitr_precision epsilon = 1.0;
+    REQUIRE(compareVectors<gitr_precision>(vals,gold,epsilon,margin));
   }
   
   SECTION("Frequency Evolution")
