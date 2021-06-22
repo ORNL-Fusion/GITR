@@ -263,6 +263,8 @@ int main(int argc, char **argv, char **envp) {
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
+  /* Ahoy! Is the +1 the index that indicates the type? the // if periodic <--- comment in
+     geometryCheck.h */
   sim::Array<Boundary> boundaries(nLines + 1, Boundary());
   if (world_rank == 0) {
     nSurfaces = importGeometry(cfg_geom, boundaries);
@@ -4107,6 +4109,9 @@ if( flowv_interp == 1 )
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
 #endif
+    /* Ahoy! this is a 3 level 4-loop to calculate density n = (x, y, q). To show the spacial
+       density and the result. Loop over timesteps, each operator loops over a section of
+       the particles... find 0 */
     for (tt; tt < nT; tt++) {
 #if USE_SORT > 0
        dev_tt[0] = tt;

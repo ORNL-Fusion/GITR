@@ -3,8 +3,15 @@ GITR.
 
 
 Geometry check. 
+
+  what does this do?
+
 spectroscopy
+  
+  creates the histogram
+
 cross field diffusion
+
 particlespointer
 
 What do I do... 
@@ -16,3 +23,7 @@ I think branch organization needs to happen for sure.
 
 config and unit_test should branch off of dev. Some of the changes in config should probably
 go into dev. Actually... I'm wondering if all of them shouldn't...
+
+Next:
+
+1. Set up a unit test for cross field diffusion. Start pulling stuff in.
