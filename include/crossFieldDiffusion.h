@@ -128,7 +128,7 @@ void operator()(std::size_t indx) const {
 #endif
             /* magnitude of spacial step for 1 particle? */
             /* m^2 / sec units for diffusionCoefficient */
-		step = std::sqrt(2*diffusionCoefficient*dt_step);
+		step = std::sqrt(4*diffusionCoefficient*dt_step);
 #if USEPERPDIFFUSION > 1
     gitr_precision plus_minus1 = floor(r4 + 0.5)*2 - 1;
     gitr_precision h = 0.001;
