@@ -173,6 +173,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     /* examine histogram */
     /* output x */
+    /* analytical equation we expect */
     for( int x_bin = 0; x_bin < net_nX; ++x_bin )
     {
       /* sum over z? */
