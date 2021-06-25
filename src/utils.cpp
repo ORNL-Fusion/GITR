@@ -488,6 +488,7 @@ int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDi
     getVariable(cfg,fieldCfgString+"z",z);
   }
   else{  
+      /* Captain! is this the conditional that gets run? */
       getVarFromFile(cfg,input_path+fileToRead,fieldCfgString,"gridRString",gridR);
     if(interpDim > 1)
     {

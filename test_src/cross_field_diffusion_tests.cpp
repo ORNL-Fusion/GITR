@@ -8,15 +8,13 @@
 #include "curandInitialize.h"
 #include <thrust/execution_policy.h>
 
+/* is there an option for analytic bfield? No. */
 TEST_CASE( "cross-field diffusion operator" )
 {
   SECTION( "Ahoy, Captain!" )
   {
     /* timesteps */
-    int nT = 1e2;
-
-    /* particles */
-    int nP = 1e4;
+    int nT = 1e4;
 
     gitr_precision dt = 1.0e-6;
 
@@ -35,6 +33,11 @@ TEST_CASE( "cross-field diffusion operator" )
     nLines = geom["x1"].getLength();
 
     REQUIRE( nLines == 2 );
+
+    /* particles */
+    libconfig::Setting &impurity = cfg_geom.lookup( "impurityParticleSource" );
+
+    int nP = impurity[ "nP" ];
 
     /* Correct flags for this unit test */
     /*
@@ -67,11 +70,13 @@ TEST_CASE( "cross-field diffusion operator" )
     int nAdist = 1;
     gitr_precision A0dist = 0.0;
     gitr_precision Adist = 0.0;
+
     auto surfaces = new Surfaces(nSurfaces, nEdist, nAdist);
     surfaces->setSurface(nEdist, E0dist, Edist, nAdist, A0dist, Adist);
     sim::Array<gitr_precision> closeGeomGridr(1),
       closeGeomGridy(1), closeGeomGridz(1);
     sim::Array<int> closeGeom(1, 0);
+
     geometry_check geometry_check0(
         particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
@@ -128,10 +133,17 @@ TEST_CASE( "cross-field diffusion operator" )
 
   int nR_Bfield = 1, nZ_Bfield = 1, n_Bfield = 1;
 
-  sim::Array<gitr_precision> bfieldGridr(nR_Bfield),
-      bfieldGridz(nZ_Bfield);
-
   sim::Array<gitr_precision> br(n_Bfield), by(n_Bfield), bz(n_Bfield);
+
+  sim::Array<gitr_precision> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
+
+  double zero = 0;
+  std::string empty = "";
+  std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
+  importVectorField(cfg_geom, "", BFIELD_INTERP, bfieldCfg, nR_Bfield,
+      0, nZ_Bfield, bfieldGridr.front(),
+      zero, bfieldGridz.front(), br.front(),
+      by.front(), bz.front(), empty );
 
   crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
@@ -142,7 +154,7 @@ TEST_CASE( "cross-field diffusion operator" )
     {
       /* call spec_bin */
       thrust::for_each(thrust::host,
-                       particle_iterator0, 
+                      particle_iterator0, 
                        particle_iterator_end, 
                        spec_bin0 );
 
@@ -170,8 +182,7 @@ TEST_CASE( "cross-field diffusion operator" )
         sum += net_Bins[ nBins * net_nX * net_nZ +
                          z_bin * net_nX + x_bin ];
       }
-
-      std::cout << "x_bin: " << x_bin << " sum: " << sum << std::endl;
+      std::cout << "sum: " << sum << std::endl;
     }
   }
 }
