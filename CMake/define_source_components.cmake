@@ -8,8 +8,11 @@ add_executable( GITR src/gitr.cpp )
 if( GITR_USE_CUDA )
 
   set_source_files_properties( src/gitr.cpp PROPERTIES LANGUAGE CUDA )
+
   set_target_properties( GITR PROPERTIES LINKER_LANGUAGE CUDA )
+
   set_property(TARGET GITR PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
   target_compile_options( GITR PRIVATE --expt-relaxed-constexpr )
 
 endif()
@@ -22,6 +25,7 @@ set( cpu_targets
      particle
      utils
      flags
+     config_interface
      setup)
 
 # conditionally compile as GPU targets
@@ -32,6 +36,7 @@ set( gpu_targets
      ionize
      boris
      hashGeom
+     fields
      spectroscopy )
 
 if( NOT GITR_USE_CUDA )
@@ -47,7 +52,9 @@ foreach( component IN LISTS cpu_targets )
   target_include_directories( ${component} PUBLIC include )
 
   if( debug )
+
     target_compile_options( ${component} PRIVATE -g )
+
   endif()
 
 endforeach()
@@ -58,13 +65,19 @@ if( GITR_USE_CUDA )
   foreach( component IN LISTS gpu_targets )
 
     add_library( ${component} src/${component}.cpp )
+
     set_source_files_properties( src/${component}.cpp PROPERTIES LANGUAGE CUDA )
+
     set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
+
     target_include_directories( ${component} PUBLIC include )
+
     target_compile_options( ${component} PRIVATE --expt-relaxed-constexpr )
 
     if( debug )
+
       target_compile_options( ${component} PRIVATE -G )
+
     endif()
 
   endforeach()

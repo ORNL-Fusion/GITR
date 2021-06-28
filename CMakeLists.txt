@@ -22,7 +22,10 @@ include( CMake/dependencies.cmake )
 include( CMake/define_source_components.cmake )
 
 # define singleton test components
-#include( CMake/define_test_components.cmake )
+include( CMake/define_test_components.cmake )
+
+# configure testing data
+include( CMake/configure_test_data.cmake )
 
 # Make sure everything is built before attempting to link
 include( CMake/enforce_build_order.cmake )

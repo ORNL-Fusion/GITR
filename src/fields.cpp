@@ -54,6 +54,7 @@ Field::Field(libconfig::Config &cfg, std::string field_name) {
     int ndimsp;
     nc_inq_varndims(ncid, val_id, &ndimsp);
     nD = ndimsp;
+    //std::cout << "ndimsp " << ndimsp << std::endl;
 
     // get dimension lengths
     dimensions.resize(nD);

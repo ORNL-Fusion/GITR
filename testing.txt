@@ -1,0 +1,18 @@
+How does an integrated test look. Exactly like
+GITR.
+
+
+Geometry check. 
+spectroscopy
+cross field diffusion
+particlespointer
+
+What do I do... 
+
+Check the changes in between the 2 branches.
+Figure out what you want to merge in and what you don't.
+
+I think branch organization needs to happen for sure.
+
+config and unit_test should branch off of dev. Some of the changes in config should probably
+go into dev. Actually... I'm wondering if all of them shouldn't...

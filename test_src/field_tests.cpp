@@ -2,6 +2,8 @@
 #include "ionize.h"
 #include "recombine.h"
 #include "utils.h"
+#include "test_data_filepath.hpp"
+
 template <typename T=double>
 bool compareVectors(std::vector<T> a, std::vector<T> b, T scale) {
     if (a.size() != b.size()) return false;
@@ -22,8 +24,9 @@ TEST_CASE("Field struct", "tests") {
     std::string inputFile = "ionize1.cfg";
     libconfig::Config cfg;
     cfg.setAutoConvert(true);
-    std::string input_path = "../test/";
-    importLibConfig(cfg, input_path + inputFile);
+    std::string input_path = "../test_data/";
+    //importLibConfig(cfg, input_path + inputFile);
+    importLibConfig(cfg, input_path+inputFile );
     //auto gitr_flags = new Flags(cfg);
     auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     std::cout << " nD " << field1->nD << " " << field1->dimensions.size() << std::endl;
@@ -39,8 +42,9 @@ TEST_CASE("Field struct", "tests") {
     std::string inputFile = "ionize.cfg";
     libconfig::Config cfg;
     cfg.setAutoConvert(true);
-    std::string input_path = "../test/";
-    importLibConfig(cfg, input_path + inputFile);
+    std::string input_path = "../test_data/";
+    //importLibConfig(cfg, input_path + inputFile);
+    importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
     //auto gitr_flags = new Flags(cfg);
     auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     std::cout << " nD " << field1->nD << " " << field1->dimensions.size() << std::endl;
