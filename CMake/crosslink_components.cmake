@@ -44,6 +44,6 @@ endif()
 target_link_libraries( config_interface_tests test_utils libconfig config_interface )
 target_link_libraries( coulomb_tests 
                        test_utils libconfig thrust interp2d utils flags netcdf mpi boris fields )
-#target_link_libraries( atomic_tests test_utils interp2d utils flags mpi )
+target_link_libraries( atomic_tests test_utils ionize interp2d utils flags mpi )
 target_link_libraries( field_tests test_utils interp2d libconfig utils netcdf mpi fields boris )
 target_link_libraries( file_io_tests test_utils libconfig utils flags boris )

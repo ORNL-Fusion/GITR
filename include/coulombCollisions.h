@@ -30,9 +30,7 @@ typedef float gitr_precision;
 #endif
 
 CUDA_CALLABLE_MEMBER
-void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_deflection, gitr_precision& nu_parallel,
-			 	gitr_precision& nu_energy, gitr_precision x, gitr_precision y,gitr_precision z, gitr_precision vx, gitr_precision vy, gitr_precision vz,gitr_precision charge, gitr_precision amu, 
-                
+void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_deflection, gitr_precision& nu_parallel,gitr_precision& nu_energy, gitr_precision x, gitr_precision y,gitr_precision z, gitr_precision vx, gitr_precision vy, gitr_precision vz,gitr_precision charge, gitr_precision amu,
     int nR_flowV,
     int nZ_flowV,
     gitr_precision* flowVGridr,
@@ -50,379 +48,193 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
     gitr_precision* TempGridr,
     gitr_precision* TempGridz,
     gitr_precision* ti, gitr_precision* te,gitr_precision background_Z, gitr_precision background_amu,
-                        int nR_Bfield, int nZ_Bfield,
-                        gitr_precision* BfieldGridR ,gitr_precision* BfieldGridZ ,
-                        gitr_precision* BfieldR ,gitr_precision* BfieldZ ,
-                 gitr_precision* BfieldT,gitr_precision &T_background 
-                ) {
-int feenableexcept(FE_INVALID | FE_OVERFLOW);			
-        gitr_precision Q = 1.60217662e-19;
-        gitr_precision EPS0 = 8.854187e-12;
-	gitr_precision pi = 3.14159265;
-        gitr_precision MI = 1.6737236e-27;	
-        gitr_precision ME = 9.10938356e-31;
+    int nR_Bfield, int nZ_Bfield,
+    gitr_precision* BfieldGridR ,gitr_precision* BfieldGridZ ,
+    gitr_precision* BfieldR ,gitr_precision* BfieldZ ,
+    gitr_precision* BfieldT,gitr_precision &T_background ) 
+{
+  //int feenableexcept(FE_INVALID | FE_OVERFLOW); //enables trapping of the floating-point exceptions
+  gitr_precision Q = 1.60217662e-19;
+  gitr_precision EPS0 = 8.854187e-12;
+  gitr_precision pi = 3.14159265;
+  gitr_precision MI = 1.6737236e-27;	
+  gitr_precision ME = 9.10938356e-31;
         
-	gitr_precision te_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te);
-        gitr_precision ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
-	
-	T_background = ti_eV;
-        gitr_precision density = interp2dCombined(x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
-            //std::cout << "ion t and n " << te_eV << "  " << density << std::endl;
-	//printf ("te ti dens %f %f %f \n", te_eV, ti_eV, density);
-	gitr_precision flowVelocity[3]= {0.0f};
-	gitr_precision relativeVelocity[3] = {0.0, 0.0, 0.0};
-	gitr_precision velocityNorm = 0.0f;
-	gitr_precision lam_d;
-	gitr_precision lam;
-	gitr_precision gam_electron_background;
-	gitr_precision gam_ion_background;
-	gitr_precision a_electron = 0.0;
-	gitr_precision a_ion = 0.0;
-	gitr_precision xx;
-	gitr_precision psi_prime;
-	gitr_precision psi_psiprime;
-	gitr_precision psi;
-	gitr_precision xx_e;
-	gitr_precision psi_prime_e;
-	gitr_precision psi_psiprime_e;
-	gitr_precision psi_psiprime_psi2x = 0.0;
-	gitr_precision psi_psiprime_psi2x_e = 0.0;
-	gitr_precision psi_e;
-	gitr_precision nu_0_i;
-	gitr_precision nu_0_e;
-    gitr_precision nu_friction_i; 
-    gitr_precision nu_deflection_i;
-    gitr_precision nu_parallel_i; 
-    gitr_precision nu_energy_i;
-    gitr_precision nu_friction_e; 
-    gitr_precision nu_deflection_e;
-    gitr_precision nu_parallel_e; 
-    gitr_precision nu_energy_e;
+  gitr_precision te_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te);
+  gitr_precision ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
+
+  T_background = ti_eV;
+  gitr_precision density = interp2dCombined(x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
+
+  gitr_precision flowVelocity[3]= {0.0};
+  gitr_precision relativeVelocity[3] = {0.0, 0.0, 0.0};
+  gitr_precision velocityNorm = 0.0;
+  gitr_precision lam_d;
+  gitr_precision lam;
+  gitr_precision gam_electron_background;
+  gitr_precision gam_ion_background;
+  gitr_precision a_electron = 0.0;
+  gitr_precision a_ion = 0.0;
+  gitr_precision xx;
+  gitr_precision psi_prime;
+  gitr_precision psi_psiprime;
+  gitr_precision psi;
+  gitr_precision xx_e;
+  gitr_precision psi_prime_e;
+  gitr_precision psi_psiprime_e;
+  gitr_precision psi_psiprime_psi2x = 0.0;
+  gitr_precision psi_psiprime_psi2x_e = 0.0;
+  gitr_precision psi_e;
+  gitr_precision nu_0_i;
+  gitr_precision nu_0_e;
+  gitr_precision nu_friction_i;
+  gitr_precision nu_deflection_i;
+  gitr_precision nu_parallel_i;
+  gitr_precision nu_energy_i;
+  gitr_precision nu_friction_e;
+  gitr_precision nu_deflection_e;
+  gitr_precision nu_parallel_e;
+  gitr_precision nu_energy_e;
                 
 #if FLOWV_INTERP == 3
-        interp3dVector (&flowVelocity[0], x,y,z,nR_flowV,nY_flowV,nZ_flowV,
-                flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
+  interp3dVector (&flowVelocity[0], x,y,z,nR_flowV,nY_flowV,nZ_flowV,
+                   flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
 #elif FLOWV_INTERP < 3    
 #if USEFIELDALIGNEDVALUES > 0
-        interpFieldAlignedVector(&flowVelocity[0],x,y,z,
-                                 nR_flowV,nZ_flowV,
-                                 flowVGridr,flowVGridz,flowVr,
-                                 flowVz,flowVt,nR_Bfield,nZ_Bfield,
-                                 BfieldGridR,BfieldGridZ,BfieldR,
-                                 BfieldZ,BfieldT);
+  interpFieldAlignedVector(&flowVelocity[0],x,y,z,
+                           nR_flowV,nZ_flowV,
+                           flowVGridr,flowVGridz,flowVr,
+                           flowVz,flowVt,nR_Bfield,nZ_Bfield,
+                           BfieldGridR,BfieldGridZ,BfieldR,
+                           BfieldZ,BfieldT);
 #else
-               interp2dVector(&flowVelocity[0],x,y,z,
-                        nR_flowV,nZ_flowV,
-                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
+  interp2dVector(&flowVelocity[0],x,y,z,
+           nR_flowV,nZ_flowV,
+           flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
 #endif
 #endif
-	//printf ("flow Velocity %e %e %e \n", flowVelocity[0],flowVelocity[1],flowVelocity[2]);
-	relativeVelocity[0] = vx - flowVelocity[0];
-	relativeVelocity[1] = vy - flowVelocity[1];
-	relativeVelocity[2] = vz - flowVelocity[2];
-	velocityNorm = std::sqrt( relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2]);                
-	//printf ("speed %e \n", velocityNorm);
-	    //std::cout << "velocity norm " << velocityNorm << std::endl;	
-    //for(int i=1; i < nSpecies; i++)
-		//{
-	lam_d = std::sqrt(EPS0*te_eV/(density*std::pow(background_Z,2)*Q));//only one q in order to convert to J
-        lam = 12.0*pi*density*std::pow(lam_d,3)/charge;
-        gam_electron_background = 0.238762895*std::pow(charge,2)*std::log(lam)/(amu*amu);//constant = Q^4/(MI^2*4*pi*EPS0^2)
-        gam_ion_background = 0.238762895*std::pow(charge,2)*std::pow(background_Z,2)*std::log(lam)/(amu*amu);//constant = Q^4/(MI^2*4*pi*EPS0^2)
-                    //std::cout << "gam components " <<gam_electron_background << " " << pow(Q,4) << " " << " " << pow(background_Z,2) << " " << log(lam)<< std::endl; 
-//printf ("lam_d lam gam gam %e %e %e %e \n", lam_d, lam, gam_electron_background, gam_ion_background);
+  relativeVelocity[0] = vx - flowVelocity[0];
+  relativeVelocity[1] = vy - flowVelocity[1];
+  relativeVelocity[2] = vz - flowVelocity[2];
+  velocityNorm = std::sqrt( relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2]);                
 
-if(gam_electron_background < 0.0) gam_electron_background=0.0;
-	if(gam_ion_background < 0.0) gam_ion_background=0.0;
-	       a_ion = background_amu*MI/(2*ti_eV*Q);// %q is just to convert units - no z needed
-		a_electron = ME/(2*te_eV*Q);// %q is just to convert units - no z needed
-	
-		xx = std::pow(velocityNorm,2)*a_ion;
-		//psi_prime = 2*sqrtf(xx/pi)*expf(-xx);
-		//psi_psiprime = erf(1.0*sqrtf(xx));
-		//psi = psi_psiprime - psi_prime;
-		//if(psi < 0.0) psi = 0.0;
-		//psi_psiprime_psi2x = psi+psi_prime - psi/2.0/x;
-		//if(xx<1.0e-3)
-		//{
-		    psi_prime = 2.0*std::sqrt(xx/pi)*std::exp(-xx);
-		    psi_psiprime = std::erf(std::sqrt(xx));
-		    psi = psi_psiprime - psi_prime;
-		    //psi_psiprime = std::erf(std::sqrt(x));
-		    //psi_psiprime_psi2x = 1.128379*std::sqrt(xx)*expf(-xx);
-//printf ("xx psi_prime psi_spiprime psi %e %e %e %e \n", xx, psi_prime, psi_psiprime, psi);
-		        //}
-                    //if(psi_prime/psi > 1.0e7) psi = psi_psiprime/1.0e7;
-                    //if(psi_prime < 0.0) psi_prime = 0.0;
-                    //if(psi_psiprime < 0.0) psi_psiprime = 0.0;
-                	xx_e = std::pow(velocityNorm,2)*a_electron;
-                	//psi_prime_e = 2*sqrtf(xx_e/pi)*expf(-xx_e);
-                	//psi_psiprime_e = erf(1.0*sqrtf(xx_e));
-                	//psi_e = psi_psiprime_e - psi_prime_e;
-                        //if(psi_e < 0.0) psi_e = 0.0;
-		        //psi_psiprime_psi2x_e = psi_e+psi_prime_e - psi_e/2.0/xx_e;
-		        //if(xx_e<1.0e-3)
-		        //{
-                            psi_prime_e = 1.128379*std::sqrt(xx_e);
-                            psi_e = 0.75225278*std::pow(xx_e,1.5);
-                            psi_psiprime_e = psi_e+psi_prime_e;
-                            psi_psiprime_psi2x_e = 1.128379*std::sqrt(xx_e)*expf(-xx_e);
-		        //}
-                    //if(psi_prime_e/psi_e > 1.0e7) psi_e = psi_psiprime_e/1.0e7;
-                    //if(psi_prime_e < 0.0) psi_prime_e = 0.0;
-                    //if(psi_psiprime_e < 0.0) psi_psiprime_e = 0.0;
-                	nu_0_i = gam_electron_background*density/std::pow(velocityNorm,3);
-                	nu_0_e = gam_ion_background*density/std::pow(velocityNorm,3);
-	                //printf ("nu i e %e %e \n", nu_0_i, nu_0_e);
-                	nu_friction_i = (1+amu/background_amu)*psi*nu_0_i;
-                	nu_deflection_i = 2*(psi_psiprime - psi/(2*xx))*nu_0_i;
-                	//nu_deflection_i = 2*(psi_psiprime_psi2x)*nu_0_i;
-                	nu_parallel_i = psi/xx*nu_0_i;
-                	nu_energy_i = 2*(amu/background_amu*psi - psi_prime)*nu_0_i;
-                	nu_friction_e = (1+amu/(ME/MI))*psi_e*nu_0_e;
-                	//nu_deflection_e = 2*(psi_psiprime_e - psi_e/(2*xx_e))*nu_0_e;
-                	nu_deflection_e = 2*(psi_psiprime_psi2x_e)*nu_0_e;
-                	nu_parallel_e = psi_e/xx_e*nu_0_e;
-                	nu_energy_e = 2*(amu/(ME/MI)*psi_e - psi_prime_e)*nu_0_e;
-	                //printf ("nu s d par e %e %e %e %e \n", nu_friction_i, nu_deflection_i, nu_parallel_i,nu_energy_i);
+  lam_d = std::sqrt(EPS0*te_eV/(density*std::pow(background_Z,2)*Q));//only one q in order to convert to J
+  lam = 12.0*pi*density*std::pow(lam_d,3)/charge;
+  gam_electron_background = 0.238762895*std::pow(charge,2)*std::log(lam)/(amu*amu);//constant = Q^4/(MI^2*4*pi*EPS0^2)
+  gam_ion_background = 0.238762895*std::pow(charge,2)*std::pow(background_Z,2)*std::log(lam)/(amu*amu);//constant = Q^4/(MI^2*4*pi*EPS0^2)
+
+  if(gam_electron_background < 0.0) gam_electron_background=0.0;
+  if(gam_ion_background < 0.0) gam_ion_background=0.0;
+  a_ion = background_amu*MI/(2*ti_eV*Q);// %q is just to convert units - no z needed
+  a_electron = ME/(2*te_eV*Q);// %q is just to convert units - no z needed
+
+  xx = std::pow(velocityNorm,2)*a_ion;
+  psi_prime = 2.0*std::sqrt(xx/pi)*std::exp(-xx);
+  psi_psiprime = std::erf(std::sqrt(xx));
+  psi = psi_psiprime - psi_prime;
+  
+  xx_e = std::pow(velocityNorm,2)*a_electron;
+  psi_prime_e = 1.128379*std::sqrt(xx_e);
+  psi_e = 0.75225278*std::pow(xx_e,1.5);
+  psi_psiprime_e = psi_e+psi_prime_e;
+  psi_psiprime_psi2x_e = 1.128379*std::sqrt(xx_e)*expf(-xx_e);
+  
+  nu_0_i = gam_electron_background*density/std::pow(velocityNorm,3);
+  nu_0_e = gam_ion_background*density/std::pow(velocityNorm,3);
+  
+  nu_friction_i = (1+amu/background_amu)*psi*nu_0_i;
+  nu_deflection_i = 2*(psi_psiprime - psi/(2*xx))*nu_0_i;
+  nu_parallel_i = psi/xx*nu_0_i;
+  nu_energy_i = 2*(amu/background_amu*psi - psi_prime)*nu_0_i;
+  
+  nu_friction_e = (1+amu/(ME/MI))*psi_e*nu_0_e;
+  nu_deflection_e = 2*(psi_psiprime_psi2x_e)*nu_0_e;
+  nu_parallel_e = psi_e/xx_e*nu_0_e;
+  nu_energy_e = 2*(amu/(ME/MI)*psi_e - psi_prime_e)*nu_0_e;
                     
-       //if(isnan(nu_friction_i)){
-       //std::cout << "nu_f_i " << nu_friction_i << std::endl;
-       //std::cout << " psi " << psi;
-       //std::cout << " xx " << xx;
-       //std::cout << " ti_eV " << ti_eV;
-       //std::cout << " a_ion " << a_ion << std::endl;
-       //std::cout << "nu_0_i " << nu_0_i << std::endl;
-       //}
-       //if(isnan(nu_friction_e)) std::cout << "nu_f_e " << nu_friction_e << std::endl;
-		    //std::cout << "lam_d lam gami game ai ae" << lam_d << " " << lam << " " << gam_ion_background << " " << gam_electron_background << " " << a_ion << " " << a_electron << std::endl;
-                    //std::cout << "x psi_prime psi_psiprime psi" << xx << " " << xx_e << " " << psi_prime << " "<< psi_prime_e << " " << psi_psiprime<< " " << psi_psiprime_e << " " << psi<< " " << psi_e << " " << nu_0_i<< " " << nu_0_e << std::endl;
-                    //std::cout << "nu friction, parallel perp energy IONs" << nu_friction_i << " " << nu_parallel_i << " " <<nu_deflection_i << " " << nu_energy_i << std::endl;
-                    //std::cout << "  psi_psiprime_psi2x and nu_0_i " <<  psi_psiprime_psi2x <<" " << nu_0_i<<std::endl;
-                    //std::cout << "nu friction, parallel perp energy ELECTRONs" << nu_friction_e << " " << nu_parallel_e << " " <<nu_deflection_e << " " << nu_energy_e << std::endl;
-	//	}
-    nu_friction = nu_friction_i ;//+ nu_friction_e;
-    nu_deflection = nu_deflection_i ;//+ nu_deflection_e;
-    nu_parallel = nu_parallel_i;// + nu_parallel_e;
-    nu_energy = nu_energy_i;// + nu_energy_e;
-     //if(nu_deflection < 0.0){
-     //                std::cout << "nu0 "  << " " <<nu_0_i << " " << nu_0_e << " " << psi_psiprime_psi2x << " " << psi_psiprime_psi2x_e << std::endl;
-     //    	    std::cout << "gam_electron_background*density/powf(velocityNorm,3) " << gam_electron_background<< " " << density<< " " << velocityNorm << " " << lam_d<< std::endl;
-     //    	    }
-     //                //std::cout << "nu friction, parallel perp energy " << nu_friction << " " << nu_parallel << " " <<nu_deflection << " " << nu_energy << std::endl;
-    if(te_eV <= 0.0 || ti_eV <= 0.0)
-    {
-        nu_friction = 0.0;
-        nu_deflection = 0.0;
-        nu_parallel = 0.0;
-        nu_energy = 0.0;
-       //std::cout << " ti_eV and nu_friction " << ti_eV<< " " << nu_friction << std::endl;
-    }
-    if(density <= 0.0)
-    {
-        nu_friction = 0.0;
-        nu_deflection = 0.0;
-        nu_parallel = 0.0;
-        nu_energy = 0.0;
-    }
-    //if(isnan(nu_friction)){
-    //        printf("nu_friction %f \n", nu_friction);
-    //        printf ("nu i e %f %f \n", nu_0_i, nu_0_e);
-    //        printf ("speed %f \n", velocityNorm);
-    //        printf ("xx psi_prime psi_spiprime psi %f %f %f %f \n", xx, psi_prime, psi_psiprime, psi);
-    //}
-    //if(isnan(nu_deflection)) printf("nu_deflection %f \n", nu_deflection);
-    //if(isnan(nu_parallel)) printf("nu_p %f \n", nu_parallel);
-    //if(isnan(nu_energy)) printf("nu_e %f \n", nu_energy);
-
-    //if(abs(nu_energy) > 1.0e7) 
-    //{
-    //        std::cout << "velocity norm " << velocityNorm << std::endl;	
-    //std::cout << "gams " << gam_electron_background << " " << gam_ion_background << std::endl;
-    //std::cout << " a and xx " << a_electron <<" " <<  a_ion<< " " << xx << " " << xx_e << std::endl;
-    //       std::cout << "psi_prime psi_psiprime psi" << psi_prime << " "<< psi_prime_e << " " << psi_psiprime<< " " << psi_psiprime_e << " " << psi<< " " << psi_e << std::endl;
-    //std::cout << "nu_Ei and nuEe " << nu_energy_i << " " << nu_energy_e << std::endl;
-    // std::cout << "nu0 "  << " " <<nu_0_i << " " << nu_0_e << " " << psi_psiprime_psi2x << " " << psi_psiprime_psi2x_e << std::endl;
-    ////nu_energy = vx;
-    ////nu_friction = vy;
-    ////nu_deflection = vz;
-    ////std::cout << "nu friction i e total " << nu_deflection_i << " " << nu_deflection_e << " " <<nu_deflection  << std::endl;
-    //}
+  nu_friction = nu_friction_i ;//+ nu_friction_e;
+  nu_deflection = nu_deflection_i ;//+ nu_deflection_e;
+  nu_parallel = nu_parallel_i;// + nu_parallel_e;
+  nu_energy = nu_energy_i;// + nu_energy_e;
+    
+  if(te_eV <= 0.0 || ti_eV <= 0.0)
+  {
+    nu_friction = 0.0;
+    nu_deflection = 0.0;
+    nu_parallel = 0.0;
+    nu_energy = 0.0;
+  }
+  if(density <= 0.0)
+  {
+    nu_friction = 0.0;
+    nu_deflection = 0.0;
+    nu_parallel = 0.0;
+    nu_energy = 0.0;
+  }
 }
 CUDA_CALLABLE_MEMBER
 void getSlowDownDirections2 (gitr_precision parallel_direction[], gitr_precision perp_direction1[], gitr_precision perp_direction2[],
         gitr_precision vx, gitr_precision vy, gitr_precision vz)
 {
-	gitr_precision v = std::sqrt(vx*vx + vy*vy + vz*vz);
-	if(v == 0.0)
-	{
-		v = 1.0;
-		vz = 1.0;
-		vx = 0.0;
-		vy = 0.0;
-	}
-        gitr_precision ez1 = vx/v;
-        gitr_precision ez2 = vy/v;
-        gitr_precision ez3 = vz/v;
+  gitr_precision v = std::sqrt(vx*vx + vy*vy + vz*vz);
+  
+  if(v == 0.0)
+  {
+    v = 1.0;
+    vz = 1.0;
+    vx = 0.0;
+    vy = 0.0;
+  }
+  
+  gitr_precision ez1 = vx/v;
+  gitr_precision ez2 = vy/v;
+  gitr_precision ez3 = vz/v;
     
-    // Get perpendicular velocity unit vectors
-    // this comes from a cross product of
-    // (ez1,ez2,ez3)x(0,0,1)
-    gitr_precision ex1 = ez2;
-    gitr_precision ex2 = -ez1;
-    gitr_precision ex3 = 0.0;
-    
-    // The above cross product will be zero for particles
-    // with a pure z-directed (ez3) velocity
-    // here we find those particles and get the perpendicular 
-    // unit vectors by taking the cross product
-    // (ez1,ez2,ez3)x(0,1,0) instead
-    gitr_precision exnorm = std::sqrt(ex1*ex1 + ex2*ex2);
-    if(std::abs(exnorm) < 1.0e-12){
-    ex1 = -ez3;
-    ex2 = 0.0;
-    ex3 = ez1;
-    }
-    // Ensure all the perpendicular direction vectors
-    // ex are unit
-    exnorm = std::sqrt(ex1*ex1+ex2*ex2 + ex3*ex3);
-    ex1 = ex1/exnorm;
-    ex2 = ex2/exnorm;
-    ex3 = ex3/exnorm;
-    
-    //if(isnan(ex1) || isnan(ex2) || isnan(ex3)){
-    //   printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
-    //}
-    // Find the second perpendicular direction 
-    // by taking the cross product
-    // (ez1,ez2,ez3)x(ex1,ex2,ex3)
-    gitr_precision ey1 = ez2*ex3 - ez3*ex2;
-    gitr_precision ey2 = ez3*ex1 - ez1*ex3;
-    gitr_precision ey3 = ez1*ex2 - ez2*ex1;
-    parallel_direction[0] = ez1; 
-    parallel_direction[1] = ez2;
-    parallel_direction[2] = ez3;
-    
-    perp_direction1[0] = ex1; 
-    perp_direction1[1] = ex2;
-    perp_direction1[2] = ex3;
-    
-    perp_direction2[0] = ey1; 
-    perp_direction2[1] = ey2;
-    perp_direction2[2] = ey3;
-}
-
-CUDA_CALLABLE_MEMBER
-void getSlowDownDirections (gitr_precision parallel_direction[], gitr_precision perp_direction1[], gitr_precision perp_direction2[],
-        gitr_precision xprevious, gitr_precision yprevious, gitr_precision zprevious,gitr_precision vx, gitr_precision vy, gitr_precision vz,
-    int nR_flowV,
-    int nY_flowV,
-    int nZ_flowV,
-    gitr_precision* flowVGridr,
-    gitr_precision* flowVGridy,
-    gitr_precision* flowVGridz,
-    gitr_precision* flowVr,
-    gitr_precision* flowVz,
-    gitr_precision* flowVt,
-    
-                        int nR_Bfield, int nZ_Bfield,
-                        gitr_precision* BfieldGridR ,gitr_precision* BfieldGridZ ,
-                        gitr_precision* BfieldR ,gitr_precision* BfieldZ ,
-                 gitr_precision* BfieldT 
-    ) {
-	        gitr_precision flowVelocity[3]= {0.0f};
-                gitr_precision relativeVelocity[3] = {0.0, 0.0, 0.0};
-                gitr_precision B[3] = {0.0f};
-                gitr_precision Bmag = 0.0;
-		gitr_precision B_unit[3] = {0.0};
-		gitr_precision velocityRelativeNorm;
-		gitr_precision s1;
-		gitr_precision s2;
-        interp2dVector(&B[0],xprevious,yprevious,zprevious,nR_Bfield,nZ_Bfield,
-                                       BfieldGridR,BfieldGridZ,BfieldR,BfieldZ,BfieldT);
-        Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
-        B_unit[0] = B[0]/Bmag;
-        B_unit[1] = B[1]/Bmag;
-        B_unit[2] = B[2]/Bmag;
-        if(Bmag ==0.0)
-        {Bmag = 1.0;
-            B_unit[0] = 1.0;
-            B_unit[1] = 0.0;
-            B_unit[2] = 0.0;
-        }
-
-#if FLOWV_INTERP == 3
-        interp3dVector (&flowVelocity[0], xprevious,yprevious,zprevious,nR_flowV,nY_flowV,nZ_flowV,
-                flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
-#elif FLOWV_INTERP < 3    
-#if USEFIELDALIGNEDVALUES > 0
-        interpFieldAlignedVector(flowVelocity,xprevious,yprevious,
-                                 zprevious,nR_flowV,nZ_flowV,
-                                 flowVGridr,flowVGridz,flowVr,
-                                 flowVz,flowVt,nR_Bfield,nZ_Bfield,
-                                 BfieldGridR,BfieldGridZ,BfieldR,
-                                 BfieldZ,BfieldT);
-#else
-               interp2dVector(&flowVelocity[0],xprevious,yprevious,zprevious,
-                        nR_flowV,nZ_flowV,
-                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
-#endif
-#endif
-                relativeVelocity[0] = vx - flowVelocity[0];
-                relativeVelocity[1] = vy - flowVelocity[1];
-                relativeVelocity[2] = vz - flowVelocity[2];
-                velocityRelativeNorm = std::sqrt( relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2]);
-
-		parallel_direction[0] = relativeVelocity[0]/velocityRelativeNorm;
-		parallel_direction[1] = relativeVelocity[1]/velocityRelativeNorm;
-		parallel_direction[2] = relativeVelocity[2]/velocityRelativeNorm;
-
-		s1 = parallel_direction[0]*B_unit[0]+parallel_direction[1]*B_unit[1]+parallel_direction[2]*B_unit[2];
-            	s2 = std::sqrt(1.0-s1*s1);
-		//std::cout << "s1 and s2 " << s1 << " " << s2 << std::endl;
-           if(std::abs(s1) >=1.0) s2=0; 
-            	perp_direction1[0] = 1.0/s2*(s1*parallel_direction[0] - B_unit[0]);
-		perp_direction1[1] = 1.0/s2*(s1*parallel_direction[1] - B_unit[1]);
-		perp_direction1[2] = 1.0/s2*(s1*parallel_direction[2] - B_unit[2]);
-           
-                perp_direction2[0] = 1.0/s2*(parallel_direction[1]*B_unit[2] - parallel_direction[2]*B_unit[1]);
-                perp_direction2[1] = 1.0/s2*(parallel_direction[2]*B_unit[0] - parallel_direction[0]*B_unit[2]);
-                perp_direction2[2] = 1.0/s2*(parallel_direction[0]*B_unit[1] - parallel_direction[1]*B_unit[0]);
-        //std::cout << "SlowdonwDir par" << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << " " << std::endl;
-        //std::cout << "SlowdonwDir perp" << perp_direction1[0] << " " <<perp_direction1[1] << " " << perp_direction1[2] << " " << std::endl;
-        //std::cout << "SlowdonwDir perp" << perp_direction2[0] << " " << perp_direction2[1] << " " << perp_direction2[2] << " " << std::endl;
-            //perp_direction1[0] =  s1;
-            //perp_direction1[1] =  s2;
-            if (s2 == 0.0)
-            {
-                perp_direction1[0] =  s1;
-                perp_direction1[1] =  s2;
-
-                perp_direction2[0] = parallel_direction[2];
-		perp_direction2[1] = parallel_direction[0];
-		perp_direction2[2] = parallel_direction[1];
-
-                s1 = parallel_direction[0]*perp_direction2[0]+parallel_direction[1]*perp_direction2[1]+parallel_direction[2]*perp_direction2[2];
-                s2 = std::sqrt(1.0-s1*s1);
-		perp_direction1[0] = -1.0/s2*(parallel_direction[1]*perp_direction2[2] - parallel_direction[2]*perp_direction2[1]);
-                perp_direction1[1] = -1.0/s2*(parallel_direction[2]*perp_direction2[0] - parallel_direction[0]*perp_direction2[2]);
-                perp_direction1[2] = -1.0/s2*(parallel_direction[0]*perp_direction2[1] - parallel_direction[1]*perp_direction2[0]);
-            }
-	    //if(parallel_direction[0]*parallel_direction[0] + parallel_direction[1]*parallel_direction[1] + parallel_direction[2]*parallel_direction[2] - 1.0 > 1e-6) std::cout << " parallel direction not one " << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << std::endl;
-	    //if(perp_direction1[0]*perp_direction1[0] + perp_direction1[1]*perp_direction1[1] + perp_direction1[2]*perp_direction1[2] - 1.0 > 1e-6) std::cout << " perp direction1 not one" << perp_direction1[0] << " " << perp_direction1[1] << " " << perp_direction1[2] << std::endl;
-	    //if(perp_direction2[0]*perp_direction2[0] + perp_direction2[1]*perp_direction2[1] + perp_direction2[2]*perp_direction2[2] - 1.0 > 1e-6) std::cout << " perp direction2 not one" << perp_direction2[0] << " " << perp_direction2[1] << " " << perp_direction2[2] << std::endl;
-	    //if(vectorDotProduct(parallel_direction,perp_direction1)  > 1e-6)
-	    //{std::cout << "par dot perp1 " << parallel_direction[0] << " " << parallel_direction[1] << " " << parallel_direction[2] << std::endl;
-	    //std::cout << "par dot perp1 " << perp_direction1[0] << " " << perp_direction1[1] << " " << perp_direction1[2] << std::endl;
-	    //}
-	    //if(vectorDotProduct(parallel_direction,perp_direction2)  > 2e-6)
-	    //{std::cout << "par dot perp2 " << parallel_direction[0] << " " << parallel_direction[2] << " " << parallel_direction[2] << std::endl;
-	    //std::cout << "par dot perp2 " << perp_direction2[0] << " " << perp_direction2[2] << " " << perp_direction2[2] << std::endl;
-	    //}
-	    //if(vectorDotProduct(perp_direction1,perp_direction2)  > 2e-6)
-	    //{std::cout << "perp1 dot perp2 " << perp_direction1[0] << " " << perp_direction1[2] << " " << perp_direction1[2] << std::endl;
-	    //std::cout << "par dot perp2 " << perp_direction2[0] << " " << perp_direction2[2] << " " << perp_direction2[2] << std::endl;
-	    //}
+  // Get perpendicular velocity unit vectors
+  // this comes from a cross product of
+  // (ez1,ez2,ez3)x(0,0,1)
+  gitr_precision ex1 = ez2;
+  gitr_precision ex2 = -ez1;
+  gitr_precision ex3 = 0.0;
+  
+  // The above cross product will be zero for particles
+  // with a pure z-directed (ez3) velocity
+  // here we find those particles and get the perpendicular 
+  // unit vectors by taking the cross product
+  // (ez1,ez2,ez3)x(0,1,0) instead
+  gitr_precision exnorm = std::sqrt(ex1*ex1 + ex2*ex2);
+  if(std::abs(exnorm) < 1.0e-12){
+  ex1 = -ez3;
+  ex2 = 0.0;
+  ex3 = ez1;
+  }
+  // Ensure all the perpendicular direction vectors
+  // ex are unit
+  exnorm = std::sqrt(ex1*ex1+ex2*ex2 + ex3*ex3);
+  ex1 = ex1/exnorm;
+  ex2 = ex2/exnorm;
+  ex3 = ex3/exnorm;
+  
+  //if(isnan(ex1) || isnan(ex2) || isnan(ex3)){
+  //   printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
+  //}
+  // Find the second perpendicular direction 
+  // by taking the cross product
+  // (ez1,ez2,ez3)x(ex1,ex2,ex3)
+  gitr_precision ey1 = ez2*ex3 - ez3*ex2;
+  gitr_precision ey2 = ez3*ex1 - ez1*ex3;
+  gitr_precision ey3 = ez1*ex2 - ez2*ex1;
+  parallel_direction[0] = ez1; 
+  parallel_direction[1] = ez2;
+  parallel_direction[2] = ez3;
+  
+  perp_direction1[0] = ex1; 
+  perp_direction1[1] = ex2;
+  perp_direction1[2] = ex3;
+  
+  perp_direction2[0] = ey1; 
+  perp_direction2[1] = ey2;
+  perp_direction2[2] = ey3;
 }
 
 struct coulombCollisions { 
@@ -514,50 +326,47 @@ struct coulombCollisions {
         BfieldZ(_BfieldZ),
         BfieldT(_BfieldT),
 	gitr_flags(_gitr_flags),
-        dv{0.0f, 0.0f, 0.0f},
+        dv{0.0, 0.0, 0.0},
         state(_state) {
   }
 CUDA_CALLABLE_MEMBER_DEVICE    
-void operator()(std::size_t indx)  { 
+void operator()(std::size_t indx) { 
 
-	    if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
-        {
-	       if(gitr_flags->USE_ADAPTIVE_DT)
-	       {
-	          dt = particlesPointer->dt[indx];	   
-	       }	  
-        gitr_precision pi = 3.14159265;   
-	gitr_precision k_boltz = 1.38e-23*11604/1.66e-27;
-	gitr_precision T_background = 0.0;
-		gitr_precision nu_friction = 0.0;
-		gitr_precision nu_deflection = 0.0;
-		gitr_precision nu_parallel = 0.0;
-		gitr_precision nu_energy = 0.0;
-		gitr_precision flowVelocity[3]= {0.0f};
-		gitr_precision vUpdate[3]= {0.0f};
-		gitr_precision relativeVelocity[3] = {0.0f};
-		gitr_precision velocityCollisions[3]= {0.0f};	
-		gitr_precision velocityRelativeNorm;	
-		gitr_precision parallel_direction[3] = {0.0f};
-		gitr_precision parallel_direction_lab[3] = {0.0f};
-		gitr_precision perp_direction1[3] = {0.0f};
-		gitr_precision perp_direction2[3] = {0.0f};
-		gitr_precision parallel_contribution;
-		gitr_precision dv_perp1[3] = {0.0f};
-		gitr_precision dv_perp2[3] = {0.0f};
-        gitr_precision x = particlesPointer->xprevious[indx];
-        gitr_precision y = particlesPointer->yprevious[indx];
-        gitr_precision z = particlesPointer->zprevious[indx];
-        gitr_precision vx = particlesPointer->vx[indx];
-        gitr_precision vy = particlesPointer->vy[indx];
-        gitr_precision vz = particlesPointer->vz[indx];
-        gitr_precision vPartNorm = 0.0f;
+  if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
+  {
+    if(gitr_flags->USE_ADAPTIVE_DT)
+    {
+      dt = particlesPointer->dt[indx];	   
+    }
+     
+    gitr_precision pi = 3.14159265;   
+    //gitr_precision k_boltz = 1.38e-23*11604/1.66e-27;
+    gitr_precision T_background = 0.0;
+    gitr_precision nu_friction = 0.0;
+    gitr_precision nu_deflection = 0.0;
+    gitr_precision nu_parallel = 0.0;
+    gitr_precision nu_energy = 0.0;
+    gitr_precision flowVelocity[3]= {0.0};
+    gitr_precision relativeVelocity[3] = {0.0};
+    gitr_precision velocityCollisions[3]= {0.0};	
+    gitr_precision velocityRelativeNorm;	
+    gitr_precision parallel_direction[3] = {0.0};
+    gitr_precision perp_direction1[3] = {0.0};
+    gitr_precision perp_direction2[3] = {0.0};
+    
+    gitr_precision x = particlesPointer->xprevious[indx];
+    gitr_precision y = particlesPointer->yprevious[indx];
+    gitr_precision z = particlesPointer->zprevious[indx];
+    gitr_precision vx = particlesPointer->vx[indx];
+    gitr_precision vy = particlesPointer->vy[indx];
+    gitr_precision vz = particlesPointer->vz[indx];
+
 #if FLOWV_INTERP == 3 
-        interp3dVector (&flowVelocity[0], particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_flowV,nY_flowV,nZ_flowV,
+    interp3dVector (&flowVelocity[0], particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_flowV,nY_flowV,nZ_flowV,
                 flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
 #elif FLOWV_INTERP < 3    
 #if USEFIELDALIGNEDVALUES > 0
-        interpFieldAlignedVector(&flowVelocity[0],
+    interpFieldAlignedVector(&flowVelocity[0],
                                  particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                                  nR_flowV,nZ_flowV,
                                  flowVGridr,flowVGridz,flowVr,
@@ -565,57 +374,49 @@ void operator()(std::size_t indx)  {
                                  BfieldGridR,BfieldGridZ,BfieldR,
                                  BfieldZ,BfieldT);
 #else
-               interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
+    interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
                         flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
 #endif
 #endif
-            vPartNorm = std::sqrt(vx*vx + vy*vy + vz*vz);
 
-	        relativeVelocity[0] = vx - flowVelocity[0];
-        	relativeVelocity[1] = vy - flowVelocity[1];
-        	relativeVelocity[2] = vz - flowVelocity[2];
-		gitr_precision vRel2 = relativeVelocity[0]*relativeVelocity[0] + relativeVelocity[1]*relativeVelocity[1] + relativeVelocity[2]*relativeVelocity[2];
-        	velocityRelativeNorm = vectorNorm(relativeVelocity);
+    relativeVelocity[0] = vx - flowVelocity[0];
+    relativeVelocity[1] = vy - flowVelocity[1];
+    relativeVelocity[2] = vz - flowVelocity[2];
+    velocityRelativeNorm = vectorNorm(relativeVelocity);
 
 #if PARTICLESEEDS > 0
 #ifdef __CUDACC__
-        //int plus_minus1 = 1;//floor(curand_uniform(&particlesPointer->streams_collision1[indx]) + 0.5)*2 -1;
-		//int plus_minus2 = 1;//floor(curand_uniform(&particlesPointer->streams_collision2[indx]) + 0.5)*2 -1;
-		//int plus_minus3 = 1;//floor(curand_uniform(&particlesPointer->streams_collision3[indx]) + 0.5)*2 -1;
-            gitr_precision n1 = curand_normal(&state[indx]);
-            gitr_precision n2 = curand_normal(&state[indx]);
-            gitr_precision r1 = curand_uniform(&state[indx]);
-            gitr_precision r2 = curand_uniform(&state[indx]);
-            gitr_precision r3 = curand_uniform(&state[indx]);
-            gitr_precision xsi = curand_uniform(&state[indx]);
+    gitr_precision n1 = curand_normal(&state[indx]);
+    gitr_precision n2 = curand_normal(&state[indx]);
+    gitr_precision r1 = curand_uniform(&state[indx]);
+    gitr_precision r2 = curand_uniform(&state[indx]);
+    gitr_precision r3 = curand_uniform(&state[indx]);
+    gitr_precision xsi = curand_uniform(&state[indx]);
 #else
-            std::normal_distribution<gitr_precision> distribution(0.0,1.0);
-            std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
-            gitr_precision n1 = distribution(state[indx]);
-            gitr_precision n2 = distribution(state[indx]);
-            gitr_precision r1 = dist(state[indx]);
-            gitr_precision r2 = dist(state[indx]);
-            gitr_precision r3 = dist(state[indx]);
-            gitr_precision xsi = dist(state[indx]);
+    std::normal_distribution<gitr_precision> distribution(0.0,1.0);
+    std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
+    gitr_precision n1 = distribution(state[indx]);
+    gitr_precision n2 = distribution(state[indx]);
+    gitr_precision r1 = dist(state[indx]);
+    gitr_precision r2 = dist(state[indx]);
+    gitr_precision r3 = dist(state[indx]);
+    gitr_precision xsi = dist(state[indx]);
 #endif
 #else
 #if __CUDACC__
-            //gitr_precision plus_minus1 = floor(curand_uniform(&state[3]) + 0.5)*2-1;
-            //gitr_precision plus_minus2 = floor(curand_uniform(&state[4]) + 0.5)*2-1;
-            //gitr_precision plus_minus3 = floor(curand_uniform(&state[5]) + 0.5)*2-1;
-            gitr_precision n1 = curand_normal(&state[indx]);
-            gitr_precision n2 = curand_normal(&state[indx]);
-            gitr_precision xsi = curand_uniform(&state[indx]);
+    gitr_precision n1 = curand_normal(&state[indx]);
+    gitr_precision n2 = curand_normal(&state[indx]);
+    gitr_precision xsi = curand_uniform(&state[indx]);
 #else
-            std::normal_distribution<double> distribution(0.0,1.0);
-            std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
-            gitr_precision n1 = distribution(state[indx]);
-            gitr_precision n2 = distribution(state[indx]);
-            gitr_precision xsi = dist(state[indx]);
+    std::normal_distribution<double> distribution(0.0,1.0);
+    std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
+    gitr_precision n1 = distribution(state[indx]);
+    gitr_precision n2 = distribution(state[indx]);
+    gitr_precision xsi = dist(state[indx]);
 #endif
 #endif
-      getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
+    getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
                              x, y, z,
                              vx, vy, vz,
                              particlesPointer->charge[indx], particlesPointer->amu[indx],
@@ -633,73 +434,43 @@ void operator()(std::size_t indx)  {
                              BfieldZ,
                              BfieldT, T_background);
 
-      //getSlowDownDirections(parallel_direction, perp_direction1, perp_direction2,
-      //                      x, y, z,
-      //                      vx, vy, vz,
-      //                      nR_flowV, nY_flowV, nZ_flowV, flowVGridr, flowVGridy,
-      //                      flowVGridz, flowVr,
-      //                      flowVz, flowVt,
-
-      //                      nR_Bfield,
-      //                      nZ_Bfield,
-      //                      BfieldGridR,
-      //                      BfieldGridZ,
-      //                      BfieldR,
-      //                      BfieldZ,
-      //                      BfieldT);
-      
-      getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
+    getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );
       
-      gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti);
-      gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni);
+    gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti);
+    gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni);
+    
+    if(nu_parallel <=0.0) nu_parallel = 0.0;
+    gitr_precision coeff_par = n1 * std::sqrt(2.0*nu_parallel * dt);
+    gitr_precision cosXsi = cos(2.0 * pi * xsi) - 0.0028;
+    if(cosXsi > 1.0) cosXsi = 1.0;
+    gitr_precision sinXsi = sin(2.0 * pi * xsi);
+    if(nu_deflection <=0.0) nu_deflection = 0.0;
+    gitr_precision coeff_perp1 = cosXsi * std::sqrt(nu_deflection * dt*0.5);
+    gitr_precision coeff_perp2 = sinXsi * std::sqrt(nu_deflection * dt*0.5);
       
-      if(nu_parallel <=0.0) nu_parallel = 0.0;
-      gitr_precision coeff_par = n1 * std::sqrt(2.0*nu_parallel * dt);
-      gitr_precision cosXsi = cos(2.0 * pi * xsi) - 0.0028;
-      if(cosXsi > 1.0) cosXsi = 1.0;
-      gitr_precision sinXsi = sin(2.0 * pi * xsi);
-      if(nu_deflection <=0.0) nu_deflection = 0.0;
-      gitr_precision coeff_perp1 = cosXsi * std::sqrt(nu_deflection * dt*0.5);
-      gitr_precision coeff_perp2 = sinXsi * std::sqrt(nu_deflection * dt*0.5);
-#if USEFRICTION == 0
-      //drag = 0.0;
-#endif
-#if USEANGLESCATTERING == 0
-      coeff_perp1 = 0.0;
-      coeff_perp2 = 0.0;
-#endif
-#if USEHEATING == 0
-      coeff_par = 0.0;
-      nu_energy = 0.0;
-#endif
+    gitr_precision nuEdt = nu_energy * dt;
+    if (nuEdt < -1.0) nuEdt = -1.0;
       
-      gitr_precision nuEdt = nu_energy * dt;
-      if (nuEdt < -1.0) nuEdt = -1.0;
+    gitr_precision vx_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[0] + std::abs(n2)*(coeff_perp1 * perp_direction1[0] + coeff_perp2 * perp_direction2[0])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[0];
+    gitr_precision vy_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[1] + std::abs(n2)*(coeff_perp1 * perp_direction1[1] + coeff_perp2 * perp_direction2[1])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[1];
+    gitr_precision vz_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[2] + std::abs(n2)*(coeff_perp1 * perp_direction1[2] + coeff_perp2 * perp_direction2[2])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[2];
       
-      gitr_precision vx_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[0] + std::abs(n2)*(coeff_perp1 * perp_direction1[0] + coeff_perp2 * perp_direction2[0])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[0];
-      gitr_precision vy_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[1] + std::abs(n2)*(coeff_perp1 * perp_direction1[1] + coeff_perp2 * perp_direction2[1])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[1];
-      gitr_precision vz_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[2] + std::abs(n2)*(coeff_perp1 * perp_direction1[2] + coeff_perp2 * perp_direction2[2])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[2];
-      if(gitr_flags->USE_ADAPTIVE_DT)
+    if(gitr_flags->USE_ADAPTIVE_DT)
       {
-	      if (particlesPointer->advance[indx])
-	      {
-      particlesPointer->vx[indx] = vx_relative + flowVelocity[0]; 
-      particlesPointer->vy[indx] = vy_relative + flowVelocity[1]; 
-      particlesPointer->vz[indx] = vz_relative + flowVelocity[2];
-	      }
+        if (particlesPointer->advance[indx])
+        {
+          particlesPointer->vx[indx] = vx_relative + flowVelocity[0]; 
+          particlesPointer->vy[indx] = vy_relative + flowVelocity[1]; 
+          particlesPointer->vz[indx] = vz_relative + flowVelocity[2];
+        }
       }
       else
       {
-      particlesPointer->vx[indx] = vx_relative + flowVelocity[0]; 
-      particlesPointer->vy[indx] = vy_relative + flowVelocity[1]; 
-      particlesPointer->vz[indx] = vz_relative + flowVelocity[2];
+        particlesPointer->vx[indx] = vx_relative + flowVelocity[0]; 
+        particlesPointer->vy[indx] = vy_relative + flowVelocity[1]; 
+        particlesPointer->vz[indx] = vz_relative + flowVelocity[2];
       }
-
-      vx = particlesPointer->vx[indx];
-      vy = particlesPointer->vy[indx];
-      vz = particlesPointer->vz[indx];
-      //printf("xsi n2 vxr vx %f %f %f %f \n",xsi,n2,vx_relative,vx);
 
       this->dv[0] = velocityCollisions[0];
       this->dv[1] = velocityCollisions[1];

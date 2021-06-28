@@ -415,6 +415,7 @@ int main(int argc, char **argv, char **envp) {
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
   int geom_hash = use.get<int>( use::geom_hash);
+  int use3dtetgeom = 1;
   if(geom_hash)
   {
   //nR_closeGeomTotal = 0;
@@ -1459,17 +1460,17 @@ if( generate_lc > 0 )
     NcVar nc_gridYLc = ncFileLC.addVar("gridY", netcdf_precision, nc_nYLc);
 #endif
     NcVar nc_gridZLc = ncFileLC.addVar("gridZ", netcdf_precision, nc_nZLc);
-
-    nc_Lc.putVar(&Lc[0]);
-    nc_s.putVar(&s[0]);
-    nc_ftx.putVar(&forwardTracerX[0]);
-    nc_fty.putVar(&forwardTracerY[0]);
-    nc_ftz.putVar(&forwardTracerZ[0]);
-    nc_btx.putVar(&backwardTracerX[0]);
-    nc_bty.putVar(&backwardTracerY[0]);
-    nc_btz.putVar(&backwardTracerZ[0]);
-    nc_nI.putVar(&noIntersectionNodes[0]);
-    nc_gridRLc.putVar(&gridRLc[0]);
+   //FIXME - commented these because of disrupted workflow compile errors
+    //nc_Lc.putVar(&Lc[0]);
+    //nc_s.putVar(&s[0]);
+    //nc_ftx.putVar(&forwardTracerX[0]);
+    //nc_fty.putVar(&forwardTracerY[0]);
+    //nc_ftz.putVar(&forwardTracerZ[0]);
+    //nc_btx.putVar(&backwardTracerX[0]);
+    //nc_bty.putVar(&backwardTracerY[0]);
+    //nc_btz.putVar(&backwardTracerZ[0]);
+    //nc_nI.putVar(&noIntersectionNodes[0]);
+    //nc_gridRLc.putVar(&gridRLc[0]);
 #if USE3DTETGEOM
     nc_gridYLc.putVar(&gridYLc[0]);
 #endif

@@ -17,7 +17,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "starting test " << std::endl;
     typedef double P;
     libconfig::Config cfg;
-    std::string file = "../test/file.cfg";
+    std::string file = "../test_data/file.cfg";
     std::cout << "about to importLibConfig " << std::endl;
     importLibConfig(cfg, file);
     std::cout << "imported cfg " << std::endl;
@@ -32,11 +32,11 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "starting test " << std::endl;
     typedef double P;
     libconfig::Config cfg;
-    std::string file = "../test/file.cfg";
+    std::string file = "../test_data/file.cfg";
     std::cout << "about to importLibConfig " << std::endl;
     importLibConfig(cfg, file);
     std::cout << "imported cfg " << std::endl;
-    const std::string var1 = "stuff.gitr_precision";
+    const std::string var1 = "stuff.float";
     gitr_precision this_thing=0;
     getVariable(cfg, var1,this_thing);
     std::cout << "this thing values " << this_thing << std::endl;
@@ -49,11 +49,11 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "starting test " << std::endl;
     typedef double P;
     libconfig::Config cfg;
-    std::string file = "../test/file.cfg";
+    std::string file = "../test_data/file.cfg";
     std::cout << "about to importLibConfig " << std::endl;
     importLibConfig(cfg, file);
     std::cout << "imported cfg " << std::endl;
-    const std::string var1 = "stuff.gitr_precision";
+    const std::string var1 = "stuff.float";
     double this_thing=0;
     getVariable(cfg, var1,this_thing);
     std::cout << "this thing values " << this_thing << std::endl;
@@ -66,7 +66,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "starting test " << std::endl;
     typedef double P;
     libconfig::Config cfg;
-    std::string file = "../test/file.cfg";
+    std::string file = "../test_data/file.cfg";
     std::cout << "about to importLibConfig " << std::endl;
     importLibConfig(cfg, file);
     std::cout << "imported cfg " << std::endl;
@@ -80,8 +80,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   {
   libconfig::Config cfg,cfg_geom;
   
-    importLibConfig(cfg_geom, "../test/geom_test.cfg");
-    importLibConfig(cfg, "../test/ionize.cfg");
+    importLibConfig(cfg_geom, "../test_data/geom_test.cfg");
+    importLibConfig(cfg, "../test_data/ionize.cfg");
   std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;
@@ -135,8 +135,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   {
   libconfig::Config cfg, cfg_geom;
   
-    importLibConfig(cfg_geom, "../test/flat_line.cfg");
-    importLibConfig(cfg, "../test/ionize.cfg");
+    importLibConfig(cfg_geom, "../test_data/flat_line.cfg");
+    importLibConfig(cfg, "../test_data/ionize.cfg");
   std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;
@@ -221,8 +221,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   {
   libconfig::Config cfg,cfg_geom;
   
-    importLibConfig(cfg_geom, "../test/positive_slope.cfg");
-    importLibConfig(cfg, "../test/ionize.cfg");
+    importLibConfig(cfg_geom, "../test_data/positive_slope.cfg");
+    importLibConfig(cfg, "../test_data/ionize.cfg");
   std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;

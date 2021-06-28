@@ -22,7 +22,8 @@ set( gpu_test_targets
      file_io_tests
      coulomb_tests 
      field_tests
-     #atomic_tests )
+     atomic_tests 
+                  )
 
 if( NOT GITR_USE_CUDA )
 
