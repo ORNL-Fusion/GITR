@@ -269,9 +269,9 @@ int main(int argc, char **argv, char **envp) {
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
   }
+  int use3dtetgeom = use.get<int>( use::use3dtetgeom );
 #if USE_MPI > 0
   MPI_Bcast(&nSurfaces, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  int use3dtetgeom = use.get<int>( use::use3dtetgeom );
   int nBoundaryMembers;
   if(use3dtetgeom)
   {
@@ -415,7 +415,7 @@ int main(int argc, char **argv, char **envp) {
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
   int geom_hash = use.get<int>( use::geom_hash);
-  int use3dtetgeom = 1;
+  //int use3dtetgeom = 1;
   if(geom_hash)
   {
   //nR_closeGeomTotal = 0;
