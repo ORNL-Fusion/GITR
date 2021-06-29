@@ -27,8 +27,7 @@ target_link_libraries( GITR
                        surface_model
                        flags
                        hashGeom
-                       config_interface
-                       mpi )
+                       config_interface )
 
 if( GITR_USE_CUDA )
 
@@ -39,12 +38,15 @@ endif()
 
 if( GITR_USE_MPI )
   target_link_libraries( GITR mpi )
+  target_link_libraries( coulomb_tests mpi )
+  target_link_libraries( atomic_tests mpi )
+  target_link_libraries( field_tests mpi )
 endif()
 
 # link test targets
 target_link_libraries( config_interface_tests test_utils libconfig config_interface )
 target_link_libraries( coulomb_tests 
-                       test_utils libconfig thrust interp2d utils flags netcdf mpi boris fields )
-target_link_libraries( atomic_tests test_utils ionize interp2d utils flags mpi )
-target_link_libraries( field_tests test_utils interp2d libconfig utils netcdf mpi fields boris )
+                       test_utils libconfig thrust interp2d utils flags netcdf boris fields )
+target_link_libraries( atomic_tests test_utils ionize interp2d utils flags )
+target_link_libraries( field_tests test_utils interp2d libconfig utils netcdf fields boris )
 target_link_libraries( file_io_tests test_utils libconfig utils flags boris )
