@@ -45,3 +45,9 @@ jobs :
 
       run : |
         cmake --build ${{github.workspace}}/build -- -j
+
+    - name : Test
+
+      run : |
+        cd ${{github.workspace}}/build
+        ctest
