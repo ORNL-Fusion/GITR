@@ -14,13 +14,14 @@ if( GITR_USE_CUDA )
   # Later: enforce minimum requirement
   include( FindCUDAToolkit )
 
+  if( NOT CUDAToolkit_FOUND )
+    message( FATAL_ERROR "CUDA toolkit not found: to enable, set -DCUDAToolkit_ROOT=/path/to/cuda_root"
+             " or disable GPU support, set -DGITR_USE_CUDA=0" )
+  endif()
+
   include_directories( ${CUDAToolkit_INCLUDE_DIRS} )
 
-  # Take care that this indicates the correct version
   set( CMAKE_CUDA_ARCHITECTURES 70 )
-
-  #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -DCUDA -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA --std=c++14 -O3 --expt-relaxed-constexpr --expt-extended-lambda) #-O3 --expt-extended-lambda --expt-relaxed-constexpr -g -G --cudart shared
-  #set( CMAKE_CUDA_FLAGS --expt-relaxed-constexpr )
 
 else()
 

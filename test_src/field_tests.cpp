@@ -26,7 +26,7 @@ TEST_CASE("Field struct", "tests") {
     cfg.setAutoConvert(true);
     std::string input_path = "../test_data/";
     //importLibConfig(cfg, input_path + inputFile);
-    importLibConfig(cfg, input_path+inputFile );
+    importLibConfig(cfg, FIELD_UNIT_TEST_FILE_1 );
     //auto gitr_flags = new Flags(cfg);
     auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     std::cout << " nD " << field1->nD << " " << field1->dimensions.size() << std::endl;

@@ -64,6 +64,9 @@ include_directories( ${NETCDF_CXX_INCLUDE_DIR} )
 
 include_directories( ${NETCDF_INCLUDE_DIR} )
 
-target_include_directories( netcdf INTERFACE ${NETCDF_INCLUDE_DIR} ${NETCDF_CXX_INCLUDE_DIR} )
+target_include_directories( netcdf INTERFACE
+                            ${NETCDF_INCLUDE_DIR}
+                            ${NETCDF_CXX_INCLUDE_DIR}
+                            ${HDF5_INCLUDE_DIRS} )
 
-target_link_libraries( netcdf INTERFACE ${NETCDF_LIBRARY} ${NETCDF_CXX_LIBRARY} )
+target_link_libraries( netcdf INTERFACE ${NETCDF_LIBRARY} ${NETCDF_CXX_LIBRARY} HDF5::HDF5 )

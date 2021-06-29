@@ -98,8 +98,6 @@ The **input** directory must contain a file called *gitrInput.cfg*. Reference
 docs/runtime_config.md for details about this file. These following options in the file must
 be mirrored with their CMake **-D**-style counterpart build-time option.
 
-Captain! Here - add a list of the flags. Or just put it in the reference file?
-
 Navigate to this directory and run:
 
 > /path/to/build/GITR

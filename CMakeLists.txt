@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project( gitr CXX )
-
-set( debug 0 )
+project( gitr CXX C )
 
 set( CMAKE_CXX_STANDARD 17 )
 
@@ -11,9 +9,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMake/)
 
 # CMake options configurable with -D<option_string>
 include( CMake/user_options.cmake )
-
-# Configures system according to user options
-include( CMake/system_options.cmake )
 
 # Handle external dependencies
 include( CMake/dependencies.cmake )
