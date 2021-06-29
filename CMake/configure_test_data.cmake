@@ -30,3 +30,9 @@ set( destination_name "test_include/test_data_filepath.hpp" )
 set( destination_path "${CMAKE_SOURCE_DIR}/${destination_name}" )
 
 configure_file( ${source_path} ${destination_path} )
+
+# This .nc file wil be removed with the netcdf dependency in the future
+set( test_file_name "test_data/netcdf_file_py.nc" )
+set( source_path "${CMAKE_SOURCE_DIR}/${test_file_name}" )
+set( destination_path "${CMAKE_BINARY_DIR}/${test_file_name}" )
+configure_file( ${source_path} ${destination_path} COPYONLY )

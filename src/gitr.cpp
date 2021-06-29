@@ -1181,7 +1181,6 @@ else
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-/* Captain! This one has something to do with generate_lc */
 if( use3dtetgeom > 0 )
 {
   nTracers = nR_Lc * nY_Lc * nZ_Lc;
@@ -1231,7 +1230,6 @@ if( generate_lc > 0 )
   std::cout << "Creating tracer particles" << std::endl;
   thrust::counting_iterator<std::size_t> lcBegin(pair.first);
   thrust::counting_iterator<std::size_t> lcEnd(pair.second - 1);
-  /* Captain! Added new arguments to this Particles constructor */
   auto forwardTracerParticles = new Particles(nTracers, 1, cfg, gitr_flags );
   auto backwardTracerParticles = new Particles(nTracers, 1, cfg, gitr_flags );
   int addIndex = 0;
@@ -1248,8 +1246,6 @@ if( generate_lc > 0 )
         forwardTracerParticles->setParticle(addIndex, gridRLc[i], gridYLc[j],
                                             gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0,
                                             0.0);
-        /* Captain! This one segfaults... but not the first one */
-        std::cout << "Ahoy, Captain! addIndex: " << addIndex << "nTracers: " << nTracers << std::endl;
         backwardTracerParticles->setParticle(addIndex, gridRLc[i], gridYLc[j],
                                              gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0,
                                              0.0);
@@ -2156,7 +2152,6 @@ if( flowv_interp == 1 )
   int nPSEs = 1;
   std::string PSECfg = "backgroundPlasmaProfiles.Efield.";
 // sim::Array<float> preSheathEGridy(1);
-/* Captain! If-begin */
 #if USEPRESHEATHEFIELD > 0
 
   std::cout << "Using presheath Efield " << std::endl;
@@ -2351,7 +2346,6 @@ if( flowv_interp == 1 )
   sim::Array<gitr_precision> PSEr(nPSEs), PSEz(nPSEs), PSEt(nPSEs);
 
 #endif
-/* Captain! If-end */
   std::string outnamePSEfieldR = "PSEfieldR.m";
   std::string outnamePSEfieldZ = "PSEfieldZ.m";
   std::string outnamePSEGridR = "PSEgridR.m";

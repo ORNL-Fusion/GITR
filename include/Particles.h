@@ -99,7 +99,6 @@ public:
     this->Z[indx] = Z;
     this->charge[indx] = charge;
     this->amu[indx] = amu;
-    /* Captain! This segfaults */
     this->hitWall[indx] = 0.0;
     this->wallIndex[indx] = 0;
     this->vx[indx] =
