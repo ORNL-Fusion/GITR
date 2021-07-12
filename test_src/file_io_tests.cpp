@@ -6,6 +6,7 @@
 #include "test_utils.hpp"
 #include "Particles.h"
 #include "geometryCheck.h"
+#include "test_data_filepath.hpp"
 #if USE_DOUBLE
 typedef double gitr_precision;
 #else
@@ -17,9 +18,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "starting test " << std::endl;
     typedef double P;
     libconfig::Config cfg;
-    std::string file = "../test_data/file.cfg";
     std::cout << "about to importLibConfig " << std::endl;
-    importLibConfig(cfg, file);
+    importLibConfig(cfg, FILE_IO_UNIT_TEST_FILE_0);
     std::cout << "imported cfg " << std::endl;
     const std::string var1 = "stuff.thing";
     int this_thing=0;
@@ -32,9 +32,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "starting test " << std::endl;
     typedef double P;
     libconfig::Config cfg;
-    std::string file = "../test_data/file.cfg";
     std::cout << "about to importLibConfig " << std::endl;
-    importLibConfig(cfg, file);
+    importLibConfig(cfg, FILE_IO_UNIT_TEST_FILE_0);
     std::cout << "imported cfg " << std::endl;
     const std::string var1 = "stuff.float";
     gitr_precision this_thing=0;
@@ -49,9 +48,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "starting test " << std::endl;
     typedef double P;
     libconfig::Config cfg;
-    std::string file = "../test_data/file.cfg";
     std::cout << "about to importLibConfig " << std::endl;
-    importLibConfig(cfg, file);
+    importLibConfig(cfg, FILE_IO_UNIT_TEST_FILE_0);
     std::cout << "imported cfg " << std::endl;
     const std::string var1 = "stuff.float";
     double this_thing=0;
@@ -66,9 +64,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "starting test " << std::endl;
     typedef double P;
     libconfig::Config cfg;
-    std::string file = "../test_data/file.cfg";
     std::cout << "about to importLibConfig " << std::endl;
-    importLibConfig(cfg, file);
+    importLibConfig(cfg, FILE_IO_UNIT_TEST_FILE_0);
     std::cout << "imported cfg " << std::endl;
     const std::string var1 = "stuff.filename";
     std::string this_thing;
@@ -76,12 +73,14 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "this thing values " << this_thing << std::endl;
     REQUIRE(this_thing == "netcdf_file_py.nc");
   }
+  /* Captain! Failing test. I think USE3DTETGEOM needs to be set to zero for this test,
+     but the default is 1 */
   SECTION("geom test")
   {
   libconfig::Config cfg,cfg_geom;
   
-    importLibConfig(cfg_geom, "../test_data/geom_test.cfg");
-    importLibConfig(cfg, "../test_data/ionize.cfg");
+    importLibConfig( cfg_geom, FILE_IO_UNIT_TEST_FILE_1 );
+    importLibConfig( cfg, FIELD_UNIT_TEST_FILE_0 );
   std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;
@@ -131,12 +130,13 @@ TEST_CASE("Factorials are computed", "[factorial]") {
 
   }
   
+  /* Captain! Failing test */
   SECTION("geom test - flat line")
   {
   libconfig::Config cfg, cfg_geom;
   
-    importLibConfig(cfg_geom, "../test_data/flat_line.cfg");
-    importLibConfig(cfg, "../test_data/ionize.cfg");
+    importLibConfig( cfg_geom, FLAT_LINE_CFG_FILE );
+    importLibConfig( cfg, FIELD_UNIT_TEST_FILE_0 );
   std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;
@@ -221,8 +221,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   {
   libconfig::Config cfg,cfg_geom;
   
-    importLibConfig(cfg_geom, "../test_data/positive_slope.cfg");
-    importLibConfig(cfg, "../test_data/ionize.cfg");
+    importLibConfig(cfg_geom, POSITIVE_SLOPE_CFG_FILE );
+    importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
   std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;

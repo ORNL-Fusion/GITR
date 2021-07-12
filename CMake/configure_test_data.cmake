@@ -19,6 +19,18 @@ set( FIELD_UNIT_TEST_FILE_0 ${destination_path} )
 generate_testing_file( "test_data/ionize1.cfg" )
 set( FIELD_UNIT_TEST_FILE_1 ${destination_path} )
 
+generate_testing_file( "test_data/file.cfg" )
+set( FILE_IO_UNIT_TEST_FILE_0 ${destination_path} )
+
+generate_testing_file( "test_data/geom_test.cfg" )
+set( FILE_IO_UNIT_TEST_FILE_1 ${destination_path} )
+
+generate_testing_file( "test_data/flat_line.cfg" )
+set( FLAT_LINE_CFG_FILE ${destination_path} )
+
+generate_testing_file( "test_data/positive_slope.cfg" )
+set( POSITIVE_SLOPE_CFG_FILE ${destination_path} )
+
 # Configure the header file that will contain these strings
 
 set( source_name "test_include/test_data_filepath.hpp.in" )
