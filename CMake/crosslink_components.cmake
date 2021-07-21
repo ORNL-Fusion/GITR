@@ -58,4 +58,7 @@ target_link_libraries( coulomb_tests
 target_link_libraries( atomic_tests test_utils ionize interp2d utils flags )
 target_link_libraries( field_tests test_utils interp2d libconfig utils netcdf fields boris )
 target_link_libraries( file_io_tests test_utils libconfig utils flags boris )
-target_link_libraries( cross_field_diffusion_tests test_utils utils flags libconfig boris spectroscopy )
+target_link_libraries( cross_field_diffusion_tests 
+                       test_utils utils flags libconfig boris spectroscopy )
+target_link_libraries( boris_tests test_utils flags libconfig utils )
+

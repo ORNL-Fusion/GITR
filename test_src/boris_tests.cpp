@@ -1,3 +1,70 @@
+#include <iostream>
+#include <thrust/execution_policy.h>
+#include "test_utils.hpp"
+#include "config_interface.h"
+#include "test_data_filepath.hpp"
+#include "utils.h"
+#include "flags.hpp"
+#include "Particles.h"
+
+TEST_CASE( "boris" )
+{
+  SECTION( "e cross b" )
+  {
+    /* timesteps */
+    int nT = 1e4;
+
+    /* create particles */
+    libconfig::Config cfg_geom;
+
+    cfg_geom.setAutoConvert(true);
+
+    importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE);
+
+    auto gitr_flags = new Flags( cfg_geom );
+
+    libconfig::Setting &impurity = cfg_geom.lookup( "impurityParticleSource" );
+
+    auto particleArray = new Particles( 1, 1, cfg_geom, gitr_flags );
+
+    thrust::counting_iterator<std::size_t> particle_iterator0(0);
+    thrust::counting_iterator<std::size_t> particle_iterator_end(1);
+
+    /* Captain... Just rip everything from cross field diffusion tests and convert it
+       into a boris test. Compare and contrast differences between what's in gitr.cpp
+       and what's in cross_field_diffusion_tests.cpp */
+    sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
+
+    int nSurfaces = importGeometry( cfg_geom, boundaries );
+
+    REQUIRE( nSurfaces == 2 );
+
+    auto particleArray = new Particles( nP, 1, cfg_geom, gitr_flags );
+
+    int nEdist = 1;
+    gitr_precision E0dist = 0.0;
+    gitr_precision Edist = 0.0;
+    int nAdist = 1;
+    gitr_precision A0dist = 0.0;
+    gitr_precision Adist = 0.0;
+
+    auto surfaces = new Surfaces(nSurfaces, nEdist, nAdist);
+    surfaces->setSurface(nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+    sim::Array<gitr_precision> closeGeomGridr(1),
+      closeGeomGridy(1), closeGeomGridz(1);
+    sim::Array<int> closeGeom(1, 0);
+
+    gitr_precision perpDiffusionCoeff = 0.0;
+    cfg_geom.lookupValue("backgroundPlasmaProfiles.Diffusion.Dperp",
+                          perpDiffusionCoeff);
+
+    int nR_Bfield = 1, nZ_Bfield = 1, n_Bfield = 1;
+
+    sim::Array<gitr_precision> br(n_Bfield), by(n_Bfield), bz(n_Bfield);
+
+    sim::Array<gitr_precision> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
+  }
+}
 /*
 
 necessary components:
