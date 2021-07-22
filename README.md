@@ -1,7 +1,10 @@
 # GITR 
 Global Impurity Transport Code
 
-[![Build GITR](https://github.com/stonecoldhughes/GITR/actions/workflows/cmake.yml/badge.svg?branch=main)](https://github.com/stonecoldhughes/GITR/actions/workflows/cmake.yml)
+[![Build GITR](https://github.com/ORNL-Fusion/GITR/actions/workflows/cmake.yml/badge.svg)](https://github.com/ORNL-Fusion/GITR/actions/workflows/cmake.yml)
+
+### Note for legacy GITR users:
+For reference, please visit the archived copy of the GITR project - [GITR_legacy](https://github.com/ORNL-Fusion/GITR_legacy)
 
 ## Description
 The GITR program takes background plasma profiles, equilibrium, geometry, and surface model 
@@ -16,6 +19,7 @@ Beginning from a set of initial conditions, the code steps each particle through
 operators until certain conditions on the particles are reached (crossing a 
 boundary or timing out). The operators acting on the particles are dependent on the prescibed 
 fields and profiles of the background.
+
 
 ![Trace Impurity Transport](images/TraceImp.png)
 
@@ -102,10 +106,16 @@ Navigate to this directory and run:
 
 > /path/to/build/GITR
 
+## Canonical Example
+
+The default configuration options in GITR are compatible with the input deck in:
+[GITR_CPC_example](https://github.com/ORNL-Fusion/GITR-CPC-Example).
 
 ## Testing
 
-Unit test coverage not yet implemented
+Navigate to the user-created build directory and run:
+
+> ctest
 
 ## Bugs/Issues
 
