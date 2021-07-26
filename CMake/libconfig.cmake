@@ -29,7 +29,7 @@ if( NOT LIBCONFIG_FOUND )
 
 
   set( LIBCONFIG_LIBRARY 
-       "${prefix}/libconfig_install/lib/libconfig.so" 
+       "${prefix}/libconfig_install/lib/libconfig${suffix}" 
        CACHE FILEPATH "" FORCE )
 
   set( LIBCONFIGPP_INCLUDE_DIR 
@@ -38,7 +38,7 @@ if( NOT LIBCONFIG_FOUND )
 
 
   set( LIBCONFIGPP_LIBRARY
-       "${prefix}/libconfig_install/lib/libconfig++.so" 
+       "${prefix}/libconfig_install/lib/libconfig++${suffix}" 
        CACHE FILEPATH "" FORCE )
 
   find_package(LibConfig REQUIRED)

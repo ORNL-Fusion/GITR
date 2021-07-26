@@ -4,6 +4,16 @@ include( ExternalProject )
 
 set( prefix "${CMAKE_BINARY_DIR}/external" )
 
+if( APPLE )
+
+  set( suffix ".dylib" )
+
+else()
+
+  set( suffix ".so" )
+
+endif()
+
 # CUDA
 
 include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart

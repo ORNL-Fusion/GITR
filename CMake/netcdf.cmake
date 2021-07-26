@@ -42,11 +42,11 @@ if( NOT NETCDF_FOUND )
 
   add_dependencies( netcdf-cxx4_download netcdf-c_download )
 
-  set( NETCDF_LIBRARY "${prefix}/netcdf-c-install/lib/libnetcdf.so" CACHE FILEPATH "" FORCE )
+  set( NETCDF_LIBRARY "${prefix}/netcdf-c-install/lib/libnetcdf${suffix}" CACHE FILEPATH "" FORCE )
 
   set( NETCDF_CXX_INCLUDE_DIR "${prefix}/netcdf-cxx4-install/include" CACHE PATH "" FORCE)
 
-  set( NETCDF_CXX_LIBRARY "${prefix}/netcdf-cxx4-install/lib/libnetcdf-cxx4.so" CACHE FILEPATH "" FORCE )
+  set( NETCDF_CXX_LIBRARY "${prefix}/netcdf-cxx4-install/lib/libnetcdf-cxx4${suffix}" CACHE FILEPATH "" FORCE )
 
   set( NETCDF_INCLUDE_DIR "${prefix}/netcdf-c/include" CACHE PATH "" FORCE )
 
