@@ -60,5 +60,5 @@ target_link_libraries( field_tests test_utils interp2d libconfig utils netcdf fi
 target_link_libraries( file_io_tests test_utils libconfig utils flags boris )
 target_link_libraries( cross_field_diffusion_tests 
                        test_utils utils flags libconfig boris spectroscopy )
-target_link_libraries( boris_tests test_utils flags libconfig utils )
+target_link_libraries( boris_tests test_utils flags libconfig utils boris )
 
