@@ -1,6 +1,5 @@
 # add hdf5 if not found
-#include( FindHDF5 )
-find_package( HDF5 COMPONENTS C CXX HL )
+include( FindHDF5 )
 
 if( HDF5_FOUND )
 
