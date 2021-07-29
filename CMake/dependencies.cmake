@@ -16,10 +16,13 @@ endif()
 
 # OpenMP
 find_package( OpenMP )
-if( TARGET OpenMP::OpenMP_CXX )
-  message( "OpenMP imported target found" )
-else()
-  message( "Ahoy! Not found" )
+
+if( OpenMP_CXX_FOUND )
+
+  #set( CMAKE_CXX_FLAGS )
+  message( "all the flags: ${OpenMP_CXX_FLAGS}" )
+  add_compile_options( ${OpenMP_CXX_FLAGS} )
+
 endif()
 
 # CUDA
