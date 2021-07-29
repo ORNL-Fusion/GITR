@@ -30,7 +30,7 @@ endif()
 include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart
 
 # HDF5
-include( CMake/hdf5.cmake )
+# include( CMake/hdf5.cmake )
 
 # MPI
 
