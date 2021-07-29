@@ -167,7 +167,7 @@ TEST_CASE( "boris" )
                         particle_iterator_end,
                         boris );
 
-      thrust::for_each(thrust::host,
+      thrust::for_each(thrust::device,
                        particle_iterator_start, 
                        particle_iterator_end, 
                        geometry_check0 );
