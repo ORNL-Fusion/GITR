@@ -14,7 +14,7 @@
 #include "Surfaces.h"
 #include <cmath>
 #include "boris.h"
-#include <omp.h>
+#include "omp.h"
 #ifdef __CUDACC__
 #include <thrust/random.h>
 #else
