@@ -11,13 +11,13 @@ if( NOT NETCDF_FOUND )
   if( EXISTS ${prefix}/netcdf-c )
     ExternalProject_Add( netcdf-c_download
                          DOWNLOAD_COMMAND ""
-                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install
+                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install -DCMAKE_INSTALL_RPATH="${prefix}/netcdf-c-install/lib" 
                          BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/netcdf-c-build -- -j
                          INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-c-build )
   else()
     ExternalProject_Add( netcdf-c_download
                          DOWNLOAD_COMMAND git clone ${netcdf-c-url} ${prefix}/netcdf-c
-                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install
+                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install -DCMAKE_INSTALL_RPATH="${prefix}/netcdf-c-install/lib"
                          BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/netcdf-c-build -- -j
                          INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-c-build )
 
@@ -69,12 +69,12 @@ target_include_directories( netcdf INTERFACE
                             ${NETCDF_CXX_INCLUDE_DIR}
                             ${HDF5_INCLUDE_DIRS} )
 
+
+
 target_link_libraries( netcdf INTERFACE
                        ${NETCDF_LIBRARY}
                        ${NETCDF_CXX_LIBRARY}
                        ${HDF5_LIBRARIES} )
-
-
 
 
 
