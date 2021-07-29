@@ -15,6 +15,8 @@ target_link_libraries( utils
 
 target_link_libraries( boris thrust )
 
+target_link_libraries( surface_model OpenMP::OpenMP_CXX )
+
 # Improvement: Conditionally link based on whether the GITR_USE_<component> clause is enabled
 target_link_libraries( GITR 
                        ionize

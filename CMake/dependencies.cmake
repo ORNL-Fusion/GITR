@@ -14,6 +14,14 @@ else()
 
 endif()
 
+# OpenMP
+find_package( OpenMP )
+if( TARGET OpenMP::OpenMP_CXX )
+  message( "OpenMP imported target found" )
+else()
+  message( "Ahoy! Not found" )
+endif()
+
 # CUDA
 
 include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart
