@@ -1,4 +1,5 @@
 #include "surfaceModel.h"
+#include <omp.h>
 
     /* constructor */
     reflection::reflection(Particles* _particles, double _dt,
