@@ -69,33 +69,7 @@ target_include_directories( netcdf INTERFACE
                             ${NETCDF_CXX_INCLUDE_DIR}
                             ${HDF5_INCLUDE_DIRS} )
 
-
-
 target_link_libraries( netcdf INTERFACE
                        ${NETCDF_LIBRARY}
                        ${NETCDF_CXX_LIBRARY}
                        ${HDF5_LIBRARIES} )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

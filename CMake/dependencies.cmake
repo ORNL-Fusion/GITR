@@ -17,20 +17,11 @@ endif()
 # OpenMP
 find_package( OpenMP )
 
-if( OpenMP_CXX_FOUND )
-
-  #set( CMAKE_CXX_FLAGS )
-  message( "all the flags: ${OpenMP_CXX_FLAGS}" )
-  add_compile_options( ${OpenMP_CXX_FLAGS} )
-
-endif()
-
 # CUDA
-
 include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart
 
 # HDF5
-# include( CMake/hdf5.cmake )
+include( CMake/hdf5.cmake )
 
 # MPI
 

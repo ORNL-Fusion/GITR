@@ -15,8 +15,13 @@ target_link_libraries( utils
 
 target_link_libraries( boris thrust )
 
-# Captain!
-#target_link_libraries( surface_model PUBLIC OpenMP::OpenMP_CXX )
+if( OpenMP_CXX_FOUND )
+
+  target_compile_options( surface_model PUBLIC ${OpenMP_CXX_FLAGS} )
+  # Captain! Is this needed? Do the compiler flags correctly handle everything? I bet they do
+  target_link_libraries( surface_model PUBLIC OpenMP::OpenMP_CXX )
+
+endif()
 
 # Improvement: Conditionally link based on whether the GITR_USE_<component> clause is enabled
 target_link_libraries( GITR 
