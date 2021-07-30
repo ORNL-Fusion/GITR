@@ -6,18 +6,24 @@ if( NOT NETCDF_FOUND )
 
   message( "Downloading netcdf-c and netcdf-cxx4..." )
 
+  # Captain! specify these projects to use the same compiler as this project. First,
+  # clean this up so you can actually read it. First start with spacing...
   set( netcdf-c-url "https://github.com/Unidata/netcdf-c.git" )
 
   if( EXISTS ${prefix}/netcdf-c )
+    set( download_command "" )
     ExternalProject_Add( netcdf-c_download
-                         DOWNLOAD_COMMAND ""
+                         DOWNLOAD_COMMAND ${download_command}
                          CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install -DCMAKE_INSTALL_RPATH="${prefix}/netcdf-c-install/lib" 
                          BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/netcdf-c-build -- -j
                          INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-c-build )
   else()
+    set( download_command git clone ${netcdf-c-url} ${prefix}/netcdf-c )
+    message( "Ahoy, Captain! download_command: ${download_command}" )
+    set( configure_command ${CMAKE_COMMAND} -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install -DCMAKE_INSTALL_RPATH="${prefix}/netcdf-c-install/lib" )
     ExternalProject_Add( netcdf-c_download
-                         DOWNLOAD_COMMAND git clone ${netcdf-c-url} ${prefix}/netcdf-c
-                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install -DCMAKE_INSTALL_RPATH="${prefix}/netcdf-c-install/lib"
+                         DOWNLOAD_COMMAND ${download_command}
+                         CONFIGURE_COMMAND ${configure_command}
                          BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/netcdf-c-build -- -j
                          INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-c-build )
 
