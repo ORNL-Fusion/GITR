@@ -19,8 +19,14 @@ if( NOT NETCDF_FOUND )
                          INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-c-build )
   else()
     set( download_command git clone ${netcdf-c-url} ${prefix}/netcdf-c )
-    message( "Ahoy, Captain! download_command: ${download_command}" )
-    set( configure_command ${CMAKE_COMMAND} -S ${prefix}/netcdf-c -B ${prefix}/netcdf-c-build -DENABLE_DAP=OFF -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install -DCMAKE_INSTALL_RPATH="${prefix}/netcdf-c-install/lib" )
+    set( configure_command "${CMAKE_COMMAND};\
+                            -S;${prefix}/netcdf-c;\
+                            -B;${prefix}/netcdf-c-build;\
+                            -DENABLE_DAP=OFF;\
+                            -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install;\
+                            -DCMAKE_INSTALL_RPATH=${prefix}/netcdf-c-install/lib" )
+
+    message( "Ahoy, Captain! configure_command: ${configure_command}" )
     ExternalProject_Add( netcdf-c_download
                          DOWNLOAD_COMMAND ${download_command}
                          CONFIGURE_COMMAND ${configure_command}
