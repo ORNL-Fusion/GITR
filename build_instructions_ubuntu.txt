@@ -42,4 +42,42 @@ System: Ubuntu 20.04.2 LTS
 3. To run large problems, you will need to leverage a GPU. This means that nvcc must be
    installed: follow these instructions:
    https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
-   You will likely need a restart after this.
+   You will likely need a restart after this to initiate cuda drivers.
+
+4. CUDA is now installed, but you must point your shell to it for it to find it.
+   Add the PATH and LD_LIBRARY_PATH exports to your bashrc file. Open a new terminal window
+   after this change so that they will take effect.
+
+
+Notes:
+
+add instructions to find the CUDA_Toolkit_ROOT_DIR in the cmake message if it is not found.
+(by typing which nvcc and then inferring the top level dir from that)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
