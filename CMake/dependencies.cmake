@@ -24,25 +24,21 @@ include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart
 include( CMake/hdf5.cmake )
 
 # MPI
-
 include( CMake/mpi.cmake ) # ---> creates target mpi
 
 set( dependencies "" )
 
 # Thrust
-
 include( CMake/thrust.cmake ) # ---> creates target thrust
 
 list( APPEND dependencies thrust )
 
 # Libconfig
-
 include( CMake/libconfig.cmake ) # ---> creates target libconfig
 
 list( APPEND dependencies libconfig )
 
 # NETCDF
-
 include( CMake/netcdf.cmake ) # ---> creates target netcdf
 
 list( APPEND dependencies netcdf )
