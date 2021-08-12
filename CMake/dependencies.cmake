@@ -20,9 +20,6 @@ find_package( OpenMP )
 # CUDA
 include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart
 
-# HDF5
-include( CMake/hdf5.cmake )
-
 # MPI
 include( CMake/mpi.cmake ) # ---> creates target mpi
 

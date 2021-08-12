@@ -9,12 +9,18 @@ if( NOT NETCDF_FOUND )
   set( netcdf-c-url "https://github.com/Unidata/netcdf-c.git" )
 
   # Captain! Set the HDF5_ROOT or other hdf5 variables so netcdf will link to it
+  set( hdf5_lib_prefix ${prefix}/hdf5/HDF5-1.12.1-Linux/HDF_Group/HDF5/1.12.1/lib )
+
   set( configure_command
       ${CMAKE_COMMAND} 
       -S ${prefix}/netcdf-c
       -B ${prefix}/netcdf-c-build
       -DENABLE_DAP=OFF
-      -DHDF5_ROOT=${hdf5_install_dir}
+      -DHDF5_C_LIBRARY=${hdf5_lib}/libhdf5.so
+      -DHDF5_HL_LIBRARY=${hdf5_lib}/libhdf5_hl.so
+      -DHDF5_INCLUDE_DIR=${hdf5_include}
+      -DHDF5_VERSION=1.12.1
+      -DSZIP_LIBRARY=${szip_install}/lib/libszip.so
       -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install
       -DCMAKE_INSTALL_RPATH=${prefix}/netcdf-c-install/lib )
 
@@ -92,9 +98,9 @@ if( TARGET netcdf-c_download AND TARGET netcdf-cxx4_download )
 endif()
 
 # Captain! Are these global includes really necessary? Comment out to test
-# include_directories( ${NETCDF_CXX_INCLUDE_DIR} )
+include_directories( ${NETCDF_CXX_INCLUDE_DIR} )
 
-# include_directories( ${NETCDF_INCLUDE_DIR} )
+include_directories( ${NETCDF_INCLUDE_DIR} )
 
 target_include_directories( netcdf INTERFACE
                             ${NETCDF_INCLUDE_DIR}
