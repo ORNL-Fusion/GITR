@@ -8,19 +8,30 @@ if( NOT LIBCONFIG_FOUND )
 
   set( libconfig_url "https://github.com/hyperrealm/libconfig.git" )
 
+  set( configure_command
+       ${CMAKE_COMMAND}
+       -S ${prefix}/libconfig
+       -B ${prefix}/libconfig_build
+       -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
+       -DCMAKE_BUILD_WITH_INSTALL_RPATH=True
+       -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=True
+       -DCMAKE_INSTALL_RPATH=${prefix}/libconfig_install/lib )
+
   if( EXISTS ${prefix}/libconfig )
-    ExternalProject_Add( libconfig_download
-                         DOWNLOAD_COMMAND ""
-                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/libconfig -B ${prefix}/libconfig_build -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
-                         BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/libconfig_build -- -j
-                         INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/libconfig_build ) 
+
+    set( download_command "" )
+
   else()
+
+    set( download_command git clone ${libconfig_url} ${prefix}/libconfig )
+
+  endif()
+
     ExternalProject_Add( libconfig_download
-                         DOWNLOAD_COMMAND git clone ${libconfig_url} ${prefix}/libconfig
-                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/libconfig -B ${prefix}/libconfig_build -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
+                         DOWNLOAD_COMMAND ${download_command}
+                         CONFIGURE_COMMAND ${configure_command}
                          BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/libconfig_build -- -j
                          INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/libconfig_build ) 
-  endif()
 
 
   set( LIBCONFIG_INCLUDE_DIR 
