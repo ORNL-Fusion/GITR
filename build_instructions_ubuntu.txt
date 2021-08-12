@@ -58,7 +58,7 @@ Notes:
 add instructions to find the CUDA_Toolkit_ROOT_DIR in the cmake message if it is not found.
 (by typing which nvcc and then inferring the top level dir from that)
 
-
+For mac, brew install hdf5@1.12
 
 
 
