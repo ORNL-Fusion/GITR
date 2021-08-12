@@ -8,19 +8,11 @@ if( NOT NETCDF_FOUND )
 
   set( netcdf-c-url "https://github.com/Unidata/netcdf-c.git" )
 
-  # Captain! Set the HDF5_ROOT or other hdf5 variables so netcdf will link to it
-  set( hdf5_lib_prefix ${prefix}/hdf5/HDF5-1.12.1-Linux/HDF_Group/HDF5/1.12.1/lib )
-
   set( configure_command
       ${CMAKE_COMMAND} 
       -S ${prefix}/netcdf-c
       -B ${prefix}/netcdf-c-build
       -DENABLE_DAP=OFF
-      -DHDF5_C_LIBRARY=${hdf5_lib}/libhdf5.so
-      -DHDF5_HL_LIBRARY=${hdf5_lib}/libhdf5_hl.so
-      -DHDF5_INCLUDE_DIR=${hdf5_include}
-      -DHDF5_VERSION=1.12.1
-      -DSZIP_LIBRARY=${szip_install}/lib/libszip.so
       -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install
       -DCMAKE_INSTALL_RPATH=${prefix}/netcdf-c-install/lib )
 
@@ -91,9 +83,8 @@ add_library( netcdf INTERFACE )
 
 if( TARGET netcdf-c_download AND TARGET netcdf-cxx4_download )
 
-  add_dependencies( netcdf-c_download hdf5 )
-  add_dependencies( netcdf-cxx4_download hdf5 )
-  add_dependencies( netcdf netcdf_c_download netcdf-cxx4_download hdf5 )
+  add_dependencies( netcdf netcdf-c_download )
+  add_dependencies( netcdf netcdf-cxx4_download )
 
 endif()
 
@@ -104,13 +95,10 @@ include_directories( ${NETCDF_INCLUDE_DIR} )
 
 target_include_directories( netcdf INTERFACE
                             ${NETCDF_INCLUDE_DIR}
-                            ${NETCDF_CXX_INCLUDE_DIR} )
-                            # Captain! Will the target link libraries call link correctly?
-                            #${HDF5_INCLUDE_DIRS} )
+                            ${NETCDF_CXX_INCLUDE_DIR}
+                            ${HDF5_INCLUDE_DIRS} )
 
 target_link_libraries( netcdf INTERFACE
                        ${NETCDF_LIBRARY}
                        ${NETCDF_CXX_LIBRARY}
-                       hdf5 )
-                       # Will the target handle this correctly?
-                       #${HDF5_LIBRARIES} )
+                       ${HDF5_LIBRARIES} )

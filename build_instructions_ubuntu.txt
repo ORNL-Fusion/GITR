@@ -48,7 +48,9 @@ System: Ubuntu 20.04.2 LTS
    Add the PATH and LD_LIBRARY_PATH exports to your bashrc file. Open a new terminal window
    after this change so that they will take effect.
 
-5. For Netcdf to work properly, you must have a compression library. sudo apt install libsz2
+5. For Netcdf to work properly, you must have m4. sudo apt install m4
+
+6. You must also have hdf5 installed - sudo apt install libhdf5-dev
 
 
 Notes:

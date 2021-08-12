@@ -23,6 +23,9 @@ include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart
 # MPI
 include( CMake/mpi.cmake ) # ---> creates target mpi
 
+# hdf5
+include( FindHDF5 )
+
 set( dependencies "" )
 
 # Thrust
