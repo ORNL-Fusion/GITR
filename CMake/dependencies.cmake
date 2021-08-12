@@ -21,8 +21,6 @@ set( CMAKE_INSTALL_RPATH
      "${prefix}/netcdf-c-install/lib"
      "${prefix}/netcdf-cxx4-install/lib" )
 
-set( CMAKE_INSTALL_RPATH_USE_LINK_PATH True )
-
 # OpenMP
 find_package( OpenMP )
 

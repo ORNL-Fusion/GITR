@@ -13,10 +13,9 @@ if( NOT NETCDF_FOUND )
       -S ${prefix}/netcdf-c
       -B ${prefix}/netcdf-c-build
       -DENABLE_DAP=OFF
-      -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install
-      -DCMAKE_BUILD_WITH_INSTALL_RPATH=True
-      -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=True
-      -DCMAKE_INSTALL_RPATH="${prefix}/netcdf-c-install/lib")
+      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+      -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-c-install )
 
   if( EXISTS ${prefix}/netcdf-c )
 
@@ -43,10 +42,9 @@ if( NOT NETCDF_FOUND )
        ${CMAKE_COMMAND}
        -S ${prefix}/netcdf-cxx4
        -B ${prefix}/netcdf-cxx4-build
-       -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-cxx4-install 
-       -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=True
-       -DCMAKE_BUILD_WITH_INSTALL_RPATH=True
-       -DCMAKE_INSTALL_RPATH="${prefix}/netcdf-cxx4-install/lib" )
+       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+       -DCMAKE_INSTALL_PREFIX=${prefix}/netcdf-cxx4-install )
 
   if( EXISTS ${prefix}/netcdf-cxx4 )
 

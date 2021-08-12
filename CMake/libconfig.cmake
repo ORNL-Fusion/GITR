@@ -12,10 +12,9 @@ if( NOT LIBCONFIG_FOUND )
        ${CMAKE_COMMAND}
        -S ${prefix}/libconfig
        -B ${prefix}/libconfig_build
-       -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
-       -DCMAKE_BUILD_WITH_INSTALL_RPATH=True
-       -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=True
-       -DCMAKE_INSTALL_RPATH=${prefix}/libconfig_install/lib )
+       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+       -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install )
 
   if( EXISTS ${prefix}/libconfig )
 
