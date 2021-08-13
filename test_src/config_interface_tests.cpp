@@ -6,7 +6,7 @@
    defines LIBCONFIG_UNIT_TEST_FILE */
 #include "test_data_filepath.hpp"
 
-TEST_CASE( "Simulation Configuration" )
+TEST_CASE( "Simulation Configuration - not fully implemented" )
 {
   /* Open the file and get a field out */
   class libconfig_string_query query( CONFIG_INTERFACE_UNIT_TEST_FILE );

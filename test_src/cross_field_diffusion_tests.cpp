@@ -9,7 +9,9 @@
 #include <thrust/execution_policy.h>
 
 /* is there an option for analytic bfield? No. */
-TEST_CASE( "cross-field diffusion operator" )
+/* Captain! This test does not work with CUDA support - something is wrong
+   with the control flow */
+TEST_CASE( "cross-field diffusion operator - not fully implemented" )
 {
   SECTION( "Ahoy, Captain!" )
   {
@@ -178,10 +180,10 @@ TEST_CASE( "cross-field diffusion operator" )
     /* examine histogram */
     /* output x */
     /* analytical equation we expect */
+    double sum = 0;
     for( int x_bin = 0; x_bin < net_nX; ++x_bin )
     {
       /* sum over z? */
-      double sum = 0;
       for( int z_bin = 0; z_bin < net_nZ; ++z_bin )
       {
         sum += net_Bins[ nBins * net_nX * net_nZ +
@@ -189,5 +191,7 @@ TEST_CASE( "cross-field diffusion operator" )
       }
       std::cout << "sum: " << sum << std::endl;
     }
+
+    REQUIRE( sum > 0 );
   }
 }

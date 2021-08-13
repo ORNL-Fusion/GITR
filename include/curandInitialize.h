@@ -34,9 +34,9 @@ struct curandInitialize{
 #if USE_CUDA > 0
     curand_init(indx, 0, 0, &s[indx]);
 #else
-    //std::random_device randDevice;
+    std::random_device randDevice;
     std::mt19937 s0(randDevice());
-    T s0(1234^indx);
+    //T s0(1234^indx);
     s[indx] = s0;
 #endif
   }

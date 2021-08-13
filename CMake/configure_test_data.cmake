@@ -3,7 +3,7 @@ macro( generate_testing_file test_file_name )
 
 set( source_path "${CMAKE_SOURCE_DIR}/${test_file_name}" )
 set( destination_path "${CMAKE_BINARY_DIR}/${test_file_name}" )
-configure_file( ${source_path} ${destination_path} )
+configure_file( ${source_path} ${destination_path} COPYONLY )
 
 endmacro()
 
