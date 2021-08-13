@@ -118,7 +118,11 @@ TEST_CASE( "cross-field diffusion operator" )
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt);
 
+    #if USE_CUDA > 0
+    typedef curandState rand_type;
+    #else
     typedef std::mt19937 rand_type;
+    #endif
 
     sim::Array<rand_type> state1(nP);
     

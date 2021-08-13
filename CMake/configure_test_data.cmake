@@ -25,6 +25,21 @@ set( CROSS_FIELD_GEOM_FILE ${destination_path} )
 generate_testing_file( "test_data/boris_config.cfg" )
 set( BORIS_TEST_FILE ${destination_path} )
 
+generate_testing_file( "test_data/file.cfg" )
+set( DATA_TYPES_TEST_FILE ${destination_path} )
+
+generate_testing_file( "test_data/geom_test.cfg" )
+set( GEOM_TEST_FILE ${destination_path} )
+
+generate_testing_file( "test_data/flat_line.cfg" )
+set( FLAT_LINE_TEST_FILE ${destination_path} )
+
+generate_testing_file( "test_data/positive_slope.cfg" )
+set( POSITIVE_SLOPE_TEST_FILE ${destination_path} )
+
+generate_testing_file( "test_data/ADAS_Rates_W.nc" )
+set( ADAS_TEST_FILE ${destination_path} )
+
 # Configure the header file that will contain these strings
 
 set( source_name "test_include/test_data_filepath.hpp.in" )

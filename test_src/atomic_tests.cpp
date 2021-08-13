@@ -6,6 +6,7 @@
 #include "curandInitialize.h"
 #include "curandInitialize2.h"
 #include "Fields.h"
+#include "test_data_filepath.hpp"
 
 #if USE_DOUBLE
 typedef double gitr_precision;
@@ -49,7 +50,7 @@ TEST_CASE("Atomic physics", "tests") {
     std::string input_path = "../test_data/";
     std::string file = "ionize.cfg";
     
-    importLibConfig(cfg, input_path+file);
+    importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
   
     auto gitr_flags = new Flags(cfg);
     
@@ -142,21 +143,20 @@ TEST_CASE("Atomic physics", "tests") {
           << "ERROR: Could not get ionization string info from input file "
           << std::endl;
     }
-    read_profileNs(input_path + ionizeFile, ionizeNcs, recombNcs,
+    read_profileNs( ADAS_TEST_FILE, ionizeNcs, recombNcs,
                    nCS_Ionize, nCS_Recombine);
 
-    read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
+    read_profileNs( ADAS_TEST_FILE, ionizeNDens, ionizeNTemp,
                    nDensitiesIonize, nTemperaturesIonize);
 
-    read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
+    read_profileNs( ADAS_TEST_FILE, recombNDens, recombNTemp,
                    nDensitiesRecombine, nTemperaturesRecombine);
     sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
                                          nDensitiesIonize);
     sim::Array<gitr_precision> gridTemperature_Ionization(nTemperaturesIonize),
       gridDensity_Ionization(nDensitiesIonize);
     
-    read_profiles(
-      input_path + ionizeFile, nTemperaturesIonize, nDensitiesIonize,
+    read_profiles( ADAS_TEST_FILE, nTemperaturesIonize, nDensitiesIonize,
       ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
       gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
     
@@ -232,7 +232,7 @@ TEST_CASE("Atomic physics", "tests") {
     std::string input_path = "../test_data/";
     std::string file = "../test_data/ionize.cfg";
     
-    importLibConfig(cfg, file);
+    importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
   
     auto gitr_flags = new Flags(cfg);
     
@@ -335,13 +335,13 @@ TEST_CASE("Atomic physics", "tests") {
           << "ERROR: Could not get ionization string info from input file "
           << std::endl;
     }
-    read_profileNs(input_path + ionizeFile, ionizeNcs, recombNcs,
+    read_profileNs(ADAS_TEST_FILE, ionizeNcs, recombNcs,
                    nCS_Ionize, nCS_Recombine);
 
-    read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
+    read_profileNs(ADAS_TEST_FILE, ionizeNDens, ionizeNTemp,
                    nDensitiesIonize, nTemperaturesIonize);
 
-    read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
+    read_profileNs(ADAS_TEST_FILE, recombNDens, recombNTemp,
                    nDensitiesRecombine, nTemperaturesRecombine);
     sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
                                          nDensitiesIonize);
@@ -349,7 +349,7 @@ TEST_CASE("Atomic physics", "tests") {
       gridDensity_Ionization(nDensitiesIonize);
     
     read_profiles(
-        input_path + ionizeFile, nTemperaturesIonize, nDensitiesIonize,
+        ADAS_TEST_FILE, nTemperaturesIonize, nDensitiesIonize,
         ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
         gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
     
@@ -411,7 +411,7 @@ TEST_CASE("Atomic physics", "tests") {
     std::string input_path = "../test_data/";
     std::string file = "ionize.cfg";
     
-    importLibConfig(cfg, input_path+file);
+    importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
   
     auto gitr_flags = new Flags(cfg);
     
@@ -513,13 +513,13 @@ TEST_CASE("Atomic physics", "tests") {
           << "ERROR: Could not get ionization string info from input file "
           << std::endl;
     }
-    read_profileNs(input_path + ionizeFile, ionizeNcs, recombNcs,
+    read_profileNs(ADAS_TEST_FILE, ionizeNcs, recombNcs,
                    nCS_Ionize, nCS_Recombine);
 
-    read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp,
+    read_profileNs(ADAS_TEST_FILE, ionizeNDens, ionizeNTemp,
                    nDensitiesIonize, nTemperaturesIonize);
 
-    read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
+    read_profileNs(ADAS_TEST_FILE, recombNDens, recombNTemp,
                    nDensitiesRecombine, nTemperaturesRecombine);
   
     sim::Array<gitr_precision> gridTemperature_Ionization(nTemperaturesIonize),
@@ -531,12 +531,12 @@ TEST_CASE("Atomic physics", "tests") {
     sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
                                          nDensitiesIonize);
     read_profiles(
-      input_path + recombFile, nTemperaturesRecombine, nDensitiesRecombine,
+      ADAS_TEST_FILE, nTemperaturesRecombine, nDensitiesRecombine,
       recombTempGrid, gridTemperature_Recombination, recombDensGrid,
       gridDensity_Recombination, recombRCvarChar, rateCoeff_Recombination);
     
     read_profiles(
-      input_path + ionizeFile, nTemperaturesIonize, nDensitiesIonize,
+      ADAS_TEST_FILE, nTemperaturesIonize, nDensitiesIonize,
       ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
       gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
     

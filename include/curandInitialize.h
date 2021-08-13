@@ -13,7 +13,7 @@
 
 template <typename T=std::mt19937>
 struct curandInitialize{
-#if __CUDACC__
+#if USE_CUDA > 0
   curandState *s;
 #else
   T *s;
@@ -21,7 +21,7 @@ struct curandInitialize{
   int seed;
   
   curandInitialize(
-#if __CUDACC__
+#if USE_CUDA > 0
     curandState *_s,
 #else
     T *_s,
@@ -31,11 +31,11 @@ struct curandInitialize{
   CUDA_CALLABLE_MEMBER_DEVICE
   void operator()(std::size_t indx)
   {
-#if __CUDACC__
+#if USE_CUDA > 0
     curand_init(indx, 0, 0, &s[indx]);
 #else
-    std::random_device randDevice;
-    //std::mt19937 s0(randDevice());
+    //std::random_device randDevice;
+    std::mt19937 s0(randDevice());
     T s0(1234^indx);
     s[indx] = s0;
 #endif
