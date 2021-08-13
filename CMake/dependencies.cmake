@@ -26,20 +26,16 @@ find_package( OpenMP )
 
 # Captain! Will this work with clang++ as well? brew install it and check
 
-message( "Captain! OpenMP_C_INCLUDE_DIRS: ${OpenMP_C_INCLUDE_DIRS}" )
-message( "Captain! OpenMP_CXX_INCLUDE_DIRS: ${OpenMP_CXX_INCLUDE_DIRS}" )
-message( "Captain! OpenMP_C_FLAGS: ${OpenMP_C_FLAGS}")
-message( "Captain! OpenMP_CXX_FLAGS: ${OpenMP_C_FLAGS}")
 include_directories( ${OpenMP_C_INCLUDE_DIRS} ${OpenMP_CXX_INCLUDE_DIRS} )
+
+# hdf5
+include( FindHDF5 )
 
 # CUDA
 include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart
 
 # MPI
 include( CMake/mpi.cmake ) # ---> creates target mpi
-
-# hdf5
-include( FindHDF5 )
 
 set( dependencies "" )
 

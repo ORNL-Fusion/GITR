@@ -6,15 +6,8 @@ if( NOT LIBCONFIG_FOUND )
 
   message( "Downloading libconfig..." )
 
-  set( libconfig_url "https://github.com/hyperrealm/libconfig.git" )
-
-  set( configure_command
-       ${CMAKE_COMMAND}
-       -S ${prefix}/libconfig
-       -B ${prefix}/libconfig_build
-       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-       -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install )
+  #set( libconfig_url "https://github.com/hyperrealm/libconfig.git" )
+  set( libconfig_url "https://github.com/ORNL-Fusion/libconfig_archive.git" )
 
   if( EXISTS ${prefix}/libconfig )
 
@@ -26,7 +19,16 @@ if( NOT LIBCONFIG_FOUND )
 
   endif()
 
+  set( configure_command
+       ${CMAKE_COMMAND}
+       -S ${prefix}/libconfig
+       -B ${prefix}/libconfig_build
+       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+       -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install )
+
     ExternalProject_Add( libconfig_download
+                         PREFIX ${prefix}
                          DOWNLOAD_COMMAND ${download_command}
                          CONFIGURE_COMMAND ${configure_command}
                          BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/libconfig_build -- -j

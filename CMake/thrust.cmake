@@ -4,9 +4,12 @@ if( NOT GITR_USE_CUDA )
 
   message( "Downloading thrust..." )
 
+  #set( git_repository "https://github.com/NVIDIA/thrust.git" )
+  set( git_repository "https://github.com/ORNL-Fusion/thrust_archive.git" )
+
   ExternalProject_Add( thrust_download
                        PREFIX "${prefix}/thrust" 
-                       GIT_REPOSITORY "https://github.com/NVIDIA/thrust.git"
+                       GIT_REPOSITORY ${git_repository}
                        CONFIGURE_COMMAND ""
                        BUILD_COMMAND ""
                        INSTALL_COMMAND "" )
@@ -26,7 +29,9 @@ find_package(Thrust REQUIRED)
 add_library( thrust INTERFACE )
 
 if( TARGET thrust_download )
+
   add_dependencies( thrust thrust_download )
+
 endif()
 
 include_directories( ${THRUST_INCLUDE_DIR} )
