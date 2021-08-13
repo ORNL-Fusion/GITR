@@ -4,7 +4,6 @@ if( NOT GITR_USE_CUDA )
 
   message( "Downloading thrust..." )
 
-  #set( git_repository "https://github.com/NVIDIA/thrust.git" )
   set( git_repository "https://github.com/ORNL-Fusion/thrust_archive.git" )
 
   ExternalProject_Add( thrust_download

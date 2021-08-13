@@ -6,8 +6,7 @@ if( NOT NETCDF_FOUND )
 
   message( "Downloading netcdf-c and netcdf-cxx4..." )
 
-  set( netcdf-c-url "https://github.com/Unidata/netcdf-c.git" )
-  #set( netcdf-c-url "https://github.com/ORNL-Fusion/netcdf-c_archive.git" )
+  set( netcdf-c-url "https://github.com/ORNL-Fusion/netcdf-c_copy.git" )
 
   if( EXISTS ${prefix}/netcdf-c )
 
@@ -37,7 +36,6 @@ if( NOT NETCDF_FOUND )
 
   # netcdf-cxx-4
 
-  #set( netcdf-cxx4-url "https://github.com/Unidata/netcdf-cxx4.git" )
   set( netcdf-cxx4-url "https://github.com/ORNL-Fusion/netcdf-cxx4_copy.git" )
 
   if( EXISTS ${prefix}/netcdf-cxx4 )

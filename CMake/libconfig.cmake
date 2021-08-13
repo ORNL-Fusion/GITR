@@ -6,7 +6,6 @@ if( NOT LIBCONFIG_FOUND )
 
   message( "Downloading libconfig..." )
 
-  #set( libconfig_url "https://github.com/hyperrealm/libconfig.git" )
   set( libconfig_url "https://github.com/ORNL-Fusion/libconfig_archive.git" )
 
   if( EXISTS ${prefix}/libconfig )
