@@ -26,6 +26,20 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 
+/* Ahoy! */
+/* defines a simple line segment */
+/* each boundary keeps track of which plane it is in. The most complex shape possible with
+   triangles would be */
+/* if every edge of a 3d object is a triangle, the most number of fanout of vertices
+      would be 6 in the smallest possible volume because it is opposite of the base triangle? */
+/* so then that is the most possible boundaries a particle could cross when updating its time
+   step. explaining why */
+/* So boundary defines a line segment but also an abcd. So it must know which plane
+      it crossed into */
+
+/* No, because if you cross a line segment, what's the max number of planes you could have
+   crossed? */
+/* So, this operates by chopping up everything into 2d cross sections */
 class Boundary 
 {
   public:

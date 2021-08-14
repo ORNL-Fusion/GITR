@@ -1,0 +1,12 @@
+1. replace hardcoded urls with ORNL-Fusion urls
+2. build hdf5 manually
+3. Get netcdf to link to the hdf5 you built
+4. ensure that the dependent projects use the same CMAKE_CXX_COMPILER as the one
+   installed.
+5. Write Mac install instructions.
+6. Get it to build on a mac.
+7. Push all that stuff to dev.
+8. rebase the unit tests branch off of dev, let Tim know so he can work on it.
+
+9. Setup CI runs in another branch - this should probably be your topic branch for next
+   week.

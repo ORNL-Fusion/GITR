@@ -107,6 +107,7 @@ struct geometry_check {
     // check particle z" << particlesPointer->z[indx] <<
     // particlesPointer->z[indx]previous <<std::endl; std::cout << "geometry
     // check particle hitwall" << p.hitWall <<std::endl;
+    /* Ahoy! This appears to only operate on zeros */
     if (particlesPointer->hitWall[indx] == 0.0) {
       int hitSurface = 0;
       gitr_precision x = particlesPointer->x[indx];
@@ -191,6 +192,9 @@ struct geometry_check {
         }
       }
 #else
+      /* Ahoy! So what happens if x[ index ] is to far away from the boundary condition
+         to get mapped? Shouldn't this be if( x < -x_size * 0.5 ) x = x + x_size ? */
+         /* will this result in incorrect behavior from the PBC equation from wikipedia */
       if (boundaryVector[nLines].periodic_bc_x) {
         if (particlesPointer->x[indx] < boundaryVector[nLines].periodic_bc_x0) {
           particlesPointer->x[indx] =
@@ -378,6 +382,7 @@ struct geometry_check {
                       rInd * n_closeGeomElements[nHash] + j];
         // std::cout << "i's " << i << std::endl;
 #else
+      /* ... Ahoy! find 0. Iterate over all line segments... */
       for (int i = 0; i < nLines; i++) {
 #endif
         a = boundaryVector[i].a;
@@ -459,12 +464,17 @@ struct geometry_check {
             boundariesCrossed[nBoundariesCrossed] = i;
             dist_to_boundariesCrossed[nBoundariesCrossed] = pointToPlaneDistance0;
             //std::cout << "boundary crossed " << i << std::endl;
+            /* Ahoy! So what are [x, y, z]prev variables? */
+            /* because p0 and p1 are the particles previous and next timestep positions */
+            /* simulation starts and ends with them being equal. */
       dist_to_p =
           std::sqrt((p[0] - xprev) * (p[0] - xprev) + (p[1] - yprev) * (p[1] - yprev) +
                     (p[2] - zprev) * (p[2] - zprev));
+      /* Ahoy! This appears to be used to guide optimization of the nearest_boundary index */
 	    if(dist_to_p < nearest_boundary_distance){
 		    nearest_boundary_distance = dist_to_p;
               nBoundariesCrossed++;
+              /* Ahoy! Recall we are iterating */
 	      nearest_boundary_index = i;
               temp_position_xyz[0] = p[0];
               temp_position_xyz[1] = p[1];
@@ -515,6 +525,7 @@ struct geometry_check {
           }
         }
       }
+        /* Ahoy! xprevious is saved, prepared for the position update now */
         if (nBoundariesCrossed == 0) {
           particlesPointer->xprevious[indx] = particlesPointer->x[indx];
           particlesPointer->yprevious[indx] = particlesPointer->y[indx];
@@ -522,6 +533,8 @@ struct geometry_check {
           particlesPointer->distTraveled[indx] =
               particlesPointer->distTraveled[indx] + dpath;
         }
+        /* Ahoy! indicate it hid a surface and indicate which surface it hit with the nearest
+           boundary index calculated above */
 	else{
               particlesPointer->hitWall[indx] = 1.0;
               particlesPointer->xprevious[indx] = temp_position_xyz[0];

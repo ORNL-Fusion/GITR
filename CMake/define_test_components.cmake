@@ -1,6 +1,8 @@
 # define test components - CMake "targets" - as separate compilation components
 include( CTest ) 
 
+enable_testing()
+
 # create a component to encapsulate the external testing framework
 # Since catch2 is a header-only library, it's target can be created as an interface target
 add_library( catch2 INTERFACE )
@@ -23,7 +25,8 @@ set( gpu_test_targets
      coulomb_tests 
      field_tests
      atomic_tests 
-                  )
+     boris_tests
+     cross_field_diffusion_tests )
 
 if( NOT GITR_USE_CUDA )
 

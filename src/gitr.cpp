@@ -263,6 +263,8 @@ int main(int argc, char **argv, char **envp) {
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
+  /* Ahoy! Is the +1 the index that indicates the type? the // if periodic <--- comment in
+     geometryCheck.h */
   sim::Array<Boundary> boundaries(nLines + 1, Boundary());
   if (world_rank == 0) {
     nSurfaces = importGeometry(cfg_geom, boundaries);
@@ -3274,6 +3276,7 @@ if( flowv_interp == 1 )
 #endif
   phi = phi * 3.141592653589793 / 180.0;
   theta = theta * 3.141592653589793 / 180.0;
+  /* Captain! Important equation to convert eV energy to vector velocity components */
   vtotal = std::sqrt(2.0 * E * 1.602e-19 / amu / 1.66e-27);
   vx = vtotal * std::sin(phi) * std::cos(theta);
   vy = vtotal * std::sin(phi) * std::sin(theta);
@@ -3563,6 +3566,7 @@ if( flowv_interp == 1 )
     // z << " "
     // << vx << " " << vy << " " << vz << " " << Z << " " << amu << " " <<
     // charge << " "  << std::endl;
+    /* Captain! */
     particleArray->setParticleV(i, x, y, z, vx, vy, vz, Z, amu, charge,dt);
 #if PARTICLE_SOURCE_SPACE > 0
     pSurfNormX[i] =
@@ -4107,6 +4111,9 @@ if( flowv_interp == 1 )
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
 #endif
+    /* Ahoy! this is a 3 level 4-loop to calculate density n = (x, y, q). To show the spacial
+       density and the result. Loop over timesteps, each operator loops over a section of
+       the particles... find 0 */
     for (tt; tt < nT; tt++) {
 #if USE_SORT > 0
        dev_tt[0] = tt;

@@ -6,21 +6,32 @@ if( NOT LIBCONFIG_FOUND )
 
   message( "Downloading libconfig..." )
 
-  set( libconfig_url "https://github.com/hyperrealm/libconfig.git" )
+  set( libconfig_url "https://github.com/ORNL-Fusion/libconfig_archive.git" )
 
   if( EXISTS ${prefix}/libconfig )
-    ExternalProject_Add( libconfig_download
-                         DOWNLOAD_COMMAND ""
-                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/libconfig -B ${prefix}/libconfig_build -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
-                         BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/libconfig_build -- -j
-                         INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/libconfig_build ) 
+
+    set( download_command "" )
+
   else()
+
+    set( download_command git clone ${libconfig_url} ${prefix}/libconfig )
+
+  endif()
+
+  set( configure_command
+       ${CMAKE_COMMAND}
+       -S ${prefix}/libconfig
+       -B ${prefix}/libconfig_build
+       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+       -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install )
+
     ExternalProject_Add( libconfig_download
-                         DOWNLOAD_COMMAND git clone ${libconfig_url} ${prefix}/libconfig
-                         CONFIGURE_COMMAND ${CMAKE_COMMAND} -S ${prefix}/libconfig -B ${prefix}/libconfig_build -DCMAKE_INSTALL_PREFIX=${prefix}/libconfig_install
+                         PREFIX ${prefix}
+                         DOWNLOAD_COMMAND ${download_command}
+                         CONFIGURE_COMMAND ${configure_command}
                          BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/libconfig_build -- -j
                          INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/libconfig_build ) 
-  endif()
 
 
   set( LIBCONFIG_INCLUDE_DIR 
@@ -29,7 +40,7 @@ if( NOT LIBCONFIG_FOUND )
 
 
   set( LIBCONFIG_LIBRARY 
-       "${prefix}/libconfig_install/lib/libconfig.so" 
+       "${prefix}/libconfig_install/lib/libconfig${suffix}" 
        CACHE FILEPATH "" FORCE )
 
   set( LIBCONFIGPP_INCLUDE_DIR 
@@ -38,7 +49,7 @@ if( NOT LIBCONFIG_FOUND )
 
 
   set( LIBCONFIGPP_LIBRARY
-       "${prefix}/libconfig_install/lib/libconfig++.so" 
+       "${prefix}/libconfig_install/lib/libconfig++${suffix}" 
        CACHE FILEPATH "" FORCE )
 
   find_package(LibConfig REQUIRED)

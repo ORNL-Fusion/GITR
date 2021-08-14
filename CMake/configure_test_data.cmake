@@ -3,7 +3,7 @@ macro( generate_testing_file test_file_name )
 
 set( source_path "${CMAKE_SOURCE_DIR}/${test_file_name}" )
 set( destination_path "${CMAKE_BINARY_DIR}/${test_file_name}" )
-configure_file( ${source_path} ${destination_path} )
+configure_file( ${source_path} ${destination_path} COPYONLY )
 
 endmacro()
 
@@ -18,6 +18,27 @@ set( FIELD_UNIT_TEST_FILE_0 ${destination_path} )
 
 generate_testing_file( "test_data/ionize1.cfg" )
 set( FIELD_UNIT_TEST_FILE_1 ${destination_path} )
+
+generate_testing_file( "test_data/cross_field_geometry.cfg" )
+set( CROSS_FIELD_GEOM_FILE ${destination_path} )
+
+generate_testing_file( "test_data/boris_config.cfg" )
+set( BORIS_TEST_FILE ${destination_path} )
+
+generate_testing_file( "test_data/file.cfg" )
+set( DATA_TYPES_TEST_FILE ${destination_path} )
+
+generate_testing_file( "test_data/geom_test.cfg" )
+set( GEOM_TEST_FILE ${destination_path} )
+
+generate_testing_file( "test_data/flat_line.cfg" )
+set( FLAT_LINE_TEST_FILE ${destination_path} )
+
+generate_testing_file( "test_data/positive_slope.cfg" )
+set( POSITIVE_SLOPE_TEST_FILE ${destination_path} )
+
+generate_testing_file( "test_data/ADAS_Rates_W.nc" )
+set( ADAS_TEST_FILE ${destination_path} )
 
 # Configure the header file that will contain these strings
 

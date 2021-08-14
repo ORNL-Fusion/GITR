@@ -862,6 +862,8 @@ void move_boris::operator()(std::size_t indx)
 
 #else
 */
+  /* Captain! */
+  /* check PSE here, should be -1000 */
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer);
@@ -921,6 +923,7 @@ void move_boris::operator()(std::size_t indx)
   ////printf("c_vpxBxyz %.16e %.16e %.16e \n",c_vpxB[0], c_vpxB[1], c_vpxB[2]);
   //}
 	       
+  /* Captain! */
   if(gitr_flags->USE_ADAPTIVE_DT)
   {
     vectorAssign(v[0],v[1],v[2],v_dt);
@@ -994,6 +997,7 @@ void move_boris::operator()(std::size_t indx)
      //v = v + q_prime*E
      vectorAdd(v,qpE,v);
      
+     /* Captain! Position updated here */
      position[0] = position[0] + v[0] * half_dt;
      position[1] = position[1] + v[1] * half_dt;
      position[2] = position[2] + v[2] * half_dt;
@@ -1054,6 +1058,8 @@ void move_boris::operator()(std::size_t indx)
   else
   {
     
+     /* Captain! This looks like the place that the particle position is actually getting
+        updated */
      if(particlesPointer->hitWall[indx] == 0.0)
       {
           particlesPointer->x[indx] = position[0] + v[0] * dt;

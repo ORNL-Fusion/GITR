@@ -5,7 +5,7 @@ libconfig_string_query::libconfig_string_query( std::string libconfig_file )
   /* open the file */
   try
   {
-    cfg.readFile( libconfig_file );
+    cfg.readFile( libconfig_file.c_str() );
   }
 
   catch(const libconfig::FileIOException &fioex)

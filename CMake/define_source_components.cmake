@@ -51,6 +51,7 @@ foreach( component IN LISTS cpu_targets )
 
   target_include_directories( ${component} PUBLIC include )
 
+  # Captain! This is not needed
   if( debug )
 
     target_compile_options( ${component} PRIVATE -g )
