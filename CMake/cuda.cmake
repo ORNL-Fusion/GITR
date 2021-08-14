@@ -15,8 +15,14 @@ if( GITR_USE_CUDA )
   include( FindCUDAToolkit )
 
   if( NOT CUDAToolkit_FOUND )
-    message( FATAL_ERROR "CUDA toolkit not found: to enable, set -DCUDAToolkit_ROOT=/path/to/cuda_root"
-             " or disable GPU support, set -DGITR_USE_CUDA=0" )
+
+    message( FATAL_ERROR
+             "CUDA toolkit not found: to enable, set -DCUDAToolkit_ROOT=/path/to/cuda_root."
+             "The CUDA root path can be inferred from your nvcc executable: run 'which nvcc'
+              to indicate where nvcc is located, take the directory portion of the path as
+              the root."
+             " Alternatively, to disable GPU support, set -DGITR_USE_CUDA=0 when configuring
+               with CMake" )
   endif()
 
   include_directories( ${CUDAToolkit_INCLUDE_DIRS} )
