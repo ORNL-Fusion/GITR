@@ -86,12 +86,14 @@ re-parse it manually by running:
 > sudo apt install libhdf5-dev
 
 ### Mac OSx
-1. If you do not have the Homebrew package manager, get it.
-2. You must install HDF5:
+1. If you do not have the Homebrew package manager, get it here at: https://brew.sh/ 
+2. For `brew` to work, you may need to run the following:
+> source ~/.bashrc
+3. You must install HDF5:
 > brew install hdf5@1.12
-3. You must install CMake if you do not already have it:
+4. You must install CMake if you do not already have it:
 > brew install cmake
-4. You may need to install m4 as well:
+5. You may need to install m4 as well:
 > brew install m4
 
 ### Configure
@@ -99,7 +101,8 @@ Configure build system with CMake. Physics operators can be activated via **-D**
  options provided to CMake.
 
 > cmake -S /path/to/GITR -B /path/to/build -D*option_name*
-
+If you get an error that reads: `Compiler requires the CUDA toolkit. Please set the CUDAToolkit_ROOT variable." use the option flag `-DGITR_USE_CUDA=0`c
+   
 or
 
 > cd GITR/build;
