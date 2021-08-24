@@ -18,7 +18,8 @@ struct curandInitialize{
 #else
   T *s;
 #endif
-  int seed;
+  //int seed;
+  bool fixed;
   
   curandInitialize(
 #if USE_CUDA > 0
@@ -26,7 +27,7 @@ struct curandInitialize{
 #else
     T *_s,
 #endif
-    int _seed) : s(_s), seed(_seed) {}
+    bool _fixed) : s(_s), fixed(_fixed) {}
     
   CUDA_CALLABLE_MEMBER_DEVICE
   void operator()(std::size_t indx)
@@ -34,10 +35,17 @@ struct curandInitialize{
 #if USE_CUDA > 0
     curand_init(indx, 0, 0, &s[indx]);
 #else
-    std::random_device randDevice;
-    std::mt19937 s0(randDevice());
-    //T s0(1234^indx);
-    s[indx] = s0;
+    if (fixed)
+    {
+      T s0(1234^indx);
+      s[indx] = s0;
+    }
+    else
+    {
+      std::random_device randDevice;
+      std::mt19937 s0(randDevice());
+      s[indx] = s0;
+    }
 #endif
   }
 };
