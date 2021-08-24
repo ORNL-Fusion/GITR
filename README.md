@@ -101,9 +101,10 @@ Configure build system with CMake. Physics operators can be activated via **-D**
  options provided to CMake.
 
 > cmake -S /path/to/GITR -B /path/to/build -D*option_name*
-If you get an error that reads: `Compiler requires the CUDA toolkit. Please set the CUDAToolkit_ROOT variable." use the option flag `-DGITR_USE_CUDA=0`c
+
+If you get an error that reads: `Compiler requires the CUDA toolkit. Please set the CUDAToolkit_ROOT variable." use the option flag `-DGITR_USE_CUDA=0`
    
-or
+Alternatively:
 
 > cd GITR/build;
 
