@@ -8,6 +8,31 @@
 #include "curandInitialize.h"
 #include <thrust/execution_policy.h>
 
+template <typename T=double>
+bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
+{
+  if (a.size() != b.size()) return false;
+  for (size_t i = 0; i < a.size(); i++) 
+  {
+    
+    bool margin_check = (a[i] != Approx(b[i]).margin(margin));
+    bool epsilon_check = (a[i] != Approx(b[i]).epsilon(epsilon));
+    
+    if (margin_check && epsilon_check)
+    {
+      
+      std::cout << "margin epsilon " <<
+        margin_check << " " << epsilon_check << std::endl; 
+      std::cout << "Element " << i << 
+        " " << a[i] << " Should == " << b[i] << std::endl;
+      
+      return false;
+    }
+  }
+  
+  return true;
+}
+
 /* is there an option for analytic bfield? No. */
 /* Captain! This test does not work with CUDA support - something is wrong
    with the control flow */
@@ -16,7 +41,7 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
   SECTION( "Ahoy, Captain!" )
   {
     /* timesteps */
-    int nT = 1e4;
+    int nT = 1e5;
 
     gitr_precision dt = 1.0e-6;
 
@@ -107,10 +132,18 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
 
     sim::Array<gitr_precision> gridX_bins(net_nX), gridY_bins(1), gridZ_bins(net_nZ);
 
+    sim::Array<gitr_precision> gridX_midpoints(net_nX-1);
     sim::Array<double> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
-
+//net_Bins needs adjusting to be in the middle of the grids
     for (int i = 0; i < net_nX; i++) {
       gridX_bins[i] = netX0 + 1.0 / (net_nX - 1) * i * (netX1 - netX0);
+      std::cout << i << " " << gridX_bins[i] << std::endl;
+    }
+
+    double dx = gridX_bins[1] - gridX_bins[0];
+    for (int i = 0; i < net_nX-1; i++) {
+      gridX_midpoints[i] = gridX_bins[i] + 0.5*dx;
+      std::cout << i << " " << gridX_midpoints[i] << std::endl;
     }
 
     for (int i = 0; i < net_nZ; i++) {
@@ -155,23 +188,33 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
       &bz.front(), &by.front());
+    
+  // half-side length
+    double s = 0.2;
+    std::vector<gitr_precision> gold(net_nX-1,0.0);
+    for( int x_bin = 0; x_bin < net_nX; ++x_bin )
+    {
+      std::cout << "xbin " << x_bin << std::endl;
+      gold[x_bin] = 0.5/perpDiffusionCoeff*(s-gridX_midpoints[x_bin]);
+    }
 
     for (int tt = 0; tt < nT; tt++)
     {
+      if(tt%(nT/10) == 0) std::cout << 100.0f*tt/nT << " % done" << std::endl;
       /* call spec_bin */
-      thrust::for_each(thrust::host,
+      thrust::for_each(thrust::device,
                       particle_iterator0, 
                        particle_iterator_end, 
                        spec_bin0 );
 
       /* call diffusion */
-      thrust::for_each(thrust::host,
+      thrust::for_each(thrust::device,
                        particle_iterator0, 
                        particle_iterator_end, 
                        crossFieldDiffusion0 );
 
       /* call geometry check */
-      thrust::for_each(thrust::host,
+      thrust::for_each(thrust::device,
                        particle_iterator0, 
                        particle_iterator_end, 
                        geometry_check0 );
@@ -180,6 +223,7 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
     /* examine histogram */
     /* output x */
     /* analytical equation we expect */
+    std::vector<double> density(net_nX-1,0.0);
     double sum = 0;
     for( int x_bin = 0; x_bin < net_nX; ++x_bin )
     {
@@ -189,9 +233,14 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
         sum += net_Bins[ nBins * net_nX * net_nZ +
                          z_bin * net_nX + x_bin ];
       }
-      std::cout << "sum: " << sum << std::endl;
+      density[x_bin] = sum*dt/nP/dx;
+      std::cout << "dens: " << density[x_bin] << " gold " << gold[x_bin] << std::endl;
+      sum = 0.0;
     }
+    
 
-    REQUIRE( sum > 0 );
+    gitr_precision margin = 0.1;
+    gitr_precision epsilon = 0.05;
+    REQUIRE(compareVectors<gitr_precision>(density,gold,epsilon,margin));
   }
 }
