@@ -17,7 +17,7 @@ background plasma parameters.
 
 Beginning from a set of initial conditions, the code steps each particle through a set of
 operators until certain conditions on the particles are reached (crossing a 
-boundary or timing out). The operators acting on the particles are dependent on the prescibed 
+boundary or timing out). The operators acting on the particles are dependent on the prescribed
 fields and profiles of the background.
 
 
@@ -55,7 +55,7 @@ This also installs make and other useful utilities.
 > make -j
 > make install
 
-  Naviate to the build folder and verify you see bin, doc, and share - bin contains the cmake
+  Navigate to the build folder and verify you see bin, doc, and share - bin contains the cmake
   executable. Get the full filepath of the executable in the bin directory with:
 > readlink -f <cmake-executable file>
   Running this file like
