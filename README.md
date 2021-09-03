@@ -157,25 +157,19 @@ Navigate to the user-created build directory and run:
 
 ### Adding a test:
 
-1. Navigate to 
+1. Navigate to `CMake/define_test_components.cmake`.
 
-> CMake/define\_test\_components.cmake.
-
-   Pick a name for the test and add it to
-   the CMake variable
-
-> 'gpu\_test\_targets'
-
+2. Pick a name for the test and add it to
+   the CMake variable `gpu_test_targets`
    if it can optionally use the GPU. Otherwise put it in
+   `cpu_test_targets`.
 
-> 'cpu\_test\_targets'.
-
-2. Create the actual unit test file - it must be named **exactly** the name you picked with .cpp
-   at the end, and in the directory GITR/test\_src. You must include:
+3. Create the actual unit test file - it must be named **exactly** the name you picked with .cpp
+   at the end, and in the directory `GITR/test_src`. You must include:
 
 > \#include "test\_utils.hpp"
 
-3. Link any libraries your test needs. Do this in GITR/CMake/crosslink\_components.cmake
+4. Link any libraries your test needs. Do this in `GITR/CMake/crosslink_components.cmake`.
 
 ### Adding a data file accessible to the unit tests:
 1. Include this file in your test file:
@@ -186,15 +180,15 @@ Navigate to the user-created build directory and run:
    the build system. To use a data file in the tests, you will need to instruct the build system
    to create a new entry in that header file.
 
-2. Copy your test file into GITR/test\_data/.
+2. Copy your test file into `GITR/test_data/`.
 
 3. Add the following lines anywhere after the macro definition in 
-   GITR/CMake/configure\_test\_data.cmake:
+   `GITR/CMake/configure_test_data.cmake`:
 
 > generate\_testing\_file( "test\_data/your\_test\_file.extension" )
 > set( YOUR\_PREPROCESSOR\_DEFINE\_NAME ${destination\_path})
 
-4. Navigate to GITR/CMake/define\_define\_test\_components.cmake. Add a line:
+4. Navigate to `GITR/CMake/define_define_test_components.cmake`. Add a line:
 
 > \#cmakedefine YOUR\_PREPROCESSOR\_DEFINE\_NAME "${YOUR\_PREPROCESSOR\_DEFINE\_NAME}"
 
@@ -212,9 +206,7 @@ Fork this repository, branch off of *dev*, and open a merge request into *dev*.
 
 ## Release Notes
 
-Navigate to
-
-> GITR/docs/release_notes.md
+Navigate to `GITR/docs/release_notes.md`
 
 ## Dependencies 
 
