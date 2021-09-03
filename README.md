@@ -119,8 +119,7 @@ If you get an error that reads: `Compiler requires the CUDA toolkit. Please set 
    
 Alternatively:
 
-> cd GITR/build;
-
+> cd GITR/build
 > cmake -D*option_name* ..
 
 The list of options can be viewed in:
@@ -132,7 +131,6 @@ The list of options can be viewed in:
 Once the project is configured, compile:
 
 > cd build
-
 > make -j
 
 ### Run
