@@ -239,13 +239,14 @@ TEST_CASE("Coulomb collision", "tests") {
 
 #ifdef __CUDACC__
     sim::Array<curandState> state1(nParticles);
+    typedef curandState rand_type;
 #else
      typedef std::mt19937 rand_type;
     sim::Array<rand_type> state1(nParticles);
 #endif
 
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize<>(&state1.front(), 0));
+                   curandInitialize<rand_type>(&state1.front(), 0));
     
     gitr_precision amu = 184.0;
     
@@ -366,6 +367,7 @@ TEST_CASE("Coulomb collision", "tests") {
     
 #ifdef __CUDACC__
     sim::Array<curandState> state1(nParticles);
+    typedef curandState rand_type;
 #else
      typedef std::mt19937 rand_type;
      sim::Array<rand_type> state1(nParticles);
@@ -388,7 +390,7 @@ TEST_CASE("Coulomb collision", "tests") {
      }
 
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize2<>(&state1.front(),&seed.front(), &sequence.front(),&offset.front()));
+                   curandInitialize2<rand_type>(&state1.front(),&seed.front(), &sequence.front(),&offset.front()));
     
     gitr_precision nu_friction = 0.0;
     gitr_precision nu_deflection = 0.0;

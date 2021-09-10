@@ -41,7 +41,7 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
   SECTION( "Ahoy, Captain!" )
   {
     /* timesteps */
-    int nT = 1e5;
+    int nT = 10000;
 
     gitr_precision dt = 1.0e-6;
 
@@ -83,6 +83,7 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
     REQUIRE( nSurfaces == 2 );
 
     auto particleArray = new Particles( nP, 1, cfg_geom, gitr_flags );
+    std::cout << "p " << particleArray->charge[0] << " x " << particleArray->xprevious[0]<<std::endl;
 
     /* dummy variables for hashing */
     int nHashes = 1;
@@ -164,7 +165,7 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nP);
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize<>(&state1.front(), 0));
+                   curandInitialize<rand_type>(&state1.front(), 0));
 
   gitr_precision perpDiffusionCoeff = 0.0;
   cfg_geom.lookupValue("backgroundPlasmaProfiles.Diffusion.Dperp",
@@ -192,7 +193,7 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
   // half-side length
     double s = 0.2;
     std::vector<gitr_precision> gold(net_nX-1,0.0);
-    for( int x_bin = 0; x_bin < net_nX; ++x_bin )
+    for( int x_bin = 0; x_bin < net_nX-1; ++x_bin )
     {
       std::cout << "xbin " << x_bin << std::endl;
       gold[x_bin] = 0.5/perpDiffusionCoeff*(s-gridX_midpoints[x_bin]);
@@ -225,7 +226,7 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
     /* analytical equation we expect */
     std::vector<double> density(net_nX-1,0.0);
     double sum = 0;
-    for( int x_bin = 0; x_bin < net_nX; ++x_bin )
+    for( int x_bin = 0; x_bin < net_nX-1; ++x_bin )
     {
       /* sum over z? */
       for( int z_bin = 0; z_bin < net_nZ; ++z_bin )
@@ -233,12 +234,16 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
         sum += net_Bins[ nBins * net_nX * net_nZ +
                          z_bin * net_nX + x_bin ];
       }
+      //density[x_bin] = sum;
       density[x_bin] = sum*dt/nP/dx;
       std::cout << "dens: " << density[x_bin] << " gold " << gold[x_bin] << std::endl;
       sum = 0.0;
     }
     
-
+for (int i=0; i< nP; i++ )
+{
+    std::cout << "p " << particleArray->charge[i] << " x " << particleArray->xprevious[i]<<std::endl;
+}   
     gitr_precision margin = 0.1;
     gitr_precision epsilon = 0.05;
     REQUIRE(compareVectors<gitr_precision>(density,gold,epsilon,margin));

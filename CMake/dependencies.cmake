@@ -42,7 +42,7 @@ set( dependencies "" )
 # Thrust
 include( CMake/thrust.cmake ) # ---> creates target thrust
 
-list( APPEND dependencies thrust )
+#list( APPEND dependencies thrust )
 
 # Libconfig
 include( CMake/libconfig.cmake ) # ---> creates target libconfig
