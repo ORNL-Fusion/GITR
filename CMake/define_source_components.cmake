@@ -37,7 +37,8 @@ set( gpu_targets
      boris
      hashGeom
      fields
-     spectroscopy )
+     spectroscopy
+     curandInitialize)
 
 if( NOT GITR_USE_CUDA )
 

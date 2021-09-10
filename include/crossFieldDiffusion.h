@@ -112,6 +112,13 @@ void operator()(std::size_t indx) const {
                           BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
         
       Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
+      if(Bmag < 1.0e-12) 
+      {
+        B[0] = 0.0;
+        B[1] = 0.0;
+        B[2] = 1.0;
+        Bmag = 1.0;
+      }
       B_unit[0] = B[0]/Bmag;
       B_unit[1] = B[1]/Bmag;
       B_unit[2] = B[2]/Bmag;
@@ -135,6 +142,9 @@ void operator()(std::size_t indx) const {
       /* magnitude of spacial step for 1 particle? */
       /* m^2 / sec units for diffusionCoefficient */
       step = std::sqrt(4*diffusionCoefficient*dt_step);
+      //printf("B_unit %f %f %f" ,B_unit[0], B_unit[1], B_unit[2]);
+      //printf("step %f" ,step);
+  //   printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
 #if USEPERPDIFFUSION > 1
       gitr_precision plus_minus1 = floor(r4 + 0.5)*2 - 1;
       gitr_precision h = 0.001;
@@ -226,17 +236,20 @@ void operator()(std::size_t indx) const {
     phi_random = 2*3.14159265*r3;
     perpVector[0] = std::cos(phi_random);
     perpVector[1] = std::sin(phi_random);
-    perpVector[2] = (-perpVector[0]*B_unit[0] - perpVector[1]*B_unit[1])/B_unit[2];
+    perpVector[2] = 0.0;//(-perpVector[0]*B_unit[0] - perpVector[1]*B_unit[1])/B_unit[2];
+      //printf("perp_vec 1 %f %f %f \n" ,perpVector[0], perpVector[1], perpVector[2]);
   
     gitr_precision ez1 = B_unit[0];
     gitr_precision ez2 = B_unit[1];
     gitr_precision ez3 = B_unit[2];
+      //printf("ez  %f %f %f \n" ,ez1, ez2, ez3);
     // Get perpendicular velocity unit vectors
   // this comes from a cross product of
   // (ez1,ez2,ez3)x(0,0,1)
   gitr_precision ex1 = ez2;
   gitr_precision ex2 = -ez1;
   gitr_precision ex3 = 0.0;
+      //printf("ex 1  %f %f %f \n" ,ex1, ex2, ex3);
   
   // The above cross product will be zero for particles
   // with a pure z-directed (ez3) velocity
@@ -249,15 +262,17 @@ void operator()(std::size_t indx) const {
   ex2 = 0.0;
   ex3 = ez1;
   }
+      //printf("ex 2 %f %f %f \n" ,ex1, ex2, ex3);
   // Ensure all the perpendicular direction vectors
   // ex are unit
   exnorm = std::sqrt(ex1*ex1+ex2*ex2 + ex3*ex3);
   ex1 = ex1/exnorm;
   ex2 = ex2/exnorm;
   ex3 = ex3/exnorm;
+      //printf("ex unit %f %f %f \n" ,ex1, ex2, ex3);
   
   //if(isnan(ex1) || isnan(ex2) || isnan(ex3)){
-  //   printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
+  //   //printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
   //}
   // Find the second perpendicular direction 
   // by taking the cross product
@@ -265,6 +280,7 @@ void operator()(std::size_t indx) const {
   gitr_precision ey1 = ez2*ex3 - ez3*ex2;
   gitr_precision ey2 = ez3*ex1 - ez1*ex3;
   gitr_precision ey3 = ez1*ex2 - ez2*ex1;
+      //printf("ey %f %f %f \n" ,ey1, ey2, ey3);
 
   gitr_precision tmp[3] = {0.0};
   tmp[0] = ex1*perpVector[0] + ey1*perpVector[1] + ez1*perpVector[2];
@@ -274,6 +290,8 @@ void operator()(std::size_t indx) const {
   perpVector[0] = tmp[0];
   perpVector[1] = tmp[1];
   perpVector[2] = tmp[2];
+      //printf("perp_vec %f %f %f \n" ,perpVector[0], perpVector[1], perpVector[2]);
+      //printf("step %f \n" ,step);
 //    if (B_unit[2] == 0)
 //    {
 //      perpVector[2] = perpVector[1];
