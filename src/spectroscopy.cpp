@@ -40,9 +40,9 @@ spec_bin::spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _
 void spec_bin::operator()(std::size_t indx) const {
 //    int indx_X = 0;
 //    int indx_Z = 0;
-    gitr_precision dx = 0.0f;
-    gitr_precision dy = 0.0f;
-    gitr_precision dz = 0.0f;
+    gitr_precision dx = 0.0;
+    gitr_precision dy = 0.0;
+    gitr_precision dz = 0.0;
     gitr_precision x = particlesPointer->xprevious[indx];
     gitr_precision y = particlesPointer->yprevious[indx];
     gitr_precision z = particlesPointer->zprevious[indx];
@@ -124,10 +124,12 @@ void spec_bin::operator()(std::size_t indx) const {
               }
 
 #else
+              #pragma omp atomic
               bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY  +indx_Y*nX +indx_X] = 
 	                          bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY+ indx_Y*nX + indx_X] + specWeight;
               if(charge < nBins)
               {
+                #pragma omp atomic
                 bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX + indx_X] = 
 		                  bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY+indx_Y*nX + indx_X] + specWeight;
               }
