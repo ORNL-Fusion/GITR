@@ -41,9 +41,9 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
   SECTION( "Ahoy, Captain!" )
   {
     /* timesteps */
-    int nT = 10000;
+    int nT = 500000;
 
-    gitr_precision dt = 1.0e-6;
+    gitr_precision dt = 2.0e-7;
 
     libconfig::Config cfg_geom;
 
@@ -226,6 +226,7 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
     /* analytical equation we expect */
     std::vector<double> density(net_nX-1,0.0);
     double sum = 0;
+    double rms_error = 0;
     for( int x_bin = 0; x_bin < net_nX-1; ++x_bin )
     {
       /* sum over z? */
@@ -237,15 +238,24 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
       //density[x_bin] = sum;
       density[x_bin] = sum*dt/nP/dx;
       std::cout << "dens: " << density[x_bin] << " gold " << gold[x_bin] << std::endl;
+      rms_error = rms_error + (density[x_bin] - gold[x_bin])*(density[x_bin] - gold[x_bin]);
       sum = 0.0;
     }
-    
+    rms_error = std::sqrt(rms_error/(net_nX-1));
+    std::cout << "rms_error " << rms_error << std::endl;
+
+int not_hit = 0;    
 for (int i=0; i< nP; i++ )
 {
-    std::cout << "p " << particleArray->charge[i] << " x " << particleArray->xprevious[i]<<std::endl;
+  if(particleArray->hitWall[i]<1.0)
+  {
+    not_hit = not_hit+1;
+  }
+//    std::cout << "p " << particleArray->charge[i] << " x " << particleArray->xprevious[i]<<std::endl;
 }   
+    std::cout << "number of particles not finished " << not_hit << std::endl;
     gitr_precision margin = 0.1;
     gitr_precision epsilon = 0.05;
-    REQUIRE(compareVectors<gitr_precision>(density,gold,epsilon,margin));
+    REQUIRE(rms_error<6.0e-4);
   }
 }
