@@ -7,6 +7,7 @@
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
 
+#include "boris.h"
 #include "Particles.h"
 #include <cmath>
 
