@@ -26,7 +26,8 @@ set( cpu_targets
      utils
      flags
      config_interface
-     setup)
+     setup
+     interpolator )
 
 # conditionally compile as GPU targets
 set( gpu_targets

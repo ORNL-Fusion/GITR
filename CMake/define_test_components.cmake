@@ -17,7 +17,8 @@ target_include_directories( test_utils PUBLIC ${CMAKE_SOURCE_DIR} )
 target_link_libraries( test_utils PUBLIC catch2 )
 
 set( cpu_test_targets
-     config_interface_tests )
+     config_interface_tests
+     interpolator_tests )
 
 # atomic tests does not compile and is disabled
 set( gpu_test_targets

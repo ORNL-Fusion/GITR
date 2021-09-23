@@ -1,0 +1,89 @@
+Long-term future goals:
+
+0. Give each particle a sequential list of shorts to form an index.
+   8 bits forms 2d index on a 4x4 uniform grid. 16 for 3d.
+
+1. Impose the uniform grid on the mesh domain. Each box should contain the same number of
+   triangles. If they do not, recursively impose a uniform grid to make the box into a subgrid.
+
+2. Spawn particles in the source square. Load the first square and all the particles inside it.
+   Continue timestepping until they have deposited or exited that square. If the exit the square,
+   Put them in that square's particles list. Iterate all the squares. Spawn as many particles
+   as can fit in a square?
+
+3. Iterate from square to square, and spawn more after passing through all the squares. Have
+   particles move according to while(1) updates. Each box has a particle list and a list of 
+   triangles to be checked.
+
+4. The boxes can be made automatically, instead of relying on user-driven domain partitioning
+   for caches.
+
+New work for GITR:
+
+0. Address bugs pointed out in the issues page
+
+1. Check the issues
+2. Update documentation
+3. event based correction for dt:
+
+   currently, there is a loop that runs boris first.
+   Run boris 3x: once with dt, once with two half dt steps.
+   Compare the difference.
+
+   if( within tolerance )
+   {
+     feed dt into the formula, update the particle position.
+   }
+
+   else
+   {
+     feed dt into the formula, do not update the particle position.
+     continue to the next loop iteration
+   }
+
+   Say a particle bounces off a wall. Say the dt is computed to be
+   10, and say that it is within tolerance to two dt=5 steps. But,
+   what if it is determined that the particle ionized at t=4?
+
+   calculate dt = 10. Ionize. Determine it ionized. Determine when.
+   Say it ionized at 4. Update particle position to 4.
+   Feed that dt = 4 into the algorithm that determines the next
+   timestep. The dt/2 stuff is just the sampling strategy. The formula
+   actually calculates the size of the next step based on the
+   error calculated with the sampling strategies.
+
+4. dynamic memory for particles:
+
+   Currently, particles are sorted according to their "weight"
+   and only the top "N" are processed each timestep.
+
+   Find another way to handle particles that exit the simulation
+   or particles that enter at a later time (with time dependence)
+
+5. multi-species:
+
+   More species need to be stored in the surface model ---> entails
+   adding another dimension to the surface model. Requires a grid
+   interpolator to handle the crazy indexing dynamics.
+
+6. nD grid interpolation object that handles indexing easily and quickly.
+
+7. Commmand line config file with descriptions for the various options.
+
+8. Grid hashing pre-processing. For this to run in any quick way, you must
+   compute the hashes. The user should have a documented, software assisted
+   process to define hashes for regions of the geometry. Different hashes
+   can be used for regions with different granularity. A piecewise hashing
+   schema.
+
+9. Grid intersection optimizations - reduce the computational cost of
+   the grid intersection calculation math
+
+10. Time dependence - currently, all the particles are seeded to start
+    at the same time and only the final state is relevant. Essentially,
+    only the integral of the function is required. In the future, we
+    want the function itself. That means that all the data needs to be
+    saved, not just the final accumulation. Also means that particles
+    will need to be spawned at different start times.
+
+11. Add an autoformatter to GITR.

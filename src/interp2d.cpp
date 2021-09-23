@@ -84,14 +84,21 @@ gitr_precision interp2dCombined ( gitr_precision x, gitr_precision y, gitr_preci
 #if USECYLSYMM > 0
     gitr_precision dim1 = std::sqrt(x*x + y*y);
 #else
+    /* Captain! This is your x-value, in dimension 1. */
     gitr_precision dim1 = x;
 #endif    
+    /* This is how far apart the samples are - the distance granularity */
     gitr_precision d_dim1 = gridx[1] - gridx[0];
+    /* same for z...*/
     gitr_precision dz = gridz[1] - gridz[0];
+    /* x-index */
+    /* Captain! There is no 0.5 here... */
     int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
+    /* z-index */
     int j = std::floor((z - gridz[0])/dz);
     
     //gitr_precision interp_value = data[i + j*nx];
+    /* Captain! Handle the initial and final elements */
     if (i < 0) i=0;
     if (j < 0) j=0;
     if (i >=nx-1 && j>=nz-1)
@@ -113,8 +120,18 @@ gitr_precision interp2dCombined ( gitr_precision x, gitr_precision y, gitr_preci
     }
     else
     {
+      /* Captain! I do not understand what is going on here: why is "j" being used to access
+         the data indexed by "i"? Why are they all being used in the same expression in the
+         first place */
+      /* what is this 2d interpolation? */
+      /* do it for "i" and "i + 1" */
+      /* f(x, z1 ) - at z1, interpolate the x vals */
       fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
+
+      /* do it for "j" and "j + 1" */
+      /* f(x, z2) - at z2, interpolate the x vals */
       fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
+      /* Now interpolate between the f(x, z1) and f(x, z2) */
       fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
     }
     }
@@ -185,8 +202,17 @@ void interp3dVector (gitr_precision* field, gitr_precision x, gitr_precision y, 
     field[2] =  interp3d (x,y,z,nx,ny,nz,gridx, gridy,gridz,dataz );
 }
 CUDA_CALLABLE_MEMBER
-void interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
-gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat ) {
+void interp2dVector (gitr_precision* field,
+                     gitr_precision x,
+                     gitr_precision y,
+                     gitr_precision z,
+                     int nx,
+                     int nz,
+                     gitr_precision* gridx,
+                     gitr_precision* gridz,
+                     gitr_precision* datar,
+                     gitr_precision* dataz,
+                     gitr_precision* datat ) {
 
    gitr_precision Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar);
    gitr_precision At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat);

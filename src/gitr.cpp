@@ -233,6 +233,7 @@ int main(int argc, char **argv, char **envp) {
   MPI_Bcast(bfieldGridz.data(), nZ_Bfield, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
+  /* Captain! Begin the interpolator planning/testing */
   gitr_precision Btest[3] = {0.0};
   interp2dVector(&Btest[0], 5.5, 0.0, -4.0, nR_Bfield, nZ_Bfield,
                  bfieldGridr.data(), bfieldGridz.data(), br.data(), bz.data(),
