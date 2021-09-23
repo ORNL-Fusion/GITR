@@ -110,16 +110,16 @@ TEST_CASE( "n-dimensional interpolation" )
     auto v0 = basis_cell( basis_len, dims );
 
     /* points in each dim */
-    std::vector< int > d_len{ 3, 3, 3 };
+    std::vector< int > d_len{ 6, 4, 10 };
 
-    /* this should result in a spacing of 1 for each dimension */
-    std::vector< double > max_values{ 3, 3, 3 };
+    /* this should result in a spacing of 2 for each dimension */
+    std::vector< double > max_values{ 12, 8, 20 };
 
     /* coordinates where it goes */
-    std::vector< int > target_index_tuple{ 1, 1, 1 };
+    std::vector< int > target_index_tuple{ 3, 2, 5 };
 
-    /* the interpolation set for this should be 8 points starting with 3,2,7 above */
-    std::vector< double > coordinates{ 1.5, 1.5, 1.5 };
+    /* the interpolation set for this should be 8 points starting with the one above */
+    std::vector< double > coordinates{ 6.9, 4.9, 10.9 };
 
     auto data = embed_basis_cell( d_len,
                                   target_index_tuple,
