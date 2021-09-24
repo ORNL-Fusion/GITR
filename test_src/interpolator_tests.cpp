@@ -2,7 +2,7 @@
 #include "interpolator.h"
 
 /* build basis cell, adapt to interpolate it */
-std::vector< double > basis_cell( int len, int d )
+std::vector< double > generate_basis_cell( int len, int d )
 {
   std::vector< double > v( 1 << d );
 
@@ -107,7 +107,7 @@ TEST_CASE( "n-dimensional interpolation" )
 
     int dims = 3;
 
-    auto v0 = basis_cell( basis_len, dims );
+    auto v0 = generate_basis_cell( basis_len, dims );
 
     /* points in each dim */
     std::vector< int > d_len{ 6, 4, 10 };
@@ -131,15 +131,44 @@ TEST_CASE( "n-dimensional interpolation" )
                                 d_len,
                                 max_values );
 
-    /* print out the data */
+    /* pick a diagonal point in this basis cell. It will be some fraction of the farthest
+       away point, the top vertex. Interpolate that point. It should give you a value
+       that represents a fraction of the farthest away point's distance. */
+
+    /* alright. You gotta big brain this. */
 
     /* get this to work before you do the interpolations */
     REQUIRE( v0 == v1 );
+
+    /* 
+       The coordinates of the interpolated point: The must be: 
+
+       base_index + spacing[ i ]
+
+       The value of the interpolated point:
+    */
   }
 
   /* this is the hypotenuse test, relies on the geometric identity */
   SECTION( "interpolate an nd basis cell" )
   {
+    int basis_len = 10;
+
+    int dims = 3;
+
+    auto basis_cell = generate_basis_cell( basis_len, dims );
+
+    /* points in each dim */
+    std::vector< int > d_len{ 6, 4, 10 };
+
+    /* this should result in a spacing of 2 for each dimension */
+    std::vector< double > max_values{ 12, 8, 20 };
+
+    /* the interpolation set for this should be 8 points starting with the one above */
+    std::vector< double > coordinates{ 6.9, 4.9, 10.9 };
+
+    /* you now need... an nd interpolator */
+    double i = interpolate_basis_cell( basis_cell );
   }
 
   /* for this test, create a 4d dataset showing a time series progression of
@@ -149,15 +178,6 @@ TEST_CASE( "n-dimensional interpolation" )
   {
   }
 }
-
-/* once these are all done you can go workout and swim!!! */
-
-
-
-
-
-
-
 
 
 

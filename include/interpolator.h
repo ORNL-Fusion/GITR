@@ -2,16 +2,70 @@
 #include <vector>
 #include <cassert>
 #include <cmath>
+
+double interpolate_basis_cell( std::vector< double > const &basis_cell,
+                               std::vector< double > const &coordinates,
+                               std::vector< int > const &d_len,
+                               std::vector< double > const &max_values )
+{
+  assert( coordinates.size() == d_len.size() );
+
+  assert( coordinates.size() == max_values.size() );
+
+  std::vector< double > spacing( max_values.size() );
+
+  for( int i = 0; i < spacing.size(); i++ )
+  {
+    spacing[ i ] = max_values[ i ] / double(d_len[ i ]);
+  }
+
+  /* each basis component will have 2 numbers associated with it */
+  std::vector< double > normalized_fractions( coordinates.size() * 2 );
+
+  for( int i = 0; i < coordinates.size(); i++ )
+  {
+    /* high fraction, matches with a 1 bit */
+    normalized_fractions[ i * 2 + 1 ] =
+    ( coordinates[ i ] - ( std::floor( coordinates[ i ] / spacing[ i ] ) * spacing[ i ] ) ) /
+    spacing[ i ];
+
+    /* low fraction, matches with a 0 bit */
+    normalized_fractions[ i * 2 ] = 1 - normalized_fractions[ i * 2 + 1 ];
+  }
+
+  /* we have the basis cell, what else is needed? */
+  double sum = 0;
+  for( int i = 0; i < basis_cell.size(); i++ )
+  {
+    double product = 1;
+
+    /* iterate the bits in "i" */
+    for( int j = 0; j < d_len.size(); j++ )
+    {
+      /* Captain! Should I calculate instead of store? */
+      product *= normalized_fractions[ j * 2 + ( ( i & ( 0x1 << j ) ) >> j ) ];
+    }
+
+    sum += product * basis_cell[ i ];
+  }
+
+  return sum;
+}
+/*
+
+What do you need to do next? Next, we need to figure out how to make more tests.
+
+*/
 /* can you turn this into a variadic template? If all of them are you can create a header only
    library */
 /* d_len is the length of each dimension */
 /* max values is the biggest x-value there is */
 /* data is the whole data field */
 /* coordinates are single dimensional float values */
-std::vector< double > fetch_basis_cell( std::vector< double > data,
-                                        std::vector< double > coordinates,
-                                        std::vector< int > d_len,
-                                        std::vector< double > max_values )
+std::vector< double > fetch_basis_cell( std::vector< double > const &data,
+                                        std::vector< double > const &coordinates,
+                                        std::vector< int > const &d_len,
+                                        std::vector< double > const &max_values )
 {
   assert( coordinates.size() == d_len.size() );
 
@@ -33,7 +87,6 @@ std::vector< double > fetch_basis_cell( std::vector< double > data,
 
   int base_index = 0;
 
-  /* Captain! There's an off-by-1 error in this base_index calculation code. Where? */
   for( int i = 0; i < coordinates.size(); i++ )
   {
     std::cout << "coordinates[ " << i << " ] = " << coordinates[ i ]
