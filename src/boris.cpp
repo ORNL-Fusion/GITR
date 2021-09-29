@@ -90,10 +90,10 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     gitr_precision Emag = 0.0;
     gitr_precision Er = 0.0;
     gitr_precision Et = 0.0;
-      gitr_precision p0[3] = {x0,y,z};
+    gitr_precision p0[3] = {x0,y,z};
     gitr_precision angle = 0.0;
-	gitr_precision fd = 0.0;
-	gitr_precision pot = 0.0;
+    gitr_precision fd = 0.0;
+    gitr_precision pot = 0.0;
       gitr_precision a = 0.0;
       gitr_precision b = 0.0;
       gitr_precision c = 0.0;
@@ -156,7 +156,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
       gitr_precision minDistance = 1.0e12;
       int nBoundariesCrossed = 0;
       int boundariesCrossed[6] = {0,0,0,0,0,0};
-        int minIndex=0;
+      int minIndex=0;
       gitr_precision distances[7] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0};
       gitr_precision normals[21] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,
                            0.0,0.0,0.0,0.0,0.0,0.0,0.0,
