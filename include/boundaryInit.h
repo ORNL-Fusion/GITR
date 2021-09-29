@@ -101,7 +101,7 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         {
           theta = std::abs(theta - (3.14159265359));
         }
-	b.unit_vec0 = b.inDir*b.a/b.plane_norm; //
+        b.unit_vec0 = b.inDir*b.a/b.plane_norm; //
         b.unit_vec1 = b.inDir*b.b/b.plane_norm; //
         b.unit_vec2 = b.inDir*b.c/b.plane_norm;
 #else
@@ -119,12 +119,15 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         b.debyeLength = std::sqrt(8.854187e-12*b.te/(b.ne*std::pow(background_Z,2)*1.60217662e-19));
 	//std::cout << "debyeLength " << b.debyeLength << std::endl;
 	gitr_precision angle = b.angle;
-	gitr_precision sheath_fac = 3.0;
+  gitr_precision me = 1.0/2000.0;
+  std::cout << "me " << me << " " << background_amu << " " << b.ti << " " << b.te << std::endl; 
+	gitr_precision sheath_fac = std::abs(0.5*std::log((2*M_PI*me/background_amu)*(1+b.ti/b.te)));
 	gitr_precision norm = std::acos(std::pow(std::exp(1),-sheath_fac));
 	gitr_precision fd = 1.0+std::log(std::cos(angle/90.0*norm))/sheath_fac;
 	if(fd < 0.0) fd = 0.0;
 	b.fd = fd;
-	if(b.ne == 0.0) b.debyeLength = 1e12f;
+  std::cout << "fd " << fd << " " << sheath_fac << std::endl; 
+	if(b.ne == 0.0) b.debyeLength = 1.0e12;
         b.larmorRadius = 1.44e-4*std::sqrt(background_amu*b.ti/2)/(background_Z*norm_B);
         b.flux = 0.25*b.density*std::sqrt(8.0*b.ti*1.602e-19/(3.1415*background_amu));
         b.impacts = 0.0;
@@ -143,7 +146,7 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         }
 #elif USE_SURFACE_POTENTIAL >0 
 #else
-        b.potential = 3.0*b.te;
+        b.potential = sheath_fac*b.te;
         std::cout << "Surface number " << b.surfaceNumber << " has te and potential " << b.te << " " << b.potential << std::endl; 
 #endif        
         //if(b.Z > 0.0)
