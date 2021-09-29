@@ -80,14 +80,14 @@ void reflection::operator()(std::size_t indx) const {
     if (particles->hitWall[indx] == 1.0) {
       gitr_precision E0 = 0.0;
       gitr_precision thetaImpact = 0.0;
-      gitr_precision particleTrackVector[3] = {0.0f};
-      gitr_precision surfaceNormalVector[3] = {0.0f};
-      gitr_precision vSampled[3] = {0.0f};
+      gitr_precision particleTrackVector[3] = {0.0};
+      gitr_precision surfaceNormalVector[3] = {0.0};
+      gitr_precision vSampled[3] = {0.0};
       gitr_precision norm_part = 0.0;
       int signPartDotNormal = 0;
       gitr_precision partDotNormal = 0.0;
-      gitr_precision Enew = 0.0f;
-      gitr_precision angleSample = 0.0f;
+      gitr_precision Enew = 0.0;
+      gitr_precision angleSample = 0.0;
       int wallIndex = 0;
       gitr_precision tol = 1e12;
       gitr_precision Sr = 0.0;
@@ -220,7 +220,7 @@ void reflection::operator()(std::size_t indx) const {
                            nE_sputtRefDistOutRef,nA_sputtRefDistIn,nE_sputtRefDistIn,
                                          energyDistGrid01Ref,A_sputtRefDistIn,
                                          E_sputtRefDistIn,EDist_CDF_R_regrid );
-                   //newWeight=(R0/(1.0f-sputtProb))*weight;
+                   //newWeight=(R0/(1.0-sputtProb))*weight;
 		   newWeight = weight*(totalYR);
     #if FLUX_EA > 0
               EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
@@ -241,9 +241,12 @@ void reflection::operator()(std::size_t indx) const {
 
             #if USE_CUDA > 0
                     atomicAdd(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
+                    atomicAdd(&surfaces->grossErosion[surfaceHit],weight*Y0);
             #else
                     #pragma omp atomic
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
+                    #pragma omp atomic
+                    surfaces->grossErosion[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*Y0;
             #endif
                 }
             }
@@ -291,7 +294,7 @@ void reflection::operator()(std::size_t indx) const {
 
             #if USE_CUDA > 0
                     atomicAdd(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
-                    atomicAdd(&surfaces->grossErosion[surfaceHit],newWeight);
+                    atomicAdd(&surfaces->grossErosion[surfaceHit],weight*Y0);
                     atomicAdd(&surfaces->aveSputtYld[surfaceHit],Y0);
                     if(weight > 0.0)
                     {
@@ -300,7 +303,8 @@ void reflection::operator()(std::size_t indx) const {
             #else
                     #pragma omp atomic
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
-                    surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit] + newWeight;
+                    #pragma omp atomic
+                    surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit] + weight*Y0;
                     surfaces->aveSputtYld[surfaceHit] = surfaces->aveSputtYld[surfaceHit] + Y0;
                     surfaces->sputtYldCount[surfaceHit] = surfaces->sputtYldCount[surfaceHit] + 1;
             #endif
@@ -316,6 +320,7 @@ void reflection::operator()(std::size_t indx) const {
             #if USE_CUDA > 0
                     atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
             #else
+                    #pragma omp atomic
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
             #endif
 	        }
@@ -327,14 +332,15 @@ void reflection::operator()(std::size_t indx) const {
                     particles->hitWall[indx] = 2.0;
                   if(surface > 0)
                 {
-		    if(didReflect)
-		    {
+		    //if(didReflect)
+		    //{
             #if USE_CUDA > 0
-                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight);
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],weight*R0);
+                    atomicAdd(&surfaces->grossDeposition[surfaceHit],-weight*Y0);
             #else
                     surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
             #endif
-	            }
+	           // }
 		}
             }
             //if(particles->test[indx] == 1.0)
