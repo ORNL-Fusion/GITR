@@ -12,23 +12,10 @@ __device__ double atomicAdd1(double* address, double val)
                             __double_as_longlong(val + 
                                 __longlong_as_double(assumed)));
                  // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
-                      } while (assumed != old);
+         } while (assumed != old);
                  
-                          return __longlong_as_double(old);
-                          }
-                          //#endif __CUDA_ARCH__ < 600
-//__device__ double atomicAdd(double* address, double val)
-//{
-//   unsigned long long int* address_as_ull =
-//                                              (unsigned long long int*)address;
-//   unsigned long long int old = *address_as_ull, assumed;
-//   do {
-//         assumed = old;
-//         old = atomicCAS(address_as_ull, assumed, 
-//               __double_as_longlong(val +                                                 __longlong_as_double(assumed)));
-//      } while (assumed != old);
-//            return __longlong_as_double(old);
-//}
+         return __longlong_as_double(old);
+}
 #endif
 
 spec_bin::spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
@@ -36,10 +23,8 @@ spec_bin::spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _
         flags(_flags), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
         dt(_dt) {}
 
-    CUDA_CALLABLE_MEMBER_DEVICE    
+CUDA_CALLABLE_MEMBER_DEVICE    
 void spec_bin::operator()(std::size_t indx) const {
-//    int indx_X = 0;
-//    int indx_Z = 0;
     gitr_precision dx = 0.0;
     gitr_precision dy = 0.0;
     gitr_precision dz = 0.0;
@@ -47,11 +32,11 @@ void spec_bin::operator()(std::size_t indx) const {
     gitr_precision y = particlesPointer->yprevious[indx];
     gitr_precision z = particlesPointer->zprevious[indx];
     gitr_precision dt_particle = 0.0;
-	    //printf ("z %f \n", z);
+
 #if SPECTROSCOPY > 2
     gitr_precision dim1 = particlesPointer->xprevious[indx];
 #else
-  #if USECYLSYMM > 0
+#if USECYLSYMM > 0
     gitr_precision dim1 = std::sqrt(x*x + y*y);
     #else
     gitr_precision dim1 = x;
