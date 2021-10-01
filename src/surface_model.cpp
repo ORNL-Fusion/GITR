@@ -195,11 +195,13 @@ void reflection::operator()(std::size_t indx) const {
                 gitr_precision r7 = curand_uniform(&state[6]);
                 gitr_precision r8 = curand_uniform(&state[7]);
                 gitr_precision r9 = curand_uniform(&state[8]);
+		gitr_precision r10 = curand_uniform(&state[9]);
               #else
                 std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
                 gitr_precision r7=dist(state[6]);
                 gitr_precision r8=dist(state[7]);
                 gitr_precision r9=dist(state[8]);
+		gitr_precision r10=dist(state[9]);
               #endif
                 //gitr_precision r7 = 0.0;
             #endif
