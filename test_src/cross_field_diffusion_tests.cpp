@@ -1,5 +1,5 @@
 #include <iostream>
-#include "test_utils.hpp"
+#include "catch2/catch_test_macros.hpp"
 #include "crossFieldDiffusion.h"
 #include "test_data_filepath.hpp"
 #include "Particles.h"

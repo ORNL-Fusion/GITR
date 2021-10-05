@@ -52,13 +52,13 @@ if( GITR_USE_MPI )
 endif()
 
 # link test targets
-target_link_libraries( config_interface_tests test_utils libconfig config_interface )
+target_link_libraries( config_interface_tests catch2 libconfig config_interface )
 target_link_libraries( coulomb_tests 
-                       test_utils libconfig thrust interp2d utils flags netcdf boris fields )
-target_link_libraries( atomic_tests test_utils ionize interp2d utils flags )
-target_link_libraries( field_tests test_utils interp2d libconfig utils netcdf fields boris )
-target_link_libraries( file_io_tests test_utils libconfig utils flags boris )
+                       catch2 libconfig thrust interp2d utils flags netcdf boris fields )
+target_link_libraries( atomic_tests catch2 ionize interp2d utils flags )
+target_link_libraries( field_tests catch2 interp2d libconfig utils netcdf fields boris )
+target_link_libraries( file_io_tests catch2 libconfig utils flags boris )
 target_link_libraries( cross_field_diffusion_tests 
-                       test_utils utils flags libconfig boris spectroscopy )
-target_link_libraries( boris_tests test_utils flags libconfig utils boris )
-target_link_libraries( interpolator_tests test_utils )
+                       catch2 utils flags libconfig boris spectroscopy )
+target_link_libraries( boris_tests catch2 flags libconfig utils boris )
+target_link_libraries( interpolator_tests catch2 )

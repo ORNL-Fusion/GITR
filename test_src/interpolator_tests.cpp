@@ -1,4 +1,4 @@
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "interpolator.h"
 
 /*
@@ -132,9 +132,71 @@ std::vector< double > embed_basis_cell( std::vector< int > const &d_len,
 }
 
 /* Captain! A row-major, flat data layout is assumed. Note that. */
-TEST_CASE( "n-dimensional interpolation" )
+TEST_CASE( "multi-dimensional interpolation" )
 {
   /* see if embed and fetch are truly inverses like you think */
+  /*
+
+  Terminology:
+
+  A discrete function is a pair of finite sets.
+  The first set:
+
+  x = { x0, x1, x2, ... , x_n }
+
+  contains domain values "x" and the other set is the co-domain values f:
+
+  f = { f(x0), f(x1), f(x2), ... , f(x_n) }
+
+  A continuous function is the same idea but the first set "x" contains all possible domain
+  values and the second set "f" contains the co-domain values for every value in "x".
+
+  A linear interpolation is a method to infer a continuous function from a discrete one:
+
+  Given finite "x" and "f" above, linear interpolation attempts to estimate the value of
+  f( p ) given:
+
+  p is not contained in set "x"
+
+  there exists x_lower and x_upper in set "x" such that
+
+  x_lower <= p <= x_upper
+
+  This value is inferred by assuming that the function "f" varies linearly and continuously
+  in [ x_lower, x_upper ]. Stated more simply, the function on [ x_lower, x_upper ] is assumed to
+  be a line, and any value "p" as defined above will lie on that line somewhere.
+
+  The [ x_lower, x_upper ] range containing "p" above will be referred to as the "basis cell"
+  containing "p". For "p" in a 1-dimensional vector space, the basis cell contains 2^1 elements
+  that define what "p" is "between".
+
+  according to algebra, "p" occupies a position that is
+
+  ( ( p - x_lower ) / ( x_upper - x_lower ) ) * ( x_upper - x_lower ) distance away from x_lower
+
+  and
+
+  ( ( x_upper - p ) / ( x_upper - x_lower ) ) * ( x_upper - x_lower ) distance away from x_upper
+
+  Linear interpolation assumes 
+
+  p = ( ( p - x_lower ) / ( x_upper - x_lower ) ) * ( x_upper - x_lower ) + x_lower 
+
+  and 
+
+  p = x_upper - ( ( x_upper - p ) / ( x_upper - x_lower ) ) * ( x_upper - x_lower )
+
+  Captain! Here
+  
+
+
+  In general, any point "q" in an n-dimensional vector space will have a basis cell containing
+  2^n elements that are vertices of an n-dimensional cube containing the point "p".
+
+  x_lower - x_lower <= p - x_lower <= x_upper - x_lower
+
+  */
+
   SECTION( "embed and fetch a basis cell" )
   {
     /* Captain! Next, make this multidimensional */

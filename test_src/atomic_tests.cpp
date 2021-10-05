@@ -1,4 +1,4 @@
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "ionize.h"
 #include "recombine.h"
 #include "utils.h"
@@ -21,8 +21,8 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
   for (size_t i = 0; i < a.size(); i++) 
   {
     
-    bool margin_check = (a[i] != Approx(b[i]).margin(margin));
-    bool epsilon_check = (a[i] != Approx(b[i]).epsilon(epsilon));
+    bool margin_check = (a[i] != Catch::Approx(b[i]).margin(margin));
+    bool epsilon_check = (a[i] != Catch::Approx(b[i]).epsilon(epsilon));
     
     if (margin_check && epsilon_check)
     {

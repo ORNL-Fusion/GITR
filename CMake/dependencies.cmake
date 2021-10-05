@@ -53,3 +53,8 @@ list( APPEND dependencies libconfig )
 include( CMake/netcdf.cmake ) # ---> creates target netcdf
 
 list( APPEND dependencies netcdf )
+
+# Catch2
+include( CMake/catch.cmake ) # ---> creates target Catch2::Catch2
+
+list( APPEND dependencies catch2 )

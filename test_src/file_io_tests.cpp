@@ -3,7 +3,7 @@
 #include <libconfig.h++>
 #include <stdio.h>
 #include "utils.h"
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "Particles.h"
 #include "geometryCheck.h"
 #include "test_data_filepath.hpp"
@@ -42,8 +42,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     getVariable(cfg, var1,this_thing);
     std::cout << "this thing values " << this_thing << std::endl;
     gitr_precision tol = 1e-3;
-    REQUIRE_THAT(this_thing,
-                     Catch::Matchers::WithinAbs(0.12345, tol));
+    REQUIRE_THAT(this_thing, Catch::Matchers::WithinAbs(0.12345, tol));
   }
   SECTION("double")
   {
