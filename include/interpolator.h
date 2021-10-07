@@ -329,19 +329,21 @@ std::vector< double > fetch_hypercube( std::vector< double > const &data,
 
   assert( coordinates.size() == max_range.size() );
 
-  std::vector< double > spacing( max_range.size() );
-
-  for( int i = 0; i < spacing.size(); i++ )
-  {
-    spacing[ i ] = max_range[ i ] / double(d_len[ i ]);
-  }
-
   /* d_multipliers[ i ] indicates the stride of dimension "i" */
   std::vector< int > d_multipliers( d_len.size(), 1 );
 
   for( int i = 0; i < d_multipliers.size() - 1; i++ )
   {
     d_multipliers[ i + 1 ] = d_multipliers[ i ] * d_len[ i ];
+  }
+
+  assert( data.size() == d_multipliers.back() * d_len.back() );
+
+  std::vector< double > spacing( max_range.size() );
+
+  for( int i = 0; i < spacing.size(); i++ )
+  {
+    spacing[ i ] = max_range[ i ] / double(d_len[ i ]);
   }
 
   /* find the index of the first vertex in the hypercube */
