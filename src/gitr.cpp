@@ -15,7 +15,7 @@
 #include "history.h"
 #include "interp2d.hpp"
 //#include "interpRateCoeff.hpp"
-#include "interpolate.h"
+//#include "interpolate.h"
 #include "ionize.h"
 #include <cmath>
 //#include "ncFile.h"
