@@ -96,10 +96,9 @@ std::vector< double > embed_hypercube( std::vector< int > const &d_len,
 
   assert( ( 1 << d_len.size() ) == hypercube.size() );
 
-  /* transform d_len into d_len accumulated */
+  /* d_multipliers[ i ] is the stride in dimension "i" */
   std::vector< int > d_multipliers( d_len.size(), 1 );
 
-  /* Captain! Do you need to reverse the coordinates? I think you might... */
   for( int i = 0; i < d_multipliers.size() - 1; i++ )
   {
     d_multipliers[ i + 1 ] = d_multipliers[ i ] * d_len[ i ];
