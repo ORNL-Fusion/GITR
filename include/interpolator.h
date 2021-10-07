@@ -301,7 +301,11 @@ double interpolate_hypercube( std::vector< double > const &hypercube,
 
 data: finite lattice in Euclidean n-space of samples of continuous n-dimensional function f 
 
-coordinates: domain coordinates for which it is desired to interpolate a function value
+coordinates: 
+
+  domain coordinates for which it is desired to interpolate a function value
+  coordinates are expected in order of dimension with the smallest stride (1) to dimension
+  with the largest stride
 
 d_len:
 
@@ -317,9 +321,9 @@ returns: n-dimensional hypercube in a flattened array of 2^n vertices
 
 */
 std::vector< double > fetch_hypercube( std::vector< double > const &data,
-                                        std::vector< double > const &coordinates,
-                                        std::vector< int > const &d_len,
-                                        std::vector< double > const &max_range )
+                                       std::vector< double > const &coordinates,
+                                       std::vector< int > const &d_len,
+                                       std::vector< double > const &max_range )
 {
   assert( coordinates.size() == d_len.size() );
 
