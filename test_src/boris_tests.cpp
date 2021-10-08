@@ -12,6 +12,48 @@
 
 TEST_CASE( "boris - not fully implemented" )
 {
+  /* Level I: velocity selector, one selected particle,
+              uniform fields, did it stay on the line? */
+
+  /* Level II: one particle, non-uniform magnitude only in the dimension of the 
+               particle's motion,
+               e and b always orthogonal. Scale E/B by constant along that dimension */
+
+  /* Level III: many particles, uniform fields again, known fraction end up above the line
+                and below? Infinite wein filter so no particles are absorbed */
+
+  /* Level IV: Scale E/B and rotate the "L" */
+
+  SECTION( "velocity selector, Level I" )
+  {
+    double e_magnitude;
+
+    double v_magnitude;
+
+    /* particle initial velocity and position */
+     
+    /* turn off field interp flags so that you can use a uniform field */
+    /* for a non-uniform field, will you have to interpolate? Or can you hack in */
+    /* should be an option to generate a field at a point based on a function... */
+
+    /* some kind of fake field factory to create field values as alternative to interpolation */
+
+    /* hook in the configuration interface to this? For calculated field values you need to
+       read in a source file? */
+
+    /* Given uniform field, boris move for many steps then check position. One component
+       should be nonzero, the other should be velocity * time */
+
+    /* how does the boris operator currently calculate the particle's initial velocity? */
+
+    /* Captain! Next steps: 
+       1. Is Tim testing the surface model? When will that be done?
+       2. :
+
+    */
+  }
+
+  /* prototype */
   SECTION( "e cross b" )
   {
     /* timesteps */
