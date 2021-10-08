@@ -3562,11 +3562,6 @@ if( flowv_interp == 1 )
     vy = vypfile[i];
     vz = vzpfile[i];
 #endif
-    // std::cout << "particle xyz Exyz Z amu charge " << x << " " << y << " " <<
-    // z << " "
-    // << vx << " " << vy << " " << vz << " " << Z << " " << amu << " " <<
-    // charge << " "  << std::endl;
-    /* Captain! */
     particleArray->setParticleV(i, x, y, z, vx, vy, vz, Z, amu, charge,dt);
 #if PARTICLE_SOURCE_SPACE > 0
     pSurfNormX[i] =

@@ -232,24 +232,27 @@ TEST_CASE( "cross-field diffusion operator" )
         sum += net_Bins[ nBins * net_nX * net_nZ +
                          z_bin * net_nX + x_bin ];
       }
+
       //density[x_bin] = sum;
       density[x_bin] = sum*dt/nP/dx;
       std::cout << "dens: " << density[x_bin] << " gold " << gold[x_bin] << std::endl;
       rms_error = rms_error + (density[x_bin] - gold[x_bin])*(density[x_bin] - gold[x_bin]);
       sum = 0.0;
     }
+
     rms_error = std::sqrt(rms_error/(net_nX-1));
     std::cout << "rms_error " << rms_error << std::endl;
 
-int not_hit = 0;    
-for (int i=0; i< nP; i++ )
-{
-  if(particleArray->hitWall[i]<1.0)
-  {
-    not_hit = not_hit+1;
-  }
-//    std::cout << "p " << particleArray->charge[i] << " x " << particleArray->xprevious[i]<<std::endl;
-}   
+    int not_hit = 0;    
+    for (int i=0; i< nP; i++ )
+    {
+      if(particleArray->hitWall[i]<1.0)
+      {
+        not_hit = not_hit+1;
+      }
+    //    std::cout << "p " << particleArray->charge[i] << " x " << particleArray->xprevious[i]<<std::endl;
+    }   
+
     std::cout << "number of particles not finished " << not_hit << std::endl;
     gitr_precision margin = 0.1;
     gitr_precision epsilon = 0.05;

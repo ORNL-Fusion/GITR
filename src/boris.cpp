@@ -1,4 +1,5 @@
 #include "boris.h"
+#include "constants.h"
 
 /* Are these preprocessor defines necessary? */
 #ifdef __CUDACC__
@@ -744,23 +745,40 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
       return minDistance;
 }
 
-move_boris::move_boris(Particles *_particlesPointer, gitr_precision _span, Boundary *_boundaryVector,int _nLines,
-            int _nR_Bfield, int _nZ_Bfield,
-            gitr_precision * _BfieldGridRDevicePointer,
-            gitr_precision * _BfieldGridZDevicePointer,
-            gitr_precision * _BfieldRDevicePointer,
-            gitr_precision * _BfieldZDevicePointer,
-            gitr_precision * _BfieldTDevicePointer,
-            int _nR_Efield,int _nY_Efield, int _nZ_Efield,
-            gitr_precision * _EfieldGridRDevicePointer,
-            gitr_precision * _EfieldGridYDevicePointer,
-            gitr_precision * _EfieldGridZDevicePointer,
-            gitr_precision * _EfieldRDevicePointer,
-            gitr_precision * _EfieldZDevicePointer,
-            gitr_precision * _EfieldTDevicePointer,
-            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, gitr_precision *_closeGeomGridr,gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, int *_closeGeom, Flags* _gitr_flags)
-        
-: particlesPointer(_particlesPointer),
+move_boris::move_boris(
+
+  Particles *_particlesPointer,
+  gitr_precision _span,
+  Boundary *_boundaryVector,
+  int _nLines,
+  int _nR_Bfield,
+  int _nZ_Bfield,
+  gitr_precision * _BfieldGridRDevicePointer,
+  gitr_precision * _BfieldGridZDevicePointer,
+  gitr_precision * _BfieldRDevicePointer,
+  gitr_precision * _BfieldZDevicePointer,
+  gitr_precision * _BfieldTDevicePointer,
+  int _nR_Efield,
+  int _nY_Efield,
+  int _nZ_Efield,
+  gitr_precision * _EfieldGridRDevicePointer,
+  gitr_precision * _EfieldGridYDevicePointer,
+  gitr_precision * _EfieldGridZDevicePointer,
+  gitr_precision * _EfieldRDevicePointer,
+  gitr_precision * _EfieldZDevicePointer,
+  gitr_precision * _EfieldTDevicePointer,
+  int _nR_closeGeom,
+  int _nY_closeGeom,
+  int _nZ_closeGeom,
+  int _n_closeGeomElements,
+  gitr_precision *_closeGeomGridr,
+  gitr_precision *_closeGeomGridy,
+  gitr_precision *_closeGeomGridz,
+  int *_closeGeom,
+  Flags* _gitr_flags )
+
+  : 
+  particlesPointer(_particlesPointer),
         boundaryVector(_boundaryVector),
         nR_Bfield(_nR_Bfield),
         nZ_Bfield(_nZ_Bfield),
@@ -862,8 +880,6 @@ void move_boris::operator()(std::size_t indx)
 
 #else
 */
-  /* Captain! */
-  /* check PSE here, should be -1000 */
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer);
@@ -877,9 +893,16 @@ void move_boris::operator()(std::size_t indx)
                     BfieldZDevicePointer,BfieldTDevicePointer);        
   Bmag = vectorNorm(B);
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
-  q_prime = 9.572528104401468e7*particlesPointer->charge[indx]/(particlesPointer->amu[indx])*dt*0.5;
+
+  //q_prime = 9.572528104401468e7*particlesPointer->charge[indx] / particlesPointer->amu[indx] * dt * 0.5;
+  /* Captain! original code above, test code below. q_prime = q * dt / ( 2 * m ) */
+  q_prime = particlesPointer->charge[ indx ] * gitr_constants::electron_volt * dt * 0.5 /
+            ( particlesPointer->amu[ indx ] * gitr_constants::dalton );
+
     coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
+
     vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v);
+
         //vectorScalarMult(q_prime,E,qpE);
     qpE[0] = q_prime*E[0];
     qpE[1] = q_prime*E[1];
@@ -923,7 +946,6 @@ void move_boris::operator()(std::size_t indx)
   ////printf("c_vpxBxyz %.16e %.16e %.16e \n",c_vpxB[0], c_vpxB[1], c_vpxB[2]);
   //}
 	       
-  /* Captain! */
   if(gitr_flags->USE_ADAPTIVE_DT)
   {
     vectorAssign(v[0],v[1],v[2],v_dt);
@@ -997,7 +1019,6 @@ void move_boris::operator()(std::size_t indx)
      //v = v + q_prime*E
      vectorAdd(v,qpE,v);
      
-     /* Captain! Position updated here */
      position[0] = position[0] + v[0] * half_dt;
      position[1] = position[1] + v[1] * half_dt;
      position[2] = position[2] + v[2] * half_dt;
@@ -1058,8 +1079,6 @@ void move_boris::operator()(std::size_t indx)
   else
   {
     
-     /* Captain! This looks like the place that the particle position is actually getting
-        updated */
      if(particlesPointer->hitWall[indx] == 0.0)
       {
           particlesPointer->x[indx] = position[0] + v[0] * dt;

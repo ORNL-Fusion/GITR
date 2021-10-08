@@ -26,6 +26,7 @@ set( cpu_targets
      utils
      flags
      config_interface
+     slow_math
      setup)
 
 # conditionally compile as GPU targets
@@ -52,13 +53,6 @@ foreach( component IN LISTS cpu_targets )
 
   target_include_directories( ${component} PUBLIC include )
 
-  # Captain! This is not needed
-  if( debug )
-
-    target_compile_options( ${component} PRIVATE -g )
-
-  endif()
-
 endforeach()
 
 # Compile gpu_targets
@@ -75,12 +69,6 @@ if( GITR_USE_CUDA )
     target_include_directories( ${component} PUBLIC include )
 
     target_compile_options( ${component} PRIVATE --expt-relaxed-constexpr )
-
-    if( debug )
-
-      target_compile_options( ${component} PRIVATE -G )
-
-    endif()
 
   endforeach()
 
