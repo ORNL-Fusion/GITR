@@ -126,8 +126,6 @@ CUDA_CALLABLE_MEMBER
 
 gitr_precision interp3d ( gitr_precision x, gitr_precision y, gitr_precision z,int nx,int ny, int nz,
     gitr_precision* gridx,gitr_precision* gridy, gitr_precision* gridz,gitr_precision* data ) {
-    //std::cout << "xyz " << x << " "<<y << " " << z<< std::endl;
-    //std::cout << "nxyz " << nx << " "<<ny << " " << nz<< std::endl;
     
     gitr_precision fxyz = 0.0;
 
@@ -173,6 +171,32 @@ gitr_precision interp3d ( gitr_precision x, gitr_precision y, gitr_precision z,i
     if(ny <=1) fxyz=fxz0;
     if(nz <=1) fxyz=fx_z0;
     //std::cout <<"fxyz " << fxyz << std::endl;
+    return fxyz;
+}
+
+CUDA_CALLABLE_MEMBER
+
+gitr_precision interp3d_nearest ( gitr_precision x, gitr_precision y, gitr_precision z,int nx,int ny, int nz,
+    gitr_precision* gridx,gitr_precision* gridy, gitr_precision* gridz,gitr_precision* data ) {
+    
+    gitr_precision fxyz = 0.0;
+
+    gitr_precision dx = gridx[1] - gridx[0];
+    gitr_precision dy = gridy[1] - gridy[0];
+    gitr_precision dz = gridz[1] - gridz[0];
+    
+    int i = std::floor((x - gridx[0])/dx+0.5);//addition of 0.5 finds nearest gridpoint
+    int j = std::floor((y - gridy[0])/dy+0.5);
+    int k = std::floor((z - gridz[0])/dz+0.5);
+    
+    if(i <0 ) i=0;
+    else if(i >=nx-1) i=nx-2;
+    if(j <0 ) j=0;
+    else if(j >=ny-1) j=ny-2;
+    if(k <0 ) k=0;
+    else if(k >=nz-1) k=nz-2;
+    
+    fxyz = data[i + j*nx + k*nx*ny];
     return fxyz;
 }
 
