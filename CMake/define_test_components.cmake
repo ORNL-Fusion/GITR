@@ -26,6 +26,7 @@ set( gpu_test_targets
      field_tests
      atomic_tests 
      boris_tests
+     surface_model_tests
      cross_field_diffusion_tests )
 
 if( NOT GITR_USE_CUDA )
