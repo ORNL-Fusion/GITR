@@ -79,7 +79,8 @@ void reflection::operator()(std::size_t indx) const {
     
   if (particles->hitWall[indx] == 1.0) 
   {
-    gitr_precision E0 = 0.0;
+    gitr_precision E0_for_surface_model = 0.0;
+    gitr_precision E0_for_flux_binning = 0.0;
     gitr_precision thetaImpact = 0.0;
     gitr_precision particleTrackVector[3] = {0.0};
     gitr_precision surfaceNormalVector[3] = {0.0};
@@ -117,9 +118,14 @@ void reflection::operator()(std::size_t indx) const {
     particleTrackVector[1] = vy;
     particleTrackVector[2] = vz;
     norm_part = std::sqrt(particleTrackVector[0] * particleTrackVector[0] + particleTrackVector[1] * particleTrackVector[1] + particleTrackVector[2] * particleTrackVector[2]);
-    E0 = 0.5 * particles->amu[indx] * 1.6737236e-27 * (norm_part * norm_part) / 1.60217662e-19;
-     if (E0 > Edist)
-        E0 = Edist;
+    E0_for_surface_model = 0.5 * particles->amu[indx] * 1.6737236e-27 * (norm_part * norm_part) / 1.60217662e-19;
+    E0_for_flux_binning = E0_for_surface_model;
+    gitr_precision maxE_for_surface_model = std::pow(10.0,Elog_sputtRefCoeff[nE_sputtRefCoeff-1]);
+     if (E0_for_surface_model > maxE_for_surface_model)
+         E0_for_surface_model = maxE_for_surface_model;
+     
+     if (E0_for_flux_binning > Edist)
+         E0_for_flux_binning = Edist;
       
     wallIndex = particles->wallIndex[indx];
     boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx]);
@@ -136,15 +142,15 @@ void reflection::operator()(std::size_t indx) const {
     if (thetaImpact < 0.0)
       thetaImpact = 0.0;
     signPartDotNormal = std::copysign(1.0,partDotNormal);
-    if (E0 == 0.0) {
+    if (E0_for_surface_model == 0.0) {
       thetaImpact = 0.0;
     }
     if (boundaryVector[wallHit].Z > 0.0) 
     {
-      Y0 = interp2d(thetaImpact, std::log10(E0), nA_sputtRefCoeff,
+      Y0 = interp2d(thetaImpact, std::log10(E0_for_surface_model), nA_sputtRefCoeff,
                     nE_sputtRefCoeff, A_sputtRefCoeff,
                     Elog_sputtRefCoeff, spyl_surfaceModel);
-      R0 = interp2d(thetaImpact, std::log10(E0), nA_sputtRefCoeff,
+      R0 = interp2d(thetaImpact, std::log10(E0_for_surface_model), nA_sputtRefCoeff,
                     nE_sputtRefCoeff, A_sputtRefCoeff,
                     Elog_sputtRefCoeff, rfyl_surfaceModel);
     } 
@@ -191,11 +197,11 @@ void reflection::operator()(std::size_t indx) const {
       if(r7 > sputtProb) //reflects
       {
         didReflect = 1;
-        aInterpVal = interp3d (r8,thetaImpact,std::log10(E0),
+        aInterpVal = interp3d (r8,thetaImpact,std::log10(E0_for_surface_model),
               nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                         angleDistGrid01,A_sputtRefDistIn,
                         E_sputtRefDistIn,ADist_CDF_R_regrid);
-         eInterpVal = interp3d ( r9,thetaImpact,std::log10(E0),
+         eInterpVal = interp3d ( r9,thetaImpact,std::log10(E0_for_surface_model),
                nE_sputtRefDistOutRef,nA_sputtRefDistIn,nE_sputtRefDistIn,
                              energyDistGrid01Ref,A_sputtRefDistIn,
                              E_sputtRefDistIn,EDist_CDF_R_regrid );
@@ -231,11 +237,11 @@ void reflection::operator()(std::size_t indx) const {
       }
       else //sputters
       {
-        aInterpVal = interp3d(r8,thetaImpact,std::log10(E0),
+        aInterpVal = interp3d(r8,thetaImpact,std::log10(E0_for_surface_model),
                 nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                 angleDistGrid01,A_sputtRefDistIn,
                 E_sputtRefDistIn,ADist_CDF_Y_regrid);
-        eInterpVal = interp3d(r9,thetaImpact,std::log10(E0),
+        eInterpVal = interp3d(r9,thetaImpact,std::log10(E0_for_surface_model),
                  nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                  energyDistGrid01,A_sputtRefDistIn,E_sputtRefDistIn,EDist_CDF_Y_regrid);
 		    
@@ -317,7 +323,7 @@ void reflection::operator()(std::size_t indx) const {
       //boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
     #endif
     #if FLUX_EA > 0
-        EdistInd = std::floor((E0-E0dist)/dEdist);
+        EdistInd = std::floor((E0_for_flux_binning-E0dist)/dEdist);
         AdistInd = std::floor((thetaImpact-A0dist)/dAdist);
       
 	      if((EdistInd >= 0) && (EdistInd < nEdist) && 
