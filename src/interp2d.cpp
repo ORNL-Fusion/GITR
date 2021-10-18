@@ -27,45 +27,43 @@ gitr_precision interp2d ( gitr_precision x, gitr_precision z,int nx, int nz,
     gitr_precision fxz = 0.0;
     gitr_precision fx_z1 = 0.0;
     gitr_precision fx_z2 = 0.0; 
+    
     if(nx*nz == 1)
     {
         fxz = data[0];
     }
-    else{
-    gitr_precision dim1 = x;
-    gitr_precision d_dim1 = gridx[1] - gridx[0];
-    gitr_precision dz = gridz[1] - gridz[0];
-    int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
-    int j = std::floor((z - gridz[0])/dz);
-    
-    //gitr_precision interp_value = data[i + j*nx];
-    if (i < 0) i =0;
-    if (j< 0 ) j=0;
-    if (i >=nx-1 && j>=nz-1)
-    {
-        fxz = data[nx-1+(nz-1)*nx];
-    }
-    else if (i >=nx-1)
-    {
-        fx_z1 = data[nx-1+j*nx];
-        fx_z2 = data[nx-1+(j+1)*nx];
-        fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
-    }
-    else if (j >=nz-1)
-    {
-        fx_z1 = data[i+(nz-1)*nx];
-        fx_z2 = data[i+(nz-1)*nx];
-        fxz = ((gridx[i+1]-dim1)*fx_z1+(dim1 - gridx[i])*fx_z2)/d_dim1;
-        
-    }
     else
     {
-      fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
-      fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
-      fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
-      //std::cout << "fxz1,2,fxz" << fx_z1 << fx_z2 << fxz <<std::endl;
-      //std::cout << "gridz0,1 j dz" << gridz[0] <<gridz[1] << j << dz <<std::endl;
-    }
+        gitr_precision dim1 = x;
+        gitr_precision d_dim1 = gridx[1] - gridx[0];
+        gitr_precision dz = gridz[1] - gridz[0];
+        int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
+        int j = std::floor((z - gridz[0])/dz);
+        if (i < 0) i =0;
+        if (j< 0 ) j=0;
+        if (i >=nx-1 && j>=nz-1)
+        {
+            fxz = data[nx-1+(nz-1)*nx];
+        }
+        else if (i >=nx-1)
+        {
+            fx_z1 = data[nx-1+j*nx];
+            fx_z2 = data[nx-1+(j+1)*nx];
+            fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+        }
+        else if (j >=nz-1)
+        {
+            fx_z1 = data[i+(nz-1)*nx];
+            fx_z2 = data[i+(nz-1)*nx];
+            fxz = ((gridx[i+1]-dim1)*fx_z1+(dim1 - gridx[i])*fx_z2)/d_dim1;
+        
+        }
+        else
+        {
+            fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
+            fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
+            fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+        }
     }
 
     return fxz;
