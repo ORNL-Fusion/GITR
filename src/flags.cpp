@@ -15,3 +15,10 @@ bool Flags::initialize_flags(libconfig::Config &cfg,std::string s)
   if(flag > 0) return true;
   else return false;
 }
+
+int Flags::initialize_int_flags(libconfig::Config &cfg,std::string s) 
+{
+  std::string base = "flags.";
+  int flag = getVariable_cfg<int> (cfg, base+s);
+  return flag;
+}

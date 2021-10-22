@@ -65,8 +65,8 @@ TEST_CASE( "boris - not fully implemented" )
     auto particleArray = new Particles( nParticles, 1, cfg, gitr_flags );
 
     /* Captain! Important equation to convert eV energy to vector velocity components */
-    gitr_precision E = 200;
-    gitr_precision amu = 99;
+    gitr_precision E = 215.443;
+    gitr_precision amu = 96.0;
     gitr_precision vtotal = std::sqrt(2.0 * E * 1.602e-19 / amu / 1.66e-27);
     std::cout << "vtotal: " << vtotal << std::endl;
 
@@ -415,5 +415,33 @@ TEST_CASE( "boris - not fully implemented" )
             particleArray->vz[i] <<"\n";
     }
   myfile.close();
+
+    //for (int i = 0; i < nE_sputtRefDistOut; i++)
+    //{
+    // std::cout << "E i " << i << " " << E_sputtRefDistOut[i]<< std::endl;
+    //}
+    
+    for (int i = 0; i < nE_sputtRefCoeff; i++)
+    {
+     std::cout << "E i " << i << " " << E_sputtRefCoeff[i]<< std::endl;
+    }
+    
+    for (int i = 0; i < nA_sputtRefCoeff; i++)
+    {
+     std::cout << "A i " << i << " " << A_sputtRefCoeff[i]<< std::endl;
+    }
+    
+      for (int i = 0; i < nE_sputtRefDistOut; i++)
+    {
+
+      int index = 4*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut + i;
+      //nE_sputtRefDistIn, nA_sputtRefDistIn, nE_sputtRefDistOut
+     std::cout << "E i " << i << " " << E_sputtRefDistOut[i]<<  " " << EDist_Y[index] << std::endl;
+    }
+      for (int i = 0; i < nA_sputtRefDistOut; i++)
+    {
+     std::cout << "A i " << i << " " << Aphi_sputtRefDistOut[i]<< std::endl;
+    }
   }
+
 }
