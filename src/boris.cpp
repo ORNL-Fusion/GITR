@@ -744,23 +744,41 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
       return minDistance;
 }
 
-move_boris::move_boris(Particles *_particlesPointer, gitr_precision _span, Boundary *_boundaryVector,int _nLines,
-            int _nR_Bfield, int _nZ_Bfield,
-            gitr_precision * _BfieldGridRDevicePointer,
-            gitr_precision * _BfieldGridZDevicePointer,
-            gitr_precision * _BfieldRDevicePointer,
-            gitr_precision * _BfieldZDevicePointer,
-            gitr_precision * _BfieldTDevicePointer,
-            int _nR_Efield,int _nY_Efield, int _nZ_Efield,
-            gitr_precision * _EfieldGridRDevicePointer,
-            gitr_precision * _EfieldGridYDevicePointer,
-            gitr_precision * _EfieldGridZDevicePointer,
-            gitr_precision * _EfieldRDevicePointer,
-            gitr_precision * _EfieldZDevicePointer,
-            gitr_precision * _EfieldTDevicePointer,
-            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, gitr_precision *_closeGeomGridr,gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, int *_closeGeom, Flags* _gitr_flags)
-        
-: particlesPointer(_particlesPointer),
+/* Captain! */
+move_boris::move_boris(
+
+  Particles *_particlesPointer,
+  gitr_precision _span,
+  Boundary *_boundaryVector,
+  int _nLines,
+  int _nR_Bfield,
+  int _nZ_Bfield,
+  gitr_precision * _BfieldGridRDevicePointer,
+  gitr_precision * _BfieldGridZDevicePointer,
+  gitr_precision * _BfieldRDevicePointer,
+  gitr_precision * _BfieldZDevicePointer,
+  gitr_precision * _BfieldTDevicePointer,
+  int _nR_Efield,
+  int _nY_Efield,
+  int _nZ_Efield,
+  gitr_precision * _EfieldGridRDevicePointer,
+  gitr_precision * _EfieldGridYDevicePointer,
+  gitr_precision * _EfieldGridZDevicePointer,
+  gitr_precision * _EfieldRDevicePointer,
+  gitr_precision * _EfieldZDevicePointer,
+  gitr_precision * _EfieldTDevicePointer,
+  int _nR_closeGeom,
+  int _nY_closeGeom,
+  int _nZ_closeGeom,
+  int _n_closeGeomElements,
+  gitr_precision *_closeGeomGridr,
+  gitr_precision *_closeGeomGridy,
+  gitr_precision *_closeGeomGridz,
+  int *_closeGeom,
+  Flags* _gitr_flags )
+
+  : 
+  particlesPointer(_particlesPointer),
         boundaryVector(_boundaryVector),
         nR_Bfield(_nR_Bfield),
         nZ_Bfield(_nZ_Bfield),
