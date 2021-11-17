@@ -10,6 +10,7 @@
 #include "Surfaces.h"
 #include "geometryCheck.h"
 #include "slow_math.h"
+#include <fstream>
 
 /* today: boris test, wein filter test, fix catch stuff, slow math implementations */
 
@@ -80,6 +81,11 @@ TEST_CASE( "Complex Boris Motion" )
     double e_field_x = 5e2;
     double e_field_y = 1e3;
     double e_field_z = 1e3;
+    /*
+    double e_field_x = 0;
+    double e_field_y = 0;
+    double e_field_z = 0;
+    */
 
     std::vector< double > rotated_e_field =
     slow_dot_product( spatial_transform,
@@ -139,7 +145,7 @@ TEST_CASE( "Complex Boris Motion" )
     /* generate timing */
     double plasma_frequency = b_field_magnitude * charge / mass;
 
-    double const dt = 1 / ( 1e4 * plasma_frequency );
+    double const dt = 1 / ( 1e2 * plasma_frequency );
     int n_timesteps = std::ceil( 1e-4 / dt );
 
     std::cout << "Ahoy, Captain! plasma_frequency: " << plasma_frequency << std::endl;
@@ -254,7 +260,7 @@ TEST_CASE( "Complex Boris Motion" )
     std::cout << "Ahoy, Captain! pos_y[ 500000 ] " << pos_y[ 500000 ] << std::endl;
     std::cout << "Ahoy, Captain! pos_z[ 500000 ] " << pos_z[ 500000 ] << std::endl;
 
-    /* finished with analytical solution! */
+    /* finished with analytical solution! write to file */
 
     /* next, run the GITR boris pusher and get vectors to compare against */
     /* Captain! Create a scope just to hold the code you're adapting */
@@ -296,9 +302,9 @@ TEST_CASE( "Complex Boris Motion" )
           initial_x,
           initial_y,
           initial_z,
-          v0_x,
-          v0_y,
-          v0_z,
+          v_x[ 0 ],
+          v_y[ 0 ],
+          v_z[ 0 ],
           material_z,
           amu,
           net_charge,
@@ -437,6 +443,25 @@ TEST_CASE( "Complex Boris Motion" )
       std::vector< double > pos_y_test( n_timesteps );
       std::vector< double > pos_z_test( n_timesteps );
 
+      /* open some files for output */
+      std::ofstream vx_boris_file( "boris_gitr_vx.csv" );
+      std::ofstream vy_boris_file( "boris_gitr_vy.csv" );
+      std::ofstream vz_boris_file( "boris_gitr_vz.csv" );
+      std::ofstream x_boris_file( "boris_gitr_x.csv" );
+      std::ofstream y_boris_file( "boris_gitr_y.csv" );
+      std::ofstream z_boris_file( "boris_gitr_z.csv" );
+
+      std::ofstream vx_analytic_file( "analytic_gitr_vx.csv" );
+      std::ofstream vy_analytic_file( "analytic_gitr_vy.csv" );
+      std::ofstream vz_analytic_file( "analytic_gitr_vz.csv" );
+      std::ofstream x_analytic_file( "analytic_gitr_x.csv" );
+      std::ofstream y_analytic_file( "analytic_gitr_y.csv" );
+      std::ofstream z_analytic_file( "analytic_gitr_z.csv" );
+
+      std::ofstream boris_t_file( "boris_gitr_t_values.csv" );
+      std::ofstream analytic_t_file( "analytic_gitr_t_values.csv" );
+
+
       for (int i = 0; i < n_timesteps; i++)
       {
         /* save particle velocity/position */
@@ -448,13 +473,28 @@ TEST_CASE( "Complex Boris Motion" )
         pos_y_test[ i ] = particleArray->y[ 0 ];
         pos_z_test[ i ] = particleArray->z[ 0 ];
 
-        std::cout << "timestep " << i << std::endl;
-        std::cout << "Ahoy, Captain! v_x" << v_x_test[ i ] << std::endl;
-        std::cout << "Ahoy, Captain! v_y" << v_y_test[ i ] << std::endl;
-        std::cout << "Ahoy, Captain! v_z" << v_z_test[ i ] << std::endl;
-        std::cout << "Ahoy, Captain! pos_x" << pos_x_test[ i ] << std::endl;
-        std::cout << "Ahoy, Captain! pos_y" << pos_y_test[ i ] << std::endl;
-        std::cout << "Ahoy, Captain! pos_z" << pos_z_test[ i ] << std::endl;
+        boris_t_file << i * dt << std::endl;
+        analytic_t_file << i * dt << std::endl;
+        vx_boris_file << v_x_test[ i ] << std::endl;
+        vy_boris_file << v_y_test[ i ] << std::endl;
+        vz_boris_file << v_z_test[ i ] << std::endl;
+        x_boris_file << pos_x_test[ i ] << std::endl;
+        y_boris_file << pos_y_test[ i ] << std::endl;
+        z_boris_file << pos_z_test[ i ] << std::endl;
+
+        vx_analytic_file << v_x[ i ] << std::endl;
+        vy_analytic_file << v_y[ i ] << std::endl;
+        vz_analytic_file << v_z[ i ] << std::endl;
+        x_analytic_file << pos_x[ i ] << std::endl;
+        y_analytic_file << pos_y[ i ] << std::endl;
+        z_analytic_file << pos_z[ i ] << std::endl;
+
+        std::cout << "v_x_boris " << v_x_test[ i ]  << " v_x_analytical: " << v_x[ i ] << std::endl;
+        std::cout << "v_y_boris " << v_y_test[ i ] << " v_y_analytical: " << v_y[ i ] << std::endl;
+        std::cout << "v_z_boris " << v_z_test[ i ] << " v_z_analytical: " << v_z[ i ] << std::endl;
+        std::cout << "pos_x_boris " << pos_x_test[ i ] << " pos_x_analytical: " << pos_x[ i ] << std::endl;
+        std::cout << "pos_y_boris " << pos_y_test[ i ] << " pos_y_analytical: " << pos_y[ i ] << std::endl;
+        std::cout << "pos_z_boris " << pos_z_test[ i ] << " pos_z_analytical: " << pos_z[ i ] << std::endl;
 
         /* update particle velocity/position */
         thrust::for_each( thrust::device,
@@ -469,6 +509,21 @@ TEST_CASE( "Complex Boris Motion" )
         particleArray->zprevious[ 0 ] = particleArray->z[0];
 
       }
+
+      vx_boris_file.close();
+      vy_boris_file.close();
+      vz_boris_file.close();
+      x_boris_file.close();
+      y_boris_file.close();
+      z_boris_file.close();
+      boris_t_file.close();
+      analytic_t_file.close();
+      vx_analytic_file.close();
+      vy_analytic_file.close();
+      vz_analytic_file.close();
+      x_analytic_file.close();
+      y_analytic_file.close();
+      z_analytic_file.close();
 
 
     std::cout << "boris calculated results:" << std::endl;

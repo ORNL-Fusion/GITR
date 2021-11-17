@@ -118,20 +118,3 @@ TEST_CASE( "rmse comparer tests" )
     REQUIRE( rmse_based_comparison( v0, v1, tolerance ) != true );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
