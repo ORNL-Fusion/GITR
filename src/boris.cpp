@@ -911,12 +911,14 @@ void move_boris::operator()(std::size_t indx)
 
     /* Captain! test code */
     /*Print out q_prime and the other units here to see divergence */
+    /*
     std::cout << "dt: " << dt
               << " q_prime: " << q_prime
               << " coeff: " << coeff
               << " E: " << E[0] << " " << E[1] << " " << E[2]
               << " B: " << B[0] << " " << B[1] << " " << B[2]
               << std::endl;
+    */
     /* end test code */
 
         //vectorScalarMult(q_prime,E,qpE);
