@@ -1,7 +1,7 @@
 #include "slow_math.h"
 
 /* calculate root squared error of vectors */
-double root_squared_error( std::vector< double > const &v0, 
+double root_mean_squared_error( std::vector< double > const &v0, 
                            std::vector< double > const &v1 )
 {
   assert( v0.size() == v1.size() );
@@ -14,7 +14,7 @@ double root_squared_error( std::vector< double > const &v0,
     squared_sum += diff * diff; 
   }
 
-  return std::sqrt( squared_sum );
+  return std::sqrt( squared_sum / v0.size() );
 }
 
 /* this function compares vectors for approximate equality */
@@ -33,9 +33,13 @@ bool rmse_based_comparison( std::vector< double > const &v0,
 
   double normalizing_scale_factor = std::max( 1.0, max_element );
 
-  double normed_rse = root_squared_error( v0, v1 ) / normalizing_scale_factor;
+  double normed_rse = root_mean_squared_error( v0, v1 ) / normalizing_scale_factor;
 
   double scaled_tolerance = tolerance * std::sqrt( v0.size() );
+
+  std::cout << "normed_rse: " << normed_rse
+            << " scaled_tolerance: " << scaled_tolerance
+            << std::endl;
 
   return normed_rse < scaled_tolerance;
 }

@@ -10,6 +10,7 @@
 #include "Surfaces.h"
 #include "geometryCheck.h"
 #include "slow_math.h"
+#include "constants.h"
 #include <fstream>
 
 /* today: boris test, wein filter test, fix catch stuff, slow math implementations */
@@ -23,22 +24,20 @@ TEST_CASE( "Complex Boris Motion" )
   /* Testing complex boris motion implemented in the linked script */
   SECTION( "t0" )
   {
-    //double const pi = 3.14159265358979323846;
-    double mass_proton = 1.6605e-27;
-    double mass_electron = 9.109383701528e-31;
-    double charge_electron = 1.602176634e-19;
+    /* amu and error in the "y" dimension appear to be inversely correlated */
+    int ion_charge = 4.0;
 
     /* assume tungsten impurities, +4 ion */
     double amu = 184;
-    double mass = amu * mass_proton;
-    double charge = 4 * charge_electron;
+    double mass = amu * gitr_constants::dalton;
+    double charge = ion_charge * gitr_constants::electron_volt;
 
     /* generate a magnetic field (b-field) */
     /* units: teslas */
     double b_field_magnitude = 1;
 
     /* bfield angle 20 degrees in radians */
-    double b_field_angle = 20.0 * pi / 180.0;
+    double b_field_angle = 20.0 * gitr_constants::pi / 180.0;
 
     /* instantiate a b-field at the incident angle in the xz plane */
     /* units: teslas */
@@ -49,7 +48,7 @@ TEST_CASE( "Complex Boris Motion" )
     double b_field_z = -1 * std::sin( b_field_angle ) * b_field_magnitude;
 
     /* rotate coordinates around the y-axis such that z-direction is aligned with the bfield */
-    double rotation_angle = pi / 2 - b_field_angle;
+    double rotation_angle = gitr_constants::pi / 2 - b_field_angle;
 
     std::vector< double > const spatial_transform =
     generate_3d_rotation_matrix( rotation_angle );
@@ -183,12 +182,6 @@ TEST_CASE( "Complex Boris Motion" )
       /* z position is zero in rotated coordinate system, can be left implicit */
     }
 
-    /* spot check */
-    std::cout << "Ahoy, Captain! v_rotated_x[ 500000 ] " << v_rotated_x[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! v_rotated_y[ 500000 ] " << v_rotated_y[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! pos_rotated_x[ 500000 ] " << pos_rotated_x[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! pos_rotated_y[ 500000 ] " << pos_rotated_y[ 500000 ] << std::endl;
-    
     /* rotate both position and velocity back into the original space */
     std::vector< double > v_x( n_timesteps );
     std::vector< double > v_y( n_timesteps );
@@ -220,14 +213,6 @@ TEST_CASE( "Complex Boris Motion" )
       pos_z[ i ] = pos_i_xyz[ 2 ];
     }
 
-    /* spot check */
-    std::cout << "Ahoy, Captain! v_x[ 500000 ] " << v_x[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! v_y[ 500000 ] " << v_y[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! v_z[ 500000 ] " << v_z[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! pos_x[ 500000 ] " << pos_x[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! pos_y[ 500000 ] " << pos_y[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! pos_z[ 500000 ] " << pos_z[ 500000 ] << std::endl;
-
     /* add electrostatic force on the particle by projecting the e-field onto the b-field and 
        adding the parallel electric force - the perpendicular force was already handled in
        rotated space. This portion is handled in the original space */
@@ -251,298 +236,280 @@ TEST_CASE( "Complex Boris Motion" )
       pos_z[ i ] += v_parallel * b_field_z / b_field_magnitude * t / 2;
     }
 
-    /* spot check again */
-    std::cout << "After factoring in parallel electrostatic force:" << std::endl;
-    std::cout << "Ahoy, Captain! v_x[ 500000 ] " << v_x[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! v_y[ 500000 ] " << v_y[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! v_z[ 500000 ] " << v_z[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! pos_x[ 500000 ] " << pos_x[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! pos_y[ 500000 ] " << pos_y[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! pos_z[ 500000 ] " << pos_z[ 500000 ] << std::endl;
-
-    /* finished with analytical solution! write to file */
-
     /* next, run the GITR boris pusher and get vectors to compare against */
     /* Captain! Create a scope just to hold the code you're adapting */
-      /* parameters */
-      int particle_array_index = 0;
+    /* parameters */
+    int particle_array_index = 0;
 
-      int initial_x = 0;
-      int initial_y = 0;
-      int initial_z = 0;
+    int initial_x = 0;
+    int initial_y = 0;
+    int initial_z = 0;
 
-      /* not sure what the role of this variable is in this context... */
-      int material_z = 0;
+    /* not sure what the role of this variable is in this context... */
+    int material_z = 0;
 
-      /* amu and error in the "y" dimension appear to be inversely correlated */
-      int net_charge = 4.0;
+    int deprecated_constructor_argument = 0;
 
-      int deprecated_constructor_argument = 0;
+    int num_particles = 1;
 
-      int num_particles = 1;
+    /* configuration flags */
+    libconfig::Config cfg_geom;
 
-      /* configuration flags */
-      libconfig::Config cfg_geom;
+    cfg_geom.setAutoConvert(true);
 
-      cfg_geom.setAutoConvert(true);
+    importLibConfig(cfg_geom, BORIS_TEST_FILE);
 
-      importLibConfig(cfg_geom, BORIS_TEST_FILE);
+    auto gitr_flags = new Flags( cfg_geom );
 
-      auto gitr_flags = new Flags( cfg_geom );
+    /* create a particle */
+    auto particleArray =
+      new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
 
-      /* create a particle */
-      auto particleArray =
-        new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
+    thrust::counting_iterator<std::size_t> particle_iterator_start(0);
 
-      thrust::counting_iterator<std::size_t> particle_iterator_start(0);
+    thrust::counting_iterator<std::size_t> particle_iterator_end(1);
 
-      thrust::counting_iterator<std::size_t> particle_iterator_end(1);
+    particleArray->setParticleV( particle_array_index, 
+        initial_x,
+        initial_y,
+        initial_z,
+        v_x[ 0 ],
+        v_y[ 0 ],
+        v_z[ 0 ],
+        material_z,
+        amu,
+        ion_charge,
+        dt );
 
-      particleArray->setParticleV( particle_array_index, 
-          initial_x,
-          initial_y,
-          initial_z,
-          v_x[ 0 ],
-          v_y[ 0 ],
-          v_z[ 0 ],
-          material_z,
-          amu,
-          net_charge,
-          dt );
+    /* dummy variables start */
 
-      /* dummy variables start */
+    /* hashing dummies */
+    int nHashes = 1;
+    sim::Array<int> nR_closeGeom(nHashes, 0);
+    sim::Array<int> nY_closeGeom(nHashes, 0);
+    sim::Array<int> nZ_closeGeom(nHashes, 0);
+    sim::Array<int> nHashPoints(nHashes, 0);
+    sim::Array<int> n_closeGeomElements(nHashes, 0);
+    int nEdist = 1;
+    gitr_precision E0dist = 0.0;
+    gitr_precision Edist = 0.0;
+    int nAdist = 1;
+    gitr_precision A0dist = 0.0;
+    gitr_precision Adist = 0.0;
+    sim::Array<gitr_precision> closeGeomGridr(1);
+    sim::Array<gitr_precision> closeGeomGridy(1);
+    sim::Array<gitr_precision> closeGeomGridz(1);
+    sim::Array<int> closeGeom(1, 0);
 
-      /* hashing dummies */
-      int nHashes = 1;
-      sim::Array<int> nR_closeGeom(nHashes, 0);
-      sim::Array<int> nY_closeGeom(nHashes, 0);
-      sim::Array<int> nZ_closeGeom(nHashes, 0);
-      sim::Array<int> nHashPoints(nHashes, 0);
-      sim::Array<int> n_closeGeomElements(nHashes, 0);
-      int nEdist = 1;
-      gitr_precision E0dist = 0.0;
-      gitr_precision Edist = 0.0;
-      int nAdist = 1;
-      gitr_precision A0dist = 0.0;
-      gitr_precision Adist = 0.0;
-      sim::Array<gitr_precision> closeGeomGridr(1);
-      sim::Array<gitr_precision> closeGeomGridy(1);
-      sim::Array<gitr_precision> closeGeomGridz(1);
-      sim::Array<int> closeGeom(1, 0);
-
-      /* boundary dummies */
-      int nLines = 0;
-      sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
+    /* boundary dummies */
+    int nLines = 0;
+    sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
 
-      int n_closeGeomElements_sheath = 1;
+    int n_closeGeomElements_sheath = 1;
 
-      int nR_closeGeom_sheath = 1;
+    int nR_closeGeom_sheath = 1;
 
-      sim::Array<gitr_precision> closeGeomGridr_sheath(nR_closeGeom_sheath);
+    sim::Array<gitr_precision> closeGeomGridr_sheath(nR_closeGeom_sheath);
 
-      int nY_closeGeom_sheath = 1;
+    int nY_closeGeom_sheath = 1;
 
-      sim::Array<gitr_precision> closeGeomGridy_sheath(nY_closeGeom_sheath);
+    sim::Array<gitr_precision> closeGeomGridy_sheath(nY_closeGeom_sheath);
 
-      int nZ_closeGeom_sheath = 1;
+    int nZ_closeGeom_sheath = 1;
 
-      sim::Array<gitr_precision> closeGeomGridz_sheath(nZ_closeGeom_sheath);
+    sim::Array<gitr_precision> closeGeomGridz_sheath(nZ_closeGeom_sheath);
 
-      int nGeomHash_sheath = 1;
+    int nGeomHash_sheath = 1;
 
-      sim::Array<int>            closeGeom_sheath(nGeomHash_sheath);
+    sim::Array<int>            closeGeom_sheath(nGeomHash_sheath);
 
-      /* presheath efield is in the bulk plasma and sheath efield is at the surface of the wall */
+    /* presheath efield is in the bulk plasma and sheath efield is at the surface of the wall */
 
-      int nR_PreSheathEfield = 1;
-      int nY_PreSheathEfield = 1;
-      int nZ_PreSheathEfield = 1;
-      int nPSEs = nR_PreSheathEfield * nY_PreSheathEfield * nZ_PreSheathEfield;
+    int nR_PreSheathEfield = 1;
+    int nY_PreSheathEfield = 1;
+    int nZ_PreSheathEfield = 1;
+    int nPSEs = nR_PreSheathEfield * nY_PreSheathEfield * nZ_PreSheathEfield;
 
-      int nR_Bfield = 1;
-      int nZ_Bfield = 1;
-      int n_Bfield = 1;
-
-
-      /* electric field array declarations */
-
-      /* domain grid */
-      sim::Array<gitr_precision> preSheathEGridr(nR_PreSheathEfield);
-      sim::Array<gitr_precision> preSheathEGridy(nY_PreSheathEfield);
-      sim::Array<gitr_precision> preSheathEGridz(nZ_PreSheathEfield);
-
-      /* values */
-      sim::Array<gitr_precision> PSEr(nPSEs); 
-      sim::Array<gitr_precision> PSEz(nPSEs); 
-      sim::Array<gitr_precision> PSEt(nPSEs);
-
-      /* magnetic field array declarations */
-
-      /* domain grid */
-      sim::Array<gitr_precision> bfieldGridr(nR_Bfield);
-      sim::Array<gitr_precision> bfieldGridz(nZ_Bfield);
-
-      /* values */
-      sim::Array<gitr_precision> br(n_Bfield); 
-      sim::Array<gitr_precision> by(n_Bfield);
-      sim::Array<gitr_precision> bz(n_Bfield);
-
-      /* dummy variables end */
-
-      /* uniform bfield */
-      br[ 0 ] = b_field_x;
-      by[ 0 ] = b_field_y;
-      bz[ 0 ] = b_field_z;
-
-      /* uniform efield */
-      /* r is x */
-      /* y is t */
-      PSEr[ 0 ] = e_field_x;
-      PSEz[ 0 ] = e_field_z;
-      PSEt[ 0 ] = e_field_y;
+    int nR_Bfield = 1;
+    int nZ_Bfield = 1;
+    int n_Bfield = 1;
 
 
-      /* create boris operator */
-      move_boris boris( particleArray,
-          dt,
-          boundaries.data(),
-          nLines,
-          nR_Bfield,
-          nZ_Bfield,
-          bfieldGridr.data(),
-          bfieldGridz.data(),
-          br.data(),
-          bz.data(),
-          by.data(),
-          nR_PreSheathEfield,
-          nY_PreSheathEfield,
-          nZ_PreSheathEfield,
-          &preSheathEGridr.front(),
-          &preSheathEGridy.front(),
-          &preSheathEGridz.front(),
-          &PSEr.front(),
-          &PSEz.front(),
-          &PSEt.front(),
-          nR_closeGeom_sheath,
-          nY_closeGeom_sheath,
-          nZ_closeGeom_sheath,
-          n_closeGeomElements_sheath,
-          closeGeomGridr_sheath.data(),
-          &closeGeomGridy_sheath.front(),
-          &closeGeomGridz_sheath.front(),
-          &closeGeom_sheath.front(),
-          gitr_flags );
+    /* electric field array declarations */
 
-      /* time loop */
-      std::vector< double > v_x_test( n_timesteps );
-      std::vector< double > v_y_test( n_timesteps );
-      std::vector< double > v_z_test( n_timesteps );
+    /* domain grid */
+    sim::Array<gitr_precision> preSheathEGridr(nR_PreSheathEfield);
+    sim::Array<gitr_precision> preSheathEGridy(nY_PreSheathEfield);
+    sim::Array<gitr_precision> preSheathEGridz(nZ_PreSheathEfield);
 
-      std::vector< double > pos_x_test( n_timesteps );
-      std::vector< double > pos_y_test( n_timesteps );
-      std::vector< double > pos_z_test( n_timesteps );
+    /* values */
+    sim::Array<gitr_precision> PSEr(nPSEs); 
+    sim::Array<gitr_precision> PSEz(nPSEs); 
+    sim::Array<gitr_precision> PSEt(nPSEs);
 
-      /* open some files for output */
-      std::ofstream vx_boris_file( "boris_gitr_vx.csv" );
-      std::ofstream vy_boris_file( "boris_gitr_vy.csv" );
-      std::ofstream vz_boris_file( "boris_gitr_vz.csv" );
-      std::ofstream x_boris_file( "boris_gitr_x.csv" );
-      std::ofstream y_boris_file( "boris_gitr_y.csv" );
-      std::ofstream z_boris_file( "boris_gitr_z.csv" );
+    /* magnetic field array declarations */
 
-      std::ofstream vx_analytic_file( "analytic_gitr_vx.csv" );
-      std::ofstream vy_analytic_file( "analytic_gitr_vy.csv" );
-      std::ofstream vz_analytic_file( "analytic_gitr_vz.csv" );
-      std::ofstream x_analytic_file( "analytic_gitr_x.csv" );
-      std::ofstream y_analytic_file( "analytic_gitr_y.csv" );
-      std::ofstream z_analytic_file( "analytic_gitr_z.csv" );
+    /* domain grid */
+    sim::Array<gitr_precision> bfieldGridr(nR_Bfield);
+    sim::Array<gitr_precision> bfieldGridz(nZ_Bfield);
 
-      std::ofstream boris_t_file( "boris_gitr_t_values.csv" );
-      std::ofstream analytic_t_file( "analytic_gitr_t_values.csv" );
+    /* values */
+    sim::Array<gitr_precision> br(n_Bfield); 
+    sim::Array<gitr_precision> by(n_Bfield);
+    sim::Array<gitr_precision> bz(n_Bfield);
+
+    /* dummy variables end */
+
+    /* uniform bfield */
+    br[ 0 ] = b_field_x;
+    by[ 0 ] = b_field_y;
+    bz[ 0 ] = b_field_z;
+
+    /* uniform efield */
+    /* r is x */
+    /* y is t */
+    PSEr[ 0 ] = e_field_x;
+    PSEz[ 0 ] = e_field_z;
+    PSEt[ 0 ] = e_field_y;
 
 
-      for (int i = 0; i < n_timesteps; i++)
-      {
-        /* save particle velocity/position */
-        v_x_test[ i ] = particleArray->vx[ 0 ];
-        v_y_test[ i ] = particleArray->vy[ 0 ];
-        v_z_test[ i ] = particleArray->vz[ 0 ];
+    /* create boris operator */
+    move_boris boris( particleArray,
+        dt,
+        boundaries.data(),
+        nLines,
+        nR_Bfield,
+        nZ_Bfield,
+        bfieldGridr.data(),
+        bfieldGridz.data(),
+        br.data(),
+        bz.data(),
+        by.data(),
+        nR_PreSheathEfield,
+        nY_PreSheathEfield,
+        nZ_PreSheathEfield,
+        &preSheathEGridr.front(),
+        &preSheathEGridy.front(),
+        &preSheathEGridz.front(),
+        &PSEr.front(),
+        &PSEz.front(),
+        &PSEt.front(),
+        nR_closeGeom_sheath,
+        nY_closeGeom_sheath,
+        nZ_closeGeom_sheath,
+        n_closeGeomElements_sheath,
+        closeGeomGridr_sheath.data(),
+        &closeGeomGridy_sheath.front(),
+        &closeGeomGridz_sheath.front(),
+        &closeGeom_sheath.front(),
+        gitr_flags );
 
-        pos_x_test[ i ] = particleArray->x[ 0 ];
-        pos_y_test[ i ] = particleArray->y[ 0 ];
-        pos_z_test[ i ] = particleArray->z[ 0 ];
+    /* time loop */
+    std::vector< double > v_x_test( n_timesteps );
+    std::vector< double > v_y_test( n_timesteps );
+    std::vector< double > v_z_test( n_timesteps );
 
-        boris_t_file << i * dt << std::endl;
-        analytic_t_file << i * dt << std::endl;
-        vx_boris_file << v_x_test[ i ] << std::endl;
-        vy_boris_file << v_y_test[ i ] << std::endl;
-        vz_boris_file << v_z_test[ i ] << std::endl;
-        x_boris_file << pos_x_test[ i ] << std::endl;
-        y_boris_file << pos_y_test[ i ] << std::endl;
-        z_boris_file << pos_z_test[ i ] << std::endl;
+    std::vector< double > pos_x_test( n_timesteps );
+    std::vector< double > pos_y_test( n_timesteps );
+    std::vector< double > pos_z_test( n_timesteps );
 
-        vx_analytic_file << v_x[ i ] << std::endl;
-        vy_analytic_file << v_y[ i ] << std::endl;
-        vz_analytic_file << v_z[ i ] << std::endl;
-        x_analytic_file << pos_x[ i ] << std::endl;
-        y_analytic_file << pos_y[ i ] << std::endl;
-        z_analytic_file << pos_z[ i ] << std::endl;
+    /* open some files for output */
+    std::ofstream vx_boris_file( "boris_gitr_vx.csv" );
+    std::ofstream vy_boris_file( "boris_gitr_vy.csv" );
+    std::ofstream vz_boris_file( "boris_gitr_vz.csv" );
+    std::ofstream x_boris_file( "boris_gitr_x.csv" );
+    std::ofstream y_boris_file( "boris_gitr_y.csv" );
+    std::ofstream z_boris_file( "boris_gitr_z.csv" );
 
-        std::cout << "v_x_boris " << v_x_test[ i ]  << " v_x_analytical: " << v_x[ i ] << std::endl;
-        std::cout << "v_y_boris " << v_y_test[ i ] << " v_y_analytical: " << v_y[ i ] << std::endl;
-        std::cout << "v_z_boris " << v_z_test[ i ] << " v_z_analytical: " << v_z[ i ] << std::endl;
-        std::cout << "pos_x_boris " << pos_x_test[ i ] << " pos_x_analytical: " << pos_x[ i ] << std::endl;
-        std::cout << "pos_y_boris " << pos_y_test[ i ] << " pos_y_analytical: " << pos_y[ i ] << std::endl;
-        std::cout << "pos_z_boris " << pos_z_test[ i ] << " pos_z_analytical: " << pos_z[ i ] << std::endl;
+    std::ofstream vx_analytic_file( "analytic_gitr_vx.csv" );
+    std::ofstream vy_analytic_file( "analytic_gitr_vy.csv" );
+    std::ofstream vz_analytic_file( "analytic_gitr_vz.csv" );
+    std::ofstream x_analytic_file( "analytic_gitr_x.csv" );
+    std::ofstream y_analytic_file( "analytic_gitr_y.csv" );
+    std::ofstream z_analytic_file( "analytic_gitr_z.csv" );
 
-        /* update particle velocity/position */
-        thrust::for_each( thrust::device,
-            particle_iterator_start,
-            particle_iterator_end,
-            boris );
-
-
-        /* manually advance the particle */
-        particleArray->xprevious[ 0 ] = particleArray->x[0];
-        particleArray->yprevious[ 0 ] = particleArray->y[0];
-        particleArray->zprevious[ 0 ] = particleArray->z[0];
-
-      }
-
-      vx_boris_file.close();
-      vy_boris_file.close();
-      vz_boris_file.close();
-      x_boris_file.close();
-      y_boris_file.close();
-      z_boris_file.close();
-      boris_t_file.close();
-      analytic_t_file.close();
-      vx_analytic_file.close();
-      vy_analytic_file.close();
-      vz_analytic_file.close();
-      x_analytic_file.close();
-      y_analytic_file.close();
-      z_analytic_file.close();
+    std::ofstream boris_t_file( "boris_gitr_t_values.csv" );
+    std::ofstream analytic_t_file( "analytic_gitr_t_values.csv" );
 
 
-    std::cout << "boris calculated results:" << std::endl;
-    std::cout << "Ahoy, Captain! v_x[ 500000 ] " << v_x_test[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! v_y[ 500000 ] " << v_y_test[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! v_z[ 500000 ] " << v_z_test[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! pos_x[ 500000 ] " << pos_x_test[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! pos_y[ 500000 ] " << pos_y_test[ 500000 ] << std::endl;
-    std::cout << "Ahoy, Captain! pos_z[ 500000 ] " << pos_z_test[ 500000 ] << std::endl;
+    for (int i = 0; i < n_timesteps; i++)
+    {
+      /* save particle velocity/position */
+      v_x_test[ i ] = particleArray->vx[ 0 ];
+      v_y_test[ i ] = particleArray->vy[ 0 ];
+      v_z_test[ i ] = particleArray->vz[ 0 ];
+
+      pos_x_test[ i ] = particleArray->x[ 0 ];
+      pos_y_test[ i ] = particleArray->y[ 0 ];
+      pos_z_test[ i ] = particleArray->z[ 0 ];
+
+      boris_t_file << i * dt << std::endl;
+      analytic_t_file << i * dt << std::endl;
+      vx_boris_file << v_x_test[ i ] << std::endl;
+      vy_boris_file << v_y_test[ i ] << std::endl;
+      vz_boris_file << v_z_test[ i ] << std::endl;
+      x_boris_file << pos_x_test[ i ] << std::endl;
+      y_boris_file << pos_y_test[ i ] << std::endl;
+      z_boris_file << pos_z_test[ i ] << std::endl;
+
+      vx_analytic_file << v_x[ i ] << std::endl;
+      vy_analytic_file << v_y[ i ] << std::endl;
+      vz_analytic_file << v_z[ i ] << std::endl;
+      x_analytic_file << pos_x[ i ] << std::endl;
+      y_analytic_file << pos_y[ i ] << std::endl;
+      z_analytic_file << pos_z[ i ] << std::endl;
+
+      /* update particle velocity/position */
+      thrust::for_each( thrust::device,
+          particle_iterator_start,
+          particle_iterator_end,
+          boris );
+
+
+      /* manually advance the particle */
+      particleArray->xprevious[ 0 ] = particleArray->x[0];
+      particleArray->yprevious[ 0 ] = particleArray->y[0];
+      particleArray->zprevious[ 0 ] = particleArray->z[0];
+
+    }
+
+    vx_boris_file.close();
+    vy_boris_file.close();
+    vz_boris_file.close();
+    x_boris_file.close();
+    y_boris_file.close();
+    z_boris_file.close();
+    boris_t_file.close();
+    analytic_t_file.close();
+    vx_analytic_file.close();
+    vy_analytic_file.close();
+    vz_analytic_file.close();
+    x_analytic_file.close();
+    y_analytic_file.close();
+    z_analytic_file.close();
+
+
+    /* Captain! Print out root mean squared error */
+    std::cout << "v_x: " << root_mean_squared_error( v_x, v_x_test ) << std::endl;
+    std::cout << "v_y: " << root_mean_squared_error( v_y, v_y_test ) << std::endl;
+    std::cout << "v_z: " << root_mean_squared_error( v_z, v_z_test ) << std::endl;
+
+    std::cout << "x: " << root_mean_squared_error( pos_x, pos_x_test ) << std::endl;
+    std::cout << "y: " << root_mean_squared_error( pos_y, pos_y_test ) << std::endl;
+    std::cout << "z: " << root_mean_squared_error( pos_z, pos_z_test ) << std::endl;
     /* rmse check the output vs analytical */
-    double tolerance = 1e-5;
-
-    REQUIRE( rmse_based_comparison( v_x, v_x_test, tolerance ) );
-    REQUIRE( rmse_based_comparison( v_y, v_y_test, tolerance ) );
-    REQUIRE( rmse_based_comparison( v_z, v_z_test, tolerance ) );
+    double tolerance = 1e-6;
 
     REQUIRE( rmse_based_comparison( pos_x, pos_x_test, tolerance ) );
     REQUIRE( rmse_based_comparison( pos_y, pos_y_test, tolerance ) );
     REQUIRE( rmse_based_comparison( pos_z, pos_z_test, tolerance ) );
+
+    REQUIRE( rmse_based_comparison( v_x, v_x_test, tolerance ) );
+
+    tolerance = 1e-5;
+    REQUIRE( rmse_based_comparison( v_y, v_y_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( v_z, v_z_test, tolerance ) );
   }
 
   /*

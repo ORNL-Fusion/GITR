@@ -1,4 +1,5 @@
 #include "boris.h"
+#include "constants.h"
 
 /* Are these preprocessor defines necessary? */
 #ifdef __CUDACC__
@@ -744,7 +745,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
       return minDistance;
 }
 
-/* Captain! */
 move_boris::move_boris(
 
   Particles *_particlesPointer,
@@ -847,12 +847,14 @@ void move_boris::operator()(std::size_t indx)
   vectorAssign(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],position0);
   vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v0);
             
+  /* line 32 of complex_boris_motion.py */
   gitr_precision dt = particlesPointer->dt[indx];
   gitr_precision vMag_dt = 0.0;
   gitr_precision vMag_half_dt = 0.0;
   gitr_precision half_dt = 0.5*dt;
   gitr_precision new_dt = 0.0;
   gitr_precision new_advance = false;
+  /* Captain! Skip this USESHEATHEFIELD block */
 #if USESHEATHEFIELD > 0
   minDist = getE(position[0], position[1], position[2],
 		  E,boundaryVector,nLines,nR_closeGeom_sheath,
@@ -880,7 +882,6 @@ void move_boris::operator()(std::size_t indx)
 
 #else
 */
-  /* Captain! */
   /* check PSE here, should be -1000 */
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
@@ -890,14 +891,34 @@ void move_boris::operator()(std::size_t indx)
               //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
 //#endif
 #endif              
+  /* Captain! Get the bfield here */
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer);        
   Bmag = vectorNorm(B);
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
-  q_prime = 9.572528104401468e7*particlesPointer->charge[indx]/(particlesPointer->amu[indx])*dt*0.5;
+
+  /* complex_boris_motion: q_prime appears to correspond to w1 and w2 (identically) */
+  //q_prime = 9.572528104401468e7*particlesPointer->charge[indx] / particlesPointer->amu[indx] * dt * 0.5;
+  /* Captain! original code above, test code below. q_prime = q * dt / ( 2 * m ) */
+  q_prime = particlesPointer->charge[ indx ] * gitr_constants::electron_volt * dt * 0.5 /
+            ( particlesPointer->amu[ indx ] * gitr_constants::dalton );
+
+    /* complex_boris_motion: coeff appears to correspond to w2 * w3 term on 2nd cross product */
     coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
+
     vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v);
+
+    /* Captain! test code */
+    /*Print out q_prime and the other units here to see divergence */
+    std::cout << "dt: " << dt
+              << " q_prime: " << q_prime
+              << " coeff: " << coeff
+              << " E: " << E[0] << " " << E[1] << " " << E[2]
+              << " B: " << B[0] << " " << B[1] << " " << B[2]
+              << std::endl;
+    /* end test code */
+
         //vectorScalarMult(q_prime,E,qpE);
     qpE[0] = q_prime*E[0];
     qpE[1] = q_prime*E[1];
@@ -941,7 +962,7 @@ void move_boris::operator()(std::size_t indx)
   ////printf("c_vpxBxyz %.16e %.16e %.16e \n",c_vpxB[0], c_vpxB[1], c_vpxB[2]);
   //}
 	       
-  /* Captain! */
+  /* Captain! skip this entire block */
   if(gitr_flags->USE_ADAPTIVE_DT)
   {
     vectorAssign(v[0],v[1],v[2],v_dt);
@@ -1015,7 +1036,6 @@ void move_boris::operator()(std::size_t indx)
      //v = v + q_prime*E
      vectorAdd(v,qpE,v);
      
-     /* Captain! Position updated here */
      position[0] = position[0] + v[0] * half_dt;
      position[1] = position[1] + v[1] * half_dt;
      position[2] = position[2] + v[2] * half_dt;
@@ -1076,8 +1096,6 @@ void move_boris::operator()(std::size_t indx)
   else
   {
     
-     /* Captain! This looks like the place that the particle position is actually getting
-        updated */
      if(particlesPointer->hitWall[indx] == 0.0)
       {
           particlesPointer->x[indx] = position[0] + v[0] * dt;
@@ -1091,6 +1109,7 @@ void move_boris::operator()(std::size_t indx)
 
 #endif
 
+/* Captain! Skip this ODEINT block - it's at the end of the file and marked */
 #if ODEINT == 1
         gitr_precision m = particlesPointer->amu[indx]*1.6737236e-27;
         gitr_precision q_m = particlesPointer->charge[indx]*1.60217662e-19/m;
@@ -1347,4 +1366,5 @@ for ( int s=0; s<nSteps; s++ )
 //std::cout << "Init Time: " << initTime <<std::endl;
             }
 #endif
+          /* Captain! This is the end of the ODEINT block I think */
 } 

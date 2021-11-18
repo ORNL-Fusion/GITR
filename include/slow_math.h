@@ -2,12 +2,10 @@
 #include <vector>
 #include <cassert>
 #include <algorithm>
-
-/* global variable */
-double constexpr pi = 3.14159265358979323846;
+#include <iostream>
 
 /* calculate raw rmse */
-double root_squared_error( std::vector< double > const &v0, 
+double root_mean_squared_error( std::vector< double > const &v0, 
            std::vector< double > const &v1 );
 
 /* rmse comparison function */

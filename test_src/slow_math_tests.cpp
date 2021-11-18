@@ -1,11 +1,12 @@
 #include "test_utils.hpp"
 #include "slow_math.h"
+#include "constants.h"
 
 TEST_CASE( "slow math tests" )
 {
   SECTION( "rotation_matrix" )
   {
-    double angle = pi / 3;
+    double angle = gitr_constants::pi / 3;
 
     std::vector< double > rotation_matrix = generate_3d_rotation_matrix( angle );
 
@@ -89,12 +90,12 @@ TEST_CASE( "rmse comparer tests" )
 
     for( int i = 0; i < v0.size(); i++ )
     {
-      v1[ i ] = v0[ i ] + 5;
+      v1[ i ] = v0[ i ] + 4;
     }
 
-    double error = root_squared_error( v0, v1 );
+    double error = root_mean_squared_error( v0, v1 );
 
-    REQUIRE( error == 10 );
+    REQUIRE( error == 4 );
   }
 
   SECTION( "rmse_based" )
@@ -106,7 +107,7 @@ TEST_CASE( "rmse comparer tests" )
     std::vector< double > v1( size );
 
     /* Captain! This should fail - does it need more testing? */
-    double tolerance = 1e-3;
+    double tolerance = 1e-4;
 
     double element_difference = 0.01;
 
