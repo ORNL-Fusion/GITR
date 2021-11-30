@@ -38,6 +38,16 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
    with the control flow */
 TEST_CASE( "cross-field diffusion operator - not fully implemented" )
 {
+  /*
+
+    Note: for this test to work, the project must be compiled with 
+
+    GITR_USE_PERP_DIFFUSION=1
+    USE_CYLSYMM=0
+
+    This technically will also pass with GITR_USE_PERP_DIFFUSION=2. Unsure which is correct.
+
+  */
   SECTION( "Ahoy, Captain!" )
   {
     /* timesteps */
@@ -71,7 +81,6 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
     USE3DTETGEOM=0
     USE_SURFACE_POTENTIAL=0
     PARTICLE_SOURCE_FILE=0
-    SPECTROSCOPY=2 ( for 2D, 1 is not an option )
     USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
     USE_ADAPTIVE_DT=0
     */
@@ -258,6 +267,15 @@ for (int i=0; i< nP; i++ )
     gitr_precision epsilon = 0.05;
     REQUIRE(rms_error<6.0e-4);
   }
+
+  /*
+
+    Note: for this test to work, the project must be compiled with 
+
+    GITR_USE_PERP_DIFFUSION=2
+    USE_CYLSYMM=1
+
+  */
   SECTION( "Crossfield diffusion curved field lines" )
   {
     /* timesteps */
@@ -269,7 +287,7 @@ for (int i=0; i< nP; i++ )
 
     cfg_geom.setAutoConvert(true);
 
-    importLibConfig(cfg_geom, "../test_data/cross_field_geometry2.cfg");
+    importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE_1 );
 
     auto gitr_flags = new Flags( cfg_geom );
 
@@ -291,7 +309,6 @@ for (int i=0; i< nP; i++ )
     USE3DTETGEOM=0
     USE_SURFACE_POTENTIAL=0
     PARTICLE_SOURCE_FILE=0
-    SPECTROSCOPY=2 ( for 2D, 1 is not an option )
     USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
     USE_ADAPTIVE_DT=0
     */

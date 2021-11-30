@@ -215,7 +215,7 @@ TEST_CASE( "boris - not fully implemented" )
 
     cfg_geom.setAutoConvert(true);
 
-    importLibConfig(cfg_geom, "../test_data/getE.cfg");
+    importLibConfig( cfg_geom, GET_E_TEST_FILE );
     int nLines = 1;
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
@@ -299,7 +299,7 @@ TEST_CASE( "boris - not fully implemented" )
       std::cout << "minDist " << minDistance << std::endl; 
       std::cout << "Efield " << thisE[0] << " " << thisE[1] << " " << thisE[2] << std::endl; 
 
-std::ifstream in("../test_data/Efield.txt");
+std::ifstream in( E_FIELD_TEST_FILE );
 
 std::string str;
 std::vector<gitr_precision> gold;

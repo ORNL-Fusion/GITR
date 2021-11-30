@@ -147,7 +147,9 @@ void operator()(std::size_t indx) const {
       //printf("step %f" ,step);
   //   printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
 #if USEPERPDIFFUSION > 1
-      gitr_precision plus_minus1 = floor(r4 + 0.5)*2 - 1;
+      /* Notice of code change: previously, this wass floor(r4 + 0.5)*2 - 1 */
+      /* r3 was replaced with variable r4 since r4 is not declared if CUDA is activated */
+      gitr_precision plus_minus1 = floor(r3 + 0.5)*2 - 1;
       gitr_precision h = 0.001;
       gitr_precision x_plus = x0+B_unit[0]*h;
       gitr_precision y_plus = y0+B_unit[1]*h;
