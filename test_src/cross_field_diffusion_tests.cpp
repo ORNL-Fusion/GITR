@@ -33,10 +33,7 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
   return true;
 }
 
-/* is there an option for analytic bfield? No. */
-/* Captain! This test does not work with CUDA support - something is wrong
-   with the control flow */
-TEST_CASE( "cross-field diffusion operator - not fully implemented" )
+TEST_CASE( "cross-field diffusion operator" )
 {
   /*
 
@@ -48,7 +45,7 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
     This technically will also pass with GITR_USE_PERP_DIFFUSION=2. Unsure which is correct.
 
   */
-  SECTION( "Ahoy, Captain!" )
+  SECTION( "cross-field diffusion, straight field lines" )
   {
     /* timesteps */
     int nT = 500000;
@@ -75,15 +72,6 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
     libconfig::Setting &impurity = cfg_geom.lookup( "impurityParticleSource" );
 
     int nP = impurity[ "nP" ];
-
-    /* Correct flags for this unit test */
-    /*
-    USE3DTETGEOM=0
-    USE_SURFACE_POTENTIAL=0
-    PARTICLE_SOURCE_FILE=0
-    USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
-    USE_ADAPTIVE_DT=0
-    */
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
@@ -276,7 +264,7 @@ for (int i=0; i< nP; i++ )
     USE_CYLSYMM=1
 
   */
-  SECTION( "Crossfield diffusion curved field lines" )
+  SECTION( "cross-field diffusion, curved field lines" )
   {
     /* timesteps */
     int nT = 200000;
