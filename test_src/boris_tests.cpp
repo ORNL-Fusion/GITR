@@ -13,12 +13,12 @@
 #include "constants.h"
 #include <fstream>
 
-/* today: boris test, wein filter test, fix catch stuff, slow math implementations */
-
-/* test implements prototype script: */
 /*
+   test implements prototype script found at:
+
    "https://github.com/ORNL-Fusion/GITR_prototyping/blob/main/boris_mini_uniform_inputs.py"
 */
+
 TEST_CASE( "Complex Boris Motion" )
 {
   /* Testing complex boris motion implemented in the linked script */
@@ -62,43 +62,17 @@ TEST_CASE( "Complex Boris Motion" )
                       3,
                       3 );
 
-    /* check here - seems correct */
-    std::cout << "Ahoy, Captain! bfield: "
-              << b_field_x << " " << b_field_y << " " << b_field_z << std::endl;
-
-    std::cout << "Ahoy, Captain! transformed bfield: " 
-              << rotated_b_field[ 0 ]
-              << " "
-              << rotated_b_field[ 1 ]
-              << " "
-              << rotated_b_field[ 2 ]
-              << std::endl;
-
-    /* Captain! Here */
     /* generate an electric field */
     /* units: V/m */
     double e_field_x = 5e2;
     double e_field_y = 1e3;
     double e_field_z = 1e3;
-    /*
-    double e_field_x = 0;
-    double e_field_y = 0;
-    double e_field_z = 0;
-    */
 
     std::vector< double > rotated_e_field =
     slow_dot_product( spatial_transform,
                       std::vector< double >{ e_field_x, e_field_y, e_field_z },
                       3,
                       3 );
-
-    std::cout << "Ahoy, Captain! transformed efield: " 
-              << rotated_e_field[ 0 ]
-              << " "
-              << rotated_e_field[ 1 ]
-              << " "
-              << rotated_e_field[ 2 ]
-              << std::endl;
 
     /* generate an initial velocity */
     double v_magnitude = 1e4;
@@ -122,14 +96,6 @@ TEST_CASE( "Complex Boris Motion" )
                     [ b_field_magnitude ]( double d ) -> double 
                     { return d / ( b_field_magnitude * b_field_magnitude ); } );
 
-    std::cout << "Ahoy, Captain! transformed v_e_rotated: " 
-              << v_e_rotated[ 0 ]
-              << " "
-              << v_e_rotated[ 1 ]
-              << " "
-              << v_e_rotated[ 2 ]
-              << std::endl;
-
     /* next, obtain the component of the rotated velocity orthogonal to the e and b plane: */
     double vsign = rotated_b_field.back() / b_field_magnitude;
 
@@ -139,26 +105,25 @@ TEST_CASE( "Complex Boris Motion" )
 
     double norm_v_perp = std::sqrt( slow_dot_product( v_perp, v_perp, 1, v_perp.size() )[ 0 ] );
 
-    std::cout << "Ahoy, Captain! norm_v_perp: " << norm_v_perp << std::endl;
-
     /* generate timing */
     double plasma_frequency = b_field_magnitude * charge / mass;
 
     double const dt = 1 / ( 1e2 * plasma_frequency );
-    int n_timesteps = std::ceil( 1e-4 / dt );
 
-    std::cout << "Ahoy, Captain! plasma_frequency: " << plasma_frequency << std::endl;
-    std::cout << "Ahoy, Captain! dt: " << dt << std::endl;
-    std::cout << "Ahoy, Captain! n_timesteps: " << n_timesteps << std::endl;
+    int n_timesteps = std::ceil( 1e-4 / dt );
 
     /* calculate v_rotated for x, y, and z at each timestep */
     std::vector< double > v_rotated_x( n_timesteps );
+
     std::vector< double > v_rotated_y( n_timesteps );
+
     /* z velocity is zero in rotated coordinate system */
 
     /* calculate position_rotated for x, y, and z at each timestep */
     std::vector< double > pos_rotated_x( n_timesteps );
+
     std::vector< double > pos_rotated_y( n_timesteps );
+
     /* z position is zero in rotated coordinate system */
 
     for( int i = 0; i < n_timesteps; i++ )
@@ -172,7 +137,6 @@ TEST_CASE( "Complex Boris Motion" )
 
       /* z velocity is zero in rotated coordinate system, can be left implicit */
 
-      /* Captain! Question for tomorrow: why is vsign not on the first one here? */
       pos_rotated_x[ i ] =
       norm_v_perp / plasma_frequency * std::sin( phase ) + v_e_rotated[ 0 ] * t;
 
@@ -237,8 +201,6 @@ TEST_CASE( "Complex Boris Motion" )
     }
 
     /* next, run the GITR boris pusher and get vectors to compare against */
-    /* Captain! Create a scope just to hold the code you're adapting */
-    /* parameters */
     int particle_array_index = 0;
 
     int initial_x = 0;
@@ -414,25 +376,6 @@ TEST_CASE( "Complex Boris Motion" )
     std::vector< double > pos_y_test( n_timesteps );
     std::vector< double > pos_z_test( n_timesteps );
 
-    /* open some files for output */
-    std::ofstream vx_boris_file( "boris_gitr_vx.csv" );
-    std::ofstream vy_boris_file( "boris_gitr_vy.csv" );
-    std::ofstream vz_boris_file( "boris_gitr_vz.csv" );
-    std::ofstream x_boris_file( "boris_gitr_x.csv" );
-    std::ofstream y_boris_file( "boris_gitr_y.csv" );
-    std::ofstream z_boris_file( "boris_gitr_z.csv" );
-
-    std::ofstream vx_analytic_file( "analytic_gitr_vx.csv" );
-    std::ofstream vy_analytic_file( "analytic_gitr_vy.csv" );
-    std::ofstream vz_analytic_file( "analytic_gitr_vz.csv" );
-    std::ofstream x_analytic_file( "analytic_gitr_x.csv" );
-    std::ofstream y_analytic_file( "analytic_gitr_y.csv" );
-    std::ofstream z_analytic_file( "analytic_gitr_z.csv" );
-
-    std::ofstream boris_t_file( "boris_gitr_t_values.csv" );
-    std::ofstream analytic_t_file( "analytic_gitr_t_values.csv" );
-
-
     for (int i = 0; i < n_timesteps; i++)
     {
       /* save particle velocity/position */
@@ -444,28 +387,11 @@ TEST_CASE( "Complex Boris Motion" )
       pos_y_test[ i ] = particleArray->y[ 0 ];
       pos_z_test[ i ] = particleArray->z[ 0 ];
 
-      boris_t_file << i * dt << std::endl;
-      analytic_t_file << i * dt << std::endl;
-      vx_boris_file << v_x_test[ i ] << std::endl;
-      vy_boris_file << v_y_test[ i ] << std::endl;
-      vz_boris_file << v_z_test[ i ] << std::endl;
-      x_boris_file << pos_x_test[ i ] << std::endl;
-      y_boris_file << pos_y_test[ i ] << std::endl;
-      z_boris_file << pos_z_test[ i ] << std::endl;
-
-      vx_analytic_file << v_x[ i ] << std::endl;
-      vy_analytic_file << v_y[ i ] << std::endl;
-      vz_analytic_file << v_z[ i ] << std::endl;
-      x_analytic_file << pos_x[ i ] << std::endl;
-      y_analytic_file << pos_y[ i ] << std::endl;
-      z_analytic_file << pos_z[ i ] << std::endl;
-
       /* update particle velocity/position */
       thrust::for_each( thrust::device,
           particle_iterator_start,
           particle_iterator_end,
           boris );
-
 
       /* manually advance the particle */
       particleArray->xprevious[ 0 ] = particleArray->x[0];
@@ -474,41 +400,21 @@ TEST_CASE( "Complex Boris Motion" )
 
     }
 
-    vx_boris_file.close();
-    vy_boris_file.close();
-    vz_boris_file.close();
-    x_boris_file.close();
-    y_boris_file.close();
-    z_boris_file.close();
-    boris_t_file.close();
-    analytic_t_file.close();
-    vx_analytic_file.close();
-    vy_analytic_file.close();
-    vz_analytic_file.close();
-    x_analytic_file.close();
-    y_analytic_file.close();
-    z_analytic_file.close();
-
-
-    /* Captain! Print out root mean squared error */
-    std::cout << "v_x: " << root_mean_squared_error( v_x, v_x_test ) << std::endl;
-    std::cout << "v_y: " << root_mean_squared_error( v_y, v_y_test ) << std::endl;
-    std::cout << "v_z: " << root_mean_squared_error( v_z, v_z_test ) << std::endl;
-
-    std::cout << "x: " << root_mean_squared_error( pos_x, pos_x_test ) << std::endl;
-    std::cout << "y: " << root_mean_squared_error( pos_y, pos_y_test ) << std::endl;
-    std::cout << "z: " << root_mean_squared_error( pos_z, pos_z_test ) << std::endl;
     /* rmse check the output vs analytical */
     double tolerance = 1e-6;
 
     REQUIRE( rmse_based_comparison( pos_x, pos_x_test, tolerance ) );
+
     REQUIRE( rmse_based_comparison( pos_y, pos_y_test, tolerance ) );
+
     REQUIRE( rmse_based_comparison( pos_z, pos_z_test, tolerance ) );
 
     REQUIRE( rmse_based_comparison( v_x, v_x_test, tolerance ) );
 
     tolerance = 1e-5;
+
     REQUIRE( rmse_based_comparison( v_y, v_y_test, tolerance ) );
+
     REQUIRE( rmse_based_comparison( v_z, v_z_test, tolerance ) );
   }
 
@@ -525,6 +431,8 @@ TEST_CASE( "Complex Boris Motion" )
 
     gitr_precision dt = 1.0e-2;
     gitr_precision vtotal = 1000;
+
+    /* total final displacement in y should be vtotal * nT * dt = 1000 * 10 * 1e-2 = 100 */
 
     int particle_array_index = 0;
 
@@ -699,12 +607,7 @@ TEST_CASE( "Complex Boris Motion" )
                       &closeGeom_sheath.front(),
                       gitr_flags );
 
-    /* get particle xyz before */
     /* time loop */
-    std::cout << "Before: " << particleArray->x[0] << " " << particleArray->z[0]
-              << " " << particleArray->y[0]
-              << std::endl;
-
     for (int tt = 0; tt < nT; tt++)
     {
 
@@ -721,14 +624,15 @@ TEST_CASE( "Complex Boris Motion" )
 
     }
 
-    std::cout << "After: " << particleArray->x[0] << " " << particleArray->z[0]
-              << " " << particleArray->y[0]
-              << std::endl;
-    /* get particle xyz after */
+    /* total final displacement in y should be vtotal * nT * dt = 1000 * 10 * 1e-2 = 100 */
+    std::vector< double > final_position{ particleArray->x[ 0 ],
+                                          particleArray->y[ 0 ],
+                                          particleArray->z[ 0 ] };
+    
+    std::vector< double > gold{ 0, 100, 0 };
 
-    /* what should it be analytically? */
+    double tolerance = 1e-9;
 
-    /* charge coulombs, e in V/m, b in Teslas */
-    /* q * e / b^2 */
+    REQUIRE( root_mean_squared_error( final_position, gold ) < tolerance );
   }
 }

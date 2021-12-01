@@ -18,7 +18,7 @@ target_link_libraries( boris thrust )
 if( OpenMP_CXX_FOUND )
 
   target_compile_options( surface_model PUBLIC ${OpenMP_CXX_FLAGS} )
-  # Captain! Is this needed? Do the compiler flags correctly handle everything? I bet they do
+
   target_link_libraries( surface_model PUBLIC OpenMP::OpenMP_CXX )
 
 endif()

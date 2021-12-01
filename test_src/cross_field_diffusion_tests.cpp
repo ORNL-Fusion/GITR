@@ -11,7 +11,7 @@
 /* is there an option for analytic bfield? No. */
 /* Captain! This test does not work with CUDA support - something is wrong
    with the control flow */
-TEST_CASE( "cross-field diffusion operator - not fully implemented" )
+TEST_CASE( "cross-field diffusion operator" )
 {
   SECTION( "Ahoy, Captain!" )
   {
