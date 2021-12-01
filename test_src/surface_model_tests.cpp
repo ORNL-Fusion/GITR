@@ -39,22 +39,19 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
   return true;
 }
 
-TEST_CASE( "boris - not fully implemented" )
+TEST_CASE( "surface model" )
 {
-  SECTION( "e cross b" )
+  SECTION( "surface model" )
   {
     /* timesteps */
     int nT = 1;
     
-    std::string inputFile = "surface_model.cfg";
-    std::string input_path = "../test_data/";
-
     /* create particles */
     libconfig::Config cfg;
 
     cfg.setAutoConvert(true);
 
-    importLibConfig(cfg, input_path+inputFile);
+    importLibConfig(cfg, SURFACE_MODEL_TEST_FILE );
 
     auto gitr_flags = new Flags( cfg );
 
@@ -215,6 +212,9 @@ TEST_CASE( "boris - not fully implemented" )
   int nDistE_surfaceModel = 1, nDistA_surfaceModel = 1;
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
+  /* Captain! To make this test work, you must put the filestring in test_data.
+     Currently, that needed file is nowhere to be found so you should disable this test for
+     now */
     getVariable(cfg, surfaceModelCfg + "fileString", surfaceModelFile);
     nE_sputtRefCoeff = getDimFromFile(cfg, input_path + surfaceModelFile,
                                       surfaceModelCfg, "nEsputtRefCoeffString");

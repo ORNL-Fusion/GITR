@@ -13,6 +13,9 @@ set( E_FIELD_TEST_FILE ${destination_path} )
 generate_testing_file( "test_data/getE.cfg" )
 set( GET_E_TEST_FILE  ${destination_path} )
 
+generate_testing_file( "test_data/surface_model.cfg" )
+set( SURFACE_MODEL_TEST_FILE ${destination_path} )
+
 generate_testing_file( "test_data/test_config.cfg" )
 set( CONFIG_INTERFACE_UNIT_TEST_FILE ${destination_path} )
 
