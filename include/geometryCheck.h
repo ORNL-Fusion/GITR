@@ -125,8 +125,8 @@ struct geometry_check {
       int AdistInd = 0;
       int EdistInd = 0;
 #endif
-      gitr_precision vxy[3] = {0.0f};
-      gitr_precision vtheta[3] = {0.0f};
+      gitr_precision vxy[3] = {0.0};
+      gitr_precision vtheta[3] = {0.0};
 #if USECYLSYMM > 0
       if (boundaryVector[nLines].periodic) // if periodic
       {
@@ -143,8 +143,8 @@ struct geometry_check {
                                particlesPointer->yprevious[indx]);
         gitr_precision r = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
                        particlesPointer->y[indx] * particlesPointer->y[indx]);
-        gitr_precision rHat[3] = {0.0f};
-        gitr_precision vr[3] = {0.0f};
+        gitr_precision rHat[3] = {0.0};
+        gitr_precision vr[3] = {0.0};
         rHat[0] = particlesPointer->x[indx];
         rHat[1] = particlesPointer->y[indx];
 
@@ -341,14 +341,14 @@ struct geometry_check {
       gitr_precision dr = closeGeomGridr[rHashInd + 1] - closeGeomGridr[rHashInd];
       gitr_precision dz = closeGeomGridz[zHashInd + 1] - closeGeomGridz[zHashInd];
       gitr_precision dy = closeGeomGridy[yHashInd + 1] - closeGeomGridy[yHashInd];
-      int rInd = std::floor((r_position - closeGeomGridr[rHashInd]) / dr + 0.5f);
+      int rInd = std::floor((r_position - closeGeomGridr[rHashInd]) / dr + 0.5);
       int zInd = std::floor(
           (particlesPointer->zprevious[indx] - closeGeomGridz[zHashInd]) / dz +
-          0.5f);
+          0.5);
       int i = 0;
       int yInd = std::floor(
           (particlesPointer->yprevious[indx] - closeGeomGridy[yHashInd]) / dy +
-          0.5f);
+          0.5);
       // std::cout << "rHashInd " << rHashInd << " " << yHashInd << " " <<
       // zHashInd << std::endl; std::cout << "dr dy dz " << dr << " " << dy << "
       // " << dz << std::endl; std::cout << "rind y z " << rInd << " " << yInd <<
@@ -382,7 +382,6 @@ struct geometry_check {
                       rInd * n_closeGeomElements[nHash] + j];
         // std::cout << "i's " << i << std::endl;
 #else
-      /* ... Ahoy! find 0. Iterate over all line segments... */
       for (int i = 0; i < nLines; i++) {
 #endif
         a = boundaryVector[i].a;
@@ -401,7 +400,8 @@ struct geometry_check {
         signPoint0 = std::copysign(1.0, pointToPlaneDistance0);
         signPoint1 = std::copysign(1.0, pointToPlaneDistance1);
 
-        if (signPoint0 != signPoint1) {
+        if (signPoint0 != signPoint1) 
+        {
           t = -(a * p0[0] + b * p0[1] + c * p0[2] + d) /
               (a * (p1[0] - p0[0]) + b * (p1[1] - p0[1]) + c * (p1[2] - p0[2]));
           vectorAssign(p0[0] + t * (p1[0] - p0[0]), p0[1] + t * (p1[1] - p0[1]),
@@ -497,9 +497,9 @@ struct geometry_check {
             // std::cout << "Energy of particle that hit surface " << E0 <<
             // std::endl;
 #if USE_CUDA > 0
-            // gitr_precision surfNormal[3] = {0.0f};
-            // gitr_precision partNormal[3] = {0.0f};
-            // gitr_precision partDotNormal = 0.0f;
+            // gitr_precision surfNormal[3] = {0.0};
+            // gitr_precision partNormal[3] = {0.0};
+            // gitr_precision partDotNormal = 0.0;
             // partNormal[0] = particlesPointer->vx[indx];
             // partNormal[1] = particlesPointer->vy[indx];
             // partNormal[2] = particlesPointer->vz[indx];
@@ -577,14 +577,14 @@ struct geometry_check {
       gitr_precision distances[2] = {};
       // distances = new gitr_precision[nPoints];
       int intersectionIndices[2] = {};
-      gitr_precision tol_small = 1e-12f;
-      gitr_precision tol = 1e12f;
+      gitr_precision tol_small = 1e-12;
+      gitr_precision tol = 1e12;
       int nIntersections = 0;
       gitr_precision signPoint;
       gitr_precision signPoint0;
       gitr_precision signLine1;
       gitr_precision signLine2;
-      gitr_precision minDist = 1e12f;
+      gitr_precision minDist = 1e12;
       int minDistInd = 0;
  //std::cout << "particle slope " << particle_slope << " " << particle_intercept
  //<< std::endl; std::cout << "r " << boundaryVector[0].x1 << " " <<
@@ -603,9 +603,9 @@ struct geometry_check {
 #endif
       gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
       gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
-      int rInd = std::floor((r_position - closeGeomGridr[0]) / dr + 0.5f);
+      int rInd = std::floor((r_position - closeGeomGridr[0]) / dr + 0.5);
       int zInd = std::floor(
-          (particlesPointer->zprevious[indx] - closeGeomGridz[0]) / dz + 0.5f);
+          (particlesPointer->zprevious[indx] - closeGeomGridz[0]) / dz + 0.5);
       if (rInd < 0 || rInd >= nR_closeGeom[0])
         rInd = 0;
       if (zInd < 0 || zInd >= nZ_closeGeom[0])
@@ -642,7 +642,7 @@ struct geometry_check {
 #endif
         // std::cout << "vert geom " << i << "  " <<
         // fabs(boundaryVector[i].slope_dzdx) << " " << tol << std::endl;
-        if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75f) 
+        if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75) 
         {
           signPoint = std::copysign(1.0, pdim1 - boundaryVector[i].x1);
           signPoint0 = std::copysign(1.0, pdim1previous - boundaryVector[i].x1);
@@ -665,12 +665,12 @@ struct geometry_check {
 
         if (signPoint != signPoint0) 
         {
-          if (std::abs(particle_slope) >= tol * 0.75f) 
+          if (std::abs(particle_slope) >= tol * 0.75) 
           {
             // std::cout << " isinf catch " << std::endl;
             particle_slope = tol;
           }
-          if (std::abs(particle_slope) >= tol * 0.75f) 
+          if (std::abs(particle_slope) >= tol * 0.75) 
           {
             signLine1 = std::copysign(1.0, boundaryVector[i].x1 - pdim1);
             signLine2 = std::copysign(1.0, boundaryVector[i].x2 - pdim1);
@@ -692,12 +692,12 @@ struct geometry_check {
 
           ////if (signPoint != signPoint0) 
           ////{
-          ////  if (std::abs(particle_slope) >= tol * 0.75f) 
+          ////  if (std::abs(particle_slope) >= tol * 0.75) 
           ////  {
           ////    // std::cout << " isinf catch " << std::endl;
           ////    particle_slope = tol;
           ////  }
-          ////  if (std::abs(particle_slope) >= tol * 0.75f) 
+          ////  if (std::abs(particle_slope) >= tol * 0.75) 
           ////  {
           ////    signLine1 = std::copysign(1.0, boundaryVector[i].x1 - pdim1);
           ////    signLine2 = std::copysign(1.0, boundaryVector[i].x2 - pdim1);
@@ -744,7 +744,7 @@ struct geometry_check {
                 // lines[i*nParam+4] << "  " <<tol << std::endl; std::cout <<
                 // "boundaryVector slope " << boundaryVector[i].slope_dzdx << " "
                 // << tol*0.75 <<std::endl;
-                if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75f) 
+                if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75) 
                 {
                   intersectionx[nIntersections - 1] = boundaryVector[i].x1;
                 } 
@@ -786,11 +786,11 @@ struct geometry_check {
         } 
         else if (nIntersections == 1) 
         {
-          particlesPointer->hitWall[indx] = 1.0f;
+          particlesPointer->hitWall[indx] = 1.0;
           particlesPointer->wallIndex[indx] = intersectionIndices[0];
           particlesPointer->surfaceHit[indx] = intersectionIndices[0];
           // particlesPointer->test0[indx] = -100.0;
-          if (particle_slope >= tol * 0.75f) 
+          if (particle_slope >= tol * 0.75) 
           {
 #if USECYLSYMM > 0
             gitr_precision x0 = particlesPointer->xprevious[indx];
@@ -905,7 +905,7 @@ struct geometry_check {
 
           particlesPointer->wallIndex[indx] = intersectionIndices[minDistInd];
           particlesPointer->surfaceHit[indx] = intersectionIndices[minDistInd];
-          particlesPointer->hitWall[indx] = 1.0f;
+          particlesPointer->hitWall[indx] = 1.0;
 #if USECYLSYMM > 0
           thetaNew = theta0 + (intersectionx[minDistInd] - pdim1previous) /
                                   (pdim1 - pdim1previous) * (theta1 - theta0);
@@ -947,11 +947,11 @@ struct geometry_check {
         //{
         //    if (particlesPointer->y[indx] < boundaryVector[nLines].y1)
         //    {
-        //        particlesPointer->hitWall[indx] = 1.0f;
+        //        particlesPointer->hitWall[indx] = 1.0;
         //    }
         //    else if (particlesPointer->y[indx] > boundaryVector[nLines].y2)
         //    {
-        //        particlesPointer->hitWall[indx] = 1.0f;
+        //        particlesPointer->hitWall[indx] = 1.0;
         //    }
         //}
 #endif
@@ -960,8 +960,8 @@ struct geometry_check {
 #if (FLUX_EA > 0 && USESURFACEMODEL == 0)
         gitr_precision E0 = 0.0;
         gitr_precision thetaImpact = 0.0;
-        gitr_precision particleTrackVector[3] = {0.0f};
-        gitr_precision surfaceNormalVector[3] = {0.0f};
+        gitr_precision particleTrackVector[3] = {0.0};
+        gitr_precision surfaceNormalVector[3] = {0.0};
         gitr_precision norm_part = 0.0;
         gitr_precision partDotNormal = 0.0;
         particleTrackVector[0] = particlesPointer->vx[indx];
@@ -1021,15 +1021,19 @@ struct geometry_check {
 		  
 #else
 
+              #pragma omp atomic
             surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                          EdistInd * nAdist + AdistInd] =
                 surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                              EdistInd * nAdist + AdistInd] +
                 weight;
+              #pragma omp atomic
             surfaces->sumWeightStrike[surfaceHit] =
                 surfaces->sumWeightStrike[surfaceHit] + weight;
+              #pragma omp atomic
             surfaces->sumParticlesStrike[surfaceHit] =
                 surfaces->sumParticlesStrike[surfaceHit] + 1;
+              #pragma omp atomic
             surfaces->grossDeposition[surfaceHit] =
                 surfaces->grossDeposition[surfaceHit] + weight;
 #endif

@@ -7,6 +7,15 @@ configure_file( ${source_path} ${destination_path} COPYONLY )
 
 endmacro()
 
+generate_testing_file( "test_data/Efield.txt" )
+set( E_FIELD_TEST_FILE ${destination_path} )
+
+generate_testing_file( "test_data/getE.cfg" )
+set( GET_E_TEST_FILE  ${destination_path} )
+
+generate_testing_file( "test_data/surface_model.cfg" )
+set( SURFACE_MODEL_TEST_FILE ${destination_path} )
+
 generate_testing_file( "test_data/test_config.cfg" )
 set( CONFIG_INTERFACE_UNIT_TEST_FILE ${destination_path} )
 
@@ -21,6 +30,9 @@ set( FIELD_UNIT_TEST_FILE_1 ${destination_path} )
 
 generate_testing_file( "test_data/cross_field_geometry.cfg" )
 set( CROSS_FIELD_GEOM_FILE ${destination_path} )
+
+generate_testing_file( "test_data/cross_field_geometry2.cfg" )
+set( CROSS_FIELD_GEOM_FILE_1 ${destination_path} )
 
 generate_testing_file( "test_data/boris_config.cfg" )
 set( BORIS_TEST_FILE ${destination_path} )

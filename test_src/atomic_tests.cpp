@@ -68,7 +68,7 @@ TEST_CASE("Atomic physics", "tests") {
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize<>(&state1.front(), 0));
+                   curandInitialize<>(&state1.front(), true));
     
     // GITR background fields
     // Density = 1e19 m^{-3}
@@ -205,7 +205,7 @@ TEST_CASE("Atomic physics", "tests") {
     
     // Reset random number state
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize<>(&state1.front(), 0));
+                   curandInitialize<>(&state1.front(), true));
   
     // Second vector of values to compare
     std::vector<gitr_precision> values2(nParticles,0.0);

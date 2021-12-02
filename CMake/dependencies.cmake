@@ -24,8 +24,6 @@ set( CMAKE_INSTALL_RPATH
 # OpenMP
 find_package( OpenMP )
 
-# Captain! Will this work with clang++ as well? brew install it and check
-
 include_directories( ${OpenMP_C_INCLUDE_DIRS} ${OpenMP_CXX_INCLUDE_DIRS} )
 
 # hdf5
@@ -42,7 +40,7 @@ set( dependencies "" )
 # Thrust
 include( CMake/thrust.cmake ) # ---> creates target thrust
 
-list( APPEND dependencies thrust )
+#list( APPEND dependencies thrust )
 
 # Libconfig
 include( CMake/libconfig.cmake ) # ---> creates target libconfig

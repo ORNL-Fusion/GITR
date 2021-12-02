@@ -3276,7 +3276,7 @@ if( flowv_interp == 1 )
 #endif
   phi = phi * 3.141592653589793 / 180.0;
   theta = theta * 3.141592653589793 / 180.0;
-  /* Captain! Important equation to convert eV energy to vector velocity components */
+  /* equation to convert eV energy to vector velocity components */
   vtotal = std::sqrt(2.0 * E * 1.602e-19 / amu / 1.66e-27);
   vx = vtotal * std::sin(phi) * std::cos(theta);
   vy = vtotal * std::sin(phi) * std::sin(theta);
@@ -3562,11 +3562,6 @@ if( flowv_interp == 1 )
     vy = vypfile[i];
     vz = vzpfile[i];
 #endif
-    // std::cout << "particle xyz Exyz Z amu charge " << x << " " << y << " " <<
-    // z << " "
-    // << vx << " " << vy << " " << vz << " " << Z << " " << amu << " " <<
-    // charge << " "  << std::endl;
-    /* Captain! */
     particleArray->setParticleV(i, x, y, z, vx, vy, vz, Z, amu, charge,dt);
 #if PARTICLE_SOURCE_SPACE > 0
     pSurfNormX[i] =

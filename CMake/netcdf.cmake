@@ -93,7 +93,6 @@ if( TARGET netcdf-c_download AND TARGET netcdf-cxx4_download )
 
 endif()
 
-# Captain! Are these global includes really necessary? Comment out to test
 include_directories( ${NETCDF_CXX_INCLUDE_DIR} )
 
 include_directories( ${NETCDF_INCLUDE_DIR} )

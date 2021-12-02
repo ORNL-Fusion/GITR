@@ -17,6 +17,7 @@ target_include_directories( test_utils PUBLIC ${CMAKE_SOURCE_DIR} )
 target_link_libraries( test_utils PUBLIC catch2 )
 
 set( cpu_test_targets
+     slow_math_tests
      config_interface_tests )
 
 # atomic tests does not compile and is disabled
@@ -26,6 +27,7 @@ set( gpu_test_targets
      field_tests
      atomic_tests 
      boris_tests
+     surface_model_tests
      cross_field_diffusion_tests )
 
 if( NOT GITR_USE_CUDA )
