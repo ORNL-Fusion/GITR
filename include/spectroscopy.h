@@ -11,6 +11,7 @@
 #include "Boundary.h"
 #include <cmath>
 #include <vector>
+#include "omp.h"
 #if USE_DOUBLE
 typedef double gitr_precision;
 #else

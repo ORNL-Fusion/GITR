@@ -15,7 +15,7 @@ endif()
 # ensure that test targets are built after source targets
 foreach( target IN LISTS cpu_test_targets gpu_test_targets )
 
-  add_dependencies( ${target} ${cpu_targets} ${gpu_targets} )
+  add_dependencies( ${target} ${cpu_targets} ${gpu_targets} test_utils )
 
 endforeach()
 
