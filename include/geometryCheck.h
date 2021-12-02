@@ -382,7 +382,6 @@ struct geometry_check {
                       rInd * n_closeGeomElements[nHash] + j];
         // std::cout << "i's " << i << std::endl;
 #else
-      /* ... Ahoy! find 0. Iterate over all line segments... */
       for (int i = 0; i < nLines; i++) {
 #endif
         a = boundaryVector[i].a;
@@ -1022,15 +1021,19 @@ struct geometry_check {
 		  
 #else
 
+              #pragma omp atomic
             surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                          EdistInd * nAdist + AdistInd] =
                 surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                              EdistInd * nAdist + AdistInd] +
                 weight;
+              #pragma omp atomic
             surfaces->sumWeightStrike[surfaceHit] =
                 surfaces->sumWeightStrike[surfaceHit] + weight;
+              #pragma omp atomic
             surfaces->sumParticlesStrike[surfaceHit] =
                 surfaces->sumParticlesStrike[surfaceHit] + 1;
+              #pragma omp atomic
             surfaces->grossDeposition[surfaceHit] =
                 surfaces->grossDeposition[surfaceHit] + weight;
 #endif

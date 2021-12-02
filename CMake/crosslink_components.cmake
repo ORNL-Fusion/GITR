@@ -21,6 +21,11 @@ if( OpenMP_CXX_FOUND )
 
   target_link_libraries( surface_model PUBLIC OpenMP::OpenMP_CXX )
 
+  target_link_libraries( cross_field_diffusion_tests OpenMP::OpenMP_CXX )
+  target_link_libraries( coulomb_tests OpenMP::OpenMP_CXX )
+  target_link_libraries( atomic_tests OpenMP::OpenMP_CXX )
+  target_link_libraries( boris_tests OpenMP::OpenMP_CXX )
+
 endif()
 
 # Improvement: Conditionally link based on whether the GITR_USE_<component> clause is enabled

@@ -106,7 +106,6 @@ TEST_CASE( "rmse comparer tests" )
 
     std::vector< double > v1( size );
 
-    /* Captain! This should fail - does it need more testing? */
     double tolerance = 1e-4;
 
     double element_difference = 0.01;

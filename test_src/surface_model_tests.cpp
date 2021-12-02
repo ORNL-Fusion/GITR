@@ -61,7 +61,7 @@ TEST_CASE( "surface model" )
     /* 2nd argument is deprecated - random number stream related */
     auto particleArray = new Particles( nParticles, 1, cfg, gitr_flags );
 
-    /* Captain! Important equation to convert eV energy to vector velocity components */
+    /* equation to convert eV energy to vector velocity components */
     gitr_precision E = 200;
     gitr_precision amu = 99;
     gitr_precision vtotal = std::sqrt(2.0 * E * 1.602e-19 / amu / 1.66e-27);
@@ -85,9 +85,6 @@ TEST_CASE( "surface model" )
     thrust::counting_iterator<std::size_t> particle_iterator_start(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
 
-    /* Captain... Just rip everything from cross field diffusion tests and convert it
-       into a boris test. Compare and contrast differences between what's in gitr.cpp
-       and what's in cross_field_diffusion_tests.cpp */
     int nLines = 1;
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
@@ -212,9 +209,12 @@ TEST_CASE( "surface model" )
   int nDistE_surfaceModel = 1, nDistA_surfaceModel = 1;
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
+
   /* Captain! To make this test work, you must put the filestring in test_data.
      Currently, that needed file is nowhere to be found so you should disable this test for
-     now */
+     now. "input_path" is set to a dummy variable */
+    std::string input_path = "";
+
     getVariable(cfg, surfaceModelCfg + "fileString", surfaceModelFile);
     nE_sputtRefCoeff = getDimFromFile(cfg, input_path + surfaceModelFile,
                                       surfaceModelCfg, "nEsputtRefCoeffString");
@@ -374,13 +374,7 @@ TEST_CASE( "surface model" )
       EDist_CDF_R_regrid.data(), AphiDist_CDF_R_regrid.data(), nEdist, E0dist,
       Edist, nAdist, A0dist, Adist);
 
-    /* get particle xyz before */
     /* time loop */
-    std::cout << "Captain! num particles: " << particleArray->nParticles << std::endl;
-    std::cout << "Captain! Before: " << particleArray->x[0] << " " << particleArray->z[0]
-              << " " << particleArray->y[0]
-              << std::endl;
-
     for (int tt = 0; tt < nT; tt++)
     {
 
@@ -400,12 +394,6 @@ TEST_CASE( "surface model" )
                        reflection0 );
     }
 
-    std::cout << "Captain! After: " << particleArray->x[0] << " " << particleArray->z[0]
-              << " " << particleArray->y[0]
-              << std::endl;
-    std::cout << "Captain! After did hit: " << particleArray->hitWall[0] 
-              << std::endl;
-  
     std::ofstream myfile;
   myfile.open ("sputtered_v.txt");
     for (int i = 0; i < nParticles; i++)
