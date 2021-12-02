@@ -17,6 +17,7 @@ endif()
 set( CMAKE_BUILD_WITH_INSTALL_RPATH True )
 
 set( CMAKE_INSTALL_RPATH
+     "${CMAKE_BINARY_DIR}"
      "${prefix}/libconfig_install/lib"
      "${prefix}/netcdf-c-install/lib"
      "${prefix}/netcdf-cxx4-install/lib" )
