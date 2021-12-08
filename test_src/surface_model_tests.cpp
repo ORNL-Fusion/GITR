@@ -321,40 +321,54 @@ TEST_CASE( "surface model" )
     for (int i = 0; i < nA_sputtRefDistOut; i++) {
       angleDistGrid01[i] = i * 1.0 / nA_sputtRefDistOut;
     }
+
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nE_sputtRefDistOut,
               EDist_Y.data(), EDist_CDF_Y.data());
+
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AphiDist_Y.data(), AphiDist_CDF_Y.data());
+
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AthetaDist_Y.data(), AthetaDist_CDF_Y.data());
+
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nE_sputtRefDistOutRef,
               EDist_R.data(), EDist_CDF_R.data());
+
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AphiDist_R.data(), AphiDist_CDF_R.data());
+
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AthetaDist_R.data(), AthetaDist_CDF_R.data());
+
+    /* Captain! Looks like a repeated function call here */
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AthetaDist_R.data(), AthetaDist_CDF_R.data());
+
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
                 angleDistGrid01.data(), nA_sputtRefDistOut,
                 Aphi_sputtRefDistOut[nA_sputtRefDistOut - 1],
                 AphiDist_CDF_Y.data(), AphiDist_CDF_Y_regrid.data());
+
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
                 angleDistGrid01.data(), nA_sputtRefDistOut,
                 Atheta_sputtRefDistOut[nA_sputtRefDistOut - 1],
                 AthetaDist_CDF_Y.data(), AthetaDist_CDF_Y_regrid.data());
+
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nE_sputtRefDistOut,
                 energyDistGrid01.data(), nE_sputtRefDistOut,
                 E_sputtRefDistOut[nE_sputtRefDistOut - 1], EDist_CDF_Y.data(),
                 EDist_CDF_Y_regrid.data());
+
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
                 angleDistGrid01.data(), nA_sputtRefDistOut,
                 Aphi_sputtRefDistOut[nA_sputtRefDistOut - 1],
                 AphiDist_CDF_R.data(), AphiDist_CDF_R_regrid.data());
+
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
                 angleDistGrid01.data(), nA_sputtRefDistOut,
                 Atheta_sputtRefDistOut[nA_sputtRefDistOut - 1],
                 AthetaDist_CDF_R.data(), AthetaDist_CDF_R_regrid.data());
+
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nE_sputtRefDistOutRef,
                 energyDistGrid01Ref.data(), nE_sputtRefDistOutRef,
                 E_sputtRefDistOutRef[nE_sputtRefDistOutRef - 1],
@@ -394,6 +408,7 @@ TEST_CASE( "surface model" )
                        reflection0 );
     }
 
+    /* Captain! What should this distribution match? One of the input distributions? */
     std::ofstream myfile;
   myfile.open ("sputtered_v.txt");
     for (int i = 0; i < nParticles; i++)

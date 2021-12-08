@@ -1,0 +1,5 @@
+Get rid of the catch as a header only library - handle it like directory d does
+
+Get rid of some of those "find" modules? Or not...
+
+pull from archived repos instead of public ones

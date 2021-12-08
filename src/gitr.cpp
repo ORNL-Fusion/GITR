@@ -63,6 +63,10 @@
 #include <thrust/transform.h>
 #include "config_interface.h"
 
+/* Captain! Begin test code */
+#include "CLI/CLI.hpp"
+/* end test code */
+
 using namespace netCDF;
 
 #if USE_DOUBLE
@@ -75,6 +79,22 @@ netCDF::NcType netcdf_precision = netCDF::ncFloat;
 #endif
 
 int main(int argc, char **argv, char **envp) {
+
+/* Captain! Begin test code */
+CLI::App app{ "Captain!" };
+
+std::string file_name = "";
+
+app.add_option( "-c", file_name, "config filepath" );
+
+CLI11_PARSE( app, argc, argv );
+
+std::cout << "Ahoy, Captain! file_name: " << file_name << std::endl;
+
+return 0;
+
+/* end test code */
+
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
   class libconfig_string_query query( "input/gitrInput.cfg" );
