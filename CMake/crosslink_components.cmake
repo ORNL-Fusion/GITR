@@ -17,7 +17,6 @@ target_link_libraries( boris thrust )
 
 if( OpenMP_CXX_FOUND )
 
-  message( STATUS "Ahoy, Captain! OpenMP_CXX is found!" )
   target_compile_options( surface_model PUBLIC ${OpenMP_CXX_FLAGS} )
   target_link_libraries( surface_model OpenMP::OpenMP_CXX )
 
@@ -52,7 +51,7 @@ if( GITR_USE_CUDA )
   target_link_libraries( GITR 
                          CUDA::cudart )
 
-  foreach( target IN LISTS gpu_targets )
+  foreach( target IN LISTS gpu_targets gpu_test_targets )
 
     target_link_libraries( ${target} thrust CUDA::cudart )
 
@@ -75,15 +74,18 @@ target_link_libraries( coulomb_tests
 
 target_link_libraries( atomic_tests test_utils ionize interp2d utils flags )
 
-target_link_libraries( field_tests test_utils interp2d libconfig utils netcdf fields boris )
+target_link_libraries( field_tests 
+                       test_utils interp2d libconfig utils netcdf fields boris )
 
-target_link_libraries( file_io_tests test_utils libconfig utils flags boris geometry_check )
+target_link_libraries( file_io_tests 
+                       test_utils libconfig utils flags boris geometry_check )
 
 target_link_libraries( cross_field_diffusion_tests 
                        test_utils utils flags libconfig boris spectroscopy thrust
                        geometry_check )
 
-target_link_libraries( surface_model_tests surface_model spectroscopy test_utils flags
+target_link_libraries( surface_model_tests 
+                       surface_model spectroscopy test_utils flags
                        libconfig utils boris geometry_check )
 
 target_link_libraries( boris_tests test_utils flags libconfig utils boris slow_math )

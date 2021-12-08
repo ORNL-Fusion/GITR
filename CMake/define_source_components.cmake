@@ -50,7 +50,7 @@ endif()
 
 foreach( component IN LISTS cpu_targets )
 
-  add_library( ${component} SHARED src/${component}.cpp )
+  add_library( ${component} src/${component}.cpp )
 
   target_include_directories( ${component} PUBLIC include )
 
@@ -61,7 +61,7 @@ if( GITR_USE_CUDA )
 
   foreach( component IN LISTS gpu_targets )
 
-    add_library( ${component} SHARED src/${component}.cpp )
+    add_library( ${component} src/${component}.cpp )
 
     set_source_files_properties( src/${component}.cpp PROPERTIES LANGUAGE CUDA )
 

@@ -36,9 +36,6 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
 
     REQUIRE( source_material_z == 13 );
 
-    /* Captain! What if you make the template argument "T" to "get" default to 
-       std::shared_ptr< class config_module_base > */
-
     /* get a child module and obtain a value from it */
     auto ionization = impurity_particle_source->get( impurity_particle_source::ionization );
 
