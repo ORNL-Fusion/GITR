@@ -28,35 +28,37 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
   SECTION( "config_module" )
   {
     /* constructor should create all the submodules necessary underneath itself */
-    class impurity_particle_source impurity_particle_source( query );
+    auto impurity_particle_source = std::make_shared< class impurity_particle_source >( query );
 
     /* get a value from this config module */
     int source_material_z = 
-    impurity_particle_source
-    .get<int>( impurity_particle_source::source_material_z );
+    impurity_particle_source->get<int>( impurity_particle_source::source_material_z );
 
     REQUIRE( source_material_z == 13 );
 
     /* get a child module and obtain a value from it */
-    auto ionization =
-    impurity_particle_source
-    .get<std::shared_ptr<class config_module_base>>
-    ( impurity_particle_source::ionization );
+    auto ionization = impurity_particle_source->get( impurity_particle_source::ionization );
 
     auto recombination =
-    impurity_particle_source
-    .get<std::shared_ptr<class config_module_base>>
-    ( impurity_particle_source::recombination );
+    impurity_particle_source->get( impurity_particle_source::recombination );
 
     std::string dense_grid_string =
     ionization->get<std::string>( ionization_process::dense_grid_string );
 
     REQUIRE( dense_grid_string == "n_Densities_Ionize" );
 
+    REQUIRE( dense_grid_string == impurity_particle_source
+             ->get( impurity_particle_source::ionization )
+             ->get< std::string >( ionization_process::dense_grid_string ) );
+
     dense_grid_string =
     recombination->get<std::string>( ionization_process::dense_grid_string );
 
     REQUIRE( dense_grid_string == "n_Densities_Recombine" );
+
+    REQUIRE( dense_grid_string == impurity_particle_source
+             ->get( impurity_particle_source::recombination )
+             ->get< std::string >( ionization_process::dense_grid_string ) );
 
     class use use( query );
 

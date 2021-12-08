@@ -58,9 +58,9 @@ if( GITR_USE_CUDA )
 
     set_source_files_properties( test_src/${component}.cpp PROPERTIES LANGUAGE CUDA )
 
-    set_target_properties( ${component} PROPERTIES
-                           COMPILE_FLAGS "-dc"
-                           CUDA_RESOLVE_DEVICE_SYMBOLS ON )
+    set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
+
+    set_target_properties( ${component} PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON )
 
     target_compile_options( ${component} PUBLIC --expt-relaxed-constexpr )
 

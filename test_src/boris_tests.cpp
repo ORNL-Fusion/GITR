@@ -43,6 +43,17 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
 
    "https://github.com/ORNL-Fusion/GITR_prototyping/blob/main/boris_mini_uniform_inputs.py"
 */
+/*
+
+  Note: for this test to work, the project must be compiled with 
+
+  GITR_USE_CYLSYMM=0
+  GITR_USE_SHEATH_EFIELD=0
+  GITR_USE_PRE_SHEATH_EFIELD=1
+
+  This technically will also pass with GITR_USE_PERP_DIFFUSION=2. Unsure which is correct.
+
+ */
 
 TEST_CASE( "Complex Boris Motion" )
 {

@@ -62,6 +62,7 @@
 #include <thrust/sort.h>
 #include <thrust/transform.h>
 #include "config_interface.h"
+#include "CLI/CLI.hpp"
 
 using namespace netCDF;
 
@@ -75,6 +76,22 @@ netCDF::NcType netcdf_precision = netCDF::ncFloat;
 #endif
 
 int main(int argc, char **argv, char **envp) {
+
+/* Placeholder code for runtime CLI */
+/*
+
+CLI::App app{ "!" };
+
+std::string file_name = "";
+
+app.add_option( "-c", file_name, "config filepath" );
+
+CLI11_PARSE( app, argc, argv );
+
+std::cout << "file_name read from stdin: " << file_name << std::endl;
+
+*/
+
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
   class libconfig_string_query query( "input/gitrInput.cfg" );

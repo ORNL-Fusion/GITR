@@ -1,6 +1,7 @@
 # Handle external dependencies
-
 include( ExternalProject )
+
+set( dependencies "" )
 
 set( prefix "${CMAKE_BINARY_DIR}/external" )
 
@@ -27,7 +28,13 @@ find_package( OpenMP )
 
 include_directories( ${OpenMP_C_INCLUDE_DIRS} ${OpenMP_CXX_INCLUDE_DIRS} )
 
+# CLI11
+include( CMake/CLI11.cmake )
+
+list( APPEND dependencies cli11 )
+
 # hdf5
+# Captain! Get rid of the "find" modules - those are really outdated
 include( FindHDF5 )
 
 # CUDA
@@ -36,12 +43,10 @@ include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart
 # MPI
 include( CMake/mpi.cmake ) # ---> creates target mpi
 
-set( dependencies "" )
-
 # Thrust
 include( CMake/thrust.cmake ) # ---> creates target thrust
 
-#list( APPEND dependencies thrust )
+list( APPEND dependencies thrust )
 
 # Libconfig
 include( CMake/libconfig.cmake ) # ---> creates target libconfig

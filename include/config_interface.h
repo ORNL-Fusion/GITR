@@ -44,10 +44,8 @@ class config_module_base
                       std::string module_path = "");
 
   /* get config sub-module */
-  std::shared_ptr< config_module_base > get( int key );
-
-  /* a config value */
-  template< typename T >
+  /* default behavior is to return the submodule itself */
+  template< typename T = std::shared_ptr< class config_module_base > >
   T get( int key );
 
   template< typename T >

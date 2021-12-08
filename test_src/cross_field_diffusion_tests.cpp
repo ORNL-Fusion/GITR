@@ -33,7 +33,6 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
   return true;
 }
 
-/* Ahoy, Captain! These tests fail if OpenMP is used instead of CUDA. Unsure why. */
 TEST_CASE( "cross-field diffusion operator" )
 {
   /*
