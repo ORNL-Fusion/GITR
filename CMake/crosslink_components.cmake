@@ -82,7 +82,7 @@ target_link_libraries( file_io_tests
 
 target_link_libraries( cross_field_diffusion_tests 
                        test_utils utils flags libconfig boris spectroscopy thrust
-                       geometry_check )
+                       geometry_check config_interface )
 
 target_link_libraries( surface_model_tests 
                        surface_model spectroscopy test_utils flags

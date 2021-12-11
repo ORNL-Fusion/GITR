@@ -8,34 +8,41 @@ libconfig_string_query::libconfig_string_query( std::string libconfig_file )
     cfg.readFile( libconfig_file.c_str() );
   }
 
+  /* bad file */
   catch(const libconfig::FileIOException &fioex)
   {
     std::cerr << "I/O error while reading file." << std::endl;
+    exit( 0 );
   }
 
+  /* bad format */
   catch(const libconfig::ParseException &pex)
   {
     std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
               << " - " << pex.getError() << std::endl;
+    exit( 0 );
   }
 }
 
-/* geta config value */
-template< typename T >
-T config_module_base::get( int key )
+geometry::
+geometry( class libconfig_string_query const &query,
+          std::string module_path )
+  :
+  config_module_base( query, module_path )
 {
-  auto access = lookup.find( key );
-  if( access == lookup.end() )
-  {
-    std::cout << "error: value key not found" << std::endl;
-    exit(0);
-  }
-
-  T val;
-
-  query( get_module_path() + "." + access->second, val );
-  
-  return val;
+  lookup[ geometry::slope ] = "slope";
+  lookup[ geometry::intercept ] = "intercept";
+  lookup[ geometry::length ] = "length";
+  lookup[ geometry::z ] = "Z";
+  lookup[ geometry::surface ] = "surface";
+  lookup[ geometry::in_dir ] = "in_dir";
+  lookup[ geometry::periodic ] = "periodic";
+  lookup[ geometry::x1 ] = "x1";
+  lookup[ geometry::x2 ] = "x2";
+  lookup[ geometry::y1 ] = "y1";
+  lookup[ geometry::y2 ] = "y2";
+  lookup[ geometry::z1 ] = "z1";
+  lookup[ geometry::z2 ] = "z2";
 }
 
 impurity_particle_source::
@@ -146,14 +153,52 @@ config_module_base::config_module_base( class libconfig_string_query const &quer
   query( query )
 { }
 
-/* explicit instantiations of that template */
+/* general "get" for values  */
+template< typename T >
+T config_module_base::get( int key )
+{
+  auto access = lookup.find( key );
+
+  if( access == lookup.end() )
+  {
+    throw( unregistered_config_mapping( key ) );
+  }
+
+  T val;
+
+  try
+  {
+    query( get_module_path() + "." + access->second, val );
+  }
+
+  catch( class invalid_key const &exception )
+  {
+    std::cout << exception.what() << std::endl;
+
+    exit( 0 );
+  }
+  
+  return val;
+}
+
+/* instantiations for singleton config setting values */
 template int config_module_base::get<int>( int key );
 template float config_module_base::get<float>( int key );
 template double config_module_base::get<double>( int key );
 template bool config_module_base::get<bool>( int key );
 template std::string config_module_base::get<std::string>( int key ); 
 
-/* get a config submodule */
+/* instantiations for vector/array config setting values */
+template std::vector< int > config_module_base::get< std::vector< int > >( int key );
+template std::vector< float >
+config_module_base::get< std::vector< float > >( int key );
+template std::vector< double >
+config_module_base::get< std::vector< double > >( int key );
+template std::vector< bool > config_module_base::get< std::vector< bool > >( int key );
+template std::vector< std::string >
+config_module_base::get< std::vector< std::string > >( int key ); 
+
+/* template specialization for non-specified type: specialization for default T from header */
 template<>
 std::shared_ptr< config_module_base >
 config_module_base::get( int key )
@@ -162,8 +207,7 @@ config_module_base::get( int key )
 
   if( access == sub_modules.end() )
   {
-    std::cout << "error: config_module key not found" << std::endl;
-    exit( 0 );
+    throw( unregistered_config_mapping( key ) );
   }
 
   return access->second;

@@ -3,7 +3,11 @@
 #include <memory>
 #include <unordered_map>
 #include <iterator>
+#include <vector>
+#include <cassert>
+#include <typeinfo>
 
+#include "config_interface_exceptions.h"
 #include "libconfig.h++"
 
 /* This class wraps the libconfig object and inserts
@@ -20,21 +24,85 @@ class libconfig_string_query
   libconfig_string_query( std::string libconfig_file = "" );
 
   template< typename T >
-  void operator()( std::string const query_key, T &query_value ) const
-  {
-    bool success = cfg.lookupValue( query_key, query_value );
+  void operator()( std::string const &query_key, T &query_value ) const;
 
-    if( success == false ) 
-    {
-      std::cout << "invalid query key: " << query_key << std::endl;
-      exit(0);
-    }
-  }
+  template< typename T >
+  void operator()( std::string const &query_key, std::vector< T > &query_values ) const;
 
   private:
 
   libconfig::Config cfg;
 };
+
+template< typename T >
+void libconfig_string_query::operator()( std::string const &query_key,
+                                         std::vector< T > &query_values ) const
+{
+  assert( query_values.size() == 0 );
+
+  if( cfg.exists( query_key.c_str() ) == false )
+  {
+    throw invalid_key(query_key);
+  }
+
+  auto const &setting = cfg.getRoot().lookup( query_key );
+
+  /* this should be the local name of the setting */
+  std::string setting_name( setting.getName() );
+
+  std::cout << "Captain! setting name: " << setting_name << std::endl;
+  std::cout << "Captain! query key: " << query_key << std::endl;
+
+  /* Ahoy, Captain! I think the issue here is that the "query_key" is geom.slope and the setting
+     name is "slope". setting_name should be "geom" and query_key should be "slope" */
+  /* How can we fix this? I think there is a way to get the path not the name */
+  /* Ahoy, Captain! Use getParent and getPath and all that */
+
+  /* check for array status */
+  if( setting.isArray() )
+  {
+    int len = setting.getLength();
+
+    for( int i = 0; i < len; i++ )
+    {
+      T value = setting[ i ];
+      std::cout << "Captain! setting: " << value << std::endl;
+      if( setting[ i ].lookupValue( setting_name.c_str(), value ) == false )
+      {
+        std::cout << "Captain! Type is: " << typeid( T ).name() << std::endl;
+      }
+      query_values.push_back( value );
+    }
+  }
+
+  else
+  {
+    std::cout << "Ahoy! This setting is not a vector. Create a new exception for it"
+              << std::endl;
+
+    exit( 0 );
+  }
+}
+
+template< typename T >
+void libconfig_string_query::operator()( std::string const &query_key, T &query_value ) const
+{
+  if( cfg.exists( query_key.c_str() ) == false )
+  {
+    throw( invalid_key( query_key ) );
+  }
+
+  else
+  {
+    bool success = cfg.lookupValue( query_key, query_value );
+
+    if( success == false ) 
+    {
+      std::cout << "Ahoy! lookup failed on: " << query_key << std::endl;
+      throw( lookup_failed( query_key ) );
+    }
+  }
+}
 
 class config_module_base
 {
@@ -43,10 +111,17 @@ class config_module_base
   config_module_base( class libconfig_string_query const &query,
                       std::string module_path = "");
 
-  /* get config sub-module */
-  /* default behavior is to return the submodule itself */
+  /* I literally want "T" itself to be a template template parameter:
+     I want T to mean std::vector< T >*/
   template< typename T = std::shared_ptr< class config_module_base > >
   T get( int key );
+
+  /* Captain! To fix this, you need to create a "get" that calls the query operator on
+     vectors instead of scalars. Rename this to get_vector() */
+  /*
+  template< typename T >
+  std::vector< T > get( int key );
+  */
 
   template< typename T >
   void generate_sub_module( int key );
@@ -67,6 +142,31 @@ class config_module_base
 
   /* I/O interface to the config file */
   class libconfig_string_query const &query;
+};
+
+class geometry final : public config_module_base
+{
+  public:
+
+  enum : int
+  {
+    slope,
+    intercept,
+    length,
+    z,
+    surface,
+    in_dir,
+    periodic,
+    x1,
+    x2,
+    y1,
+    y2,
+    z1,
+    z2
+  };
+
+  geometry( class libconfig_string_query const &query,
+            std::string module_path = "geom" );
 };
 
 class ionization_process final : public config_module_base

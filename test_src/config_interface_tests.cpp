@@ -67,6 +67,49 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
     REQUIRE( spectroscopy == 3);
   }
 
-  /* for the final test, create a top-level class that includes this one and another one */
+  /* Test the exception handling - also create a malformed class */
+  SECTION( "misc" )
+  {
+    auto geometry = std::make_shared< class geometry >( query );
 
+    /* get an array value from this config module */
+    auto slope = geometry->get< std::vector< double > >( geometry::slope );
+
+    REQUIRE( slope == std::vector< double >{ 1e12, 1e12 } );
+
+    /* try opening a bad file too. After this, be done with GITR this week please */
+
+    /* Captain! Catch the exceptions it throws - expect a specific key */
+
+    /* also handle the case where the desired config option is not available */
+
+    /* the key was not registered with the lookup case, the key does not exist in the 
+       libconfig file */
+
+    /* What else needs to be handled? */
+    /*
+
+       Config options do need to be cached... but if you are accessing them via
+       ->get
+       ->get
+       ...
+       successive pointer dereferences, you're going to have a lot of issues with performance.
+       Is it possible to avoid dereferencing long chains of them in the functors?
+
+       Just leave a comment and don't do that non-performant behavior
+    
+    */
+  }
 }
+
+
+
+
+
+
+
+
+
+
+
+

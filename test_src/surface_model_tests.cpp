@@ -1,3 +1,5 @@
+/* Sample the out-distribution? */
+/* bin the in-distribution? */
 #include <iostream>
 #include <fstream>
 #include <thrust/execution_policy.h>
