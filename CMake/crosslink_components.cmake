@@ -71,9 +71,10 @@ endif()
 target_link_libraries( config_interface_tests test_utils libconfig config_interface )
 
 target_link_libraries( coulomb_tests 
-                       test_utils libconfig thrust interp2d utils flags netcdf boris fields )
+                       test_utils libconfig thrust interp2d utils data_file_io
+                       flags netcdf boris fields )
 
-target_link_libraries( atomic_tests test_utils ionize interp2d utils flags )
+target_link_libraries( atomic_tests test_utils ionize interp2d utils data_file_io flags )
 
 target_link_libraries( field_tests 
                        test_utils interp2d libconfig utils netcdf fields boris )

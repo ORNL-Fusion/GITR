@@ -16,15 +16,21 @@ typedef float gitr_precision;
 
 int readFileDim(const std::string& fileName,const std::string& varName);
 
+#if GITR_USE_NETCDF
 int readFileDim_netcdf(const std::string& fileName,const std::string& varName);
-
+#elif GITR_USE_HDF5
 int readFileDim_hdf5(const std::string& fileName,const std::string& varName);
+#endif
 
-/* */
 int read_ar2Input( std::string fileName, gitr_precision *Bfield[]);
-int read_ar2Input_hdf5( std::string fileName, gitr_precision *Bfield[]);
-int read_ar2Input_netcdf( std::string fileName, gitr_precision *Bfield[]);
 
+#if GITR_USE_HDF5
+int read_ar2Input_hdf5( std::string fileName, gitr_precision *Bfield[]);
+#elif GITR_USE_NETCDF 
+int read_ar2Input_netcdf( std::string fileName, gitr_precision *Bfield[]);
+#endif
+
+#if GITR_USE_HDF5
 template <typename T>
 int readFileVar_hdf5(const std::string& fileName,
                 const std::string& section,const std::string& varName,T &x ) {
@@ -97,6 +103,7 @@ int readFileVar_hdf5(const std::string& fileName,
        } 
 }
 
+#elif GITR_USE_NETCDF
 template <typename T>
 int readFileVar_netcdf(const std::string& fileName,
                 const std::string& section,const std::string& varName,T &x ) {
@@ -168,6 +175,7 @@ int readFileVar_netcdf(const std::string& fileName,
        return xlength;
        } 
 }
+#endif
 
 template <typename T>
 int readFileVar(const std::string& fileName,
