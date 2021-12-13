@@ -18,8 +18,8 @@
 #include "Particle.h"
 #include "libconfig.h++"
 #include <libconfig.h++>
-#include "interp2d.hpp"
 #include <fstream>
+#include "interp2d.hpp"
 #if USE_DOUBLE
 typedef double gitr_precision;
 #else
@@ -141,7 +141,6 @@ int importLibConfig(libconfig::Config &cfg,std::string filepath);
 int importVectorFieldNs(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int &nR, int &nY,int &nZ,std::string &fileToRead);
 int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int nR, int nY,int nZ,gitr_precision &gridR,gitr_precision &gridY,gitr_precision &gridZ,gitr_precision &r, gitr_precision &y,gitr_precision &z,std::string &fileToRead);
 int importGeometry(libconfig::Config &cfg,sim::Array<Boundary> &boundaries);
-int read_ar2Input( std::string fileName, gitr_precision *Bfield[]);
 
 int read_profileNs( std::string fileName,std::string nzName,std::string nxName,int &n_x,int &n_z );
 int read_profileNsChar(const char *fileName,const char *nxName,const char *nzName,int &n_x,int &n_z );

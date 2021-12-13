@@ -25,12 +25,6 @@
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
 
-#if USE_DOUBLE
-typedef double gitr_precision;
-#else
-typedef float gitr_precision;
-#endif
-
 using namespace std;
 using namespace netCDF;
 using namespace exceptions;
@@ -668,57 +662,6 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
       }
       std::cout << "hhhash nr ny nz total " << nGeomHash << " " << nRTotal << " " << nYTotal << " " << nZTotal<< std::endl;
   return 0;
-}
-int read_ar2Input( string fileName, gitr_precision *Bfield[]) {
-
-    // Check input file exists
-
-    std::ifstream file(fileName.c_str());
-    if(!file.good()) {
-        cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
-        exit(1);
-    }
-
-    NcFile nc(fileName.c_str(), NcFile::read);
-
-    NcDim nc_nR(nc.getDim("nR"));
-    NcDim nc_nZ(nc.getDim("nZ"));
-    
-    int nR = nc_nR.getSize(); 
-    int nZ = nc_nZ.getSize(); 
-
-    NcVar nc_r(nc.getVar("r"));
-    NcVar nc_z(nc.getVar("z"));
-
-    std::vector<gitr_precision> r;
-    r.resize(nR);
-    nc_r.getVar(&r[0]);
-
-    std::vector<gitr_precision> z;
-    z.resize(nZ);
-    nc_z.getVar(&z[0]);
-
-
-    // Allocate contiguous 2D array for netcdf to work
-    gitr_precision **br = new gitr_precision*[nR];
-    br[0] = new gitr_precision[nR*nZ];
-    for(int i=0; i<nR; i++){
-        br[i] = &br[0][i*nZ];
-    }
-
-
-    NcVar nc_br(nc.getVar("br"));
-
-    nc_br.getVar(br[0]);
-
-    for(int i=0; i<nR; i++){
-        for(int j=0; j<nZ; j++){
-           Bfield[i][j] = br[j][i]; 
-        }
-    }
-
-    return(0);
-
 }
 
 
