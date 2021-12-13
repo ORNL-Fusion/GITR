@@ -77,6 +77,102 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
 
     REQUIRE( slope == std::vector< double >{ 1e12, 1e12 } );
 
+    /* create testing dummy */
+    class testing_dummy final : public config_module_base
+    {
+      public:
+
+      enum : int
+      {
+        setting_doubles,
+        setting_string,
+        nonexistent_setting,
+        unregistered
+      };
+
+      testing_dummy( class libconfig_string_query const &query,
+                    std::string module_path = "testing_dummy" )
+        :
+        config_module_base( query, module_path )
+      {
+        lookup[ testing_dummy::setting_doubles ] = "setting_doubles";
+        lookup[ testing_dummy::setting_string ] = "setting_string";
+        lookup[ testing_dummy::nonexistent_setting ] = "random_lookup_string_key";
+
+        /* lookup[ testing_dummy::unregistered ] is left unset to test exception triggering */
+      }
+    };
+
+    /* trigger exceptions to test for error conditions */
+    /* look up an unregistered config string: */
+    auto testing_dummy = std::make_shared< class testing_dummy >( query );
+
+    /* test vectors */
+    auto doubles = testing_dummy->get< std::vector< double > >( testing_dummy::setting_doubles );
+
+    REQUIRE( doubles == std::vector< double >{ 1.5, 2.5, 3.5, 4.5, 5.5 } );
+
+    /* test looking up unregistered key */
+    try
+    {
+      auto trash = testing_dummy->get( testing_dummy::unregistered );
+    }
+
+    catch( class unregistered_config_mapping const &exception )
+    {
+      std::string const error_message{ exception.what() };
+
+      std::cout << error_message << exception.get_key() << std::endl;
+    }
+
+    /* test looking up an unregistered key */
+    REQUIRE_THROWS_MATCHES( testing_dummy->get( testing_dummy::unregistered ),
+                            unregistered_config_mapping,
+                            Catch::Matchers::Message( 
+                            unregistered_config_mapping::get_message() ) ); 
+
+    /* test lookup up registered key with non-existent config value */
+    try
+    {
+      std::cout << "Ahoy!" << std::endl;
+      int trash = testing_dummy->get< int >( testing_dummy::nonexistent_setting );
+    }
+
+    catch( class invalid_key const &exception )
+    {
+      std::cout << "Ahoy!" << std::endl;
+      std::string const error_message{ exception.what() };
+
+      std::cout << error_message << exception.get_key() << std::endl;
+    }
+
+    REQUIRE_THROWS_MATCHES( testing_dummy->get< int >( testing_dummy::nonexistent_setting ),
+                            invalid_key,
+                            Catch::Matchers::Message(
+                            invalid_key::get_message() ) );
+
+    /* test lookup on vector type vs scalar type */
+    /* test lookup on wrong data type? Will that actually fail or just be a mismatch? */
+    /*
+
+    1. Practice problems
+    2. Vim
+    3. Atul
+    4. Complete config interface tests
+    5. Fix and test operators in cross field diffusion tests, and document what you fixed
+    6. Install GITR on this IDA machine
+
+    move it to "base" and "derived" as well
+    what config interface tests are still needed?
+
+    errors we need to trigger:
+
+    1. invalid key
+    2. lookup failed - try mismatched types maybe?
+    3. unregistered config mapping
+
+    */
+
     /* try opening a bad file too. After this, be done with GITR this week please */
 
     /* Captain! Catch the exceptions it throws - expect a specific key */

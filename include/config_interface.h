@@ -77,6 +77,7 @@ void libconfig_string_query::operator()( std::string const &query_key,
 
   else
   {
+    /* create an exception for here and for the case where a vector is accessed as a scalar */
     std::cout << "Ahoy! This setting is not a vector. Create a new exception for it"
               << std::endl;
 

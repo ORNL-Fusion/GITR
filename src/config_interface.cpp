@@ -173,9 +173,15 @@ T config_module_base::get( int key )
 
   catch( class invalid_key const &exception )
   {
-    std::cout << exception.what() << std::endl;
+    std::cout << "Captain! Caught" << std::endl;
+    throw( exception );
+    /*
+    std::string const error_message{ exception.what() };
+
+    std::cout << error_message << exception.get_key() << std::endl;
 
     exit( 0 );
+    */
   }
   
   return val;
@@ -199,6 +205,7 @@ template std::vector< std::string >
 config_module_base::get< std::vector< std::string > >( int key ); 
 
 /* template specialization for non-specified type: specialization for default T from header */
+/* Captain! It keeps grabbing the wrong template - this one instead of the above one */
 template<>
 std::shared_ptr< config_module_base >
 config_module_base::get( int key )
