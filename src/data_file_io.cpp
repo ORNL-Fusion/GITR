@@ -99,3 +99,51 @@ int read_ar2Input_netcdf( std::string fileName, gitr_precision *Bfield[])
 }
 #elif GITR_USE_HDF5
 #endif
+
+int read_profileNs( std::string fileName, 
+                    std::string nxName, std::string nzName,int &n_x,int &n_z )
+{
+  #if GITR_USE_NETCDF
+
+  return read_profileNs_netcdf( fileName, nxName, nzName, n_x, n_z );
+
+  #elif GITR_USE_HDF5
+
+  return read_profileNs_hdf5( fileName, nxName, nzName, n_x, n_z );
+
+  #endif
+}
+
+#if GITR_USE_HDF5
+int read_profileNs_hdf5( std::string fileName, 
+                         std::string nxName, std::string nzName,int &n_x,int &n_z )
+{
+  return 0;
+}
+
+#elif GITR_USE_NETCDF
+int read_profileNs_netcdf( std::string fileName, 
+                           std::string nxName, std::string nzName,int &n_x,int &n_z )
+{
+  // Check input file exists
+
+  std::ifstream file(fileName.c_str());
+  if(!file.good())
+  {
+      std::cout<<"ERROR: Cannot file input file ... "<<fileName<< std::endl;
+      exit(1);
+  }
+
+  netCDF::NcFile nc(fileName.c_str(), netCDF::NcFile::read);
+
+  netCDF::NcDim nc_nx(nc.getDim(nxName));
+  netCDF::NcDim nc_nz(nc.getDim(nzName));
+  
+  n_x = nc_nx.getSize(); 
+  n_z = nc_nz.getSize(); 
+
+  nc.close();
+
+  return(0);
+}
+#endif

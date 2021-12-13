@@ -75,7 +75,6 @@ int importVectorFieldNs(libconfig::Config &cfg,std::string input_path,int interp
 int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int nR, int nY,int nZ,gitr_precision &gridR,gitr_precision &gridY,gitr_precision &gridZ,gitr_precision &r, gitr_precision &y,gitr_precision &z,std::string &fileToRead);
 int importGeometry(libconfig::Config &cfg,sim::Array<Boundary> &boundaries);
 
-int read_profileNs( std::string fileName,std::string nzName,std::string nxName,int &n_x,int &n_z );
 int read_profileNsChar(const char *fileName,const char *nxName,const char *nzName,int &n_x,int &n_z );
 int read_profile2d( std::string fileName,std::string dataName, sim::Array<gitr_precision>& data);
 int read_profile1d( std::string fileName,std::string gridxName, sim::Array<gitr_precision>& gridx);
@@ -92,9 +91,5 @@ int read_profiles( std::string fileName, int &n_x, int &n_z,std::string gridxNam
 //void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, int *array3d);
 
 
-
-int ncdfIO(int rwCode,const std::string& fileName,std::vector< std::string> dimNames,std::vector<int> dims,
-        std::vector< std::string> gridNames,std::vector<int> gridMapToDims,std::vector<gitr_precision*> pointers,
-        std::vector< std::string> intVarNames,std::vector<std::vector<int>> intVarDimMap, std::vector<int*> intVarPointers);
 int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::string fieldCfgString,int *nR, int *nY,int *nZ,int *n,int &nRTotal,int &nYTotal,int &nZTotal,int *nHashPoints, int &nHashPointsTotal,int &nGeomHash);
 #endif

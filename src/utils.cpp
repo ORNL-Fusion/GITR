@@ -26,9 +26,11 @@
 #endif
 
 using namespace std;
+/*
 using namespace netCDF;
 using namespace exceptions;
 using namespace netCDF::exceptions;
+*/
 using namespace libconfig;
 void  read_comand_line_args(const int argc,char** argv,int& ppn,std::string& inputFile)
 {
@@ -665,29 +667,6 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
 }
 
 
-int read_profileNs( std::string fileName, std::string nxName, std::string nzName,int &n_x,int &n_z ) {
-
-    // Check input file exists
-
-    std::ifstream file(fileName.c_str());
-    if(!file.good()) {
-        cout<<"ERROR: Cannot file input file ... "<<fileName<<endl;
-        exit(1);
-    }
-
-    NcFile nc(fileName.c_str(), NcFile::read);
-
-    NcDim nc_nx(nc.getDim(nxName));
-    NcDim nc_nz(nc.getDim(nzName));
-    
-    n_x = nc_nx.getSize(); 
-    n_z = nc_nz.getSize(); 
-
-    nc.close();
-    return(0);
-
-}
-
 int read_profileNsChar(const char *fileName,const char *nxName,const char *nzName,int &n_x,int &n_z ) {
 
     // Check input file exists
@@ -700,10 +679,10 @@ int read_profileNsChar(const char *fileName,const char *nxName,const char *nzNam
     }
 
     //NcFile nc(fileName.c_str(), NcFile::read);
-    NcFile nc(fileName, NcFile::read);
+    netCDF::NcFile nc(fileName, netCDF::NcFile::read);
 
-    NcDim nc_nx(nc.getDim(nxName));
-    NcDim nc_nz(nc.getDim(nzName));
+    netCDF::NcDim nc_nx(nc.getDim(nxName));
+    netCDF::NcDim nc_nz(nc.getDim(nzName));
     
     n_x = nc_nx.getSize(); 
     n_z = nc_nz.getSize(); 
@@ -724,14 +703,14 @@ int read_profiles( std::string fileName, int &n_x, int &n_z,std::string gridxNam
         exit(1);
     }
 
-    NcFile nc(fileName.c_str(), NcFile::read);
+    netCDF::NcFile nc(fileName.c_str(), netCDF::NcFile::read);
 
-    NcVar nc_gridx(nc.getVar(gridxName));
-    NcVar nc_gridz(nc.getVar(gridzName));
+    netCDF::NcVar nc_gridx(nc.getVar(gridxName));
+    netCDF::NcVar nc_gridz(nc.getVar(gridzName));
 
     nc_gridx.getVar(&gridx[0]);
     nc_gridz.getVar(&gridz[0]);
-    NcVar nc_ne(nc.getVar(dataName));
+    netCDF::NcVar nc_ne(nc.getVar(dataName));
     nc_ne.getVar(&data[0]);
     nc.close();
     return(0);
@@ -751,12 +730,12 @@ int read_profile2d( std::string fileName,std::string dataName, sim::Array<gitr_p
         exit(1);
     }
 
-    NcFile nc(fileName.c_str(), NcFile::read);
+    netCDF::NcFile nc(fileName.c_str(), netCDF::NcFile::read);
 
 
     //NcVar nc_ne(nc.getVar(dataName));
     static const int NC_ERR = 2;
-    NcVar nc_ne;
+    netCDF::NcVar nc_ne;
     try{
         std::cout << "inside try " << std::endl;
         nc_ne = nc.getVar(dataName);
@@ -786,10 +765,10 @@ int read_profile3d( std::string fileName,std::string dataName, sim::Array<int>& 
         exit(1);
     }
 
-    NcFile nc(fileName.c_str(), NcFile::read);
+    netCDF::NcFile nc(fileName.c_str(), netCDF::NcFile::read);
 
 
-    NcVar nc_ne(nc.getVar(dataName));
+    netCDF::NcVar nc_ne(nc.getVar(dataName));
     nc_ne.getVar(&data[0]);
 
     return(0);
@@ -805,9 +784,9 @@ int read_profile1d( std::string fileName,std::string gridxName, sim::Array<gitr_
         exit(1);
     }
 
-    NcFile nc(fileName.c_str(), NcFile::read);
+    netCDF::NcFile nc(fileName.c_str(), netCDF::NcFile::read);
 
-    NcVar nc_gridx(nc.getVar(gridxName));
+    netCDF::NcVar nc_gridx(nc.getVar(gridxName));
 
     nc_gridx.getVar(&gridx[0]);
 
@@ -834,80 +813,4 @@ void OUTPUT(char outname[],int nX, int nY, gitr_precision **array2d)
 					outfile << "  ];" << std::endl;
 				}
 			outfile.close();	
-		
-		
-}
-
-int ncdfIO(int rwCode,const std::string& fileName,std::vector< std::string> dimNames,std::vector<int> dims,
-        std::vector< std::string> gridNames,std::vector<int> gridMapToDims,
-         std::vector<gitr_precision*> pointers,std::vector< std::string> intVarNames,std::vector<std::vector<int>> intVarDimMap, std::vector<int*> intVarPointers)
-{
-    std::cout << "readWritecode " << rwCode << std::endl;//0 is read, 1 is write
-    if(rwCode == 1)
-    {
-       NcFile thisFile;
-       try{
-             thisFile.open(fileName+".nc",NcFile::newFile);
-             if(thisFile.isNull())
-             {
-                std::cout << "ERROR: Failed to open " << fileName << std::endl;
-             }
-             else
-             {   
-                std::cout << "successfully opened " << fileName << std::endl;
-             }
-          }
-       catch(NcException& e)
-       {
-          std::cout << " caught exists exception " << thisFile.isNull() << std::endl;
-          int fileInt = 0;
-          while (thisFile.isNull())
-          {
-            std::cout << "filename " << fileName << " is taken " <<std::endl;
-            try{
-                  thisFile.open(fileName+std::to_string(fileInt)+".nc",NcFile::newFile);
-               }
-            catch(NcException& e){
-            std::cout << "Filename " << fileName+std::to_string(fileInt)+".nc" <<
-                                 " is taken " << std::endl;
-            }
-                         fileInt++;
-          }
-       }
-
-       std::vector<NcDim> theseDims(dims.size());
-       for(int i=0;i<theseDims.size();i++)
-       {
-           theseDims[i] = thisFile.addDim(dimNames[i],dims[i]);
-       }
-
-       std::vector<NcVar> theseVars(dims.size());
-       for(int i=0;i<pointers.size();i++)
-       {
-           theseVars[i] = thisFile.addVar(gridNames[i],ncDouble,theseDims[gridMapToDims[i]]);
-           theseVars[i].putVar(pointers[i]);
-       }
-       std::vector<NcVar> intVars(intVarNames.size());
-       std::vector<std::vector<NcDim>> intVarDims(intVarNames.size());
-       for(int i=0;i<intVarNames.size();i++)
-       {
-           for(int j=0;j<intVarDimMap[i].size();j++)
-           {
-               intVarDims[i].push_back(theseDims[intVarDimMap[i][j]]);
-           }
-           intVars[i] = thisFile.addVar(intVarNames[i],NC_INT,intVarDims[i]);
-           intVars[i].putVar(intVarPointers[i]);
-       }
-      thisFile.close();
-    }
-    std::cout << "filename " << fileName << std::endl;
-
-    for(int i=0; i<dimNames.size();i++)
-    {
-       std::cout << "dimname " <<i << " " <<  dimNames[i] << std::endl;
-    }
-    for(int i=0; i<dims.size();i++)
-    {
-       std::cout << "dimension " <<i << " " <<  dims[i] << std::endl;
-    }
 }

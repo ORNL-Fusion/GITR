@@ -30,6 +30,19 @@ int read_ar2Input_hdf5( std::string fileName, gitr_precision *Bfield[]);
 int read_ar2Input_netcdf( std::string fileName, gitr_precision *Bfield[]);
 #endif
 
+int read_profileNs( std::string fileName,
+                    std::string nzName,
+                    std::string nxName,
+                    int &n_x,
+                    int &n_z );
+#if GITR_USE_HDF5
+int read_profileNs_hdf5( std::string fileName, 
+                         std::string nxName, std::string nzName,int &n_x,int &n_z );
+#elif GITR_USE_NETCDF
+int read_profileNs_netcdf( std::string fileName, 
+                           std::string nxName, std::string nzName,int &n_x,int &n_z );
+#endif
+
 #if GITR_USE_HDF5
 template <typename T>
 int readFileVar_hdf5(const std::string& fileName,
