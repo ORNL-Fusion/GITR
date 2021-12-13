@@ -27,6 +27,7 @@ set( cpu_targets
      flags
      config_interface
      slow_math
+     data_file_io
      setup)
 
 # conditionally compile as GPU targets

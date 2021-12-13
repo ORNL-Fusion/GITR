@@ -11,6 +11,7 @@ target_link_libraries( utils
                        libconfig
                        thrust
                        interp2d
+                       data_file_io
                        netcdf )
 
 target_link_libraries( boris thrust )

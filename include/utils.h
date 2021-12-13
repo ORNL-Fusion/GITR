@@ -161,7 +161,6 @@ int read_profiles( std::string fileName, int &n_x, int &n_z,std::string gridxNam
 
 
 
-int readFileDim(const std::string& fileName,const std::string& varName);
 int ncdfIO(int rwCode,const std::string& fileName,std::vector< std::string> dimNames,std::vector<int> dims,
         std::vector< std::string> gridNames,std::vector<int> gridMapToDims,std::vector<gitr_precision*> pointers,
         std::vector< std::string> intVarNames,std::vector<std::vector<int>> intVarDimMap, std::vector<int*> intVarPointers);

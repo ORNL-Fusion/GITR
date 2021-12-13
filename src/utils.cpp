@@ -11,6 +11,7 @@
 #include "Boundary.h"
 #include "Particle.h"
 #include "libconfig.h++"
+#include "data_file_io.h"
 
 #ifdef __CUDACC__
 #include <thrust/host_vector.h>
@@ -425,20 +426,6 @@ void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, int
 			outfile.close();	
 		
 		
-}
-int readFileDim(const std::string& fileName,const std::string& varName)
-{
-           NcFile nc(fileName, NcFile::read);
-
-                  if(nc.isNull()){
-                             std::cout << "ERROR: Failed to open " << fileName << std::endl;
-                                    }
-                         NcDim nc_nx(nc.getDim(varName));
-
-                                int n_x = nc_nx.getSize();
-                                nc.close();
-                                       return n_x;
-
 }
 int importLibConfig(libconfig::Config &cfg, std::string filepath)
 {
