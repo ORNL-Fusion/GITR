@@ -151,8 +151,10 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
                             Catch::Matchers::Message(
                             invalid_key::get_message() ) );
 
+    /* Captain! Make a PR for all of this so it is visible on the pull requests in GITR */
     /* test lookup on vector type vs scalar type */
     /* test lookup on wrong data type? Will that actually fail or just be a mismatch? */
+    /* test all this with multiple arrows, and also from fewer levels down */
     /*
 
     1. Practice problems

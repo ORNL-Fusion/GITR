@@ -161,7 +161,7 @@ T config_module_base::get( int key )
 
   if( access == lookup.end() )
   {
-    throw( unregistered_config_mapping( key ) );
+    throw unregistered_config_mapping( key );
   }
 
   T val;
@@ -173,15 +173,24 @@ T config_module_base::get( int key )
 
   catch( class invalid_key const &exception )
   {
-    std::cout << "Captain! Caught" << std::endl;
-    throw( exception );
-    /*
     std::string const error_message{ exception.what() };
 
-    std::cout << error_message << exception.get_key() << std::endl;
+    std::string const error_key{ exception.get_key() };
 
-    exit( 0 );
-    */
+    std::cout << error_message << error_key << std::endl;
+
+    throw invalid_key( error_key );
+  }
+
+  catch( class lookup_failed const &exception )
+  {
+    std::string const error_message{ exception.what() };
+
+    std::string const error_key{ exception.get_key() };
+
+    std::cout << error_message << error_key << std::endl;
+
+    throw lookup_failed( error_key );
   }
   
   return val;
@@ -205,7 +214,6 @@ template std::vector< std::string >
 config_module_base::get< std::vector< std::string > >( int key ); 
 
 /* template specialization for non-specified type: specialization for default T from header */
-/* Captain! It keeps grabbing the wrong template - this one instead of the above one */
 template<>
 std::shared_ptr< config_module_base >
 config_module_base::get( int key )

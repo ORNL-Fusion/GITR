@@ -24,10 +24,10 @@ class libconfig_string_query
   libconfig_string_query( std::string libconfig_file = "" );
 
   template< typename T >
-  void operator()( std::string const &query_key, T &query_value ) const;
+  void operator()( std::string const query_key, T &query_value ) const;
 
   template< typename T >
-  void operator()( std::string const &query_key, std::vector< T > &query_values ) const;
+  void operator()( std::string const query_key, std::vector< T > &query_values ) const;
 
   private:
 
@@ -35,28 +35,20 @@ class libconfig_string_query
 };
 
 template< typename T >
-void libconfig_string_query::operator()( std::string const &query_key,
+void libconfig_string_query::operator()( std::string const query_key,
                                          std::vector< T > &query_values ) const
 {
   assert( query_values.size() == 0 );
 
   if( cfg.exists( query_key.c_str() ) == false )
   {
-    throw invalid_key(query_key);
+    throw invalid_key( query_key );
   }
 
   auto const &setting = cfg.getRoot().lookup( query_key );
 
   /* this should be the local name of the setting */
   std::string setting_name( setting.getName() );
-
-  std::cout << "Captain! setting name: " << setting_name << std::endl;
-  std::cout << "Captain! query key: " << query_key << std::endl;
-
-  /* Ahoy, Captain! I think the issue here is that the "query_key" is geom.slope and the setting
-     name is "slope". setting_name should be "geom" and query_key should be "slope" */
-  /* How can we fix this? I think there is a way to get the path not the name */
-  /* Ahoy, Captain! Use getParent and getPath and all that */
 
   /* check for array status */
   if( setting.isArray() )
@@ -65,32 +57,40 @@ void libconfig_string_query::operator()( std::string const &query_key,
 
     for( int i = 0; i < len; i++ )
     {
-      T value = setting[ i ];
-      std::cout << "Captain! setting: " << value << std::endl;
+      T value;
+
       if( setting[ i ].lookupValue( setting_name.c_str(), value ) == false )
       {
-        std::cout << "Captain! Type is: " << typeid( T ).name() << std::endl;
+        std::cout << "Ahoy, Captain! " << setting_name << std::endl;
+        
+        throw lookup_failed( query_key );
       }
-      query_values.push_back( value );
+
+      else query_values.push_back( value );
     }
   }
 
   else
   {
-    /* create an exception for here and for the case where a vector is accessed as a scalar */
-    std::cout << "Ahoy! This setting is not a vector. Create a new exception for it"
-              << std::endl;
-
-    exit( 0 );
+    /* Captain! */
+    throw 0;
   }
 }
 
 template< typename T >
-void libconfig_string_query::operator()( std::string const &query_key, T &query_value ) const
+void libconfig_string_query::operator()( std::string const query_key, T &query_value ) const
 {
   if( cfg.exists( query_key.c_str() ) == false )
   {
-    throw( invalid_key( query_key ) );
+    throw invalid_key( query_key );
+  }
+
+  auto const &setting = cfg.getRoot().lookup( query_key );
+
+  if( setting.isArray() )
+  {
+    /* Captain! */
+    throw 0;
   }
 
   else
@@ -99,8 +99,7 @@ void libconfig_string_query::operator()( std::string const &query_key, T &query_
 
     if( success == false ) 
     {
-      std::cout << "Ahoy! lookup failed on: " << query_key << std::endl;
-      throw( lookup_failed( query_key ) );
+      throw lookup_failed( query_key );
     }
   }
 }
@@ -112,17 +111,8 @@ class config_module_base
   config_module_base( class libconfig_string_query const &query,
                       std::string module_path = "");
 
-  /* I literally want "T" itself to be a template template parameter:
-     I want T to mean std::vector< T >*/
   template< typename T = std::shared_ptr< class config_module_base > >
   T get( int key );
-
-  /* Captain! To fix this, you need to create a "get" that calls the query operator on
-     vectors instead of scalars. Rename this to get_vector() */
-  /*
-  template< typename T >
-  std::vector< T > get( int key );
-  */
 
   template< typename T >
   void generate_sub_module( int key );
