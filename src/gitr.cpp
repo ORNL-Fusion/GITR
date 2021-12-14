@@ -1,3 +1,21 @@
+/* COMMENTS J. Guterl:
+ * Modularization of the gitr.cpp:
+ * Easy and safe tasks: functionalize writing of data into files. Deemed safe because he does not broke the physics (only damp data)
+ * Medium tasks: reorganize the data structure. In order to make it simple and readable, I suggest to organize the data using data structure (aka classes in oop) by functions.
+ *               This needs to be done slowly and sequentially as it can broke the flow if data are used by physics driver. That can be done safely for monitoring data such as history, spectro, ect...
+ *               It should be just adding references in front of variable: historyX becomes historyStructName->historyX.
+ * Hard:       : following the above structuration of the data, one probably look for class methods to write an object:
+ * 				history->init(NP); history->collect() -> history->dump(filename)
+ *
+ * Code structure: split gitr.cpp into input_driver.cpp and init_driver.cpp with the initialization tasks
+ *                 and put main loop into a separate loop_driver.cpp. Need to centralize all the mpi/cuda broadcasting tasks into one place first (should be just copypasting the broadcast with the right if flags).
+ *                 It is safe to put the data into a structure as it will not change the typing of it to carry it between init and main_loop phase.
+ *
+ *
+ *
+ *
+ * */
+
 #include "Boundary.h"
 //#include "Fields.h"
 #include "Particles.h"
@@ -91,7 +109,11 @@ CLI11_PARSE( app, argc, argv );
 std::cout << "file_name read from stdin: " << file_name << std::endl;
 
 */
-
+	  /* *****************************************************************  */
+	  /* *****************************************************************  */
+	  /* *********************** BEGIN INITIALIZATION      ********************   */
+	  /* *****************************************************************  */
+	  /* *****************************************************************  */
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
   class libconfig_string_query query( "input/gitrInput.cfg" );
@@ -839,8 +861,10 @@ if( geom_hash == 1 )
   fsec0 fs0 = finish_clock0 - start_clock0;
   printf("Time taken          is %6.3f (secs) \n", fs0.count());
   if (world_rank == 0) {
+	  /* START BLOCK: write_hash(...) - easy - netcdf  */
     for (int i = 0; i < nHashes; i++) {
       std::cout << "opening file" << std::endl;
+
       netCDF::NcFile ncFile_hash("output/geomHash" + std::to_string(i) + ".nc",
                          netCDF::NcFile::replace);
       std::cout << "opened file" << std::endl;
@@ -880,6 +904,7 @@ if( geom_hash == 1 )
       hash.putVar(&closeGeom[ncIndex]);
       ncFile_hash.close();
     }
+    /* END BLOCK: write_hash(...) - easy - netcdf  */
   }
       std::cout << "created vars2" << std::endl;
 }
@@ -1088,6 +1113,7 @@ if( geom_hash_sheath > 1 )
   fsec0_s fs0_s = finish_clock0_s - start_clock0_s;
   printf("Time taken          is %6.3f (secs) \n", fs0_s.count());
   if (world_rank == 0) {
+	  /* START BLOCK: write_hash_sheath(...) - easy - netcdf  */
     netCDF::NcFile ncFile_hash_sheath("output/geomHash_sheath.nc", netCDF::NcFile::replace);
     netCDF::NcDim hashNR_sheath = ncFile_hash_sheath.addDim("nR", nR_closeGeom_sheath);
     netCDF::NcDim hashNY_sheath = ncFile_hash_sheath.addDim("nY", nY_closeGeom_sheath);
@@ -1112,6 +1138,7 @@ if( geom_hash_sheath > 1 )
     hash_gridZ_sheath.putVar(&closeGeomGridz_sheath[0]);
     hash_sheath.putVar(&closeGeom_sheath[0]);
     ncFile_hash_sheath.close();
+    /* END BLOCK: write_hash_sheath(...) - easy - netcdf  */
   }
 #if USE_CUDA
   cudaDeviceSynchronize();
@@ -1446,7 +1473,7 @@ if( generate_lc > 0 )
         }
       }
     }
-
+    /* Start BLOCK: write_connection_length(...) - easy - netcdf  */
     NcFile ncFileLC("LcS.nc", NcFile::replace);
     vector<NcDim> dims_lc;
     NcDim nc_nTracers = ncFileLC.addDim("nTracers", nTracers);
@@ -1491,6 +1518,7 @@ if( generate_lc > 0 )
 #endif
     nc_gridZLc.putVar(&gridZLc[0]);
     ncFileLC.close();
+    /* END BLOCK: write_connection_length(...) - easy - netcdf  */
 #if USE_MPI > 0
   }
   MPI_Bcast(Lc.data(), nTracers, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -1909,6 +1937,8 @@ if( flowv_interp == 1 )
       flowVz[i] = flowVzSub[i];
     }
   }
+  /* START BLOCK: write_flow(...) - easy - netcdf - return struct with xp and vp values -  */
+
   NcFile ncFileFlow("flowV.nc", NcFile::replace);
   NcDim nFlowV = ncFileFlow.addDim("n_flowV", n_flowV);
   NcDim nc_nRflow = ncFileFlow.addDim("nR", nR_flowV);
@@ -3326,14 +3356,19 @@ if( flowv_interp == 1 )
   gitr_precision randA = 0.0;
   int lowIndA = 0;
 #endif
+
+
+
   std::cout << "Starting psourcefile import " << std::endl;
 #if PARTICLE_SOURCE_FILE > 0 // File source
   libconfig::Config cfg_particles;
   vector<gitr_precision> xpfile(nP), ypfile(nP), zpfile(nP), vxpfile(nP), vypfile(nP),
       vzpfile(nP);
+
   std::string ncParticleSourceFile;
   int nPfile = 0;
   if (world_rank == 0) {
+	  /* START BLOCK: read_particle(...) - medium - netcdf - return struct with xp and vp values -  */
     getVariable(cfg, "particleSource.ncFileString", ncParticleSourceFile);
     std::cout << "About to try to open NcFile ncp0 " << std::endl;
     // Return this in event of a problem.
@@ -3374,6 +3409,7 @@ if( flowv_interp == 1 )
     std::cout << "defined file vectors " << std::endl;
     ncp.close();
     std::cout << "closed ncp " << std::endl;
+    /* END BLOCK: read_particle(...) - medium - netcdf - return struct with xp and vp values -  */
   }
 #if USE_MPI > 0
   MPI_Bcast(&nPfile, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -3598,7 +3634,8 @@ if( flowv_interp == 1 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-    std::cout << "writing particles out file" << std::endl;
+	  /* START BLOCK: write_particle(...) - easy - netcdf  */
+	std::cout << "writing particles out file" << std::endl;
     netCDF::NcFile ncFile_particles("output/particleSource.nc", netCDF::NcFile::replace);
     netCDF::NcDim pNP = ncFile_particles.addDim("nP", nP);
     netCDF::NcVar p_surfNormx = ncFile_particles.addVar("surfNormX", netcdf_precision, pNP);
@@ -3621,6 +3658,7 @@ if( flowv_interp == 1 )
     p_z.putVar(&pz[0]);
     ncFile_particles.close();
     std::cout << "finished writing particles out file" << std::endl;
+    /* END BLOCK: write_particle(...) - easy - netcdf  */
 #if USE_MPI > 0
   }
 #endif
@@ -3642,7 +3680,8 @@ if( flowv_interp == 1 )
     particleArray->vz[i] = mag_trace * std::cos(phi_trace);
   }
 #endif
-
+  /* START BLOCK: init_history(...) - easy - put all the vectors positionHistoryXXXXX into a structure!!!
+   * safe move because history only collect data and do not impact physics driver */
 #if PARTICLE_TRACKS > 0
   int subSampleFac = 1;
   if (world_rank == 0) {
@@ -3708,6 +3747,10 @@ if( flowv_interp == 1 )
   std::vector<gitr_precision> weightHistoryGather(nHistories);
 #endif
 #endif
+  /* END BLOCK: init_history(...) - easy  */
+
+
+  /* START BLOCK: put those variables in a structure - medium */
   gitr_precision *finalPosX = new gitr_precision[nP];
   gitr_precision *finalPosY = new gitr_precision[nP];
   gitr_precision *finalPosZ = new gitr_precision[nP];
@@ -3717,6 +3760,12 @@ if( flowv_interp == 1 )
   gitr_precision *transitTime = new gitr_precision[nP];
   gitr_precision *hitWall = new gitr_precision[nP];
 
+
+  /* *****************************************************************  */
+  /* *****************************************************************  */
+  /* *********************** END INITIALIZATION      ********************   */
+  /* *****************************************************************  */
+  /* *****************************************************************  */
   std::cout << "Beginning random number seeds" << std::endl;
   std::uniform_real_distribution<gitr_precision> dist(0, 1e6);
 
@@ -3731,7 +3780,11 @@ if( flowv_interp == 1 )
   //std::default_random_engine generator5(rd());
   //std::default_random_engine generator6(rd());
 //}
-
+  /* *****************************************************************  */
+  /* *****************************************************************  */
+  /* *********************** INIT MAIN LOOP      ********************   */
+  /* *****************************************************************  */
+  /* *****************************************************************  */
   thrust::counting_iterator<std::size_t> particleBegin(pStartIndx[world_rank]);
   thrust::counting_iterator<std::size_t> particleEnd(
       pStartIndx[world_rank] + nActiveParticlesOnRank[world_rank] );
@@ -4001,7 +4054,10 @@ if( flowv_interp == 1 )
 #endif
       }
     }
+    /* BLOCK: write_force(...) - easy - netcdf  */
     std::cout << " about to write ncFile_forces " << std::endl;
+
+
     netCDF::NcFile ncFile_force("output/forces.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nRf = ncFile_force.addDim("nR", nR_force);
     netCDF::NcDim nc_nZf = ncFile_force.addDim("nZ", nZ_force);
@@ -4047,6 +4103,7 @@ if( flowv_interp == 1 )
     dvETGzf.putVar(&dvETGz[0]);
     dvETGtf.putVar(&dvETGt[0]);
     ncFile_force.close();
+    /* END BLOCK: write_force(...) */
     particleArray->setParticleV(0, px[0], py[0], pz[0], pvx[0], pvy[0], pvz[0],
                                 Z, amu, charge, dt);
   }
@@ -4126,6 +4183,13 @@ if( flowv_interp == 1 )
     /* Ahoy! this is a 3 level 4-loop to calculate density n = (x, y, q). To show the spacial
        density and the result. Loop over timesteps, each operator loops over a section of
        the particles... find 0 */
+
+
+/* *****************************************************************  */
+/* *****************************************************************  */
+/* *********************** START MAIN LOOP      **********************  */
+/* *****************************************************************  */
+/* *****************************************************************  */
     for (tt; tt < nT; tt++) {
 #if USE_SORT > 0
        dev_tt[0] = tt;
@@ -4216,6 +4280,11 @@ if( flowv_interp == 1 )
 #endif
 #endif
     }
+    /* *****************************************************************  */
+    /* *****************************************************************  */
+    /* *********************** END MAIN LOOP      **********************  */
+    /* *****************************************************************  */
+    /* *****************************************************************  */
 #if PARTICLE_TRACKS > 0
     tt = nT;
     // dev_tt[0] = tt;
@@ -4628,6 +4697,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     }
     outfile2.close();
     // Write netCDF output for positions
+    /* START BLOCK: write_position(...) - easy - netcdf  */
     netCDF::NcFile ncFile0("output/positions.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nP0 = ncFile0.addDim("nP", nP);
     vector<netCDF::NcDim> dims0;
@@ -4680,6 +4750,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
   nc_dt0.putVar(&particleArray->dt[0]);
 #endif
     ncFile0.close();
+    /* END BLOCK: write_position(...) - easy - netcdf  */
     // auto particleArray2 = new Particles(1);
     // std::cout << "particleArray2 z weight"<<particleArray2->z[0] << " " <<
     // particleArray2->weight[0] << std::endl;
@@ -4748,6 +4819,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
         srf = srf + 1;
       }
     }
+	/* START BLOCK: write_surface_data(...) - easy - netcdf  */
     netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
     vector<netCDF::NcDim> dims1;
@@ -4798,6 +4870,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
     // nc_surfADistGrid.putVar(&surfaces->gridA[0]);
     ncFile1.close();
+    /* END BLOCK: write_surface_data(...) - easy - netcdf  */
 #else
     std::vector<int> surfaceNumbers(nSurfaces, 0);
     int srf = 0;
@@ -4809,6 +4882,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
         srf = srf + 1;
       }
     }  
+    /* START BLOCK: write_surface_data(...) - easy - netcdf  */
     netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
     vector<netCDF::NcDim> dims1;
@@ -4858,11 +4932,13 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // nc_surfEDistGrid.putVar(&surfaces->gridE[0]);
     // NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
     // nc_surfADistGrid.putVar(&surfaces->gridA[0]);
+
     ncFile1.close();
+    /* END BLOCK: write_surface_data(...) - easy - netcdf  */
 #endif
 #endif
 #if PARTICLE_TRACKS > 0
-
+    /* START BLOCK: write_history_data(...) - easy - netcdf  */
     // Write netCDF output for histories
     netCDF::NcFile ncFile_hist("output/history.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nT = ncFile_hist.addDim("nT", nHistoriesPerParticle);
@@ -4915,9 +4991,12 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_charge.putVar(&chargeHistory[0]);
 #endif
     ncFile_hist.close();
+    /* END BLOCK: write_history_data(...) - easy - netcdf  */
 #endif
+
 #if SPECTROSCOPY > 0
     // Write netCDF output for density data
+    /* START BLOCK: write_spectro_data(...) - easy - netcdf  */
     netCDF::NcFile ncFile("output/spec.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
     netCDF::NcDim nc_nR = ncFile.addDim("nR", net_nX);
@@ -4942,16 +5021,19 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netcdf_precision, nc_nY);
     nc_gridY.putVar(&gridY_bins[0]);
 #endif
+
 #if USE_MPI > 0
     nc_n.putVar(&net_BinsTotal[0]);
 #else
     nc_n.putVar(&net_Bins[0]);
 #endif
     ncFile.close();
+    /* END BLOCK: write_history_data(...) - easy - netcdf  */
 #endif
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
 #endif
+
 #if USE_MPI > 0
 /*
     for(int i=0;i<100;i++)
