@@ -57,16 +57,12 @@ void libconfig_string_query::operator()( std::string const query_key,
 
     for( int i = 0; i < len; i++ )
     {
-      T value;
+      T value = setting[ i ];
 
-      if( setting[ i ].lookupValue( setting_name.c_str(), value ) == false )
-      {
-        std::cout << "Ahoy, Captain! " << setting_name << std::endl;
-        
-        throw lookup_failed( query_key );
-      }
+      /* Ahoy, Captain! What happens with a bad lookup? Is an exception caught? Should you
+         catch this one? */
 
-      else query_values.push_back( value );
+      query_values.push_back( value );
     }
   }
 
@@ -116,6 +112,8 @@ class config_module_base
 
   template< typename T >
   void generate_sub_module( int key );
+
+  std::string lookup_key( int key ) { return lookup[ key ]; };
 
   protected:
 

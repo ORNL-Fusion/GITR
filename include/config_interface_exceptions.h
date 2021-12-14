@@ -52,6 +52,35 @@ class lookup_failed: public std::exception
     message{ "configuration interface error - lookup failed for registered key: " };
 };
 
+class config_exception_base : public std::exception
+{
+  public:
+
+    config_exception_base()
+      :
+      query_key( query_key )
+    { }
+
+    std::string get_key() const { return query_key; }
+
+    std::string get_message() const { return message; }
+
+    const char* what() const throw() 
+    {
+      return message.c_str();
+    }
+
+  private:
+    
+    std::string const query_key;
+
+    std::string static const inline 
+    message{ "configuration interface error - key not found: " };
+};
+
+/* Captain! The class above is currently unused: change the static stuff in the one below.
+   Then change to use the base class. Then change them all? Go for it. */
+
 class invalid_key: public std::exception
 {
   public:

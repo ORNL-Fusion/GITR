@@ -97,7 +97,7 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
       {
         lookup[ testing_dummy::setting_doubles ] = "setting_doubles";
         lookup[ testing_dummy::setting_string ] = "setting_string";
-        lookup[ testing_dummy::nonexistent_setting ] = "random_lookup_string_key";
+        lookup[ testing_dummy::nonexistent_setting ] = "not_there_string_key";
 
         /* lookup[ testing_dummy::unregistered ] is left unset to test exception triggering */
       }
@@ -126,30 +126,38 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
     }
 
     /* test looking up an unregistered key */
+    /*
     REQUIRE_THROWS_MATCHES( testing_dummy->get( testing_dummy::unregistered ),
                             unregistered_config_mapping,
                             Catch::Matchers::Message( 
                             unregistered_config_mapping::get_message() ) ); 
+    */
 
     /* test lookup up registered key with non-existent config value */
+    bool caught = false;
+    std::string key;
+
     try
     {
-      std::cout << "Ahoy!" << std::endl;
       int trash = testing_dummy->get< int >( testing_dummy::nonexistent_setting );
     }
 
     catch( class invalid_key const &exception )
     {
-      std::cout << "Ahoy!" << std::endl;
+      caught = true;
+
       std::string const error_message{ exception.what() };
 
-      std::cout << error_message << exception.get_key() << std::endl;
+      std::string const error_key{ exception.get_key() };
+
+      REQUIRE( error_key == "testing_dummy.not_there_string_key" );
+
+      REQUIRE( exception.what() == exception.get_message() );
+
+      std::cout << error_message << error_key << std::endl;
     }
 
-    REQUIRE_THROWS_MATCHES( testing_dummy->get< int >( testing_dummy::nonexistent_setting ),
-                            invalid_key,
-                            Catch::Matchers::Message(
-                            invalid_key::get_message() ) );
+    REQUIRE( caught ); 
 
     /* Captain! Make a PR for all of this so it is visible on the pull requests in GITR */
     /* test lookup on vector type vs scalar type */
@@ -176,8 +184,6 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
     */
 
     /* try opening a bad file too. After this, be done with GITR this week please */
-
-    /* Captain! Catch the exceptions it throws - expect a specific key */
 
     /* also handle the case where the desired config option is not available */
 
