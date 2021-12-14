@@ -7,12 +7,14 @@ target_link_libraries( interp2d thrust )
 
 target_link_libraries( flags libconfig thrust )
 
+target_link_libraries( data_file_io ${data_file_io_interface} )
+
 target_link_libraries( utils 
                        libconfig
                        thrust
                        interp2d
                        data_file_io
-                       netcdf )
+                       netcdf ) 
 
 target_link_libraries( boris thrust )
 

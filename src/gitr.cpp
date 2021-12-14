@@ -840,6 +840,7 @@ if( geom_hash == 1 )
   printf("Time taken          is %6.3f (secs) \n", fs0.count());
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
+      /* HERE: geom hash block begin */
       std::cout << "opening file" << std::endl;
       netCDF::NcFile ncFile_hash("output/geomHash" + std::to_string(i) + ".nc",
                          netCDF::NcFile::replace);
@@ -879,6 +880,7 @@ if( geom_hash == 1 )
                   nZ_closeGeom[i - 1] * n_closeGeomElements[i - 1];
       hash.putVar(&closeGeom[ncIndex]);
       ncFile_hash.close();
+      /* HERE: geom hash block end */
     }
   }
       std::cout << "created vars2" << std::endl;

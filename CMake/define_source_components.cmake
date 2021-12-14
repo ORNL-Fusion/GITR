@@ -19,6 +19,16 @@ endif()
 
 target_include_directories( GITR PUBLIC include )
 
+if( GITR_USE_NETCDF )
+
+  set( data_file_io_interface "data_file_io_netcdf" )
+
+elseif( GITR_USE_HDF5 )
+
+  set( data_file_io_interface "data_file_io_hdf5" )
+
+endif()
+
 # CPU-only targets
 set( cpu_targets
      efield_interp
@@ -26,9 +36,11 @@ set( cpu_targets
      utils
      flags
      config_interface
-     slow_math
+     ${data_file_io_interface}
      data_file_io
+     slow_math
      setup)
+
 
 # conditionally compile as GPU targets
 set( gpu_targets
@@ -50,6 +62,8 @@ if( NOT GITR_USE_CUDA )
 endif()
 
 foreach( component IN LISTS cpu_targets )
+
+  message( "attempting to compile ${component}.cpp" )
 
   add_library( ${component} src/${component}.cpp )
 

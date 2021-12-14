@@ -75,13 +75,6 @@ int importVectorFieldNs(libconfig::Config &cfg,std::string input_path,int interp
 int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int nR, int nY,int nZ,gitr_precision &gridR,gitr_precision &gridY,gitr_precision &gridZ,gitr_precision &r, gitr_precision &y,gitr_precision &z,std::string &fileToRead);
 int importGeometry(libconfig::Config &cfg,sim::Array<Boundary> &boundaries);
 
-int read_profileNsChar(const char *fileName,const char *nxName,const char *nzName,int &n_x,int &n_z );
-int read_profile2d( std::string fileName,std::string dataName, sim::Array<gitr_precision>& data);
-int read_profile1d( std::string fileName,std::string gridxName, sim::Array<gitr_precision>& gridx);
-int read_profile3d( std::string fileName,std::string dataName, sim::Array<int>& data);
-
-int read_profiles( std::string fileName, int &n_x, int &n_z,std::string gridxName, sim::Array<gitr_precision>& gridx,std::string gridzName,
-                            sim::Array<gitr_precision>& gridz, std::string dataName, sim::Array<gitr_precision>& data);
 //void OUTPUT(char outname[],int nX, int nY, float **array2d);
 //void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, float *array2d);
 //void OUTPUT1d(std::string folder,std::string outname,int nX, float *array2d);
