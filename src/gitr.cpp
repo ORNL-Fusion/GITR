@@ -1,6 +1,6 @@
 /* COMMENTS J. Guterl:
  * Modularization of the gitr.cpp:
- * Easy and safe tasks: functionalize writing of data into files. Deemed safe because he does not broke the physics (only damp data)
+ * Easy and safe tasks: functionalize writing of data into files. Deemed safe because it does not broke the physics (only damp data)
  * Medium tasks: reorganize the data structure. In order to make it simple and readable, I suggest to organize the data using data structure (aka classes in oop) by functions.
  *               This needs to be done slowly and sequentially as it can broke the flow if data are used by physics driver. That can be done safely for monitoring data such as history, spectro, ect...
  *               It should be just adding references in front of variable: historyX becomes historyStructName->historyX.
@@ -10,6 +10,9 @@
  * Code structure: split gitr.cpp into input_driver.cpp and init_driver.cpp with the initialization tasks
  *                 and put main loop into a separate loop_driver.cpp. Need to centralize all the mpi/cuda broadcasting tasks into one place first (should be just copypasting the broadcast with the right if flags).
  *                 It is safe to put the data into a structure as it will not change the typing of it to carry it between init and main_loop phase.
+ * COMMENTS on MPI: the mpi implementation is all over the place. It is probably easier to have all the parameters loading first then have a broadcasting function which take care of everything so it follow cuda synchronize approach.
+ *                   Also the use of cuda synchronize is unclear. Not sure how MPI broadcasting is not a bottleneck here.
+ *                   The best way is probably to finish a serial version first then move the mpi commands and compare the output (need to have a deterministic list of  seeds shared between the processors to compare apple to apple.
  *
  *
  *
@@ -3441,10 +3444,33 @@ if( flowv_interp == 1 )
 #if USE3DTETGEOM > 0
   // MPI_Bcast(&boundaries[0].area, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
 #endif
+  /* ************ START PARTICLE SOURCE ********************* */
   sim::Array<gitr_precision> pSurfNormX(nP), pSurfNormY(nP), pSurfNormZ(nP), px(nP),
       py(nP), pz(nP), pvx(nP), pvy(nP), pvz(nP);
+  /* I'm getting a bit grumpy but the person who wrote that never heard of STRUCTURE or CLASS ???!!!!!!!Programming 101 */
+//EXAMPLE:
+//struct ParticleSource
+//{
+//    int nP;
+//    sim::Array<type> &arr; (Harry: how do define a ref to an class instance?)
+//public:
+//    ParticleSource(int nP) :
+//    {
+//        arr(nP); //allocate
+//    }
+//
+//    ~Test()
+//    {
+//      ~arr; //deallocate
+//    }
+//};*
+//   *
+//   *
+//   */
+
   int surfIndexMod = 0;
   gitr_precision eVec[3] = {0.0};
+
   for (int i = 0; i < nP; i++) {
   //std::cout<< "setting particle " << i << std::endl;
 #if PARTICLE_SOURCE_SPACE > 0 // File source
@@ -3631,10 +3657,13 @@ if( flowv_interp == 1 )
     pvy[i] = vy;
     pvz[i] = vz;
   }
+  /* ************ END PARTICLE SOURCE ********************* */
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
 	  /* START BLOCK: write_particle(...) - easy - netcdf  */
+
+	  /* void write_particles(int nP, int pNP, &pSurfNormX, pSurfNormY,pSurfNormZ, pvx, pvy, pvz, px, py, pz) */
 	std::cout << "writing particles out file" << std::endl;
     netCDF::NcFile ncFile_particles("output/particleSource.nc", netCDF::NcFile::replace);
     netCDF::NcDim pNP = ncFile_particles.addDim("nP", nP);
@@ -4697,7 +4726,9 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     }
     outfile2.close();
     // Write netCDF output for positions
-    /* START BLOCK: write_position(...) - easy - netcdf  */
+    /* START BLOCK: write_position() - easy - netcdf  */
+    /* should add a subsampling option. Dumping and plotting a billion of particles is kind of expansive... Parameters should be a list of indexes of particles that need be dumped */
+    /* write_particle_position(int nP, )
     netCDF::NcFile ncFile0("output/positions.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nP0 = ncFile0.addDim("nP", nP);
     vector<netCDF::NcDim> dims0;
@@ -4719,6 +4750,11 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_time0 = ncFile0.addVar("time", netcdf_precision, dims0);
     netCDF::NcVar nc_dt0 = ncFile0.addVar("dt", netcdf_precision, dims0);
 #if USE_MPI > 0
+    // could use a structure to collect data! simplicity would suggest to have one instance of structure (non-allocated) per mpi process then allocate each on each process to limit memory issue.
+     * then use an operator overloading to broadcast and sum all collector array together and dump them.
+     * could also iterate over the attributes with boost instead of writing tons of lines to dump the data!
+     * see https://stackoverflow.com/questions/17660095/iterating-over-a-struct-in-c
+     */
     nc_x0.putVar(&xGather[0]);
     nc_y0.putVar(&yGather[0]);
     nc_z0.putVar(&zGather[0]);
