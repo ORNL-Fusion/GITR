@@ -1995,8 +1995,9 @@ if( flowv_interp == 1 )
   OUTPUT2d(profiles_folder, outnameFlowVt, nR_flowV, nZ_flowV, &flowVt.front());
 #endif
 */
+  /* END BLOCK: write_flow(...) - easy - netcdf - return struct with xp and vp values -  */
 }
-/* END BLOCK: write_flow(...) - easy - netcdf - return struct with xp and vp values -  */
+
   // Background plasma temperature gradient field intitialization
   int nR_gradT = 1;
   int nY_gradT = 1;
@@ -4750,7 +4751,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // Write netCDF output for positions
     /* START BLOCK: write_position() - easy - netcdf  */
     /* should add a subsampling option. Dumping and plotting a billion of particles is kind of expansive... Parameters should be a list of indexes of particles that need be dumped */
-    /* write_particle_position(int nP, )
+    /* write_particle_position(int nP, )*/
     netCDF::NcFile ncFile0("output/positions.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nP0 = ncFile0.addDim("nP", nP);
     vector<netCDF::NcDim> dims0;
