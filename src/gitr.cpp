@@ -5,7 +5,7 @@
  *               This needs to be done slowly and sequentially as it can broke the flow if data are used by physics driver. That can be done safely for monitoring data such as history, spectro, ect...
  *               It should be just adding references in front of variable: historyX becomes historyStructName->historyX.
  * Hard:       : following the above structuration of the data, one probably look for class methods to write an object:
- * 				history->init(NP); history->collect() -> history->dump(filename)
+ * 				history->init(NP); history->track(); history->collect() -> history->dump(filename)
  *
  * Code structure: split gitr.cpp into input_driver.cpp and init_driver.cpp with the initialization tasks
  *                 and put main loop into a separate loop_driver.cpp. Need to centralize all the mpi/cuda broadcasting tasks into one place first (should be just copypasting the broadcast with the right if flags).
@@ -15,8 +15,28 @@
  *                   The best way is probably to finish a serial version first then move the mpi commands and compare the output (need to have a deterministic list of  seeds shared between the processors to compare apple to apple.
  *
  *
+ * Data Structure: need to design containers (struct/class) for each type of data
+ *                 -> surface elements (classical performance considerations for arrays of struct vs struct of arrys required. Guess struct of arrays for vectorization as usual)
+ *                 -> particles (already done)
+ *                 -> volume elements
+ *                 -> plasma conditions
+ *                 -> monitors (history, spectro)
+ *                 -> inputs (probably what was implemented to get rid of built-in options)
+ *  We could template all of that now as well and slowly move elements (monitoring first) over time.
+ * Workflow should be:
+ * 1) read completely the inputs and verify validity of parameters (options among permitted choices, dimension , size). Do not mixed up input reading and allocation of variables as it makes the workflow untrackable
+ * 2) load geometry and surface elements
+ * 3) load plasma conditions
+ * 4) load species and surface conditions
+ * 5) broadcast as necessary  (can be put in step 2 to 5 if too big)
+ * 6) run main loop
+ * 7) collect and dump data and do a conservation check (total amount of atoms carried should be consistent across entire volume. Need a loss collector)
  *
- *
+ * Note Need to define two entry points for main_loop: one through input reading and command line execution, one through instance method (gitr->run_main_loop) so it can be executed from a parent instance
+
+ * -->>> Let's make a rule:
+ * All new development (e.g surface model) need to be embedded into a container (struct or class) and written in a separate file).
+ * Only methods applied to the container itself can be called in GITR.cpp!
  * */
 
 #include "Boundary.h"
@@ -1941,7 +1961,7 @@ if( flowv_interp == 1 )
     }
   }
   /* START BLOCK: write_flow(...) - easy - netcdf - return struct with xp and vp values -  */
-
+ /* void write_flow(n_flowV, nR_flowV, nY_flowV, nZ_flowV, flowVr, flowVt, flowVz) */
   NcFile ncFileFlow("flowV.nc", NcFile::replace);
   NcDim nFlowV = ncFileFlow.addDim("n_flowV", n_flowV);
   NcDim nc_nRflow = ncFileFlow.addDim("nR", nR_flowV);
@@ -1958,7 +1978,8 @@ if( flowv_interp == 1 )
   nc_flowVt.putVar(&flowVt[0]);
   nc_flowVz.putVar(&flowVz[0]);
   ncFileFlow.close();
-  std::string outnameFlowVr = "flowVr.m";
+  /* remove that dumping into matlab format. useless*/
+/*  std::string outnameFlowVr = "flowVr.m";
   std::string outnameFlowVz = "flowVz.m";
   std::string outnameFlowVt = "flowVt.m";
 #if LC_INTERP == 3
@@ -1973,8 +1994,9 @@ if( flowv_interp == 1 )
   OUTPUT2d(profiles_folder, outnameFlowVz, nR_flowV, nZ_flowV, &flowVz.front());
   OUTPUT2d(profiles_folder, outnameFlowVt, nR_flowV, nZ_flowV, &flowVt.front());
 #endif
+*/
 }
-
+/* END BLOCK: write_flow(...) - easy - netcdf - return struct with xp and vp values -  */
   // Background plasma temperature gradient field intitialization
   int nR_gradT = 1;
   int nY_gradT = 1;
@@ -3663,7 +3685,7 @@ if( flowv_interp == 1 )
 #endif
 	  /* START BLOCK: write_particle(...) - easy - netcdf  */
 
-	  /* void write_particles(int nP, int pNP, &pSurfNormX, pSurfNormY,pSurfNormZ, pvx, pvy, pvz, px, py, pz) */
+	  /* void write_particles(int nP, int pNP, &pSurfNormX, &pSurfNormY,&pSurfNormZ, &pvx, &pvy, &pvz, &px, &py, &pz) */
 	std::cout << "writing particles out file" << std::endl;
     netCDF::NcFile ncFile_particles("output/particleSource.nc", netCDF::NcFile::replace);
     netCDF::NcDim pNP = ncFile_particles.addDim("nP", nP);
