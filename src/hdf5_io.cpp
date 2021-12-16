@@ -1,4 +1,5 @@
 #include "hdf5_io.h"
+#include <iostream>
 
 void write_file( std::string file_name )
 {
@@ -12,7 +13,7 @@ void write_file( std::string file_name )
           dset_data[i][j] = i * 6 + j + 1;
 
   /* Open an existing file. */
-  file_id = H5Fopen(file_name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT);
+  file_id = H5Fcreate(file_name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
 
   /* Open an existing dataset. */
   dataset_id = H5Dopen2(file_id, "/dset", H5P_DEFAULT);
