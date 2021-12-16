@@ -26,6 +26,7 @@ set( cpu_targets
      utils
      flags
      config_interface
+     hdf5_io
      slow_math
      setup)
 

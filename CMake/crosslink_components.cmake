@@ -15,6 +15,9 @@ target_link_libraries( utils
 
 target_link_libraries( boris thrust )
 
+message( "Ahoy, Captain! Linking in ${prefix}/CMake-hdf5-1.13.0/build/bin/libhdf5${suffix}" )
+target_link_libraries( hdf5_io hdf5 ${prefix}/CMake-hdf5-1.13.0/build/bin/libhdf5${suffix} )
+
 if( OpenMP_CXX_FOUND )
 
   target_compile_options( surface_model PUBLIC ${OpenMP_CXX_FLAGS} )
@@ -91,6 +94,8 @@ target_link_libraries( surface_model_tests
 target_link_libraries( boris_tests test_utils flags libconfig utils boris slow_math )
 
 target_link_libraries( slow_math_tests test_utils slow_math )
+
+target_link_libraries( hdf5_io_tests test_utils hdf5_io hdf5 ${prefix}/CMake-hdf5-1.13.0/build/bin/libhdf5${suffix})
 
 if( OpenMP_CXX_FOUND )
 

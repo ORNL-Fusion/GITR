@@ -21,7 +21,8 @@ set( CMAKE_INSTALL_RPATH
      "${CMAKE_BINARY_DIR}"
      "${prefix}/libconfig_install/lib"
      "${prefix}/netcdf-c-install/lib"
-     "${prefix}/netcdf-cxx4-install/lib" )
+     "${prefix}/netcdf-cxx4-install/lib"
+     "${prefix}/CMake-hdf5-1.13.0/build/bin" )
 
 # OpenMP
 find_package( OpenMP )
@@ -35,7 +36,9 @@ list( APPEND dependencies cli11 )
 
 # hdf5
 # Captain! Get rid of the "find" modules - those are really outdated
-include( FindHDF5 )
+include( CMake/hdf5.cmake )
+
+list( APPEND dependencies hdf5 )
 
 # CUDA
 include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart

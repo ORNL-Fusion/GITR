@@ -18,6 +18,7 @@ target_link_libraries( test_utils PUBLIC catch2 )
 
 set( cpu_test_targets
      slow_math_tests
+     hdf5_io_tests
      config_interface_tests )
 
 # atomic tests does not compile and is disabled
