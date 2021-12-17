@@ -1496,6 +1496,9 @@ if( generate_lc > 0 )
         }
       }
     }
+
+
+
     /* Start BLOCK: write_connection_length(...) - easy - netcdf  */
     NcFile ncFileLC("LcS.nc", NcFile::replace);
     vector<NcDim> dims_lc;
@@ -1553,7 +1556,8 @@ if( generate_lc > 0 )
 #endif
   //}
 }
-
+/* START TEMPLATE PlasmaData: contain all plasma data, depends on datageom and datasurface and dataparticle to be sure that we have the right dataset e.g. for collisions between plasma species and impurities particles)*/
+/*   put all the variables defined in this block in the container PlasmaData */
 if( lc_interp > 1 )
 {
   std::cout << "Importing pre-existing connection length file" << std::endl;
@@ -2205,6 +2209,9 @@ if( flowv_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
+   *
+   *
+   */
   // Applying background values at material boundaries
   std::for_each(boundaries.begin(), boundaries.end() - 1,
                 boundary_init(background_Z, background_amu, nR_Dens, nZ_Dens,
@@ -2525,7 +2532,7 @@ if( flowv_interp == 1 )
   sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
   sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
 #endif
-
+  /* END TEMPLATE PlasmaData*/
   std::string outnameEfieldR = "EfieldR.m";
   std::string outnameEfieldZ = "EfieldZ.m";
   std::string outnameEfieldT = "EfieldT.m";
@@ -2536,6 +2543,7 @@ if( flowv_interp == 1 )
   // nR_Bfield, nZ_Bfield, &Efieldt.front());
   // OUTPUT2d(profiles_folder,outnameMinDist, nR_Bfield, nZ_Bfield,
   // &minDist.front());
+  /* START TEMPLATE TrackerData: contain all data top track particles (spectro+history+loss(not implemented)*/
 
 #if SPECTROSCOPY > 0
   gitr_precision netX0 = 0.0, netX1 = 0.0, netY0 = 0.0, netY1 = 0.0, netZ0 = 0.0,
@@ -2615,7 +2623,9 @@ if( flowv_interp == 1 )
     gridZ_bins[i] = netZ0 + i * 1.0 / (net_nZ - 1) * (netZ1 - netZ0);
   }
 #endif
+  /* END TEMPLATE TrackerData*/
 
+  /* This is plasmadata below */
   // Perp DiffusionCoeff initialization - only used when Diffusion interpolator
   // is = 0
   gitr_precision perpDiffusionCoeff = 0.0;
@@ -2632,6 +2642,10 @@ if( flowv_interp == 1 )
   MPI_Bcast(&perpDiffusionCoeff, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+  /* START TEMPLATE SurfaceData: contain all surface data with model options and data*/
+
+
   // Surface model import
   int nE_sputtRefCoeff = 1, nA_sputtRefCoeff = 1;
   int nE_sputtRefDistIn = 1, nA_sputtRefDistIn = 1;
@@ -2974,6 +2988,9 @@ if( flowv_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 #endif
+
+/* END TEMPLATE SurfaceData*/
+
   // Particle time stepping control
   // int ionization_nDtPerApply  =
   // cfg.lookup("timeStep.ionization_nDtPerApply"); int collision_nDtPerApply  =
@@ -3057,6 +3074,8 @@ if( flowv_interp == 1 )
             << " starting at " << pStartIndx[world_rank] 
             << " ending at " << pStartIndx[world_rank]+nPPerRank[world_rank] << std::endl;
   auto particleArray = new Particles(nParticles,1,cfg,gitr_flags);
+  /* START TEMPLATE ParticlesData: contain all particle data: initial mass, type, charge, x,y,z, vx,vy,vz, chemical reactions, collisions options and transport options  if needed
+   */
 
   gitr_precision x, y, z, E, vtotal, vx, vy, vz, Ex, Ey, Ez, amu, Z, charge, phi, theta,
       Ex_prime, Ez_prime, theta_transform;
@@ -3680,6 +3699,8 @@ if( flowv_interp == 1 )
     pvz[i] = vz;
   }
   /* ************ END PARTICLE SOURCE ********************* */
+
+
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
@@ -3713,7 +3734,9 @@ if( flowv_interp == 1 )
 #if USE_MPI > 0
   }
 #endif
+  /* END TEMPLATE PlasmaData */
 
+  /* what is that geometry tracer? You can just plot magnetic flux surface or line based on bx, by, bz ...   */
 #if GEOM_TRACE > 0
   std::uniform_real_distribution<gitr_precision> dist2(0, 1);
   // std::random_device rd2;
