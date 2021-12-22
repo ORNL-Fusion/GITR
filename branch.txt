@@ -1,0 +1,8 @@
+Purpose of this branch:
+
+1. Change cmake generator to ninja
+2. add "clean" command to delete what's not external
+3. Checks to not rebuild all of external every time
+4. updated documentation to describe 2 workflows:
+   managed (with spack) or unmanaged (build everything yourself)
+5. Make build system re-entrant - should be able to clean and rebuild without issue
