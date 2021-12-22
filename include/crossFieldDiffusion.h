@@ -111,7 +111,7 @@ if(flags->USE_PERPDIFFUSION>0)
                           particlesPointer->zprevious[indx],
                           nR_Bfield,nZ_Bfield,
                           BfieldGridRDevicePointer,BfieldGridZDevicePointer,
-                          BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
+                          BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer,flags->USE_CYLSYMM);
         
       Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
       if(Bmag < 1.0e-12) 
@@ -154,7 +154,7 @@ if(flags->USE_PERPDIFFUSION>0)
       gitr_precision B_plus[3] = {0.0};
       
       interp2dVector(&B_plus[0],x_plus,y_plus,z_plus,nR_Bfield,nZ_Bfield,
-                               BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
+                               BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer,flags->USE_CYLSYMM);
         gitr_precision Bmag_plus = std::sqrt(B_plus[0]*B_plus[0] + B_plus[1]*B_plus[1] + B_plus[2]*B_plus[2]);
     
     gitr_precision B_deriv1[3] = {0.0};

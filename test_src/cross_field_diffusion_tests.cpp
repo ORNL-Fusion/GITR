@@ -49,7 +49,7 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
 
     cfg_geom.setAutoConvert(true);
 
-    importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE);
+    importLibConfig(cfg_geom, "../test_data/cross_field_geometry.cfg");
 
     auto gitr_flags = new Flags( cfg_geom );
 

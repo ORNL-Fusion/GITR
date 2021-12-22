@@ -236,7 +236,7 @@ int main(int argc, char **argv, char **envp) {
   gitr_precision Btest[3] = {0.0};
   interp2dVector(&Btest[0], 5.5, 0.0, -4.0, nR_Bfield, nZ_Bfield,
                  bfieldGridr.data(), bfieldGridz.data(), br.data(), bz.data(),
-                 by.data());
+                 by.data(),USECYLSYMM);
   //std::cout << "node " << world_rank << "Bfield at 5.5 -4 " << Btest[0] << " "
   //          << Btest[1] << " " << Btest[2] << std::endl;
   std::string profiles_folder = "output/profiles";
@@ -272,6 +272,7 @@ int main(int argc, char **argv, char **envp) {
               << std::endl;
   }
   int use3dtetgeom = use.get<int>( use::use3dtetgeom );
+  use3dtetgeom = 1;
 #if USE_MPI > 0
   MPI_Bcast(&nSurfaces, 1, MPI_INT, 0, MPI_COMM_WORLD);
   int nBoundaryMembers;
@@ -417,6 +418,7 @@ int main(int argc, char **argv, char **envp) {
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
   int geom_hash = use.get<int>( use::geom_hash);
+  use3dtetgeom = 1;
   //int use3dtetgeom = 1;
   if(geom_hash)
   {
@@ -488,7 +490,7 @@ int main(int argc, char **argv, char **envp) {
     {
       getVariable(cfg,geomHashCfg+"nY_closeGeom",nY_closeGeom[0]);
     }
-    }
+    
      nGeomHash = 0;
      nR_closeGeomTotal = 0;
      nY_closeGeomTotal = 0;
@@ -506,6 +508,7 @@ int main(int argc, char **argv, char **envp) {
      std::cout << "hhhash nr ny nz total " << nGeomHash << " " <<
      nR_closeGeomTotal << " " << nY_closeGeomTotal << " " <<
      nZ_closeGeomTotal<< std::endl;
+    }
   }
 #if USE_MPI > 0
   std::cout << " mpi broadcast hash " << std::endl;
@@ -722,6 +725,7 @@ if( geom_hash == 1 )
         << nY_closeGeom[0]  << " " << nZ_closeGeom[0] <<" "
         << n_closeGeomElements[0] << std::endl;
   
+  std::cout << "flags tet geom " << use3dtetgeom << " geomhash " << geom_hash << std::endl;
   hashGeom geo1(nLines, nHashes, boundaries.data(), closeGeomGridr.data(),
                 closeGeomGridy.data(), closeGeomGridz.data(),
                 n_closeGeomElements.data(), closeGeom.data(),
@@ -833,12 +837,9 @@ if( geom_hash == 1 )
       vector<netCDF::NcDim> geomHashDim;
       geomHashDim.push_back(hashNR);
       std::cout << "created dims" << std::endl;
-      geomHashDim.push_back(hashNZ);
-      geomHashDim.push_back(hashN);
       netCDF::NcVar hash_gridR = ncFile_hash.addVar("gridR", netcdf_precision, hashNR);
       std::cout << "created dims2" << std::endl;
       netCDF::NcVar hash_gridZ = ncFile_hash.addVar("gridZ", netcdf_precision, hashNZ);
-      netCDF::NcVar hash = ncFile_hash.addVar("hash", netCDF::ncInt, geomHashDim);
       std::cout << "created vars" << std::endl;
       int ncIndex = 0;
       if (i > 0)
@@ -846,6 +847,8 @@ if( geom_hash == 1 )
       hash_gridR.putVar(&closeGeomGridr[ncIndex]);
       if( use3dtetgeom > 0 )
       {
+      std::cout << "CREATING Y DIMENSION!!" << std::endl;
+
         netCDF::NcDim hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
         geomHashDim.push_back(hashNY);
         netCDF::NcVar hash_gridY = ncFile_hash.addVar("gridY", netcdf_precision, hashNY);
@@ -853,6 +856,9 @@ if( geom_hash == 1 )
           ncIndex = nY_closeGeom[i - 1];
         hash_gridY.putVar(&closeGeomGridy[ncIndex]);
       }
+      geomHashDim.push_back(hashNZ);
+      geomHashDim.push_back(hashN);
+      netCDF::NcVar hash = ncFile_hash.addVar("hash", netCDF::ncInt, geomHashDim);
 
       if (i > 0)
         ncIndex = nZ_closeGeom[i - 1];
@@ -1578,7 +1584,7 @@ if(temp_interp > 0 )
 
   gitr_precision testVec = 0.0;
   testVec = interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),
-                             TempGridz.data(), ti.data());
+                             TempGridz.data(), ti.data(),USECYLSYMM);
   std::cout << "Finished Temperature import " << testVec << std::endl;
 
   // Background Plasma Density Initialization
@@ -1648,11 +1654,11 @@ if( density_interp == 0 )
     std::cout << "Finished density import "
               << interp2dCombined(5.5, 0.0, -4.4, nR_Dens, nZ_Dens,
                                   &DensGridr.front(), &DensGridz.front(),
-                                  &ne.front())
+                                  &ne.front(),USECYLSYMM)
               << " "
               << interp2dCombined(0.0, 0.1, 0.0, nR_Dens, nZ_Dens,
                                   &DensGridr.front(), &DensGridz.front(),
-                                  &ne.front())
+                                  &ne.front(),USECYLSYMM)
               << std::endl;
 // for(int i=0;i<100;i++)
 //{
@@ -1804,15 +1810,15 @@ if( flowv_interp == 1 )
         //    << flowVGridz[j] << " " << nR_Temp << " "<<nZ_Temp << std::endl;
         teLocal = interp2dCombined(flowVGridr[i], thisY, flowVGridz[j], nR_Temp,
                                    nZ_Temp, &TempGridr.front(),
-                                   &TempGridz.front(), &te.front());
+                                   &TempGridz.front(), &te.front(),USECYLSYMM);
         tiLocal = interp2dCombined(flowVGridr[i], thisY, flowVGridz[j], nR_Temp,
                                    nZ_Temp, &TempGridr.front(),
-                                   &TempGridz.front(), &ti.front());
+                                   &TempGridz.front(), &ti.front(),USECYLSYMM);
         cs0 =
             std::sqrt((teLocal + tiLocal) * 1.602e-19 / (background_amu * 1.66e-27));
         interp2dVector(&BLocal[0], flowVGridr[i], thisY, flowVGridz[j],
                        nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-                       bfieldGridz.data(), br.data(), bz.data(), by.data());
+                       bfieldGridz.data(), br.data(), bz.data(), by.data(),USECYLSYMM);
         Bmag = std::sqrt(BLocal[0] * BLocal[0] + BLocal[1] * BLocal[1] +
                     BLocal[2] * BLocal[2]);
         Bnorm[0] = BLocal[0] / Bmag;
@@ -2012,7 +2018,7 @@ if( flowv_interp == 1 )
   gitr_precision gradTi[3] = {0.0};
   interp2dVector(&gradTi[0], 1.45, 0.0, -1.2, nR_gradT, nZ_gradT,
                  gradTGridr.data(), gradTGridz.data(), gradTiR.data(),
-                 gradTiZ.data(), gradTiY.data());
+                 gradTiZ.data(), gradTiY.data(), USECYLSYMM);
   std::cout << "thermal gradient interpolation gradTi " << gradTi[0] << " "
             << gradTi[1] << " " << gradTi[2] << " " << std::endl;
 
@@ -2257,7 +2263,7 @@ if( flowv_interp == 1 )
                                     &TempGridz.front(), &te.front());
         interp2dVector(&BLocal1[0], gridRLc[i], 0.0, gridZLc[j], nR_Bfield,
                        nZ_Bfield, bfieldGridr.data(), bfieldGridz.data(),
-                       br.data(), bz.data(), by.data());
+                       br.data(), bz.data(), by.data(),USECYLSYMM);
         Bmag1 = std::sqrt(BLocal1[0] * BLocal1[0] + BLocal1[1] * BLocal1[1] +
                      BLocal1[2] * BLocal1[2]);
         Bnorm1[0] = BLocal1[0] / Bmag1;
@@ -3145,7 +3151,7 @@ if( flowv_interp == 1 )
     gitr_precision localBnorm[3] = {0.0};
     interp2dVector(&localBnorm[0], particleSourceX[i], 0.0, particleSourceZ[i],
                    nR_Bfield, nZ_Bfield, bfieldGridr.data(), bfieldGridz.data(),
-                   br.data(), bz.data(), by.data());
+                   br.data(), bz.data(), by.data(),USECYLSYMM);
     vectorNormalize(localBnorm, localBnorm);
     boundaries[currentBoundaryIndex].getSurfaceNormal(perpVec);
     bDotSurfaceNorm = std::abs(vectorDotProduct(localBnorm, perpVec));
@@ -3463,7 +3469,7 @@ if( flowv_interp == 1 )
     gitr_precision localBnorm[3] = {0.0};
     interp2dVector(&localBnorm[0], x, y, z, nR_Bfield, nZ_Bfield,
                    bfieldGridr.data(), bfieldGridz.data(), br.data(), bz.data(),
-                   by.data());
+                   by.data(),USECYLSYMM);
     vectorNormalize(localBnorm, localBnorm);
     boundaries[currentSegment].getSurfaceNormal(perpVec);
     bDotSurfaceNorm = std::abs(vectorDotProduct(localBnorm, perpVec));
@@ -3938,7 +3944,7 @@ if( flowv_interp == 1 )
       for (int j = 0; j < nZ_force; j++) {
         interp2dVector(&Btest[0], forceR[i], 0.0, forceZ[j], nR_Bfield,
                        nZ_Bfield, bfieldGridr.data(), bfieldGridz.data(),
-                       br.data(), bz.data(), by.data());
+                       br.data(), bz.data(), by.data(),USECYLSYMM);
         Btotal = vectorNorm(Btest);
         // std::cout << "node " << world_rank << "Bfield at  "<< forceR[i] << "
         // " << forceZ[j]<< " " << Btest[0] << " " << Btest[1] <<
@@ -4054,7 +4060,7 @@ if( flowv_interp == 1 )
 #else
   interp2dVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV, nZ_flowV,
                  flowVGridr.data(), flowVGridz.data(), flowVr.data(),
-                 flowVz.data(), flowVt.data());
+                 flowVz.data(), flowVt.data(),USECYLSYMM);
 #endif
 
   gitr_precision leakZ = 0.0;

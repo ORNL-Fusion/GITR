@@ -215,7 +215,8 @@ TEST_CASE( "boris - not fully implemented" )
 
     cfg_geom.setAutoConvert(true);
 
-    importLibConfig(cfg_geom, "../test_data/getE.cfg");
+    //importLibConfig(cfg_geom, "../test_data/getE.cfg");
+    importLibConfig(cfg_geom, "../test_data/gitrGeometryImpacts_3d.cfg");
     int nLines = 1;
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
@@ -314,7 +315,7 @@ while (std::getline(in, str))
         }
 }
 for(int i=0;i<gold.size();i++){
-std::cout << gold[i] << std::endl;
+std::cout << gold[i] << " " << gitrE[i] << std::endl;
 }
 gold[0] = 0.0;
     // Compare vectors to ensure reproducibility
