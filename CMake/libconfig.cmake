@@ -1,9 +1,29 @@
 # Add libconfig
 
-find_package(LibConfig)
+set( LIBCONFIG_INCLUDE_DIR 
+     "${prefix}/libconfig_install/include" 
+     CACHE PATH "" FORCE )
 
-if( NOT LIBCONFIG_FOUND )
+set( LIBCONFIG_LIBRARY 
+     "${prefix}/libconfig_install/lib/libconfig${suffix}" 
+     CACHE FILEPATH "" FORCE )
 
+set( LIBCONFIGPP_INCLUDE_DIR 
+     "${prefix}/libconfig_install/include" 
+     CACHE PATH "" FORCE )
+
+
+set( LIBCONFIGPP_LIBRARY
+     "${prefix}/libconfig_install/lib/libconfig++${suffix}" 
+     CACHE FILEPATH "" FORCE )
+
+if( NOT EXISTS ${LIBCONFIG_INCLUDE_DIR} OR
+    NOT EXISTS ${LIBCONFIGPP_LIBRARY} OR
+    NOT EXISTS ${LIBCONFIGPP_INCLUDE_DIR} OR
+    NOT EXISTS ${LIBCONFIG_LIBRARY} )
+
+  # Captain! This may not make sense given that the whole block is skipped if the artifacts
+  # are not found to exist above
   message( "Downloading libconfig..." )
 
   set( libconfig_url "https://github.com/ORNL-Fusion/libconfig_archive.git" )
@@ -30,36 +50,18 @@ if( NOT LIBCONFIG_FOUND )
                          PREFIX ${prefix}
                          DOWNLOAD_COMMAND ${download_command}
                          CONFIGURE_COMMAND ${configure_command}
+                         BUILD_BYPRODUCTS ${LIBCONFIG_LIBRARY} ${LIBCONFIGPP_LIBRARY}
                          BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/libconfig_build -- -j
                          INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/libconfig_build ) 
-
-
-  set( LIBCONFIG_INCLUDE_DIR 
-       "${prefix}/libconfig_install/include" 
-       CACHE PATH "" FORCE )
-
-
-  set( LIBCONFIG_LIBRARY 
-       "${prefix}/libconfig_install/lib/libconfig${suffix}" 
-       CACHE FILEPATH "" FORCE )
-
-  set( LIBCONFIGPP_INCLUDE_DIR 
-       "${prefix}/libconfig_install/include" 
-       CACHE PATH "" FORCE )
-
-
-  set( LIBCONFIGPP_LIBRARY
-       "${prefix}/libconfig_install/lib/libconfig++${suffix}" 
-       CACHE FILEPATH "" FORCE )
-
-  find_package(LibConfig REQUIRED)
 
 endif()
 
 add_library( libconfig INTERFACE )
 
 if( TARGET libconfig_download )
+
   add_dependencies( libconfig libconfig_download )
+
 endif()
 
 include_directories( ${LIBCONFIG_INCLUDE_DIR} )

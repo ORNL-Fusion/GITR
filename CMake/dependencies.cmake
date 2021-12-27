@@ -24,7 +24,8 @@ set( CMAKE_INSTALL_RPATH
      "${prefix}/netcdf-cxx4-install/lib" )
 
 # OpenMP
-find_package( OpenMP )
+# Captain! Shouldn't this be include( FindOpenMP ) instead?
+include( FindOpenMP )
 
 include_directories( ${OpenMP_C_INCLUDE_DIRS} ${OpenMP_CXX_INCLUDE_DIRS} )
 
@@ -34,7 +35,6 @@ include( CMake/CLI11.cmake )
 list( APPEND dependencies cli11 )
 
 # hdf5
-# Captain! Get rid of the "find" modules - those are really outdated
 include( FindHDF5 )
 
 # CUDA
