@@ -75,7 +75,12 @@ Install one (preferably the latest):
 
 > spack install gcc @11.2.0
 
-You are building a literal compiler. Expect this to take a v
+> spack load gcc@11.2.0
+
+> spack compiler find
+
+You are building a literal compiler. Expect this to take a
+
 > Very.
 
 > Long.
@@ -88,13 +93,13 @@ You are building a literal compiler. Expect this to take a v
 
 > spack versions cmake
 
-> spack install cmake @version %compiler_version
+> spack install cmake @3.22.1 %gcc@11.2.0
 
 6. **Optional**: for CUDA support, similarly install CUDA:
 
 > spack list cuda
 > spack versions cuda
-> spack install cuda @version %compiler_version
+> spack install cuda @11.5.1 %gcc@11.2.0
 
 7. **Optional** for system HDF5 support, similarly install HDF5:
 
@@ -102,7 +107,7 @@ You are building a literal compiler. Expect this to take a v
 
 > spack versions hdf5
 
-> spack install hdf5 @version %compiler_version
+> spack install hdf5 @1.13.0 %gcc@11.2.0
 
 8. **Optional** for blazingly fast source compilation, similarly install Ninja build system:
 
@@ -110,7 +115,7 @@ You are building a literal compiler. Expect this to take a v
 
 > spack versions ninja
 
-> spack install ninja @version %compiler_version
+> spack install ninja @1.10.2 %gcc@11.2.0
 
 8. Now that these softwares are made available to spack, they must be loaded into the current environment so that they are discoverable in the current environment. List packages and load them:
 
