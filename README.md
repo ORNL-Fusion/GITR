@@ -48,6 +48,10 @@ The GITR software relies on several other software installations to operate. The
 
 > apt install build-essential
 
+At this time, HDF5 must also be installed as a system dependency with the native system package manager. It cannot be installed with spack.
+
+> apt install hdf5-hl
+
 1. Download spack: 
 
 > git clone https://github.com/spack/spack.git
@@ -101,15 +105,7 @@ You are building a literal compiler. Expect this to take a
 > spack versions cuda
 > spack install cuda @11.5.1 %gcc@11.2.0
 
-7. **Optional** for system HDF5 support, similarly install HDF5:
-
-> spack list hdf5
-
-> spack versions hdf5
-
-> spack install hdf5 @1.13.0 %gcc@11.2.0
-
-8. **Optional** for blazingly fast source compilation, similarly install Ninja build system:
+7. **Optional** for blazingly fast source compilation, similarly install Ninja build system:
 
 > spack list ninja
 
@@ -130,8 +126,6 @@ You are building a literal compiler. Expect this to take a
 > spack load cmake
 
 > spack load ninja
-
-> spack load hdf5
 
 > spack find -x --loaded
 
@@ -157,13 +151,6 @@ Configure build system with CMake. Physics operators can be activated via **-D**
 
 > cmake -S /path/to/GITR -B /path/to/build -D*option_name*
 
-If you get an error that reads: `Compiler requires the CUDA toolkit. Please set the CUDAToolkit_ROOT variable.` use the option flag `-DGITR_USE_CUDA=0`
-   
-Alternatively:
-
-> cd GITR/build
-> cmake -D*option_name* ..
-
 The list of options can be viewed in:
 
 > CMake/user_options.cmake
@@ -173,7 +160,14 @@ The list of options can be viewed in:
 Once the project is configured, compile:
 
 > cd build
+
+If using Unix Makefiles:
+
 > make -j
+
+If using Ninja:
+
+> ninja -j 0
 
 ### Run
 
