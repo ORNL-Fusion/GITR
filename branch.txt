@@ -1,3 +1,52 @@
+Captain! Graph the data flow through gitr.cpp. I think that is going to be the best way to
+figure out what is going on in there.
+
+Captain! Workflow after the examples are tested and verified: you need to have 2 windows,
+of 2 panels each. One needs to be jerome's gitr and jerome.cpp
+the other needs to be gitr.cpp and the other relevant files.
+Copy it all over, then compile and test. If it passes, you're golden. Merge it in. By then,
+hopefully you will have had a change to meet with Tim and ask
+
+1. What is the deal with the input distribution grids for the surface models? According to
+   what rules are they regridded and made into cdfs?
+
+2. What is the meaning of the options and their values? Which ones are deprecated and can be
+   removed?
+
+3. Get some more examples that test all the options Tim tells you matter. Get these as PyGITR
+   examples from Alyssa
+
+4. Verify changes to the build options and the file interface. Switch to hdf5 file interface.
+   Make netcdf optional and NOT enabled by default.
+
+5. Merge all outstanding branches, tag a release.
+
+6. Start the multi-species unit test.
+
+7. Heavy refactor of source code.
+
+8. Time dependence.
+
+9. Geometry hashing stuff.
+
+10. Automatic domain balancing
+
+11. Interfacing with NDIP
+
+
+What about integrating GITR stuff and runs into the data analysis? What if you used your
+machines at home to set up a server and token issuer to do an ssh connection? Can you replicate
+what they have on the site? Replicate their tech stack - you know it's there!
+
+Also write detailed comments in user_options.cmake explaining what the options are and what the
+different values for the options mean.
+
+kubernetes
+
+get aaron involved in the vis
+
+
+
 Goals by tomorrow:
 
 1. Get everything installed and building and running on fusiont6 for Atul tomorrow
