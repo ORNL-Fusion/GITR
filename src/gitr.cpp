@@ -840,7 +840,7 @@ if( geom_hash == 1 )
   printf("Time taken          is %6.3f (secs) \n", fs0.count());
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
-      /* HERE: geom hash block begin */
+      /* Captain! HERE: geom hash block begin */
       std::cout << "opening file" << std::endl;
       netCDF::NcFile ncFile_hash("output/geomHash" + std::to_string(i) + ".nc",
                          netCDF::NcFile::replace);
