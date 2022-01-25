@@ -1,3 +1,196 @@
+Now... how do we actually go about obtaining these vectors?
+
+
+so... for configuration, maybe it makes sense to have a rigid kind of skeleton built up that
+you expect things to conform to. The whole point of configuration is rigidity right
+
+but for data I/O, I think you might need more flexibility. What does that mean/look like? Well,
+I think maybe you could make a global list of output columns and their names. These basic
+building blocks can be rigidly defined, I think. How to allocate their storage though?
+
+so for data we simply need an enum for the internal GITR name and a pointer to a vector that
+can be retrieved with that name. This can be the output data pool. Retrieve the pointer to the
+vector from the pool manager - the lifeguard. Make it a unique_ptr.
+
+/* map data to an int (all of it) */
+class data_output_columns
+{
+  public:
+
+  enum : int
+  {
+    name_of_data_column
+  };
+
+  /* this constructor will populate "lookup" */
+  data_output_columns();
+
+  shared_ptr get_vector( int );
+
+  protected:
+
+  /* Captain! Instead of a std::vector< double >, you may want to just do a T* and an int size */
+  /* you're going to have to open a separate PR entirely for hashing. Start with just moving it
+     into dedicated files. Then start figuring out everything in it */
+  std::unordered_map< int, std::shared_ptr< std::vector< double > > > lookup;
+};
+
+/* map a name to an int */
+class data_output_column_names
+{
+  public:
+
+  /* populate "lookup" */
+  data_output_column_names( data_output_columns );
+
+  std::string get_name( int );
+
+  protected:
+
+  std::unordered_map< int, std::string > names;
+};
+
+/* both of the above classes might as well be singletons */
+
+/* create a mapping from data columns to names */
+class named_data_columns
+{
+  public:
+
+  /* Captain! Verify that the one is completely contained in the other */
+  /* I think columns should be contained in column names completely, but names could have more */
+  named_data_columns( data_output_columns, data_output_column_names );
+
+  /* throw exceptions depending on what is contained vs not in these */
+  get_name();
+
+  get_data_column();
+
+  protected:
+
+  data_output_columns;
+
+  data_output_column_names;
+};
+
+/* write a mapping to a file - make a netcdf derived class and an hdf5 derived class for this */
+class output_named_columns
+{
+  public:
+
+  output_named_columns( named_data_columns );
+
+  /* this can be either netcdf or hdf5 in an inherited method */
+  virtual write_to_file();
+
+  protected:
+
+  named_data_columns;
+};
+
+Next, how can we incrementally move towards that from our current code??
+
+read it to find out. Some version of lambdafying it I think will be necessary....
+
+actually... what if we just directly make the jump. Then make two swap functions.
+
+lambdafy it. then re-implement each lambda using other primitives? What should those be?
+
+1. Lambda
+2. Create class type for it.
+3. Replace and recompile.
+4. Re-implement as hdf5 and test
+
+Captain! Not below here!
+
+How can we organize these named data columns into identical output files consistent with the
+current GITR interface? Create an abstract base class that aggregates data columns and writes
+them to a named file with the correct names for the data classes.
+
+/* map int to a string */
+class jagged_data_matrix
+{
+  public:
+
+  /* data and the name of the data */
+  jagged_data_matrix( std::string file_name, data_columns );
+
+  /* name of the file */
+  get_file_name();
+
+  /* will be further derived to use netcdf or hdf5 */
+  /* simply calls the */
+  void write_to_file()
+  {
+    /* simply needs to iterate through the "lookup" map to get the variable name and the
+       data_columns map to get the data. Then just needs to call "write" on it? */
+  }
+
+  protected:
+
+  std::unordered_map< int, std::string > lookup;
+
+  std::shared_ptr< class data_output_columns > const data_columns;
+
+  std::string name;
+};
+
+class geometry_hash final : public jagged_data_matrix
+{
+  public:
+
+  /* populate "lookup". Pass args to base class */
+  geometry_hash( std::string file_name, data_columns );
+};
+
+
+1. annotate
+2. lambdafy
+3. parameterize file names and data contents
+4. fundamentally, you're bidirectionally mapping file names and data:
+  
+  file_name - different, runtime configurable. Load in a data class.
+
+    get_name()
+    protected string name in base class
+
+
+  data_interface - different, preprocessor handled
+
+  data - shared. Basic building block needs to be a pair of vector and string. call that a
+         data_column
+
+  abstract format - a list of data columns and a name for each list item, file name for each
+  "jagged data matrix"
+
+  link against a compiled library object that is implemented in a file data_file_io_netcdf
+  that extends/implements an abstract base class defined in data_file_io target. This abstract
+  base class must provide a mapping between internal GITR data and output files.
+
+  separate base class and derived implemented classes into different file sets
+
+  what kind of mapping do you want to use? Same idea as with the configuration interface I'd
+  think. What does this entail? How will we map the file 
+
+
+class geometry_hash : public jagged_data_matrix final
+{
+  public:
+
+  enum int
+  {
+    col_name_0,
+    col_name_1,
+    col_name_2,
+    ...
+  };
+
+  geometry_hash();
+
+
+};
+
+
 Captain! Graph the data flow through gitr.cpp. I think that is going to be the best way to
 figure out what is going on in there.
 
