@@ -4,7 +4,9 @@ if( NOT EXISTS ${cli_include_dir} )
 
   set( cli11_url "https://github.com/CLIUtils/CLI11.git" )
 
-  set( download_command git clone ${cli11_url} ${prefix}/cli11 )
+  set( download_command 
+       git clone --depth 1 --branch v2.1.2
+       ${cli11_url} ${prefix}/cli11 )
 
   set( configure_command
       ${CMAKE_COMMAND} 

@@ -34,7 +34,11 @@ include( CMake/CLI11.cmake ) # ---> creates target cli11
 list( APPEND dependencies cli11 )
 
 # hdf5
-include( FindHDF5 )
+#include( FindHDF5 )
+find_package( HDF5 COMPONENTS C HL )
+
+message( "HDF5_INCLUDE_DIRS: ${HDF5_INCLUDE_DIRS}" )
+message( "HDF5_INCLUDE_DIRS: ${HDF5_LIBRARIES}" )
 
 # CUDA
 include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart

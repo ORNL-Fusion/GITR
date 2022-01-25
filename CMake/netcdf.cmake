@@ -71,7 +71,7 @@ if ( NOT EXISTS ${NETCDF_INCLUDE_DIR} OR
   endif()
 
   set( configure_command
-       PATH=${prefix}/netcdf-c-install/bin:$ENV{PATH}
+       PATH=${prefix}/netcdf-c-install/bin:${HDF5_INCLUDE_DIRS}:$ENV{PATH}
        ${CMAKE_COMMAND}
        -S ${prefix}/netcdf-cxx4
        -B ${prefix}/netcdf-cxx4-build
