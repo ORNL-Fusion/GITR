@@ -22,11 +22,9 @@ if( NOT EXISTS ${LIBCONFIG_INCLUDE_DIR} OR
     NOT EXISTS ${LIBCONFIGPP_INCLUDE_DIR} OR
     NOT EXISTS ${LIBCONFIG_LIBRARY} )
 
-  # Captain! This may not make sense given that the whole block is skipped if the artifacts
-  # are not found to exist above
-  message( "Downloading libconfig..." )
+  message( "libconfig will be downloaded..." )
 
-  set( libconfig_url "https://github.com/ORNL-Fusion/libconfig_archive.git" )
+  set( libconfig_url "https://github.com/hyperrealm/libconfig.git" )
 
   if( EXISTS ${prefix}/libconfig )
 
@@ -34,7 +32,10 @@ if( NOT EXISTS ${LIBCONFIG_INCLUDE_DIR} OR
 
   else()
 
-    set( download_command git clone ${libconfig_url} ${prefix}/libconfig )
+    set( download_command 
+         git clone --depth 1 --branch v1.7.3
+         ${libconfig_url}
+         ${prefix}/libconfig )
 
   endif()
 

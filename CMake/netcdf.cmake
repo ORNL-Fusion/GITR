@@ -19,20 +19,20 @@ if ( NOT EXISTS ${NETCDF_INCLUDE_DIR} OR
      NOT EXISTS ${NETCDF_CXX_INCLUDE_DIR} OR
      NOT EXISTS ${NETCDF_CXX_LIBRARY} )
 
-  message( "Downloading netcdf-c and netcdf-cxx4..." )
+  set( netcdf-c-url "https://github.com/Unidata/netcdf-c.git" )
 
-  set( netcdf-c-url "https://github.com/ORNL-Fusion/netcdf-c_copy.git" )
-
-  # Captain! This may not be needed since rebuild is initiated if libraries/directories
-  # do not exist
   if( EXISTS ${prefix}/netcdf-c )
 
     set( download_command "" )
 
   else()
 
-    set( download_command git clone ${netcdf-c-url} ${prefix}/netcdf-c )
-    message( "Ahoy, Captain! Downloading netcdf-c" )
+    set( download_command 
+         git clone --depth 1 --branch v4.8.1
+         ${netcdf-c-url}
+         ${prefix}/netcdf-c )
+
+    message( "netcdf-c will be downloaded..." )
 
   endif()
 
@@ -55,7 +55,7 @@ if ( NOT EXISTS ${NETCDF_INCLUDE_DIR} OR
 
   # netcdf-cxx-4
 
-  set( netcdf-cxx4-url "https://github.com/ORNL-Fusion/netcdf-cxx4_copy.git" )
+  set( netcdf-cxx4-url "https://github.com/Unidata/netcdf-cxx4.git" )
 
   if( EXISTS ${prefix}/netcdf-cxx4 )
 
@@ -63,7 +63,10 @@ if ( NOT EXISTS ${NETCDF_INCLUDE_DIR} OR
 
   else()
 
-    set( download_command git clone ${netcdf-cxx4-url} ${prefix}/netcdf-cxx4 )
+    set( download_command 
+         git clone --depth 1 --branch v4.3.1
+         ${netcdf-cxx4-url}
+         ${prefix}/netcdf-cxx4 )
 
   endif()
 
@@ -101,7 +104,6 @@ include_directories( ${NETCDF_CXX_INCLUDE_DIR} )
 
 include_directories( ${NETCDF_INCLUDE_DIR} )
 
-# Captain! What is the deal with the hdf5 include directories and libraries? Are they needed?
 target_include_directories( netcdf INTERFACE
                             ${NETCDF_INCLUDE_DIR}
                             ${NETCDF_CXX_INCLUDE_DIR}
