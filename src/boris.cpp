@@ -1028,13 +1028,13 @@ gitr_precision max_dt = 1.0e-7;
      if ( new_dt > 0.34/gyrofrequency)
      {
       new_dt = 0.34/gyrofrequency;
-      new_advance = true;
+      //new_advance = true;
      }
      
      if ( new_dt > max_dt)
      {
       new_dt = max_dt;
-      new_advance = true;
+      //new_advance = true;
      }
      
      if (particlesPointer->charge[indx]==0)

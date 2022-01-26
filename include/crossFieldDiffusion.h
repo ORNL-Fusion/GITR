@@ -143,7 +143,7 @@ if(flags->USE_PERPDIFFUSION>0)
     gitr_precision z_transform = 0.0; 
     gitr_precision denom = 0.0; 
   //   printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
-    if(flags->USE_PERPDIFFUSION)
+    if(flags->USE_PERPDIFFUSION > 1)
     {
       gitr_precision plus_minus1 = floor(r4 + 0.5)*2 - 1;
       gitr_precision h = 0.001;
