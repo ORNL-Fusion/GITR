@@ -27,6 +27,7 @@ if ( NOT EXISTS ${NETCDF_INCLUDE_DIR} OR
 
   else()
 
+    # Captain!
     set( download_command 
          git clone --depth 1 --branch v4.8.1
          ${netcdf-c-url}
@@ -54,7 +55,6 @@ if ( NOT EXISTS ${NETCDF_INCLUDE_DIR} OR
                        INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-c-build )
 
   # netcdf-cxx-4
-
   set( netcdf-cxx4-url "https://github.com/Unidata/netcdf-cxx4.git" )
 
   if( EXISTS ${prefix}/netcdf-cxx4 )
@@ -63,8 +63,9 @@ if ( NOT EXISTS ${NETCDF_INCLUDE_DIR} OR
 
   else()
 
+    # Captain!
     set( download_command 
-         git clone --depth 1 --branch v4.3.1
+         git clone --depth 1 --branch v4.3.0
          ${netcdf-cxx4-url}
          ${prefix}/netcdf-cxx4 )
 
