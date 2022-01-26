@@ -9,7 +9,7 @@ For reference, please visit the archived copy of the GITR project - [GITR_legacy
 ## Description
 The GITR program takes background plasma profiles, equilibrium, geometry, and surface model 
 and performs large scale simulation of plasma induced erosion, plasma transport of those 
-impurities, self-sputtering, and redeposition.
+impurities, sputtering, and redeposition.
 
 The physics implemented in GITR is based on the trace-impurity assumption. i.e. 
 The density of impurities created in the GITR code is negligible in its effect on the 
@@ -37,68 +37,102 @@ fields and profiles of the background.
 ├── test_include    ---> C++ unit test header files
 └── test_src        ---> C++ unit test source files
 ```
-## Installation
+
+## Environment
+
+The GITR software relies on several other software installations to operate. These *dependencies* fall under *system dependencies* and *3rd-party dependencies*. GITR's advanced build system downloads and builds all 3rd-party dependencies automatically, but this is not the case with system dependencies. These must all be installed by the user prior to attempting to build GITR. Numerous approaches are available to the user for installing/updating/managing system dependencies. An approach using the **spack** utility is briefly described below, loosely following https://spack-tutorial.readthedocs.io/en/latest/.
 
 ### Ubuntu 20.04
 
-1. Install g++ and associated utilities. This is best done by installing the "build-essential" package with the command:
+0. Ensure that basic system dependencies like a working compiler are installed and discoverable on your system. If it is a blank system, you will need to install these with the native Ubuntu package manager *apt*:
 
 > apt install build-essential
 
-This also installs make and other useful utilities.
+At this time, HDF5 must also be installed as a system dependency with the native system package manager. It cannot be installed with spack.
 
-2. Install the newest version of CMake. This can be done with **apt** or by building from source.
-   To build from source, visit the CMake website and download the newest stable release as a
-   zipped tar archive. Unizip and extract with
+> apt install hdf5-hl
 
-> tar -xvf <cmake_file_name>.tar.gz
+1. Download spack: 
 
-   Move the directory into your home directory. Create an out-of-source build directory.
-   Navigate to the cmake source directory and run:
+> git clone https://github.com/spack/spack.git
 
-> ./bootstrap --prefix=/path/to/cmake_build_directory
-> make -j
-> make install
+2. Instantiate spack in your environment. This can optionally be placed in your .bashrc file if you want it done automatically upon every login:
 
-  Navigate to the build folder and verify you see bin, doc, and share - bin contains the cmake
-  executable. Get the full filepath of the executable in the bin directory with:
+> source ~/spack/share/spack/setup-env.sh
 
-> readlink -f <cmake-executable file>
+3. Direct spack to find a compiler to use:
 
-  Running this file like
+> spack compilers
 
-> ./<cmake-executable-file> --version
+This command should produce non-empty output. The discovered compilers will be listed.
 
-  from within the bin folder should print out the version. Now, to make this executable invokable
-  from any directory, open the file .bashrc in your home directory or create it if it doesn't
-  exist. Add this line to the end:
+4. We may now begin using spack to install the rest of the system dependencies. Beginning with the newest version of gcc:
 
-> alias cmake=<paste the filepath of the cmake executable immediately after the equals sign, no quotes or spaces>
+List packages matching *gcc*:
+> spack list gcc
 
-To use this cmake binary, either open a new terminal window to re-parse the .bashrc file, or
-re-parse it manually by running:
+List versions of package:
 
-> source ~/.bashrc
+> spack versions gcc
 
-3. To run large problems, you will need to leverage a GPU. This means that nvcc, the NVIDIA CUDA
-   compiler, must be installed. Follow these instructions:
-   [**CUDA install**](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)
-   You will likely need a restart after this to initiate CUDA drivers.
+Install one (preferably the latest):
 
-4. CUDA is now installed, but you must point your shell to it for it to find it. Add the PATH
-   and LD\_LIBRARY\_PATH exports to your .bashrc file. Open a new terminal window or source it as
-   explained in the CMake installation step for it to take effect.
+> spack install gcc @11.2.0
 
-5. For Netcdf to work properly, you must have the m4 package installed:
+> spack load gcc@11.2.0
 
-> sudo apt install m4
+> spack compiler find
 
-6. For Netcdf to work, you must also have HDF5 installed. Make sure it is installing
-   a modern version from the package repo:
+You are building a literal compiler. Expect this to take a
 
-> sudo apt install libhdf5-dev
+> Very.
+
+> Long.
+
+> Time...
+
+5. Next, we will use the compiler we just built to build the rest of the dependencies:
+
+> spack list cmake
+
+> spack versions cmake
+
+> spack install cmake @3.22.1 %gcc@11.2.0
+
+6. **Optional**: for CUDA support, similarly install CUDA:
+
+> spack list cuda
+> spack versions cuda
+> spack install cuda @11.5.1 %gcc@11.2.0
+
+7. **Optional** for blazingly fast source compilation, similarly install Ninja build system:
+
+> spack list ninja
+
+> spack versions ninja
+
+> spack install ninja @1.10.2 %gcc@11.2.0
+
+8. Now that these softwares are made available to spack, they must be loaded into the current environment so that they are discoverable in the current environment. List packages and load them:
+
+> spack find -x
+
+> spack find -x --loaded
+
+> spack load gcc
+
+> spack load cuda
+
+> spack load cmake
+
+> spack load ninja
+
+> spack find -x --loaded
+
+This final command should print out all the loaded environments.
 
 ### Mac OSx
+
 1. If you do not have the Homebrew package manager, get it here at: https://brew.sh/ 
 2. For `brew` to work, you may need to run the following:
 > source ~/.bashrc
@@ -109,18 +143,13 @@ re-parse it manually by running:
 5. You may need to install m4 as well:
 > brew install m4
 
+## Installation
+
 ### Configure
 Configure build system with CMake. Physics operators can be activated via **-D**-style build-time
  options provided to CMake.
 
 > cmake -S /path/to/GITR -B /path/to/build -D*option_name*
-
-If you get an error that reads: `Compiler requires the CUDA toolkit. Please set the CUDAToolkit_ROOT variable.` use the option flag `-DGITR_USE_CUDA=0`
-   
-Alternatively:
-
-> cd GITR/build
-> cmake -D*option_name* ..
 
 The list of options can be viewed in:
 
@@ -131,7 +160,14 @@ The list of options can be viewed in:
 Once the project is configured, compile:
 
 > cd build
+
+If using Unix Makefiles:
+
 > make -j
+
+If using Ninja:
+
+> ninja -j 0
 
 ### Run
 

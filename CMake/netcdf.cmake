@@ -1,12 +1,25 @@
 # netcdf-c
 
-find_package(NetCDF COMPONENTS CXX)
+set( NETCDF_INCLUDE_DIR "${prefix}/netcdf-c/include" CACHE PATH "" FORCE )
 
-if( NOT NETCDF_FOUND )
+set( NETCDF_LIBRARY
+     "${prefix}/netcdf-c-install/lib/libnetcdf${suffix}"
+     CACHE FILEPATH ""
+     FORCE )
 
-  message( "Downloading netcdf-c and netcdf-cxx4..." )
+set( NETCDF_CXX_INCLUDE_DIR "${prefix}/netcdf-cxx4-install/include" CACHE PATH "" FORCE)
 
-  set( netcdf-c-url "https://github.com/ORNL-Fusion/netcdf-c_copy.git" )
+set( NETCDF_CXX_LIBRARY
+     "${prefix}/netcdf-cxx4-install/lib/libnetcdf-cxx4${suffix}"
+     CACHE FILEPATH ""
+     FORCE )
+
+if ( NOT EXISTS ${NETCDF_INCLUDE_DIR} OR
+     NOT EXISTS ${NETCDF_LIBRARY} OR
+     NOT EXISTS ${NETCDF_CXX_INCLUDE_DIR} OR
+     NOT EXISTS ${NETCDF_CXX_LIBRARY} )
+
+  set( netcdf-c-url "https://github.com/Unidata/netcdf-c.git" )
 
   if( EXISTS ${prefix}/netcdf-c )
 
@@ -14,7 +27,13 @@ if( NOT NETCDF_FOUND )
 
   else()
 
-    set( download_command git clone ${netcdf-c-url} ${prefix}/netcdf-c )
+    # Captain!
+    set( download_command 
+         git clone --depth 1 --branch v4.8.1
+         ${netcdf-c-url}
+         ${prefix}/netcdf-c )
+
+    message( "netcdf-c will be downloaded..." )
 
   endif()
 
@@ -31,12 +50,12 @@ if( NOT NETCDF_FOUND )
                        PREFIX ${prefix}
                        DOWNLOAD_COMMAND ${download_command}
                        CONFIGURE_COMMAND ${configure_command}
+                       BUILD_BYPRODUCTS ${NETCDF_LIBRARY}
                        BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/netcdf-c-build -- -j
                        INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-c-build )
 
   # netcdf-cxx-4
-
-  set( netcdf-cxx4-url "https://github.com/ORNL-Fusion/netcdf-cxx4_copy.git" )
+  set( netcdf-cxx4-url "https://github.com/Unidata/netcdf-cxx4.git" )
 
   if( EXISTS ${prefix}/netcdf-cxx4 )
 
@@ -44,12 +63,16 @@ if( NOT NETCDF_FOUND )
 
   else()
 
-    set( download_command git clone ${netcdf-cxx4-url} ${prefix}/netcdf-cxx4 )
+    # Captain!
+    set( download_command 
+         git clone --depth 1 --branch v4.3.0
+         ${netcdf-cxx4-url}
+         ${prefix}/netcdf-cxx4 )
 
   endif()
 
   set( configure_command
-       PATH=${prefix}/netcdf-c-install/bin:$ENV{PATH}
+       PATH=${prefix}/netcdf-c-install/bin:${HDF5_INCLUDE_DIRS}:$ENV{PATH}
        ${CMAKE_COMMAND}
        -S ${prefix}/netcdf-cxx4
        -B ${prefix}/netcdf-cxx4-build
@@ -61,26 +84,11 @@ if( NOT NETCDF_FOUND )
                        PREFIX ${prefix}
                        DOWNLOAD_COMMAND ${download_command}
                        CONFIGURE_COMMAND ${configure_command}
+                       BUILD_BYPRODUCTS ${NETCDF_CXX_LIBRARY}
                        BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/netcdf-cxx4-build -- -j
                        INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/netcdf-cxx4-build )
 
   add_dependencies( netcdf-cxx4_download netcdf-c_download )
-
-  set( NETCDF_LIBRARY
-       "${prefix}/netcdf-c-install/lib/libnetcdf${suffix}"
-       CACHE FILEPATH ""
-       FORCE )
-
-  set( NETCDF_CXX_INCLUDE_DIR "${prefix}/netcdf-cxx4-install/include" CACHE PATH "" FORCE)
-
-  set( NETCDF_CXX_LIBRARY
-       "${prefix}/netcdf-cxx4-install/lib/libnetcdf-cxx4${suffix}"
-       CACHE FILEPATH ""
-       FORCE )
-
-  set( NETCDF_INCLUDE_DIR "${prefix}/netcdf-c/include" CACHE PATH "" FORCE )
-
-  find_package(NetCDF COMPONENTS CXX REQUIRED)
 
 endif()
 
