@@ -27,7 +27,6 @@ if ( NOT EXISTS ${NETCDF_INCLUDE_DIR} OR
 
   else()
 
-    # Captain!
     set( download_command 
          git clone --depth 1 --branch v4.8.1
          ${netcdf-c-url}
@@ -63,7 +62,6 @@ if ( NOT EXISTS ${NETCDF_INCLUDE_DIR} OR
 
   else()
 
-    # Captain!
     set( download_command 
          git clone --depth 1 --branch v4.3.0
          ${netcdf-cxx4-url}
@@ -71,8 +69,12 @@ if ( NOT EXISTS ${NETCDF_INCLUDE_DIR} OR
 
   endif()
 
+  set( HDF5_PATHS ${HDF5_INCLUDE_DIRS} )
+
+  string( REPLACE ";" ":" HDF5_PATHS "${HDF5_PATHS}" )
+
   set( configure_command
-       PATH=${prefix}/netcdf-c-install/bin:${HDF5_INCLUDE_DIRS}:$ENV{PATH}
+       PATH=${prefix}/netcdf-c-install/bin:${HDF5_PATHS}:$ENV{PATH}
        ${CMAKE_COMMAND}
        -S ${prefix}/netcdf-cxx4
        -B ${prefix}/netcdf-cxx4-build
