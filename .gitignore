@@ -3,4 +3,3 @@ build
 external
 .*.swp
 test_include/test_data_filepath.hpp
-build_gitr.sh
