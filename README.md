@@ -102,7 +102,9 @@ You are building a literal compiler. Expect this to take a
 6. **Optional**: for CUDA support, similarly install CUDA:
 
 > spack list cuda
+
 > spack versions cuda
+
 > spack install cuda @11.5.1 %gcc@11.2.0
 
 7. **Optional** for blazingly fast source compilation, similarly install Ninja build system:
@@ -140,12 +142,24 @@ This final command should print out all the loaded environments.
 > brew install hdf5@1.12
 4. You must install CMake if you do not already have it:
 > brew install cmake
-5. You may need to install m4 as well:
+5. You must install Ninja:
+> brew install ninja
+6. You may need to install m4 as well:
 > brew install m4
 
 ## Installation
 
-### Configure
+### Easy build script
+
+a build script, **build_gitr.sh** is included for convenience. It requires 2 positional arguments, and builds GITR and all its tests on Ubuntu or Mac:
+
+> GITR/build_gitr.sh \<source code directory\>  \<build directory\>
+
+The directories **must** be full filepaths. Edit this script for on-the-fly changes to the default
+ build-time options specified in CMake/user_options.cmake
+ 
+### Manual Configuration/Installation:
+ 
 Configure build system with CMake. Physics operators can be activated via **-D**-style build-time
  options provided to CMake.
 
@@ -244,34 +258,17 @@ Fork this repository, branch off of *dev*, and open a merge request into *dev*.
 
 Navigate to `GITR/docs/release_notes.md`
 
-## Dependencies 
+## System Dependencies:
 
 - cmake version 3.13 or newer required
+ 
+- gcc
+ 
+- Ninja
+
+- HDF5
+ 
 - **CUDA**
   - Enabled by default, disable with -DGITR_USE_CUDA=0
   - Requires existing installation. Set:
     - -DCMAKE_CUDA_COMPILER=/path/to/nvcc
-- [**libconfig**](https://github.com/hyperrealm/libconfig)
-  - consumes human-readable input config files
-  - to use an existing installation, set:
-    - -DLIBCONFIG_INCLUDE_DIR=/path/to/libconfig/include (libconfig headers)
-    - -DLIBCONFIG_LIBRARY=/path/to/libconfig.so
-    - -DLIBCONFIGPP_INCLUDE_DIR=/path/to/libconfig++/include (libconfig headers)
-    - -DLIBCONFIGPP_LIBRARY=/path/to/libconfig++.so
-- [**netcdf-c**](https://github.com/Unidata/netcdf-c)
-  - input/output raw data format
-  - to use existing installation set:
-    - -DNETCDF_LIBRARY=/path/to/libnetcdf.so
-    - -DNETCDF_INCLUDE_DIR=/path/to/netcdf-c/include (netcdf-c headers)
-- [**netcdf-cxx4**](https://github.com/Unidata/netcdf-cxx4)
-  - C++ extensions to netcdf-c
-  - to use an existing installation, set:
-    - -DNETCDF_CXX_LIBRARY=/path/to/libnetcdf-cxx4.so
-    - -DNETCDF_CXX_INCLUDE_DIR=/path/to/netcdf-cxx4/include (netcdf-c headers)
-- [**thrust**](https://github.com/thrust/thrust)
-  - header-only library
-    - included in CUDA installation if gpu support enabled
-  - to use existing installation, set:
-    - -DTHRUST_INCLUDE_DIR=/path/to/thrust
-    - this should only be necessary if CUDA is disabled
-
