@@ -148,17 +148,8 @@ This final command should print out all the loaded environments.
 > brew install m4
 
 ## Installation
-
-### Easy build script
-
-a build script, **build_gitr.sh** is included for convenience. It requires 2 positional arguments, and builds GITR and all its tests on Ubuntu or Mac:
-
-> GITR/build_gitr.sh \<source code directory\>  \<build directory\>
-
-The directories **must** be full filepaths. Edit this script for on-the-fly changes to the default
- build-time options specified in CMake/user_options.cmake
  
-### Manual Configuration/Installation:
+### Configure:
  
 Configure build system with CMake. Physics operators can be activated via **-D**-style build-time
  options provided to CMake.
