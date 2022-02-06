@@ -172,7 +172,7 @@ TEST_CASE( "cross-field diffusion operator" )
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nP);
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize<rand_type>(&state1.front(), 0));
+                   curandInitialize<rand_type>(&state1.front(), true));
 
   gitr_precision perpDiffusionCoeff = 0.0;
   cfg_geom.lookupValue("backgroundPlasmaProfiles.Diffusion.Dperp",
