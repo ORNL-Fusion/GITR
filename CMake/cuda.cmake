@@ -32,6 +32,7 @@ if( GITR_USE_CUDA )
 
 else()
 
-  add_compile_definitions( THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP )
+  #add_compile_definitions( THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP )
+  add_compile_definitions( THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP )
 
 endif()

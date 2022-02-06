@@ -1000,20 +1000,27 @@ else{
 #else
 
             #pragma omp atomic
+          /*
           surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                        EdistInd * nAdist + AdistInd] =
               surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                            EdistInd * nAdist + AdistInd] +
               weight;
+              */
+          surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
+                                       EdistInd * nAdist + AdistInd] += weight;
             #pragma omp atomic
-          surfaces->sumWeightStrike[surfaceHit] =
-              surfaces->sumWeightStrike[surfaceHit] + weight;
+          //surfaces->sumWeightStrike[surfaceHit] =
+           //   surfaces->sumWeightStrike[surfaceHit] + weight;
+          surfaces->sumWeightStrike[surfaceHit] += weight;
             #pragma omp atomic
-          surfaces->sumParticlesStrike[surfaceHit] =
-              surfaces->sumParticlesStrike[surfaceHit] + 1;
+          //surfaces->sumParticlesStrike[surfaceHit] =
+          //    surfaces->sumParticlesStrike[surfaceHit] + 1;
+          surfaces->sumParticlesStrike[surfaceHit]++;
             #pragma omp atomic
-          surfaces->grossDeposition[surfaceHit] =
-              surfaces->grossDeposition[surfaceHit] + weight;
+          //surfaces->grossDeposition[surfaceHit] =
+          //    surfaces->grossDeposition[surfaceHit] + weight;
+          surfaces->grossDeposition[surfaceHit] += weight;
 #endif
         }
       }

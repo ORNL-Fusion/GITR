@@ -2,7 +2,7 @@
 
 # String description for each option
 set( description "(no description added - see define_options.cmake)" )
-set( GITR_USE_CUDA 1 CACHE STRING "${description}" )
+set( GITR_USE_CUDA 0 CACHE STRING "${description}" )
 set( GITR_USE_MPI 0 CACHE STRING "${description}" )
 set( GITR_USE_DOUBLE 1 CACHE STRING "${description}" )
 set( GITR_USE_IONIZATION 1 CACHE STRING "${description}" ) # if ionization is on, recombination on

@@ -229,9 +229,11 @@ void reflection::operator()(std::size_t indx) const {
                 atomicAdd1(&surfaces->grossErosion[surfaceHit],weight*Y0);
         #else
                 #pragma omp atomic
-                surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
+                //surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
+                surfaces->grossDeposition[surfaceHit] += ( weight*(1.0-R0) );
                 #pragma omp atomic
-                surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit]+weight*Y0;
+                //surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit]+weight*Y0;
+                surfaces->grossErosion[surfaceHit] += ( weight * Y0 );
         #endif
         }
       }
