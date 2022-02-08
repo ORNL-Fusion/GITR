@@ -76,24 +76,21 @@ netCDF::NcType netcdf_precision = netCDF::ncFloat;
 
 int main(int argc, char **argv, char **envp) {
 
-/* Placeholder code for runtime CLI */
-/*
+  /* Placeholder code for runtime CLI */
 
-CLI::App app{ "!" };
+  CLI::App app{ "!" };
 
-std::string file_name = "";
+  std::string file_name = "";
 
-app.add_option( "-c", file_name, "config filepath" );
+  app.add_option( "-c", file_name, "config filepath" )->required();
 
-CLI11_PARSE( app, argc, argv );
+  CLI11_PARSE( app, argc, argv );
 
-std::cout << "file_name read from stdin: " << file_name << std::endl;
-
-*/
+  std::cout << "file_name read from stdin: " << file_name << std::endl;
 
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
-  class libconfig_string_query query( "input/gitrInput.cfg" );
+  class libconfig_string_query query( file_name );
   class use use( query );
 
   // Set default processes per node to 1

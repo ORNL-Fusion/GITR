@@ -59,9 +59,6 @@ void libconfig_string_query::operator()( std::string const query_key,
     {
       T value = setting[ i ];
 
-      /* Ahoy, Captain! What happens with a bad lookup? Is an exception caught? Should you
-         catch this one? */
-
       query_values.push_back( value );
     }
   }
@@ -70,6 +67,7 @@ void libconfig_string_query::operator()( std::string const query_key,
   {
     /* Captain! */
     throw 0;
+    //throw not_an_array( query_key );
   }
 }
 
@@ -86,6 +84,7 @@ void libconfig_string_query::operator()( std::string const query_key, T &query_v
   if( setting.isArray() )
   {
     /* Captain! */
+    //throw not_a_scalar( query_key );
     throw 0;
   }
 

@@ -4,12 +4,12 @@ class unregistered_config_mapping: public std::exception
 {
   public:
 
-    unregistered_config_mapping( int const query_key )
+    unregistered_config_mapping( int const query_key = -1 )
       :
       query_key( query_key )
     { }
 
-    int get_key() const { return query_key; }
+    std::string get_key() const { return std::to_string( query_key ); }
 
     std::string static get_message() { return message; }
 
@@ -78,9 +78,7 @@ class config_exception_base : public std::exception
     message{ "configuration interface error - key not found: " };
 };
 
-/* Captain! The class above is currently unused: change the static stuff in the one below.
-   Then change to use the base class. Then change them all? Go for it. */
-
+/* Captain! Use config_base above to make a different message for each type of exception? */
 class invalid_key: public std::exception
 {
   public:
@@ -110,15 +108,22 @@ class invalid_key: public std::exception
 };
 
 /*
-class mismatched_dimensions : public std::exception
+class not_an_array : public std::exception
 {
   public:
 
-    mismatched_dimensions( std::string const &query_key )
-      :
-      query_key( query_key )
-    { }
+  not_a_scalar( std::string const &query_key )
+    :
+    query_key( query_key )
+  { }
 
-    std::string get_key() const { return query_key; }
+  private:
+};
+
+class not_a_scalar : public std::exception
+{
+  public:
+
+  private:
 };
 */

@@ -68,7 +68,7 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
   }
 
   /* Test the exception handling - also create a malformed class */
-  SECTION( "misc" )
+  SECTION( "exceptions and arrays" )
   {
     auto geometry = std::make_shared< class geometry >( query );
 
@@ -104,6 +104,7 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
     };
 
     /* trigger exceptions to test for error conditions */
+
     /* look up an unregistered config string: */
     auto testing_dummy = std::make_shared< class testing_dummy >( query );
 
@@ -111,6 +112,9 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
     auto doubles = testing_dummy->get< std::vector< double > >( testing_dummy::setting_doubles );
 
     REQUIRE( doubles == std::vector< double >{ 1.5, 2.5, 3.5, 4.5, 5.5 } );
+
+    /* test exceptions */
+    int caught = 0;
 
     /* test looking up unregistered key */
     try
@@ -120,22 +124,17 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
 
     catch( class unregistered_config_mapping const &exception )
     {
+      caught++;
+
       std::string const error_message{ exception.what() };
 
-      std::cout << error_message << exception.get_key() << std::endl;
+      std::string const error_key{ exception.get_key() };
+
+      /* Captain! Template this whole function */
+      REQUIRE( error_key == "3" );
+
+      std::cout << error_message << error_key << std::endl;
     }
-
-    /* test looking up an unregistered key */
-    /*
-    REQUIRE_THROWS_MATCHES( testing_dummy->get( testing_dummy::unregistered ),
-                            unregistered_config_mapping,
-                            Catch::Matchers::Message( 
-                            unregistered_config_mapping::get_message() ) ); 
-    */
-
-    /* test lookup up registered key with non-existent config value */
-    bool caught = false;
-    std::string key;
 
     try
     {
@@ -144,7 +143,7 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
 
     catch( class invalid_key const &exception )
     {
-      caught = true;
+      caught++;
 
       std::string const error_message{ exception.what() };
 
@@ -152,57 +151,10 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
 
       REQUIRE( error_key == "testing_dummy.not_there_string_key" );
 
-      REQUIRE( exception.what() == exception.get_message() );
-
       std::cout << error_message << error_key << std::endl;
     }
 
-    REQUIRE( caught ); 
-
-    /* Captain! Make a PR for all of this so it is visible on the pull requests in GITR */
-    /* test lookup on vector type vs scalar type */
-    /* test lookup on wrong data type? Will that actually fail or just be a mismatch? */
-    /* test all this with multiple arrows, and also from fewer levels down */
-    /*
-
-    1. Practice problems
-    2. Vim
-    3. Atul
-    4. Complete config interface tests
-    5. Fix and test operators in cross field diffusion tests, and document what you fixed
-    6. Install GITR on this IDA machine
-
-    move it to "base" and "derived" as well
-    what config interface tests are still needed?
-
-    errors we need to trigger:
-
-    1. invalid key
-    2. lookup failed - try mismatched types maybe?
-    3. unregistered config mapping
-
-    */
-
-    /* try opening a bad file too. After this, be done with GITR this week please */
-
-    /* also handle the case where the desired config option is not available */
-
-    /* the key was not registered with the lookup case, the key does not exist in the 
-       libconfig file */
-
-    /* What else needs to be handled? */
-    /*
-
-       Config options do need to be cached... but if you are accessing them via
-       ->get
-       ->get
-       ...
-       successive pointer dereferences, you're going to have a lot of issues with performance.
-       Is it possible to avoid dereferencing long chains of them in the functors?
-
-       Just leave a comment and don't do that non-performant behavior
-    
-    */
+    REQUIRE( caught == 2 ); 
   }
 }
 
