@@ -35,3 +35,5 @@ if( TARGET cli11_download )
 endif()
 
 target_include_directories( cli11 INTERFACE ${cli_include_dir} )
+
+list( APPEND dependencies cli11 )

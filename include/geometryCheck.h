@@ -12,7 +12,11 @@
 #include "Surfaces.h"
 #include "surfaceModel.h"
 #include "boris.h"
+
+#if USE_OPENMP == 1
 #include "omp.h"
+#endif
+
 #include <cmath>
 
 #if USE_DOUBLE

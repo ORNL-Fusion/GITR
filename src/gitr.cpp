@@ -19,7 +19,6 @@
 #include "ionize.h"
 #include <cmath>
 //#include "ncFile.h"
-#include "ompPrint.h"
 #include "recombine.h"
 #include "spectroscopy.h"
 #include "surfaceModel.h"

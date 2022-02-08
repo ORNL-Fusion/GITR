@@ -16,7 +16,7 @@ target_include_directories( test_utils PUBLIC ${CMAKE_SOURCE_DIR} )
 
 target_link_libraries( test_utils PUBLIC catch2 )
 
-set( cpu_test_targets
+set( non_gpu_test_targets
      slow_math_tests
      config_interface_tests )
 
@@ -32,11 +32,11 @@ set( gpu_test_targets
 
 if( NOT GITR_USE_CUDA )
 
-  set( cpu_test_targets ${cpu_test_targets} ${gpu_test_targets} )
+  set( non_gpu_test_targets ${non_gpu_test_targets} ${gpu_test_targets} )
 
 endif()
 
-foreach( component IN LISTS cpu_test_targets )
+foreach( component IN LISTS non_gpu_test_targets )
 
   add_executable( ${component} test_src/${component}.cpp )
 

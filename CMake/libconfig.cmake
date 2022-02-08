@@ -76,3 +76,5 @@ target_include_directories( libconfig INTERFACE
 target_link_libraries( libconfig INTERFACE
                        ${LIBCONFIG_LIBRARY}
                        ${LIBCONFIGPP_LIBRARY} )
+
+list( APPEND dependencies libconfig )

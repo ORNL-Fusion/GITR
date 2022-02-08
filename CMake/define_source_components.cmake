@@ -20,7 +20,7 @@ endif()
 target_include_directories( GITR PUBLIC include )
 
 # CPU-only targets
-set( cpu_targets
+set( non_gpu_targets
      efield_interp
      particle
      utils
@@ -44,11 +44,11 @@ set( gpu_targets
 
 if( NOT GITR_USE_CUDA )
 
-  set( cpu_targets ${cpu_targets} ${gpu_targets} )
+  set( non_gpu_targets ${non_gpu_targets} ${gpu_targets} )
 
 endif()
 
-foreach( component IN LISTS cpu_targets )
+foreach( component IN LISTS non_gpu_targets )
 
   add_library( ${component} src/${component}.cpp )
 

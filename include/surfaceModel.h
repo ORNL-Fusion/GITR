@@ -15,7 +15,11 @@
 #include <cmath>
 #include "boris.h"
 #include "spectroscopy.h"
+
+#if USE_OPENMP == 1
 #include "omp.h"
+#endif
+
 #ifdef __CUDACC__
 #include <thrust/random.h>
 #else

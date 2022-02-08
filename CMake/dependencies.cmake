@@ -1,7 +1,12 @@
+# Only OpenMP or Cuda can be specified
+if( GITR_USE_CUDA AND GITR_USE_OPENMP )
+
+  message( FATAL_ERROR "Both GITR_USE_CUDA and GITR_USE_OPENMP are set. Please select one" )
+
+endif()
+
 # Handle external dependencies
 include( ExternalProject )
-
-set( dependencies "" )
 
 set( prefix "${CMAKE_BINARY_DIR}/external" )
 
@@ -17,46 +22,48 @@ endif()
 
 set( CMAKE_BUILD_WITH_INSTALL_RPATH True )
 
+# ensure shared dependency libs are discoverable at load-time
 set( CMAKE_INSTALL_RPATH
      "${CMAKE_BINARY_DIR}"
      "${prefix}/libconfig_install/lib"
      "${prefix}/netcdf-c-install/lib"
      "${prefix}/netcdf-cxx4-install/lib" )
 
-# OpenMP
-include( FindOpenMP )
+# Captain! Rename to "common dependency set" or something more descriptive
+set( dependencies "" )
 
-include_directories( ${OpenMP_C_INCLUDE_DIRS} ${OpenMP_CXX_INCLUDE_DIRS} )
+# The following lines populate the "dependencies" variable
 
 # CLI11
 include( CMake/CLI11.cmake ) # ---> creates target cli11
 
-list( APPEND dependencies cli11 )
-
-# hdf5
-#include( FindHDF5 )
+# HDF5
 find_package( HDF5 COMPONENTS C HL )
 
-message( "HDF5_INCLUDE_DIRS: ${HDF5_INCLUDE_DIRS}" )
-message( "HDF5_INCLUDE_DIRS: ${HDF5_LIBRARIES}" )
-
 # CUDA
-include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart
+if( GITR_USE_CUDA )
 
-# MPI
-include( CMake/mpi.cmake ) # ---> creates target mpi
+  include( CMake/cuda.cmake ) # ---> creates target CUDA::cudart
+
+# OpenMP
+elseif( GITR_USE_OPENMP )
+
+  include( CMake/openmp.cmake ) # ---> creates target OpenMP
+
+endif()
 
 # Thrust
 include( CMake/thrust.cmake ) # ---> creates target thrust
 
-list( APPEND dependencies thrust )
+# MPI 
+if( GITR_USE_MPI )
+
+  include( CMake/mpi.cmake ) # ---> creates target mpi
+
+endif()
 
 # Libconfig
 include( CMake/libconfig.cmake ) # ---> creates target libconfig
 
-list( APPEND dependencies libconfig )
-
 # NETCDF
 include( CMake/netcdf.cmake ) # ---> creates target netcdf
-
-list( APPEND dependencies netcdf )
