@@ -2040,6 +2040,7 @@ if( flowv_interp == 1 )
   int i0, i1, i2, i3, i4;
   int nTemperaturesRecombine = 1, nDensitiesRecombine = 1;
   int use_ionization = use.get< int >( use::ionization );
+  int use_coulomb_collisions = use.get< int >( use::coulombcollisions );
 
   sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
                                          nDensitiesIonize);
@@ -3770,9 +3771,9 @@ if( flowv_interp == 1 )
 #endif
 
   /* initialize random states if monte-carlo operators are active in this run */
-  if( use_ionization == 1 )
+  if( use_ionization == 1 || use_coulomb_collisions == 1 )
   {
-#if USEPERPDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
+#if USEPERPDIFFUSION > 0 || USESURFACEMODEL > 0
 #if USE_CUDA
   // if(world_rank == 0)
   //{
@@ -3874,7 +3875,7 @@ if( flowv_interp == 1 )
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
       &bz.front(), &by.front());
 #endif
-#if USECOULOMBCOLLISIONS > 0
+
   coulombCollisions coulombCollisions0(
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
       &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),
@@ -3884,7 +3885,6 @@ if( flowv_interp == 1 )
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
       &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(),gitr_flags);
 
-#endif
 #if USETHERMALFORCE > 0
   thermalForce thermalForce0(gitr_flags,
       particleArray, dt, background_amu, nR_gradT, nZ_gradT, gradTGridr.data(),
@@ -3974,9 +3974,11 @@ if( flowv_interp == 1 )
 	        thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
         }
 
-#if USECOULOMBCOLLISIONS > 0
-        thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
-#endif
+        if( use_coulomb_collisions == 1 )
+        {
+          thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
+        }
+
 #if USETHERMALFORCE > 0
         thrust::for_each(thrust::device,particleBegin,particleBegin,thermalForce0);
 #endif
@@ -3988,21 +3990,25 @@ if( flowv_interp == 1 )
         dvBt[j * nR_force + i] = move_boris0.magneticForce[1];
         if( use_ionization == 1 )
         {
-        tIon[j * nR_force + i] = ionize0.tion;
-        tRecomb[j * nR_force + i] = recombine0.tion;
+          tIon[j * nR_force + i] = ionize0.tion;
+          tRecomb[j * nR_force + i] = recombine0.tion;
         }
-#if USECOULOMBCOLLISIONS > 0
-        dvCollr[j * nR_force + i] = coulombCollisions0.dv[0];
-        dvCollz[j * nR_force + i] = coulombCollisions0.dv[2];
-        dvCollt[j * nR_force + i] = coulombCollisions0.dv[1];
-#endif
+        if( use_coulomb_collisions == 1 )
+        {
+          dvCollr[j * nR_force + i] = coulombCollisions0.dv[0];
+          dvCollz[j * nR_force + i] = coulombCollisions0.dv[2];
+          dvCollt[j * nR_force + i] = coulombCollisions0.dv[1];
+        }
+
 #if USETHERMALFORCE > 0
+
         dvITGr[j * nR_force + i] = thermalForce0.dv_ITGx;
         dvITGz[j * nR_force + i] = thermalForce0.dv_ITGz;
         dvITGt[j * nR_force + i] = thermalForce0.dv_ITGy;
         dvETGr[j * nR_force + i] = thermalForce0.dv_ETGx;
         dvETGz[j * nR_force + i] = thermalForce0.dv_ETGz;
         dvETGt[j * nR_force + i] = thermalForce0.dv_ETGy;
+
 #endif
       }
     }
@@ -4165,13 +4171,10 @@ if( flowv_interp == 1 )
 #endif
 #endif
 
-#if USECOULOMBCOLLISIONS > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd,
-                       coulombCollisions0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
+      if( use_coulomb_collisions == 1 )
+      {
+        thrust::for_each(thrust::device, particleBegin, particleEnd, coulombCollisions0);
+      }
 
 #if USETHERMALFORCE > 0
       thrust::for_each(thrust::device, particleBegin, particleEnd,

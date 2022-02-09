@@ -199,7 +199,7 @@ class use final : public config_module_base
   {
     ionization,
     useperpdiffusion,
-    usecoulombcollisions,
+    coulombcollisions,
     usefriction,
     useanglescattering,
     useheating,

@@ -2,13 +2,21 @@
 
 # String description for each option
 set( description "(no description added - see define_options.cmake)" )
+
+# Build-time options
 set( GITR_USE_CUDA 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_OPENMP 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_MPI 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_DOUBLE 1 CACHE STRING "${description}" FORCE )
-set( GITR_USE_IONIZATION 1 CACHE STRING "${description}" FORCE ) 
+
+
+# Run-time options
+
+# if collisions are on, friction, scattering, heating are as well
+set( GITR_USE_COULOMB_COLLISIONS 1 CACHE STRING "${description}" FORCE ) 
+
+# Captain!
 set( GITR_USE_PERP_DIFFUSION 1 CACHE STRING "${description}" )
-set( GITR_USE_COULOMB_COLLISIONS 1 CACHE STRING "${description}" ) # if collisions are on, friction, scattering, heating
 set( GITR_USE_FRICTION 1 CACHE STRING "${description}" )
 set( GITR_USE_ANGLE_SCATTERING 1 CACHE STRING "${description}" )
 set( GITR_USE_HEATING 1 CACHE STRING "${description}" )
@@ -46,15 +54,12 @@ set( GITR_USE_FIELD_ALIGNED_VALUES 0 CACHE STRING "${description}" )
 set( GITR_FLUX_EA 1 CACHE STRING "${description}" )
 set( GITR_FORCE_EVAL 0 CACHE STRING "${description}" )
 set( GITR_USE_SORT 0 CACHE STRING "${description}" )
-set( GITR_CHECK_COMPATIBILITY 1 CACHE STRING "${description}" )
 
 add_compile_definitions( 
         USE_CUDA=${GITR_USE_CUDA}
         USE_MPI=${GITR_USE_MPI}
         USE_OPENMP=${GITR_USE_OPENMP}
 	      USE_DOUBLE=${GITR_USE_DOUBLE}
-        USEIONIZATION=${GITR_USE_IONIZATION}
-        USERECOMBINATION=${GITR_USE_RECOMBINATION}
         USEPERPDIFFUSION=${GITR_USE_PERP_DIFFUSION}
         USECOULOMBCOLLISIONS=${GITR_USE_COULOMB_COLLISIONS}
         USEFRICTION=${GITR_USE_FRICTION}
@@ -93,5 +98,4 @@ add_compile_definitions(
         USEFIELDALIGNEDVALUES=${GITR_USE_FIELD_ALIGNED_VALUES}
         FLUX_EA=${GITR_FLUX_EA}
         FORCE_EVAL=${GITR_FORCE_EVAL}
-        USE_SORT=${GITR_USE_SORT}
-        CHECK_COMPATIBILITY=${GITR_CHECK_COMPATIBILITY})
+        USE_SORT=${GITR_USE_SORT})
