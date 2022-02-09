@@ -162,7 +162,6 @@ void reflection::operator()(std::size_t indx) const {
     
     totalYR = Y0 + R0;
 
-#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
     gitr_precision r7 = curand_uniform(&state[indx]);
     gitr_precision r8 = curand_uniform(&state[indx]);
@@ -176,18 +175,6 @@ void reflection::operator()(std::size_t indx) const {
     gitr_precision r10 = dist(state[indx]);
 #endif
 
-#else
-  #if __CUDACC__
-    gitr_precision r7 = curand_uniform(&state[6]);
-    gitr_precision r8 = curand_uniform(&state[7]);
-    gitr_precision r9 = curand_uniform(&state[8]);
-  #else
-    std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
-    gitr_precision r7=dist(state[6]);
-    gitr_precision r8=dist(state[7]);
-    gitr_precision r9=dist(state[8]);
-  #endif
-#endif
     //particle either reflects or deposits
     gitr_precision sputtProb = Y0/totalYR;
     int didReflect = 0;

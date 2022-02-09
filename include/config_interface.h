@@ -220,7 +220,6 @@ class use final : public config_module_base
     odeint,
     fixedseeds,
     fixed_seeds,
-    particleseeds ,
     geom_trace ,
     geom_hash,
     geom_hash_sheath,

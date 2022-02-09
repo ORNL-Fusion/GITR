@@ -121,7 +121,6 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::odeint ] = "ODEINT";
   lookup[ use::fixedseeds ] = "FIXEDSEEDS";
   lookup[ use::fixed_seeds ] = "FIXED_SEEDS";
-  lookup[ use::particleseeds  ] = "PARTICLESEEDS ";
   lookup[ use::geom_trace  ] = "GEOM_TRACE ";
   lookup[ use::geom_hash ] = "GEOM_HASH";
   lookup[ use::geom_hash_sheath ] = "GEOM_HASH_SHEATH";
