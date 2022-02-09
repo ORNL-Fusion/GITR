@@ -51,7 +51,7 @@
 #include <mpi.h>
 #endif
 
-#include <omp.h>
+//#include <omp.h>
 
 #include "sortParticles.h"
 #include <thrust/binary_search.h>
@@ -146,6 +146,7 @@ int main(int argc, char **argv, char **envp) {
     // Parse and read input file
     std::cout << "Open configuration file " << input_path << inputFile
               << std::endl;
+
     importLibConfig(cfg, inputFile);
     //checkFlags( cfg );
 
@@ -2038,55 +2039,70 @@ if( flowv_interp == 1 )
   int nTemperaturesIonize = 1, nDensitiesIonize = 1;
   int i0, i1, i2, i3, i4;
   int nTemperaturesRecombine = 1, nDensitiesRecombine = 1;
-#if USEIONIZATION > 0
-  if (world_rank == 0) {
-    if (cfg.lookupValue("impurityParticleSource.ionization.fileString",
-                        ionizeFile) &&
-        cfg.lookupValue("impurityParticleSource.ionization.nChargeStateString",
-                        ionizeNcs) &&
-        cfg.lookupValue("impurityParticleSource.ionization.DensGridString",
-                        ionizeNDens) &&
-        cfg.lookupValue("impurityParticleSource.ionization.TempGridString",
-                        ionizeNTemp) &&
-        cfg.lookupValue("impurityParticleSource.ionization.TempGridVarName",
-                        ionizeTempGrid) &&
-        cfg.lookupValue("impurityParticleSource.ionization.DensGridVarName",
-                        ionizeDensGrid) &&
-        cfg.lookupValue("impurityParticleSource.ionization.CoeffVarName",
-                        ionizeRCvarChar)) {
-      std::cout << "Ionization rate coefficient file: " << ionizeFile
-                << std::endl;
-    } else {
-      std::cout
-          << "ERROR: Could not get ionization string info from input file "
-          << std::endl;
-    }
-#endif
-#if USERECOMBINATION > 0
-    if (cfg.lookupValue("impurityParticleSource.recombination.fileString",
-                        recombFile) &&
-        cfg.lookupValue(
-            "impurityParticleSource.recombination.nChargeStateString",
-            recombNcs) &&
-        cfg.lookupValue("impurityParticleSource.recombination.DensGridString",
-                        recombNDens) &&
-        cfg.lookupValue("impurityParticleSource.recombination.TempGridString",
-                        recombNTemp) &&
-        cfg.lookupValue("impurityParticleSource.recombination.TempGridVarName",
-                        recombTempGrid) &&
-        cfg.lookupValue("impurityParticleSource.recombination.DensGridVarName",
-                        recombDensGrid) &&
-        cfg.lookupValue("impurityParticleSource.recombination.CoeffVarName",
-                        recombRCvarChar)) {
-      std::cout << "Recombination rate coefficient file: " << recombFile
-                << std::endl;
-    } else {
-      std::cout
-          << "ERROR: Could not get ionization string info from input file "
-          << std::endl;
-    }
-#endif
-#if USEIONIZATION > 0
+  int use_ionization = use.get< int >( use::ionization );
+
+  sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
+                                         nDensitiesIonize);
+  sim::Array<gitr_precision> gridTemperature_Ionization(nTemperaturesIonize),
+      gridDensity_Ionization(nDensitiesIonize);
+  sim::Array<gitr_precision> rateCoeff_Recombination(
+      nCS_Recombine * nTemperaturesRecombine * nDensitiesRecombine);
+  sim::Array<gitr_precision> gridTemperature_Recombination(nTemperaturesRecombine),
+      gridDensity_Recombination(nDensitiesRecombine);
+
+  if (world_rank == 0 && use_ionization == 1 ) 
+  {
+      if (cfg.lookupValue("impurityParticleSource.ionization.fileString",
+                          ionizeFile) &&
+          cfg.lookupValue("impurityParticleSource.ionization.nChargeStateString",
+                          ionizeNcs) &&
+          cfg.lookupValue("impurityParticleSource.ionization.DensGridString",
+                          ionizeNDens) &&
+          cfg.lookupValue("impurityParticleSource.ionization.TempGridString",
+                          ionizeNTemp) &&
+          cfg.lookupValue("impurityParticleSource.ionization.TempGridVarName",
+                          ionizeTempGrid) &&
+          cfg.lookupValue("impurityParticleSource.ionization.DensGridVarName",
+                          ionizeDensGrid) &&
+          cfg.lookupValue("impurityParticleSource.ionization.CoeffVarName",
+                          ionizeRCvarChar))
+      {
+        std::cout << "Ionization rate coefficient file: " << ionizeFile << std::endl;
+      } 
+
+      else 
+      {
+        std::cout
+        << "ERROR: Could not get ionization string info from input file "
+        << std::endl;
+      }
+
+      if (cfg.lookupValue("impurityParticleSource.recombination.fileString",
+                          recombFile) &&
+          cfg.lookupValue(
+              "impurityParticleSource.recombination.nChargeStateString",
+              recombNcs) &&
+          cfg.lookupValue("impurityParticleSource.recombination.DensGridString",
+                          recombNDens) &&
+          cfg.lookupValue("impurityParticleSource.recombination.TempGridString",
+                          recombNTemp) &&
+          cfg.lookupValue("impurityParticleSource.recombination.TempGridVarName",
+                          recombTempGrid) &&
+          cfg.lookupValue("impurityParticleSource.recombination.DensGridVarName",
+                          recombDensGrid) &&
+          cfg.lookupValue("impurityParticleSource.recombination.CoeffVarName",
+                          recombRCvarChar))
+      {
+        std::cout << "Recombination rate coefficient file: " << recombFile
+                  << std::endl;
+      }
+
+      else 
+      {
+        std::cout << "ERROR: Could not get ionization string info from input file "
+                  << std::endl;
+      }
+
     i0 = read_profileNs(input_path + ionizeFile, ionizeNcs, recombNcs,
                         nCS_Ionize, nCS_Recombine);
 
@@ -2095,7 +2111,6 @@ if( flowv_interp == 1 )
 
     i3 = read_profileNs(input_path + recombFile, recombNDens, recombNTemp,
                         nDensitiesRecombine, nTemperaturesRecombine);
-  }
 #if USE_MPI > 0
   MPI_Bcast(&nCS_Ionize, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&nTemperaturesIonize, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -2105,28 +2120,15 @@ if( flowv_interp == 1 )
   MPI_Bcast(&nDensitiesRecombine, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
-  sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
-                                         nDensitiesIonize);
-  sim::Array<gitr_precision> gridTemperature_Ionization(nTemperaturesIonize),
-      gridDensity_Ionization(nDensitiesIonize);
-  sim::Array<gitr_precision> rateCoeff_Recombination(
-      nCS_Recombine * nTemperaturesRecombine * nDensitiesRecombine);
-  sim::Array<gitr_precision> gridTemperature_Recombination(nTemperaturesRecombine),
-      gridDensity_Recombination(nDensitiesRecombine);
-  if (world_rank == 0) {
-#if USEIONIZATION > 0
+
     i2 = read_profiles(
         input_path + ionizeFile, nTemperaturesIonize, nDensitiesIonize,
         ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
         gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
-#endif
-#if USERECOMBINATION > 0
     i4 = read_profiles(
         input_path + recombFile, nTemperaturesRecombine, nDensitiesRecombine,
         recombTempGrid, gridTemperature_Recombination, recombDensGrid,
         gridDensity_Recombination, recombRCvarChar, rateCoeff_Recombination);
-#endif
   }
 #if USE_MPI > 0
   MPI_Bcast(&rateCoeff_Ionization[0],
@@ -3744,7 +3746,6 @@ if( flowv_interp == 1 )
   thrust::counting_iterator<std::size_t> particleZero(0);
   auto randInitStart_clock = gitr_time::now();
 
-#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
      typedef curandState rand_type;
 #else
@@ -3755,8 +3756,11 @@ if( flowv_interp == 1 )
 #else
   sim::Array<rand_type> state1(nParticles);
 #endif
-#if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 ||       \
-    USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
+
+  /* initialize random states if monte-carlo operators are active in this run */
+  if( use_ionization == 1 )
+  {
+#if USEPERPDIFFUSION > 0 || USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
 #if USE_CUDA
   // if(world_rank == 0)
   //{
@@ -3765,22 +3769,12 @@ if( flowv_interp == 1 )
   dev_i[0] = 0;
   std::cout << " about to do curandInit" << std::endl;
   thrust::for_each(thrust::device, particleBegin, particleEnd,
-                   // thrust::for_each(thrust::device,particleBegin+
-                   // world_rank*nP/world_size,particleBegin +
-                   // (world_rank+1)*nP/world_size-10,
-                   // curandInitialize(&state1[0],randDeviceInit,0));
                    curandInitialize<>(&state1.front(), 0));
   std::cout << " finished curandInit" << std::endl;
-  // curandInitialize cuIn(0);
-  // cuIn(0);
-  //}
-  //}
+
 #else
+
   std::random_device randDeviceInit;
-  // thrust::for_each(thrust::device,particleBegin+
-  // world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,
-  //                     curandInitialize(&state1[0],randDeviceInit,0));
-  // std::mt19937 s0(randDeviceInit);
   for (int i = world_rank * nP / world_size;
        i < (world_rank + 1) * nP / world_size; i++) {
     std::mt19937 s0(randDeviceInit());
@@ -3791,7 +3785,7 @@ if( flowv_interp == 1 )
   cudaDeviceSynchronize();
 #endif
 #endif
-#endif
+  }
   auto randInitEnd_clock = gitr_time::now();
   std::chrono::duration<gitr_precision> fsRandInit = randInitEnd_clock - randInitStart_clock;
   printf(
@@ -3836,38 +3830,32 @@ if( flowv_interp == 1 )
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt);
 #endif
-#if USEIONIZATION > 0
-#if USE_CUDA > 0
   gitr_precision *uni;
+  if( use_ionization == 1 )
+  {
+#if USE_CUDA > 0
   cudaMallocManaged(&uni, sizeof(gitr_precision));
 #else
-  gitr_precision *uni = new gitr_precision[1];
+  uni = new gitr_precision[1];
   *uni = 0;
 #endif
+  }
 
+  /* Captain! These will always be initialized - possibly unused and with dummy values */
   ionize<rand_type> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
       &rateCoeff_Ionization.front(),uni);
-  //if(gitr_flags.USE_IONIZATION > 0) ionize0.func = &ionize::operator();
-  //else ionize0.func = &ionize::operator1;
-  //void (ionize::*func)(std::size_t) = &ionize::operator();
-  //ionize * ionize_ptr = &ionize0;
-  //void (*func11)(std::size_t)  = &ionize0.operator();
-  //if(gitr_flags.USE_IONIZATION > 0) &func = &ionize::operator1;
-  //else func = NULL;
-  //auto func1 = *func;
-#endif
-#if USERECOMBINATION > 0
+
   recombine<rand_type> recombine0(
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
       gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags);
-#endif
+
 #if USEPERPDIFFUSION > 0
   crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
@@ -3967,12 +3955,13 @@ if( flowv_interp == 1 )
         particleArray->setParticle(0, forceR[i], 0.0, forceZ[j], testTi, 0.0,
                                    0.0, Z, amu, charge + 1.0);
         move_boris0(0);
-#if USEIONIZATION > 0
-        thrust::for_each(thrust::device,particleBegin,particleBegin,ionize0);
-#endif
-#if USERECOMBINATION > 0
-	thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
-#endif
+
+        if( use_ionization == 1 ) 
+        {
+          thrust::for_each(thrust::device,particleBegin,particleBegin,ionize0);
+	        thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
+        }
+
 #if USECOULOMBCOLLISIONS > 0
         thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
 #endif
@@ -3985,12 +3974,11 @@ if( flowv_interp == 1 )
         dvBr[j * nR_force + i] = move_boris0.magneticForce[0];
         dvBz[j * nR_force + i] = move_boris0.magneticForce[2];
         dvBt[j * nR_force + i] = move_boris0.magneticForce[1];
-#if USEIONIZATION > 0
+        if( use_ionization == 1 )
+        {
         tIon[j * nR_force + i] = ionize0.tion;
-#endif
-#if USERECOMBINATION > 0
         tRecomb[j * nR_force + i] = recombine0.tion;
-#endif
+        }
 #if USECOULOMBCOLLISIONS > 0
         dvCollr[j * nR_force + i] = coulombCollisions0.dv[0];
         dvCollz[j * nR_force + i] = coulombCollisions0.dv[2];
@@ -4095,36 +4083,11 @@ if( flowv_interp == 1 )
 #if __CUDACC__
   cudaDeviceSynchronize();
 #endif
-  // int nDevices=0;
-  // nDevices = omp_get_num_threads();
-  //    unsigned int cpu_thread_id = omp_get_thread_num();
-  //    unsigned int num_cpu_threads = omp_get_num_threads();
-  //    printf("Number of CPU threads %d (ID %d)\n", cpu_thread_id,
-  //    num_cpu_threads);
+
 #if USE_MPI > 0
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     sim::Array<int> tmpInt(1, 1), tmpInt2(1, 1);
-    // int nN=10000;
-    // thrust::host_vector<int> h_vec(nN);
-    // thrust::generate(h_vec.begin(), h_vec.end(), rand);
-    //// transfer data to the device
-    // thrust::device_vector<int> d_vec = h_vec;
-    // float *d_vec2;
-    // cudaMallocManaged(&d_vec2, 1000*sizeof(float));
-    // std::cout << "created d_vec and cmalloc, starting init " << std::endl;
-    // for(int k=0;k<1000;k++)
-    //{   //std::cout << "k " << k << std::endl;
-    //    d_vec2[k] = 1.0;
-    //}
-    // for(int k=0;k<1000;k++)
-    //{   //std::cout << "k " << k << std::endl;
-    //    //d_vec2[k] = 1.0;
-    // thrust::sort(thrust::device,d_vec.begin()+world_rank*nN/world_size,
-    // d_vec.begin()+ (world_rank+1)*nN/world_size-1); // sort data on the device
-    //}
-    //// transfer data back to host
-    // thrust::copy(d_vec.begin(), d_vec.end(), h_vec.begin());
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
 #endif
@@ -4170,19 +4133,11 @@ if( flowv_interp == 1 )
 #endif
 #endif
 
-#if USEIONIZATION > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd,ionize0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
-
-#if USERECOMBINATION > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
+      if( use_ionization == 1 )
+      {
+        thrust::for_each(thrust::device, particleBegin, particleEnd,ionize0);
+        thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
+      }
 
 #if USEPERPDIFFUSION > 0
       thrust::for_each(thrust::device, particleBegin, particleEnd,

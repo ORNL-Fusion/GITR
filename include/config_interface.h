@@ -197,12 +197,7 @@ class use final : public config_module_base
 
   enum : int
   {
-    cuda,
-    use_openmp,
-    mpi,
-    useionization,
-    use_ionization,
-    userecombination,
+    ionization,
     useperpdiffusion,
     usecoulombcollisions,
     usefriction,
