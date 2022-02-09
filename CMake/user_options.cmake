@@ -4,7 +4,7 @@
 set( description "(no description added - see define_options.cmake)" )
 
 # Build-time options
-set( GITR_USE_CUDA 0 CACHE STRING "${description}" FORCE )
+set( GITR_USE_CUDA 1 CACHE STRING "${description}" FORCE )
 set( GITR_USE_OPENMP 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_MPI 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_DOUBLE 1 CACHE STRING "${description}" FORCE )
@@ -14,9 +14,12 @@ set( GITR_USE_DOUBLE 1 CACHE STRING "${description}" FORCE )
 
 # if collisions are on, friction, scattering, heating are as well
 set( GITR_USE_COULOMB_COLLISIONS 1 CACHE STRING "${description}" FORCE ) 
+set( GITR_USE_PERP_DIFFUSION 2 CACHE STRING "${description}" FORCE )
+# IONIZATION is 1 and absorbed RECOMBINATION - that will need to be put in the runtime file
+# or it will segfault
 
-# Captain!
-set( GITR_USE_PERP_DIFFUSION 1 CACHE STRING "${description}" )
+# Captain! Done above, still remaining below
+
 set( GITR_USE_FRICTION 1 CACHE STRING "${description}" )
 set( GITR_USE_ANGLE_SCATTERING 1 CACHE STRING "${description}" )
 set( GITR_USE_HEATING 1 CACHE STRING "${description}" )
@@ -49,7 +52,7 @@ set( GITR_PARTICLE_SOURCE_ANGLE 0 CACHE STRING "${description}" )
 set( GITR_PARTICLE_SOURCE_FILE 0 CACHE STRING "${description}" )
 set( GITR_SPECTROSCOPY 2 CACHE STRING "${description}" )
 set( GITR_USE_3DTET_GEOM 0 CACHE STRING "${description}" )
-set( GITR_USE_CYLSYMM 0 CACHE STRING "${description}" )
+set( GITR_USE_CYLSYMM 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_FIELD_ALIGNED_VALUES 0 CACHE STRING "${description}" )
 set( GITR_FLUX_EA 1 CACHE STRING "${description}" )
 set( GITR_FORCE_EVAL 0 CACHE STRING "${description}" )

@@ -198,7 +198,7 @@ class use final : public config_module_base
   enum : int
   {
     ionization,
-    useperpdiffusion,
+    perpdiffusion,
     coulombcollisions,
     usefriction,
     useanglescattering,

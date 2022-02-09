@@ -2041,6 +2041,7 @@ if( flowv_interp == 1 )
   int nTemperaturesRecombine = 1, nDensitiesRecombine = 1;
   int use_ionization = use.get< int >( use::ionization );
   int use_coulomb_collisions = use.get< int >( use::coulombcollisions );
+  int use_perp_diffusion = use.get< int >( use::perpdiffusion );
 
   sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
                                          nDensitiesIonize);
@@ -3771,9 +3772,9 @@ if( flowv_interp == 1 )
 #endif
 
   /* initialize random states if monte-carlo operators are active in this run */
-  if( use_ionization == 1 || use_coulomb_collisions == 1 )
+  if( use_ionization == 1 || use_coulomb_collisions == 1 || use_perp_diffusion == 1 )
   {
-#if USEPERPDIFFUSION > 0 || USESURFACEMODEL > 0
+#if USESURFACEMODEL > 0
 #if USE_CUDA
   // if(world_rank == 0)
   //{
@@ -3869,12 +3870,10 @@ if( flowv_interp == 1 )
       nDensitiesRecombine, gridTemperature_Recombination.data(),
       gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags);
 
-#if USEPERPDIFFUSION > 0
   crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front());
-#endif
+      &bz.front(), &by.front(), use_perp_diffusion);
 
   coulombCollisions coulombCollisions0(
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
@@ -4157,19 +4156,13 @@ if( flowv_interp == 1 )
         thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
       }
 
-#if USEPERPDIFFUSION > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd,
-                       crossFieldDiffusion0);
-      thrust::for_each(thrust::device, particleBegin, particleEnd,
-                       geometry_check0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
+      if( use_perp_diffusion == 0 )
+      {
+        thrust::for_each(thrust::device, particleBegin, particleEnd,
+                         crossFieldDiffusion0);
+        thrust::for_each(thrust::device, particleBegin, particleEnd,
+                         geometry_check0);
+      }
 
       if( use_coulomb_collisions == 1 )
       {

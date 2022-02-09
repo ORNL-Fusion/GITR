@@ -46,12 +46,6 @@ TEST_CASE( "cross-field diffusion operator" )
     This technically will also pass with GITR_USE_PERP_DIFFUSION=2. Unsure which is correct.
 
   */
-  SECTION( "cross-field diffusion, straight field lines" )
-  {
-    /* timesteps */
-    int nT = 500000;
-
-    gitr_precision dt = 2.0e-7;
 
     libconfig::Config cfg_geom;
 
@@ -63,7 +57,15 @@ TEST_CASE( "cross-field diffusion operator" )
     class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
 
     /* Captain! This will replace "flags" */
-    auto use = std::make_shared< class use >( query );
+    class use use( query );
+
+  SECTION( "cross-field diffusion, straight field lines" )
+  {
+    /* timesteps */
+    int nT = 500000;
+
+    gitr_precision dt = 2.0e-7;
+
 
     auto gitr_flags = new Flags( cfg_geom );
 
@@ -192,10 +194,12 @@ TEST_CASE( "cross-field diffusion operator" )
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
 
+  int use_perp_diffusion = use.get< int >( use::perpdiffusion );
+
   crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front());
+      &bz.front(), &by.front(), use_perp_diffusion );
     
   // half-side length
     double s = 0.2;
@@ -427,10 +431,12 @@ TEST_CASE( "cross-field diffusion operator" )
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
 
+  int use_perp_diffusion = use.get< int >( use::perpdiffusion );
+
   crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front());
+      &bz.front(), &by.front(), use_perp_diffusion);
     
   // half-side length
     double s = 0.2;
