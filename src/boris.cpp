@@ -882,7 +882,7 @@ void move_boris::operator()(std::size_t indx)
 */
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-                     EfieldZDevicePointer,EfieldTDevicePointer);
+                     EfieldZDevicePointer,EfieldTDevicePointer,USECYLSYMM);
                  
   vectorAdd(E,PSE,E);
               //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
@@ -890,7 +890,7 @@ void move_boris::operator()(std::size_t indx)
 #endif              
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                    BfieldZDevicePointer,BfieldTDevicePointer);        
+                    BfieldZDevicePointer,BfieldTDevicePointer, USECYLSYMM);        
   Bmag = vectorNorm(B);
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
 
@@ -991,13 +991,13 @@ void move_boris::operator()(std::size_t indx)
 #if USEPRESHEATHEFIELD > 0
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-                     EfieldZDevicePointer,EfieldTDevicePointer);
+                     EfieldZDevicePointer,EfieldTDevicePointer,USECYLSYMM);
                  
   vectorAdd(E,PSE,E);
 #endif              
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                    BfieldZDevicePointer,BfieldTDevicePointer);        
+                    BfieldZDevicePointer,BfieldTDevicePointer, USECYLSYMM);        
   Bmag = vectorNorm(B);
     q_prime = particlesPointer->charge[indx]*1.60217662e-19/(particlesPointer->amu[indx]*1.6737236e-27)*half_dt*0.5;
     coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
@@ -1045,11 +1045,17 @@ void move_boris::operator()(std::size_t indx)
       new_dt = span;
       new_advance = true;
      }
-
+gitr_precision max_dt = 1.0e-7;
      if ( new_dt > 0.34/gyrofrequency)
      {
       new_dt = 0.34/gyrofrequency;
-      new_advance = true;
+      //new_advance = true;
+     }
+     
+     if ( new_dt > max_dt)
+     {
+      new_dt = max_dt;
+      //new_advance = true;
      }
      
      if (particlesPointer->charge[indx]==0)
@@ -1146,7 +1152,7 @@ for ( int s=0; s<nSteps; s++ )
 #endif
     interp2dVector(&B[0],r[0],r[1],r[2],nR_Bfield,nZ_Bfield,
                BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-               BfieldZDevicePointer,BfieldTDevicePointer);        
+               BfieldZDevicePointer,BfieldTDevicePointer,USECYLSYMM);        
 #ifdef __CUDACC__
 #else
 #endif
@@ -1203,7 +1209,7 @@ for ( int s=0; s<nSteps; s++ )
 
     interp2dVector(&B[0],r2[0],r2[1],r2[2],nR_Bfield,nZ_Bfield,
              BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-             BfieldZDevicePointer,BfieldTDevicePointer);        
+             BfieldZDevicePointer,BfieldTDevicePointer,USECYLSYMM);        
 #ifdef __CUDACC__
 #else
 #endif
@@ -1258,7 +1264,7 @@ for ( int s=0; s<nSteps; s++ )
 #endif
     interp2dVector(&B[0],r3[0],r3[1],r3[2],nR_Bfield,nZ_Bfield,
                  BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                 BfieldZDevicePointer,BfieldTDevicePointer);        
+                 BfieldZDevicePointer,BfieldTDevicePointer,USECYLSYMM);        
                 
 #ifdef __CUDACC__
 #else
@@ -1303,7 +1309,7 @@ for ( int s=0; s<nSteps; s++ )
 #if USEPRESHEATHEFIELD > 0
    interp2dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
                EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
-               EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter);
+               EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter,USECYLSYMM);
     vectorAdd(E,particlesPointer->E,E);
 #endif              
 #ifdef __CUDACC__
@@ -1312,7 +1318,7 @@ for ( int s=0; s<nSteps; s++ )
 
     interp2dVector(&B[0],r4[0],r4[1],r4[2],nR_Bfield,nZ_Bfield,
                         BfieldGridRDevicePointer,BfieldGridZDevicePointer,
-                        BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);        
+                        BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer, USECYLSYMM);        
 #ifdef __CUDACC__
 #else
 #endif

@@ -85,13 +85,13 @@ struct boundary_init {
         gitr_precision midpointy = 0.0;
         gitr_precision midpointz = 0.5*(b.z2 - b.z1) + b.z1;
 #endif
-        b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density);
-        b.ne = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,ne);
-        b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
-        b.te = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,te);
+        b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density,USECYLSYMM);
+        b.ne = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,ne,USECYLSYMM);
+        b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti,USECYLSYMM);
+        b.te = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,te,USECYLSYMM);
         gitr_precision B[3] = {0.0,0.0,0.0};
 interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
-                 bfieldGridz,bfieldR,bfieldZ,bfieldT);
+                 bfieldGridz,bfieldR,bfieldZ,bfieldT,USECYLSYMM);
         gitr_precision norm_B = vectorNorm(B);
 #if USE3DTETGEOM
         gitr_precision surfNorm[3] = {0.0,0.0,0.0};

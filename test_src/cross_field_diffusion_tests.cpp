@@ -33,19 +33,12 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
   return true;
 }
 
-TEST_CASE( "cross-field diffusion operator" )
+/* is there an option for analytic bfield? No. */
+/* Captain! This test does not work with CUDA support - something is wrong
+   with the control flow */
+TEST_CASE( "cross-field diffusion operator - not fully implemented" )
 {
-  /*
-
-    Note: for this test to work, the project must be compiled with 
-
-    GITR_USE_PERP_DIFFUSION=1
-    USE_CYLSYMM=0
-
-    This technically will also pass with GITR_USE_PERP_DIFFUSION=2. Unsure which is correct.
-
-  */
-  SECTION( "cross-field diffusion, straight field lines" )
+  SECTION( "Ahoy, Captain!" )
   {
     /* timesteps */
     int nT = 500000;
@@ -56,7 +49,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     cfg_geom.setAutoConvert(true);
 
-    importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE);
+    importLibConfig(cfg_geom, "../test_data/cross_field_geometry.cfg");
 
     auto gitr_flags = new Flags( cfg_geom );
 
@@ -72,6 +65,16 @@ TEST_CASE( "cross-field diffusion operator" )
     libconfig::Setting &impurity = cfg_geom.lookup( "impurityParticleSource" );
 
     int nP = impurity[ "nP" ];
+
+    /* Correct flags for this unit test */
+    /*
+    USE3DTETGEOM=0
+    USE_SURFACE_POTENTIAL=0
+    PARTICLE_SOURCE_FILE=0
+    SPECTROSCOPY=2 ( for 2D, 1 is not an option )
+    USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
+    USE_ADAPTIVE_DT=0
+    */
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
@@ -232,42 +235,30 @@ TEST_CASE( "cross-field diffusion operator" )
         sum += net_Bins[ nBins * net_nX * net_nZ +
                          z_bin * net_nX + x_bin ];
       }
-
       //density[x_bin] = sum;
       density[x_bin] = sum*dt/nP/dx;
       std::cout << "dens: " << density[x_bin] << " gold " << gold[x_bin] << std::endl;
       rms_error = rms_error + (density[x_bin] - gold[x_bin])*(density[x_bin] - gold[x_bin]);
       sum = 0.0;
     }
-
     rms_error = std::sqrt(rms_error/(net_nX-1));
     std::cout << "rms_error " << rms_error << std::endl;
 
-    int not_hit = 0;    
-    for (int i=0; i< nP; i++ )
-    {
-      if(particleArray->hitWall[i]<1.0)
-      {
-        not_hit = not_hit+1;
-      }
-    //    std::cout << "p " << particleArray->charge[i] << " x " << particleArray->xprevious[i]<<std::endl;
-    }   
-
+int not_hit = 0;    
+for (int i=0; i< nP; i++ )
+{
+  if(particleArray->hitWall[i]<1.0)
+  {
+    not_hit = not_hit+1;
+  }
+//    std::cout << "p " << particleArray->charge[i] << " x " << particleArray->xprevious[i]<<std::endl;
+}   
     std::cout << "number of particles not finished " << not_hit << std::endl;
     gitr_precision margin = 0.1;
     gitr_precision epsilon = 0.05;
     REQUIRE(rms_error<6.0e-4);
   }
-
-  /*
-
-    Note: for this test to work, the project must be compiled with 
-
-    GITR_USE_PERP_DIFFUSION=2
-    USE_CYLSYMM=1
-
-  */
-  SECTION( "cross-field diffusion, curved field lines" )
+  SECTION( "Crossfield diffusion curved field lines" )
   {
     /* timesteps */
     int nT = 200000;
@@ -278,7 +269,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     cfg_geom.setAutoConvert(true);
 
-    importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE_1 );
+    importLibConfig(cfg_geom, "../test_data/cross_field_geometry2.cfg");
 
     auto gitr_flags = new Flags( cfg_geom );
 
@@ -300,6 +291,7 @@ TEST_CASE( "cross-field diffusion operator" )
     USE3DTETGEOM=0
     USE_SURFACE_POTENTIAL=0
     PARTICLE_SOURCE_FILE=0
+    SPECTROSCOPY=2 ( for 2D, 1 is not an option )
     USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
     USE_ADAPTIVE_DT=0
     */

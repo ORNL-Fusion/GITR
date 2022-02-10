@@ -78,7 +78,7 @@ if(particles->hitWall[indx] == 0.0)
 
     interp2dVector(&B[0],x0, y0,z0,
             nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
-            BfieldR,BfieldZ,BfieldT);
+            BfieldR,BfieldZ,BfieldT,USECYLSYMM);
     //std::cout << "Bfield interp " << B[0] << " " << B[1] << " " << B[2] << std::endl;
     vectorNormalize(B,B);
     //Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
@@ -90,20 +90,20 @@ if(particles->hitWall[indx] == 0.0)
 
     interp2dVector(&B[0],x0+0.5*k1[0],y0+0.5*k1[1],z0+0.5*k1[2],
             nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
-            BfieldR,BfieldZ,BfieldT);
+            BfieldR,BfieldZ,BfieldT,USECYLSYMM);
     vectorNormalize(B,B);
 
     vectorScalarMult(dr_fac,B,k2);
     interp2dVector(&B[0],x0+0.5*k2[0],y0+0.5*k2[1],z0+0.5*k2[2],
             nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
-            BfieldR,BfieldZ,BfieldT);
+            BfieldR,BfieldZ,BfieldT,USECYLSYMM);
     vectorNormalize(B,B);
 
     vectorScalarMult(dr_fac,B,k3);
 
     interp2dVector(&B[0],x0+k3[0],y0+k3[1],z0+k3[2],
             nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
-            BfieldR,BfieldZ,BfieldT);
+            BfieldR,BfieldZ,BfieldT,USECYLSYMM);
     vectorNormalize(B,B);
 
     vectorScalarMult(dr_fac,B,k4);

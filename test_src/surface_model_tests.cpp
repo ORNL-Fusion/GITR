@@ -39,19 +39,22 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
   return true;
 }
 
-TEST_CASE( "surface model" )
+TEST_CASE( "boris - not fully implemented" )
 {
-  SECTION( "surface model" )
+  SECTION( "e cross b" )
   {
     /* timesteps */
     int nT = 1;
     
+    std::string inputFile = "surface_model.cfg";
+    std::string input_path = "../test_data/";
+
     /* create particles */
     libconfig::Config cfg;
 
     cfg.setAutoConvert(true);
 
-    importLibConfig(cfg, SURFACE_MODEL_TEST_FILE );
+    importLibConfig(cfg, input_path+inputFile);
 
     auto gitr_flags = new Flags( cfg );
 
@@ -61,9 +64,9 @@ TEST_CASE( "surface model" )
     /* 2nd argument is deprecated - random number stream related */
     auto particleArray = new Particles( nParticles, 1, cfg, gitr_flags );
 
-    /* equation to convert eV energy to vector velocity components */
-    gitr_precision E = 200;
-    gitr_precision amu = 99;
+    /* Captain! Important equation to convert eV energy to vector velocity components */
+    gitr_precision E = 215.443;
+    gitr_precision amu = 96.0;
     gitr_precision vtotal = std::sqrt(2.0 * E * 1.602e-19 / amu / 1.66e-27);
     std::cout << "vtotal: " << vtotal << std::endl;
 
@@ -85,6 +88,9 @@ TEST_CASE( "surface model" )
     thrust::counting_iterator<std::size_t> particle_iterator_start(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
 
+    /* Captain... Just rip everything from cross field diffusion tests and convert it
+       into a boris test. Compare and contrast differences between what's in gitr.cpp
+       and what's in cross_field_diffusion_tests.cpp */
     int nLines = 1;
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
@@ -209,12 +215,6 @@ TEST_CASE( "surface model" )
   int nDistE_surfaceModel = 1, nDistA_surfaceModel = 1;
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
-
-  /* Captain! To make this test work, you must put the filestring in test_data.
-     Currently, that needed file is nowhere to be found so you should disable this test for
-     now. "input_path" is set to a dummy variable */
-    std::string input_path = "";
-
     getVariable(cfg, surfaceModelCfg + "fileString", surfaceModelFile);
     nE_sputtRefCoeff = getDimFromFile(cfg, input_path + surfaceModelFile,
                                       surfaceModelCfg, "nEsputtRefCoeffString");
@@ -321,54 +321,40 @@ TEST_CASE( "surface model" )
     for (int i = 0; i < nA_sputtRefDistOut; i++) {
       angleDistGrid01[i] = i * 1.0 / nA_sputtRefDistOut;
     }
-
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nE_sputtRefDistOut,
               EDist_Y.data(), EDist_CDF_Y.data());
-
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AphiDist_Y.data(), AphiDist_CDF_Y.data());
-
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AthetaDist_Y.data(), AthetaDist_CDF_Y.data());
-
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nE_sputtRefDistOutRef,
               EDist_R.data(), EDist_CDF_R.data());
-
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AphiDist_R.data(), AphiDist_CDF_R.data());
-
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AthetaDist_R.data(), AthetaDist_CDF_R.data());
-
-    /* Captain! Looks like a repeated function call here */
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AthetaDist_R.data(), AthetaDist_CDF_R.data());
-
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
                 angleDistGrid01.data(), nA_sputtRefDistOut,
                 Aphi_sputtRefDistOut[nA_sputtRefDistOut - 1],
                 AphiDist_CDF_Y.data(), AphiDist_CDF_Y_regrid.data());
-
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
                 angleDistGrid01.data(), nA_sputtRefDistOut,
                 Atheta_sputtRefDistOut[nA_sputtRefDistOut - 1],
                 AthetaDist_CDF_Y.data(), AthetaDist_CDF_Y_regrid.data());
-
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nE_sputtRefDistOut,
                 energyDistGrid01.data(), nE_sputtRefDistOut,
                 E_sputtRefDistOut[nE_sputtRefDistOut - 1], EDist_CDF_Y.data(),
                 EDist_CDF_Y_regrid.data());
-
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
                 angleDistGrid01.data(), nA_sputtRefDistOut,
                 Aphi_sputtRefDistOut[nA_sputtRefDistOut - 1],
                 AphiDist_CDF_R.data(), AphiDist_CDF_R_regrid.data());
-
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
                 angleDistGrid01.data(), nA_sputtRefDistOut,
                 Atheta_sputtRefDistOut[nA_sputtRefDistOut - 1],
                 AthetaDist_CDF_R.data(), AthetaDist_CDF_R_regrid.data());
-
     regrid2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nE_sputtRefDistOutRef,
                 energyDistGrid01Ref.data(), nE_sputtRefDistOutRef,
                 E_sputtRefDistOutRef[nE_sputtRefDistOutRef - 1],
@@ -388,7 +374,13 @@ TEST_CASE( "surface model" )
       EDist_CDF_R_regrid.data(), AphiDist_CDF_R_regrid.data(), nEdist, E0dist,
       Edist, nAdist, A0dist, Adist);
 
+    /* get particle xyz before */
     /* time loop */
+    std::cout << "Captain! num particles: " << particleArray->nParticles << std::endl;
+    std::cout << "Captain! Before: " << particleArray->x[0] << " " << particleArray->z[0]
+              << " " << particleArray->y[0]
+              << std::endl;
+
     for (int tt = 0; tt < nT; tt++)
     {
 
@@ -408,7 +400,12 @@ TEST_CASE( "surface model" )
                        reflection0 );
     }
 
-    /* Captain! What should this distribution match? One of the input distributions? */
+    std::cout << "Captain! After: " << particleArray->x[0] << " " << particleArray->z[0]
+              << " " << particleArray->y[0]
+              << std::endl;
+    std::cout << "Captain! After did hit: " << particleArray->hitWall[0] 
+              << std::endl;
+  
     std::ofstream myfile;
   myfile.open ("sputtered_v.txt");
     for (int i = 0; i < nParticles; i++)
@@ -418,5 +415,33 @@ TEST_CASE( "surface model" )
             particleArray->vz[i] <<"\n";
     }
   myfile.close();
+
+    //for (int i = 0; i < nE_sputtRefDistOut; i++)
+    //{
+    // std::cout << "E i " << i << " " << E_sputtRefDistOut[i]<< std::endl;
+    //}
+    
+    for (int i = 0; i < nE_sputtRefCoeff; i++)
+    {
+     std::cout << "E i " << i << " " << E_sputtRefCoeff[i]<< std::endl;
+    }
+    
+    for (int i = 0; i < nA_sputtRefCoeff; i++)
+    {
+     std::cout << "A i " << i << " " << A_sputtRefCoeff[i]<< std::endl;
+    }
+    
+      for (int i = 0; i < nE_sputtRefDistOut; i++)
+    {
+
+      int index = 4*nA_sputtRefDistIn*nE_sputtRefDistOut + 0*nE_sputtRefDistOut + i;
+      //nE_sputtRefDistIn, nA_sputtRefDistIn, nE_sputtRefDistOut
+     std::cout << "E i " << i << " " << E_sputtRefDistOut[i]<<  " " << EDist_Y[index] << std::endl;
+    }
+      for (int i = 0; i < nA_sputtRefDistOut; i++)
+    {
+     std::cout << "A i " << i << " " << Aphi_sputtRefDistOut[i]<< std::endl;
+    }
   }
+
 }

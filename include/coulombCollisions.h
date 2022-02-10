@@ -60,11 +60,11 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   gitr_precision MI = 1.6737236e-27;	
   gitr_precision ME = 9.10938356e-31;
         
-  gitr_precision te_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te);
-  gitr_precision ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
+  gitr_precision te_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te,USECYLSYMM);
+  gitr_precision ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti,USECYLSYMM);
 
   T_background = ti_eV;
-  gitr_precision density = interp2dCombined(x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
+  gitr_precision density = interp2dCombined(x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni,USECYLSYMM);
 
   gitr_precision flowVelocity[3]= {0.0};
   gitr_precision relativeVelocity[3] = {0.0, 0.0, 0.0};
@@ -110,7 +110,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
 #else
   interp2dVector(&flowVelocity[0],x,y,z,
            nR_flowV,nZ_flowV,
-           flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
+           flowVGridr,flowVGridz,flowVr,flowVz,flowVt,USECYLSYMM);
 #endif
 #endif
   relativeVelocity[0] = vx - flowVelocity[0];
@@ -376,7 +376,7 @@ void operator()(std::size_t indx) {
 #else
     interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
-                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
+                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt,USECYLSYMM);
 #endif
 #endif
 
@@ -437,8 +437,8 @@ void operator()(std::size_t indx) {
     getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );
       
-    gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti);
-    gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni);
+    gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti,USECYLSYMM);
+    gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni,USECYLSYMM);
     
     if(nu_parallel <=0.0) nu_parallel = 0.0;
     gitr_precision coeff_par = n1 * std::sqrt(2.0*nu_parallel * dt);

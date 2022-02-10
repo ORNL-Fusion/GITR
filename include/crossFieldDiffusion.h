@@ -74,7 +74,8 @@ struct crossFieldDiffusion {
 /* diffusion equation - start particles at a known point. */
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const { 
-
+if(flags->USE_PERPDIFFUSION>0)
+{
   if(particlesPointer->hitWall[indx] == 0.0)
   {
     if(particlesPointer->charge[indx] > 0.0)
@@ -110,7 +111,7 @@ void operator()(std::size_t indx) const {
                           particlesPointer->zprevious[indx],
                           nR_Bfield,nZ_Bfield,
                           BfieldGridRDevicePointer,BfieldGridZDevicePointer,
-                          BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
+                          BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer,flags->USE_CYLSYMM);
         
       Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
       if(Bmag < 1.0e-12) 
@@ -124,32 +125,27 @@ void operator()(std::size_t indx) const {
       B_unit[1] = B[1]/Bmag;
       B_unit[2] = B[2]/Bmag;
 
-#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
       gitr_precision r3 = curand_uniform(&state[indx]);
+      gitr_precision r4 = curand_uniform(&state[indx]);
 #else
       std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
       gitr_precision r3=dist(state[indx]);
       gitr_precision r4=dist(state[indx]);
 #endif 
-#else
-#if __CUDACC__
-      gitr_precision r3 = curand_uniform(&state[2]);
-#else
-      std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
-      gitr_precision r3=dist(state[2]);
-#endif
-#endif
       /* magnitude of spacial step for 1 particle? */
       /* m^2 / sec units for diffusionCoefficient */
       step = std::sqrt(4*diffusionCoefficient*dt_step);
       //printf("B_unit %f %f %f" ,B_unit[0], B_unit[1], B_unit[2]);
       //printf("step %f" ,step);
+    gitr_precision x_transform = 0.0; 
+    gitr_precision y_transform = 0.0; 
+    gitr_precision z_transform = 0.0; 
+    gitr_precision denom = 0.0; 
   //   printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
-#if USEPERPDIFFUSION > 1
-      /* Notice of code change: previously, this wass floor(r4 + 0.5)*2 - 1 */
-      /* r3 was replaced with variable r4 since r4 is not declared if CUDA is activated */
-      gitr_precision plus_minus1 = floor(r3 + 0.5)*2 - 1;
+    if(flags->USE_PERPDIFFUSION > 1)
+    {
+      gitr_precision plus_minus1 = floor(r4 + 0.5)*2 - 1;
       gitr_precision h = 0.001;
       gitr_precision x_plus = x0+B_unit[0]*h;
       gitr_precision y_plus = y0+B_unit[1]*h;
@@ -158,7 +154,7 @@ void operator()(std::size_t indx) const {
       gitr_precision B_plus[3] = {0.0};
       
       interp2dVector(&B_plus[0],x_plus,y_plus,z_plus,nR_Bfield,nZ_Bfield,
-                               BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
+                               BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer,flags->USE_CYLSYMM);
         gitr_precision Bmag_plus = std::sqrt(B_plus[0]*B_plus[0] + B_plus[1]*B_plus[1] + B_plus[2]*B_plus[2]);
     
     gitr_precision B_deriv1[3] = {0.0};
@@ -167,7 +163,7 @@ void operator()(std::size_t indx) const {
     B_deriv1[1] = (B_plus[1] - B[1])/(h);
     B_deriv1[2] = (B_plus[2] - B[2])/(h);
     
-    gitr_precision denom = vectorNorm(B_deriv1);
+    denom = vectorNorm(B_deriv1);
     
     gitr_precision R = 1.0e4;
     
@@ -226,13 +222,12 @@ void operator()(std::size_t indx) const {
     vectorCrossProduct(B, B_deriv1, y_dir);
     gitr_precision x_comp = s*std::cos(theta0);
     gitr_precision y_comp = s*std::sin(theta0);
-    gitr_precision x_transform = x_comp*perpVector[0] + y_comp*y_dir[0];
-    gitr_precision y_transform = x_comp*perpVector[1] + y_comp*y_dir[1];
-    gitr_precision z_transform = x_comp*perpVector[2] + y_comp*y_dir[2];
-
+    x_transform = x_comp*perpVector[0] + y_comp*y_dir[0];
+    y_transform = x_comp*perpVector[1] + y_comp*y_dir[1];
+    z_transform = x_comp*perpVector[2] + y_comp*y_dir[2];
+    }
     if(std::abs(denom) < 1.0e-8)
     {
-#endif
     perpVector[0] = 0.0;
     perpVector[1] = 0.0;
     perpVector[2] = 0.0;
@@ -324,7 +319,6 @@ void operator()(std::size_t indx) const {
    particlesPointer->x[indx] = particlesPointer->xprevious[indx] + step*perpVector[0];
    particlesPointer->y[indx] = particlesPointer->yprevious[indx] + step*perpVector[1];
    particlesPointer->z[indx] = particlesPointer->zprevious[indx] + step*perpVector[2];
-#if USEPERPDIFFUSION > 1    
 }
 else
 {
@@ -332,9 +326,10 @@ else
     particlesPointer->y[indx] = y0 + y_transform;
     particlesPointer->z[indx] = z0 + z_transform;
 }
-#endif
     }
-    } }
+    } 
+}
+}
 };
 
 #endif

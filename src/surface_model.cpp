@@ -231,7 +231,9 @@ void reflection::operator()(std::size_t indx) const {
                 #pragma omp atomic
                 surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
                 #pragma omp atomic
+/* Captain! Ask Tim which one is correct of the next 2 lines: */
                 surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit]+weight*Y0;
+                //surfaces->grossErosion[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*Y0;
         #endif
         }
       }
