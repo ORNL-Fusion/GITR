@@ -47,9 +47,9 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
 
   Note: for this test to work, the project must be compiled with 
 
-  GITR_USE_CYLSYMM=0
   GITR_USE_SHEATH_EFIELD=0
   GITR_USE_PRE_SHEATH_EFIELD=1
+  GITR_BFIELD_INTERP=1
 
   This technically will also pass with GITR_USE_PERP_DIFFUSION=2. Unsure which is correct.
 
@@ -57,6 +57,8 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
 
 TEST_CASE( "Complex Boris Motion" )
 {
+  /* set GITR_USE_CYLSYMM=0 */
+
   /* Testing complex boris motion implemented in the linked script */
   SECTION( "compare vx, vy, vz, x, y, z to analytic solution" )
   {
@@ -456,12 +458,8 @@ TEST_CASE( "Complex Boris Motion" )
     REQUIRE( rmse_based_comparison( v_z, v_z_test, tolerance ) );
   }
 
-  /*
+  /* set GITR_USE_CYLSYMM=0 */
 
-  USE_PRESHEATH_EFIELD=1
-  BFIELD_INTERP=1
-
-  */
   SECTION( "exb drift experiment - Wein Filter" )
   {
     /* parameters */

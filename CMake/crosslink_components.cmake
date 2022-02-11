@@ -19,7 +19,7 @@ if( OpenMP_CXX_FOUND )
   Message("DID FIND OPENMP_CXX")
 
   target_compile_options( surface_model PUBLIC ${OpenMP_CXX_FLAGS} )
-  target_link_libraries( surface_model PUBLIC OpenMP::OpenMP_CXX )
+  target_link_libraries( surface_model OpenMP::OpenMP_CXX )
 
   target_compile_options( spectroscopy PUBLIC ${OpenMP_CXX_FLAGS} )
   target_link_libraries( spectroscopy OpenMP::OpenMP_CXX )
@@ -78,16 +78,6 @@ target_link_libraries( config_interface_tests test_utils libconfig config_interf
 
 target_link_libraries( coulomb_tests 
                        test_utils libconfig thrust interp2d utils flags netcdf boris fields )
-<<<<<<< HEAD
-======
-target_link_libraries( atomic_tests test_utils ionize interp2d utils flags )
-target_link_libraries( field_tests test_utils interp2d libconfig utils netcdf fields boris )
-target_link_libraries( file_io_tests test_utils libconfig utils flags boris )
-target_link_libraries( cross_field_diffusion_tests 
-                       test_utils utils flags libconfig boris spectroscopy thrust)
-target_link_libraries( boris_tests test_utils flags libconfig utils boris )
-target_link_libraries( surface_model_tests surface_model spectroscopy test_utils flags libconfig utils boris )
->>>>>>> mac/check-tests
 
 target_link_libraries( atomic_tests test_utils ionize interp2d utils flags )
 

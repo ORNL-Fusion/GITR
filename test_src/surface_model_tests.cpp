@@ -54,7 +54,7 @@ TEST_CASE( "boris - not fully implemented" )
 
     cfg.setAutoConvert(true);
 
-    importLibConfig(cfg, input_path+inputFile);
+    importLibConfig(cfg, SURFACE_MODEL_TEST_FILE );
 
     auto gitr_flags = new Flags( cfg );
 

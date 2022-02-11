@@ -36,6 +36,16 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
 /* is there an option for analytic bfield? No. */
 /* Captain! This test does not work with CUDA support - something is wrong
    with the control flow */
+
+    /* Correct flags for this unit test */
+    /*
+    USE3DTETGEOM=0
+    USE_SURFACE_POTENTIAL=0
+    PARTICLE_SOURCE_FILE=0
+    SPECTROSCOPY=2 ( for 2D, 1 is not an option )
+    USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
+    USE_ADAPTIVE_DT=0
+    */
 TEST_CASE( "cross-field diffusion operator - not fully implemented" )
 {
   SECTION( "Ahoy, Captain!" )
@@ -49,7 +59,7 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
 
     cfg_geom.setAutoConvert(true);
 
-    importLibConfig(cfg_geom, "../test_data/cross_field_geometry.cfg");
+    importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE );
 
     auto gitr_flags = new Flags( cfg_geom );
 
@@ -65,16 +75,6 @@ TEST_CASE( "cross-field diffusion operator - not fully implemented" )
     libconfig::Setting &impurity = cfg_geom.lookup( "impurityParticleSource" );
 
     int nP = impurity[ "nP" ];
-
-    /* Correct flags for this unit test */
-    /*
-    USE3DTETGEOM=0
-    USE_SURFACE_POTENTIAL=0
-    PARTICLE_SOURCE_FILE=0
-    SPECTROSCOPY=2 ( for 2D, 1 is not an option )
-    USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
-    USE_ADAPTIVE_DT=0
-    */
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
@@ -269,7 +269,7 @@ for (int i=0; i< nP; i++ )
 
     cfg_geom.setAutoConvert(true);
 
-    importLibConfig(cfg_geom, "../test_data/cross_field_geometry2.cfg");
+    importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE_1 );
 
     auto gitr_flags = new Flags( cfg_geom );
 
@@ -285,16 +285,6 @@ for (int i=0; i< nP; i++ )
     libconfig::Setting &impurity = cfg_geom.lookup( "impurityParticleSource" );
 
     int nP = impurity[ "nP" ];
-
-    /* Correct flags for this unit test */
-    /*
-    USE3DTETGEOM=0
-    USE_SURFACE_POTENTIAL=0
-    PARTICLE_SOURCE_FILE=0
-    SPECTROSCOPY=2 ( for 2D, 1 is not an option )
-    USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
-    USE_ADAPTIVE_DT=0
-    */
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
