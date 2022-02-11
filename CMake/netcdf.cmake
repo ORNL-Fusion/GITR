@@ -6,7 +6,7 @@ if( NOT NETCDF_FOUND )
 
   message( "Downloading netcdf-c and netcdf-cxx4..." )
 
-  set( netcdf-c-url "https://github.com/ORNL-Fusion/netcdf-c_copy.git" )
+  set( netcdf-c-url "https://github.com/Unidata/netcdf-c.git" )
 
   if( EXISTS ${prefix}/netcdf-c )
 
@@ -14,7 +14,10 @@ if( NOT NETCDF_FOUND )
 
   else()
 
-    set( download_command git clone ${netcdf-c-url} ${prefix}/netcdf-c )
+    set( download_command 
+         git clone --depth 1 --branch v4.8.1
+         ${netcdf-c-url}
+         ${prefix}/netcdf-c )
 
   endif()
 
@@ -36,7 +39,7 @@ if( NOT NETCDF_FOUND )
 
   # netcdf-cxx-4
 
-  set( netcdf-cxx4-url "https://github.com/ORNL-Fusion/netcdf-cxx4_copy.git" )
+  set( netcdf-cxx4-url "https://github.com/Unidata/netcdf-cxx4.git" )
 
   if( EXISTS ${prefix}/netcdf-cxx4 )
 
@@ -44,7 +47,10 @@ if( NOT NETCDF_FOUND )
 
   else()
 
-    set( download_command git clone ${netcdf-cxx4-url} ${prefix}/netcdf-cxx4 )
+    set( download_command 
+         git clone --depth 1 --branch v4.3.0
+         ${netcdf-cxx4-url}
+         ${prefix}/netcdf-cxx4 )
 
   endif()
 

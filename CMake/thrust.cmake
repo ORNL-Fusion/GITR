@@ -4,9 +4,12 @@ if( NOT GITR_USE_CUDA )
 
   message( "Downloading thrust..." )
 
-  set( thrust_url "https://github.com/ORNL-Fusion/thrust_archive.git" )
+  set( thrust_url "https://github.com/NVIDIA/thrust.git" )
 
-  set( download_command git clone ${thrust_url} ${prefix}/thrust )
+  set( download_command
+       git clone --depth 1 --branch 1.15.0
+       ${thrust_url} 
+       ${prefix}/thrust )
 
   ExternalProject_Add( thrust_download
                        PREFIX ${prefix} 

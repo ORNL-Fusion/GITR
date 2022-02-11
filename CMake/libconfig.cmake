@@ -6,7 +6,7 @@ if( NOT LIBCONFIG_FOUND )
 
   message( "Downloading libconfig..." )
 
-  set( libconfig_url "https://github.com/ORNL-Fusion/libconfig_archive.git" )
+  set( libconfig_url "https://github.com/hyperrealm/libconfig.git" )
 
   if( EXISTS ${prefix}/libconfig )
 
@@ -14,7 +14,10 @@ if( NOT LIBCONFIG_FOUND )
 
   else()
 
-    set( download_command git clone ${libconfig_url} ${prefix}/libconfig )
+    set( download_command 
+         git clone --depth 1 --branch v1.7.3
+         ${libconfig_url}
+         ${prefix}/libconfig )
 
   endif()
 
