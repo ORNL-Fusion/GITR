@@ -3884,14 +3884,14 @@ if( flowv_interp == 1 )
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
       &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(),gitr_flags);
 
-#if USETHERMALFORCE > 0
+      int usethermalforce = use.get< int >( use::thermalforce );
+
   thermalForce thermalForce0(gitr_flags,
       particleArray, dt, background_amu, nR_gradT, nZ_gradT, gradTGridr.data(),
       gradTGridz.data(), gradTiR.data(), gradTiZ.data(), gradTiY.data(),
       gradTeR.data(), gradTeZ.data(), gradTeY.data(), nR_Bfield, nZ_Bfield,
       bfieldGridr.data(), &bfieldGridz.front(), &br.front(), &bz.front(),
       &by.front());
-#endif
 
 #if USESURFACEMODEL > 0
   reflection reflection0(
@@ -3978,9 +3978,10 @@ if( flowv_interp == 1 )
           thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
         }
 
-#if USETHERMALFORCE > 0
+      if( usethermalforce > 0 )
+      {
         thrust::for_each(thrust::device,particleBegin,particleBegin,thermalForce0);
-#endif
+      }
         dvEr[j * nR_force + i] = move_boris0.electricForce[0];
         dvEz[j * nR_force + i] = move_boris0.electricForce[2];
         dvEt[j * nR_force + i] = move_boris0.electricForce[1];
@@ -3999,8 +4000,8 @@ if( flowv_interp == 1 )
           dvCollt[j * nR_force + i] = coulombCollisions0.dv[1];
         }
 
-#if USETHERMALFORCE > 0
-
+      if( usethermalforce > 0 )
+      {
         dvITGr[j * nR_force + i] = thermalForce0.dv_ITGx;
         dvITGz[j * nR_force + i] = thermalForce0.dv_ITGz;
         dvITGt[j * nR_force + i] = thermalForce0.dv_ITGy;
@@ -4008,7 +4009,7 @@ if( flowv_interp == 1 )
         dvETGz[j * nR_force + i] = thermalForce0.dv_ETGz;
         dvETGt[j * nR_force + i] = thermalForce0.dv_ETGy;
 
-#endif
+      }
       }
     }
     std::cout << " about to write ncFile_forces " << std::endl;
@@ -4169,13 +4170,11 @@ if( flowv_interp == 1 )
         thrust::for_each(thrust::device, particleBegin, particleEnd, coulombCollisions0);
       }
 
-#if USETHERMALFORCE > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd,
-                       thermalForce0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
+      if( usethermalforce > 0 )
+      {
+        thrust::for_each(thrust::device, particleBegin, particleEnd,
+                         thermalForce0);
+      }
 
 #if USESURFACEMODEL > 0
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);

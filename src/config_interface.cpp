@@ -101,9 +101,7 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::ionization ] = "USEIONIZATION";
   lookup[ use::perpdiffusion ] = "USEPERPDIFFUSION";
   lookup[ use::coulombcollisions ] = "USECOULOMBCOLLISIONS";
-  lookup[ use::useanglescattering ] = "USEANGLESCATTERING";
-  lookup[ use::useheating ] = "USEHEATING";
-  lookup[ use::usethermalforce ] = "USETHERMALFORCE";
+  lookup[ use::thermalforce ] = "USETHERMALFORCE";
   lookup[ use::usesurfacemodel ] = "USESURFACEMODEL";
   lookup[ use::usesheathefield ] = "USESHEATHEFIELD";
   lookup[ use::biased_surface ] = "BIASED_SURFACE";
