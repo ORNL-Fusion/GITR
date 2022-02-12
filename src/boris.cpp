@@ -1051,6 +1051,13 @@ void move_boris::operator()(std::size_t indx)
       new_dt = 0.34/gyrofrequency;
       new_advance = true;
      }
+
+     gitr_precision max_dt = 1.0e-7;
+
+     if ( new_dt > max_dt)
+     {
+      new_dt = max_dt;
+     }
      
      if (particlesPointer->charge[indx]==0)
      {
