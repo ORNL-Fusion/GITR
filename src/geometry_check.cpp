@@ -62,7 +62,9 @@ geometry_check::geometry_check(
   gitr_precision _Edist,
   int _nAdist,
   gitr_precision _A0dist,
-  gitr_precision _Adist )
+  gitr_precision _Adist,
+  int use_surface_model,
+  int use_flux_ea )
   :
 
     particlesPointer(_particlesPointer), nLines(_nLines),
@@ -73,7 +75,7 @@ geometry_check::geometry_check(
     closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy),
     closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
     E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
-    Adist(_Adist) {}
+    Adist(_Adist), use_surface_model(use_surface_model), use_flux_ea(use_flux_ea) {}
 
 __host__  __device__
 void geometry_check::operator()(std::size_t indx) const {
@@ -97,12 +99,12 @@ void geometry_check::operator()(std::size_t indx) const {
     gitr_precision dpath =
         std::sqrt((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev) +
                   (z - zprev) * (z - zprev));
-#if FLUX_EA > 0
+
     gitr_precision dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
     gitr_precision dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
     int AdistInd = 0;
     int EdistInd = 0;
-#endif
+
     gitr_precision vxy[3] = {0.0};
     gitr_precision vtheta[3] = {0.0};
 #if USECYLSYMM > 0
@@ -457,15 +459,6 @@ void geometry_check::operator()(std::size_t indx) const {
             temp_position_xyz[0] = p[0];
             temp_position_xyz[1] = p[1];
             temp_position_xyz[2] = p[2];
-          //#if USESURFACEMODEL == 0
-          //  #if USE_CUDA > 0
-          //    atomicAdd(&boundaryVector[i].impacts,
-          //    particlesPointer->weight[indx]);
-          //  #else
-          //    boundaryVector[i].impacts = boundaryVector[i].impacts +
-          //    particlesPointer->weight[indx];
-          //  #endif
-          //#endif
             gitr_precision E0 =
               0.5 * particlesPointer->amu[indx] * 1.66e-27 *
               (particlesPointer->vx[indx] * particlesPointer->vx[indx] +
@@ -935,7 +928,8 @@ else{
 #endif
     if (particlesPointer->hitWall[indx] == 1.0) {
 
-#if (FLUX_EA > 0 && USESURFACEMODEL == 0)
+      if( use_flux_ea > 0 && use_surface_model == 0 )
+      {
       gitr_precision E0 = 0.0;
       gitr_precision thetaImpact = 0.0;
       gitr_precision particleTrackVector[3] = {0.0};
@@ -1024,10 +1018,12 @@ else{
 #endif
         }
       }
-#elif (FLUX_EA == 0 && USESURFACEMODEL == 0)
+      }
+      else if( use_flux_ea == 0 && use_surface_model == 0 )
+      {
         particlesPointer->weight[indx] = 0.0;
-#endif
       // particlesPointer->transitTime[indx] = tt*dt;
+      }
     }
   }
 

@@ -119,7 +119,7 @@ TEST_CASE( "cross-field diffusion operator" )
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist, 0, 0 );
 
 
     /* data collection variables */
@@ -356,7 +356,7 @@ TEST_CASE( "cross-field diffusion operator" )
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist, 0, 0 );
 
 
     /* data collection variables */

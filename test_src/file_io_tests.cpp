@@ -122,12 +122,14 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       closeGeomGridy(1), closeGeomGridz(1);
   sim::Array<int> closeGeom(1, 0);
   gitr_precision dt = 1.0e9;
+  /* Captain! Last 2 arguments set arbitrarily to zero since it doesn't look like it matters
+     much in this code */
   geometry_check geometry_check0(
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist, 0, 0 );
 
 
   }
@@ -182,7 +184,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist, 0, 0 );
 
     particleArray->x[0] = 0.5;
     particleArray->xprevious[0] = 0.5;
@@ -268,7 +270,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist, 0, 0 );
 
     particleArray->x[0] = 0.5;
     particleArray->xprevious[0] = 0.5;

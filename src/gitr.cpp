@@ -92,6 +92,8 @@ int main(int argc, char **argv, char **envp) {
   auto gitr_start_clock = gitr_time::now();
   class libconfig_string_query query( file_name );
   class use use( query );
+  int use_surface_model = use.get< int >( use::surfacemodel );
+  int use_flux_ea = use.get< int >( use::flux_ea );
 
   // Set default processes per node to 1
   int ppn = 1;
@@ -1305,7 +1307,8 @@ if( generate_lc > 0 )
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
-                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0));
+                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0,
+                       use_surface_model, use_flux_ea ));
 
     thrust::for_each(
         thrust::device, lcBegin, lcEnd,
@@ -1314,7 +1317,8 @@ if( generate_lc > 0 )
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
-                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0));
+                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0,
+                       use_surface_model, use_flux_ea ));
   }
   auto finish_clock_trace = Time_trace::now();
   fsec_trace fstrace = finish_clock_trace - start_clock_trace;
@@ -2595,9 +2599,11 @@ if( flowv_interp == 1 )
   int nE_sputtRefDistOut = 1, nA_sputtRefDistOut = 1;
   int nE_sputtRefDistOutRef = 1, nDistE_surfaceModelRef = 1;
   int nDistE_surfaceModel = 1, nDistA_surfaceModel = 1;
-#if USESURFACEMODEL > 0
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
+
+  if( use_surface_model > 0 )
+  {
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
@@ -2642,7 +2648,7 @@ if( flowv_interp == 1 )
   MPI_Bcast(&nDistA_surfaceModel, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+  }
   sim::Array<gitr_precision> E_sputtRefCoeff(nE_sputtRefCoeff),
       A_sputtRefCoeff(nA_sputtRefCoeff), Elog_sputtRefCoeff(nE_sputtRefCoeff),
       energyDistGrid01(nE_sputtRefDistOut),
@@ -2670,7 +2676,8 @@ if( flowv_interp == 1 )
       AphiDist_CDF_R_regrid(nDistA_surfaceModel),
       AthetaDist_CDF_R_regrid(nDistA_surfaceModel),
       EDist_CDF_R_regrid(nDistE_surfaceModelRef);
-#if USESURFACEMODEL > 0
+      if( use_surface_model > 0 )
+      {
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
@@ -2930,7 +2937,7 @@ if( flowv_interp == 1 )
             MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+      }
   // Particle time stepping control
   // int ionization_nDtPerApply  =
   // cfg.lookup("timeStep.ionization_nDtPerApply"); int collision_nDtPerApply  =
@@ -3772,15 +3779,14 @@ if( flowv_interp == 1 )
 #endif
 
   /* initialize random states if monte-carlo operators are active in this run */
-  if( use_ionization == 1 || use_coulomb_collisions == 1 || use_perp_diffusion > 0 )
+  if( use_ionization == 1 ||
+      use_coulomb_collisions == 1 ||
+      use_perp_diffusion > 0 || 
+      use_surface_model > 0 )
   {
-#if USESURFACEMODEL > 0
 #if USE_CUDA
   // if(world_rank == 0)
   //{
-  int *dev_i;
-  cudaMallocManaged(&dev_i, sizeof(int));
-  dev_i[0] = 0;
   std::cout << " about to do curandInit" << std::endl;
   thrust::for_each(thrust::device, particleBegin, particleEnd,
                    curandInitialize<>(&state1.front(), 0));
@@ -3795,10 +3801,11 @@ if( flowv_interp == 1 )
     state1[i] = s0;
   }
 #endif
+
 #if USE_CUDA
   cudaDeviceSynchronize();
 #endif
-#endif
+
   }
   auto randInitEnd_clock = gitr_time::now();
   std::chrono::duration<gitr_precision> fsRandInit = randInitEnd_clock - randInitStart_clock;
@@ -3834,7 +3841,7 @@ if( flowv_interp == 1 )
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist, use_surface_model, use_flux_ea );
 #if USE_SORT > 0
   sortParticles sort0(particleArray, nP,dev_tt, 10000,
                       nActiveParticlesOnRank.data());
@@ -3893,7 +3900,6 @@ if( flowv_interp == 1 )
       bfieldGridr.data(), &bfieldGridz.front(), &br.front(), &bz.front(),
       &by.front());
 
-#if USESURFACEMODEL > 0
   reflection reflection0(
       particleArray, dt, &state1.front(), nLines, &boundaries[0], surfaces,
       nE_sputtRefCoeff, nA_sputtRefCoeff, A_sputtRefCoeff.data(),
@@ -3906,8 +3912,7 @@ if( flowv_interp == 1 )
       energyDistGrid01Ref.data(), angleDistGrid01.data(),
       EDist_CDF_Y_regrid.data(), AphiDist_CDF_Y_regrid.data(),
       EDist_CDF_R_regrid.data(), AphiDist_CDF_R_regrid.data(), nEdist, E0dist,
-      Edist, nAdist, A0dist, Adist);
-#endif
+      Edist, nAdist, A0dist, Adist, use_flux_ea );
 
 #if PARTICLE_TRACKS > 0
   history history0(particleArray, dev_tt, nT, subSampleFac, nP,
@@ -4176,12 +4181,10 @@ if( flowv_interp == 1 )
                          thermalForce0);
       }
 
-#if USESURFACEMODEL > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
+      if( use_surface_model > 0 )
+      {
+        thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
+      }
     }
 #if PARTICLE_TRACKS > 0
     tt = nT;
@@ -4419,7 +4422,8 @@ for(int i=0; i<nP ; i++)
              MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#if (USESURFACEMODEL > 0 || FLUX_EA > 0)
+      if( use_surface_model > 0 || use_flux_ea > 0 )
+      {
   // MPI_Barrier(MPI_COMM_WORLD);
   std::cout << "Starting surface reduce " << std::endl;
   // for(int i=0;i<nSurfaces;i++) std::cout <<
@@ -4452,7 +4456,7 @@ for(int i=0; i<nP ; i++)
              MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
   std::cout << "Finished surface reduce " << std::endl;
-#endif
+      }
 #endif
   if (world_rank == 0) {
     auto MPIfinish_clock = gitr_time::now();
@@ -4704,7 +4708,8 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // std::cout << "weights "  << " " << weights1[i] << " " <<
     // weightThreshold[0] << std::endl;
     //}
-#if (USESURFACEMODEL > 0 || FLUX_EA > 0)
+    if( use_surface_model > 0 || use_flux_ea > 0 )
+    {
 #if USE_MPI > 0
     std::vector<int> surfaceNumbers(nSurfaces, 0);
     int srf = 0;
@@ -4827,7 +4832,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // nc_surfADistGrid.putVar(&surfaces->gridA[0]);
     ncFile1.close();
 #endif
-#endif
+    }
 #if PARTICLE_TRACKS > 0
 
     // Write netCDF output for histories

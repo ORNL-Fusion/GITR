@@ -186,12 +186,13 @@ TEST_CASE( "surface model" )
                       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                       &closeGeom_sheath.front(), gitr_flags );
 
+    /* Captain! Arbitrary runtime flags inserted in geometry check */
     geometry_check geometry_check0(
         particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist, 1, 1 );
 
 #ifdef __CUDACC__
     typedef curandState rand_type;
@@ -376,6 +377,7 @@ TEST_CASE( "surface model" )
                 E_sputtRefDistOutRef[nE_sputtRefDistOutRef - 1],
                 EDist_CDF_R.data(), EDist_CDF_R_regrid.data());
   
+    /* Captain! Arbitrary runtime flag as last argument, flux_ea = 1  */
     reflection reflection0(
       particleArray, dt, &state1.front(), nLines, &boundaries[0], surfaces,
       nE_sputtRefCoeff, nA_sputtRefCoeff, A_sputtRefCoeff.data(),
@@ -388,7 +390,7 @@ TEST_CASE( "surface model" )
       energyDistGrid01Ref.data(), angleDistGrid01.data(),
       EDist_CDF_Y_regrid.data(), AphiDist_CDF_Y_regrid.data(),
       EDist_CDF_R_regrid.data(), AphiDist_CDF_R_regrid.data(), nEdist, E0dist,
-      Edist, nAdist, A0dist, Adist);
+      Edist, nAdist, A0dist, Adist, 1 );
 
     /* time loop */
     for (int tt = 0; tt < nT; tt++)

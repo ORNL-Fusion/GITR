@@ -201,7 +201,7 @@ class use final : public config_module_base
     perpdiffusion,
     coulombcollisions,
     thermalforce,
-    usesurfacemodel,
+    surfacemodel,
     usesheathefield,
     biased_surface,
     usepresheathefield,

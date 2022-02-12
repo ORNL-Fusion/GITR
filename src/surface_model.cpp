@@ -37,7 +37,8 @@
     gitr_precision _Edist,
     int _nAdist,
     gitr_precision _A0dist,
-    gitr_precision _Adist) :
+    gitr_precision _Adist,
+    int use_flux_ea ) :
 particles(_particles),
                              dt(_dt),
                              nLines(_nLines),
@@ -72,7 +73,8 @@ particles(_particles),
                              nAdist(_nAdist),
                              A0dist(_A0dist),
                              Adist(_Adist),
-                             state(_state) { }
+                             state(_state),
+                             use_flux_ea( use_flux_ea ) { }
 
 CUDA_CALLABLE_MEMBER_DEVICE
 void reflection::operator()(std::size_t indx) const {
