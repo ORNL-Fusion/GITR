@@ -775,7 +775,8 @@ move_boris::move_boris(
   gitr_precision *_closeGeomGridy,
   gitr_precision *_closeGeomGridz,
   int *_closeGeom,
-  Flags* _gitr_flags )
+  Flags* _gitr_flags,
+  gitr_precision _max_dt)
 
   : 
   particlesPointer(_particlesPointer),
@@ -805,7 +806,7 @@ move_boris::move_boris(
         closeGeomGridz_sheath(_closeGeomGridz),
         closeGeom_sheath(_closeGeom),
 	gitr_flags(_gitr_flags),
-
+        max_dt(_max_dt),
         span(_span),
         nLines(_nLines),
         magneticForce{0.0, 0.0, 0.0},
@@ -1050,6 +1051,11 @@ void move_boris::operator()(std::size_t indx)
      {
       new_dt = 0.34/gyrofrequency;
       new_advance = true;
+     }
+
+     if ( new_dt > max_dt)
+     {
+      new_dt = max_dt;
      }
      
      if (particlesPointer->charge[indx]==0)

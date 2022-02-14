@@ -2952,7 +2952,7 @@ if( flowv_interp == 1 )
   int nP = 0;          // cfg.lookup("impurityParticleSource.nP");
   long nParticles = 0; // nP;
   int nT = 0;
-
+  gitr_precision max_dt = 1.0e5;
   if (world_rank == 0) {
     nP = cfg.lookup("impurityParticleSource.nP");
     nParticles = nP;
@@ -2962,6 +2962,15 @@ if( flowv_interp == 1 )
       cout << "Number of particles: " << nP << endl;
     } else {
       std::cout << "ERROR: could not get nT, dt, or nP from input file"
+                << std::endl;
+    }
+    if (cfg.lookupValue("timeStep.max_dt", max_dt)) 
+    {
+      cout << "Max dt: " << max_dt << endl;
+    } 
+    else 
+    {
+      std::cout << "WARNING: maximum dt is not specified in input file, using default of 1.0e5 seconds"
                 << std::endl;
     }
   }
@@ -3813,7 +3822,7 @@ if( flowv_interp == 1 )
       nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
       n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-      &closeGeom_sheath.front(),gitr_flags);
+      &closeGeom_sheath.front(),gitr_flags,max_dt);
   //void (*bor)(std::size_t) = &move_boris::operator2;
   //auto bor1 = *bor;
   geometry_check geometry_check0(

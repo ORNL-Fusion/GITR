@@ -83,6 +83,7 @@ struct move_boris {
     gitr_precision* closeGeomGridz_sheath;
     int* closeGeom_sheath; 
     Flags* gitr_flags;
+    gitr_precision max_dt;
 
     const gitr_precision span;
     const int nLines;
@@ -103,7 +104,7 @@ struct move_boris {
             gitr_precision * _EfieldRDevicePointer,
             gitr_precision * _EfieldZDevicePointer,
             gitr_precision * _EfieldTDevicePointer,
-            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, gitr_precision *_closeGeomGridr,gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, int *_closeGeom, Flags* _gitr_flags);
+            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, gitr_precision *_closeGeomGridr,gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, int *_closeGeom, Flags* _gitr_flags, gitr_precision _max_dt = 1.0e5);
 
     CUDA_CALLABLE_MEMBER    
     void operator()(std::size_t indx); 
