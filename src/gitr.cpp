@@ -2398,7 +2398,10 @@ if( flowv_interp == 1 )
       Efieldz(nR_Bfield * nZ_Bfield), Efieldt(nR_Bfield * nZ_Bfield),
       minDist(nR_Bfield * nZ_Bfield);
 
-#if USESHEATHEFIELD > 0
+  int use_sheath_efield = use.get< int >( use::sheath_efield );
+
+  if( use_sheath_efield > 0 )
+  {
   gitr_precision thisE0[3] = {0.0, 0.0, 0.0};
   gitr_precision minDist0 = 0.0;
   int minInd_bnd = 0;
@@ -2480,12 +2483,14 @@ if( flowv_interp == 1 )
       cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
       cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
 #endif
-#else
+  }
+  else
+  {
   int nR_dtsEfield = 1;
   int nZ_dtsEfield = 1;
   sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
   sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
-#endif
+  }
 
   std::string outnameEfieldR = "EfieldR.m";
   std::string outnameEfieldZ = "EfieldZ.m";
@@ -3833,7 +3838,7 @@ if( flowv_interp == 1 )
       nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
       n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-      &closeGeom_sheath.front(),gitr_flags,max_dt);
+      &closeGeom_sheath.front(),gitr_flags, use_sheath_efield, max_dt );
   //void (*bor)(std::size_t) = &move_boris::operator2;
   //auto bor1 = *bor;
   geometry_check geometry_check0(
@@ -3862,7 +3867,6 @@ if( flowv_interp == 1 )
 #endif
   }
 
-  /* Captain! These will always be initialized - possibly unused and with dummy values */
   ionize<rand_type> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),

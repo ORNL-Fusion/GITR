@@ -202,7 +202,7 @@ class use final : public config_module_base
     coulombcollisions,
     thermalforce,
     surfacemodel,
-    usesheathefield,
+    sheath_efield,
     biased_surface,
     usepresheathefield,
     bfield_interp,

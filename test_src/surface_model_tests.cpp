@@ -173,6 +173,7 @@ TEST_CASE( "surface model" )
       closeGeomGridz_sheath(nZ_closeGeom_sheath);
     sim::Array<int> closeGeom_sheath(nGeomHash_sheath);
 
+    int use_sheath_efield = 1;
     /* create boris operator */
     move_boris boris( particleArray, dt, boundaries.data(), nLines, nR_Bfield, nZ_Bfield,
                       bfieldGridr.data(), bfieldGridz.data(), br.data(), bz.data(), by.data(),
@@ -184,7 +185,7 @@ TEST_CASE( "surface model" )
                       nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
                       n_closeGeomElements_sheath, closeGeomGridr_sheath.data(),
                       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-                      &closeGeom_sheath.front(), gitr_flags );
+                      &closeGeom_sheath.front(), gitr_flags, use_sheath_efield );
 
     /* Captain! Arbitrary runtime flags inserted in geometry check */
     geometry_check geometry_check0(

@@ -89,6 +89,7 @@ struct move_boris {
     const int nLines;
     gitr_precision magneticForce[3];
     gitr_precision electricForce[3];
+    int use_sheath_efield;
 
     move_boris(Particles *_particlesPointer, gitr_precision _span, Boundary *_boundaryVector,int _nLines,
             int _nR_Bfield, int _nZ_Bfield,
@@ -104,7 +105,7 @@ struct move_boris {
             gitr_precision * _EfieldRDevicePointer,
             gitr_precision * _EfieldZDevicePointer,
             gitr_precision * _EfieldTDevicePointer,
-            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, gitr_precision *_closeGeomGridr,gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, int *_closeGeom, Flags* _gitr_flags, gitr_precision _max_dt = 1.0e5);
+            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, gitr_precision *_closeGeomGridr,gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, int *_closeGeom, Flags* _gitr_flags, int use_sheath_efield, gitr_precision _max_dt = 1.0e5 );
 
     CUDA_CALLABLE_MEMBER    
     void operator()(std::size_t indx); 
