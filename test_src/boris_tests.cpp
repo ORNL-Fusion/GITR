@@ -376,6 +376,7 @@ TEST_CASE( "Complex Boris Motion" )
 
     /* create boris operator */
     int use_sheath_efield = 0;
+    int use_presheath_efield = 1;
     move_boris boris( particleArray,
         dt,
         boundaries.data(),
@@ -404,7 +405,7 @@ TEST_CASE( "Complex Boris Motion" )
         &closeGeomGridy_sheath.front(),
         &closeGeomGridz_sheath.front(),
         &closeGeom_sheath.front(),
-        gitr_flags, use_sheath_efield );
+        gitr_flags, use_sheath_efield, use_presheath_efield );
 
     /* time loop */
     std::vector< double > v_x_test( n_timesteps );
@@ -617,6 +618,7 @@ TEST_CASE( "Complex Boris Motion" )
 
     /* create boris operator */
     int use_sheath_efield = 0;
+    int use_presheath_efield = 1;
     move_boris boris( particleArray,
                       dt,
                       boundaries.data(),
@@ -646,7 +648,7 @@ TEST_CASE( "Complex Boris Motion" )
                       &closeGeomGridz_sheath.front(),
                       &closeGeom_sheath.front(),
                       gitr_flags,
-                      use_sheath_efield );
+                      use_sheath_efield, use_presheath_efield );
 
     /* time loop */
     for (int tt = 0; tt < nT; tt++)

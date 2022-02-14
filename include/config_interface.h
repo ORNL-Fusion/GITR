@@ -204,7 +204,7 @@ class use final : public config_module_base
     surfacemodel,
     sheath_efield,
     biased_surface,
-    usepresheathefield,
+    presheath_efield,
     bfield_interp,
     lc_interp,
     generate_lc,

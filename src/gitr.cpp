@@ -2187,7 +2187,21 @@ if( flowv_interp == 1 )
   int nPSEs = 1;
   std::string PSECfg = "backgroundPlasmaProfiles.Efield.";
 // sim::Array<float> preSheathEGridy(1);
-#if USEPRESHEATHEFIELD > 0
+  int use_presheath_efield = use.get< int >( use::presheath_efield );
+
+  sim::Array<gitr_precision>
+  preSheathEGridr(nR_PreSheathEfield),
+  preSheathEGridy(nY_PreSheathEfield), 
+  preSheathEGridz(nZ_PreSheathEfield);
+
+
+  sim::Array<gitr_precision>
+  PSEr(nPSEs),
+  PSEz(nPSEs),
+  PSEt(nPSEs);
+
+  if( use_presheath_efield > 0 )
+  {
 
   std::cout << "Using presheath Efield " << std::endl;
 #if PRESHEATH_INTERP == 1
@@ -2217,10 +2231,17 @@ if( flowv_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 #endif
+
   nPSEs = nR_PreSheathEfield * nY_PreSheathEfield * nZ_PreSheathEfield;
-  sim::Array<gitr_precision> preSheathEGridr(nR_PreSheathEfield),
-      preSheathEGridy(nY_PreSheathEfield), preSheathEGridz(nZ_PreSheathEfield);
-  sim::Array<gitr_precision> PSEr(nPSEs), PSEz(nPSEs), PSEt(nPSEs);
+
+  preSheathEGridr.resize(nR_PreSheathEfield);
+  preSheathEGridy.resize(nY_PreSheathEfield); 
+  preSheathEGridz.resize(nZ_PreSheathEfield);
+
+  PSEr.resize(nPSEs);
+  PSEz.resize(nPSEs);
+  PSEt.resize(nPSEs);
+
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
@@ -2374,13 +2395,15 @@ if( flowv_interp == 1 )
   nc_PSEt.putVar(&PSEt[0]);
   nc_PSEz.putVar(&PSEz[0]);
 #endif
-#else
+  }
+  else
+  {
   nPSEs = nR_PreSheathEfield * nY_PreSheathEfield * nZ_PreSheathEfield;
   sim::Array<gitr_precision> preSheathEGridr(nR_PreSheathEfield),
       preSheathEGridy(nY_PreSheathEfield), preSheathEGridz(nZ_PreSheathEfield);
   sim::Array<gitr_precision> PSEr(nPSEs), PSEz(nPSEs), PSEt(nPSEs);
+  }
 
-#endif
   std::string outnamePSEfieldR = "PSEfieldR.m";
   std::string outnamePSEfieldZ = "PSEfieldZ.m";
   std::string outnamePSEGridR = "PSEgridR.m";
@@ -3838,7 +3861,7 @@ if( flowv_interp == 1 )
       nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
       n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-      &closeGeom_sheath.front(),gitr_flags, use_sheath_efield, max_dt );
+      &closeGeom_sheath.front(),gitr_flags, use_sheath_efield, use_presheath_efield, max_dt );
   //void (*bor)(std::size_t) = &move_boris::operator2;
   //auto bor1 = *bor;
   geometry_check geometry_check0(
