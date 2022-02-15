@@ -47,25 +47,24 @@ TEST_CASE( "cross-field diffusion operator" )
 
   */
 
-    libconfig::Config cfg_geom;
+  libconfig::Config cfg_geom;
 
-    cfg_geom.setAutoConvert(true);
+  cfg_geom.setAutoConvert(true);
 
-    importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE);
-
-    /* Captain! Instantiate a "use" module here? Get the config values following... */
-    class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
-
-    /* Captain! This will replace "flags" */
-    class use use( query );
+  int const spectroscopy = 2;
 
   SECTION( "cross-field diffusion, straight field lines" )
   {
+    importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE);
+
+    class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
+
+    class use use( query );
+
     /* timesteps */
     int nT = 500000;
 
     gitr_precision dt = 2.0e-7;
-
 
     auto gitr_flags = new Flags( cfg_geom );
 
@@ -161,7 +160,7 @@ TEST_CASE( "cross-field diffusion operator" )
     }
     spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt);
+                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy );
 
     #if USE_CUDA > 0
     typedef curandState rand_type;
@@ -280,6 +279,12 @@ TEST_CASE( "cross-field diffusion operator" )
     GITR_USE_PERP_DIFFUSION=2
     USE_CYLSYMM=1
 
+    USE3DTETGEOM=0
+    USE_SURFACE_POTENTIAL=0
+    PARTICLE_SOURCE_FILE=0
+    USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
+    USE_ADAPTIVE_DT=0
+
   */
   SECTION( "cross-field diffusion, curved field lines" )
   {
@@ -293,6 +298,10 @@ TEST_CASE( "cross-field diffusion operator" )
     cfg_geom.setAutoConvert(true);
 
     importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE_1 );
+
+    class libconfig_string_query query( CROSS_FIELD_GEOM_FILE_1 );
+
+    class use use( query );
 
     auto gitr_flags = new Flags( cfg_geom );
 
@@ -309,14 +318,6 @@ TEST_CASE( "cross-field diffusion operator" )
 
     int nP = impurity[ "nP" ];
 
-    /* Correct flags for this unit test */
-    /*
-    USE3DTETGEOM=0
-    USE_SURFACE_POTENTIAL=0
-    PARTICLE_SOURCE_FILE=0
-    USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
-    USE_ADAPTIVE_DT=0
-    */
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
@@ -398,7 +399,7 @@ TEST_CASE( "cross-field diffusion operator" )
     }
     spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt);
+                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy);
 
     #if USE_CUDA > 0
     typedef curandState rand_type;
@@ -411,7 +412,7 @@ TEST_CASE( "cross-field diffusion operator" )
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nP);
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize<rand_type>(&state1.front(), 0));
+                   curandInitialize<rand_type>(&state1.front(), true));
 
   gitr_precision perpDiffusionCoeff = 0.0;
   cfg_geom.lookupValue("backgroundPlasmaProfiles.Diffusion.Dperp",

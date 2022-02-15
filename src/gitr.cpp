@@ -94,6 +94,7 @@ int main(int argc, char **argv, char **envp) {
   class use use( query );
   int use_surface_model = use.get< int >( use::surfacemodel );
   int use_flux_ea = use.get< int >( use::flux_ea );
+  int spectroscopy = use.get< int >( use::spectroscopy );
 
   // Set default processes per node to 1
   int ppn = 1;
@@ -2526,12 +2527,27 @@ if( flowv_interp == 1 )
   // OUTPUT2d(profiles_folder,outnameMinDist, nR_Bfield, nZ_Bfield,
   // &minDist.front());
 
-#if SPECTROSCOPY > 0
-  gitr_precision netX0 = 0.0, netX1 = 0.0, netY0 = 0.0, netY1 = 0.0, netZ0 = 0.0,
-        netZ1 = 0.0;
-  int net_nX = 0, net_nY = 0, net_nZ = 0;
+  gitr_precision netX0 = 0.0,
+    netX1 = 0.0,
+    netY0 = 0.0,
+    netY1 = 0.0,
+    netZ0 = 0.0,
+    netZ1 = 0.0;
+
+  int net_nX = 0, 
+  net_nY = 0,
+  net_nZ = 0;
+
   int nBins = 0;
   int nSpec = 0;
+
+  size_t net_Bins_size = 0;
+  size_t net_BinsTotal_size = 0;
+
+  sim::Array<gitr_precision> gridX_bins(net_nX), gridY_bins(net_nY), gridZ_bins(net_nZ);
+  if( spectroscopy > 0 )
+  {
+
   if (world_rank == 0) {
     if (cfg.lookupValue("diagnostics.netx0", netX0) &&
         cfg.lookupValue("diagnostics.netx1", netX1) &&
@@ -2550,11 +2566,16 @@ if( flowv_interp == 1 )
                 << std::endl;
     }
   }
-#if SPECTROSCOPY < 3
-  nSpec = (nBins + 1) * net_nX * net_nZ;
-#else
-  nSpec = (nBins + 1) * net_nX * net_nY * net_nZ;
-#endif
+
+  if( spectroscopy < 3 )
+  {
+    nSpec = (nBins + 1) * net_nX * net_nZ;
+  }
+  else
+  {
+    nSpec = (nBins + 1) * net_nX * net_nY * net_nZ;
+  }
+
 #if USE_MPI > 0
   MPI_Bcast(&netX0, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&netX1, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -2572,26 +2593,23 @@ if( flowv_interp == 1 )
 
   std::cout << "spec bin Ns " << nBins << " " << net_nX << " " << net_nY << " "
             << net_nZ << std::endl;
-#if SPECTROSCOPY < 3
-  sim::Array<double> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
-  sim::Array<double> net_BinsTotal((nBins + 1) * net_nX * net_nZ, 0.0);
-#else
-  std::cout << "initializing 3d spec arrays " << std::endl;
-  sim::Array<double> net_Bins((nBins + 1) * net_nX * net_nY * net_nZ, 0.0);
-  sim::Array<double> net_BinsTotal((nBins + 1) * net_nX * net_nY * net_nZ, 0.0);
-  std::cout << "initialized 3d spec arrays " << std::endl;
-#endif
 
-  /*
-  for (int i=0; i<nBins*net_nX*net_nZ; i++)
-      {
-          std::cout << "i " << i << std::endl;
-        net_Bins[i] = 0;
-          std::cout << "net bins " << net_Bins[i] << std::endl;
+  if( spectroscopy < 3 )
+  {
+    net_Bins_size = ((nBins + 1) * net_nX * net_nZ);
+    net_BinsTotal_size = ((nBins + 1) * net_nX * net_nZ);
+  }
 
-      }
-  */
-  sim::Array<gitr_precision> gridX_bins(net_nX), gridY_bins(net_nY), gridZ_bins(net_nZ);
+  else
+  {
+    net_Bins_size = ((nBins + 1) * net_nX * net_nY * net_nZ);
+    net_BinsTotal_size = ((nBins + 1) * net_nX * net_nY * net_nZ);
+  }
+
+  gridX_bins.resize(net_nX);
+  gridY_bins.resize(net_nY);
+  gridZ_bins.resize(net_nZ);
+
 
   for (int i = 0; i < net_nX; i++) {
     gridX_bins[i] = netX0 + 1.0 / (net_nX - 1) * i * (netX1 - netX0);
@@ -2603,7 +2621,11 @@ if( flowv_interp == 1 )
   for (int i = 0; i < net_nZ; i++) {
     gridZ_bins[i] = netZ0 + i * 1.0 / (net_nZ - 1) * (netZ1 - netZ0);
   }
-#endif
+  }
+
+  sim::Array<double> net_Bins( net_Bins_size, 0.0 );
+
+  sim::Array<double> net_BinsTotal( net_BinsTotal_size, 0.0 );
 
   // Perp DiffusionCoeff initialization - only used when Diffusion interpolator
   // is = 0
@@ -3874,11 +3896,9 @@ if( flowv_interp == 1 )
   sortParticles sort0(particleArray, nP,dev_tt, 10000,
                       nActiveParticlesOnRank.data());
 #endif
-#if SPECTROSCOPY > 0
   spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt);
-#endif
+                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy );
   gitr_precision *uni;
   if( use_ionization == 1 )
   {
@@ -4176,12 +4196,10 @@ if( flowv_interp == 1 )
       // cudaThreadSynchronize();
 #endif
 
-#if SPECTROSCOPY > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd, spec_bin0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
+      if( spectroscopy > 0 )
+      {
+        thrust::for_each(thrust::device, particleBegin, particleEnd, spec_bin0);
+      }
 
       if( use_ionization == 1 )
       {
@@ -4443,12 +4461,13 @@ for(int i=0; i<nP ; i++)
 //  nSpec,
 #endif
 
-#if SPECTROSCOPY > 0
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], nSpec, MPI_DOUBLE, MPI_SUM, 0,
-             MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-#endif
+  if( spectroscopy > 0 )
+  {
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], nSpec, MPI_DOUBLE, MPI_SUM, 0,
+               MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
       if( use_surface_model > 0 || use_flux_ea > 0 )
       {
   // MPI_Barrier(MPI_COMM_WORLD);
@@ -4915,21 +4934,29 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 #endif
     ncFile_hist.close();
 #endif
-#if SPECTROSCOPY > 0
+    if( spectroscopy > 0 )
+    {
+      /* Captain! */
     // Write netCDF output for density data
     netCDF::NcFile ncFile("output/spec.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
     netCDF::NcDim nc_nR = ncFile.addDim("nR", net_nX);
-#if SPECTROSCOPY > 2
-    netCDF::NcDim nc_nY = ncFile.addDim("nY", net_nY);
-#endif
+    netCDF::NcDim nc_nY;
+    if( spectroscopy > 2 )
+    {
+      nc_nY = ncFile.addDim("nY", net_nY);
+    }
+
     netCDF::NcDim nc_nZ = ncFile.addDim("nZ", net_nZ);
     vector<netCDF::NcDim> dims;
     dims.push_back(nc_nBins);
     dims.push_back(nc_nZ);
-#if SPECTROSCOPY > 2
-    dims.push_back(nc_nY);
-#endif
+
+    if( spectroscopy > 2 )
+    {
+      dims.push_back(nc_nY);
+    }
+
     dims.push_back(nc_nR);
 
     netCDF::NcVar nc_n = ncFile.addVar("n", netcdf_precision, dims);
@@ -4937,17 +4964,21 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_gridZ = ncFile.addVar("gridZ", netcdf_precision, nc_nZ);
     nc_gridR.putVar(&gridX_bins[0]);
     nc_gridZ.putVar(&gridZ_bins[0]);
-#if SPECTROSCOPY > 2
-    netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netcdf_precision, nc_nY);
-    nc_gridY.putVar(&gridY_bins[0]);
-#endif
+
+    if( spectroscopy > 2 )
+    {
+      netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netcdf_precision, nc_nY);
+      nc_gridY.putVar(&gridY_bins[0]);
+    }
+
 #if USE_MPI > 0
     nc_n.putVar(&net_BinsTotal[0]);
 #else
     nc_n.putVar(&net_Bins[0]);
 #endif
     ncFile.close();
-#endif
+    /* Captain! */
+    }
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
 #endif
