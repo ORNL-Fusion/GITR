@@ -135,6 +135,7 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::compatibility_check ] = "CHECK_COMPATIBILITY";
   lookup[ use::use_sort ] = "USE_SORT";
   lookup[ use::use_adaptive_dt ] = "USE_ADAPTIVE_DT";
+  lookup[ use::surface_potential ] = "USE_SURFACE_POTENTIAL";
 }
 
 config_module_base::config_module_base( class libconfig_string_query const &query,

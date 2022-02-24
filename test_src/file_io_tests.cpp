@@ -13,6 +13,7 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 TEST_CASE("Factorials are computed", "[factorial]") {
+  int const use_surface_potential = 0;
   SECTION("int")
   {
     std::cout << "starting test " << std::endl;
@@ -98,7 +99,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     }
   
     sim::Array<Boundary> boundaries(nLines + 1, Boundary());
-    nSurfaces = importGeometry(cfg_geom, boundaries);
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
@@ -155,7 +156,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     }
   
     sim::Array<Boundary> boundaries(nLines + 1, Boundary());
-    nSurfaces = importGeometry(cfg_geom, boundaries);
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
@@ -241,7 +242,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     }
   
     sim::Array<Boundary> boundaries(nLines + 1, Boundary());
-    nSurfaces = importGeometry(cfg_geom, boundaries);
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;

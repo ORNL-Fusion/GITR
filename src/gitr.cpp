@@ -284,8 +284,9 @@ int main(int argc, char **argv, char **envp) {
   /* Ahoy! Is the +1 the index that indicates the type? the // if periodic <--- comment in
      geometryCheck.h */
   sim::Array<Boundary> boundaries(nLines + 1, Boundary());
+    int use_surface_potential = use.get< int >( use::surface_potential );
   if (world_rank == 0) {
-    nSurfaces = importGeometry(cfg_geom, boundaries);
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
   }
@@ -2175,7 +2176,8 @@ if( flowv_interp == 1 )
                               bfieldGridr.data(), bfieldGridz.data(), br.data(),
                               bz.data(), by.data(), nR_Temp, nZ_Temp,
                               TempGridr.data(), TempGridz.data(), ti.data(),
-                              te.data(), biasPotential, biased_surface ));
+                              te.data(), biasPotential, biased_surface,
+                              use_surface_potential ));
 
   std::cout << "Completed Boundary Init " << std::endl;
   std::cout << "periodicy "<<boundaries[nLines].periodic << std::endl;

@@ -692,7 +692,8 @@ TEST_CASE( "Complex Boris Motion" )
     int nLines = 1;
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    int nSurfaces = importGeometry( cfg_geom, boundaries );
+    int use_surface_potential = 0;
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_surface_potential );
     int nR_Dens = 1;
     int nZ_Dens = 1;
     sim::Array<gitr_precision> DensGridr(1, 0.0);
@@ -737,7 +738,10 @@ TEST_CASE( "Complex Boris Motion" )
                               bfieldGridr.data(), bfieldGridz.data(), br.data(),
                               bz.data(), by.data(), nR_Temp, nZ_Temp,
                               TempGridr.data(), TempGridz.data(), ti.data(),
-                              te.data(), biasPotential, biased_surface ));
+                              te.data(), 
+                              biasPotential,
+                              biased_surface,
+                              use_surface_potential ));
     
     int nHashes = 1;
     int nR_closeGeom_sheath = 1;

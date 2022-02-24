@@ -53,6 +53,8 @@ TEST_CASE( "cross-field diffusion operator" )
 
   int const spectroscopy = 2;
 
+  int use_surface_potential = 0;
+
   SECTION( "cross-field diffusion, straight field lines" )
   {
     importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE);
@@ -84,7 +86,7 @@ TEST_CASE( "cross-field diffusion operator" )
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
     /* Ahoy, Captain! Function call, drop in, why don't ye?! */
-    int nSurfaces = importGeometry( cfg_geom, boundaries );
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_surface_potential );
 
     REQUIRE( nSurfaces == 2 );
 
@@ -321,7 +323,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    int nSurfaces = importGeometry( cfg_geom, boundaries );
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_surface_potential );
 
     REQUIRE( nSurfaces == 2 );
 

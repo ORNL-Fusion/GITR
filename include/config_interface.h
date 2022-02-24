@@ -233,7 +233,8 @@ class use final : public config_module_base
     force_eval,
     compatibility_check,
     use_sort,
-    use_adaptive_dt
+    use_adaptive_dt,
+    surface_potential
   };
 
   use( class libconfig_string_query const &query,

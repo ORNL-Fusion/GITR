@@ -90,7 +90,8 @@ TEST_CASE( "surface model" )
     int nLines = 1;
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    int nSurfaces = importGeometry( cfg, boundaries );
+    int use_surface_potential = 0;
+    int nSurfaces = importGeometry( cfg, boundaries, use_surface_potential );
 
     REQUIRE( nSurfaces == 1 );
 

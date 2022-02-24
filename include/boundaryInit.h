@@ -45,6 +45,7 @@ struct boundary_init {
     gitr_precision* bfieldT;
     gitr_precision potential;
     int biased_surface;
+    int use_surface_potential;
     
     boundary_init(gitr_precision _background_Z, gitr_precision _background_amu,int _nx, int _nz,
           gitr_precision* _densityGridx, gitr_precision* _densityGridz,gitr_precision* _density,gitr_precision* _ne,int _nxB,
@@ -52,7 +53,8 @@ struct boundary_init {
           gitr_precision* _bfieldZ,gitr_precision* _bfieldT,int _nR_Temp, int _nZ_Temp,
           gitr_precision* _TempGridr, gitr_precision* _TempGridz, gitr_precision* _ti, gitr_precision* _te, 
           gitr_precision _potential,
-          int biased_surface )
+          int biased_surface,
+          int use_surface_potential )
 
      : background_Z(_background_Z),
         background_amu(_background_amu),
@@ -76,7 +78,8 @@ struct boundary_init {
         bfieldZ(_bfieldZ),
         bfieldT(_bfieldT),
         potential(_potential),
-        biased_surface( biased_surface ) {}
+        biased_surface( biased_surface ),
+        use_surface_potential( use_surface_potential ) {}
 
     void operator()(Boundary &b) const {
 #if USE3DTETGEOM
@@ -135,7 +138,8 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         b.larmorRadius = 1.44e-4*std::sqrt(background_amu*b.ti/2)/(background_Z*norm_B);
         b.flux = 0.25*b.density*std::sqrt(8.0*b.ti*1.602e-19/(3.1415*background_amu));
         b.impacts = 0.0;
-#if BIASED_SURFACE
+        if( biased_surface )
+        {
         b.potential = potential;
         //gitr_precision cs = std::sqrt(2*b.ti*1.602e-19/(1.66e-27*background_amu));
         //gitr_precision jsat_ion = 1.602e-19*b.density*cs;
@@ -148,11 +152,10 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         else
         { b.ChildLangmuirDist = 1e12;
         }
-#elif USE_SURFACE_POTENTIAL >0 
-#else
+
         b.potential = sheath_fac*b.te;
         std::cout << "Surface number " << b.surfaceNumber << " has te and potential " << b.te << " " << b.potential << std::endl; 
-#endif        
+        }
         //if(b.Z > 0.0)
         //{
         //std::cout << "Boundary ti density potensial and CLdist " <<b.ti << " " << 

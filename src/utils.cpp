@@ -401,7 +401,9 @@ int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDi
   }
   return 0;
 }
-int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries)
+
+int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries,
+                   int use_surface_potential )
 {
     Setting& geom = cfg_geom.lookup("geom");
     std::cout << "Boundary import routine " << int(boundaries.size()) << std::endl;
@@ -437,9 +439,10 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[i].area = geom["area"][i];
        boundaries[i].surface = geom["surface"][i];
        boundaries[i].inDir = geom["inDir"][i];
-  #if USE_SURFACE_POTENTIAL > 0
+  if( use_surface_potential > 0 )
+  {
        boundaries[i].potential = geom["potential"][i];
-  #endif
+  }
        //std::cout << "inDir " << i << " " << boundaries[i].inDir << std::endl;
        if(boundaries[i].surface > 0)
        {
@@ -481,9 +484,10 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[i].intercept_z = geom["intercept"][i];
        boundaries[i].length = geom["length"][i];
        //std::cout << "got Z slope length " << std::endl;
-  #if USE_SURFACE_POTENTIAL > 0
+  if( use_surface_potential > 0 )
+  {
        boundaries[i].potential = geom["potential"][i];
-  #endif
+  }
 
     boundaries[i].a = boundaries[i].z2 - boundaries[i].z1;
     boundaries[i].b = 0.0;
