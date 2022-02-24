@@ -86,7 +86,7 @@ CUDA_CALLABLE_MEMBER
 gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, gitr_precision E[], Boundary *boundaryVector, int nLines,
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
-         int&  closestBoundaryIndex) {
+         int&  closestBoundaryIndex, int biased_surface ) {
 #if USE3DTETGEOM > 0
     gitr_precision Emag = 0.0;
     gitr_precision Er = 0.0;
@@ -584,49 +584,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
         {
             distanceToParticle = tol;
         }
-    //int thisTmp=0;
-    //int Bperiodic = boundaryVector[minIndex].periodic;
-    //int BpointLine = boundaryVector[minIndex].pointLine;
-    //int BsurfaceNumber = boundaryVector[minIndex].surfaceNumber;
-    //int Bsurface = boundaryVector[minIndex].surface;
-    //gitr_precision Bx1 = boundaryVector[minIndex].x1;
-    //gitr_precision By1 = boundaryVector[minIndex].y1;
-    //gitr_precision Bz1 = boundaryVector[minIndex].z1;
-    //gitr_precision Bx2 = boundaryVector[minIndex].x2;
-    //gitr_precision By2 = boundaryVector[minIndex].y2;
-    //gitr_precision Bz2 = boundaryVector[minIndex].z2;
-    //gitr_precision Ba = boundaryVector[minIndex].a;
-    //gitr_precision Bb = boundaryVector[minIndex].b;
-    //gitr_precision Bc = boundaryVector[minIndex].c;
-    //gitr_precision Bd = boundaryVector[minIndex].d;
-    //gitr_precision Bplane_norm = boundaryVector[minIndex].plane_norm;
-    //#if USE3DTETGEOM > 0
-    //  gitr_precision Bx3 = boundaryVector[minIndex].x3;
-    //  gitr_precision By3 = boundaryVector[minIndex].y3;
-    //  gitr_precision Bz3 = boundaryVector[minIndex].z3;
-    //  gitr_precision Barea = boundaryVector[minIndex].area;
-    //#else
-    //  gitr_precision Bslope_dzdx = boundaryVector[minIndex].slope_dzdx;
-    //  gitr_precision Bintercept_z = boundaryVector[minIndex].intercept_z;
-    //#endif     
-    //gitr_precision BZ = boundaryVector[minIndex].Z;
-    //gitr_precision Bamu = boundaryVector[minIndex].amu;
-    //gitr_precision Bpotential = boundaryVector[minIndex].potential;
-	//
-    //gitr_precision BhitWall = boundaryVector[minIndex].hitWall;
-    //gitr_precision Blength = boundaryVector[minIndex].length;
-    //gitr_precision BdistanceToParticle = boundaryVector[minIndex].distanceToParticle;
-    //gitr_precision Bangle = boundaryVector[minIndex].angle;
-    //gitr_precision Bfd = boundaryVector[minIndex].fd;
-    //gitr_precision Bdensity = boundaryVector[minIndex].density;
-    //gitr_precision Bti = boundaryVector[minIndex].ti;
-    //gitr_precision Bne = boundaryVector[minIndex].ne;
-    //gitr_precision Bte = boundaryVector[minIndex].te;
-    //gitr_precision BdebyeLength = boundaryVector[minIndex].debyeLength;
-    //gitr_precision BlarmorRadius = boundaryVector[minIndex].larmorRadius;
-    //   if(x0==0.0 && z > 1.0e-3 && minDistance<1.0e-9)
-    //       thisTmp=1;
-    //std::cout << "min distance " << j << " " << minDistance << std::endl;
     }
     if (direction_type == 1)
     {
@@ -683,10 +640,13 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     //directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     //directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
 #endif   
-#if BIASED_SURFACE > 0
+    if( biased_surface > 0 )
+    {
     pot = boundaryVector[minIndex].potential;
     Emag = pot/(2.0*boundaryVector[minIndex].ChildLangmuirDist)*exp(-minDistance/(2.0*boundaryVector[minIndex].ChildLangmuirDist));
-#else 
+    }
+    else
+    {
     angle = boundaryVector[minIndex].angle;    
     fd  = boundaryVector[minIndex].fd;
     pot = boundaryVector[minIndex].potential;
@@ -697,15 +657,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
         Emag = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength))+ (1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
         gitr_precision part1 = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)));
         gitr_precision part2 = pot*(1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius);
-        //if(isnan(Emag)){
-	//printf("Emag %f ", Emag);
-	//}
-        //if(isnan(directionUnitVector[0]) ||isnan(directionUnitVector[1]) || isnan(directionUnitVector[2]) ){
-	//printf("direction %f %f %f \n", directionUnitVector[0],directionUnitVector[1],directionUnitVector[2]);
-	//}
-        //std::cout << "fd " << fd << std::endl;
-        //std::cout << "minDistance " << minDistance << std::endl;
-#endif
+    }
     if(minDistance == 0.0 || boundaryVector[minIndex].larmorRadius == 0.0)
     {
         Emag = 0.0;
@@ -778,6 +730,7 @@ move_boris::move_boris(
   Flags* _gitr_flags,
   int use_sheath_efield,
   int use_presheath_efield,
+  int biased_surface,
   gitr_precision _max_dt )
 
   : 
@@ -814,7 +767,8 @@ move_boris::move_boris(
         magneticForce{0.0, 0.0, 0.0},
         electricForce{0.0, 0.0, 0.0},
         use_sheath_efield( use_sheath_efield ),
-        use_presheath_efield( use_presheath_efield ) {}
+        use_presheath_efield( use_presheath_efield ),
+        biased_surface( biased_surface ) {}
 
 CUDA_CALLABLE_MEMBER    
 void move_boris::operator()(std::size_t indx)
@@ -861,7 +815,8 @@ void move_boris::operator()(std::size_t indx)
                   nY_closeGeom_sheath,nZ_closeGeom_sheath,
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
-                  closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex);
+                  closeGeomGridz_sheath,closeGeom_sheath,
+                  closestBoundaryIndex, biased_surface);
   }
 
 if( use_presheath_efield > 0 )
@@ -989,7 +944,8 @@ if( use_presheath_efield > 0 )
                   nY_closeGeom_sheath,nZ_closeGeom_sheath,
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
-                  closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex);
+                  closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
+                  biased_surface);
   }
 
   if( use_presheath_efield > 0 )

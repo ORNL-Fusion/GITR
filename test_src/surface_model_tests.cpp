@@ -176,6 +176,7 @@ TEST_CASE( "surface model" )
     int use_sheath_efield = 1;
     int use_presheath_efield = 1;
     /* create boris operator */
+    int biased_surface = 0;
     move_boris boris( particleArray, dt, boundaries.data(), nLines, nR_Bfield, nZ_Bfield,
                       bfieldGridr.data(), bfieldGridz.data(), br.data(), bz.data(), by.data(),
                       nR_PreSheathEfield, 
@@ -187,7 +188,7 @@ TEST_CASE( "surface model" )
                       n_closeGeomElements_sheath, closeGeomGridr_sheath.data(),
                       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                       &closeGeom_sheath.front(), gitr_flags, use_sheath_efield,
-                      use_presheath_efield );
+                      use_presheath_efield, biased_surface );
 
     /* Captain! Arbitrary runtime flags inserted in geometry check */
     geometry_check geometry_check0(

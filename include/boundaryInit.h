@@ -44,12 +44,15 @@ struct boundary_init {
     gitr_precision* bfieldZ;
     gitr_precision* bfieldT;
     gitr_precision potential;
+    int biased_surface;
     
     boundary_init(gitr_precision _background_Z, gitr_precision _background_amu,int _nx, int _nz,
           gitr_precision* _densityGridx, gitr_precision* _densityGridz,gitr_precision* _density,gitr_precision* _ne,int _nxB,
           int _nzB, gitr_precision* _bfieldGridr, gitr_precision* _bfieldGridz,gitr_precision* _bfieldR,
           gitr_precision* _bfieldZ,gitr_precision* _bfieldT,int _nR_Temp, int _nZ_Temp,
-          gitr_precision* _TempGridr, gitr_precision* _TempGridz, gitr_precision* _ti, gitr_precision* _te, gitr_precision _potential)
+          gitr_precision* _TempGridr, gitr_precision* _TempGridz, gitr_precision* _ti, gitr_precision* _te, 
+          gitr_precision _potential,
+          int biased_surface )
 
      : background_Z(_background_Z),
         background_amu(_background_amu),
@@ -72,7 +75,8 @@ struct boundary_init {
         bfieldR(_bfieldR),
         bfieldZ(_bfieldZ),
         bfieldT(_bfieldT),
-        potential(_potential) {}
+        potential(_potential),
+        biased_surface( biased_surface ) {}
 
     void operator()(Boundary &b) const {
 #if USE3DTETGEOM

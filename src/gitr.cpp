@@ -95,6 +95,7 @@ int main(int argc, char **argv, char **envp) {
   int use_surface_model = use.get< int >( use::surfacemodel );
   int use_flux_ea = use.get< int >( use::flux_ea );
   int spectroscopy = use.get< int >( use::spectroscopy );
+  int biased_surface = use.get< int >( use::biased_surface );
 
   // Set default processes per node to 1
   int ppn = 1;
@@ -321,7 +322,6 @@ int main(int argc, char **argv, char **envp) {
 #endif
 
   gitr_precision biasPotential = 0.0;
-  int biased_surface = use.get<int>(use::biased_surface);
   if(biased_surface)
   {
   if (world_rank == 0) {
@@ -2175,7 +2175,7 @@ if( flowv_interp == 1 )
                               bfieldGridr.data(), bfieldGridz.data(), br.data(),
                               bz.data(), by.data(), nR_Temp, nZ_Temp,
                               TempGridr.data(), TempGridz.data(), ti.data(),
-                              te.data(), biasPotential));
+                              te.data(), biasPotential, biased_surface ));
 
   std::cout << "Completed Boundary Init " << std::endl;
   std::cout << "periodicy "<<boundaries[nLines].periodic << std::endl;
@@ -2436,7 +2436,7 @@ if( flowv_interp == 1 )
                nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-               &closeGeom_sheath.front(), minInd_bnd);
+               &closeGeom_sheath.front(), minInd_bnd, biased_surface );
       //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
   }
 #if EFIELD_INTERP == 1
@@ -2446,7 +2446,7 @@ if( flowv_interp == 1 )
     for (int j = 0; j < nZ_Bfield; j++) {
       minDist[(nR_Bfield - 1 - i) * nZ_Bfield + (nZ_Bfield - 1 - j)] =
           getE(bfieldGridr[i], 0.0, bfieldGridz[j], thisE, boundaries.data(),
-               nLines, closestBoundaryIndex);
+               nLines, closestBoundaryIndex, biased_surface );
       Efieldr[i * nZ_Bfield + j] = thisE[0];
       Efieldz[i * nZ_Bfield + j] = thisE[2];
       Efieldt[i * nZ_Bfield + j] = thisE[1];
@@ -3883,7 +3883,8 @@ if( flowv_interp == 1 )
       nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
       n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-      &closeGeom_sheath.front(),gitr_flags, use_sheath_efield, use_presheath_efield, max_dt );
+      &closeGeom_sheath.front(),gitr_flags, use_sheath_efield, use_presheath_efield, 
+      biased_surface, max_dt );
   //void (*bor)(std::size_t) = &move_boris::operator2;
   //auto bor1 = *bor;
   geometry_check geometry_check0(
@@ -4597,7 +4598,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
                nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-               &closeGeom_sheath.front(), closestBoundaryIndex);
+               &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface );
       
       if (boundaries[closestBoundaryIndex].Z > 0.0) {
         surfIndex = boundaries[closestBoundaryIndex].surfaceNumber;

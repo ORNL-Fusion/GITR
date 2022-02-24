@@ -377,6 +377,8 @@ TEST_CASE( "Complex Boris Motion" )
     /* create boris operator */
     int use_sheath_efield = 0;
     int use_presheath_efield = 1;
+    int biased_surface = 0;
+
     move_boris boris( particleArray,
         dt,
         boundaries.data(),
@@ -405,7 +407,7 @@ TEST_CASE( "Complex Boris Motion" )
         &closeGeomGridy_sheath.front(),
         &closeGeomGridz_sheath.front(),
         &closeGeom_sheath.front(),
-        gitr_flags, use_sheath_efield, use_presheath_efield );
+        gitr_flags, use_sheath_efield, use_presheath_efield, biased_surface );
 
     /* time loop */
     std::vector< double > v_x_test( n_timesteps );
@@ -619,6 +621,7 @@ TEST_CASE( "Complex Boris Motion" )
     /* create boris operator */
     int use_sheath_efield = 0;
     int use_presheath_efield = 1;
+    int biased_surface = 0;
     move_boris boris( particleArray,
                       dt,
                       boundaries.data(),
@@ -648,7 +651,7 @@ TEST_CASE( "Complex Boris Motion" )
                       &closeGeomGridz_sheath.front(),
                       &closeGeom_sheath.front(),
                       gitr_flags,
-                      use_sheath_efield, use_presheath_efield );
+                      use_sheath_efield, use_presheath_efield, biased_surface );
 
     /* time loop */
     for (int tt = 0; tt < nT; tt++)
@@ -726,6 +729,7 @@ TEST_CASE( "Complex Boris Motion" )
     gitr_precision biasPotential = 0;
 
   
+    int biased_surface = 0;
     std::for_each(boundaries.begin(), boundaries.end() - 1,
                 boundary_init(background_Z, background_amu, nR_Dens, nZ_Dens,
                               DensGridr.data(), DensGridz.data(), ni.data(),
@@ -733,7 +737,7 @@ TEST_CASE( "Complex Boris Motion" )
                               bfieldGridr.data(), bfieldGridz.data(), br.data(),
                               bz.data(), by.data(), nR_Temp, nZ_Temp,
                               TempGridr.data(), TempGridz.data(), ti.data(),
-                              te.data(), biasPotential));
+                              te.data(), biasPotential, biased_surface ));
     
     int nHashes = 1;
     int nR_closeGeom_sheath = 1;
@@ -763,7 +767,7 @@ TEST_CASE( "Complex Boris Motion" )
                nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-               &closeGeom_sheath.front(), closestBoundaryIndex);
+               &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface );
       gitrE[j] = thisE[2];
     }
 
