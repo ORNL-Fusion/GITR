@@ -58,15 +58,19 @@ struct geometry_check {
   gitr_precision Adist;
   int use_surface_model;
   int use_flux_ea;
+  int use_3d_tet_geom;
+  int use_cylsymm;
 
-  geometry_check(Particles *_particlesPointer, int _nLines,
-                 Boundary *_boundaryVector, Surfaces *_surfaces, gitr_precision _dt,
-                 int _nHashes, int *_nR_closeGeom, int *_nY_closeGeom,
-                 int *_nZ_closeGeom, int *_n_closeGeomElements,
-                 gitr_precision *_closeGeomGridr, gitr_precision *_closeGeomGridy,
-                 gitr_precision *_closeGeomGridz, int *_closeGeom, int _nEdist,
-                 gitr_precision _E0dist, gitr_precision _Edist, int _nAdist, gitr_precision _A0dist,
-                 gitr_precision _Adist, int use_surface_model, int use_flux_ea );
+  geometry_check( Particles *_particlesPointer, int _nLines,
+                  Boundary *_boundaryVector, Surfaces *_surfaces, gitr_precision _dt,
+                  int _nHashes, int *_nR_closeGeom, int *_nY_closeGeom,
+                  int *_nZ_closeGeom, int *_n_closeGeomElements,
+                  gitr_precision *_closeGeomGridr, gitr_precision *_closeGeomGridy,
+                  gitr_precision *_closeGeomGridz, int *_closeGeom, int _nEdist,
+                  gitr_precision _E0dist,
+                  gitr_precision _Edist, int _nAdist, gitr_precision _A0dist,
+                  gitr_precision _Adist, int use_surface_model, int use_flux_ea,
+                  int use_3d_tet_geom, int use_cylsymm );
 
   //CUDA_CALLABLE_MEMBER_DEVICE
  __host__  __device__

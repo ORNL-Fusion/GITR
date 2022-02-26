@@ -54,6 +54,11 @@ TEST_CASE( "cross-field diffusion operator" )
   int const spectroscopy = 2;
 
   int use_surface_potential = 0;
+  
+  int use_flux_ea = 0;
+  int use_surface_model = 0;
+  int use_3d_tet_geom = 0;
+  int use_cylsymm = 0;
 
   SECTION( "cross-field diffusion, straight field lines" )
   {
@@ -86,7 +91,8 @@ TEST_CASE( "cross-field diffusion operator" )
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
     /* Ahoy, Captain! Function call, drop in, why don't ye?! */
-    int nSurfaces = importGeometry( cfg_geom, boundaries, use_surface_potential );
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_surface_potential,
+                                    use_3d_tet_geom, use_cylsymm );
 
     REQUIRE( nSurfaces == 2 );
 
@@ -120,7 +126,8 @@ TEST_CASE( "cross-field diffusion operator" )
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist, 0, 0 );
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist,
+        use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
 
 
     /* data collection variables */
@@ -323,7 +330,8 @@ TEST_CASE( "cross-field diffusion operator" )
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    int nSurfaces = importGeometry( cfg_geom, boundaries, use_surface_potential );
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_surface_potential,
+                                    use_3d_tet_geom, use_cylsymm );
 
     REQUIRE( nSurfaces == 2 );
 
@@ -359,7 +367,8 @@ TEST_CASE( "cross-field diffusion operator" )
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist, 0, 0 );
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist,
+        use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
 
 
     /* data collection variables */

@@ -1,0 +1,72 @@
+./src/utils.cpp:419:  #if USE3DTETGEOM > 0
+./src/utils.cpp:545:      #if USE3DTETGEOM > 0
+./src/utils.cpp:567:      #if USE3DTETGEOM > 0
+
+DONE
+
+./src/geometry_check.cpp:215:#if USE3DTETGEOM > 0
+
+./src/hashGeom.cpp:58:#if USE3DTETGEOM > 0
+./src/hashGeom.cpp:155:#if USE3DTETGEOM > 0
+./src/hashGeom.cpp:168:#if USE3DTETGEOM > 0
+./src/hashGeom.cpp:173:#if USE3DTETGEOM > 0
+./src/hashGeom.cpp:217:#if USE3DTETGEOM > 0
+./src/hashGeom.cpp:255:#if USE3DTETGEOM > 0
+./src/hashGeom.cpp:264:#if USE3DTETGEOM > 0
+
+./src/gitr.cpp:1002:#if USE3DTETGEOM > 0
+./src/gitr.cpp:1128:#if USE3DTETGEOM > 0
+./src/gitr.cpp:1221:#if USE3DTETGEOM > 0
+./src/gitr.cpp:1259:#if USE3DTETGEOM > 0
+./src/gitr.cpp:1393:#if USE3DTETGEOM > 0
+./src/gitr.cpp:1457:#if USE3DTETGEOM
+./src/gitr.cpp:1475:#if USE3DTETGEOM
+./src/gitr.cpp:1490:#if USE3DTETGEOM
+./src/gitr.cpp:3143:#if USE3DTETGEOM
+./src/gitr.cpp:3160:#if USE3DTETGEOM
+./src/gitr.cpp:3471:#if USE3DTETGEOM > 0
+./src/gitr.cpp:3481:#if USE3DTETGEOM > 0
+./src/gitr.cpp:4514:#if USE3DTETGEOM > 0
+./src/gitr.cpp:4795:    //#if USE3DTETGEOM > 0
+./src/gitr.cpp:4856:    //#if USE3DTETGEOM > 0
+
+./src/boris.cpp:90:#if USE3DTETGEOM > 0
+./src/boris.cpp:680:#if USE3DTETGEOM > 0
+
+./include/Boundary.h:63:    #if USE3DTETGEOM > 0
+./include/Boundary.h:106:#if USE3DTETGEOM > 0
+./include/Boundary.h:116:#if USE3DTETGEOM > 0
+./include/Boundary.h:131:#if USE3DTETGEOM > 0
+./include/Boundary.h:189://#if USE3DTETGEOM > 0
+./include/boundaryInit.h:85:#if USE3DTETGEOM
+./include/boundaryInit.h:103:#if USE3DTETGEOM
+./include/hashGeomSheath.h:63:      #if USE3DTETGEOM > 0
+./include/hashGeomSheath.h:118:    #if USE3DTETGEOM > 0
+./include/hashGeomSheath.h:130:    #if USE3DTETGEOM > 0
+./include/hashGeomSheath.h:135:    #if USE3DTETGEOM > 0
+./include/hashGeomSheath.h:171:#if USE3DTETGEOM > 0
+./include/hashGeomSheath.h:206:          #if USE3DTETGEOM > 0
+./include/hashGeomSheath.h:214:          #if USE3DTETGEOM > 0
+
+./src/utils.cpp:461:     #if USECYLSYMM
+
+./src/interp2d.cpp:82:#if USECYLSYMM > 0
+./src/interp2d.cpp:216:#if USECYLSYMM > 0
+
+./src/geometry_check.cpp:113:#if USECYLSYMM > 0
+./src/geometry_check.cpp:524:#if USECYLSYMM > 0
+./src/geometry_check.cpp:571:#if USECYLSYMM > 0
+./src/geometry_check.cpp:770:#if USECYLSYMM > 0
+./src/geometry_check.cpp:806:#if USECYLSYMM > 0
+./src/geometry_check.cpp:853:#if USECYLSYMM > 0
+./src/geometry_check.cpp:884:#if USECYLSYMM > 0
+
+./src/spectroscopy.cpp:43:#if USECYLSYMM > 0
+
+./src/config_interface.cpp:132:  lookup[ use::cylsymm ] = "USECYLSYMM";
+
+./src/boris.cpp:494:#if USECYLSYMM > 0
+./src/boris.cpp:684:#if USECYLSYMM > 0
+
+./include/Boundary.h:118:#if USECYLSYMM > 0
+./include/Boundary.h:145:#if USECYLSYMM > 0

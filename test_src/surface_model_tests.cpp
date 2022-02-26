@@ -43,6 +43,11 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
 
 TEST_CASE( "surface model" )
 {
+  int use_flux_ea = 0;
+  int use_surface_model = 0;
+  int use_3d_tet_geom = 0;
+  int use_cylsymm = 0;
+
   SECTION( "surface model" )
   {
     /* timesteps */
@@ -91,7 +96,11 @@ TEST_CASE( "surface model" )
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
     int use_surface_potential = 0;
-    int nSurfaces = importGeometry( cfg, boundaries, use_surface_potential );
+    int use_3d_tet_geom = 0;
+    int use_cylsymm = 0;
+
+    int nSurfaces = importGeometry( cfg, boundaries, use_surface_potential,
+                                    use_3d_tet_geom, use_cylsymm );
 
     REQUIRE( nSurfaces == 1 );
 
@@ -197,7 +206,8 @@ TEST_CASE( "surface model" )
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist, 1, 1 );
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist,
+        use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
 
 #ifdef __CUDACC__
     typedef curandState rand_type;

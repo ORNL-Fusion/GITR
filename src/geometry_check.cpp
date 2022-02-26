@@ -64,7 +64,9 @@ geometry_check::geometry_check(
   gitr_precision _A0dist,
   gitr_precision _Adist,
   int use_surface_model,
-  int use_flux_ea )
+  int use_flux_ea, 
+  int use_3d_tet_geom,
+  int use_cylsymm )
   :
 
     particlesPointer(_particlesPointer), nLines(_nLines),
@@ -75,7 +77,8 @@ geometry_check::geometry_check(
     closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy),
     closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
     E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
-    Adist(_Adist), use_surface_model(use_surface_model), use_flux_ea(use_flux_ea) {}
+    Adist(_Adist), use_surface_model(use_surface_model), use_flux_ea(use_flux_ea),
+    use_3d_tet_geom( use_3d_tet_geom ), use_cylsymm( use_cylsymm ) {}
 
 __host__  __device__
 void geometry_check::operator()(std::size_t indx) const {
@@ -212,6 +215,7 @@ void geometry_check::operator()(std::size_t indx) const {
       }
     }
 #endif
+/* Captain! */
 #if USE3DTETGEOM > 0
 
     gitr_precision a = 0.0;
@@ -926,6 +930,7 @@ else{
       //    }
       //}
 #endif
+      /* Captain! */
     if (particlesPointer->hitWall[indx] == 1.0) {
 
       if( use_flux_ea > 0 && use_surface_model == 0 )

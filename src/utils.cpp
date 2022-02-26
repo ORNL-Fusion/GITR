@@ -403,7 +403,7 @@ int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDi
 }
 
 int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries,
-                   int use_surface_potential )
+                   int use_surface_potential, int use_3d_tet_geom, int use_cylsymm )
 {
     Setting& geom = cfg_geom.lookup("geom");
     std::cout << "Boundary import routine " << int(boundaries.size()) << std::endl;
@@ -416,7 +416,8 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
 
   std::string full_path = geom_folder + "/" + geom_outname;
   outfile.open (full_path );
-  #if USE3DTETGEOM > 0
+  if( use_3d_tet_geom > 0 )
+  {
     std::cout << "Reading 3D geometry file " << std::endl;
     for(int i=0 ; i<nLines ; i++)
     {
@@ -465,7 +466,9 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[nLines].periodic = geom["periodic"];
      #endif
     outfile.close();
-  #else
+  }
+  else
+  {
 
     //int nMaterials = geom["nMaterials"];
     //std::cout << "nmat " << nMaterials << std::endl;
@@ -515,10 +518,10 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
     boundaries[nLines].y1 = geom["y1"];
     boundaries[nLines].y2 = geom["y2"];
     boundaries[nLines].periodic = geom["periodic"];
-  #endif
+  }
     return nZSurfs;
 }
-int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::string fieldCfgString,int *nR, int *nY,int *nZ,int *n,int &nRTotal,int &nYTotal,int &nZTotal,int *nHashPoints, int &nHashPointsTotal,int &nGeomHash)
+int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::string fieldCfgString,int *nR, int *nY,int *nZ,int *n,int &nRTotal,int &nYTotal,int &nZTotal,int *nHashPoints, int &nHashPointsTotal,int &nGeomHash, int use_3d_tet_geom )
 {
       Setting& geomHash = cfg.lookup(fieldCfgString);
       if(nHashes > 1)
@@ -542,7 +545,9 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
         nRTotal = nRTotal + nR[j];
         nZTotal = nZTotal + nZ[j];
       }
-      #if USE3DTETGEOM > 0
+
+      if( use_3d_tet_geom > 0 )
+      {
       if(nHashes > 1)
       {
         for(int i=0; i<nHashes;i++)
@@ -554,9 +559,11 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
       {
         getVariable(cfg,fieldCfgString+".nY_closeGeom",nY[0]);
       }
-#else
+      }
+      else
+      {
       nY[0] = 1;
-      #endif
+      }
       nGeomHash = 0;
       nRTotal = 0;
       nYTotal = 0;
@@ -564,16 +571,14 @@ int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::
       nGeomHash = 0;
       for(int j=0;j<nHashes;j++)
       {
-      #if USE3DTETGEOM > 0
-       // if(nHashes > 1)
-        //{
+        if( use_3d_tet_geom > 0 )
+        {
           nHashPoints[j] =nR[j]*nY[j]*nZ[j];
-        //}
-       #else //else
-        //{
+        }
+        else
+        {
           nHashPoints[j] =nR[j]*nZ[j];
-        //} 
-	#endif
+        }
         nHashPointsTotal = nHashPointsTotal + nHashPoints[j];
         nGeomHash = nGeomHash + nHashPoints[j]*n[j];
         nRTotal = nRTotal + nR[j];

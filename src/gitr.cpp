@@ -96,6 +96,8 @@ int main(int argc, char **argv, char **envp) {
   int use_flux_ea = use.get< int >( use::flux_ea );
   int spectroscopy = use.get< int >( use::spectroscopy );
   int biased_surface = use.get< int >( use::biased_surface );
+  int use_3d_tet_geom = use.get< int >( use::use3dtetgeom );
+  int use_cylsymm = use.get< int >( use::cylsymm );
 
   // Set default processes per node to 1
   int ppn = 1;
@@ -286,7 +288,10 @@ int main(int argc, char **argv, char **envp) {
   sim::Array<Boundary> boundaries(nLines + 1, Boundary());
     int use_surface_potential = use.get< int >( use::surface_potential );
   if (world_rank == 0) {
-    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential );
+
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential,
+                               use_3d_tet_geom, use_cylsymm );
+
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
   }
@@ -464,7 +469,7 @@ int main(int argc, char **argv, char **envp) {
                  nY_closeGeom.data(), nZ_closeGeom.data(),
                  n_closeGeomElements.data(), nR_closeGeomTotal,
                  nY_closeGeomTotal, nZ_closeGeomTotal, nHashPoints.data(),
-                 nHashPointsTotal, nGeomHash);
+                 nHashPointsTotal, nGeomHash, use_3d_tet_geom );
     std::cout << "made it here" << std::endl;
     libconfig::Setting& geomHash = cfg.lookup("geometry_hash");
      if(nHashes > 1)
@@ -1310,7 +1315,7 @@ if( generate_lc > 0 )
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
                        &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0,
-                       use_surface_model, use_flux_ea ));
+                       use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm ) );
 
     thrust::for_each(
         thrust::device, lcBegin, lcEnd,
@@ -1320,7 +1325,7 @@ if( generate_lc > 0 )
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
                        &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0,
-                       use_surface_model, use_flux_ea ));
+                       use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm ) );
   }
   auto finish_clock_trace = Time_trace::now();
   fsec_trace fstrace = finish_clock_trace - start_clock_trace;
@@ -3894,7 +3899,9 @@ if( flowv_interp == 1 )
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist, use_surface_model, use_flux_ea );
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist, 
+      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
+
 #if USE_SORT > 0
   sortParticles sort0(particleArray, nP,dev_tt, 10000,
                       nActiveParticlesOnRank.data());

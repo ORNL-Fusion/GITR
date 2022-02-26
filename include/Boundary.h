@@ -60,15 +60,12 @@ class Boundary
     gitr_precision c;
     gitr_precision d;
     gitr_precision plane_norm; //16
-    #if USE3DTETGEOM > 0
-      gitr_precision x3;
-      gitr_precision y3;
-      gitr_precision z3;
-      gitr_precision area;
-    #else
-      gitr_precision slope_dzdx;
-      gitr_precision intercept_z;
-    #endif 
+    gitr_precision x3;
+    gitr_precision y3;
+    gitr_precision z3;
+    gitr_precision area;
+    gitr_precision slope_dzdx;
+    gitr_precision intercept_z;
     gitr_precision periodic_bc_x0;    
     gitr_precision periodic_bc_x1;    
     gitr_precision Z;

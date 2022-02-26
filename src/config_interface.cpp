@@ -129,7 +129,7 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::spectroscopy ] = "SPECTROSCOPY";
   lookup[ use::use3dtetgeom ] = "USE3DTETGEOM";
   lookup[ use::flux_ea ] = "FLUX_EA";
-  lookup[ use::usecylsymm ] = "USECYLSYMM";
+  lookup[ use::cylsymm ] = "USECYLSYMM";
   lookup[ use::usefieldalignedvalues ] = "USEFIELDALIGNEDVALUES";
   lookup[ use::force_eval ] = "FORCE_EVAL";
   lookup[ use::compatibility_check ] = "CHECK_COMPATIBILITY";

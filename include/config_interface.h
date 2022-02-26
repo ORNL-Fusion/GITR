@@ -228,7 +228,7 @@ class use final : public config_module_base
     spectroscopy,
     use3dtetgeom,
     flux_ea,
-    usecylsymm,
+    cylsymm,
     usefieldalignedvalues,
     force_eval,
     compatibility_check,

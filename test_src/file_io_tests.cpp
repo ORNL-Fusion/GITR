@@ -13,7 +13,16 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 TEST_CASE("Factorials are computed", "[factorial]") {
+
   int const use_surface_potential = 0;
+
+  /* Captain! Last 2 arguments set arbitrarily to zero since it doesn't look like it matters
+     much in this code */
+  int use_flux_ea = 0;
+  int use_surface_model = 0;
+  int use_3d_tet_geom = 0;
+  int use_cylsymm = 0;
+
   SECTION("int")
   {
     std::cout << "starting test " << std::endl;
@@ -99,7 +108,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     }
   
     sim::Array<Boundary> boundaries(nLines + 1, Boundary());
-    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential );
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential,
+                               use_3d_tet_geom, use_cylsymm );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
@@ -123,14 +133,14 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       closeGeomGridy(1), closeGeomGridz(1);
   sim::Array<int> closeGeom(1, 0);
   gitr_precision dt = 1.0e9;
-  /* Captain! Last 2 arguments set arbitrarily to zero since it doesn't look like it matters
-     much in this code */
+
   geometry_check geometry_check0(
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist, 0, 0 );
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist,
+      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
 
 
   }
@@ -156,7 +166,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     }
   
     sim::Array<Boundary> boundaries(nLines + 1, Boundary());
-    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential );
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential,
+                               use_3d_tet_geom, use_cylsymm );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
@@ -185,7 +196,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist, 0, 0 );
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist,
+      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
 
     particleArray->x[0] = 0.5;
     particleArray->xprevious[0] = 0.5;
@@ -242,7 +254,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     }
   
     sim::Array<Boundary> boundaries(nLines + 1, Boundary());
-    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential );
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_surface_potential,
+                               use_3d_tet_geom, use_cylsymm );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
@@ -271,7 +284,8 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist, 0, 0 );
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist,
+      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
 
     particleArray->x[0] = 0.5;
     particleArray->xprevious[0] = 0.5;
