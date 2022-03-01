@@ -55,7 +55,20 @@ void hashGeom::operator()(std::size_t indx) {
   //std::cout << "nRhashSum " << nRhashSum << std::endl;
   //std::cout << "nYhashSum " << nYhashSum << std::endl;
   //std::cout << "nZhashSum " << nZhashSum << std::endl;
-#if USE3DTETGEOM > 0
+//#if USE3DTETGEOM > 0
+
+  gitr_precision x0;
+
+  gitr_precision y0;
+
+  gitr_precision z0;
+
+  int xyzIndx;
+
+  int buffIndx;
+
+  if( use_3d_geom > 0 )
+  {
   gitr_precision kk = (indx-nHashPoints)/(nR[nHash]*nY[nHash]);
   //std::cout << "kk " << kk << std::endl;
 
@@ -78,14 +91,17 @@ void hashGeom::operator()(std::size_t indx) {
   //if( j > nY || j < 0){ std::cout << "j out of range " << j << std::endl; exit(0);}
   //if( k > nZ || k < 0){ std::cout << "k out of range " << k  << "indx " << indx<< std::endl; exit(0);}
   //std::cout << "ijk " << i << " " << j << " "<< k << std::endl;
-  int xyzIndx = indx;
-  int buffIndx = hashSum+(k*(nR[nHash]*nY[nHash])+j*nR[nHash]+i)*n_closeGeomElements[nHash] ;
-  gitr_precision x0 = x[nRhashSum+i];
-  gitr_precision y0 = y[nYhashSum+j];
-  gitr_precision z0 = z[nZhashSum+k];
+  xyzIndx = indx;
+  buffIndx = hashSum+(k*(nR[nHash]*nY[nHash])+j*nR[nHash]+i)*n_closeGeomElements[nHash] ;
+  x0 = x[nRhashSum+i];
+  y0 = y[nYhashSum+j];
+  z0 = z[nZhashSum+k];
   //std::cout << "point "  << nHash << " " <<   x0 << " " <<  y0 << " "
   //     <<  z0 << std::endl;
-#else
+  }
+  else
+  {
+//#else
   nHash=0;
   hashSum=0;
   nRhashSum=0;
@@ -95,15 +111,16 @@ void hashGeom::operator()(std::size_t indx) {
   gitr_precision kk = indx/(nR[0]);
   int k = std::floor(kk);
   int i = indx - k*(nR[0]);
-  gitr_precision x0 = x[i];
-  gitr_precision y0 = 0.0;
-  gitr_precision z0 = z[k];
-  int xyzIndx = indx;
-  int buffIndx=(k*(nR[0])+ i)*n_closeGeomElements[0];
+  x0 = x[i];
+  y0 = 0.0;
+  z0 = z[k];
+  xyzIndx = indx;
+  buffIndx=(k*(nR[0])+ i)*n_closeGeomElements[0];
   //std::cout << "point "  <<nHash<< " " <<   x0 << " " <<  z0 << " "
   //     <<  buffIndx << std::endl;
 
-#endif
+//#endif
+  }
   //gitr_precision minDist[n_closeGeomElements] = {0.0};
   //for(int i1=0;i1<n_closeGeomElements; i1++)
   //{
@@ -152,25 +169,30 @@ void hashGeom::operator()(std::size_t indx) {
     gitr_precision d = boundary[l].d;
     //std::cout << "abcd "  << a << " " <<b << " "
     //    <<  c << " " <<d << std::endl;
-#if USE3DTETGEOM > 0
+    gitr_precision perpDist;
+
+    if( use_3d_geom > 0 )
+    {
     gitr_precision plane_norm = boundary[l].plane_norm;
     gitr_precision t = -(a*x0 + b*y0 + c*z0 + d)/(a*a + b*b + c*c);
     p[0] = a*t + x0;
     p[1] = b*t + y0;
     p[2] = c*t + z0;
-    gitr_precision perpDist = std::sqrt((x0-p[0])*(x0-p[0]) + (y0-p[1])*(y0-p[1]) + (z0-p[2])*(z0-p[2]));
-#endif
+    perpDist = std::sqrt((x0-p[0])*(x0-p[0]) + (y0-p[1])*(y0-p[1]) + (z0-p[2])*(z0-p[2]));
+    }
 
     vectorAssign(boundary[l].x1, boundary[l].y1, 
         boundary[l].z1, A);    
     vectorAssign(boundary[l].x2, boundary[l].y2, 
         boundary[l].z2, B);    
-#if USE3DTETGEOM > 0
+    if( use_3d_geom > 0 )
+    {
     vectorAssign(boundary[l].x3, boundary[l].y3, 
         boundary[l].z3, C); 
-#endif
+    }
     vectorSubtract(B,A,AB);
-#if USE3DTETGEOM > 0
+    if( use_3d_geom > 0 )
+    {
     vectorSubtract(C,A,AC);
     vectorSubtract(C,B,BC);
     vectorSubtract(A,C,CA);
@@ -193,7 +215,7 @@ void hashGeom::operator()(std::size_t indx) {
     {
     }
     else perpDist = 1.0e6;
-#endif
+    }
     //std::cout << "perpDist " << perpDist << std::endl;
     //Edge checking
     p[0] = x0;
@@ -214,7 +236,9 @@ void hashGeom::operator()(std::size_t indx) {
     //std::cout << "edge1 comp " << pA[0] << " " << pA[1] << " " << pA[2] <<
     //   " " << cEdge1mag << " " << cEdge1[0] << " " << cEdge1[1] << " " << cEdge1[2] << " "
     //   << dEdge1[0] << " " <<dEdge1[1] << " " << dEdge1[2] << std::endl;
-#if USE3DTETGEOM > 0
+    gitr_precision minEdge;
+    if( use_3d_geom > 0 )
+    {
     gitr_precision pB[3] = {0.0};
     gitr_precision cEdge2[3] = {0.0};
     gitr_precision dEdge2[3] = {0.0};
@@ -239,12 +263,14 @@ void hashGeom::operator()(std::size_t indx) {
       vectorSubtract(pC,cEdge3,dEdge3);
       distE3 = std::sqrt(vectorDotProduct(dEdge3,dEdge3));
     }
-    gitr_precision minEdge = std::min(distE1,distE2);
+    minEdge = std::min(distE1,distE2);
     minEdge = std::min(distE3,minEdge);
-#else
+    }
+    else
+    {
     //
     gitr_precision minEdge = distE1;
-#endif
+    }
     //std::cout << "edgeDistances " << distE1 << " " << distE2 << " " << distE3 << std::endl;
     gitr_precision d1 =std::sqrt((x0 - boundary[l].x1)*(x0 - boundary[l].x1)
         +  (y0 - boundary[l].y1)*(y0 - boundary[l].y1)
@@ -252,19 +278,25 @@ void hashGeom::operator()(std::size_t indx) {
     gitr_precision d2 =std::sqrt((x0 - boundary[l].x2)*(x0 - boundary[l].x2)
         +  (y0 - boundary[l].y2)*(y0 - boundary[l].y2)
         +  (z0 - boundary[l].z2)*(z0 - boundary[l].z2));
-#if USE3DTETGEOM > 0
-    gitr_precision d3 =std::sqrt((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
+
+    gitr_precision d3;
+    if( use_3d_geom > 0 )
+    {
+    d3 =std::sqrt((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
         +  (y0 - boundary[l].y3)*(y0 - boundary[l].y3)
         +  (z0 - boundary[l].z3)*(z0 - boundary[l].z3));
-#endif
+    }
+
     //std::cout << " point Distances " << d3 << " " << d2 << " " << d1 << std::endl;
     gitr_precision minOf3 = std::min(d1,d2);
     minOf3 = std::min(minOf3,minEdge);
+
     //std::cout << "min of two " << minOf3 << std::endl;
-#if USE3DTETGEOM > 0
+    if( use_3d_geom > 0 )
+    {
     minOf3 = std::min(minOf3,perpDist);
     minOf3 = std::min(minOf3,d3);
-#endif
+    }
     //std::cout << "mindist "  << minOf3 << " " <<  std::endl;
     //  if(indx ==1)
     //  {std::cout << "minof3" << perpDist <<  " " << minEdge << " " << minOf3<< std::endl;}

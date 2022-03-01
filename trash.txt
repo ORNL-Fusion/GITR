@@ -5,7 +5,6 @@
 
 ./src/geometry_check.cpp:215:#if USE3DTETGEOM > 0
 
-DONE
 
 ./src/hashGeom.cpp:58:#if USE3DTETGEOM > 0
 ./src/hashGeom.cpp:155:#if USE3DTETGEOM > 0
@@ -14,6 +13,8 @@ DONE
 ./src/hashGeom.cpp:217:#if USE3DTETGEOM > 0
 ./src/hashGeom.cpp:255:#if USE3DTETGEOM > 0
 ./src/hashGeom.cpp:264:#if USE3DTETGEOM > 0
+
+DONE
 
 ./src/gitr.cpp:1002:#if USE3DTETGEOM > 0
 ./src/gitr.cpp:1128:#if USE3DTETGEOM > 0

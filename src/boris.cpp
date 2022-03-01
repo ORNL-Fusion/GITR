@@ -87,7 +87,10 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
          int&  closestBoundaryIndex, int biased_surface, int use_3d_geom ) {
-#if USE3DTETGEOM > 0
+    /* Captain! */
+if( use_3d_geom > 0 )
+{
+//#if USE3DTETGEOM > 0
     gitr_precision Emag = 0.0;
     gitr_precision Er = 0.0;
     gitr_precision Et = 0.0;
@@ -182,30 +185,17 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
        i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements 
                    + yInd*nR_closeGeom*n_closeGeomElements
                    + rInd*n_closeGeomElements + k];
-       //closestBoundaryIndex = i;
-       //std::cout << "closest boundaries to check " << i << std::endl;
 #else
       for (int i=0; i<nLines; i++)
       {
 #endif
-    //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
-    //if (boundaryVector[i].Z != 0.0)
-    //{
-    //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
     a = boundaryVector[i].a;
     b = boundaryVector[i].b;
     c = boundaryVector[i].c;
     d = boundaryVector[i].d;
     plane_norm = boundaryVector[i].plane_norm;
     pointToPlaneDistance0 = (a * p0[0] + b * p0[1] + c * p0[2] + d) / plane_norm;
-    //std::cout << "abcd plane_norm "<< a  << " " << b << " " << c << " " << d << " " << plane_norm << std::endl;
-    //std::cout << i << std::endl;// " point to plane dist "  << pointToPlaneDistance0 << std::endl;
-    //pointToPlaneDistance1 = (a*p1[0] + b*p1[1] + c*p1[2] + d)/plane_norm;
-    //signPoint0 = std::copysign(1.0,pointToPlaneDistance0);
-    //signPoint1 = std::copysign(1.0,pointToPlaneDistance1);
     vectorAssign(a / plane_norm, b / plane_norm, c / plane_norm, normalVector);
-    //vectorNormalize(normalVector,normalVector);
-    //std::cout << "normal " << normalVector[0] << " " << normalVector[1] << " " << normalVector[2] << std::endl;
     vectorAssign(p0[0] - pointToPlaneDistance0 * normalVector[0],
                  p0[1] - pointToPlaneDistance0 * normalVector[1],
                  p0[2] - pointToPlaneDistance0 * normalVector[2], p);
@@ -229,32 +219,10 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     vectorCrossProduct(AB, Ap, crossABAp);
     vectorCrossProduct(BC, Bp, crossBCBp);
     vectorCrossProduct(CA, Cp, crossCACp);
-    /*  
-         dot0 = vectorDotProduct(crossABAp,normalVector);
-            dot1 = vectorDotProduct(crossBCBp,normalVector);
-            dot2 = vectorDotProduct(crossCACp,normalVector);
-         */
     signDot0 = std::copysign(1.0,vectorDotProduct(crossABAp, normalVector));
     signDot1 = std::copysign(1.0,vectorDotProduct(crossBCBp, normalVector));
     signDot2 = std::copysign(1.0,vectorDotProduct(crossCACp, normalVector));
-    /*  
-         if(dot0 == 0.0) signDot0 = 1;
-         if(dot1 == 0.0) signDot1 = 1;
-         if(dot2 == 0.0) signDot2 = 1;
-         
-         if(vectorNorm(crossABAp) == 0.0) signDot0 = 1;
-         if(vectorNorm(crossBCBp) == 0.0) signDot1 = 1;
-         if(vectorNorm(crossCACp) == 0.0) signDot2 = 1;
-         */
          totalSigns = std::abs(signDot0 + signDot1 + signDot2);
-         /*
-         if(vectorNorm(crossABAp) == 0.0) totalSigns = 3;
-         if(vectorNorm(crossBCBp) == 0.0) totalSigns = 3;
-         if(vectorNorm(crossCACp) == 0.0) totalSigns = 3;
-         */
-         //std::cout << dot0 << " signDot0 " << signDot0 << std::endl;
-         //std::cout << dot1 << " signDot1 " << signDot1 << std::endl;
-         //std::cout << dot2 << " signDot2 " << signDot2 << std::endl;
          vectorSubtract(A,p0,p0A);
          vectorSubtract(B,p0,p0B);
          vectorSubtract(C,p0,p0C);
@@ -274,9 +242,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
              normals[9] = p0C[0]/p0Cnorm;
              normals[10] = p0C[1]/p0Cnorm;
              normals[11] = p0C[2]/p0Cnorm;
-         //std::cout << "point to plane " << pointToPlaneDistance0 << std::endl;
-         //std::cout << "point to ABC " << p0Anorm << " " << p0Bnorm << " " << p0Cnorm << std::endl;
-         //std::cout << "total Signs " << totalSigns << std::endl;
          normAB = vectorNorm(AB);
          normBC = vectorNorm(BC);
          normCA = vectorNorm(CA);
@@ -290,17 +255,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
          tAB = -1.0*tAB;
          tBC = -1.0*tBC;
          tCA = -1.0*tCA;
-         /*
-         std::cout << "A " << A[0] << " " << A[1] << " " << A[2] << std::endl;   
-         std::cout << "B " << B[0] << " " << B[1] << " " << B[2] << std::endl;   
-         std::cout << "C " << C[0] << " " << C[1] << " " << C[2] << std::endl;   
-         std::cout << "ABhat " << ABhat[0] << " " << ABhat[1] << " " << ABhat[2] << std::endl; 
-         std::cout << "CAhat " << CAhat[0] << " " << CAhat[1] << " " << CAhat[2] << std::endl; 
-         std::cout << "p0C " << p0C[0] << " " << p0C[1] << " " << p0C[2] << std::endl; 
-         std::cout << "tAB and norm AB " << tAB << " "<<  normAB << std::endl;  
-         std::cout << "tBC and norm BC " << tBC << " "<<  normBC << std::endl;  
-         std::cout << "tCA and norm CA " << tCA << " "<<  normCA << std::endl;  
-         */
          if((tAB > 0.0) && (tAB < normAB))
          {
              vectorScalarMult(tAB,ABhat,projP0AB);
@@ -360,82 +314,18 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
 
          if (totalSigns == 3.0)
          {
-             //if (fabs(pointToPlaneDistance0) < minDistance)
-             //{
                 perpDist = std::abs(pointToPlaneDistance0); 
-                //minDistance = fabs(pointToPlaneDistance0);
-                //std::cout << "p " << p[0] << " " << p[1] << " " << p[2] << std::endl;
-                //std::cout << "p0 " << p0[0] << " " << p0[1] << " " << p0[2] << std::endl;
                 vectorSubtract(p,p0 ,normalVector);
-                //std::cout << "unit vec " << directionUnitVector[0] << " " << directionUnitVector[1] << 
-                //    " " << directionUnitVector[2] << std::endl;
                 vectorNormalize(normalVector,normalVector);
-                //std::cout << "unit vec " << directionUnitVector[0] << " " << directionUnitVector[1] << 
-                //    " " << directionUnitVector[2] << std::endl;
-                //std::cout << "perp distance " << std::endl;
              distances[0] = perpDist;   
              normals[0] = boundaryVector[i].unit_vec0; //normalVector[0];
              normals[1] = boundaryVector[i].unit_vec1; //normalVector[1];
              normals[2] = boundaryVector[i].unit_vec2; //normalVector[2];
-             //}
          }
          else
          {
              perpDist = 1.0e12;
              distances[0] = perpDist;   
-             /*
-             if (p0Anorm < p0Bnorm)
-             {
-                     if (p0Anorm < p0Cnorm)
-                     {
-                        if (p0Anorm < minDistance)
-                        {
-                         minDistance = p0Anorm;
-                         vectorAssign(p0A[0]/p0Anorm,p0A[1]/p0Anorm,p0A[2]/p0Anorm,
-                                      directionUnitVector);
-                         minIndex = i;
-                        std::cout << "p0A " << std::endl;
-                        }
-                     }
-                     else
-                     {
-                        if (p0Cnorm < minDistance)
-                        {
-                         minDistance = p0Cnorm;
-                         vectorAssign(p0C[0]/p0Cnorm,p0C[1]/p0Cnorm,p0C[2]/p0Cnorm,
-                                      directionUnitVector);
-                         minIndex = i;
-                        std::cout << "p0C " << p0Cnorm << std::endl;
-                        }
-                     }
-             }
-             else
-             {
-                     if (p0Bnorm < p0Cnorm)
-                     {
-                        if (p0Bnorm < minDistance)
-                        {
-                         minDistance = p0Bnorm;
-                         vectorAssign(p0B[0]/p0Bnorm,p0B[1]/p0Bnorm,p0B[2]/p0Bnorm,
-                                      directionUnitVector);
-                         minIndex = i;
-                        std::cout << "p0B " << std::endl;
-                        }
-                     }
-                     else
-                     {
-                        if (p0Cnorm < minDistance)
-                        {
-                         minDistance = p0Cnorm;
-                         vectorAssign(p0C[0]/p0Cnorm,p0C[1]/p0Cnorm,p0C[2]/p0Cnorm,
-                                      directionUnitVector);
-                         minIndex = i;
-                        std::cout << "p0C two " << std::endl;
-                        }
-                     }
-
-             }      
-             */
          }
          int index = 0;
          for(int j = 0; j < 7; j++)
@@ -468,7 +358,9 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     }
       //vectorScalarMult(-1.0,directionUnitVector,directionUnitVector);
       //std::cout << "min dist " << minDistance << std::endl;
-#else //2dGeom     
+    /* Captain! */
+//#else //2dGeom     
+} else {
                 
     gitr_precision Emag = 0.0;
 	gitr_precision fd = 0.0;
@@ -535,10 +427,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
 	  {
 	   perp_dist = x0 - boundaryVector[j].x1;
 	  }
-	//std::cout << " x0 z " << x0 << " " << z << " slope " << boundaryVector[j].slope_dzdx << " intercept " << boundaryVector[j].intercept_z << std::endl;
-        
-	//std::cout << " surface check " << j << " point1dist " << point1_dist << " point2_dist " << point2_dist <<  
-	   //           " perp_dist " << perp_dist << std::endl;
             if (point1_dist > point2_dist)
             {
                 max = point1_dist;
@@ -549,7 +437,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
                 max = point2_dist;
                 min = point1_dist;
             }
-    //        std::cout << "p1dist p2dist perpDist " << point1_dist << " " << point2_dist << " " << perp_dist << std::endl;
             if (boundaryVector[j].length*boundaryVector[j].length + perp_dist*perp_dist >=
                     max*max)
             {
@@ -605,23 +492,19 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
             directionUnitVector[0] = 1.0 * std::copysign(1.0,(z - boundaryVector[minIndex].intercept_z)/(boundaryVector[minIndex].slope_dzdx) - x0);
             directionUnitVector[1] = 0.0;
             directionUnitVector[2] = 1.0 * std::copysign(1.0,perp_dist)/(boundaryVector[minIndex].slope_dzdx);
-        //std::cout << "sign boundarVec.slope  sign perp_dist " << sgn(boundaryVector[minIndex].slope_dzdx) << " " << sgn(perp_dist) << std::endl;
         }
-        //std::cout << "direction_type 1 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     }
     else if (direction_type == 2)
     {
         directionUnitVector[0] = (boundaryVector[minIndex].x1 - x);
         directionUnitVector[1] = 0.0;
         directionUnitVector[2] = (boundaryVector[minIndex].z1 - z);
-        //std::cout << "direction_type 2 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     }
     else
     {
         directionUnitVector[0] = (boundaryVector[minIndex].x2 - x);
         directionUnitVector[1] = 0.0;
         directionUnitVector[2] = (boundaryVector[minIndex].z2 - z);
-        //std::cout << "direction_type 3 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     }
 
     vectorMagnitude = std::sqrt(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
@@ -629,17 +512,10 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
-    //gitr_precision surfaceNormalVector[3] = {0.0};
-    //boundaryVector[minIndex].getSurfaceNormal(surfaceNormalVector,y,x);
-    //directionUnitVector[0]= boundaryVector[minIndex].inDir*surfaceNormalVector[0];
-    //directionUnitVector[1]= boundaryVector[minIndex].inDir*surfaceNormalVector[1];
-    //directionUnitVector[2]= boundaryVector[minIndex].inDir*surfaceNormalVector[2];
-    //vectorMagnitude = std::sqrt(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
-    //                            + directionUnitVector[2]*directionUnitVector[2]);
-    //directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
-    //directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
-    //directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
-#endif   
+
+    /* Captain! */
+//#endif   
+    }
     if( biased_surface > 0 )
     {
     pot = boundaryVector[minIndex].potential;
@@ -857,7 +733,7 @@ if( use_presheath_efield > 0 )
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
 
   //q_prime = 9.572528104401468e7*particlesPointer->charge[indx] / particlesPointer->amu[indx] * dt * 0.5;
-  /* Captain! original code above, new code below. q_prime = q * dt / ( 2 * m ) */
+  /* original code above, new code below. q_prime = q * dt / ( 2 * m ) */
   q_prime = particlesPointer->charge[ indx ] * gitr_constants::electron_volt * dt * 0.5 /
             ( particlesPointer->amu[ indx ] * gitr_constants::dalton );
 
