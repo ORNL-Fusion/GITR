@@ -67,7 +67,8 @@ ionize< T >::ionize(Flags *_flags,
           gitr_precision *_gridTemperature_Ionization,
           gitr_precision *_gridDensity_Ionization,
           gitr_precision *_rateCoeff_Ionization,
-          gitr_precision *_random_uniform_number)
+          gitr_precision *_random_uniform_number,
+          int use_cylcymm )
       :
 
         flags(_flags), particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
@@ -80,8 +81,8 @@ ionize< T >::ionize(Flags *_flags,
         gridTemperature_Ionization(_gridTemperature_Ionization),
         rateCoeff_Ionization(_rateCoeff_Ionization),
         dt(_dt),
-        state(_state),random_uniform_number{_random_uniform_number}
-{ }
+        state(_state),random_uniform_number{_random_uniform_number},
+        use_cylsymm( use_cylsymm ) { }
 
 template< typename T >
 CUDA_CALLABLE_MEMBER_DEVICE
@@ -99,7 +100,7 @@ void ionize< T >::operator()(std::size_t indx)
           particlesPointer->y[indx], particlesPointer->z[indx], nR_Temp,
           nZ_Temp, TempGridr, TempGridz, te, DensGridr, DensGridz, ne,
           nTemperaturesIonize, nDensitiesIonize, gridTemperature_Ionization,
-          gridDensity_Ionization, rateCoeff_Ionization);
+          gridDensity_Ionization, rateCoeff_Ionization, use_cylsymm );
     
     gitr_precision P = exp(-dt / tion);
     gitr_precision P1 = 1.0 - P;

@@ -45,6 +45,7 @@ struct hashGeom {
    int* nR;
    int* nY;
    int* nZ;
+   int use_3d_geom;
 
 
    hashGeom( int _nLines,int _nHashes,
@@ -54,7 +55,7 @@ struct hashGeom {
                 gitr_precision* _z, 
                 int* _n_closeGeomElements,//gitr_precision *_minDist,
                 int *_closeGeom,
-                int* _nR, int* _nY, int* _nZ);
+                int* _nR, int* _nY, int* _nZ, int use_3d_geom );
     
    CUDA_CALLABLE_MEMBER_DEVICE 
    void operator()(std::size_t indx); 

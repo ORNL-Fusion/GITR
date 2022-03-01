@@ -2,9 +2,10 @@
 ./src/utils.cpp:545:      #if USE3DTETGEOM > 0
 ./src/utils.cpp:567:      #if USE3DTETGEOM > 0
 
-DONE
 
 ./src/geometry_check.cpp:215:#if USE3DTETGEOM > 0
+
+DONE
 
 ./src/hashGeom.cpp:58:#if USE3DTETGEOM > 0
 ./src/hashGeom.cpp:155:#if USE3DTETGEOM > 0
@@ -38,8 +39,10 @@ DONE
 ./include/Boundary.h:116:#if USE3DTETGEOM > 0
 ./include/Boundary.h:131:#if USE3DTETGEOM > 0
 ./include/Boundary.h:189://#if USE3DTETGEOM > 0
+
 ./include/boundaryInit.h:85:#if USE3DTETGEOM
 ./include/boundaryInit.h:103:#if USE3DTETGEOM
+
 ./include/hashGeomSheath.h:63:      #if USE3DTETGEOM > 0
 ./include/hashGeomSheath.h:118:    #if USE3DTETGEOM > 0
 ./include/hashGeomSheath.h:130:    #if USE3DTETGEOM > 0

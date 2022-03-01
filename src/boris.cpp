@@ -86,7 +86,7 @@ CUDA_CALLABLE_MEMBER
 gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, gitr_precision E[], Boundary *boundaryVector, int nLines,
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
-         int&  closestBoundaryIndex, int biased_surface ) {
+         int&  closestBoundaryIndex, int biased_surface, int use_3d_geom ) {
 #if USE3DTETGEOM > 0
     gitr_precision Emag = 0.0;
     gitr_precision Er = 0.0;
@@ -731,6 +731,8 @@ move_boris::move_boris(
   int use_sheath_efield,
   int use_presheath_efield,
   int biased_surface,
+  int use_3d_geom,
+  int use_cylsymm,
   gitr_precision _max_dt )
 
   : 
@@ -768,7 +770,9 @@ move_boris::move_boris(
         electricForce{0.0, 0.0, 0.0},
         use_sheath_efield( use_sheath_efield ),
         use_presheath_efield( use_presheath_efield ),
-        biased_surface( biased_surface ) {}
+        biased_surface( biased_surface ),
+        use_3d_geom( use_3d_geom ),
+        use_cylsymm( use_cylsymm ) {}
 
 CUDA_CALLABLE_MEMBER    
 void move_boris::operator()(std::size_t indx)
@@ -816,7 +820,7 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath,
-                  closestBoundaryIndex, biased_surface);
+                  closestBoundaryIndex, biased_surface, use_3d_geom );
   }
 
 if( use_presheath_efield > 0 )
@@ -840,7 +844,7 @@ if( use_presheath_efield > 0 )
 */
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-                     EfieldZDevicePointer,EfieldTDevicePointer);
+                     EfieldZDevicePointer,EfieldTDevicePointer, use_cylsymm );
                  
   vectorAdd(E,PSE,E);
               //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
@@ -848,7 +852,7 @@ if( use_presheath_efield > 0 )
 }
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                    BfieldZDevicePointer,BfieldTDevicePointer);        
+                    BfieldZDevicePointer,BfieldTDevicePointer, use_cylsymm );        
   Bmag = vectorNorm(B);
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
 
@@ -945,21 +949,21 @@ if( use_presheath_efield > 0 )
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  biased_surface);
+                  biased_surface, use_3d_geom );
   }
 
   if( use_presheath_efield > 0 )
   {
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-                     EfieldZDevicePointer,EfieldTDevicePointer);
+                     EfieldZDevicePointer,EfieldTDevicePointer, use_cylsymm );
                  
   vectorAdd(E,PSE,E);
   }
 
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                    BfieldZDevicePointer,BfieldTDevicePointer);        
+                    BfieldZDevicePointer,BfieldTDevicePointer, use_cylsymm );        
   Bmag = vectorNorm(B);
     q_prime = particlesPointer->charge[indx]*1.60217662e-19/(particlesPointer->amu[indx]*1.6737236e-27)*half_dt*0.5;
     coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
@@ -1100,7 +1104,7 @@ for ( int s=0; s<nSteps; s++ )
 #endif
     if( use_sheath_efield > 0 )
     {
-    minDist = getE(r[0],r[1],r[2],E,boundaryVector,nLines);
+    minDist = getE(r[0],r[1],r[2],E,boundaryVector,nLines, use_3d_geom );
     }
 
     if( use_presheath_efield > 0 )
@@ -1117,7 +1121,7 @@ for ( int s=0; s<nSteps; s++ )
 #endif
     interp2dVector(&B[0],r[0],r[1],r[2],nR_Bfield,nZ_Bfield,
                BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-               BfieldZDevicePointer,BfieldTDevicePointer);        
+               BfieldZDevicePointer,BfieldTDevicePointer, use_cylsymm );        
 #ifdef __CUDACC__
 #else
 #endif
@@ -1160,7 +1164,7 @@ for ( int s=0; s<nSteps; s++ )
 
     if( use_sheath_efield > 0 )
     {
-    minDist = getE(r2[0],r2[1],r2[2],E,boundaryVector,nLines);
+    minDist = getE(r2[0],r2[1],r2[2],E,boundaryVector,nLines, use_3d_geom );
     }
     if( use_presheath_efield > 0 )
     {
@@ -1176,7 +1180,7 @@ for ( int s=0; s<nSteps; s++ )
 
     interp2dVector(&B[0],r2[0],r2[1],r2[2],nR_Bfield,nZ_Bfield,
              BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-             BfieldZDevicePointer,BfieldTDevicePointer);        
+             BfieldZDevicePointer,BfieldTDevicePointer, use_cylsymm );        
 #ifdef __CUDACC__
 #else
 #endif
@@ -1218,7 +1222,7 @@ for ( int s=0; s<nSteps; s++ )
 
     if( use_sheath_efield > 0 )
     {
-    minDist = getE(r3[0],r3[1],r3[2],E,boundaryVector,nLines);
+    minDist = getE(r3[0],r3[1],r3[2],E,boundaryVector,nLines, use_3d_geom );
     }
     if( use_presheath_efield > 0 )
     {
@@ -1233,7 +1237,7 @@ for ( int s=0; s<nSteps; s++ )
 #endif
     interp2dVector(&B[0],r3[0],r3[1],r3[2],nR_Bfield,nZ_Bfield,
                  BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                 BfieldZDevicePointer,BfieldTDevicePointer);        
+                 BfieldZDevicePointer,BfieldTDevicePointer, use_cylsymm );        
                 
 #ifdef __CUDACC__
 #else
@@ -1281,7 +1285,8 @@ for ( int s=0; s<nSteps; s++ )
     {
    interp2dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
                EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
-               EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter);
+               EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter,
+               use_cylsymm );
     vectorAdd(E,particlesPointer->E,E);
     }
 #ifdef __CUDACC__
@@ -1290,7 +1295,8 @@ for ( int s=0; s<nSteps; s++ )
 
     interp2dVector(&B[0],r4[0],r4[1],r4[2],nR_Bfield,nZ_Bfield,
                         BfieldGridRDevicePointer,BfieldGridZDevicePointer,
-                        BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);        
+                        BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer,
+                        use_cylsymm );        
 #ifdef __CUDACC__
 #else
 #endif

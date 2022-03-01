@@ -115,6 +115,7 @@ struct crossFieldDiffusion {
     gitr_precision * BfieldTDevicePointer;
 
     int use_perp_diffusion;
+    int use_cylsymm;
 
 #if __CUDACC__
         curandState *state;
@@ -131,7 +132,7 @@ struct crossFieldDiffusion {
         int _nR_Bfield, int _nZ_Bfield,
         gitr_precision * _BfieldGridRDevicePointer,gitr_precision * _BfieldGridZDevicePointer,
         gitr_precision * _BfieldRDevicePointer,gitr_precision * _BfieldZDevicePointer,
-        gitr_precision * _BfieldTDevicePointer, int use_perp_diffusion )
+        gitr_precision * _BfieldTDevicePointer, int use_perp_diffusion, int use_cylsymm )
       : flags(_flags), particlesPointer(_particlesPointer),
         dt(_dt),
         diffusionCoefficient(_diffusionCoefficient),
@@ -143,7 +144,8 @@ struct crossFieldDiffusion {
         BfieldZDevicePointer(_BfieldZDevicePointer),
         BfieldTDevicePointer(_BfieldTDevicePointer),
         state(_state),
-        use_perp_diffusion( use_perp_diffusion ){
+        use_perp_diffusion( use_perp_diffusion ),
+        use_cylsymm( use_cylsymm ) {
   }
 
 /* Monte Carlo solution to diffusion equation - we need this tested */
@@ -187,7 +189,8 @@ void operator()(std::size_t indx) const {
                           particlesPointer->zprevious[indx],
                           nR_Bfield,nZ_Bfield,
                           BfieldGridRDevicePointer,BfieldGridZDevicePointer,
-                          BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
+                          BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer,
+                          use_cylsymm );
         
       Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
       if(Bmag < 1.0e-12) 
@@ -232,7 +235,8 @@ void operator()(std::size_t indx) const {
       gitr_precision B_plus[3] = {0.0};
       
       interp2dVector(&B_plus[0],x_plus,y_plus,z_plus,nR_Bfield,nZ_Bfield,
-                               BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
+                               BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer, use_cylsymm );
+
         gitr_precision Bmag_plus = std::sqrt(B_plus[0]*B_plus[0] + B_plus[1]*B_plus[1] + B_plus[2]*B_plus[2]);
     
     gitr_precision B_deriv1[3] = {0.0};

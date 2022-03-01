@@ -216,7 +216,8 @@ void geometry_check::operator()(std::size_t indx) const {
     }
 #endif
 /* Captain! */
-#if USE3DTETGEOM > 0
+if( use_3d_tet_geom > 0 )
+{
 
     gitr_precision a = 0.0;
     gitr_precision b = 0.0;
@@ -520,7 +521,9 @@ else{
             particlesPointer->z[indx] = temp_position_xyz[2];
             particlesPointer->surfaceHit[indx] = nearest_boundary_index;
 }
-#else // 2D geometry
+    }
+    else
+    {
 #if USECYLSYMM > 0
     gitr_precision pdim1 = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
                        particlesPointer->y[indx] * particlesPointer->y[indx]);
@@ -929,8 +932,8 @@ else{
       //        particlesPointer->hitWall[indx] = 1.0;
       //    }
       //}
-#endif
-      /* Captain! */
+//#endif
+    }
     if (particlesPointer->hitWall[indx] == 1.0) {
 
       if( use_flux_ea > 0 && use_surface_model == 0 )

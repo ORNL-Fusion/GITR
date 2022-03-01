@@ -97,7 +97,6 @@ TEST_CASE( "surface model" )
 
     int use_surface_potential = 0;
     int use_3d_tet_geom = 0;
-    int use_cylsymm = 0;
 
     int nSurfaces = importGeometry( cfg, boundaries, use_surface_potential,
                                     use_3d_tet_geom, use_cylsymm );
@@ -185,6 +184,7 @@ TEST_CASE( "surface model" )
 
     int use_sheath_efield = 1;
     int use_presheath_efield = 1;
+    int use_3d_geom = 0;
     /* create boris operator */
     int biased_surface = 0;
     move_boris boris( particleArray, dt, boundaries.data(), nLines, nR_Bfield, nZ_Bfield,
@@ -198,7 +198,7 @@ TEST_CASE( "surface model" )
                       n_closeGeomElements_sheath, closeGeomGridr_sheath.data(),
                       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                       &closeGeom_sheath.front(), gitr_flags, use_sheath_efield,
-                      use_presheath_efield, biased_surface );
+                      use_presheath_efield, biased_surface, use_3d_geom, use_cylsymm );
 
     /* Captain! Arbitrary runtime flags inserted in geometry check */
     geometry_check geometry_check0(

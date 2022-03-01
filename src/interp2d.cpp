@@ -69,7 +69,7 @@ gitr_precision interp2d ( gitr_precision x, gitr_precision z,int nx, int nz,
     return fxz;
 }
 gitr_precision interp2dCombined ( gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
-    gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data ) {
+    gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data, int use_cylsymm ) {
     
     gitr_precision fxz = 0.0;
     gitr_precision fx_z1 = 0.0;
@@ -200,7 +200,7 @@ gitr_precision interp3d_nearest ( gitr_precision x, gitr_precision y, gitr_preci
 
 CUDA_CALLABLE_MEMBER
 void interp3dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx,int ny, int nz,
-        gitr_precision* gridx,gitr_precision* gridy,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat ) {
+        gitr_precision* gridx,gitr_precision* gridy,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat, int use_cylsymm ) {
 
     field[0] =  interp3d (x,y,z,nx,ny,nz,gridx, gridy,gridz,datar );
     field[1] =  interp3d (x,y,z,nx,ny,nz,gridx, gridy,gridz,datat );
@@ -208,11 +208,11 @@ void interp3dVector (gitr_precision* field, gitr_precision x, gitr_precision y, 
 }
 CUDA_CALLABLE_MEMBER
 void interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
-gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat ) {
+gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat, int use_cylsymm ) {
 
-   gitr_precision Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar);
-   gitr_precision At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat);
-   field[2] = interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz);
+   gitr_precision Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, use_cylsymm );
+   gitr_precision At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, use_cylsymm );
+   field[2] = interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, use_cylsymm );
 #if USECYLSYMM > 0
             gitr_precision theta = std::atan2(y,x);   
             field[0] = std::cos(theta)*Ar - std::sin(theta)*At;
@@ -226,14 +226,14 @@ gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precisio
 CUDA_CALLABLE_MEMBER
 void interpFieldAlignedVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
 gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat,
-int nxB, int nzB, gitr_precision* gridxB,gitr_precision* gridzB,gitr_precision* datarB,gitr_precision* datazB, gitr_precision* datatB) {
+int nxB, int nzB, gitr_precision* gridxB,gitr_precision* gridzB,gitr_precision* datarB,gitr_precision* datazB, gitr_precision* datatB, int use_cylsymm ) {
 
-   gitr_precision Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar);
+   gitr_precision Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, use_cylsymm );
    gitr_precision B[3] = {0.0};
    gitr_precision B_unit[3] = {0.0};
    gitr_precision Bmag = 0.0;
    interp2dVector (&B[0],x,y,z,nxB,nzB,
-                   gridxB,gridzB,datarB,datazB,datatB);
+                   gridxB,gridzB,datarB,datazB,datatB, use_cylsymm );
    Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
    B_unit[0] = B[0]/Bmag;
    B_unit[1] = B[1]/Bmag;

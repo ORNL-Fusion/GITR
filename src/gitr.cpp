@@ -256,7 +256,7 @@ int main(int argc, char **argv, char **envp) {
   gitr_precision Btest[3] = {0.0};
   interp2dVector(&Btest[0], 5.5, 0.0, -4.0, nR_Bfield, nZ_Bfield,
                  bfieldGridr.data(), bfieldGridz.data(), br.data(), bz.data(),
-                 by.data());
+                 by.data(), use_cylsymm );
   //std::cout << "node " << world_rank << "Bfield at 5.5 -4 " << Btest[0] << " "
   //          << Btest[1] << " " << Btest[2] << std::endl;
   std::string profiles_folder = "output/profiles";
@@ -748,7 +748,8 @@ if( geom_hash == 1 )
   hashGeom geo1(nLines, nHashes, boundaries.data(), closeGeomGridr.data(),
                 closeGeomGridy.data(), closeGeomGridz.data(),
                 n_closeGeomElements.data(), closeGeom.data(),
-                nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data());
+                nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
+                use_3d_tet_geom );
   std::cout << "nHashPoints start stop " << world_rank * nHashMeshPointsPerProcess << " "
         << world_rank * nHashMeshPointsPerProcess + hashMeshIncrements[world_rank] - 1<< std::endl;
   thrust::for_each(thrust::device,
@@ -1297,7 +1298,7 @@ if( generate_lc > 0 )
                                       gridRLc.data(), gridZLc.data(), Lc.data(),
                                       nR_Bfield, nZ_Bfield, bfieldGridr.data(),
                                       &bfieldGridz.front(), &br.front(),
-                                      &bz.front(), &by.front()));
+                                      &bz.front(), &by.front(), use_cylsymm ));
 
     thrust::for_each(thrust::device, lcBegin, lcEnd,
                      field_line_trace(-1.0, backwardTracerParticles, dr,
@@ -1305,7 +1306,7 @@ if( generate_lc > 0 )
                                       gridRLc.data(), gridZLc.data(), Lc.data(),
                                       nR_Bfield, nZ_Bfield, bfieldGridr.data(),
                                       &bfieldGridz.front(), &br.front(),
-                                      &bz.front(), &by.front()));
+                                      &bz.front(), &by.front(), use_cylsymm ) );
 
     thrust::for_each(
         thrust::device, lcBegin, lcEnd,
@@ -1603,7 +1604,7 @@ if(temp_interp > 0 )
 
   gitr_precision testVec = 0.0;
   testVec = interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),
-                             TempGridz.data(), ti.data());
+                             TempGridz.data(), ti.data(), use_cylsymm );
   std::cout << "Finished Temperature import " << testVec << std::endl;
 
   // Background Plasma Density Initialization
@@ -1673,11 +1674,11 @@ if( density_interp == 0 )
     std::cout << "Finished density import "
               << interp2dCombined(5.5, 0.0, -4.4, nR_Dens, nZ_Dens,
                                   &DensGridr.front(), &DensGridz.front(),
-                                  &ne.front())
+                                  &ne.front(), use_cylsymm )
               << " "
               << interp2dCombined(0.0, 0.1, 0.0, nR_Dens, nZ_Dens,
                                   &DensGridr.front(), &DensGridz.front(),
-                                  &ne.front())
+                                  &ne.front(), use_cylsymm )
               << std::endl;
 // for(int i=0;i<100;i++)
 //{
@@ -1829,15 +1830,15 @@ if( flowv_interp == 1 )
         //    << flowVGridz[j] << " " << nR_Temp << " "<<nZ_Temp << std::endl;
         teLocal = interp2dCombined(flowVGridr[i], thisY, flowVGridz[j], nR_Temp,
                                    nZ_Temp, &TempGridr.front(),
-                                   &TempGridz.front(), &te.front());
+                                   &TempGridz.front(), &te.front(), use_cylsymm );
         tiLocal = interp2dCombined(flowVGridr[i], thisY, flowVGridz[j], nR_Temp,
                                    nZ_Temp, &TempGridr.front(),
-                                   &TempGridz.front(), &ti.front());
+                                   &TempGridz.front(), &ti.front(), use_cylsymm );
         cs0 =
             std::sqrt((teLocal + tiLocal) * 1.602e-19 / (background_amu * 1.66e-27));
         interp2dVector(&BLocal[0], flowVGridr[i], thisY, flowVGridz[j],
                        nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-                       bfieldGridz.data(), br.data(), bz.data(), by.data());
+                       bfieldGridz.data(), br.data(), bz.data(), by.data(), use_cylsymm );
         Bmag = std::sqrt(BLocal[0] * BLocal[0] + BLocal[1] * BLocal[1] +
                     BLocal[2] * BLocal[2]);
         Bnorm[0] = BLocal[0] / Bmag;
@@ -2037,7 +2038,7 @@ if( flowv_interp == 1 )
   gitr_precision gradTi[3] = {0.0};
   interp2dVector(&gradTi[0], 1.45, 0.0, -1.2, nR_gradT, nZ_gradT,
                  gradTGridr.data(), gradTGridz.data(), gradTiR.data(),
-                 gradTiZ.data(), gradTiY.data());
+                 gradTiZ.data(), gradTiY.data(), use_cylsymm );
   std::cout << "thermal gradient interpolation gradTi " << gradTi[0] << " "
             << gradTi[1] << " " << gradTi[2] << " " << std::endl;
 
@@ -2182,7 +2183,7 @@ if( flowv_interp == 1 )
                               bz.data(), by.data(), nR_Temp, nZ_Temp,
                               TempGridr.data(), TempGridz.data(), ti.data(),
                               te.data(), biasPotential, biased_surface,
-                              use_surface_potential ));
+                              use_surface_potential, use_cylsymm ));
 
   std::cout << "Completed Boundary Init " << std::endl;
   std::cout << "periodicy "<<boundaries[nLines].periodic << std::endl;
@@ -2443,7 +2444,7 @@ if( flowv_interp == 1 )
                nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-               &closeGeom_sheath.front(), minInd_bnd, biased_surface );
+               &closeGeom_sheath.front(), minInd_bnd, biased_surface, use_3d_tet_geom );
       //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
   }
 #if EFIELD_INTERP == 1
@@ -3891,7 +3892,7 @@ if( flowv_interp == 1 )
       n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
       &closeGeom_sheath.front(),gitr_flags, use_sheath_efield, use_presheath_efield, 
-      biased_surface, max_dt );
+      biased_surface, use_3d_tet_geom, use_cylsymm, max_dt );
   //void (*bor)(std::size_t) = &move_boris::operator2;
   //auto bor1 = *bor;
   geometry_check geometry_check0(
@@ -3925,19 +3926,20 @@ if( flowv_interp == 1 )
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(),uni);
+      &rateCoeff_Ionization.front(),uni, use_cylsymm );
 
   recombine<rand_type> recombine0(
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
-      gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags);
+      gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags,
+      use_cylsymm );
 
   crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front(), use_perp_diffusion);
+      &bz.front(), &by.front(), use_perp_diffusion, use_cylsymm );
 
   coulombCollisions coulombCollisions0(
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
@@ -3946,7 +3948,8 @@ if( flowv_interp == 1 )
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-      &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(),gitr_flags);
+      &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(),gitr_flags,
+      use_cylsymm );
 
       int usethermalforce = use.get< int >( use::thermalforce );
 
@@ -3955,7 +3958,7 @@ if( flowv_interp == 1 )
       gradTGridz.data(), gradTiR.data(), gradTiZ.data(), gradTiY.data(),
       gradTeR.data(), gradTeZ.data(), gradTeY.data(), nR_Bfield, nZ_Bfield,
       bfieldGridr.data(), &bfieldGridz.front(), &br.front(), &bz.front(),
-      &by.front());
+      &by.front(), use_cylsymm );
 
   reflection reflection0(
       particleArray, dt, &state1.front(), nLines, &boundaries[0], surfaces,
@@ -4139,7 +4142,7 @@ if( flowv_interp == 1 )
 #else
   interp2dVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV, nZ_flowV,
                  flowVGridr.data(), flowVGridz.data(), flowVr.data(),
-                 flowVz.data(), flowVt.data());
+                 flowVz.data(), flowVt.data(), use_cylsymm );
 #endif
 
   gitr_precision leakZ = 0.0;
@@ -4607,7 +4610,8 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
                nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-               &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface );
+               &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface,
+               use_3d_tet_geom );
       
       if (boundaries[closestBoundaryIndex].Z > 0.0) {
         surfIndex = boundaries[closestBoundaryIndex].surfaceNumber;

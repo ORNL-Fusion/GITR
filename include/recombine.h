@@ -51,6 +51,7 @@ struct recombine {
   gitr_precision dt;
   gitr_precision tion;
   T *state;
+  int use_cylsymm;
 
   recombine(Particles *_particlesPointer, gitr_precision _dt,
       T *_state,
@@ -58,7 +59,7 @@ struct recombine {
      gitr_precision* _DensGridz,gitr_precision* _ne,int _nR_Temp, int _nZ_Temp,
      gitr_precision* _TempGridr, gitr_precision* _TempGridz,gitr_precision* _te,int _nTemperaturesRecomb,
      int _nDensitiesRecomb,gitr_precision* _gridTemperature_Recombination,gitr_precision* _gridDensity_Recombination,
-     gitr_precision* _rateCoeff_Recombination, Flags* _gitr_flags) : 
+     gitr_precision* _rateCoeff_Recombination, Flags* _gitr_flags, int use_cylsymm ) : 
      particlesPointer(_particlesPointer),
 
      nR_Dens(_nR_Dens),
@@ -78,7 +79,8 @@ struct recombine {
      rateCoeff_Recombination(_rateCoeff_Recombination),
      gitr_flags(_gitr_flags),
      dt(_dt),
-     state(_state) {}
+     state(_state),
+     use_cylsymm( use_cylsymm ) {}
  
   
   CUDA_CALLABLE_MEMBER_DEVICE
@@ -94,7 +96,7 @@ struct recombine {
     
     if(particlesPointer->charge[indx] > 0)
     {
-      tion = interpRateCoeff2d ( particlesPointer->charge[indx]-1, particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination);
+      tion = interpRateCoeff2d ( particlesPointer->charge[indx]-1, particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination, use_cylsymm );
       gitr_precision P = exp(-dt/tion);
       P1 = 1.0-P;
       r1 = get_rand_double(state,indx);

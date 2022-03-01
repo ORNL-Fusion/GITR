@@ -35,6 +35,7 @@ struct field_line_trace {
             gitr_precision * BfieldR;
             gitr_precision * BfieldZ;
             gitr_precision * BfieldT;
+            int use_cylsymm;
             
     field_line_trace(gitr_precision _BfieldFactor,Particles* _particles,gitr_precision _dr,Boundary* _boundaries,int _nLines, int _nR_Lc, int _nZ_Lc, 
             gitr_precision* _gridRLc, gitr_precision* _gridZLc, gitr_precision* _Lc,
@@ -43,13 +44,14 @@ struct field_line_trace {
             gitr_precision * _BfieldGridZ,
             gitr_precision * _BfieldR,
             gitr_precision * _BfieldZ,
-            gitr_precision * _BfieldT)
+            gitr_precision * _BfieldT,
+            int use_cylsymm )
         
             : BfieldFactor(_BfieldFactor),particles(_particles),dr(_dr),boundaries(_boundaries),nLines(_nLines),
         nR_Lc(_nR_Lc),nZ_Lc(_nZ_Lc),
         gridRLc(_gridRLc), gridZLc(_gridZLc),Lc(_Lc),
              nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridR(_BfieldGridR), BfieldGridZ(_BfieldGridZ),
-    BfieldR(_BfieldR), BfieldZ(_BfieldZ), BfieldT(_BfieldT) {}
+    BfieldR(_BfieldR), BfieldZ(_BfieldZ), BfieldT(_BfieldT), use_cylsymm( use_cylsymm ) {}
 
 CUDA_CALLABLE_MEMBER    
 void operator()(std::size_t indx) const { 
@@ -78,7 +80,7 @@ if(particles->hitWall[indx] == 0.0)
 
     interp2dVector(&B[0],x0, y0,z0,
             nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
-            BfieldR,BfieldZ,BfieldT);
+            BfieldR,BfieldZ,BfieldT, use_cylsymm );
     //std::cout << "Bfield interp " << B[0] << " " << B[1] << " " << B[2] << std::endl;
     vectorNormalize(B,B);
     //Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
@@ -90,20 +92,21 @@ if(particles->hitWall[indx] == 0.0)
 
     interp2dVector(&B[0],x0+0.5*k1[0],y0+0.5*k1[1],z0+0.5*k1[2],
             nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
-            BfieldR,BfieldZ,BfieldT);
+            BfieldR,BfieldZ,BfieldT, use_cylsymm );
+
     vectorNormalize(B,B);
 
     vectorScalarMult(dr_fac,B,k2);
     interp2dVector(&B[0],x0+0.5*k2[0],y0+0.5*k2[1],z0+0.5*k2[2],
             nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
-            BfieldR,BfieldZ,BfieldT);
+            BfieldR,BfieldZ,BfieldT, use_cylsymm );
     vectorNormalize(B,B);
 
     vectorScalarMult(dr_fac,B,k3);
 
     interp2dVector(&B[0],x0+k3[0],y0+k3[1],z0+k3[2],
             nR_Bfield,nZ_Bfield,BfieldGridR,BfieldGridZ,
-            BfieldR,BfieldZ,BfieldT);
+            BfieldR,BfieldZ,BfieldT, use_cylsymm );
     vectorNormalize(B,B);
 
     vectorScalarMult(dr_fac,B,k4);

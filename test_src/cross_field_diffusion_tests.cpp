@@ -207,7 +207,7 @@ TEST_CASE( "cross-field diffusion operator" )
   crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front(), use_perp_diffusion );
+      &bz.front(), &by.front(), use_perp_diffusion, use_cylsymm );
     
   // half-side length
     double s = 0.2;
@@ -448,7 +448,7 @@ TEST_CASE( "cross-field diffusion operator" )
   crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front(), use_perp_diffusion);
+      &bz.front(), &by.front(), use_perp_diffusion, use_cylsymm );
     
   // half-side length
     double s = 0.2;
