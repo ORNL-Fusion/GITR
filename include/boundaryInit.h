@@ -159,21 +159,23 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         b.impacts = 0.0;
         if( biased_surface )
         {
-        b.potential = potential;
-        //gitr_precision cs = std::sqrt(2*b.ti*1.602e-19/(1.66e-27*background_amu));
-        //gitr_precision jsat_ion = 1.602e-19*b.density*cs;
-        //b.ChildLangmuirDist = 2.0/3.0*std::pow(2*1.602e-19/(background_amu*1.66e-27),0.25)
-        //*std::pow(potential,0.75)/(2.0*std::sqrt(3.1415*jsat_ion))*1.055e-5;
-        if(b.te > 0.0)
+          b.potential = potential;
+          //gitr_precision cs = std::sqrt(2*b.ti*1.602e-19/(1.66e-27*background_amu));
+          //gitr_precision jsat_ion = 1.602e-19*b.density*cs;
+          //b.ChildLangmuirDist = 2.0/3.0*std::pow(2*1.602e-19/(background_amu*1.66e-27),0.25)
+          //*std::pow(potential,0.75)/(2.0*std::sqrt(3.1415*jsat_ion))*1.055e-5;
+          if(b.te > 0.0)
+          {
+            b.ChildLangmuirDist = b.debyeLength*std::pow(std::abs(b.potential)/b.te,0.75);
+          }
+          else
+          { b.ChildLangmuirDist = 1e12;
+          }
+        }
+        else if( use_surface_potential <= 0 )
         {
-          b.ChildLangmuirDist = b.debyeLength*std::pow(std::abs(b.potential)/b.te,0.75);
-        }
-        else
-        { b.ChildLangmuirDist = 1e12;
-        }
-
-        b.potential = sheath_fac*b.te;
-        std::cout << "Surface number " << b.surfaceNumber << " has te and potential " << b.te << " " << b.potential << std::endl; 
+          b.potential = sheath_fac*b.te;
+          std::cout << "Surface number " << b.surfaceNumber << " has te and potential " << b.te << " " << b.potential << std::endl; 
         }
         //if(b.Z > 0.0)
         //{

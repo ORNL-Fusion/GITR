@@ -42,6 +42,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     GITR_USE_PERP_DIFFUSION=1
     USE_CYLSYMM=0
+    BFIELD_INTERP = 0
 
     This technically will also pass with GITR_USE_PERP_DIFFUSION=2. Unsure which is correct.
 
@@ -58,10 +59,11 @@ TEST_CASE( "cross-field diffusion operator" )
   int use_flux_ea = 0;
   int use_surface_model = 0;
   int use_3d_tet_geom = 0;
-  int use_cylsymm = 0;
 
   SECTION( "cross-field diffusion, straight field lines" )
   {
+    int use_cylsymm = 0;
+
     importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE);
 
     class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
@@ -90,13 +92,11 @@ TEST_CASE( "cross-field diffusion operator" )
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    /* Ahoy, Captain! Function call, drop in, why don't ye?! */
     int nSurfaces = importGeometry( cfg_geom, boundaries, use_surface_potential,
                                     use_3d_tet_geom, use_cylsymm );
 
     REQUIRE( nSurfaces == 2 );
 
-    /* Ahoy, Captain! Function call, drop in, why don't ye?! */
     auto particleArray = new Particles( nP, 1, cfg_geom, gitr_flags );
     std::cout << "p " << particleArray->charge[0] << " x " << particleArray->xprevious[0]<<std::endl;
 
@@ -120,7 +120,6 @@ TEST_CASE( "cross-field diffusion operator" )
       closeGeomGridy(1), closeGeomGridz(1);
     sim::Array<int> closeGeom(1, 0);
 
-    /* Captain! Tons of build_time options in geometry_check */
     geometry_check geometry_check0(
         particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
@@ -197,6 +196,8 @@ TEST_CASE( "cross-field diffusion operator" )
   double zero = 0;
   std::string empty = "";
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
+
+  /* Captain! */
   importVectorField(cfg_geom, "", BFIELD_INTERP, bfieldCfg, nR_Bfield,
       0, nZ_Bfield, bfieldGridr.front(),
       zero, bfieldGridz.front(), br.front(),
@@ -299,6 +300,8 @@ TEST_CASE( "cross-field diffusion operator" )
   {
     /* timesteps */
     int nT = 200000;
+
+    int use_cylsymm = 1;
 
     gitr_precision dt = 1.0e-7;
 

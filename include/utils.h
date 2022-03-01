@@ -130,10 +130,12 @@ int getVarFromFile (libconfig::Config &cfg,const std::string& file,const std::st
         const std::string& s, T &a)
 {
   std::string str;
+  /* Captain! */
   getVariable(cfg,section+s,str);
   int dim = readFileVar(file,section,str,a);
   return dim;
 }
+
 int getDimFromFile(libconfig::Config &cfg,const std::string& file,const std::string& section,const std::string& s);
 int make2dCDF(int nX, int nY, int nZ, gitr_precision* distribution, gitr_precision* cdf);
 int regrid2dCDF(int nX, int nY, int nZ,gitr_precision* xGrid,int nNew,gitr_precision maxNew, gitr_precision* cdf, gitr_precision* cdf_regrid);

@@ -84,9 +84,9 @@ target_link_libraries( cross_field_diffusion_tests
                        test_utils utils flags libconfig boris spectroscopy thrust
                        geometry_check config_interface )
 
-target_link_libraries( surface_model_tests 
-                       surface_model spectroscopy test_utils flags
-                       libconfig utils boris geometry_check )
+#target_link_libraries( surface_model_tests 
+#                       surface_model spectroscopy test_utils flags
+#                       libconfig utils boris geometry_check )
 
 target_link_libraries( boris_tests test_utils flags libconfig utils boris slow_math )
 

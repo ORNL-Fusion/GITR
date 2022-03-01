@@ -74,6 +74,7 @@ template <typename T>
 T getVariable (libconfig::Config &cfg,const std::string& s, T &a)
 {
   T tmp;
+  /* Captain! */
   if(cfg.lookupValue(s, tmp))
     {
       std::cout << s << " = " << tmp << std::endl;
@@ -386,6 +387,7 @@ int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDi
   }
   else{  
 
+      /* Captain! */
       getVarFromFile(cfg,input_path+fileToRead,fieldCfgString,"gridRString",gridR);
     if(interpDim > 1)
     {
