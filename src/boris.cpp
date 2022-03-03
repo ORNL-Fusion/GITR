@@ -368,21 +368,17 @@ if( use_3d_geom > 0 )
     gitr_precision vectorMagnitude;
     gitr_precision max = 0.0;
     gitr_precision min = 0.0;
-    /* Captain */
     gitr_precision Bfabsfperp = 0.0;
     gitr_precision distanceToParticle = 0.0;
     int pointLine=0;
     gitr_precision x;
     if( use_cylsymm > 0 )
     {
-//#if USECYLSYMM > 0
     x = std::sqrt(x0*x0 + y*y);
-//#else
     }
     else
     {
     x = x0;
-//#endif 
     }
 
 #if GEOM_HASH_SHEATH > 0

@@ -55,7 +55,6 @@ void hashGeom::operator()(std::size_t indx) {
   //std::cout << "nRhashSum " << nRhashSum << std::endl;
   //std::cout << "nYhashSum " << nYhashSum << std::endl;
   //std::cout << "nZhashSum " << nZhashSum << std::endl;
-//#if USE3DTETGEOM > 0
 
   gitr_precision x0;
 
@@ -101,7 +100,6 @@ void hashGeom::operator()(std::size_t indx) {
   }
   else
   {
-//#else
   nHash=0;
   hashSum=0;
   nRhashSum=0;
@@ -118,8 +116,6 @@ void hashGeom::operator()(std::size_t indx) {
   buffIndx=(k*(nR[0])+ i)*n_closeGeomElements[0];
   //std::cout << "point "  <<nHash<< " " <<   x0 << " " <<  z0 << " "
   //     <<  buffIndx << std::endl;
-
-//#endif
   }
   //gitr_precision minDist[n_closeGeomElements] = {0.0};
   //for(int i1=0;i1<n_closeGeomElements; i1++)
