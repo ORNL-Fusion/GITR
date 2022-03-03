@@ -101,32 +101,33 @@ class Boundary
     void getSurfaceParallel( gitr_precision A[],gitr_precision y,gitr_precision x,
                              int use_3d_tet_geom, int use_cylsymm )
     {
-    gitr_precision norm;
+      gitr_precision norm;
       if( use_3d_tet_geom > 0 )
       {
-    norm = std::sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
-    A[1] = (y2 - y1) / norm;
+        norm = std::sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
+        A[1] = (y2 - y1) / norm;
       }
       else
       {
-    norm = std::sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
-    A[1] = 0.0;
+        norm = std::sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
+        A[1] = 0.0;
       }
-        //std::cout << "surf par calc " << x2 << " " << x1 << " " << norm << std::endl;
-        A[0] = (x2-x1)/norm;
-        A[2] = (z2-z1)/norm;
-    if( use_3d_tet_geom <= 0 )
-    {
-    if( use_cylsymm > 0 )
-    {
-    gitr_precision theta = std::atan2(y, x);
-    gitr_precision B[3] = {0.0};
-    B[0] = std::cos(theta) * A[0] - std::sin(theta) * A[1];
-    B[1] = std::sin(theta) * A[0] + std::cos(theta) * A[1];
-    A[0] = B[0];
-    A[1] = B[1];
-    }
-    }
+
+      A[0] = (x2-x1)/norm;
+      A[2] = (z2-z1)/norm;
+
+      if( use_3d_tet_geom <= 0 )
+      {
+        if( use_cylsymm > 0 )
+        {
+          gitr_precision theta = std::atan2(y, x);
+          gitr_precision B[3] = {0.0};
+          B[0] = std::cos(theta) * A[0] - std::sin(theta) * A[1];
+          B[1] = std::sin(theta) * A[0] + std::cos(theta) * A[1];
+          A[0] = B[0];
+          A[1] = B[1];
+       }
+      }
     }
 
   CUDA_CALLABLE_MEMBER

@@ -555,8 +555,8 @@ else{
     }
     else
     {
-    gitr_precision pdim1 = particlesPointer->x[indx];
-    gitr_precision pdim1previous = particlesPointer->xprevious[indx];
+    pdim1 = particlesPointer->x[indx];
+    pdim1previous = particlesPointer->xprevious[indx];
     }
     gitr_precision particle_slope =
         (particlesPointer->z[indx] - particlesPointer->zprevious[indx]) /
