@@ -86,18 +86,20 @@ CUDA_CALLABLE_MEMBER
 gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, gitr_precision E[], Boundary *boundaryVector, int nLines,
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
-         int&  closestBoundaryIndex, int biased_surface, int use_3d_geom ) {
-    /* Captain! */
-if( use_3d_geom > 0 )
-{
-//#if USE3DTETGEOM > 0
+         int&  closestBoundaryIndex, int biased_surface, int use_3d_geom, int use_cylsymm ) {
+
+    gitr_precision pot = 0.0;
+      int minIndex=0;
+      gitr_precision minDistance = 1.0e12;
     gitr_precision Emag = 0.0;
-    gitr_precision Er = 0.0;
-    gitr_precision Et = 0.0;
-    gitr_precision p0[3] = {x0,y,z};
     gitr_precision angle = 0.0;
     gitr_precision fd = 0.0;
-    gitr_precision pot = 0.0;
+      gitr_precision directionUnitVector[3] = {0.0,0.0,0.0};
+    gitr_precision Er = 0.0;
+    gitr_precision Et = 0.0;
+if( use_3d_geom > 0 )
+{
+    gitr_precision p0[3] = {x0,y,z};
       gitr_precision a = 0.0;
       gitr_precision b = 0.0;
       gitr_precision c = 0.0;
@@ -105,6 +107,7 @@ if( use_3d_geom > 0 )
       gitr_precision plane_norm = 0.0;
       gitr_precision pointToPlaneDistance0 = 0.0;
       gitr_precision pointToPlaneDistance1 = 0.0;
+      /* Captain */
       gitr_precision signPoint0 = 0.0;
       gitr_precision signPoint1 = 0.0;
       gitr_precision t = 0.0;
@@ -132,7 +135,6 @@ if( use_3d_geom > 0 )
       gitr_precision crossABAp[3] = {0.0,0.0,0.0};
       gitr_precision crossBCBp[3] = {0.0,0.0,0.0};
       gitr_precision crossCACp[3] = {0.0,0.0,0.0};
-      gitr_precision directionUnitVector[3] = {0.0,0.0,0.0};
       gitr_precision dot0 = 0.0;
       gitr_precision dot1 = 0.0;
       gitr_precision dot2 = 0.0;
@@ -157,10 +159,8 @@ if( use_3d_geom > 0 )
       gitr_precision signDot1 = 0.0;
       gitr_precision signDot2 = 0.0;
       gitr_precision totalSigns = 0.0;
-      gitr_precision minDistance = 1.0e12;
       int nBoundariesCrossed = 0;
       int boundariesCrossed[6] = {0,0,0,0,0,0};
-      int minIndex=0;
       gitr_precision distances[7] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0};
       gitr_precision normals[21] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,
                            0.0,0.0,0.0,0.0,0.0,0.0,0.0,
@@ -358,36 +358,32 @@ if( use_3d_geom > 0 )
     }
       //vectorScalarMult(-1.0,directionUnitVector,directionUnitVector);
       //std::cout << "min dist " << minDistance << std::endl;
-    /* Captain! */
-//#else //2dGeom     
 } else {
                 
-    gitr_precision Emag = 0.0;
-	gitr_precision fd = 0.0;
-	gitr_precision pot = 0.0;
-    int minIndex = 0;
-    gitr_precision minDistance = 1e12;
     int direction_type;
     gitr_precision tol = 1e12;
     gitr_precision point1_dist;
     gitr_precision point2_dist;
     gitr_precision perp_dist;
-    gitr_precision directionUnitVector[3] = {0.0,0.0,0.0};
     gitr_precision vectorMagnitude;
     gitr_precision max = 0.0;
     gitr_precision min = 0.0;
-    gitr_precision angle = 0.0;
-    gitr_precision Er = 0.0;
-    gitr_precision Et = 0.0;
+    /* Captain */
     gitr_precision Bfabsfperp = 0.0;
     gitr_precision distanceToParticle = 0.0;
     int pointLine=0;
-//#if EFIELD_INTERP ==1
-#if USECYLSYMM > 0
-    gitr_precision x = std::sqrt(x0*x0 + y*y);
-#else
-    gitr_precision x = x0;
-#endif 
+    gitr_precision x;
+    if( use_cylsymm > 0 )
+    {
+//#if USECYLSYMM > 0
+    x = std::sqrt(x0*x0 + y*y);
+//#else
+    }
+    else
+    {
+    x = x0;
+//#endif 
+    }
 
 #if GEOM_HASH_SHEATH > 0
   gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
@@ -513,8 +509,6 @@ if( use_3d_geom > 0 )
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
 
-    /* Captain! */
-//#endif   
     }
     if( biased_surface > 0 )
     {
@@ -553,21 +547,26 @@ if( use_3d_geom > 0 )
         //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     
     //std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
-#if USE3DTETGEOM > 0
+            if( use_3d_geom > 0 )
+            {
             E[0] = Er;
             E[1] = Et;
-#else
-#if USECYLSYMM > 0
-            //if cylindrical geometry
+            }
+            else
+            {
+            if( use_cylsymm > 0 )
+            {
             gitr_precision theta = std::atan2(y,x0);
   
             E[0] = std::cos(theta)*Er - std::sin(theta)*Et;
             E[1] = std::sin(theta)*Er + std::cos(theta)*Et;
-#else
+            }
+            else
+            {
             E[0] = Er;
             E[1] = Et;
-#endif
-#endif
+            }
+            }
             //std::cout << "Ex and Ey and Ez " << E[0] << " " << E[1] << " " << E[2] << std::endl;
    
       return minDistance;
@@ -696,7 +695,7 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath,
-                  closestBoundaryIndex, biased_surface, use_3d_geom );
+                  closestBoundaryIndex, biased_surface, use_3d_geom, use_cylsymm );
   }
 
 if( use_presheath_efield > 0 )
@@ -825,7 +824,7 @@ if( use_presheath_efield > 0 )
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  biased_surface, use_3d_geom );
+                  biased_surface, use_3d_geom, use_cylsymm );
   }
 
   if( use_presheath_efield > 0 )
@@ -980,7 +979,7 @@ for ( int s=0; s<nSteps; s++ )
 #endif
     if( use_sheath_efield > 0 )
     {
-    minDist = getE(r[0],r[1],r[2],E,boundaryVector,nLines, use_3d_geom );
+    minDist = getE(r[0],r[1],r[2],E,boundaryVector,nLines, use_3d_geom, use_cylsymm );
     }
 
     if( use_presheath_efield > 0 )
@@ -1040,7 +1039,7 @@ for ( int s=0; s<nSteps; s++ )
 
     if( use_sheath_efield > 0 )
     {
-    minDist = getE(r2[0],r2[1],r2[2],E,boundaryVector,nLines, use_3d_geom );
+    minDist = getE(r2[0],r2[1],r2[2],E,boundaryVector,nLines, use_3d_geom, use_cylsymm );
     }
     if( use_presheath_efield > 0 )
     {
@@ -1098,7 +1097,7 @@ for ( int s=0; s<nSteps; s++ )
 
     if( use_sheath_efield > 0 )
     {
-    minDist = getE(r3[0],r3[1],r3[2],E,boundaryVector,nLines, use_3d_geom );
+    minDist = getE(r3[0],r3[1],r3[2],E,boundaryVector,nLines, use_3d_geom, use_cylsymm );
     }
     if( use_presheath_efield > 0 )
     {
@@ -1154,7 +1153,8 @@ for ( int s=0; s<nSteps; s++ )
 
   if( use_sheath_efield > 0 )
   {
-	minDist = getE(r4[0],r4[1],r4[2],E,boundaryVector,nLines);
+  /* Captain! */
+	minDist = getE(r4[0],r4[1],r4[2],E,boundaryVector,nLines, use_3d_geom, use_cylsymm );
   }
 
     if( use_presheath_efield > 0 )

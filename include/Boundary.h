@@ -98,38 +98,48 @@ class Boundary
     gitr_precision unit_vec2;
 
     CUDA_CALLABLE_MEMBER
-    void getSurfaceParallel(gitr_precision A[],gitr_precision y,gitr_precision x)
+    void getSurfaceParallel( gitr_precision A[],gitr_precision y,gitr_precision x,
+                             int use_3d_tet_geom, int use_cylsymm )
     {
-#if USE3DTETGEOM > 0
-    gitr_precision norm = std::sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
+    gitr_precision norm;
+      if( use_3d_tet_geom > 0 )
+      {
+    norm = std::sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
     A[1] = (y2 - y1) / norm;
-#else
-    gitr_precision norm = std::sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
+      }
+      else
+      {
+    norm = std::sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
     A[1] = 0.0;
-#endif
+      }
         //std::cout << "surf par calc " << x2 << " " << x1 << " " << norm << std::endl;
         A[0] = (x2-x1)/norm;
         A[2] = (z2-z1)/norm;
-#if USE3DTETGEOM > 0
-#else
-#if USECYLSYMM > 0
+    if( use_3d_tet_geom <= 0 )
+    {
+    if( use_cylsymm > 0 )
+    {
     gitr_precision theta = std::atan2(y, x);
     gitr_precision B[3] = {0.0};
     B[0] = std::cos(theta) * A[0] - std::sin(theta) * A[1];
     B[1] = std::sin(theta) * A[0] + std::cos(theta) * A[1];
     A[0] = B[0];
     A[1] = B[1];
-#endif
-#endif
+    }
+    }
     }
 
   CUDA_CALLABLE_MEMBER
-  void getSurfaceNormal(gitr_precision B[], gitr_precision y, gitr_precision x) {
-#if USE3DTETGEOM > 0
+  void getSurfaceNormal(gitr_precision B[], gitr_precision y, gitr_precision x,
+                        int use_3d_tet_geom, int use_cylsymm ) {
+    if( use_3d_tet_geom > 0 )
+    {
     B[0] = a / plane_norm;
     B[1] = b / plane_norm;
     B[2] = c / plane_norm;
-#else
+    }
+    else
+    {
     gitr_precision perpSlope = 0.0;
     if (slope_dzdx == 0.0) {
       perpSlope = 1.0e12;
@@ -139,29 +149,29 @@ class Boundary
     gitr_precision Br = 1.0 / std::sqrt(perpSlope * perpSlope + 1.0);
     gitr_precision Bt = 0.0;
     B[2] = std::copysign(1.0,perpSlope) * std::sqrt(1 - Br * Br);
-#if USECYLSYMM > 0
+    if( use_cylsymm > 0 )
+    {
     gitr_precision theta = std::atan2(y, x);
     B[0] = std::cos(theta) * Br - std::sin(theta) * Bt;
     B[1] = std::sin(theta) * Br + std::cos(theta) * Bt;
-#else
+    }
+    else
+    {
     B[0] = Br;
     B[1] = Bt;
-#endif
-//B[0] = -a/plane_norm;
-//B[1] = -b/plane_norm;
-//B[2] = -c/plane_norm;
-//std::cout << "perp x and z comp " << B[0] << " " << B[2] << std::endl;
-#endif
+    }
+    }
     }
     CUDA_CALLABLE_MEMBER
-        void transformToSurface(gitr_precision C[],gitr_precision y, gitr_precision x)
+        void transformToSurface( gitr_precision C[],gitr_precision y, gitr_precision x,
+                                 int use_3d_tet_geom, int use_cylsymm )
         {
             gitr_precision X[3] = {0.0};
             gitr_precision Y[3] = {0.0};
             gitr_precision Z[3] = {0.0};
             gitr_precision tmp[3] = {0.0};
-            getSurfaceParallel(X,y,x);
-            getSurfaceNormal(Z,y,x);
+            getSurfaceParallel(X,y,x, use_3d_tet_geom, use_cylsymm );
+            getSurfaceNormal(Z,y,x, use_3d_tet_geom, use_cylsymm );
             Y[0] = Z[1]*X[2] - Z[2]*X[1]; 
             Y[1] = Z[2]*X[0] - Z[0]*X[2]; 
             Y[2] = Z[0]*X[1] - Z[1]*X[0];
@@ -174,24 +184,5 @@ class Boundary
             C[2] = tmp[2];
 
         }
-//        Boundary(float x1,float y1, float z1, float x2, float y2, float z2,float slope, float intercept, float Z, float amu)
-//		{
-//    
-//		this->x1 = x1;
-//		this->y1 = y1;
-//		this->z1 = z1;
-//        this->x2 = x2;
-//        this->y2 = y2;
-//        this->z2 = z2;        
-//#if USE3DTETGEOM > 0
-//#else
-//        this->slope_dzdx = slope;
-//        this->intercept_z = intercept;
-//#endif
-//		this->Z = Z;
-//		this->amu = amu;
-//		this->hitWall = 0.0;
-//        array1(amu,0.0);
-//        };
 };
 #endif

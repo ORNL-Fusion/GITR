@@ -1007,10 +1007,11 @@ if( geom_hash_sheath > 1 )
     getVariable(cfg, geomHashSheathCfg + "hashX1", hashX1_s);
     getVariable(cfg, geomHashSheathCfg + "hashZ0", hashZ0_s);
     getVariable(cfg, geomHashSheathCfg + "hashZ1", hashZ1_s);
-#if USE3DTETGEOM > 0
+    if( use_3d_tet_geom > 0 )
+    {
     getVariable(cfg, geomHashSheathCfg + "hashY0", hashY0_s);
     getVariable(cfg, geomHashSheathCfg + "hashY1", hashY1_s);
-#endif
+    }
   }
 #if USE_MPI > 0
   MPI_Bcast(&hashX0_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -1056,7 +1057,7 @@ if( geom_hash_sheath > 1 )
       nLines, boundaries.data(), closeGeomGridr_sheath.data(),
       closeGeomGridy_sheath.data(), closeGeomGridz_sheath.data(),
       n_closeGeomElements_sheath, closeGeom_sheath.data(), nR_closeGeom_sheath,
-      nY_closeGeom_sheath, nZ_closeGeom_sheath);
+      nY_closeGeom_sheath, nZ_closeGeom_sheath, use_3d_tet_geom );
   thrust::for_each(thrust::device,
                    lines0_s + world_rank * nHashMeshPointsPerProcess_s,
                    lines0_s + world_rank * nHashMeshPointsPerProcess_s +
@@ -1133,10 +1134,11 @@ else if( geom_hash_sheath > 1 )
                    "gridRString", closeGeomGridr_sheath[0]);
     getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
                    "gridZString", closeGeomGridz_sheath[0]);
-#if USE3DTETGEOM > 0
+    if( use_3d_tet_geom > 0 )
+    {
     getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
                    "gridYString", closeGeomGridy_sheath[0]);
-#endif
+    }
     getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
                    "closeGeomString", closeGeom_sheath[0]);
 #if USE_MPI > 0
@@ -1226,12 +1228,13 @@ if( generate_lc > 0 )
   // if( !boost::filesystem::exists( lcFile ) )
   // {
   //   std::cout << "No pre-existing connection length file found" << std::endl;
-#if USE3DTETGEOM > 0
+  if( use_3d_tet_geom > 0 )
+  {
   gitr_precision dy_Lc = (y1_Lc - y0_Lc) / (nY_Lc - 1);
   for (int j = 0; j < nY_Lc; j++) {
     gridYLc[j] = y0_Lc + j * dy_Lc;
   }
-#endif
+  }
   gitr_precision dr_Lc = (r1_Lc - r0_Lc) / (nR_Lc - 1);
   for (int i = 0; i < nR_Lc; i++) {
     gridRLc[i] = r0_Lc + i * dr_Lc;
@@ -1264,11 +1267,14 @@ if( generate_lc > 0 )
   for (int i = 0; i < nR_Lc; i++) {
     for (int j = 0; j < nY_Lc; j++) {
       for (int k = 0; k < nZ_Lc; k++) {
-#if USE3DTETGEOM > 0
+        if( use_3d_tet_geom > 0 )
+        {
         addIndex = i + j * nR_Lc + k * nR_Lc * nY_Lc;
-#else
+        }
+        else
+        {
         addIndex = i + k * nR_Lc;
-#endif
+        }
         forwardTracerParticles->setParticle(addIndex, gridRLc[i], gridYLc[j],
                                             gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0,
                                             0.0);
@@ -1398,11 +1404,14 @@ if( generate_lc > 0 )
         for (int k = 0; k < nZ_Lc; k++) {
           // std::cout << "hitwall of tracers " <<
           // forwardTracerParticles->hitWall[addIndex] << std::endl;
-#if USE3DTETGEOM > 0
+          if( use_3d_tet_geom > 0 )
+          {
           addIndex = i + j * nR_Lc + k * nR_Lc * nY_Lc;
-#else
+          }
+          else
+          {
         addIndex = i + k * nR_Lc;
-#endif
+          }
           if (forwardTracerParticles->hitWall[addIndex] > 0) {
             forwardDist = forwardTracerParticles->distanceTraveled[addIndex];
           } else {
@@ -1462,10 +1471,12 @@ if( generate_lc > 0 )
     NcDim nc_nRLc = ncFileLC.addDim("nR", nR_Lc);
     dims_lc.push_back(nc_nRLc);
 
-#if USE3DTETGEOM
-    NcDim nc_nYLc = ncFileLC.addDim("nY", nY_Lc);
+    NcDim nc_nYLc;
+    if( use_3d_tet_geom )
+    {
+    nc_nYLc = ncFileLC.addDim("nY", nY_Lc);
     dims_lc.push_back(nc_nYLc);
-#endif
+    }
 
     NcDim nc_nZLc = ncFileLC.addDim("nZ", nZ_Lc);
     dims_lc.push_back(nc_nZLc);
@@ -1480,9 +1491,12 @@ if( generate_lc > 0 )
     NcVar nc_btz = ncFileLC.addVar("bz", netcdf_precision, dims_lc);
     NcVar nc_nI = ncFileLC.addVar("noIntersection", netcdf_precision, dims_lc);
     NcVar nc_gridRLc = ncFileLC.addVar("gridR", netcdf_precision, nc_nRLc);
-#if USE3DTETGEOM
-    NcVar nc_gridYLc = ncFileLC.addVar("gridY", netcdf_precision, nc_nYLc);
-#endif
+    NcVar nc_gridYLc;
+    if( use_3d_tet_geom )
+    {
+    nc_gridYLc = ncFileLC.addVar("gridY", netcdf_precision, nc_nYLc);
+    }
+
     NcVar nc_gridZLc = ncFileLC.addVar("gridZ", netcdf_precision, nc_nZLc);
    //FIXME - commented these because of disrupted workflow compile errors
     //nc_Lc.putVar(&Lc[0]);
@@ -1495,9 +1509,10 @@ if( generate_lc > 0 )
     //nc_btz.putVar(&backwardTracerZ[0]);
     //nc_nI.putVar(&noIntersectionNodes[0]);
     //nc_gridRLc.putVar(&gridRLc[0]);
-#if USE3DTETGEOM
+    if( use_3d_tet_geom )
+    {
     nc_gridYLc.putVar(&gridYLc[0]);
-#endif
+    }
     nc_gridZLc.putVar(&gridZLc[0]);
     ncFileLC.close();
 #if USE_MPI > 0
@@ -2183,7 +2198,7 @@ if( flowv_interp == 1 )
                               bz.data(), by.data(), nR_Temp, nZ_Temp,
                               TempGridr.data(), TempGridz.data(), ti.data(),
                               te.data(), biasPotential, biased_surface,
-                              use_surface_potential, use_cylsymm ));
+                              use_surface_potential, use_cylsymm, use_3d_tet_geom ));
 
   std::cout << "Completed Boundary Init " << std::endl;
   std::cout << "periodicy "<<boundaries[nLines].periodic << std::endl;
@@ -2444,7 +2459,8 @@ if( flowv_interp == 1 )
                nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-               &closeGeom_sheath.front(), minInd_bnd, biased_surface, use_3d_tet_geom );
+               &closeGeom_sheath.front(), minInd_bnd, biased_surface, use_3d_tet_geom,
+               use_cylsymm );
       //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
   }
 #if EFIELD_INTERP == 1
@@ -3160,11 +3176,14 @@ if( flowv_interp == 1 )
     for (int i = 0; i < nLines; i++) {
       if (boundaries[i].Z == sourceMaterialZ) {
         nSourceBoundaries++;
-#if USE3DTETGEOM
+        if( use_3d_tet_geom )
+        {
         accumulatedLengthArea = accumulatedLengthArea + boundaries[i].area;
-#else
+        }
+        else
+        {
         accumulatedLengthArea = accumulatedLengthArea + boundaries[i].length;
-#endif
+        }
       }
     }
   } else {
@@ -3177,15 +3196,18 @@ if( flowv_interp == 1 )
                 << std::endl;
     }
     for (int i = 0; i < nSourceBoundaries; i++) {
-#if USE3DTETGEOM
+      if( use_3d_tet_geom )
+      {
       accumulatedLengthArea =
           accumulatedLengthArea +
           boundaries[int(particleSourceSetting["surfaceIndices"][i])].area;
-#else
+      }
+      else
+      {
       accumulatedLengthArea =
           accumulatedLengthArea +
           boundaries[int(particleSourceSetting["surfaceIndices"][i])].length;
-#endif
+      }
     }
   }
   if (cfg_particles.lookupValue("particleSource.sourceSampleResolution",
@@ -3488,9 +3510,6 @@ if( flowv_interp == 1 )
   //}
 #endif
   std::cout << "particle file import done" << std::endl;
-#if USE3DTETGEOM > 0
-  // MPI_Bcast(&boundaries[0].area, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-#endif
   sim::Array<gitr_precision> pSurfNormX(nP), pSurfNormY(nP), pSurfNormZ(nP), px(nP),
       py(nP), pz(nP), pvx(nP), pvy(nP), pvz(nP);
   int surfIndexMod = 0;
@@ -3498,7 +3517,8 @@ if( flowv_interp == 1 )
   for (int i = 0; i < nP; i++) {
   //std::cout<< "setting particle " << i << std::endl;
 #if PARTICLE_SOURCE_SPACE > 0 // File source
-#if USE3DTETGEOM > 0
+    if( use_3d_tet_geom > 0 )
+    {
     surfIndexMod = i % nSourceSurfaces;
     gitr_precision xCentroid = (boundaries[sourceElements[surfIndexMod]].x1 +
                        boundaries[sourceElements[surfIndexMod]].x2 +
@@ -3525,7 +3545,9 @@ if( flowv_interp == 1 )
         bufferLaunch * boundaries[sourceElements[surfIndexMod]].c /
             boundaries[sourceElements[surfIndexMod]]
                 .plane_norm; // boundaries[sourceElements[surfIndexMod]].z1;
-#else
+    }
+    else
+    {
     // x = sampled
     rand0 = dist01(s0);
     gitr_precision distAlongSegs =
@@ -3553,7 +3575,7 @@ if( flowv_interp == 1 )
     z = z - buffer * boundaries[currentSegment].c /
                 boundaries[currentSegment]
                     .plane_norm; // boundaries[sourceElements[surfIndexMod]].z1;
-#endif
+    }
 #endif
 #if PARTICLE_SOURCE_ENERGY > 0
     randE = dist01E(sE);
@@ -3909,7 +3931,7 @@ if( flowv_interp == 1 )
 #endif
   spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy );
+                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy, use_cylsymm );
   gitr_precision *uni;
   if( use_ionization == 1 )
   {
@@ -3972,7 +3994,7 @@ if( flowv_interp == 1 )
       energyDistGrid01Ref.data(), angleDistGrid01.data(),
       EDist_CDF_Y_regrid.data(), AphiDist_CDF_Y_regrid.data(),
       EDist_CDF_R_regrid.data(), AphiDist_CDF_R_regrid.data(), nEdist, E0dist,
-      Edist, nAdist, A0dist, Adist, use_flux_ea );
+      Edist, nAdist, A0dist, Adist, use_flux_ea, use_3d_tet_geom, use_cylsymm );
 
 #if PARTICLE_TRACKS > 0
   history history0(particleArray, dev_tt, nT, subSampleFac, nP,
@@ -4535,7 +4557,8 @@ for(int i=0; i<nP ; i++)
       if (particleArray->hitWall[i] > 0.0)
         totalHitWall++;
     }
-#if USE3DTETGEOM > 0
+    if( use_3d_tet_geom > 0 )
+    {
     gitr_precision meanTransitTime0 = 0.0;
     /*
     for (int i=0; i<nP; i++)
@@ -4588,7 +4611,9 @@ std::cout << "bound 255p " << tally00[255] << std::endl;
 std::cout << "bound 164 " << boundaries[164].impacts << std::endl;
 std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 */
-#else
+    }
+    else
+    {
   gitr_precision *impacts = new gitr_precision[nLines];
   gitr_precision *startingParticles = new gitr_precision[nLines];
   gitr_precision *surfZ = new gitr_precision[nLines];
@@ -4598,7 +4623,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     startingParticles[i] = boundaries[i].startingParticles;
     surfZ[i] = boundaries[i].Z;
   }
-#endif
+    }
     // add initial particle erosion to surface counting
     int closestBoundaryIndex = 0;
     int surfIndex = 0;
@@ -4611,7 +4636,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface,
-               use_3d_tet_geom );
+               use_3d_tet_geom, use_cylsymm );
       
       if (boundaries[closestBoundaryIndex].Z > 0.0) {
         surfIndex = boundaries[closestBoundaryIndex].surfaceNumber;
@@ -4817,9 +4842,6 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_surfSputtDist =
         ncFile1.addVar("surfSputtDist", netcdf_precision, dimsSurfE);
     // nc_surfImpacts.putVar(impacts);
-    //#if USE3DTETGEOM > 0
-    // nc_surfRedeposit.putVar(redeposit);
-    //#endif
     // nc_surfStartingParticles.putVar(startingParticles);
     // nc_surfZ.putVar(surfZ);
     nc_surfEDist.putVar(&energyDistribution[0]);
@@ -4878,9 +4900,6 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_surfSputtDist =
         ncFile1.addVar("surfSputtDist", netcdf_precision, dimsSurfE);
     // nc_surfImpacts.putVar(impacts);
-    //#if USE3DTETGEOM > 0
-    // nc_surfRedeposit.putVar(redeposit);
-    //#endif
     // nc_surfStartingParticles.putVar(startingParticles);
     // nc_surfZ.putVar(surfZ);
     nc_surfEDist.putVar(&surfaces->energyDistribution[0]);

@@ -110,7 +110,8 @@ void geometry_check::operator()(std::size_t indx) const {
 
     gitr_precision vxy[3] = {0.0};
     gitr_precision vtheta[3] = {0.0};
-#if USECYLSYMM > 0
+    if( use_cylsymm > 0 )
+    {
     if (boundaryVector[nLines].periodic) // if periodic
     {
       gitr_precision pi = 3.14159265;
@@ -174,8 +175,10 @@ void geometry_check::operator()(std::size_t indx) const {
         particlesPointer->vy[indx] = vy0;
       }
     }
-#else
-    /* Ahoy! So what happens if x[ index ] is to far away from the boundary condition
+    }
+    else
+    {
+    /* Ahoy Captain!! So what happens if x[ index ] is to far away from the boundary condition
        to get mapped? Shouldn't this be if( x < -x_size * 0.5 ) x = x + x_size ? */
        /* will this result in incorrect behavior from the PBC equation from wikipedia */
     if (boundaryVector[nLines].periodic_bc_x) {
@@ -214,8 +217,7 @@ void geometry_check::operator()(std::size_t indx) const {
             (particlesPointer->y[indx] - boundaryVector[nLines].y2);
       }
     }
-#endif
-/* Captain! */
+    }
 if( use_3d_tet_geom > 0 )
 {
 
@@ -524,25 +526,38 @@ else{
     }
     else
     {
-#if USECYLSYMM > 0
-    gitr_precision pdim1 = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
-                       particlesPointer->y[indx] * particlesPointer->y[indx]);
-    gitr_precision pdim1previous = std::sqrt(particlesPointer->xprevious[indx] *
-                                   particlesPointer->xprevious[indx] +
-                               particlesPointer->yprevious[indx] *
-                                   particlesPointer->yprevious[indx]);
-    gitr_precision theta0 = std::atan2(particlesPointer->yprevious[indx],
-                          particlesPointer->xprevious[indx]);
-    gitr_precision theta1 =
-        std::atan2(particlesPointer->y[indx], particlesPointer->x[indx]);
+
+    gitr_precision pdim1;
+    gitr_precision pdim1previous;
+    gitr_precision theta0;
+    gitr_precision theta1;
     gitr_precision thetaNew = 0;
     gitr_precision rNew = 0;
     gitr_precision xNew = 0;
     gitr_precision yNew = 0;
-#else
+
+    if( use_cylsymm > 0 )
+    {
+    pdim1 = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
+                       particlesPointer->y[indx] * particlesPointer->y[indx]);
+    pdim1previous = std::sqrt(particlesPointer->xprevious[indx] *
+                                   particlesPointer->xprevious[indx] +
+                               particlesPointer->yprevious[indx] *
+                                   particlesPointer->yprevious[indx]);
+    theta0 = std::atan2(particlesPointer->yprevious[indx],
+                          particlesPointer->xprevious[indx]);
+    theta1 =
+        std::atan2(particlesPointer->y[indx], particlesPointer->x[indx]);
+    thetaNew = 0;
+    rNew = 0;
+    xNew = 0;
+    yNew = 0;
+    }
+    else
+    {
     gitr_precision pdim1 = particlesPointer->x[indx];
     gitr_precision pdim1previous = particlesPointer->xprevious[indx];
-#endif
+    }
     gitr_precision particle_slope =
         (particlesPointer->z[indx] - particlesPointer->zprevious[indx]) /
         (pdim1 - pdim1previous);
@@ -571,14 +586,19 @@ else{
 //particlesPointer->y[indx] << " " <<
 //particlesPointer->z[indx]<< std::endl;
 #if GEOM_HASH > 0
-#if USECYLSYMM > 0
-    gitr_precision r_position = std::sqrt(particlesPointer->xprevious[indx] *
+    gitr_precision r_position;
+
+    if( use_cylsymm > 0 )
+    {
+    r_position = std::sqrt(particlesPointer->xprevious[indx] *
                                  particlesPointer->xprevious[indx] +
                              particlesPointer->yprevious[indx] *
                                  particlesPointer->yprevious[indx]);
-#else
-    gitr_precision r_position = particlesPointer->xprevious[indx];
-#endif
+    }
+    else
+    {
+    r_position = particlesPointer->xprevious[indx];
+    }
     gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
     gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
     int rInd = std::floor((r_position - closeGeomGridr[0]) / dr + 0.5);
@@ -770,7 +790,8 @@ else{
         // particlesPointer->test0[indx] = -100.0;
         if (particle_slope >= tol * 0.75) 
         {
-#if USECYLSYMM > 0
+          if( use_cylsymm > 0 )
+          {
           gitr_precision x0 = particlesPointer->xprevious[indx];
           gitr_precision x1 = particlesPointer->x[indx];
           gitr_precision y0 = particlesPointer->yprevious[indx];
@@ -786,7 +807,9 @@ else{
                          (theta1 - theta0);
           particlesPointer->y[indx] = yNew;
           particlesPointer->yprevious[indx] = yNew;
-#else
+          }
+          else
+          {
           // std::cout << "Particle index " << indx << " hit wall and is
           // calculating y point " << particlesPointer->y[indx] << std::endl;
           particlesPointer->y[indx] =
@@ -801,12 +824,12 @@ else{
           // "<< particlesPointer->zprevious[indx] << " " <<
           // particlesPointer->z[indx] << " " << particlesPointer->y[indx] <<
           // std::endl;
-
-#endif
+          }
         } 
         else 
         {
-#if USECYLSYMM > 0
+          if( use_cylsymm > 0 )
+          {
           gitr_precision x0 = particlesPointer->xprevious[indx];
           gitr_precision x1 = particlesPointer->x[indx];
           gitr_precision y0 = particlesPointer->yprevious[indx];
@@ -836,7 +859,9 @@ else{
           // yNew " << xNew << " " << yNew << std::endl; std::cout <<
           // "intersectionx " << intersectionx[0] << std::endl;
           //}
-#else
+          }
+          else
+          {
           // std::cout << "Particle index " << indx << " hit wall and is
           // calculating y point " << particlesPointer->y[indx] << std::endl;
           particlesPointer->y[indx] =
@@ -851,15 +876,19 @@ else{
           // "<< particlesPointer->zprevious[indx] << " " <<
           // particlesPointer->z[indx] << " " << particlesPointer->y[indx] <<
           // std::endl;
-#endif
+          }
         }
-#if USECYLSYMM > 0
+
+        if( use_cylsymm > 0 )
+        {
         particlesPointer->xprevious[indx] = xNew;
         particlesPointer->x[indx] = particlesPointer->xprevious[indx];
-#else
+        }
+        else
+        {
         particlesPointer->x[indx] = intersectionx[0];
         particlesPointer->xprevious[indx] = intersectionx[0];
-#endif
+        }
         particlesPointer->zprevious[indx] = intersectiony[0];
         particlesPointer->z[indx] = intersectiony[0];
         // std::cout << "nInt = 1 position " << intersectionx[0] << " " <<
@@ -884,7 +913,8 @@ else{
         particlesPointer->wallIndex[indx] = intersectionIndices[minDistInd];
         particlesPointer->surfaceHit[indx] = intersectionIndices[minDistInd];
         particlesPointer->hitWall[indx] = 1.0;
-#if USECYLSYMM > 0
+        if( use_cylsymm > 0 )
+        {
         thetaNew = theta0 + (intersectionx[minDistInd] - pdim1previous) /
                                 (pdim1 - pdim1previous) * (theta1 - theta0);
         particlesPointer->yprevious[indx] =
@@ -894,7 +924,9 @@ else{
         // intersectionx[minDistInd]*cosf(thetaNew);
         particlesPointer->x[indx] =
             intersectionx[minDistInd] * std::cos(thetaNew);
-#else
+        }
+        else
+        {
         // std::cout << "Particle index " << indx << " hit wall and is
         // calculating y point " << particlesPointer->yprevious[indx] << " " <<
         // particlesPointer->y[indx] << std::endl;
@@ -917,7 +949,7 @@ else{
         // particlesPointer->z[indx] << " " << particlesPointer->y[indx] <<
         // std::endl;
         particlesPointer->x[indx] = intersectionx[minDistInd];
-#endif
+        }
         particlesPointer->z[indx] = intersectiony[minDistInd];
       }
     ////}
@@ -932,7 +964,6 @@ else{
       //        particlesPointer->hitWall[indx] = 1.0;
       //    }
       //}
-//#endif
     }
     if (particlesPointer->hitWall[indx] == 1.0) {
 
@@ -955,7 +986,7 @@ else{
       int wallHitP = particlesPointer->surfaceHit[indx];
       boundaryVector[particlesPointer->surfaceHit[indx]].getSurfaceNormal(
           surfaceNormalVector, particlesPointer->y[indx],
-          particlesPointer->x[indx]);
+          particlesPointer->x[indx], use_3d_tet_geom, use_cylsymm );
       particleTrackVector[0] = particleTrackVector[0] / norm_part;
       particleTrackVector[1] = particleTrackVector[1] / norm_part;
       particleTrackVector[2] = particleTrackVector[2] / norm_part;

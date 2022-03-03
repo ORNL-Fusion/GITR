@@ -79,11 +79,15 @@ gitr_precision interp2dCombined ( gitr_precision x, gitr_precision y, gitr_preci
         fxz = data[0];
     }
     else{
-#if USECYLSYMM > 0
-    gitr_precision dim1 = std::sqrt(x*x + y*y);
-#else
-    gitr_precision dim1 = x;
-#endif    
+    gitr_precision dim1;
+    if( use_cylsymm > 0 )
+    {
+    dim1 = std::sqrt(x*x + y*y);
+    }
+    else
+    {
+    dim1 = x;
+    }
     gitr_precision d_dim1 = gridx[1] - gridx[0];
     gitr_precision dz = gridz[1] - gridz[0];
     int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
@@ -213,14 +217,17 @@ gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precisio
    gitr_precision Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, use_cylsymm );
    gitr_precision At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, use_cylsymm );
    field[2] = interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, use_cylsymm );
-#if USECYLSYMM > 0
+            if( use_cylsymm > 0 )
+            {
             gitr_precision theta = std::atan2(y,x);   
             field[0] = std::cos(theta)*Ar - std::sin(theta)*At;
             field[1] = std::sin(theta)*Ar + std::cos(theta)*At;
-#else
+            }
+            else
+            {
             field[0] = Ar;
             field[1] = At;
-#endif
+            }
 
 }
 CUDA_CALLABLE_MEMBER

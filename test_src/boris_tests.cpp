@@ -751,7 +751,8 @@ TEST_CASE( "Complex Boris Motion" )
                               biasPotential,
                               biased_surface,
                               use_surface_potential,
-                              use_cylsymm ));
+                              use_cylsymm,
+                              use_3d_tet_geom ));
     
     int nHashes = 1;
     int nR_closeGeom_sheath = 1;
@@ -782,7 +783,7 @@ TEST_CASE( "Complex Boris Motion" )
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface,
-               use_3d_tet_geom );
+               use_3d_tet_geom, use_cylsymm );
 
       gitrE[j] = thisE[2];
     }

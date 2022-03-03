@@ -168,7 +168,7 @@ TEST_CASE( "cross-field diffusion operator" )
     }
     spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy );
+                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy, use_cylsymm );
 
     #if USE_CUDA > 0
     typedef curandState rand_type;
@@ -296,6 +296,7 @@ TEST_CASE( "cross-field diffusion operator" )
     USE_ADAPTIVE_DT=0
 
   */
+  /* Captain! */
   SECTION( "cross-field diffusion, curved field lines" )
   {
     /* timesteps */
@@ -413,7 +414,7 @@ TEST_CASE( "cross-field diffusion operator" )
     }
     spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy);
+                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy, use_cylsymm );
 
     #if USE_CUDA > 0
     typedef curandState rand_type;
