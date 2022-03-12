@@ -3733,24 +3733,6 @@ if( flowv_interp == 1 )
   }
 #endif
 
-#if GEOM_TRACE > 0
-  std::uniform_real_distribution<gitr_precision> dist2(0, 1);
-  // std::random_device rd2;
-  // std::default_random_engine generator2(rd2());
-  gitr_precision randDevice02 = 6.52E+5;
-  std::default_random_engine generatorTrace(randDevice02);
-  std::cout << "Randomizing velocities to trace geometry. " << std::endl;
-
-  for (int i = 0; i < nParticles; i++) {
-    gitr_precision theta_trace = dist2(generatorTrace) * 2 * 3.1415;
-    gitr_precision phi_trace = dist2(generatorTrace) * 3.1415;
-    gitr_precision mag_trace = 2e3;
-    particleArray->vx[i] = mag_trace * std::cos(theta_trace) * std::sin(phi_trace);
-    particleArray->vy[i] = mag_trace * std::sin(theta_trace) * std::sin(phi_trace);
-    particleArray->vz[i] = mag_trace * std::cos(phi_trace);
-  }
-#endif
-
 #if PARTICLE_TRACKS > 0
   int subSampleFac = 1;
   if (world_rank == 0) {
@@ -4155,17 +4137,10 @@ if( flowv_interp == 1 )
   printf("Initialize time for node %i          is %6.3f (secs) \n", world_rank,
          fs1.count());
   gitr_precision testFlowVec[3] = {0.0};
-#if USEFIELDALIGNEDVALUES > 0
-  interpFieldAlignedVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV,
-                           nZ_flowV, flowVGridr.data(), flowVGridz.data(),
-                           flowVr.data(), flowVz.data(), flowVt.data(),
-                           nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-                           bfieldGridz.data(), br.data(), bz.data(), by.data());
-#else
+
   interp2dVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV, nZ_flowV,
                  flowVGridr.data(), flowVGridz.data(), flowVr.data(),
                  flowVz.data(), flowVt.data(), use_cylsymm );
-#endif
 
   gitr_precision leakZ = 0.0;
   if (world_rank == 0) {

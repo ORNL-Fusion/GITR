@@ -43,10 +43,6 @@ CUDA_CALLABLE_MEMBER
 void interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
 gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat, int use_cylsymm );
 CUDA_CALLABLE_MEMBER
-void interpFieldAlignedVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
-        gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat,
-        int nxB, int nzB, gitr_precision* gridxB,gitr_precision* gridzB,gitr_precision* datarB,gitr_precision* datazB, gitr_precision* datatB, int use_cylsymm );
-CUDA_CALLABLE_MEMBER
 gitr_precision interp1dUnstructured(gitr_precision samplePoint,int nx, gitr_precision max_x, gitr_precision* data,int &lowInd);
 CUDA_CALLABLE_MEMBER
 gitr_precision interp1dUnstructured2(gitr_precision samplePoint,int nx, gitr_precision *xdata, gitr_precision* data);

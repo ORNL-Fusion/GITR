@@ -230,28 +230,7 @@ gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precisio
             }
 
 }
-CUDA_CALLABLE_MEMBER
-void interpFieldAlignedVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
-gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat,
-int nxB, int nzB, gitr_precision* gridxB,gitr_precision* gridzB,gitr_precision* datarB,gitr_precision* datazB, gitr_precision* datatB, int use_cylsymm ) {
 
-   gitr_precision Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, use_cylsymm );
-   gitr_precision B[3] = {0.0};
-   gitr_precision B_unit[3] = {0.0};
-   gitr_precision Bmag = 0.0;
-   interp2dVector (&B[0],x,y,z,nxB,nzB,
-                   gridxB,gridzB,datarB,datazB,datatB, use_cylsymm );
-   Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
-   B_unit[0] = B[0]/Bmag;
-   B_unit[1] = B[1]/Bmag;
-   B_unit[2] = B[2]/Bmag;
-   //std::cout << " Ar and Bunit " << Ar << " " << B_unit[0] << " " <<
-   //             " " << B_unit[1] << " " << B_unit[2] << std::endl; 
-   field[0] = Ar*B_unit[0];
-   field[1] = Ar*B_unit[1];
-   field[2] = Ar*B_unit[2];
-
-}
 CUDA_CALLABLE_MEMBER
 gitr_precision interp1dUnstructured(gitr_precision samplePoint,int nx, gitr_precision max_x, gitr_precision* data,int &lowInd)
 {
