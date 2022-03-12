@@ -215,7 +215,6 @@ class use final : public config_module_base
     flowv_interp,
     gradt_interp,
     odeint,
-    fixedseeds,
     fixed_seeds,
     geom_hash,
     geom_hash_sheath,
@@ -231,8 +230,8 @@ class use final : public config_module_base
     usefieldalignedvalues,
     force_eval,
     compatibility_check,
-    use_sort,
-    use_adaptive_dt,
+    sort,
+    adaptive_dt,
     surface_potential
   };
 

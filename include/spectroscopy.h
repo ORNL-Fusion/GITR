@@ -26,7 +26,6 @@ __device__ double atomicAdd1(double* address, double val);
 #endif
 
 struct spec_bin { 
-    Flags *flags;
     Particles *particlesPointer;
     const int nBins;
     int nX;
@@ -39,9 +38,21 @@ struct spec_bin {
     gitr_precision dt;
     int spectroscopy;
     int use_cylsymm;
+    int use_adaptive_dt;
 
-    spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
-           double * _bins, gitr_precision _dt, int spectroscopy, int use_cylsymm );
+    spec_bin( Particles *_particlesPointer,
+              int _nBins,
+              int _nX,
+              int _nY,
+              int _nZ,
+              gitr_precision *_gridX,
+              gitr_precision *_gridY,
+              gitr_precision *_gridZ,
+              double * _bins,
+              gitr_precision _dt,
+              int spectroscopy,
+              int use_cylsymm,
+              int use_adaptive_dt );
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const;

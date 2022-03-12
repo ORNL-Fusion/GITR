@@ -60,6 +60,7 @@ TEST_CASE( "cross-field diffusion operator" )
   int use_surface_model = 0;
   int use_3d_tet_geom = 0;
   int bfield_interp = 0;
+  int use_adaptive_dt = 0;
 
   SECTION( "cross-field diffusion, straight field lines" )
   {
@@ -75,8 +76,6 @@ TEST_CASE( "cross-field diffusion operator" )
     int nT = 500000;
 
     gitr_precision dt = 2.0e-7;
-
-    auto gitr_flags = new Flags( cfg_geom );
 
     int nLines = 0;
 
@@ -98,7 +97,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     REQUIRE( nSurfaces == 2 );
 
-    auto particleArray = new Particles( nP, 1, cfg_geom, gitr_flags );
+    auto particleArray = new Particles( nP, 1, cfg_geom );
     std::cout << "p " << particleArray->charge[0] << " x " << particleArray->xprevious[0]<<std::endl;
 
     /* dummy variables for hashing */
@@ -167,9 +166,10 @@ TEST_CASE( "cross-field diffusion operator" )
     for (int i = 0; i < net_nZ; i++) {
       gridZ_bins[i] = netZ0 + i * 1.0 / (net_nZ - 1) * (netZ1 - netZ0);
     }
-    spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
+    spec_bin spec_bin0(particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy, use_cylsymm );
+                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy, use_cylsymm,
+                     use_adaptive_dt );
 
     #if USE_CUDA > 0
     typedef curandState rand_type;
@@ -206,10 +206,10 @@ TEST_CASE( "cross-field diffusion operator" )
 
   int use_perp_diffusion = use.get< int >( use::perpdiffusion );
 
-  crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
+  crossFieldDiffusion crossFieldDiffusion0(
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front(), use_perp_diffusion, use_cylsymm );
+      &bz.front(), &by.front(), use_perp_diffusion, use_cylsymm, use_adaptive_dt );
     
   // half-side length
     double s = 0.2;
@@ -317,8 +317,6 @@ TEST_CASE( "cross-field diffusion operator" )
 
     class use use( query );
 
-    auto gitr_flags = new Flags( cfg_geom );
-
     int nLines = 0;
 
     libconfig::Setting &geom = cfg_geom.lookup( "geom" );
@@ -340,7 +338,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     REQUIRE( nSurfaces == 2 );
 
-    auto particleArray = new Particles( nP, 1, cfg_geom, gitr_flags );
+    auto particleArray = new Particles( nP, 1, cfg_geom );
     for(int i=0;i<nP;i++)
     {
       particleArray->setParticleV(i,0.2,0.0,0.0, 10, 10, 10, 4, 5, 1.0,dt);
@@ -413,9 +411,10 @@ TEST_CASE( "cross-field diffusion operator" )
     for (int i = 0; i < net_nZ; i++) {
       gridZ_bins[i] = netZ0 + i * 1.0 / (net_nZ - 1) * (netZ1 - netZ0);
     }
-    spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
+    spec_bin spec_bin0(particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy, use_cylsymm );
+                     &gridZ_bins.front(), &net_Bins.front(), dt, spectroscopy, use_cylsymm,
+                     use_adaptive_dt );
 
     #if USE_CUDA > 0
     typedef curandState rand_type;
@@ -450,10 +449,10 @@ TEST_CASE( "cross-field diffusion operator" )
 
   int use_perp_diffusion = use.get< int >( use::perpdiffusion );
 
-  crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
+  crossFieldDiffusion crossFieldDiffusion0(
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front(), use_perp_diffusion, use_cylsymm );
+      &bz.front(), &by.front(), use_perp_diffusion, use_cylsymm, use_adaptive_dt );
     
   // half-side length
     double s = 0.2;

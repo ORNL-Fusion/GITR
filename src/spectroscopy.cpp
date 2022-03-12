@@ -18,10 +18,32 @@ __device__ double atomicAdd1(double* address, double val)
 }
 #endif
 
-spec_bin::spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
-           double * _bins, gitr_precision _dt, int spectroscopy) : 
-        flags(_flags), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
-        dt(_dt), spectroscopy(spectroscopy) {}
+spec_bin::spec_bin( Particles *_particlesPointer,
+                    int _nBins,
+                    int _nX,
+                    int _nY,
+                    int _nZ,
+                    gitr_precision *_gridX,
+                    gitr_precision *_gridY,
+                    gitr_precision *_gridZ,
+                    double * _bins,
+                    gitr_precision _dt,
+                    int spectroscopy,
+                    int use_cylsymm,
+                    int use_adaptive_dt ) : 
+        particlesPointer(_particlesPointer),
+        nBins(_nBins),
+        nX(_nX),
+        nY(_nY),
+        nZ(_nZ),
+        gridX(_gridX),
+        gridY(_gridY),
+        gridZ(_gridZ),
+        bins(_bins),
+        dt(_dt), 
+        spectroscopy(spectroscopy),
+        use_cylsymm( use_cylsymm ),
+        use_adaptive_dt( use_adaptive_dt ) {}
 
 CUDA_CALLABLE_MEMBER_DEVICE    
 void spec_bin::operator()(std::size_t indx) const {
@@ -51,7 +73,7 @@ void spec_bin::operator()(std::size_t indx) const {
               gitr_precision specWeight = 0.0;
               if(particlesPointer->hitWall[indx]== 0.0)
               {
-                if (flags->USE_ADAPTIVE_DT) {
+                if ( use_adaptive_dt ) {
 	          if(particlesPointer->advance[indx])
 		  {
 	            dt_particle = particlesPointer->dt[indx];
@@ -105,11 +127,14 @@ void spec_bin::operator()(std::size_t indx) const {
   }
   else
   {
-#if USECYLSYMM > 0
+    if( use_cylsymm > 0 )
+    {
     dim1 = std::sqrt(x*x + y*y);
-    #else
+    }
+    else
+    {
     dim1 = x;
-    #endif
+    }
   }
 
     if ((z > gridZ[0]) && (z < gridZ[nZ-1]))

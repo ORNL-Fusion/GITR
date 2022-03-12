@@ -4,7 +4,6 @@
 #include "config_interface.h"
 #include "test_data_filepath.hpp"
 #include "utils.h"
-#include "flags.hpp"
 #include "Particles.h"
 #include "boris.h"
 #include "Surfaces.h"
@@ -58,6 +57,7 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
 TEST_CASE( "Complex Boris Motion" )
 {
   int const use_cylsymm = 0;
+  int const use_adaptive_dt = 0;
   /* Testing complex boris motion implemented in the linked script */
   SECTION( "compare vx, vy, vz, x, y, z to analytic solution" )
   {
@@ -260,11 +260,9 @@ TEST_CASE( "Complex Boris Motion" )
 
     importLibConfig(cfg_geom, BORIS_TEST_FILE);
 
-    auto gitr_flags = new Flags( cfg_geom );
-
     /* create a particle */
     auto particleArray =
-      new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
+      new Particles( num_particles, deprecated_constructor_argument, cfg_geom );
 
     thrust::counting_iterator<std::size_t> particle_iterator_start(0);
 
@@ -409,8 +407,9 @@ TEST_CASE( "Complex Boris Motion" )
         &closeGeomGridy_sheath.front(),
         &closeGeomGridz_sheath.front(),
         &closeGeom_sheath.front(),
-        gitr_flags, use_sheath_efield, use_presheath_efield, biased_surface, use_3d_geom,
-        use_cylsymm );
+        use_sheath_efield, use_presheath_efield, biased_surface, use_3d_geom,
+        use_cylsymm,
+        use_adaptive_dt );
 
     /* time loop */
     std::vector< double > v_x_test( n_timesteps );
@@ -507,11 +506,9 @@ TEST_CASE( "Complex Boris Motion" )
 
     importLibConfig(cfg_geom, BORIS_TEST_FILE);
 
-    auto gitr_flags = new Flags( cfg_geom );
-
     /* create a particle */
     auto particleArray =
-    new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
+    new Particles( num_particles, deprecated_constructor_argument, cfg_geom );
 
     thrust::counting_iterator<std::size_t> particle_iterator_start(0);
 
@@ -655,10 +652,10 @@ TEST_CASE( "Complex Boris Motion" )
                       &closeGeomGridy_sheath.front(),
                       &closeGeomGridz_sheath.front(),
                       &closeGeom_sheath.front(),
-                      gitr_flags,
                       use_sheath_efield, use_presheath_efield, biased_surface,
                       use_3d_geom,
-                      use_cylsymm );
+                      use_cylsymm,
+                      use_adaptive_dt );
 
     /* time loop */
     for (int tt = 0; tt < nT; tt++)

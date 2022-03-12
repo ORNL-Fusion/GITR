@@ -14,7 +14,6 @@
 #include "Particles.h"
 #include "Boundary.h"
 #include "interp2d.hpp"
-#include "flags.hpp"
 #include <algorithm>
 
 #if USE_DOUBLE
@@ -82,7 +81,6 @@ struct move_boris {
     gitr_precision* closeGeomGridy_sheath;
     gitr_precision* closeGeomGridz_sheath;
     int* closeGeom_sheath; 
-    Flags* gitr_flags;
     gitr_precision max_dt;
 
     const gitr_precision span;
@@ -94,6 +92,7 @@ struct move_boris {
     int biased_surface;
     int use_3d_geom;
     int use_cylsymm;
+    int use_adaptive_dt;
 
     move_boris(Particles *_particlesPointer, gitr_precision _span, Boundary *_boundaryVector,int _nLines,
             int _nR_Bfield, int _nZ_Bfield,
@@ -117,12 +116,12 @@ struct move_boris {
             gitr_precision *_closeGeomGridy,
             gitr_precision *_closeGeomGridz,
             int *_closeGeom,
-            Flags* _gitr_flags,
             int use_sheath_efield,
             int use_presheath_efield,
             int biased_surface,
             int use_3d_geom,
             int use_cylsymm,
+            int use_adaptive_dt,
             gitr_precision _max_dt = 1.0e5 );
 
     CUDA_CALLABLE_MEMBER    

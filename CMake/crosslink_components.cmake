@@ -5,7 +5,6 @@ target_link_libraries( ionize interpRateCoeff )
 
 target_link_libraries( interp2d thrust )
 
-target_link_libraries( flags libconfig thrust )
 
 target_link_libraries( utils 
                        libconfig
@@ -40,9 +39,9 @@ target_link_libraries( GITR
                        utils
                        boris
                        surface_model
-                       flags
                        hashGeom
                        geometry_check
+                       particles
                        cli11
                        config_interface )
 
@@ -70,25 +69,22 @@ endif()
 target_link_libraries( config_interface_tests test_utils libconfig config_interface )
 
 target_link_libraries( coulomb_tests 
-                       test_utils libconfig thrust interp2d utils flags netcdf boris fields )
+                       test_utils libconfig thrust interp2d utils netcdf boris fields 
+                       particles )
 
-target_link_libraries( atomic_tests test_utils ionize interp2d utils flags )
+target_link_libraries( atomic_tests test_utils ionize interp2d utils particles )
 
 target_link_libraries( field_tests 
                        test_utils interp2d libconfig utils netcdf fields boris )
 
 target_link_libraries( file_io_tests 
-                       test_utils libconfig utils flags boris geometry_check )
+                       test_utils libconfig utils boris geometry_check particles )
 
 target_link_libraries( cross_field_diffusion_tests 
-                       test_utils utils flags libconfig boris spectroscopy thrust
-                       geometry_check config_interface )
+                       test_utils utils libconfig boris spectroscopy thrust
+                       geometry_check config_interface particles )
 
-#target_link_libraries( surface_model_tests 
-#                       surface_model spectroscopy test_utils flags
-#                       libconfig utils boris geometry_check )
-
-target_link_libraries( boris_tests test_utils flags libconfig utils boris slow_math )
+target_link_libraries( boris_tests test_utils libconfig utils boris slow_math particles )
 
 target_link_libraries( slow_math_tests test_utils slow_math )
 

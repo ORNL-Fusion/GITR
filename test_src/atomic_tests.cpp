@@ -40,7 +40,11 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
 }
 
 TEST_CASE("Atomic physics", "tests") {
+
   int const use_cylsymm = 0;
+  int const use_ionization = 1;
+  int const use_adaptive_dt = 0;
+
   SECTION("ionize - test fixed random seeds")
   {
     // Creat cfg object and set to autoconvert types
@@ -53,10 +57,8 @@ TEST_CASE("Atomic physics", "tests") {
     
     importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
   
-    auto gitr_flags = new Flags(cfg);
-    
     int nParticles = 10;
-    auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
+    auto particleArray = new Particles(nParticles,nParticles,cfg);
 
 #ifdef __CUDACC__
     typedef curandState rand_type;
@@ -170,7 +172,6 @@ TEST_CASE("Atomic physics", "tests") {
 
     // Ionize functor instance
     ionize<rand_type> ionize0(
-      gitr_flags,
       particleArray,
       dt,
       &state1.front(),
@@ -190,7 +191,9 @@ TEST_CASE("Atomic physics", "tests") {
       &gridDensity_Ionization.front(),
       &rateCoeff_Ionization.front(),
       &dev_f.front(),
-      use_cylsymm );
+      use_cylsymm,
+      use_ionization,
+      use_adaptive_dt );
 
     // Create a vector to store values in
     std::vector<gitr_precision> values(nParticles,0.0);
@@ -236,10 +239,8 @@ TEST_CASE("Atomic physics", "tests") {
     
     importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
   
-    auto gitr_flags = new Flags(cfg);
-    
     int nParticles = 10;
-    auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
+    auto particleArray = new Particles(nParticles,nParticles,cfg );
 #ifdef __CUDACC__
      typedef curandState rand_type;
 #else
@@ -361,11 +362,13 @@ TEST_CASE("Atomic physics", "tests") {
     sim::Array<gitr_precision> dev_f(1,-1.0);
     
     ionize<rand_type> ionize0(
-      gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
+      particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(), &dev_f.front(), use_cylsymm );
+      &rateCoeff_Ionization.front(), &dev_f.front(), use_cylsymm,
+      use_ionization,
+      use_adaptive_dt );
   
     std::vector<gitr_precision> values(nParticles,0.0);
     for (int i=0;i<nParticles;i++)
@@ -415,11 +418,9 @@ TEST_CASE("Atomic physics", "tests") {
     
     importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
   
-    auto gitr_flags = new Flags(cfg);
-    
     int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
     
-    auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
+    auto particleArray = new Particles(nParticles,nParticles,cfg);
   
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
@@ -549,18 +550,35 @@ TEST_CASE("Atomic physics", "tests") {
     sim::Array<gitr_precision> dev_f(1,-1.0);
   
     ionize<rand_type> ionize0(
-      gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
+      particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(),&dev_f.front(), use_cylsymm );
+      &rateCoeff_Ionization.front(),&dev_f.front(), use_cylsymm,
+      use_ionization,
+      use_adaptive_dt );
   
     recombine<rand_type> recombine0(
-      particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
-      &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
-      &TempGridz.front(), &te.front(), nTemperaturesRecombine,
-      nDensitiesRecombine, gridTemperature_Recombination.data(),
-      gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags, use_cylsymm );
+      particleArray,
+      dt,
+      &state1.front(),
+      nR_Dens,
+      nZ_Dens,
+      &DensGridr.front(),
+      &DensGridz.front(),
+      &ne.front(),
+      nR_Temp,
+      nZ_Temp,
+      &TempGridr.front(),
+      &TempGridz.front(),
+      &te.front(),
+      nTemperaturesRecombine,
+      nDensitiesRecombine,
+      gridTemperature_Recombination.data(),
+      gridDensity_Recombination.data(),
+      rateCoeff_Recombination.data(),
+      use_cylsymm,
+      use_adaptive_dt );
 
     typedef std::chrono::high_resolution_clock gitr_time;
     auto gitr_start_clock = gitr_time::now();

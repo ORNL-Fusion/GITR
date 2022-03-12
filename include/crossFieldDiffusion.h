@@ -93,8 +93,7 @@ void legacy_code_block_0( Particles *particlesPointer,
 
 /* How do particles move perpendicular to the B field */
 struct crossFieldDiffusion {
-    /* control flow */
-    Flags* flags;
+
     /* particles we are operating on - changing their positions */
     Particles *particlesPointer;
     /* prior to time adaptivity dt was a constant, now it can adapt */
@@ -116,24 +115,34 @@ struct crossFieldDiffusion {
 
     int use_perp_diffusion;
     int use_cylsymm;
+    int use_adaptive_dt;
 
 #if __CUDACC__
         curandState *state;
 #else
         std::mt19937 *state;
 #endif
-    crossFieldDiffusion(Flags* _flags, Particles *_particlesPointer, gitr_precision _dt,
-#if __CUDACC__
-        curandState *_state,
-#else
-        std::mt19937 *_state,
-#endif
-        gitr_precision _diffusionCoefficient,
-        int _nR_Bfield, int _nZ_Bfield,
-        gitr_precision * _BfieldGridRDevicePointer,gitr_precision * _BfieldGridZDevicePointer,
-        gitr_precision * _BfieldRDevicePointer,gitr_precision * _BfieldZDevicePointer,
-        gitr_precision * _BfieldTDevicePointer, int use_perp_diffusion, int use_cylsymm )
-      : flags(_flags), particlesPointer(_particlesPointer),
+
+    crossFieldDiffusion( Particles *_particlesPointer,
+                         gitr_precision _dt,
+                         #if __CUDACC__
+                         curandState *_state,
+                         #else
+                         std::mt19937 *_state,
+                         #endif
+                         gitr_precision _diffusionCoefficient,
+                         int _nR_Bfield,
+                         int _nZ_Bfield,
+                         gitr_precision * _BfieldGridRDevicePointer,
+                         gitr_precision * _BfieldGridZDevicePointer,
+                         gitr_precision * _BfieldRDevicePointer,
+                         gitr_precision * _BfieldZDevicePointer,
+                         gitr_precision * _BfieldTDevicePointer,
+                         int use_perp_diffusion,
+                         int use_cylsymm,
+                         int use_adaptive_dt )
+
+      : particlesPointer(_particlesPointer),
         dt(_dt),
         diffusionCoefficient(_diffusionCoefficient),
         nR_Bfield(_nR_Bfield),
@@ -145,8 +154,9 @@ struct crossFieldDiffusion {
         BfieldTDevicePointer(_BfieldTDevicePointer),
         state(_state),
         use_perp_diffusion( use_perp_diffusion ),
-        use_cylsymm( use_cylsymm ) {
-  }
+        use_cylsymm( use_cylsymm ),
+        use_adaptive_dt( use_adaptive_dt )
+        { }
 
 /* Monte Carlo solution to diffusion equation - we need this tested */
 /* semi-non-deterministic test - tolerance type test */
@@ -168,7 +178,7 @@ void operator()(std::size_t indx) const {
       gitr_precision step;
       gitr_precision dt_step = dt;
 
-      if (flags->USE_ADAPTIVE_DT) 
+      if ( use_adaptive_dt ) 
       {
         if(particlesPointer->advance[indx])
         {

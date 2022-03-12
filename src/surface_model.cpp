@@ -113,12 +113,17 @@ void reflection::operator()(std::size_t indx) const {
     gitr_precision vx = particles->vx[indx];
     gitr_precision vy = particles->vy[indx];
     gitr_precision vz = particles->vz[indx];
-#if FLUX_EA > 0
-    gitr_precision dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
-    gitr_precision dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
     int AdistInd = 0;
     int EdistInd = 0;
-#endif
+    gitr_precision dEdist;
+    gitr_precision dAdist;
+
+    if( use_flux_ea > 0 )
+    {
+      dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
+      dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
+    }
+
     particles->firstCollision[indx] = 1;
     particleTrackVector[0] = vx;
     particleTrackVector[1] = vy;
@@ -199,21 +204,23 @@ void reflection::operator()(std::size_t indx) const {
                              energyDistGrid01Ref,A_sputtRefDistIn,
                              E_sputtRefDistIn,EDist_CDF_R_regrid );
 
-         newWeight = weight*(totalYR);
-#if FLUX_EA > 0
-        EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
-        AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
-        if((EdistInd >= 0) && (EdistInd < nEdist) && 
-           (AdistInd >= 0) && (AdistInd < nAdist))
-        {
-        #if USE_CUDA > 0
-              atomicAdd1(&surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd],newWeight);
-        #else      
-              surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
-                surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
-        #endif
+        newWeight = weight*(totalYR);
+
+        if( use_flux_ea > 0 )
+        { 
+          EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
+          AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
+          if((EdistInd >= 0) && (EdistInd < nEdist) && 
+             (AdistInd >= 0) && (AdistInd < nAdist))
+          {
+          #if USE_CUDA > 0
+                atomicAdd1(&surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd],newWeight);
+          #else      
+                surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
+                  surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
+          #endif
+          }
         }
-#endif
         if(surface > 0)
         {
 
@@ -241,7 +248,8 @@ void reflection::operator()(std::size_t indx) const {
                  energyDistGrid01,A_sputtRefDistIn,E_sputtRefDistIn,EDist_CDF_Y_regrid);
 		    
         newWeight=weight*totalYR;
-      #if FLUX_EA > 0
+        if( use_flux_ea > 0 )
+        {
         EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
         AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
         if((EdistInd >= 0) && (EdistInd < nEdist) && 
@@ -254,7 +262,7 @@ void reflection::operator()(std::size_t indx) const {
                 surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
         #endif 
         }
-	    #endif
+        }
         if(sputtProb == 0.0) newWeight = 0.0;
         if(surface > 0)
         {
@@ -317,7 +325,8 @@ void reflection::operator()(std::size_t indx) const {
         surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
       //boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
     #endif
-    #if FLUX_EA > 0
+    if( use_flux_ea > 0 )
+    {
         EdistInd = std::floor((E0_for_flux_binning-E0dist)/dEdist);
         AdistInd = std::floor((thetaImpact-A0dist)/dAdist);
       
@@ -333,7 +342,7 @@ void reflection::operator()(std::size_t indx) const {
           surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
 #endif
         }
-#endif
+    }
       }
       //reflect with weight and new initial conditions
       

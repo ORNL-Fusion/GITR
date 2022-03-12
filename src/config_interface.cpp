@@ -114,7 +114,6 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::flowv_interp ] = "FLOWV_INTERP";
   lookup[ use::gradt_interp ] = "GRADT_INTERP";
   lookup[ use::odeint ] = "ODEINT";
-  lookup[ use::fixedseeds ] = "FIXEDSEEDS";
   lookup[ use::fixed_seeds ] = "FIXED_SEEDS";
   lookup[ use::geom_hash ] = "GEOM_HASH";
   lookup[ use::geom_hash_sheath ] = "GEOM_HASH_SHEATH";
@@ -130,8 +129,8 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::usefieldalignedvalues ] = "USEFIELDALIGNEDVALUES";
   lookup[ use::force_eval ] = "FORCE_EVAL";
   lookup[ use::compatibility_check ] = "CHECK_COMPATIBILITY";
-  lookup[ use::use_sort ] = "USE_SORT";
-  lookup[ use::use_adaptive_dt ] = "USE_ADAPTIVE_DT";
+  lookup[ use::sort ] = "USE_SORT";
+  lookup[ use::adaptive_dt ] = "USE_ADAPTIVE_DT";
   lookup[ use::surface_potential ] = "USE_SURFACE_POTENTIAL";
 }
 

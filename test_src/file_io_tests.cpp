@@ -113,8 +113,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
-  auto gitr_flags = new Flags(cfg);
-      auto particleArray = new Particles(nParticles,1,cfg,gitr_flags);
+      auto particleArray = new Particles( nParticles,1,cfg );
       int nHashes = 1;
   sim::Array<int> nR_closeGeom(nHashes, 0);
   sim::Array<int> nY_closeGeom(nHashes, 0);
@@ -171,8 +170,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
-  auto gitr_flags = new Flags(cfg);
-      auto particleArray = new Particles(nParticles,1,cfg,gitr_flags);
+      auto particleArray = new Particles( nParticles,1,cfg );
       int nHashes = 1;
   sim::Array<int> nR_closeGeom(nHashes, 0);
   sim::Array<int> nY_closeGeom(nHashes, 0);
@@ -259,8 +257,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
-  auto gitr_flags = new Flags(cfg);
-      auto particleArray = new Particles(nParticles,1,cfg,gitr_flags);
+      auto particleArray = new Particles( nParticles,1,cfg );
       int nHashes = 1;
   sim::Array<int> nR_closeGeom(nHashes, 0);
   sim::Array<int> nY_closeGeom(nHashes, 0);

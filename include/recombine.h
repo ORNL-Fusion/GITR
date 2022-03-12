@@ -29,6 +29,8 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 
+#include <iostream>
+
 template <typename T=std::mt19937>
 struct recombine {
   Particles *particlesPointer;
@@ -47,19 +49,33 @@ struct recombine {
   gitr_precision* gridDensity_Recombination;
   gitr_precision* gridTemperature_Recombination;
   gitr_precision* rateCoeff_Recombination;
-  Flags* gitr_flags;
   gitr_precision dt;
   gitr_precision tion;
   T *state;
   int use_cylsymm;
+  int use_adaptive_dt;
 
-  recombine(Particles *_particlesPointer, gitr_precision _dt,
-      T *_state,
-     int _nR_Dens,int _nZ_Dens,gitr_precision* _DensGridr,
-     gitr_precision* _DensGridz,gitr_precision* _ne,int _nR_Temp, int _nZ_Temp,
-     gitr_precision* _TempGridr, gitr_precision* _TempGridz,gitr_precision* _te,int _nTemperaturesRecomb,
-     int _nDensitiesRecomb,gitr_precision* _gridTemperature_Recombination,gitr_precision* _gridDensity_Recombination,
-     gitr_precision* _rateCoeff_Recombination, Flags* _gitr_flags, int use_cylsymm ) : 
+  recombine( Particles *_particlesPointer,
+             gitr_precision _dt,
+             T *_state,
+             int _nR_Dens,
+             int _nZ_Dens,
+             gitr_precision* _DensGridr,
+             gitr_precision* _DensGridz,
+             gitr_precision* _ne,
+             int _nR_Temp,
+             int _nZ_Temp,
+             gitr_precision* _TempGridr,
+             gitr_precision* _TempGridz,
+             gitr_precision* _te,
+             int _nTemperaturesRecomb,
+             int _nDensitiesRecomb,
+             gitr_precision* _gridTemperature_Recombination,
+             gitr_precision* _gridDensity_Recombination,
+             gitr_precision* _rateCoeff_Recombination,
+             int use_cylsymm,
+             int use_adaptive_dt ) : 
+
      particlesPointer(_particlesPointer),
 
      nR_Dens(_nR_Dens),
@@ -77,10 +93,11 @@ struct recombine {
      gridDensity_Recombination(_gridDensity_Recombination),
      gridTemperature_Recombination(_gridTemperature_Recombination),
      rateCoeff_Recombination(_rateCoeff_Recombination),
-     gitr_flags(_gitr_flags),
      dt(_dt),
      state(_state),
-     use_cylsymm( use_cylsymm ) {}
+     use_cylsymm( use_cylsymm ),
+     use_adaptive_dt( use_adaptive_dt )
+     { }
  
   
   CUDA_CALLABLE_MEMBER_DEVICE
@@ -89,7 +106,7 @@ struct recombine {
     gitr_precision P1 = 0.0;
     gitr_precision r1 = 1.0;
       
-    if (gitr_flags->USE_ADAPTIVE_DT)
+    if ( use_adaptive_dt )
     {
       dt = particlesPointer->dt[indx];
     }
@@ -102,7 +119,7 @@ struct recombine {
       r1 = get_rand_double(state,indx);
     }
 
-    if (gitr_flags->USE_ADAPTIVE_DT)
+    if ( use_adaptive_dt )
     {
       if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx])
       {

@@ -238,7 +238,7 @@ void getSlowDownDirections2 (gitr_precision parallel_direction[], gitr_precision
   perp_direction2[2] = ey3;
 }
 
-struct coulombCollisions { 
+struct coulombCollisions {
     Particles *particlesPointer;
     gitr_precision dt;
     int nR_flowV;
@@ -270,7 +270,6 @@ struct coulombCollisions {
     gitr_precision * BfieldR;
     gitr_precision * BfieldZ;
     gitr_precision * BfieldT;
-    Flags* gitr_flags;
     gitr_precision dv[3];
 #if __CUDACC__
             curandState *state;
@@ -280,25 +279,50 @@ struct coulombCollisions {
 
     int use_cylsymm;
     int flowv_interp;
+    int use_adaptive_dt;
 
-    coulombCollisions(Particles *_particlesPointer,gitr_precision _dt, 
-#if __CUDACC__
-                            curandState *_state,
-#else
-                            std::mt19937 *_state,
-#endif
-            int _nR_flowV,int _nY_flowV, int _nZ_flowV,    gitr_precision* _flowVGridr,gitr_precision* _flowVGridy,
-                gitr_precision* _flowVGridz,gitr_precision* _flowVr,
-                        gitr_precision* _flowVz,gitr_precision* _flowVt,
-                        int _nR_Dens,int _nZ_Dens,gitr_precision* _DensGridr,
-                            gitr_precision* _DensGridz,gitr_precision* _ni,int _nR_Temp, int _nZ_Temp,
-                        gitr_precision* _TempGridr, gitr_precision* _TempGridz,gitr_precision* _ti,gitr_precision* _te,
-                        gitr_precision _background_Z, gitr_precision _background_amu,
-                        int _nR_Bfield, int _nZ_Bfield,
-                        gitr_precision * _BfieldGridR ,gitr_precision * _BfieldGridZ ,
-                        gitr_precision * _BfieldR ,gitr_precision * _BfieldZ ,
-                 gitr_precision * _BfieldT, Flags* _gitr_flags, int use_cylsymm,
-                 int flowv_interp )
+    /* Captain! */
+    coulombCollisions( Particles *_particlesPointer,
+                       gitr_precision _dt, 
+                       #if __CUDACC__
+                       curandState *_state,
+                       #else
+                       std::mt19937 *_state,
+                        #endif
+                       int _nR_flowV,
+                       int _nY_flowV,
+                       int _nZ_flowV,
+                       gitr_precision* _flowVGridr,
+                       gitr_precision* _flowVGridy,
+                       gitr_precision* _flowVGridz,
+                       gitr_precision* _flowVr,
+                       gitr_precision* _flowVz,
+                       gitr_precision* _flowVt,
+                       int _nR_Dens,
+                       int _nZ_Dens,
+                       gitr_precision* _DensGridr,
+                       gitr_precision* _DensGridz,
+                       gitr_precision* _ni,
+                       int _nR_Temp,
+                       int _nZ_Temp,
+                       gitr_precision* _TempGridr,
+                       gitr_precision* _TempGridz,
+                       gitr_precision* _ti,
+                       gitr_precision* _te,
+                       gitr_precision _background_Z,
+                       gitr_precision _background_amu,
+                       int _nR_Bfield,
+                       int _nZ_Bfield,
+                       gitr_precision * _BfieldGridR,
+                       gitr_precision * _BfieldGridZ,
+                       gitr_precision * _BfieldR,
+                       gitr_precision * _BfieldZ,
+                       gitr_precision * _BfieldT,
+                       int use_cylsymm,
+                       int flowv_interp,
+                       int use_adaptive_dt )
+    /* Captain! */
+
       : particlesPointer(_particlesPointer),
         dt(_dt),
         nR_flowV(_nR_flowV),
@@ -330,18 +354,19 @@ struct coulombCollisions {
         BfieldR(_BfieldR),
         BfieldZ(_BfieldZ),
         BfieldT(_BfieldT),
-	gitr_flags(_gitr_flags),
         dv{0.0, 0.0, 0.0},
         state(_state),
         use_cylsymm( use_cylsymm ),
-        flowv_interp( flowv_interp ){
-  }
+        flowv_interp( flowv_interp ),
+        use_adaptive_dt( use_adaptive_dt ) 
+        { }
+
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) { 
 
   if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
   {
-    if(gitr_flags->USE_ADAPTIVE_DT)
+    if( use_adaptive_dt )
     {
       dt = particlesPointer->dt[indx];	   
     }
@@ -460,7 +485,7 @@ void operator()(std::size_t indx) {
     gitr_precision vy_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[1] + std::abs(n2)*(coeff_perp1 * perp_direction1[1] + coeff_perp2 * perp_direction2[1])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[1];
     gitr_precision vz_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[2] + std::abs(n2)*(coeff_perp1 * perp_direction1[2] + coeff_perp2 * perp_direction2[2])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[2];
       
-    if(gitr_flags->USE_ADAPTIVE_DT)
+    if( use_adaptive_dt )
       {
         if (particlesPointer->advance[indx])
         {

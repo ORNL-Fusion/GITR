@@ -598,12 +598,12 @@ move_boris::move_boris(
   gitr_precision *_closeGeomGridy,
   gitr_precision *_closeGeomGridz,
   int *_closeGeom,
-  Flags* _gitr_flags,
   int use_sheath_efield,
   int use_presheath_efield,
   int biased_surface,
   int use_3d_geom,
   int use_cylsymm,
+  int use_adaptive_dt,
   gitr_precision _max_dt )
 
   : 
@@ -633,7 +633,6 @@ move_boris::move_boris(
         closeGeomGridy_sheath(_closeGeomGridy),
         closeGeomGridz_sheath(_closeGeomGridz),
         closeGeom_sheath(_closeGeom),
-	gitr_flags(_gitr_flags),
         max_dt(_max_dt),
         span(_span),
         nLines(_nLines),
@@ -643,7 +642,8 @@ move_boris::move_boris(
         use_presheath_efield( use_presheath_efield ),
         biased_surface( biased_surface ),
         use_3d_geom( use_3d_geom ),
-        use_cylsymm( use_cylsymm ) {}
+        use_cylsymm( use_cylsymm ),
+        use_adaptive_dt( use_adaptive_dt ) {}
 
 CUDA_CALLABLE_MEMBER    
 void move_boris::operator()(std::size_t indx)
@@ -779,7 +779,7 @@ if( use_presheath_efield > 0 )
   ////printf("c_vpxBxyz %.16e %.16e %.16e \n",c_vpxB[0], c_vpxB[1], c_vpxB[2]);
   //}
 	       
-  if(gitr_flags->USE_ADAPTIVE_DT)
+  if( use_adaptive_dt )
   {
     vectorAssign(v[0],v[1],v[2],v_dt);
     vMag_dt = vectorNorm(v_dt);

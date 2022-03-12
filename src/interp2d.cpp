@@ -228,8 +228,18 @@ void interp3dVector( gitr_precision* field,
 }
 
 CUDA_CALLABLE_MEMBER
-void interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
-gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat, int use_cylsymm ) {
+void interp2dVector( gitr_precision* field,
+                     gitr_precision x,
+                     gitr_precision y,
+                     gitr_precision z,
+                     int nx,
+                     int nz,
+                     gitr_precision* gridx,
+                     gitr_precision* gridz,
+                     gitr_precision* datar,
+                     gitr_precision* dataz,
+                     gitr_precision* datat,
+                     int use_cylsymm ) {
 
    gitr_precision Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, use_cylsymm );
    gitr_precision At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, use_cylsymm );

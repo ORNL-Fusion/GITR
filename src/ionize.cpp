@@ -48,7 +48,7 @@ double get_rand_double(std::mt19937 *state,int indx)
 }
 
 template< typename T >
-ionize< T >::ionize(Flags *_flags,
+ionize< T >::ionize(
           Particles *_particlesPointer,
           gitr_precision _dt,
           T *_state,
@@ -68,10 +68,12 @@ ionize< T >::ionize(Flags *_flags,
           gitr_precision *_gridDensity_Ionization,
           gitr_precision *_rateCoeff_Ionization,
           gitr_precision *_random_uniform_number,
-          int use_cylcymm )
+          int use_cylcymm,
+          int use_ionization,
+          int use_adaptive_dt)
       :
 
-        flags(_flags), particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
+        particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
         nZ_Dens(_nZ_Dens), DensGridr(_DensGridr), DensGridz(_DensGridz),
         ne(_ne), nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr),
         TempGridz(_TempGridz), te(_te),
@@ -82,15 +84,17 @@ ionize< T >::ionize(Flags *_flags,
         rateCoeff_Ionization(_rateCoeff_Ionization),
         dt(_dt),
         state(_state),random_uniform_number{_random_uniform_number},
-        use_cylsymm( use_cylsymm ) { }
+        use_cylsymm( use_cylsymm ),
+        use_ionization( use_ionization ),
+        use_adaptive_dt( use_adaptive_dt ) { }
 
 template< typename T >
 CUDA_CALLABLE_MEMBER_DEVICE
 void ionize< T >::operator()(std::size_t indx)
 {
-  if (flags->USE_IONIZATION)
+  if ( use_ionization )
   {
-    if (flags->USE_ADAPTIVE_DT)
+    if ( use_adaptive_dt )
     {
       dt = particlesPointer->dt[indx];
     }
@@ -107,7 +111,7 @@ void ionize< T >::operator()(std::size_t indx)
     gitr_precision r1 = get_rand_double(state,indx);
     random_uniform_number[0] = r1;
     
-    if (flags->USE_ADAPTIVE_DT) 
+    if ( use_adaptive_dt ) 
     {
       if (particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx])
       {

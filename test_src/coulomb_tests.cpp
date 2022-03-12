@@ -41,6 +41,7 @@ TEST_CASE("Coulomb collision", "tests") {
 
   int use_cylsymm = 0;
   int flowv_interp = 0;
+  int use_adaptive_dt = 0;
 
   SECTION("Frequency")
   {
@@ -235,12 +236,10 @@ TEST_CASE("Coulomb collision", "tests") {
     importLibConfig(cfg, COULOMB_UNIT_TEST_FILE );
     std::string input_path = "../test/";
   
-    auto gitr_flags = new Flags(cfg);
-    
     int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
     //int seed01 = getVariable_cfg<int> (cfg,"operators.ionization.seed");
     
-    auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
+    auto particleArray = new Particles( nParticles,nParticles,cfg );
     
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
@@ -306,8 +305,8 @@ TEST_CASE("Coulomb collision", "tests") {
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
-      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags,
-      use_cylsymm, flowv_interp );
+      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),
+      use_cylsymm, flowv_interp, use_adaptive_dt );
     
     typedef std::chrono::high_resolution_clock gitr_time;
     auto gitr_start_clock = gitr_time::now();
@@ -363,11 +362,9 @@ TEST_CASE("Coulomb collision", "tests") {
     importLibConfig(cfg, COULOMB_UNIT_TEST_FILE );
     std::string input_path = "../test/";
   
-    auto gitr_flags = new Flags(cfg);
-    
     int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
     int seed01 = getVariable_cfg<int> (cfg,"operators.ionization.seed");
-    auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
+    auto particleArray = new Particles(nParticles,nParticles,cfg);
     
     for(int i=0; i<nParticles; i++) particleArray->vz[i] = 4580.0;
     
@@ -467,8 +464,8 @@ TEST_CASE("Coulomb collision", "tests") {
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
-      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags,
-      use_cylsymm, flowv_interp );
+      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),
+      use_cylsymm, flowv_interp, use_adaptive_dt );
     
     typedef std::chrono::high_resolution_clock gitr_time;
     auto gitr_start_clock = gitr_time::now();
