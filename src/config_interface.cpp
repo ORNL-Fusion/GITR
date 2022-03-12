@@ -111,8 +111,6 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::generate_lc ] = "GENERATE_LC";
   lookup[ use::efield_interp ] = "EFIELD_INTERP";
   lookup[ use::presheath_interp ] = "PRESHEATH_INTERP";
-  lookup[ use::density_interp ] = "DENSITY_INTERP";
-  lookup[ use::temp_interp ] = "TEMP_INTERP";
   lookup[ use::flowv_interp ] = "FLOWV_INTERP";
   lookup[ use::gradt_interp ] = "GRADT_INTERP";
   lookup[ use::odeint ] = "ODEINT";

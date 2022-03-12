@@ -39,7 +39,8 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
 
 TEST_CASE("Coulomb collision", "tests") {
 
-    int use_cylsymm = 0;
+  int use_cylsymm = 0;
+  int flowv_interp = 0;
 
   SECTION("Frequency")
   {
@@ -59,8 +60,10 @@ TEST_CASE("Coulomb collision", "tests") {
 
     int nR_flowV = 1;
     int nZ_flowV = 1;
+    int nY_flowV = 1;
     sim::Array<gitr_precision> flowVGridr(1, 0.0);
     sim::Array<gitr_precision> flowVGridz(1, 0.0);
+    sim::Array<gitr_precision> flowVGridy(1, 0.0);
     sim::Array<gitr_precision> flowVr(1, 0.0);
     sim::Array<gitr_precision> flowVz(1, 0.0);
     sim::Array<gitr_precision> flowVt(1, 0.0);
@@ -94,8 +97,8 @@ TEST_CASE("Coulomb collision", "tests") {
                              x, y, z,
                              vx, vy, vz,
                              charge, amu,
-                             nR_flowV, nZ_flowV, flowVGridr.data(),
-                             flowVGridz.data(), flowVr.data(),
+                             nR_flowV, nZ_flowV, nY_flowV, flowVGridr.data(),
+                             flowVGridz.data(), flowVGridy.data(), flowVr.data(),
                              flowVz.data(), flowVt.data(),
                              nR_Dens, nZ_Dens, DensGridr.data(),
                              DensGridz.data(), ni.data(), nR_Temp, nZ_Temp,
@@ -107,7 +110,7 @@ TEST_CASE("Coulomb collision", "tests") {
                              BfieldGridZ.data(),
                              BfieldR.data(),
                              BfieldZ.data(),
-                             BfieldT.data(), T_background, use_cylsymm );
+                             BfieldT.data(), T_background, use_cylsymm, flowv_interp );
       std::cout << "nu_friction " << nu_friction << std::endl;
       std::cout << "nu_deflection " << nu_deflection << std::endl;
       std::cout << "nu_parallel " << nu_parallel << std::endl;
@@ -150,8 +153,10 @@ TEST_CASE("Coulomb collision", "tests") {
     
     int nR_flowV = 1;
     int nZ_flowV = 1;
+    int nY_flowV = 1;
     sim::Array<gitr_precision> flowVGridr(1, 0.0);
     sim::Array<gitr_precision> flowVGridz(1, 0.0);
+    sim::Array<gitr_precision> flowVGridy(1, 0.0);
     sim::Array<gitr_precision> flowVr(1, 2000.0);
     sim::Array<gitr_precision> flowVz(1, 0.0);
     sim::Array<gitr_precision> flowVt(1, 0.0);
@@ -190,8 +195,8 @@ TEST_CASE("Coulomb collision", "tests") {
                              x, y, z,
                              vx, vy, vz,
                              charge, amu,
-                             nR_flowV, nZ_flowV, flowVGridr.data(),
-                             flowVGridz.data(), flowVr.data(),
+                             nR_flowV, nZ_flowV, nY_flowV, flowVGridr.data(),
+                             flowVGridz.data(), flowVGridy.data(), flowVr.data(),
                              flowVz.data(), flowVt.data(),
                              nR_Dens, nZ_Dens, DensGridr.data(),
                              DensGridz.data(), ni.data(), nR_Temp, nZ_Temp,
@@ -203,7 +208,7 @@ TEST_CASE("Coulomb collision", "tests") {
                              BfieldGridZ.data(),
                              BfieldR.data(),
                              BfieldZ.data(),
-                             BfieldT.data(), T_background, use_cylsymm );
+                             BfieldT.data(), T_background, use_cylsymm, flowv_interp );
      
       vx = vx + (flowVr[0] - vx)*dt*nu_friction;
     }
@@ -302,7 +307,7 @@ TEST_CASE("Coulomb collision", "tests") {
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
       &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags,
-      use_cylsymm );
+      use_cylsymm, flowv_interp );
     
     typedef std::chrono::high_resolution_clock gitr_time;
     auto gitr_start_clock = gitr_time::now();
@@ -463,7 +468,7 @@ TEST_CASE("Coulomb collision", "tests") {
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
       &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags,
-      use_cylsymm );
+      use_cylsymm, flowv_interp );
     
     typedef std::chrono::high_resolution_clock gitr_time;
     auto gitr_start_clock = gitr_time::now();
@@ -476,8 +481,8 @@ TEST_CASE("Coulomb collision", "tests") {
                              x, y, z,
                              vx, vy, vz,
                              charge, amu,
-                             nR_flowV, nZ_flowV, flowVGridr.data(),
-                             flowVGridz.data(), flowVr.data(),
+                             nR_flowV, nZ_flowV, nY_flowV, flowVGridr.data(),
+                             flowVGridz.data(), flowVGridy.data(), flowVr.data(),
                              flowVz.data(), flowVt.data(),
                              nR_Dens, nZ_Dens, DensGridr.data(),
                              DensGridz.data(), ni.data(), nR_Temp, nZ_Temp,
@@ -489,7 +494,7 @@ TEST_CASE("Coulomb collision", "tests") {
                              BfieldGridZ.data(),
                              BfieldR.data(),
                              BfieldZ.data(),
-                             BfieldT.data(), T_background, use_cylsymm );
+                             BfieldT.data(), T_background, use_cylsymm, flowv_interp );
       vx = vx - nu_friction*dt*(vx - flowVr[0]); 
       vy = vy - nu_friction*dt*(vy - flowVt[0]); 
       vz = vz - nu_friction*dt*(vz - flowVz[0]); 

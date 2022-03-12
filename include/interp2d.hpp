@@ -36,9 +36,27 @@ CUDA_CALLABLE_MEMBER
 
 gitr_precision interp3d_nearest ( gitr_precision x, gitr_precision y, gitr_precision z,int nx,int ny, int nz,
     gitr_precision* gridx,gitr_precision* gridy, gitr_precision* gridz,gitr_precision* data );
+
 CUDA_CALLABLE_MEMBER
-void interp3dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx,int ny, int nz,
-        gitr_precision* gridx,gitr_precision* gridy,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat );
+void interp3dVector( gitr_precision* field,
+
+                     gitr_precision x,
+                     gitr_precision y,
+                     gitr_precision z,
+
+                     int nx,
+                     int ny,
+                     int nz,
+
+                     gitr_precision* gridx,
+                     gitr_precision* gridy,
+                     gitr_precision* gridz,
+
+                     gitr_precision* datar,
+                     gitr_precision* dataz,
+                     gitr_precision* datat );
+
+
 CUDA_CALLABLE_MEMBER
 void interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
 gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, gitr_precision* datat, int use_cylsymm );

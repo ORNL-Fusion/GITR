@@ -59,6 +59,7 @@ TEST_CASE( "cross-field diffusion operator" )
   int use_flux_ea = 0;
   int use_surface_model = 0;
   int use_3d_tet_geom = 0;
+  int bfield_interp = 0;
 
   SECTION( "cross-field diffusion, straight field lines" )
   {
@@ -198,7 +199,7 @@ TEST_CASE( "cross-field diffusion operator" )
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
 
   /* Captain! */
-  importVectorField(cfg_geom, "", BFIELD_INTERP, bfieldCfg, nR_Bfield,
+  importVectorField(cfg_geom, "", bfield_interp, bfieldCfg, nR_Bfield,
       0, nZ_Bfield, bfieldGridr.front(),
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
@@ -442,7 +443,7 @@ TEST_CASE( "cross-field diffusion operator" )
   double zero = 0;
   std::string empty = "";
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
-  importVectorField(cfg_geom, "", BFIELD_INTERP, bfieldCfg, nR_Bfield,
+  importVectorField(cfg_geom, "", bfield_interp, bfieldCfg, nR_Bfield,
       0, nZ_Bfield, bfieldGridr.front(),
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );

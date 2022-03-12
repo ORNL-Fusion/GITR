@@ -98,6 +98,7 @@ int main(int argc, char **argv, char **envp) {
   int biased_surface = use.get< int >( use::biased_surface );
   int use_3d_tet_geom = use.get< int >( use::use3dtetgeom );
   int use_cylsymm = use.get< int >( use::cylsymm );
+  int bfield_interp = use.get< int >( use::bfield_interp );
 
   // Set default processes per node to 1
   int ppn = 1;
@@ -223,7 +224,7 @@ int main(int argc, char **argv, char **envp) {
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   std::string bfieldFile;
   if (world_rank == 0) {
-    importVectorFieldNs(cfg, input_path, BFIELD_INTERP, bfieldCfg, nR_Bfield,
+    importVectorFieldNs(cfg, input_path, bfield_interp, bfieldCfg, nR_Bfield,
                         nY_Bfield, nZ_Bfield, bfieldFile);
   }
 #if USE_MPI > 0
@@ -239,7 +240,7 @@ int main(int argc, char **argv, char **envp) {
   sim::Array<gitr_precision> br(n_Bfield), by(n_Bfield), bz(n_Bfield);
 
   if (world_rank == 0) {
-    importVectorField(cfg, input_path, BFIELD_INTERP, bfieldCfg, nR_Bfield,
+    importVectorField(cfg, input_path, bfield_interp, bfieldCfg, nR_Bfield,
                       nY_Bfield, nZ_Bfield, bfieldGridr.front(),
                       bfieldGridy.front(), bfieldGridz.front(), br.front(),
                       by.front(), bz.front(), bfieldFile);
@@ -3953,7 +3954,7 @@ if( flowv_interp == 1 )
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
       &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(),gitr_flags,
-      use_cylsymm );
+      use_cylsymm, flowv_interp );
 
       int usethermalforce = use.get< int >( use::thermalforce );
 
