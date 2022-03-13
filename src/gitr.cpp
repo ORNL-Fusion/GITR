@@ -103,6 +103,10 @@ int main(int argc, char **argv, char **envp) {
   int use_sort = use.get< int >( use::sort );
   int use_adaptive_dt = use.get< int >( use::adaptive_dt );
   int use_geom_hash = use.get< int >( use::geom_hash );
+  int use_particle_source_file = use.get< int >( use::particle_source_file );
+  int use_particle_source_space = use.get< int >( use::particle_source_space );
+  int use_particle_source_energy = use.get< int >( use::particle_source_energy );
+  int use_particle_source_angle = use.get< int >( use::particle_source_angle );
 
   // Set default processes per node to 1
   int ppn = 1;
@@ -3450,10 +3454,13 @@ if( flowv_interp == 1 )
   int lowIndA = 0;
 #endif
   std::cout << "Starting psourcefile import " << std::endl;
-#if PARTICLE_SOURCE_FILE > 0 // File source
-  libconfig::Config cfg_particles;
+
   vector<gitr_precision> xpfile(nP), ypfile(nP), zpfile(nP), vxpfile(nP), vypfile(nP),
       vzpfile(nP);
+
+  if( use_particle_source_file > 0 )
+  {
+  libconfig::Config cfg_particles;
   std::string ncParticleSourceFile;
   int nPfile = 0;
   if (world_rank == 0) {
@@ -3523,7 +3530,7 @@ if( flowv_interp == 1 )
   //    << zpfile[i] << std::endl; std::cout << " Exyz from file " << Expfile[i]
   //    << " " << Eypfile[i] << " " << Ezpfile[i] << std::endl;
   //}
-#endif
+  }
   std::cout << "particle file import done" << std::endl;
   sim::Array<gitr_precision> pSurfNormX(nP), pSurfNormY(nP), pSurfNormZ(nP), px(nP),
       py(nP), pz(nP), pvx(nP), pvy(nP), pvz(nP);
@@ -3694,14 +3701,15 @@ if( flowv_interp == 1 )
     // particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
 #endif
 
-#if PARTICLE_SOURCE_FILE > 0 // File source
+    if( use_particle_source_file > 0 )
+    {
     x = xpfile[i];
     y = ypfile[i];
     z = zpfile[i];
     vx = vxpfile[i];
     vy = vypfile[i];
     vz = vzpfile[i];
-#endif
+    }
     particleArray->setParticleV(i, x, y, z, vx, vy, vz, Z, amu, charge,dt);
 #if PARTICLE_SOURCE_SPACE > 0
     pSurfNormX[i] =
