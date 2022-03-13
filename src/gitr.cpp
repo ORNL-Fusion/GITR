@@ -111,6 +111,7 @@ int main(int argc, char **argv, char **envp) {
   int presheath_interp = use.get< int >( use::presheath_interp );
   int efield_interp = use.get< int >( use::efield_interp );
 
+
   // Set default processes per node to 1
   int ppn = 1;
 
@@ -1174,6 +1175,8 @@ else if( geom_hash_sheath > 1 )
   std::string connLengthCfg = "connectionLength.";
   std::string lcFile;
 int generate_lc = use.get<int>( use::generate_lc );
+  NcFile ncFileLC("LcS.nc", NcFile::replace);
+  NcDim nc_nTracers = ncFileLC.addDim("nTracers", nTracers);
 int lc_interp = use.get<int>( use::lc_interp );
 if (world_rank == 0) {
 if( generate_lc > 0 )
@@ -1477,9 +1480,8 @@ if( generate_lc > 0 )
       }
     }
 
-    NcFile ncFileLC("LcS.nc", NcFile::replace);
     vector<NcDim> dims_lc;
-    NcDim nc_nTracers = ncFileLC.addDim("nTracers", nTracers);
+    nc_nTracers = ncFileLC.addDim("nTracers", nTracers);
     NcDim nc_nRLc = ncFileLC.addDim("nR", nR_Lc);
     dims_lc.push_back(nc_nRLc);
 
@@ -1814,6 +1816,11 @@ if( density_interp == 0 )
   MPI_Bcast(flowVz.data(), n_flowV, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
+  gitr_precision surroundingMinimumR = 0.0;
+  gitr_precision surroundingMinimumY = 0.0;
+  gitr_precision surroundingMinimumZ = 0.0;
+  int iterIndex = 0;
+  int nFlowVs;
 if( flowv_interp == 1 )
 {
   for (int i = 0; i < nR_flowV; i++) {
@@ -1827,7 +1834,7 @@ if( flowv_interp == 1 )
     flowVGridz[i] = gridZLc[i];
   }
   std::cout << " !!! flowvgridr0 " << flowVGridr[0] << std::endl;
-  int nFlowVs = nR_Lc * nZ_Lc;
+  nFlowVs = nR_Lc * nZ_Lc;
   if( lc_interp == 3 )
   {
   for (int i = 0; i < nY_flowV; i++)
@@ -1893,10 +1900,6 @@ if( flowv_interp == 1 )
   std::cout << "Done with initial calculation, beginning sorting" << std::endl;
   sim::Array<gitr_precision> flowVrSub(nFlowVs), flowVzSub(nFlowVs), flowVySub(nFlowVs);
   sim::Array<int> noIntersectionNearestMax(nFlowVs);
-  gitr_precision surroundingMinimumR = 0.0;
-  gitr_precision surroundingMinimumY = 0.0;
-  gitr_precision surroundingMinimumZ = 0.0;
-  int iterIndex = 0;
   for (int i = 0; i < nR_Lc; i++) {
     std::cout << "i of " << i << " " << nR_Lc << std::endl;
     for (int j = 0; j < nY_Lc; j++) {
