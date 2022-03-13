@@ -83,10 +83,26 @@ void vectorCrossProduct(gitr_precision A[], gitr_precision B[], gitr_precision C
 }
 
 CUDA_CALLABLE_MEMBER
-gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, gitr_precision E[], Boundary *boundaryVector, int nLines,
-       int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
-       gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
-         int&  closestBoundaryIndex, int biased_surface, int use_3d_geom, int use_cylsymm ) {
+gitr_precision getE ( gitr_precision x0, 
+                      gitr_precision y,
+                      gitr_precision z,
+                      gitr_precision E[],
+                      Boundary *boundaryVector,
+                      int nLines,
+                      int nR_closeGeom,
+                      int nY_closeGeom,
+                      int nZ_closeGeom,
+                      int n_closeGeomElements, 
+                      gitr_precision *closeGeomGridr,
+                      gitr_precision *closeGeomGridy,
+                      gitr_precision *closeGeomGridz,
+                      int *closeGeom, 
+                      int&  closestBoundaryIndex,
+                      int biased_surface,
+                      int use_3d_geom,
+                      int use_cylsymm,
+                      int const use_geom_hash )
+{
 
     gitr_precision pot = 0.0;
       int minIndex=0;
@@ -165,30 +181,56 @@ if( use_3d_geom > 0 )
       gitr_precision normals[21] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,
                            0.0,0.0,0.0,0.0,0.0,0.0,0.0,
                            0.0,0.0,0.0,0.0,0.0,0.0,0.0};
-#if GEOM_HASH_SHEATH > 0
-  gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
-  gitr_precision dy = closeGeomGridy[1] - closeGeomGridy[0];
-  gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
-  int rInd = std::floor((x0 - closeGeomGridr[0])/dr + 0.5);
-  int yInd = std::floor((y - closeGeomGridy[0])/dy + 0.5);
-  int zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
-  int i;
-  if(rInd < 0 || rInd >= nR_closeGeom)
-    rInd =0;
-  if(yInd < 0 || yInd >= nY_closeGeom)
-    yInd =0;
-  if(zInd < 0 || zInd >= nZ_closeGeom)
-    zInd =0;
+  int top_limit = -1;
 
-  for (int k=0; k< n_closeGeomElements; k++) //n_closeGeomElements
+  gitr_precision dr;
+  gitr_precision dy;
+  gitr_precision dz;
+
+  int rInd;
+  int yInd;
+  int zInd;
+
+  if( use_geom_hash > 0 )
+  {
+    dr = closeGeomGridr[1] - closeGeomGridr[0];
+    dy = closeGeomGridy[1] - closeGeomGridy[0];
+    dz = closeGeomGridz[1] - closeGeomGridz[0];
+    rInd = std::floor((x0 - closeGeomGridr[0])/dr + 0.5);
+    yInd = std::floor((y - closeGeomGridy[0])/dy + 0.5);
+    zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
+
+    if(rInd < 0 || rInd >= nR_closeGeom) rInd =0;
+
+    if(yInd < 0 || yInd >= nY_closeGeom) yInd =0;
+
+    if(zInd < 0 || zInd >= nZ_closeGeom) zInd =0;
+
+    top_limit = n_closeGeomElements;
+  }
+
+  else
+  {
+    top_limit = nLines;
+  }
+
+  for( int k = 0; k < top_limit; k++ )
+  {
+    int i = -1;
+
+    if( use_geom_hash > 0 )
     {
-       i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements 
-                   + yInd*nR_closeGeom*n_closeGeomElements
-                   + rInd*n_closeGeomElements + k];
-#else
-      for (int i=0; i<nLines; i++)
-      {
-#endif
+      i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements 
+                    + yInd*nR_closeGeom*n_closeGeomElements
+                    + rInd*n_closeGeomElements + k];
+    }
+
+    else
+    {
+      i = k;
+    }
+
+        /* Captain! Make this into a lambda function */
     a = boundaryVector[i].a;
     b = boundaryVector[i].b;
     c = boundaryVector[i].c;
@@ -345,10 +387,8 @@ if( use_3d_geom > 0 )
           closestBoundaryIndex = i;
           minIndex = i;
          }
-         //std::cout << "perp dist " << perpDist << std::endl;
-         //std::cout << "point to AB BC CA " << p0ABdist << " " << p0BCdist << " " << p0CAdist << std::endl;
-        //}
-       }
+  }
+
     if(isnan(directionUnitVector[0]) || isnan(directionUnitVector[1]) || isnan(directionUnitVector[2])){
 	    //printf("minDist %f \n", minDistance);
 	    //printf("directionV %f %f %f \n", directionUnitVector[0],directionUnitVector[1],directionUnitVector[2]);
@@ -381,28 +421,53 @@ if( use_3d_geom > 0 )
     x = x0;
     }
 
-#if GEOM_HASH_SHEATH > 0
-  gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
-  gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
-  int rInd = std::floor((x - closeGeomGridr[0])/dr + 0.5);
-  int zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
-  if(rInd >= nR_closeGeom) rInd = nR_closeGeom -1;
-  if(zInd >= nZ_closeGeom) zInd = nZ_closeGeom -1;
-  if(rInd < 0) rInd = 0;
-  if(zInd < 0) zInd = 0;
-  int j;
-  for (int k=0; k< n_closeGeomElements; k++) //n_closeGeomElements
-    {
-       j = closeGeom[zInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + k];
+    int top_limit = -1;
+    gitr_precision dr;
+    gitr_precision dz;
 
-#else
-    for (int j=0; j< nLines; j++)
-    {  //std::cout << " surface check " << j << std::endl;
-#endif
-        //if(j > nLines)
-        //{
-        //    j = 0;
-        //}
+    int rInd;
+    int zInd;
+
+    if( use_geom_hash > 0 )
+    {
+      dr = closeGeomGridr[1] - closeGeomGridr[0];
+
+      dz = closeGeomGridz[1] - closeGeomGridz[0];
+
+      rInd = std::floor((x - closeGeomGridr[0])/dr + 0.5);
+
+      zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
+
+      if(rInd >= nR_closeGeom) rInd = nR_closeGeom -1;
+
+      if(zInd >= nZ_closeGeom) zInd = nZ_closeGeom -1;
+
+      if(rInd < 0) rInd = 0;
+
+      if(zInd < 0) zInd = 0;
+
+      top_limit = n_closeGeomElements;
+    }
+    
+    else
+    {
+      top_limit = nLines;
+    }
+
+    for( int k = 0; k < top_limit; k++ )
+    {
+      int j = -1;
+
+      if( use_geom_hash > 0 )
+      {
+        j = closeGeom[zInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + k];
+      }
+
+      else
+      {
+        j = k;
+      }
+
        gitr_precision boundZhere = boundaryVector[j].Z;
        
         if (boundZhere != 0.0)
@@ -464,6 +529,7 @@ if( use_3d_geom > 0 )
             distanceToParticle = tol;
         }
     }
+
     if (direction_type == 1)
     {
         if (boundaryVector[minIndex].slope_dzdx == 0)
@@ -604,6 +670,7 @@ move_boris::move_boris(
   int use_3d_geom,
   int use_cylsymm,
   int use_adaptive_dt,
+  int use_geom_hash,
   gitr_precision _max_dt )
 
   : 
@@ -643,7 +710,9 @@ move_boris::move_boris(
         biased_surface( biased_surface ),
         use_3d_geom( use_3d_geom ),
         use_cylsymm( use_cylsymm ),
-        use_adaptive_dt( use_adaptive_dt ) {}
+        use_adaptive_dt( use_adaptive_dt ),
+        use_geom_hash( use_geom_hash )
+        {}
 
 CUDA_CALLABLE_MEMBER    
 void move_boris::operator()(std::size_t indx)
@@ -691,7 +760,8 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath,
-                  closestBoundaryIndex, biased_surface, use_3d_geom, use_cylsymm );
+                  closestBoundaryIndex, biased_surface, use_3d_geom, use_cylsymm,
+                  use_geom_hash );
   }
 
 if( use_presheath_efield > 0 )
@@ -820,7 +890,7 @@ if( use_presheath_efield > 0 )
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  biased_surface, use_3d_geom, use_cylsymm );
+                  biased_surface, use_3d_geom, use_cylsymm, use_geom_hash );
   }
 
   if( use_presheath_efield > 0 )

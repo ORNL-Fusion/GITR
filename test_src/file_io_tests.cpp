@@ -22,6 +22,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   int use_surface_model = 0;
   int use_3d_tet_geom = 0;
   int use_cylsymm = 0;
+  int use_geom_hash = 0;
 
   SECTION("int")
   {
@@ -139,7 +140,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
       nEdist, E0dist, Edist, nAdist, A0dist, Adist,
-      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
+      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm, use_geom_hash );
 
 
   }
@@ -195,7 +196,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
       nEdist, E0dist, Edist, nAdist, A0dist, Adist,
-      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
+      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm, use_geom_hash );
 
     particleArray->x[0] = 0.5;
     particleArray->xprevious[0] = 0.5;
@@ -282,7 +283,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
       nEdist, E0dist, Edist, nAdist, A0dist, Adist,
-      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
+      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm, use_geom_hash );
 
     particleArray->x[0] = 0.5;
     particleArray->xprevious[0] = 0.5;

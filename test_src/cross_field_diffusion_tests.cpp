@@ -61,6 +61,7 @@ TEST_CASE( "cross-field diffusion operator" )
   int use_3d_tet_geom = 0;
   int bfield_interp = 0;
   int use_adaptive_dt = 0;
+  int use_geom_hash = 0;
 
   SECTION( "cross-field diffusion, straight field lines" )
   {
@@ -126,7 +127,7 @@ TEST_CASE( "cross-field diffusion operator" )
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
         nEdist, E0dist, Edist, nAdist, A0dist, Adist,
-        use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
+        use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm, use_geom_hash );
 
 
     /* data collection variables */
@@ -371,7 +372,7 @@ TEST_CASE( "cross-field diffusion operator" )
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
         nEdist, E0dist, Edist, nAdist, A0dist, Adist,
-        use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
+        use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm, use_geom_hash );
 
 
     /* data collection variables */

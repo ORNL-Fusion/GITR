@@ -102,6 +102,7 @@ int main(int argc, char **argv, char **envp) {
   int force_eval = use.get< int >( use::force_eval );
   int use_sort = use.get< int >( use::sort );
   int use_adaptive_dt = use.get< int >( use::adaptive_dt );
+  int use_geom_hash = use.get< int >( use::geom_hash );
 
   // Set default processes per node to 1
   int ppn = 1;
@@ -1324,7 +1325,8 @@ if( generate_lc > 0 )
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
                        &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0,
-                       use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm ) );
+                       use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm,
+                       use_geom_hash ) );
 
     thrust::for_each(
         thrust::device, lcBegin, lcEnd,
@@ -1334,7 +1336,8 @@ if( generate_lc > 0 )
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
                        &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0,
-                       use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm ) );
+                       use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm,
+                       use_geom_hash ) );
   }
   auto finish_clock_trace = Time_trace::now();
   fsec_trace fstrace = finish_clock_trace - start_clock_trace;
@@ -2472,7 +2475,7 @@ if( flowv_interp == 1 )
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), minInd_bnd, biased_surface, use_3d_tet_geom,
-               use_cylsymm );
+               use_cylsymm, use_geom_hash );
       //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
   }
 #if EFIELD_INTERP == 1
@@ -3896,16 +3899,15 @@ if( flowv_interp == 1 )
       n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
       &closeGeom_sheath.front(), use_sheath_efield, use_presheath_efield, 
-      biased_surface, use_3d_tet_geom, use_cylsymm, max_dt );
-  //void (*bor)(std::size_t) = &move_boris::operator2;
-  //auto bor1 = *bor;
+      biased_surface, use_3d_tet_geom, use_cylsymm, use_adaptive_dt, use_geom_hash, max_dt );
+
   geometry_check geometry_check0(
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
       nEdist, E0dist, Edist, nAdist, A0dist, Adist, 
-      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm );
+      use_surface_model, use_flux_ea, use_3d_tet_geom, use_cylsymm, use_geom_hash );
 
   sortParticles sort0(particleArray, nP,dev_tt, 10000,
                       nActiveParticlesOnRank.data());
@@ -4614,7 +4616,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface,
-               use_3d_tet_geom, use_cylsymm );
+               use_3d_tet_geom, use_cylsymm, use_geom_hash );
       
       if (boundaries[closestBoundaryIndex].Z > 0.0) {
         surfIndex = boundaries[closestBoundaryIndex].surfaceNumber;

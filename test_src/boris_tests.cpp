@@ -58,6 +58,7 @@ TEST_CASE( "Complex Boris Motion" )
 {
   int const use_cylsymm = 0;
   int const use_adaptive_dt = 0;
+  int const use_geom_hash = 0;
   /* Testing complex boris motion implemented in the linked script */
   SECTION( "compare vx, vy, vz, x, y, z to analytic solution" )
   {
@@ -409,7 +410,8 @@ TEST_CASE( "Complex Boris Motion" )
         &closeGeom_sheath.front(),
         use_sheath_efield, use_presheath_efield, biased_surface, use_3d_geom,
         use_cylsymm,
-        use_adaptive_dt );
+        use_adaptive_dt,
+        use_geom_hash );
 
     /* time loop */
     std::vector< double > v_x_test( n_timesteps );
@@ -655,7 +657,8 @@ TEST_CASE( "Complex Boris Motion" )
                       use_sheath_efield, use_presheath_efield, biased_surface,
                       use_3d_geom,
                       use_cylsymm,
-                      use_adaptive_dt );
+                      use_adaptive_dt,
+                      use_geom_hash );
 
     /* time loop */
     for (int tt = 0; tt < nT; tt++)
@@ -780,7 +783,7 @@ TEST_CASE( "Complex Boris Motion" )
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface,
-               use_3d_tet_geom, use_cylsymm );
+               use_3d_tet_geom, use_cylsymm, use_geom_hash );
 
       gitrE[j] = thisE[2];
     }

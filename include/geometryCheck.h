@@ -60,6 +60,7 @@ struct geometry_check {
   int use_flux_ea;
   int use_3d_tet_geom;
   int use_cylsymm;
+  int use_geom_hash;
 
   geometry_check( Particles *_particlesPointer, int _nLines,
                   Boundary *_boundaryVector, Surfaces *_surfaces, gitr_precision _dt,
@@ -70,7 +71,7 @@ struct geometry_check {
                   gitr_precision _E0dist,
                   gitr_precision _Edist, int _nAdist, gitr_precision _A0dist,
                   gitr_precision _Adist, int use_surface_model, int use_flux_ea,
-                  int use_3d_tet_geom, int use_cylsymm );
+                  int use_3d_tet_geom, int use_cylsymm, int use_geom_hash );
 
   //CUDA_CALLABLE_MEMBER_DEVICE
  __host__  __device__

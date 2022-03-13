@@ -66,7 +66,8 @@ geometry_check::geometry_check(
   int use_surface_model,
   int use_flux_ea, 
   int use_3d_tet_geom,
-  int use_cylsymm )
+  int use_cylsymm,
+  int use_geom_hash )
   :
 
     particlesPointer(_particlesPointer), nLines(_nLines),
@@ -78,7 +79,9 @@ geometry_check::geometry_check(
     closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
     E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
     Adist(_Adist), use_surface_model(use_surface_model), use_flux_ea(use_flux_ea),
-    use_3d_tet_geom( use_3d_tet_geom ), use_cylsymm( use_cylsymm ) {}
+    use_3d_tet_geom( use_3d_tet_geom ), use_cylsymm( use_cylsymm ),
+    use_geom_hash( use_geom_hash )
+    {}
 
 __host__  __device__
 void geometry_check::operator()(std::size_t indx) const {
@@ -273,104 +276,128 @@ if( use_3d_tet_geom > 0 )
                    particlesPointer->zprevious[indx]};
     gitr_precision p1[3] = {particlesPointer->x[indx], particlesPointer->y[indx],
                    particlesPointer->z[indx]};
-#if GEOM_HASH > 0
-    // find which hash
+
+    int top_limit = -1;
+
+    int buffIndx;
+    int rInd;
+    int zInd;
+    int yInd;
     int nHash = 0;
-    int rHashInd = 0;
-    int yHashInd = 0;
-    int zHashInd = 0;
-    int rHashInd1 = 0;
-    int yHashInd1 = 0;
-    int zHashInd1 = 0;
-    gitr_precision r_position = particlesPointer->xprevious[indx];
-    for (int i = 0; i < nHashes; i++) {
-      rHashInd1 = nR_closeGeom[i] - 1;
-      yHashInd1 = nY_closeGeom[i] - 1;
-      zHashInd1 = nZ_closeGeom[i] - 1;
-      if (i > 0)
-        rHashInd = nR_closeGeom[i - 1];
-      if (i > 0)
-        yHashInd = nY_closeGeom[i - 1];
-      if (i > 0)
-        zHashInd = nZ_closeGeom[i - 1];
-      if (i > 0)
-        rHashInd1 = nR_closeGeom[i - 1] + nR_closeGeom[i] - 1;
-      if (i > 0)
-        yHashInd1 = nY_closeGeom[i - 1] + nY_closeGeom[i] - 1;
-      if (i > 0)
-        zHashInd1 = nZ_closeGeom[i - 1] + nZ_closeGeom[i] - 1;
-      // std::cout << "rpos " <<rHashInd<< " " << rHashInd1 << " " <<
-      // closeGeomGridr[rHashInd] << " "
-      //          << closeGeomGridr[rHashInd1] << std::endl;
-      // std::cout << "ypos " << closeGeomGridy[yHashInd] << " "
-      //          << closeGeomGridy[yHashInd1] << std::endl;
-      // std::cout << "zpos " << closeGeomGridz[zHashInd] << " "
-      //         << closeGeomGridz[zHashInd1] << std::endl;
-      if (r_position < closeGeomGridr[rHashInd1] &&
-          r_position > closeGeomGridr[rHashInd] &&
-          particlesPointer->yprevious[indx] < closeGeomGridy[yHashInd1] &&
-          particlesPointer->yprevious[indx] > closeGeomGridy[yHashInd] &&
-          particlesPointer->zprevious[indx] < closeGeomGridz[zHashInd1] &&
-          particlesPointer->zprevious[indx] > closeGeomGridz[zHashInd]) {
-        nHash = i;
+
+    if( use_geom_hash > 0 )
+    {
+      int rHashInd = 0;
+      int yHashInd = 0;
+      int zHashInd = 0;
+      int rHashInd1 = 0;
+      int yHashInd1 = 0;
+      int zHashInd1 = 0;
+      gitr_precision r_position = particlesPointer->xprevious[indx];
+      for (int i = 0; i < nHashes; i++) {
+        rHashInd1 = nR_closeGeom[i] - 1;
+        yHashInd1 = nY_closeGeom[i] - 1;
+        zHashInd1 = nZ_closeGeom[i] - 1;
+        if (i > 0)
+          rHashInd = nR_closeGeom[i - 1];
+        if (i > 0)
+          yHashInd = nY_closeGeom[i - 1];
+        if (i > 0)
+          zHashInd = nZ_closeGeom[i - 1];
+        if (i > 0)
+          rHashInd1 = nR_closeGeom[i - 1] + nR_closeGeom[i] - 1;
+        if (i > 0)
+          yHashInd1 = nY_closeGeom[i - 1] + nY_closeGeom[i] - 1;
+        if (i > 0)
+          zHashInd1 = nZ_closeGeom[i - 1] + nZ_closeGeom[i] - 1;
+        // std::cout << "rpos " <<rHashInd<< " " << rHashInd1 << " " <<
+        // closeGeomGridr[rHashInd] << " "
+        //          << closeGeomGridr[rHashInd1] << std::endl;
+        // std::cout << "ypos " << closeGeomGridy[yHashInd] << " "
+        //          << closeGeomGridy[yHashInd1] << std::endl;
+        // std::cout << "zpos " << closeGeomGridz[zHashInd] << " "
+        //         << closeGeomGridz[zHashInd1] << std::endl;
+        if (r_position < closeGeomGridr[rHashInd1] &&
+            r_position > closeGeomGridr[rHashInd] &&
+            particlesPointer->yprevious[indx] < closeGeomGridy[yHashInd1] &&
+            particlesPointer->yprevious[indx] > closeGeomGridy[yHashInd] &&
+            particlesPointer->zprevious[indx] < closeGeomGridz[zHashInd1] &&
+            particlesPointer->zprevious[indx] > closeGeomGridz[zHashInd]) {
+          nHash = i;
+        }
       }
-    }
-    // std::cout << "nHash " << nHash << std::endl;
-    rHashInd = 0;
-    yHashInd = 0;
-    zHashInd = 0;
-    if (nHash > 0)
-      rHashInd = nR_closeGeom[nHash - 1];
-    if (nHash > 0)
-      yHashInd = nY_closeGeom[nHash - 1];
-    if (nHash > 0)
-      zHashInd = nZ_closeGeom[nHash - 1];
-    gitr_precision dr = closeGeomGridr[rHashInd + 1] - closeGeomGridr[rHashInd];
-    gitr_precision dz = closeGeomGridz[zHashInd + 1] - closeGeomGridz[zHashInd];
-    gitr_precision dy = closeGeomGridy[yHashInd + 1] - closeGeomGridy[yHashInd];
-    int rInd = std::floor((r_position - closeGeomGridr[rHashInd]) / dr + 0.5);
-    int zInd = std::floor(
-        (particlesPointer->zprevious[indx] - closeGeomGridz[zHashInd]) / dz +
-        0.5);
-    int i = 0;
-    int yInd = std::floor(
-        (particlesPointer->yprevious[indx] - closeGeomGridy[yHashInd]) / dy +
-        0.5);
-    // std::cout << "rHashInd " << rHashInd << " " << yHashInd << " " <<
-    // zHashInd << std::endl; std::cout << "dr dy dz " << dr << " " << dy << "
-    // " << dz << std::endl; std::cout << "rind y z " << rInd << " " << yInd <<
-    // " " << zInd << std::endl;
-    if (rInd < 0 || yInd < 0 || zInd < 0) {
-      rInd = 0;
-      yInd = 0;
-      zInd = 0;
+      // std::cout << "nHash " << nHash << std::endl;
+      rHashInd = 0;
+      yHashInd = 0;
+      zHashInd = 0;
+      if (nHash > 0)
+        rHashInd = nR_closeGeom[nHash - 1];
+      if (nHash > 0)
+        yHashInd = nY_closeGeom[nHash - 1];
+      if (nHash > 0)
+        zHashInd = nZ_closeGeom[nHash - 1];
+      gitr_precision dr = closeGeomGridr[rHashInd + 1] - closeGeomGridr[rHashInd];
+      gitr_precision dz = closeGeomGridz[zHashInd + 1] - closeGeomGridz[zHashInd];
+      gitr_precision dy = closeGeomGridy[yHashInd + 1] - closeGeomGridy[yHashInd];
+      rInd = std::floor((r_position - closeGeomGridr[rHashInd]) / dr + 0.5);
+      zInd = std::floor(
+          (particlesPointer->zprevious[indx] - closeGeomGridz[zHashInd]) / dz +
+          0.5);
+      int i = 0;
+      yInd = std::floor(
+          (particlesPointer->yprevious[indx] - closeGeomGridy[yHashInd]) / dy +
+          0.5);
+      // std::cout << "rHashInd " << rHashInd << " " << yHashInd << " " <<
+      // zHashInd << std::endl; std::cout << "dr dy dz " << dr << " " << dy << "
+      // " << dz << std::endl; std::cout << "rind y z " << rInd << " " << yInd <<
+      // " " << zInd << std::endl;
+      if (rInd < 0 || yInd < 0 || zInd < 0) {
+        rInd = 0;
+        yInd = 0;
+        zInd = 0;
 #if USE_CUDA
 #else
-      // std::cout << "WARNING: particle outside of geometry hash range (low)"
-      // << std::endl;
+        // std::cout << "WARNING: particle outside of geometry hash range (low)"
+        // << std::endl;
 #endif
-    } else if (rInd > nR_closeGeom[nHash] - 1 ||
-               yInd > nY_closeGeom[nHash] - 1 ||
-               zInd > nZ_closeGeom[nHash] - 1) {
-      rInd = 0;
-      yInd = 0;
-      zInd = 0;
+      } else if (rInd > nR_closeGeom[nHash] - 1 ||
+          yInd > nY_closeGeom[nHash] - 1 ||
+          zInd > nZ_closeGeom[nHash] - 1) {
+        rInd = 0;
+        yInd = 0;
+        zInd = 0;
+      }
+      buffIndx = 0;
+      if (nHash > 0)
+        buffIndx = nR_closeGeom[nHash - 1] * nY_closeGeom[nHash - 1] *
+          nZ_closeGeom[nHash - 1] * n_closeGeomElements[nHash - 1];
+
+      top_limit = n_closeGeomElements[ nHash ];
     }
-    int buffIndx = 0;
-    if (nHash > 0)
-      buffIndx = nR_closeGeom[nHash - 1] * nY_closeGeom[nHash - 1] *
-                 nZ_closeGeom[nHash - 1] * n_closeGeomElements[nHash - 1];
-    // std::cout << "buff Index " << buffIndx << std::endl;
-    for (int j = 0; j < n_closeGeomElements[nHash]; j++) {
-      i = closeGeom[buffIndx +
-                    zInd * nY_closeGeom[nHash] * nR_closeGeom[nHash] *
-                        n_closeGeomElements[nHash] +
-                    yInd * nR_closeGeom[nHash] * n_closeGeomElements[nHash] +
-                    rInd * n_closeGeomElements[nHash] + j];
-      // std::cout << "i's " << i << std::endl;
-#else
-    for (int i = 0; i < nLines; i++) {
-#endif
+
+    else
+    {
+      top_limit = nLines;
+    }
+
+    for( int k = 0; k < top_limit; k++ )
+    {
+      int i = -1;
+
+      if( use_geom_hash > 0 )
+      {
+        i = closeGeom[ buffIndx +
+                       zInd * nY_closeGeom[nHash] * nR_closeGeom[nHash] *
+                       n_closeGeomElements[nHash] +
+                       yInd * nR_closeGeom[nHash] * n_closeGeomElements[nHash] +
+                       rInd * n_closeGeomElements[nHash] + k ];
+      }
+
+      else
+      {
+        i = k;
+      }
+
       a = boundaryVector[i].a;
       b = boundaryVector[i].b;
       c = boundaryVector[i].c;
@@ -503,6 +530,7 @@ if( use_3d_tet_geom > 0 )
         }
       }
     }
+
       /* Ahoy! xprevious is saved, prepared for the position update now */
       if (nBoundariesCrossed == 0) {
         particlesPointer->xprevious[indx] = particlesPointer->x[indx];
@@ -585,188 +613,195 @@ else{
 //std::cout << "r0 " << particlesPointer->x[indx] << " " <<
 //particlesPointer->y[indx] << " " <<
 //particlesPointer->z[indx]<< std::endl;
-#if GEOM_HASH > 0
-    gitr_precision r_position;
 
-    if( use_cylsymm > 0 )
-    {
+/* test code */
+
+int top_limit = -1;
+int closeIndx = 0;
+
+int rInd;
+int zInd;
+
+if( use_geom_hash > 0 )
+{
+  gitr_precision r_position;
+
+  if( use_cylsymm > 0 )
+  {
     r_position = std::sqrt(particlesPointer->xprevious[indx] *
-                                 particlesPointer->xprevious[indx] +
-                             particlesPointer->yprevious[indx] *
-                                 particlesPointer->yprevious[indx]);
-    }
-    else
-    {
+        particlesPointer->xprevious[indx] +
+        particlesPointer->yprevious[indx] *
+        particlesPointer->yprevious[indx]);
+  }
+
+  else
+  {
     r_position = particlesPointer->xprevious[indx];
+  }
+
+  gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
+  gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
+
+  rInd = std::floor((r_position - closeGeomGridr[0]) / dr + 0.5);
+  zInd = std::floor(
+      (particlesPointer->zprevious[indx] - closeGeomGridz[0]) / dz + 0.5);
+
+  if (rInd < 0 || rInd >= nR_closeGeom[0]) rInd = 0;
+
+  if (zInd < 0 || zInd >= nZ_closeGeom[0]) zInd = 0;
+
+  top_limit = n_closeGeomElements[0];
+}
+
+else
+{
+  top_limit = nLines;
+}
+
+for( int k = 0; k < top_limit; k++ )
+{
+  int i = -1;
+
+  if( use_geom_hash > 0 )
+  {
+    closeIndx = zInd * nR_closeGeom[0] * n_closeGeomElements[0] +
+               rInd * n_closeGeomElements[0] + k;
+
+    i = closeGeom[closeIndx];
+  }
+
+  else
+  {
+    i = k;
+  }
+
+  if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75) 
+  {
+    signPoint = std::copysign(1.0, pdim1 - boundaryVector[i].x1);
+    signPoint0 = std::copysign(1.0, pdim1previous - boundaryVector[i].x1);
+    // std::cout << "signpoint1 " << signPoint << " " << signPoint0 <<
+    // std::endl;
+  } 
+  else 
+  {
+    signPoint =
+      std::copysign(1.0, particlesPointer->z[indx] -
+          pdim1 * boundaryVector[i].slope_dzdx -
+          boundaryVector[i].intercept_z);
+    signPoint0 = std::copysign(1.0, particlesPointer->zprevious[indx] -
+        pdim1previous *
+        boundaryVector[i].slope_dzdx -
+        boundaryVector[i].intercept_z);
+    //std::cout << "signpoint2 " << signPoint << " " << signPoint0 <<
+    //std::endl;
+  }
+
+  if (signPoint != signPoint0) 
+  {
+    if (std::abs(particle_slope) >= tol * 0.75) 
+    {
+      // std::cout << " isinf catch " << std::endl;
+      particle_slope = tol;
     }
-    gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
-    gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
-    int rInd = std::floor((r_position - closeGeomGridr[0]) / dr + 0.5);
-    int zInd = std::floor(
-        (particlesPointer->zprevious[indx] - closeGeomGridz[0]) / dz + 0.5);
-    if (rInd < 0 || rInd >= nR_closeGeom[0])
-      rInd = 0;
-    if (zInd < 0 || zInd >= nZ_closeGeom[0])
-      zInd = 0;
-    int i = 0;
-    int closeIndx = 0;
-    for (int j = 0; j < n_closeGeomElements[0]; j++) {
-      closeIndx = zInd * nR_closeGeom[0] * n_closeGeomElements[0] +
-                  rInd * n_closeGeomElements[0] + j;
-      // if(zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      // rInd*n_closeGeomElements[0] + j < 0)
-      //{
-      //        zInd=0;
-      //        rInd=0;
-      //        j=0;
-      //    //std::cout << "index " <<
-      //    zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      //    rInd*n_closeGeomElements[0] + j << std::endl;
-      //}
-      //    if(zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      //    rInd*n_closeGeomElements[0] + j > 1309440)
-      //    {
-      //        zInd=0;
-      //        rInd=0;
-      //        j=0;
-      //        //std::cout << "index " <<
-      //        zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      //        rInd*n_closeGeomElements[0] + j << std::endl;
-      //    }
-      i = closeGeom[closeIndx];
-    
-#else
-    for (int i = 0; i < nLines; i++) {
-#endif
-      // std::cout << "vert geom " << i << "  " <<
-      // fabs(boundaryVector[i].slope_dzdx) << " " << tol << std::endl;
-      if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75) 
+    if (std::abs(particle_slope) >= tol * 0.75) 
+    {
+      signLine1 = std::copysign(1.0, boundaryVector[i].x1 - pdim1);
+      signLine2 = std::copysign(1.0, boundaryVector[i].x2 - pdim1);
+      // std::cout << "signlines3 " << signLine1 << " " << signLine2 <<
+      // std::endl;
+    }
+    else 
+    {
+      signLine1 =
+        std::copysign(1.0, boundaryVector[i].z1 -
+            boundaryVector[i].x1 * particle_slope -
+            particle_intercept);
+      signLine2 =
+        std::copysign(1.0, boundaryVector[i].z2 -
+            boundaryVector[i].x2 * particle_slope -
+            particle_intercept);
+      //std::cout << "signline 1 and 2 " << signLine1 << " " << signLine2 << std::endl;
+    }
+
+    ////if (signPoint != signPoint0) 
+    ////{
+    ////  if (std::abs(particle_slope) >= tol * 0.75) 
+    ////  {
+    ////    // std::cout << " isinf catch " << std::endl;
+    ////    particle_slope = tol;
+    ////  }
+    ////  if (std::abs(particle_slope) >= tol * 0.75) 
+    ////  {
+    ////    signLine1 = std::copysign(1.0, boundaryVector[i].x1 - pdim1);
+    ////    signLine2 = std::copysign(1.0, boundaryVector[i].x2 - pdim1);
+    ////    // std::cout << "signlines3 " << signLine1 << " " << signLine2 <<
+    ////    // std::endl;
+    ////  } 
+    ////  else 
+    ////  {
+    ////    signLine1 =
+    ////        std::copysign(1.0, boundaryVector[i].z1 -
+    ////                               boundaryVector[i].x1 * particle_slope -
+    ////                               particle_intercept);
+    ////    signLine2 =
+    ////        std::copysign(1.0, boundaryVector[i].z2 -
+    ////                               boundaryVector[i].x2 * particle_slope -
+    ////                               particle_intercept);
+    ////  }
+    // std::cout << "signLines " << signLine1 << " " << signLine2 <<
+    // std::endl; std::cout << "bound vec points " <<
+    // boundaryVector[i].z1 << " " << boundaryVector[i].x1 <<
+    // " " << boundaryVector[i].z2 << " " << boundaryVector[i].x2 <<
+    // std::endl;
+    if (signLine1 != signLine2) 
+    {
+      intersectionIndices[nIntersections] = i;
+      nIntersections++;
+
+      // std::cout << "nintersections " << nIntersections << std::endl;
+      // std::cout << fabs(particlesPointer->x[indx] -
+      // particlesPointer->xprevious[indx]) << tol_small << std::endl;
+      if (std::abs(pdim1 - pdim1previous) < tol_small) 
       {
-        signPoint = std::copysign(1.0, pdim1 - boundaryVector[i].x1);
-        signPoint0 = std::copysign(1.0, pdim1previous - boundaryVector[i].x1);
-        // std::cout << "signpoint1 " << signPoint << " " << signPoint0 <<
-        // std::endl;
+        //  std::cout << "vertical line" << std::cout;
+        intersectionx[nIntersections - 1] = pdim1previous;
+        intersectiony[nIntersections - 1] =
+          intersectionx[nIntersections - 1] *
+          boundaryVector[i].slope_dzdx +
+          boundaryVector[i].intercept_z;
       } 
       else 
       {
-        signPoint =
-            std::copysign(1.0, particlesPointer->z[indx] -
-                                   pdim1 * boundaryVector[i].slope_dzdx -
-                                   boundaryVector[i].intercept_z);
-        signPoint0 = std::copysign(1.0, particlesPointer->zprevious[indx] -
-                                            pdim1previous *
-                                                boundaryVector[i].slope_dzdx -
-                                            boundaryVector[i].intercept_z);
-         //std::cout << "signpoint2 " << signPoint << " " << signPoint0 <<
-         //std::endl;
-      }
-
-      if (signPoint != signPoint0) 
-      {
-        if (std::abs(particle_slope) >= tol * 0.75) 
+        // std::cout << "not vertical line" << std::endl;
+        // std::cout << 0.0*7.0 << " " << i << " " << nParam << " " <<
+        // lines[i*nParam+4] << "  " <<tol << std::endl; std::cout <<
+        // "boundaryVector slope " << boundaryVector[i].slope_dzdx << " "
+        // << tol*0.75 <<std::endl;
+        if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75) 
         {
-          // std::cout << " isinf catch " << std::endl;
-          particle_slope = tol;
-        }
-        if (std::abs(particle_slope) >= tol * 0.75) 
-        {
-          signLine1 = std::copysign(1.0, boundaryVector[i].x1 - pdim1);
-          signLine2 = std::copysign(1.0, boundaryVector[i].x2 - pdim1);
-          // std::cout << "signlines3 " << signLine1 << " " << signLine2 <<
-          // std::endl;
-        }
+          intersectionx[nIntersections - 1] = boundaryVector[i].x1;
+        } 
         else 
         {
-          signLine1 =
-              std::copysign(1.0, boundaryVector[i].z1 -
-                                     boundaryVector[i].x1 * particle_slope -
-                                     particle_intercept);
-          signLine2 =
-              std::copysign(1.0, boundaryVector[i].z2 -
-                                     boundaryVector[i].x2 * particle_slope -
-                                     particle_intercept);
-          //std::cout << "signline 1 and 2 " << signLine1 << " " << signLine2 << std::endl;
+          intersectionx[nIntersections - 1] =
+            (boundaryVector[i].intercept_z - particle_intercept) /
+            (particle_slope - boundaryVector[i].slope_dzdx);
+          //  std::cout << "in this else "<<
+          //  intersectionx[nIntersections -1] << std::endl;
         }
-
-        ////if (signPoint != signPoint0) 
-        ////{
-        ////  if (std::abs(particle_slope) >= tol * 0.75) 
-        ////  {
-        ////    // std::cout << " isinf catch " << std::endl;
-        ////    particle_slope = tol;
-        ////  }
-        ////  if (std::abs(particle_slope) >= tol * 0.75) 
-        ////  {
-        ////    signLine1 = std::copysign(1.0, boundaryVector[i].x1 - pdim1);
-        ////    signLine2 = std::copysign(1.0, boundaryVector[i].x2 - pdim1);
-        ////    // std::cout << "signlines3 " << signLine1 << " " << signLine2 <<
-        ////    // std::endl;
-        ////  } 
-        ////  else 
-        ////  {
-        ////    signLine1 =
-        ////        std::copysign(1.0, boundaryVector[i].z1 -
-        ////                               boundaryVector[i].x1 * particle_slope -
-        ////                               particle_intercept);
-        ////    signLine2 =
-        ////        std::copysign(1.0, boundaryVector[i].z2 -
-        ////                               boundaryVector[i].x2 * particle_slope -
-        ////                               particle_intercept);
-        ////  }
-          // std::cout << "signLines " << signLine1 << " " << signLine2 <<
-          // std::endl; std::cout << "bound vec points " <<
-          // boundaryVector[i].z1 << " " << boundaryVector[i].x1 <<
-          // " " << boundaryVector[i].z2 << " " << boundaryVector[i].x2 <<
-          // std::endl;
-          if (signLine1 != signLine2) 
-          {
-            intersectionIndices[nIntersections] = i;
-            nIntersections++;
-
-            // std::cout << "nintersections " << nIntersections << std::endl;
-            // std::cout << fabs(particlesPointer->x[indx] -
-            // particlesPointer->xprevious[indx]) << tol_small << std::endl;
-            if (std::abs(pdim1 - pdim1previous) < tol_small) 
-            {
-              //  std::cout << "vertical line" << std::cout;
-              intersectionx[nIntersections - 1] = pdim1previous;
-              intersectiony[nIntersections - 1] =
-                  intersectionx[nIntersections - 1] *
-                      boundaryVector[i].slope_dzdx +
-                  boundaryVector[i].intercept_z;
-            } 
-            else 
-            {
-              // std::cout << "not vertical line" << std::endl;
-              // std::cout << 0.0*7.0 << " " << i << " " << nParam << " " <<
-              // lines[i*nParam+4] << "  " <<tol << std::endl; std::cout <<
-              // "boundaryVector slope " << boundaryVector[i].slope_dzdx << " "
-              // << tol*0.75 <<std::endl;
-              if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75) 
-              {
-                intersectionx[nIntersections - 1] = boundaryVector[i].x1;
-              } 
-              else 
-              {
-                intersectionx[nIntersections - 1] =
-                    (boundaryVector[i].intercept_z - particle_intercept) /
-                    (particle_slope - boundaryVector[i].slope_dzdx);
-                //  std::cout << "in this else "<<
-                //  intersectionx[nIntersections -1] << std::endl;
-              }
-              intersectiony[nIntersections - 1] =
-                  intersectionx[nIntersections - 1] * particle_slope +
-                  particle_intercept;
-                  //std::cout << "intersectionx and y"<<
-                  //intersectionx[nIntersections -1] << " " << intersectiony[0] << std::endl;
-            }
-          }
-        ////}
+        intersectiony[nIntersections - 1] =
+          intersectionx[nIntersections - 1] * particle_slope +
+          particle_intercept;
+        //std::cout << "intersectionx and y"<<
+        //intersectionx[nIntersections -1] << " " << intersectiony[0] << std::endl;
       }
     }
-    //std::cout << " nIntersections " << nIntersections << std::endl;
-      // if(particlesPointer->hitWall[indx] == 0.0)
-      // {
+    ////}
+  }
+}
+
+/* end test code */
+
       if (nIntersections == 0) 
       {
         particlesPointer->distTraveled[indx] =
