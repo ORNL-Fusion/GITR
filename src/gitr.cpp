@@ -108,6 +108,8 @@ int main(int argc, char **argv, char **envp) {
   int use_particle_source_energy = use.get< int >( use::particle_source_energy );
   int use_particle_source_angle = use.get< int >( use::particle_source_angle );
   int particle_tracks = use.get< int >( use::particle_tracks );
+  int presheath_interp = use.get< int >( use::presheath_interp );
+  int efield_interp = use.get< int >( use::efield_interp );
 
   // Set default processes per node to 1
   int ppn = 1;
@@ -1872,7 +1874,6 @@ if( flowv_interp == 1 )
 
 #if LC_INTERP == 3
         index = i + k * nR_Lc + j * nR_Lc * nY_Lc;
-        // std::cout << "flowv calc index " << index << std::endl;
 #else
       index = i + j * nR_Lc;
 #endif
@@ -2248,13 +2249,12 @@ if( flowv_interp == 1 )
   {
 
   std::cout << "Using presheath Efield " << std::endl;
-#if PRESHEATH_INTERP == 1
   nR_PreSheathEfield = nR_Lc;
   nY_PreSheathEfield = nY_Lc;
   nZ_PreSheathEfield = nZ_Lc;
-#endif
-#if PRESHEATH_INTERP > 1
   std::string efieldFile;
+  if( presheath_interp > 1 )
+  {
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
@@ -2263,10 +2263,11 @@ if( flowv_interp == 1 )
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNrString");
     nZ_PreSheathEfield =
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNzString");
-#if PRESHEATH_INTERP > 2
+    if( presheath_interp > 2 )
+    {
     nY_PreSheathEfield =
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNyString");
-#endif
+    }
 #if USE_MPI > 0
   }
   MPI_Bcast(&nR_PreSheathEfield, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -2274,7 +2275,7 @@ if( flowv_interp == 1 )
   MPI_Bcast(&nZ_PreSheathEfield, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+  }
 
   nPSEs = nR_PreSheathEfield * nY_PreSheathEfield * nZ_PreSheathEfield;
 
@@ -2289,19 +2290,25 @@ if( flowv_interp == 1 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-#if PRESHEATH_INTERP == 0
+
+    if( presheath_interp == 0 )
+    {
     getVariable(cfg, PSECfg + "Er", PSEr[0]);
     getVariable(cfg, PSECfg + "Et", PSEt[0]);
     getVariable(cfg, PSECfg + "Ez", PSEz[0]);
-#elif PRESHEATH_INTERP > 1
+    }
+
+    else if( presheath_interp > 1 )
+    {
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridRString",
                  preSheathEGridr[0]);
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridZString",
                  preSheathEGridz[0]);
-#if PRESHEATH_INTERP > 2
-  getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridYString",
-                 preSheathEGridy[0]);
-#endif
+      if( presheath_interp > 2 )
+      {
+        getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridYString",
+                       preSheathEGridy[0]);
+      }
 
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "radialComponentString",
                  PSEr[0]);
@@ -2309,7 +2316,7 @@ if( flowv_interp == 1 )
                  "toroidalComponentString", PSEt[0]);
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "axialComponentString",
                  PSEz[0]);
-#endif
+    }
 #if USE_MPI > 0
   }
   MPI_Bcast(preSheathEGridr.data(), nR_PreSheathEfield, MPI_FLOAT, 0,
@@ -2324,7 +2331,8 @@ if( flowv_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-#if PRESHEATH_INTERP == 1
+if( presheath_interp == 1 )
+{
 
   for (int i = 0; i < nR_PreSheathEfield; i++) {
     preSheathEGridr[i] = gridRLc[i];
@@ -2349,15 +2357,26 @@ if( flowv_interp == 1 )
     for (int k = 0; k < nY_PreSheathEfield; k++) {
       thisY = preSheathEGridy[k];
 #endif
-      for (int j = 0; j < nZ_PreSheathEfield; j++) {
-        teLocal1 = interp2dCombined(preSheathEGridr[i], 0.0, preSheathEGridz[j],
-                                    nR_Temp, nZ_Temp, &TempGridr.front(),
-                                    &TempGridz.front(), &te.front());
+      for (int j = 0; j < nZ_PreSheathEfield; j++) 
+      {
+
+        teLocal1 = interp2dCombined( preSheathEGridr[i],
+                                     0.0,
+                                     preSheathEGridz[j],
+                                     nR_Temp,
+                                     nZ_Temp,
+                                     &TempGridr.front(),
+                                     &TempGridz.front(),
+                                     &te.front(),
+                                     use_cylsymm );
+
         interp2dVector(&BLocal1[0], gridRLc[i], 0.0, gridZLc[j], nR_Bfield,
                        nZ_Bfield, bfieldGridr.data(), bfieldGridz.data(),
                        br.data(), bz.data(), by.data(), use_cylsymm );
+
         Bmag1 = std::sqrt(BLocal1[0] * BLocal1[0] + BLocal1[1] * BLocal1[1] +
                      BLocal1[2] * BLocal1[2]);
+
         Bnorm1[0] = BLocal1[0] / Bmag1;
         Bnorm1[1] = BLocal1[1] / Bmag1;
         Bnorm1[2] = BLocal1[2] / Bmag1;
@@ -2365,7 +2384,6 @@ if( flowv_interp == 1 )
 #if LC_INTERP == 3
         index1 = i + k * nR_PreSheathEfield +
                  j * nR_PreSheathEfield * nY_PreSheathEfield;
-        // std::cout << "flowv calc index " << index << std::endl;
 #else
       index1 = i + j * nR_PreSheathEfield;
 #endif
@@ -2389,7 +2407,7 @@ if( flowv_interp == 1 )
   for (int i = 0; i < nR_Lc; i++) {
     for (int j = 0; j < nY_Lc; j++) {
       for (int k = 0; k < nZ_Lc; k++) {
-        index = i + j * nR_Lc + k * nR_Lc * nY_Lc;
+        int index = i + j * nR_Lc + k * nR_Lc * nY_Lc;
         if (noIntersectionNodes[index] == 1) {
           surroundingMinimumR = 0.0;
           surroundingMinimumY = 0.0;
@@ -2438,7 +2456,7 @@ if( flowv_interp == 1 )
   nc_PSEr.putVar(&PSEr[0]);
   nc_PSEt.putVar(&PSEt[0]);
   nc_PSEz.putVar(&PSEz[0]);
-#endif
+  }
   }
   else
   {
