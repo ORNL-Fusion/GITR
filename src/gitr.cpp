@@ -2490,89 +2490,104 @@ if( presheath_interp == 1 )
 
   if( use_sheath_efield > 0 )
   {
-  gitr_precision thisE0[3] = {0.0, 0.0, 0.0};
-  gitr_precision minDist0 = 0.0;
-  int minInd_bnd = 0;
-  for (int i = 0; i < 1000; i++) {
-      minDist0 =
-          getE(0.0, 0.0, 1.0E-6*i, thisE0, boundaries.data(),
-               nLines,
-               nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
-               n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
-               &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-               &closeGeom_sheath.front(), minInd_bnd, biased_surface, use_3d_tet_geom,
-               use_cylsymm, use_geom_hash );
-      //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
-  }
-#if EFIELD_INTERP == 1
-  gitr_precision thisE[3] = {0.0, 0.0, 0.0};
+    gitr_precision thisE0[3] = {0.0, 0.0, 0.0};
+    gitr_precision minDist0 = 0.0;
+    int minInd_bnd = 0;
+    for (int i = 0; i < 1000; i++) {
+        minDist0 =
+            getE(0.0, 0.0, 1.0E-6*i, thisE0, boundaries.data(),
+                 nLines,
+                 nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
+                 n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
+                 &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
+                 &closeGeom_sheath.front(), minInd_bnd, biased_surface, use_3d_tet_geom,
+                 use_cylsymm, use_geom_hash );
+        //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
+    }
 
-  for (int i = 0; i < nR_Bfield; i++) {
-    for (int j = 0; j < nZ_Bfield; j++) {
-      minDist[(nR_Bfield - 1 - i) * nZ_Bfield + (nZ_Bfield - 1 - j)] =
-          getE(bfieldGridr[i], 0.0, bfieldGridz[j], thisE, boundaries.data(),
-               nLines, closestBoundaryIndex, biased_surface );
-      Efieldr[i * nZ_Bfield + j] = thisE[0];
-      Efieldz[i * nZ_Bfield + j] = thisE[2];
-      Efieldt[i * nZ_Bfield + j] = thisE[1];
+    /* Captain! This block appears to be decayed/invalid. Leave it for reference. */
+      /*
+    if( efield_interp == 1 )
+    {
+    gitr_precision thisE[3] = {0.0, 0.0, 0.0};
+
+    for (int i = 0; i < nR_Bfield; i++) {
+
+      for (int j = 0; j < nZ_Bfield; j++) {
+
+        minDist[(nR_Bfield - 1 - i) * nZ_Bfield + (nZ_Bfield - 1 - j)] =
+
+            getE(bfieldGridr[i], 0.0, bfieldGridz[j], thisE, boundaries.data(),
+                 nLines, closestBoundaryIndex, biased_surface, use_3d_tet_geom,
+                 use_cylsymm, use_geom_hash );
+
+        Efieldr[i * nZ_Bfield + j] = thisE[0];
+        Efieldz[i * nZ_Bfield + j] = thisE[2];
+        Efieldt[i * nZ_Bfield + j] = thisE[1];
+      }
+    }
+
+    int nR_closeGeom;
+    int nZ_dtsEfield;
+    int nR_dtsEfield;
+
+    int d1 = read_profileNs(
+        cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNrString"),
+        cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNzString"),
+        nR_dtsEfield, nZ_dtsEfield);
+
+    sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
+    sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
+
+    int d2 = read_profile1d(
+        cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridRString"),
+        dtsEfieldGridr);
+
+    std::cout << "got first grid " << dtsEfieldGridr.front() << std::endl;
+    int d3 = read_profile1d(
+        cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridZString"),
+        dtsEfieldGridz);
+
+    std::cout << "got second grid" << dtsEfieldGridz.front() << std::endl;
+
+    int d4 = read_profile2d(
+        cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
+        cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
+    }
+      */
+
+    if( efield_interp == 2 )
+    {
+      int nR_dtsEfield, nZ_dtsEfield;
+
+      int d1 = read_profileNs(
+          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
+          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNrString"),
+          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNzString"),
+          nR_dtsEfield, nZ_dtsEfield);
+
+      sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
+      sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
+
+      int d2 = read_profile1d(
+          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
+          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridRString"),
+          dtsEfieldGridr);
+
+      int d3 = read_profile1d(
+          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
+          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridZString"),
+          dtsEfieldGridz);
+
+      int d4 = read_profile2d(
+          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
+          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
     }
   }
 
-  int nR_closeGeom;
-  int nZ_dtsEfield;
-
-  int d1 = read_profileNs(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNrString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNzString"),
-      nR_dtsEfield, nZ_dtsEfield);
-
-  sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
-  sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
-
-  int d2 = read_profile1d(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridRString"),
-      dtsEfieldGridr);
-
-  std::cout << "got first grid " << dtsEfieldGridr.front() << std::endl;
-  int d3 = read_profile1d(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridZString"),
-      dtsEfieldGridz);
-
-  std::cout << "got second grid" << dtsEfieldGridz.front() << std::endl;
-
-  int d4 = read_profile2d(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
-#elif EFIELD_INTERP == 2
-  int nR_dtsEfield, nZ_dtsEfield;
-
-  int d1 = read_profileNs(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNrString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNzString"),
-      nR_dtsEfield, nZ_dtsEfield);
-
-  sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
-  sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
-
-  int d2 = read_profile1d(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridRString"),
-      dtsEfieldGridr);
-
-  int d3 = read_profile1d(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridZString"),
-      dtsEfieldGridz);
-
-  int d4 = read_profile2d(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
-#endif
-  }
   else
   {
   int nR_dtsEfield = 1;
@@ -3171,7 +3186,10 @@ if( presheath_interp == 1 )
 #endif
 
   int nSourceSurfaces = 0;
-#if PARTICLE_SOURCE_SPACE == 0 // Point Source
+  /* Captain! Maybe declare some variables here */
+  int currentSegment = 0;
+  if( use_particle_source_space == 0 )
+  {
   if (world_rank == 0) {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.x_start",
                         x) &&
@@ -3193,8 +3211,10 @@ if( presheath_interp == 1 )
   MPI_Bcast(&z, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#elif PARTICLE_SOURCE_SPACE > 0 // Material Surfaces - flux weighted source
-  Config cfg_particles;
+  }
+  else if( use_particle_source_space > 0 )
+  {
+  libconfig::Config cfg_particles;
   std::string particleSourceFile;
   getVariable(cfg, "particleSource.fileString", particleSourceFile);
   std::cout << "Open particle source file " << input_path + particleSourceFile
@@ -3203,7 +3223,7 @@ if( presheath_interp == 1 )
   std::cout << "Successfully staged input and particle source file "
             << std::endl;
 
-  Setting &particleSourceSetting = cfg_particles.lookup("particleSource");
+  libconfig::Setting &particleSourceSetting = cfg_particles.lookup("particleSource");
   std::cout << "Successfully set particleSource setting " << std::endl;
   int nSourceBoundaries = 0, nSourceElements = 0;
   gitr_precision sourceMaterialZ = 0.0, accumulatedLengthArea = 0.0,
@@ -3270,12 +3290,15 @@ if( presheath_interp == 1 )
       particleSourceSpaceGrid(nSourceElements, 0.0);
   sim::Array<int> particleSourceIndices(nSourceElements, 0),
       particleSourceBoundaryIndices(nSourceBoundaries, 0);
-#if PARTICLE_SOURCE_SPACE == 1
+  int currentSegmentIndex = 0, currentBoundaryIndex = 0;
+  /* Captain! This appears to be a decayed block, leave for reference */
+  /*
+  if( use_particle_source_space == 1 )
+  {
   for (int i = 0; i < nSourceBoundaries; i++) {
     particleSourceBoundaryIndices[i] =
         particleSourceSetting["surfaceIndices"][i];
   }
-  int currentSegmentIndex = 0, currentBoundaryIndex = 0;
   gitr_precision currentAccumulatedLengthArea = 0.0, lengthAlongBoundary = 0.0,
         bDotSurfaceNorm = 0.0;
   gitr_precision parVec[3] = {0.0};
@@ -3358,10 +3381,9 @@ if( presheath_interp == 1 )
   //boost::random::uniform_01<> dist01;
   gitr_precision rand0 = 0.0;
   int lowInd = 0;
-  int currentSegment = 0;
-#else
-#endif
-#endif
+  }
+  */
+  }
 #if PARTICLE_SOURCE_ENERGY == 0
   if (world_rank == 0) {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.energy_eV",
@@ -3560,7 +3582,10 @@ if( presheath_interp == 1 )
   gitr_precision eVec[3] = {0.0};
   for (int i = 0; i < nP; i++) {
   //std::cout<< "setting particle " << i << std::endl;
-#if PARTICLE_SOURCE_SPACE > 0 // File source
+  /* Captain! Decayed block below - variables are being called that don't exist */
+  /*
+  if( use_particle_source_space > 0 )
+  {
     if( use_3d_tet_geom > 0 )
     {
     surfIndexMod = i % nSourceSurfaces;
@@ -3620,7 +3645,8 @@ if( presheath_interp == 1 )
                 boundaries[currentSegment]
                     .plane_norm; // boundaries[sourceElements[surfIndexMod]].z1;
     }
-#endif
+  }
+  */
 #if PARTICLE_SOURCE_ENERGY > 0
     randE = dist01E(sE);
 #if PARTICLE_SOURCE_ENERGY == 1
@@ -3733,14 +3759,16 @@ if( presheath_interp == 1 )
     vz = vzpfile[i];
     }
     particleArray->setParticleV(i, x, y, z, vx, vy, vz, Z, amu, charge,dt);
-#if PARTICLE_SOURCE_SPACE > 0
+
+    if( use_particle_source_space > 0 )
+    {
     pSurfNormX[i] =
         -boundaries[currentSegment].a / boundaries[currentSegment].plane_norm;
     pSurfNormY[i] =
         -boundaries[currentSegment].b / boundaries[currentSegment].plane_norm;
     pSurfNormZ[i] =
         -boundaries[currentSegment].c / boundaries[currentSegment].plane_norm;
-#endif
+    }
     px[i] = x;
     py[i] = y;
     pz[i] = z;
@@ -4982,7 +5010,6 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
   }
     if( spectroscopy > 0 )
     {
-      /* Captain! */
     // Write netCDF output for density data
     netCDF::NcFile ncFile("output/spec.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
@@ -5023,7 +5050,6 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_n.putVar(&net_Bins[0]);
 #endif
     ncFile.close();
-    /* Captain! */
     }
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
