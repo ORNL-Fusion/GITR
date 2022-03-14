@@ -3384,7 +3384,8 @@ if( presheath_interp == 1 )
   }
   */
   }
-#if PARTICLE_SOURCE_ENERGY == 0
+  if( use_particle_source_energy == 0 )
+  {
   if (world_rank == 0) {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.energy_eV",
                         E)) {
@@ -3400,8 +3401,11 @@ if( presheath_interp == 1 )
   MPI_Bcast(&E, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#elif PARTICLE_SOURCE_ENERGY > 0
-#if PARTICLE_SOURCE_ENERGY == 1
+  }
+  else if( use_particle_source_energy > 0 )
+  {
+    if( use_particle_source_energy == 1 )
+    {
   // Create Thompson Distribution
   gitr_precision surfaceBindingEnergy =
       cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
@@ -3437,14 +3441,13 @@ if( presheath_interp == 1 )
     // std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " <<
     // CumulativeDFThompson[i] << std::endl;
   }
-#elif PARTICLE_SOURCE_ENERGY == 2
-#endif
+    }
   //boost::random::mt19937 sE;
   //boost::random::uniform_01<> dist01E;
-  gitr_precision randE = 0.0;
   int lowIndE = 0;
-#endif
-#if PARTICLE_SOURCE_ANGLE == 0
+  }
+  if( use_particle_source_angle == 0 )
+  {
   if (world_rank == 0) {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.phi", phi) &&
         cfg.lookupValue("impurityParticleSource.initialConditions.theta",
@@ -3474,12 +3477,13 @@ if( presheath_interp == 1 )
     vy = 0.0;
     vz = vtotal;
   }
-#elif PARTICLE_SOURCE_ANGLE > 0
+  }
+
+  else if( use_particle_source_angle > 0 )
+  {
 
   std::cout << "Read particle source " << std::endl;
-#if PARTICLE_SOURCE_ENERGY < 2
-  Config cfg_particles;
-#endif
+  libconfig::Config cfg_particles;
   // cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
   // Setting& particleSource = cfg_particles.lookup("particleSource");
   // int nSegmentsAngle = particleSource["nSegmentsAngle"];
@@ -3496,7 +3500,7 @@ if( presheath_interp == 1 )
   std::uniform_real_distribution<gitr_precision> dist01A(0.0, 1.0);
   gitr_precision randA = 0.0;
   int lowIndA = 0;
-#endif
+  }
   std::cout << "Starting psourcefile import " << std::endl;
 
   vector<gitr_precision> xpfile(nP), ypfile(nP), zpfile(nP), vxpfile(nP), vypfile(nP),
@@ -3647,7 +3651,11 @@ if( presheath_interp == 1 )
     }
   }
   */
-#if PARTICLE_SOURCE_ENERGY > 0
+    /* Captain! Decayed block below. interp* function calls have invalid parameters */
+    /*
+    if( use_particle_source_energy > 0 )
+    {
+    gitr_precision randE = 0.0;
     randE = dist01E(sE);
 #if PARTICLE_SOURCE_ENERGY == 1
     E = interp1dUnstructured(randE, nThompDistPoints, max_Energy,
@@ -3673,8 +3681,10 @@ if( presheath_interp == 1 )
               << " and local potential " << 3.0 * localT
               << " puts the particle energy to " << E << std::endl;
 #endif
-#endif
-#if PARTICLE_SOURCE_ANGLE == 1 // Analytic normal incidence
+    }
+    */
+    if( use_particle_source_angle == 1 )
+    {
     Ex = -E * boundaries[currentSegment].a /
          boundaries[currentSegment].plane_norm;
     Ey = -E * boundaries[currentSegment].b /
@@ -3682,8 +3692,13 @@ if( presheath_interp == 1 )
     Ez = -E * boundaries[currentSegment].c /
          boundaries[currentSegment].plane_norm;
 
-#elif PARTICLE_SOURCE_ANGLE > 1
-    randA = dist01A(sA);
+    }
+
+    /* Captain! Decayed block below. Calls nonexistent functions */
+    /*
+    else if( use_particle_source_angle > 1 )
+    {
+    gitr_precision randA = dist01A(sA);
     gitr_precision sputtA =
         interp3d(randA, localAngle, std::log10(3.0 * localT),
                  nAdistBins_surfaceModel, nA_surfaceModel, nE_surfaceModel,
@@ -3747,7 +3762,8 @@ if( presheath_interp == 1 )
     std::cout << "Transformed E " << Ex << " " << Ey << " " << Ez << " "
               << std::endl;
     // particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
-#endif
+    }
+    */
 
     if( use_particle_source_file > 0 )
     {

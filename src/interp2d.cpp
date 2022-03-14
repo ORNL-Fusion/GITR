@@ -126,8 +126,16 @@ gitr_precision interp2dCombined ( gitr_precision x, gitr_precision y, gitr_preci
 
 CUDA_CALLABLE_MEMBER
 
-gitr_precision interp3d ( gitr_precision x, gitr_precision y, gitr_precision z,int nx,int ny, int nz,
-    gitr_precision* gridx,gitr_precision* gridy, gitr_precision* gridz,gitr_precision* data ) {
+gitr_precision interp3d( gitr_precision x,
+                         gitr_precision y,
+                         gitr_precision z,
+                         int nx,
+                         int ny,
+                         int nz,
+                         gitr_precision* gridx,
+                         gitr_precision* gridy,
+                         gitr_precision* gridz,
+                         gitr_precision* data ) {
     
     gitr_precision fxyz = 0.0;
 
