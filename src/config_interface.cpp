@@ -132,6 +132,8 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::sort ] = "USE_SORT";
   lookup[ use::adaptive_dt ] = "USE_ADAPTIVE_DT";
   lookup[ use::surface_potential ] = "USE_SURFACE_POTENTIAL";
+  lookup[ use::density_interp ] = "DENSITY_INTERP";
+  lookup[ use::temp_interp ] = "TEMP_INTERP";
 }
 
 config_module_base::config_module_base( class libconfig_string_query const &query,
