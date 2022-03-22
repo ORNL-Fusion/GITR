@@ -101,7 +101,7 @@ std::cout << "file_name read from stdin: " << file_name << std::endl;
   int ppn = 1;
 
   // Set default input file string
-  std::string inputFile = "gitrInput.cfg";
+  std::string inputFile = file_name;
 
 #if USE_MPI > 0
   // Initialize the MPI environment
@@ -150,8 +150,8 @@ std::cout << "file_name read from stdin: " << file_name << std::endl;
     // Parse and read input file
     std::cout << "Open configuration file " << input_path << inputFile
               << std::endl;
-    importLibConfig(cfg, input_path + inputFile);
-    checkFlags( cfg );
+    importLibConfig(cfg, inputFile);
+    //checkFlags( cfg );
 
     // Parse and read geometry file
     std::string geomFile;
