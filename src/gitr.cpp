@@ -2121,6 +2121,18 @@ if( flowv_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
+  rateCoeff_Ionization.resize( nCS_Ionize * nTemperaturesIonize * nDensitiesIonize );
+
+  gridTemperature_Ionization.resize( nTemperaturesIonize );
+
+  gridDensity_Ionization.resize( nDensitiesIonize );
+
+  rateCoeff_Recombination.resize( nCS_Recombine * nTemperaturesRecombine * nDensitiesRecombine);
+
+  gridTemperature_Recombination.resize( nTemperaturesRecombine );
+
+  gridDensity_Recombination.resize( nDensitiesRecombine );
+
     i2 = read_profiles(
         input_path + ionizeFile, nTemperaturesIonize, nDensitiesIonize,
         ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
