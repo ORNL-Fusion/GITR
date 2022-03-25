@@ -213,7 +213,7 @@ void operator()(std::size_t indx) const {
       /* m^2 / sec units for diffusionCoefficient */
       step = std::sqrt(4*diffusionCoefficient*dt_step);
       /* Captain! Is an "else" even needed here? It doesn't appear to be so */
-      if( use_perp_diffusion != 1 )
+      if( use_perp_diffusion <= 1 )
       {
         legacy_code_block_0( particlesPointer, indx, B_unit, step, r3 );
       }

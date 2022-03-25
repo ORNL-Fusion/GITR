@@ -3772,7 +3772,7 @@ if( flowv_interp == 1 )
 #endif
 
   /* initialize random states if monte-carlo operators are active in this run */
-  if( use_ionization == 1 || use_coulomb_collisions == 1 || use_perp_diffusion == 1 )
+  if( use_ionization == 1 || use_coulomb_collisions == 1 || use_perp_diffusion > 0 )
   {
 #if USESURFACEMODEL > 0
 #if USE_CUDA
@@ -4156,7 +4156,7 @@ if( flowv_interp == 1 )
         thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
       }
 
-      if( use_perp_diffusion == 0 )
+      if( use_perp_diffusion > 0 )
       {
         thrust::for_each(thrust::device, particleBegin, particleEnd,
                          crossFieldDiffusion0);

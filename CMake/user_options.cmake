@@ -2,67 +2,60 @@
 
 # String description for each option
 set( description "(no description added - see define_options.cmake)" )
-
-# Build-time options
 set( GITR_USE_CUDA 1 CACHE STRING "${description}" FORCE )
 set( GITR_USE_OPENMP 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_MPI 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_DOUBLE 1 CACHE STRING "${description}" FORCE )
-
-
-# Run-time options
-
-# if collisions are on, friction, scattering, heating are as well
-set( GITR_USE_COULOMB_COLLISIONS 1 CACHE STRING "${description}" FORCE ) 
+set( GITR_USE_IONIZATION 1 CACHE STRING "${description}" FORCE ) # if ionization is on, recombination on
+set( GITR_USE_RECOMBINATION 1 CACHE STRING "${description}" FORCE )
 set( GITR_USE_PERP_DIFFUSION 2 CACHE STRING "${description}" FORCE )
-# IONIZATION is 1 and absorbed RECOMBINATION - that will need to be put in the runtime file
-# or it will segfault
-
-# Captain! Done above, still remaining below
-
-set( GITR_USE_FRICTION 1 CACHE STRING "${description}" )
-set( GITR_USE_ANGLE_SCATTERING 1 CACHE STRING "${description}" )
-set( GITR_USE_HEATING 1 CACHE STRING "${description}" )
-set( GITR_USE_THERMAL_FORCE 0 CACHE STRING "${description}" )
-set( GITR_USE_SURFACE_MODEL 1 CACHE STRING "${description}" ) 
-set( GITR_USE_SHEATH_EFIELD 1 CACHE STRING "${description}" )
+set( GITR_USE_COULOMB_COLLISIONS 1 CACHE STRING "${description}" FORCE ) # if collisions are on, friction, scattering, heating
+set( GITR_USE_FRICTION 1 CACHE STRING "${description}" FORCE )
+set( GITR_USE_ANGLE_SCATTERING 1 CACHE STRING "${description}" FORCE )
+set( GITR_USE_HEATING 1 CACHE STRING "${description}" FORCE )
+set( GITR_USE_THERMAL_FORCE 0 CACHE STRING "${description}" FORCE )
+set( GITR_USE_SURFACE_MODEL 1 CACHE STRING "${description}" FORCE ) 
+set( GITR_USE_SHEATH_EFIELD 1 CACHE STRING "${description}" FORCE )
 set( GITR_BIASED_SURFACE 0 CACHE STRING "${description}" )
-set( GITR_USE_SURFACE_POTENTIAL 0 CACHE STRING "${description}" )
-set( GITR_USE_PRE_SHEATH_EFIELD 0 CACHE STRING "${description}" )
-set( GITR_BFIELD_INTERP 0 CACHE STRING "${description}" )
-set( GITR_LC_INTERP 0 CACHE STRING "${description}" )
-set( GITR_GENERATE_LC 0 CACHE STRING "${description}" )
-set( GITR_EFIELD_INTERP 0 CACHE STRING "${description}" )
-set( GITR_PRE_SHEATH_INTERP 0 CACHE STRING "${description}" )
-set( GITR_DENSITY_INTERP 2 CACHE STRING "${description}" )
-set( GITR_TEMP_INTERP 2 CACHE STRING "${description}" )
-set( GITR_FLOWV_INTERP 0 CACHE STRING "${description}" )
-set( GITR_GRADT_INTERP 0 CACHE STRING "${description}" )
-set( GITR_ODE_INT 0 CACHE STRING "${description}" )
-set( GITR_FIXED_SEEDS 1 CACHE STRING "${description}" )
-set( GITR_PARTICLE_SEEDS 1 CACHE STRING "${description}" )
-set( GITR_GEOM_TRACE 0 CACHE STRING "${description}" )
-set( GITR_GEOM_HASH 0 CACHE STRING "${description}" )
-set( GITR_GEOM_HASH_SHEATH 0 CACHE STRING "${description}" )
-set( GITR_PARTICLE_TRACKS 0 CACHE STRING "${description}" )
-set( GITR_PARTICLE_SOURCE 0 CACHE STRING "${description}" )
-set( GITR_PARTICLE_SOURCE_SPACE 0 CACHE STRING "${description}" )
-set( GITR_PARTICLE_SOURCE_ENERGY 0 CACHE STRING "${description}" )
-set( GITR_PARTICLE_SOURCE_ANGLE 0 CACHE STRING "${description}" )
-set( GITR_PARTICLE_SOURCE_FILE 0 CACHE STRING "${description}" )
-set( GITR_SPECTROSCOPY 2 CACHE STRING "${description}" )
-set( GITR_USE_3DTET_GEOM 0 CACHE STRING "${description}" )
-set( GITR_USE_CYLSYMM 0 CACHE STRING "${description}" FORCE )
-set( GITR_USE_FIELD_ALIGNED_VALUES 0 CACHE STRING "${description}" )
-set( GITR_FLUX_EA 1 CACHE STRING "${description}" )
-set( GITR_FORCE_EVAL 0 CACHE STRING "${description}" )
-set( GITR_USE_SORT 0 CACHE STRING "${description}" )
+set( GITR_USE_SURFACE_POTENTIAL 1 CACHE STRING "${description}" FORCE )
+set( GITR_USE_PRE_SHEATH_EFIELD 0 CACHE STRING "${description}" FORCE )
+set( GITR_BFIELD_INTERP 2 CACHE STRING "${description}" FORCE )
+set( GITR_LC_INTERP 0 CACHE STRING "${description}" FORCE )
+set( GITR_GENERATE_LC 0 CACHE STRING "${description}" FORCE )
+set( GITR_EFIELD_INTERP 0 CACHE STRING "${description}" FORCE )
+set( GITR_PRE_SHEATH_INTERP 0 CACHE STRING "${description}" FORCE )
+set( GITR_DENSITY_INTERP 2 CACHE STRING "${description}" FORCE )
+set( GITR_TEMP_INTERP 2 CACHE STRING "${description}" FORCE )
+set( GITR_FLOWV_INTERP 2 CACHE STRING "${description}" FORCE )
+set( GITR_GRADT_INTERP 0 CACHE STRING "${description}" FORCE )
+set( GITR_ODE_INT 0 CACHE STRING "${description}" FORCE )
+set( GITR_FIXED_SEEDS 1 CACHE STRING "${description}" FORCE )
+set( GITR_PARTICLE_SEEDS 1 CACHE STRING "${description}" FORCE )
+set( GITR_GEOM_TRACE 0 CACHE STRING "${description}" FORCE )
+set( GITR_GEOM_HASH 3 CACHE STRING "${description}" FORCE )
+set( GITR_GEOM_HASH_SHEATH 3 CACHE STRING "${description}" FORCE )
+set( GITR_PARTICLE_TRACKS 0 CACHE STRING "${description}" FORCE )
+set( GITR_PARTICLE_SOURCE 0 CACHE STRING "${description}" FORCE )
+set( GITR_PARTICLE_SOURCE_SPACE 0 CACHE STRING "${description}" FORCE )
+set( GITR_PARTICLE_SOURCE_ENERGY 0 CACHE STRING "${description}" FORCE )
+set( GITR_PARTICLE_SOURCE_ANGLE 0 CACHE STRING "${description}" FORCE )
+set( GITR_PARTICLE_SOURCE_FILE 1 CACHE STRING "${description}" FORCE )
+set( GITR_SPECTROSCOPY 3 CACHE STRING "${description}" FORCE )
+set( GITR_USE_3DTET_GEOM 1 CACHE STRING "${description}" FORCE )
+set( GITR_USE_CYLSYMM 1 CACHE STRING "${description}" FORCE )
+set( GITR_USE_FIELD_ALIGNED_VALUES 0 CACHE STRING "${description}" FORCE )
+set( GITR_FLUX_EA 1 CACHE STRING "${description}" FORCE )
+set( GITR_FORCE_EVAL 0 CACHE STRING "${description}" FORCE )
+set( GITR_USE_SORT 1 CACHE STRING "${description}" FORCE )
+set( GITR_CHECK_COMPATIBILITY 1 CACHE STRING "${description}" FORCE )
 
 add_compile_definitions( 
         USE_CUDA=${GITR_USE_CUDA}
         USE_MPI=${GITR_USE_MPI}
         USE_OPENMP=${GITR_USE_OPENMP}
 	      USE_DOUBLE=${GITR_USE_DOUBLE}
+        USEIONIZATION=${GITR_USE_IONIZATION}
+        USERECOMBINATION=${GITR_USE_RECOMBINATION}
         USEPERPDIFFUSION=${GITR_USE_PERP_DIFFUSION}
         USECOULOMBCOLLISIONS=${GITR_USE_COULOMB_COLLISIONS}
         USEFRICTION=${GITR_USE_FRICTION}
@@ -101,4 +94,5 @@ add_compile_definitions(
         USEFIELDALIGNEDVALUES=${GITR_USE_FIELD_ALIGNED_VALUES}
         FLUX_EA=${GITR_FLUX_EA}
         FORCE_EVAL=${GITR_FORCE_EVAL}
-        USE_SORT=${GITR_USE_SORT})
+        USE_SORT=${GITR_USE_SORT}
+        CHECK_COMPATIBILITY=${GITR_CHECK_COMPATIBILITY})
