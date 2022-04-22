@@ -571,7 +571,7 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
     //std::cout << "nmat " << nMaterials << std::endl;
     for(int i=0 ; i<nLines ; i++)
     {
-       //std::cout << "i " << i << std::endl;
+       std::cout << "Ahoy! i: " << i << std::endl;
        boundaries[i].x1 = geom["x1"][i];
        boundaries[i].y1 = 0.0;
        boundaries[i].z1 = geom["z1"][i];
@@ -583,6 +583,7 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[i].slope_dzdx = geom["slope"][i];
        boundaries[i].intercept_z = geom["intercept"][i];
        boundaries[i].length = geom["length"][i];
+       std::cout << "Ahoy!" << std::endl;
        //std::cout << "got Z slope length " << std::endl;
   #if USE_SURFACE_POTENTIAL > 0
        boundaries[i].potential = geom["potential"][i];
