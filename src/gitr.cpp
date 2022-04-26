@@ -2165,16 +2165,24 @@ if( flowv_interp == 1 )
   std::cout << "periodicx "<<boundaries[nLines].periodic_bc_x << std::endl;
   
   std::vector<double> surface_potential_out(nLines,0.0);
+  std::vector<double> surface_te_out(nLines,0.0);
+  std::vector<double> surface_ti_out(nLines,0.0);
 
   for( int i=0; i<nLines; i++)
 {
   surface_potential_out[i] = boundaries[i].potential;
+  surface_te_out[i] = boundaries[i].te;
+  surface_ti_out[i] = boundaries[i].ti;
 }
   netCDF::NcFile ncFile_boundary("output/boundary_values.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_nLine = ncFile_boundary.addDim("nBoundaries", nLines);
 
     netCDF::NcVar nc_bound_potential = ncFile_boundary.addVar("potential", netcdf_precision,nc_nLine);
+    netCDF::NcVar nc_bound_te = ncFile_boundary.addVar("te", netcdf_precision,nc_nLine);
+    netCDF::NcVar nc_bound_ti = ncFile_boundary.addVar("ti", netcdf_precision,nc_nLine);
   nc_bound_potential.putVar(&surface_potential_out[0]);
+  nc_bound_te.putVar(&surface_te_out[0]);
+  nc_bound_ti.putVar(&surface_ti_out[0]);
     ncFile_boundary.close();
 
   // Efield
