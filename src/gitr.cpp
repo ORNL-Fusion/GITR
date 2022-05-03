@@ -93,6 +93,39 @@ int main(int argc, char **argv, char **envp) {
   class libconfig_string_query query( file_name );
   class use use( query );
 
+  int use_surface_model = use.get< int >( use::surface_model );
+  int flux_ea = use.get<int>(use::flux_ea);
+  int spectroscopy = use.get< int >( use::spectroscopy );
+  int biased_surface = use.get< int >( use::biased_surface );
+  int use_3d_geom = use.get< int >( use::use_3d_geom );
+  int use_cylsymm = use.get< int >( use::cylsymm );
+  int bfield_interp = use.get< int >( use::bfield_interp );
+  int gradt_interp = use.get< int >( use::gradt_interp );
+  int force_eval = use.get< int >( use::force_eval );
+  int use_sort = use.get< int >( use::sort );
+  int use_adaptive_dt = use.get< int >( use::adaptive_dt );
+  int geom_hash = use.get<int>( use::geom_hash);
+  int use_particle_source_file = use.get< int >( use::particle_source_file );
+  int use_particle_source_space = use.get< int >( use::particle_source_space );
+  int use_particle_source_energy = use.get< int >( use::particle_source_energy );
+  int use_particle_source_angle = use.get< int >( use::particle_source_angle );
+  int particle_tracks = use.get< int >( use::particle_tracks );
+  int presheath_interp = use.get< int >( use::presheath_interp );
+  int efield_interp = use.get< int >( use::efield_interp );
+  int use_surface_potential = use.get< int >( use::surface_potential );
+  int flowv_interp = use.get<int>( use::flowv_interp );
+  int density_interp = use.get<int>( use::density_interp );
+  int temp_interp = use.get<int>(use::temp_interp);
+  int generate_lc = use.get<int>( use::generate_lc );
+  int lc_interp = use.get<int>( use::lc_interp );
+  int geom_hash_sheath = use.get<int>( use::geom_hash_sheath );
+  int usethermalforce = use.get< int >( use::thermal_force );
+  int use_sheath_efield = use.get< int >( use::sheath_efield );
+  int use_presheath_efield = use.get< int >( use::presheath_efield );
+  int use_ionization = use.get< int >( use::ionization );
+  int use_coulomb_collisions = use.get< int >( use::coulomb_collisions );
+  int use_perp_diffusion = use.get< int >( use::perp_diffusion );
+
   // Set default processes per node to 1
   int ppn = 1;
 
@@ -284,11 +317,10 @@ int main(int argc, char **argv, char **envp) {
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
   }
-  int use3dtetgeom = use.get<int>( use::use3dtetgeom );
 #if USE_MPI > 0
   MPI_Bcast(&nSurfaces, 1, MPI_INT, 0, MPI_COMM_WORLD);
   int nBoundaryMembers;
-  if(use3dtetgeom)
+  if(use_3d_geom)
   {
     nBoundaryMembers = 41;
   }
@@ -317,7 +349,6 @@ int main(int argc, char **argv, char **envp) {
 #endif
 
   gitr_precision biasPotential = 0.0;
-  int biased_surface = use.get<int>(use::biased_surface);
   if(biased_surface)
   {
   if (world_rank == 0) {
@@ -336,7 +367,6 @@ int main(int argc, char **argv, char **envp) {
   int nAdist = 1;
   gitr_precision A0dist = 0.0;
   gitr_precision Adist = 0.0;
-  int flux_ea = use.get<int>(use::flux_ea);
   if(flux_ea)
   {
   if (world_rank == 0) {
@@ -429,8 +459,7 @@ int main(int argc, char **argv, char **envp) {
   int nHashPointsTotal = 1;
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
-  int geom_hash = use.get<int>( use::geom_hash);
-  //int use3dtetgeom = 1;
+  //int use_3d_geom = 1;
   if(geom_hash)
   {
   //nR_closeGeomTotal = 0;
@@ -488,7 +517,7 @@ int main(int argc, char **argv, char **envp) {
       nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
       nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
     }
-    if(use3dtetgeom)
+    if(use_3d_geom)
     {
      if(nHashes > 1)
     {
@@ -564,7 +593,7 @@ if( geom_hash > 1 )
       nGeomHash = nGeomHash +
                   nR_closeGeom[i] * nZ_closeGeom[i] * n_closeGeomElements[i];
 
-      if( use3dtetgeom > 0 )
+      if( use_3d_geom > 0 )
       {
         nY_closeGeom[i] = getDimFromFile(cfg, input_path + hashFile[i],
                                          geomHashCfg, "gridNyString");
@@ -616,7 +645,7 @@ if( geom_hash == 1 )
         hashX1[i] = geomHash["hashX1"][i];
         hashZ0[i] = geomHash["hashZ0"][i];
         hashZ1[i] = geomHash["hashZ1"][i];
-        if( use3dtetgeom > 0 )
+        if( use_3d_geom > 0 )
         {
           hashY0[i] = geomHash["hashY0"][i];
           hashY1[i] = geomHash["hashY1"][i];
@@ -627,7 +656,7 @@ if( geom_hash == 1 )
       getVariable(cfg, geomHashCfg + "hashX1", hashX1[0]);
       getVariable(cfg, geomHashCfg + "hashZ0", hashZ0[0]);
       getVariable(cfg, geomHashCfg + "hashZ1", hashZ1[0]);
-      if( use3dtetgeom > 0 )
+      if( use_3d_geom > 0 )
       {
       getVariable(cfg, geomHashCfg + "hashY0", hashY0[0]);
       getVariable(cfg, geomHashCfg + "hashY1", hashY1[0]);
@@ -787,7 +816,7 @@ if( geom_hash == 1 )
           }
         };
 
-        if(use3dtetgeom)
+        if(use_3d_geom)
         {
           for (int j = 0; j < nY_closeGeom[ii]; j++)
           {
@@ -857,7 +886,7 @@ if( geom_hash == 1 )
       if (i > 0)
         ncIndex = nR_closeGeom[i - 1];
       hash_gridR.putVar(&closeGeomGridr[ncIndex]);
-      if( use3dtetgeom > 0 )
+      if( use_3d_geom > 0 )
       {
         netCDF::NcDim hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
         geomHashDim.push_back(hashNY);
@@ -893,7 +922,7 @@ else if( geom_hash > 1 )
       getVarFromFile(cfg, input_path + hashFile[i], geomHashCfg, "gridZString",
                      closeGeomGridz[dataIndex]);
       std::cout << "created vars3" << std::endl;
-      if( use3dtetgeom > 0 )
+      if( use_3d_geom > 0 )
       {
         if (i > 0)
           dataIndex = nY_closeGeom[0];
@@ -926,7 +955,6 @@ else if( geom_hash > 1 )
   int n_closeGeomElements_sheath = 1;
   int nGeomHash_sheath = 1;
   std::string geomHashSheathCfg = "geometry_sheath.";
-int geom_hash_sheath = use.get<int>( use::geom_hash_sheath );
 if( geom_hash_sheath == 1 )
 {
   if (world_rank == 0) {
@@ -936,7 +964,7 @@ if( geom_hash_sheath == 1 )
                 n_closeGeomElements_sheath);
     nGeomHash_sheath =
         nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
-    if( use3dtetgeom > 0 )
+    if( use_3d_geom > 0 )
     {
       getVariable(cfg, geomHashSheathCfg + "nY_closeGeom", nY_closeGeom_sheath);
       nGeomHash_sheath = nY_closeGeom_sheath * nGeomHash_sheath;
@@ -966,7 +994,7 @@ if( geom_hash_sheath > 1 )
                        "nearestNelementsString");
     nGeomHash_sheath =
         nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
-    if( use3dtetgeom > 0 )
+    if( use_3d_geom > 0 )
     {
       nY_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
                                            geomHashSheathCfg, "gridNyString");
@@ -1150,8 +1178,6 @@ else if( geom_hash_sheath > 1 )
   int nTraceSteps;
   std::string connLengthCfg = "connectionLength.";
   std::string lcFile;
-int generate_lc = use.get<int>( use::generate_lc );
-int lc_interp = use.get<int>( use::lc_interp );
 if (world_rank == 0) {
 if( generate_lc > 0 )
 {
@@ -1196,7 +1222,7 @@ else
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-if( use3dtetgeom > 0 )
+if( use_3d_geom > 0 )
 {
   nTracers = nR_Lc * nY_Lc * nZ_Lc;
 }
@@ -1519,7 +1545,6 @@ if( lc_interp > 1 )
   int nZ_Temp = 1;
   int n_Temp = 1;
   std::string tempCfg = "backgroundPlasmaProfiles.Temperature.";
-int temp_interp = use.get<int>(use::temp_interp);
   std::string tempFile;
 if(temp_interp > 0 )
 {
@@ -1600,7 +1625,6 @@ if(temp_interp > 0 )
   int nZ_Dens = 1;
   int n_Dens = 1;
   std::string densCfg = "backgroundPlasmaProfiles.Density.";
-  int density_interp = use.get<int>( use::density_interp );
   std::string densFile;
   if( density_interp > 0 )
   {
@@ -1698,7 +1722,6 @@ if( density_interp == 0 )
   int nZ_flowV = 1;
   int n_flowV = 1;
   std::string flowVCfg = "backgroundPlasmaProfiles.FlowVelocity.";
-  int flowv_interp = use.get<int>( use::flowv_interp );
   if( flowv_interp == 1 )
   {
   nR_flowV = nR_Lc;

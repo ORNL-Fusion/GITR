@@ -101,19 +101,18 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::cuda ] = "USE_CUDA";
   lookup[ use::use_openmp ] = "USE_OPENMP";
   lookup[ use::mpi ] = "USE_MPI";
-  lookup[ use::useionization ] = "USEIONIZATION";
-  lookup[ use::use_ionization ] = "USE_IONIZATION";
-  lookup[ use::userecombination ] = "USERECOMBINATION";
-  lookup[ use::useperpdiffusion ] = "USEPERPDIFFUSION";
-  lookup[ use::usecoulombcollisions ] = "USECOULOMBCOLLISIONS";
-  lookup[ use::usefriction ] = "USEFRICTION";
-  lookup[ use::useanglescattering ] = "USEANGLESCATTERING";
-  lookup[ use::useheating ] = "USEHEATING";
-  lookup[ use::usethermalforce ] = "USETHERMALFORCE";
-  lookup[ use::usesurfacemodel ] = "USESURFACEMODEL";
-  lookup[ use::usesheathefield ] = "USESHEATHEFIELD";
+  lookup[ use::ionization ] = "USEIONIZATION";
+  lookup[ use::ionization ] = "USE_IONIZATION";
+  lookup[ use::perp_diffusion ] = "USEPERPDIFFUSION";
+  lookup[ use::coulomb_collisions ] = "USECOULOMBCOLLISIONS";
+  lookup[ use::friction ] = "USEFRICTION";
+  lookup[ use::angle_scattering ] = "USEANGLESCATTERING";
+  lookup[ use::heating ] = "USEHEATING";
+  lookup[ use::thermal_force ] = "USETHERMALFORCE";
+  lookup[ use::surface_model ] = "USESURFACEMODEL";
+  lookup[ use::sheath_efield ] = "USESHEATHEFIELD";
   lookup[ use::biased_surface ] = "BIASED_SURFACE";
-  lookup[ use::usepresheathefield ] = "USEPRESHEATHEFIELD";
+  lookup[ use::presheath_efield ] = "USEPRESHEATHEFIELD";
   lookup[ use::bfield_interp ] = "BFIELD_INTERP";
   lookup[ use::lc_interp ] = "LC_INTERP";
   lookup[ use::generate_lc ] = "GENERATE_LC";
@@ -136,14 +135,15 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::particle_source_angle ] = "PARTICLE_SOURCE_ANGLE";
   lookup[ use::particle_source_file ] = "PARTICLE_SOURCE_FILE";
   lookup[ use::spectroscopy ] = "SPECTROSCOPY";
-  lookup[ use::use3dtetgeom ] = "USE3DTETGEOM";
+  lookup[ use::use_3d_geom ] = "USE3DTETGEOM";
   lookup[ use::flux_ea ] = "FLUX_EA";
-  lookup[ use::usecylsymm ] = "USECYLSYMM";
-  lookup[ use::usefieldalignedvalues ] = "USEFIELDALIGNEDVALUES";
+  lookup[ use::cylsymm ] = "USECYLSYMM";
+  lookup[ use::field_aligned_values ] = "USEFIELDALIGNEDVALUES";
   lookup[ use::force_eval ] = "FORCE_EVAL";
   lookup[ use::compatibility_check ] = "CHECK_COMPATIBILITY";
-  lookup[ use::use_sort ] = "USE_SORT";
+  lookup[ use::sort ] = "USE_SORT";
   lookup[ use::use_adaptive_dt ] = "USE_ADAPTIVE_DT";
+  lookup[ use::surface_potential ] = "USE_SURFACE_POTENTIAL";
 }
 
 config_module_base::config_module_base( class libconfig_string_query const &query,

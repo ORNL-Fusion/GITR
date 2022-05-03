@@ -1,4 +1,26 @@
+customer service:
 
+cancel sirius xm radio service:
+
+866 635 2349
+
+account number: 489 721 1916 98
+
+
+
+SECTION FOR MULTI-DIM:
+
+output histograms for GITR:
+
+spec.nc
+
+surface.nc
+
+new convention:
+netX0 to netX1 is endpoints and net_nX
+
+
+SECTION FOR OPTIONS:
 
 set( description "(no description added - see define_options.cmake)" )
 
