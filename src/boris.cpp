@@ -87,14 +87,26 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
          int&  closestBoundaryIndex) {
-#if USE3DTETGEOM > 0
+
+    gitr_precision pot = 0.0;
+    int minIndex = 0;
+    gitr_precision minDistance = 1.0e12;
     gitr_precision Emag = 0.0;
-    gitr_precision Er = 0.0;
-    gitr_precision Et = 0.0;
-    gitr_precision p0[3] = {x0,y,z};
     gitr_precision angle = 0.0;
     gitr_precision fd = 0.0;
-    gitr_precision pot = 0.0;
+    gitr_precision directionUnitVector[ 3 ] = { 0.0, 0.0, 0.0 };
+    gitr_precision Er = 0.0;
+    gitr_precision Et = 0.0;
+
+    if( USE3DTETGEOM > 0 )
+    {
+    Emag = 0.0;
+    Er = 0.0;
+    Et = 0.0;
+    gitr_precision p0[3] = {x0,y,z};
+    angle = 0.0;
+    fd = 0.0;
+    pot = 0.0;
       gitr_precision a = 0.0;
       gitr_precision b = 0.0;
       gitr_precision c = 0.0;
@@ -129,7 +141,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
       gitr_precision crossABAp[3] = {0.0,0.0,0.0};
       gitr_precision crossBCBp[3] = {0.0,0.0,0.0};
       gitr_precision crossCACp[3] = {0.0,0.0,0.0};
-      gitr_precision directionUnitVector[3] = {0.0,0.0,0.0};
       gitr_precision dot0 = 0.0;
       gitr_precision dot1 = 0.0;
       gitr_precision dot2 = 0.0;
@@ -154,10 +165,9 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
       gitr_precision signDot1 = 0.0;
       gitr_precision signDot2 = 0.0;
       gitr_precision totalSigns = 0.0;
-      gitr_precision minDistance = 1.0e12;
+      minDistance = 1.0e12;
       int nBoundariesCrossed = 0;
       int boundariesCrossed[6] = {0,0,0,0,0,0};
-      int minIndex=0;
       gitr_precision distances[7] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0};
       gitr_precision normals[21] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,
                            0.0,0.0,0.0,0.0,0.0,0.0,0.0,
@@ -468,7 +478,9 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     }
       //vectorScalarMult(-1.0,directionUnitVector,directionUnitVector);
       //std::cout << "min dist " << minDistance << std::endl;
-#else //2dGeom     
+    }
+    else
+    {
                 
     gitr_precision Emag = 0.0;
 	gitr_precision fd = 0.0;
@@ -682,7 +694,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     //directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
     //directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     //directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
-#endif   
+    }
 #if BIASED_SURFACE > 0
     pot = boundaryVector[minIndex].potential;
     Emag = pot/(2.0*boundaryVector[minIndex].ChildLangmuirDist)*exp(-minDistance/(2.0*boundaryVector[minIndex].ChildLangmuirDist));
@@ -725,10 +737,13 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
         //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     
     //std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
-#if USE3DTETGEOM > 0
+    if( USE3DTETGEOM > 0 )
+    {
             E[0] = Er;
             E[1] = Et;
-#else
+    }
+    else
+    {
 #if USECYLSYMM > 0
             //if cylindrical geometry
             gitr_precision theta = std::atan2(y,x0);
@@ -739,7 +754,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
             E[0] = Er;
             E[1] = Et;
 #endif
-#endif
+    }
             //std::cout << "Ex and Ey and Ez " << E[0] << " " << E[1] << " " << E[2] << std::endl;
    
       return minDistance;

@@ -60,15 +60,12 @@ class Boundary
     gitr_precision c;
     gitr_precision d;
     gitr_precision plane_norm; //16
-    #if USE3DTETGEOM > 0
       gitr_precision x3;
       gitr_precision y3;
       gitr_precision z3;
       gitr_precision area;
-    #else
       gitr_precision slope_dzdx;
       gitr_precision intercept_z;
-    #endif 
     gitr_precision periodic_bc_x0;    
     gitr_precision periodic_bc_x1;    
     gitr_precision Z;
@@ -103,18 +100,23 @@ class Boundary
     CUDA_CALLABLE_MEMBER
     void getSurfaceParallel(gitr_precision A[],gitr_precision y,gitr_precision x)
     {
-#if USE3DTETGEOM > 0
-    gitr_precision norm = std::sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
+    gitr_precision norm;
+    if( USE3DTETGEOM > 0 )
+    {
+    norm = std::sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
     A[1] = (y2 - y1) / norm;
-#else
-    gitr_precision norm = std::sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
+    }
+    else
+    {
+    norm = std::sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
     A[1] = 0.0;
-#endif
+    }
         //std::cout << "surf par calc " << x2 << " " << x1 << " " << norm << std::endl;
         A[0] = (x2-x1)/norm;
         A[2] = (z2-z1)/norm;
-#if USE3DTETGEOM > 0
-#else
+
+    if( USE3DTETGEOM <= 0 )
+    {
 #if USECYLSYMM > 0
     gitr_precision theta = std::atan2(y, x);
     gitr_precision B[3] = {0.0};
@@ -123,16 +125,19 @@ class Boundary
     A[0] = B[0];
     A[1] = B[1];
 #endif
-#endif
+    }
     }
 
   CUDA_CALLABLE_MEMBER
   void getSurfaceNormal(gitr_precision B[], gitr_precision y, gitr_precision x) {
-#if USE3DTETGEOM > 0
+    if( USE3DTETGEOM > 0 )
+    {
     B[0] = a / plane_norm;
     B[1] = b / plane_norm;
     B[2] = c / plane_norm;
-#else
+    }
+    else
+    {
     gitr_precision perpSlope = 0.0;
     if (slope_dzdx == 0.0) {
       perpSlope = 1.0e12;
@@ -154,7 +159,7 @@ class Boundary
 //B[1] = -b/plane_norm;
 //B[2] = -c/plane_norm;
 //std::cout << "perp x and z comp " << B[0] << " " << B[2] << std::endl;
-#endif
+    }
     }
     CUDA_CALLABLE_MEMBER
         void transformToSurface(gitr_precision C[],gitr_precision y, gitr_precision x)
@@ -186,7 +191,6 @@ class Boundary
 //        this->x2 = x2;
 //        this->y2 = y2;
 //        this->z2 = z2;        
-//#if USE3DTETGEOM > 0
 //#else
 //        this->slope_dzdx = slope;
 //        this->intercept_z = intercept;

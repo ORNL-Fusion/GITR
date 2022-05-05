@@ -75,16 +75,22 @@ struct boundary_init {
         potential(_potential) {}
 
     void operator()(Boundary &b) const {
-#if USE3DTETGEOM
-        gitr_precision midpointx = b.x1 + 0.666666667*(b.x2 + 0.5*(b.x3-b.x2)-b.x1);
-        gitr_precision midpointy = b.y1 + 0.666666667*(b.y2 + 0.5*(b.y3-b.y2)-b.y1);
-        gitr_precision midpointz = b.z1 + 0.666666667*(b.z2 + 0.5*(b.z3-b.z2)-b.z1);
-#else
+        gitr_precision midpointx;
+        gitr_precision midpointy;
+        gitr_precision midpointz;
+    if( USE3DTETGEOM )
+    {
+        midpointx = b.x1 + 0.666666667*(b.x2 + 0.5*(b.x3-b.x2)-b.x1);
+        midpointy = b.y1 + 0.666666667*(b.y2 + 0.5*(b.y3-b.y2)-b.y1);
+        midpointz = b.z1 + 0.666666667*(b.z2 + 0.5*(b.z3-b.z2)-b.z1);
+    }
+    else
+    {
 
-        gitr_precision midpointx = 0.5*(b.x2 - b.x1)+ b.x1;
-        gitr_precision midpointy = 0.0;
-        gitr_precision midpointz = 0.5*(b.z2 - b.z1) + b.z1;
-#endif
+        midpointx = 0.5*(b.x2 - b.x1)+ b.x1;
+        midpointy = 0.0;
+        midpointz = 0.5*(b.z2 - b.z1) + b.z1;
+    }
         b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density);
         b.ne = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,ne);
         b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
@@ -93,10 +99,12 @@ struct boundary_init {
 interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
                  bfieldGridz,bfieldR,bfieldZ,bfieldT);
         gitr_precision norm_B = vectorNorm(B);
-#if USE3DTETGEOM
+        gitr_precision theta;
+    if( USE3DTETGEOM )
+    {
         gitr_precision surfNorm[3] = {0.0,0.0,0.0};
         b.getSurfaceNormal(surfNorm,0.0,0.0);
-        gitr_precision theta = std::acos(vectorDotProduct(B,surfNorm)/(vectorNorm(B)*vectorNorm(surfNorm)));
+        theta = std::acos(vectorDotProduct(B,surfNorm)/(vectorNorm(B)*vectorNorm(surfNorm)));
         if (theta > 3.14159265359*0.5)
         {
           theta = std::abs(theta - (3.14159265359));
@@ -104,17 +112,19 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         b.unit_vec0 = b.inDir*b.a/b.plane_norm; //
         b.unit_vec1 = b.inDir*b.b/b.plane_norm; //
         b.unit_vec2 = b.inDir*b.c/b.plane_norm;
-#else
+    }
+    else
+    {
         gitr_precision br = B[0];
         gitr_precision bt = B[1];
         gitr_precision bz = B[2];
-        gitr_precision theta = std::acos((-br*b.slope_dzdx + bz)/(std::sqrt(br*br+bz*bz+bt*bt)*std::sqrt(b.slope_dzdx*b.slope_dzdx + 1.0)));
+        theta = std::acos((-br*b.slope_dzdx + bz)/(std::sqrt(br*br+bz*bz+bt*bt)*std::sqrt(b.slope_dzdx*b.slope_dzdx + 1.0)));
  
         if (theta > 3.14159265359*0.5)
         {
             theta = std::acos((br*b.slope_dzdx - bz)/(std::sqrt(br*br+bz*bz+bt*bt)*std::sqrt(b.slope_dzdx*b.slope_dzdx + 1.0)));
         }
-#endif        
+    }
         b.angle = theta*180.0/3.14159265359;
         b.debyeLength = std::sqrt(8.854187e-12*b.te/(b.ne*std::pow(background_Z,2)*1.60217662e-19));
 	//std::cout << "debyeLength " << b.debyeLength << std::endl;
