@@ -3825,8 +3825,11 @@ if( flowv_interp == 1 )
 #else
   sim::Array<rand_type> state1(nParticles);
 #endif
-#if USEIONIZATION > 0 || USERECOMBINATION > 0 || USEPERPDIFFUSION > 0 ||       \
-    USECOULOMBCOLLISIONS > 0 || USESURFACEMODEL > 0
+    if( USEIONIZATION > 0 ||
+        USEPERPDIFFUSION > 0 ||
+        USECOULOMBCOLLISIONS > 0 ||
+        USESURFACEMODEL > 0 )
+    {
 #if USE_CUDA
   // if(world_rank == 0)
   //{
@@ -3841,10 +3844,6 @@ if( flowv_interp == 1 )
                    // curandInitialize(&state1[0],randDeviceInit,0));
                    curandInitialize<>(&state1.front(), 0));
   std::cout << " finished curandInit" << std::endl;
-  // curandInitialize cuIn(0);
-  // cuIn(0);
-  //}
-  //}
 #else
   std::random_device randDeviceInit;
   // thrust::for_each(thrust::device,particleBegin+
@@ -3860,7 +3859,7 @@ if( flowv_interp == 1 )
 #if USE_CUDA
   cudaDeviceSynchronize();
 #endif
-#endif
+}
 #endif
   auto randInitEnd_clock = gitr_time::now();
   std::chrono::duration<gitr_precision> fsRandInit = randInitEnd_clock - randInitStart_clock;
@@ -3938,12 +3937,12 @@ if( flowv_interp == 1 )
       nDensitiesRecombine, gridTemperature_Recombination.data(),
       gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags);
 #endif
-#if USEPERPDIFFUSION > 0
+
   crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
       &bz.front(), &by.front());
-#endif
+
 #if USECOULOMBCOLLISIONS > 0
   coulombCollisions coulombCollisions0(
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
@@ -4254,19 +4253,13 @@ if( flowv_interp == 1 )
 #endif
 #endif
 
-#if USEPERPDIFFUSION > 0
+      if( USEPERPDIFFUSION > 0 )
+      {
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        crossFieldDiffusion0);
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        geometry_check0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
+      }
 
 #if USECOULOMBCOLLISIONS > 0
       thrust::for_each(thrust::device, particleBegin, particleEnd,

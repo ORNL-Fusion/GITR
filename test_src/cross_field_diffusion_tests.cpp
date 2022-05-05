@@ -276,6 +276,11 @@ TEST_CASE( "cross-field diffusion operator" )
     GITR_USE_PERP_DIFFUSION=2
     USE_CYLSYMM=1
 
+    USE3DTETGEOM=0
+    USE_SURFACE_POTENTIAL=0
+    PARTICLE_SOURCE_FILE=0
+    USE_ADAPTIVE_DT=0
+
   */
   SECTION( "cross-field diffusion, curved field lines" )
   {
@@ -305,18 +310,11 @@ TEST_CASE( "cross-field diffusion operator" )
 
     int nP = impurity[ "nP" ];
 
-    /* Correct flags for this unit test */
-    /*
-    USE3DTETGEOM=0
-    USE_SURFACE_POTENTIAL=0
-    PARTICLE_SOURCE_FILE=0
-    USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
-    USE_ADAPTIVE_DT=0
-    */
-
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
+    std::cout << "Ahoy, Captain!" << std::endl;
     int nSurfaces = importGeometry( cfg_geom, boundaries );
+    std::cout << "Ahoy, Captain!" << std::endl;
 
     REQUIRE( nSurfaces == 2 );
 
@@ -407,7 +405,7 @@ TEST_CASE( "cross-field diffusion operator" )
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nP);
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize<rand_type>(&state1.front(), 0));
+                   curandInitialize<rand_type>(&state1.front(), true));
 
   gitr_precision perpDiffusionCoeff = 0.0;
   cfg_geom.lookupValue("backgroundPlasmaProfiles.Diffusion.Dperp",
