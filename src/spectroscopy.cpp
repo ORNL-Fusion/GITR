@@ -36,11 +36,14 @@ void spec_bin::operator()(std::size_t indx) const {
 #if SPECTROSCOPY > 2
     gitr_precision dim1 = particlesPointer->xprevious[indx];
 #else
-#if USECYLSYMM > 0
+     if( USECYLSYMM > 0 )
+     {
     gitr_precision dim1 = std::sqrt(x*x + y*y);
-    #else
+    }
+    else
+    {
     gitr_precision dim1 = x;
-    #endif
+    }
 #endif
 
     if ((z > gridZ[0]) && (z < gridZ[nZ-1]))

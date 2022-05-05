@@ -503,11 +503,15 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     gitr_precision distanceToParticle = 0.0;
     int pointLine=0;
 //#if EFIELD_INTERP ==1
-#if USECYLSYMM > 0
-    gitr_precision x = std::sqrt(x0*x0 + y*y);
-#else
-    gitr_precision x = x0;
-#endif 
+    gitr_precision x;
+     if( USECYLSYMM > 0 )
+     {
+    x = std::sqrt(x0*x0 + y*y);
+    }
+    else
+    {
+    x = x0;
+    }
 
 #if GEOM_HASH_SHEATH > 0
   gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
@@ -744,16 +748,19 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     }
     else
     {
-#if USECYLSYMM > 0
+     if( USECYLSYMM > 0 )
+     {
             //if cylindrical geometry
             gitr_precision theta = std::atan2(y,x0);
   
             E[0] = std::cos(theta)*Er - std::sin(theta)*Et;
             E[1] = std::sin(theta)*Er + std::cos(theta)*Et;
-#else
+    }
+    else
+    {
             E[0] = Er;
             E[1] = Et;
-#endif
+    }
     }
             //std::cout << "Ex and Ey and Ez " << E[0] << " " << E[1] << " " << E[2] << std::endl;
    

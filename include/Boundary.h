@@ -117,14 +117,15 @@ class Boundary
 
     if( USE3DTETGEOM <= 0 )
     {
-#if USECYLSYMM > 0
+     if( USECYLSYMM > 0 )
+     {
     gitr_precision theta = std::atan2(y, x);
     gitr_precision B[3] = {0.0};
     B[0] = std::cos(theta) * A[0] - std::sin(theta) * A[1];
     B[1] = std::sin(theta) * A[0] + std::cos(theta) * A[1];
     A[0] = B[0];
     A[1] = B[1];
-#endif
+     }
     }
     }
 
@@ -147,14 +148,17 @@ class Boundary
     gitr_precision Br = 1.0 / std::sqrt(perpSlope * perpSlope + 1.0);
     gitr_precision Bt = 0.0;
     B[2] = std::copysign(1.0,perpSlope) * std::sqrt(1 - Br * Br);
-#if USECYLSYMM > 0
+     if( USECYLSYMM > 0 )
+     {
     gitr_precision theta = std::atan2(y, x);
     B[0] = std::cos(theta) * Br - std::sin(theta) * Bt;
     B[1] = std::sin(theta) * Br + std::cos(theta) * Bt;
-#else
+    }
+    else
+    {
     B[0] = Br;
     B[1] = Bt;
-#endif
+    }
 //B[0] = -a/plane_norm;
 //B[1] = -b/plane_norm;
 //B[2] = -c/plane_norm;
