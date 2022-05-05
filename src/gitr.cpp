@@ -1024,10 +1024,13 @@ if( geom_hash_sheath > 1 )
     getVariable(cfg, geomHashSheathCfg + "hashX1", hashX1_s);
     getVariable(cfg, geomHashSheathCfg + "hashZ0", hashZ0_s);
     getVariable(cfg, geomHashSheathCfg + "hashZ1", hashZ1_s);
-#if USE3DTETGEOM > 0
+    if( USE3DTETGEOM > 0 )
+    {
+//#if USE3DTETGEOM > 0
     getVariable(cfg, geomHashSheathCfg + "hashY0", hashY0_s);
     getVariable(cfg, geomHashSheathCfg + "hashY1", hashY1_s);
-#endif
+//#endif
+    }
   }
 #if USE_MPI > 0
   MPI_Bcast(&hashX0_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -1150,10 +1153,13 @@ else if( geom_hash_sheath > 1 )
                    "gridRString", closeGeomGridr_sheath[0]);
     getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
                    "gridZString", closeGeomGridz_sheath[0]);
-#if USE3DTETGEOM > 0
+//#if USE3DTETGEOM > 0
+    if( USE3DTETGEOM > 0 )
+    {
     getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
                    "gridYString", closeGeomGridy_sheath[0]);
-#endif
+//#endif
+    }
     getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
                    "closeGeomString", closeGeom_sheath[0]);
 #if USE_MPI > 0
@@ -1241,12 +1247,15 @@ if( generate_lc > 0 )
   // if( !boost::filesystem::exists( lcFile ) )
   // {
   //   std::cout << "No pre-existing connection length file found" << std::endl;
-#if USE3DTETGEOM > 0
+    if( USE3DTETGEOM > 0 )
+    {
+//#if USE3DTETGEOM > 0
   gitr_precision dy_Lc = (y1_Lc - y0_Lc) / (nY_Lc - 1);
   for (int j = 0; j < nY_Lc; j++) {
     gridYLc[j] = y0_Lc + j * dy_Lc;
   }
-#endif
+//#endif
+    }
   gitr_precision dr_Lc = (r1_Lc - r0_Lc) / (nR_Lc - 1);
   for (int i = 0; i < nR_Lc; i++) {
     gridRLc[i] = r0_Lc + i * dr_Lc;
@@ -1279,11 +1288,17 @@ if( generate_lc > 0 )
   for (int i = 0; i < nR_Lc; i++) {
     for (int j = 0; j < nY_Lc; j++) {
       for (int k = 0; k < nZ_Lc; k++) {
-#if USE3DTETGEOM > 0
+    if( USE3DTETGEOM > 0 )
+    {
+//#if USE3DTETGEOM > 0
         addIndex = i + j * nR_Lc + k * nR_Lc * nY_Lc;
-#else
+    }
+    else
+    {
+//#else
         addIndex = i + k * nR_Lc;
-#endif
+//#endif
+    }
         forwardTracerParticles->setParticle(addIndex, gridRLc[i], gridYLc[j],
                                             gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0,
                                             0.0);
@@ -1411,11 +1426,17 @@ if( generate_lc > 0 )
         for (int k = 0; k < nZ_Lc; k++) {
           // std::cout << "hitwall of tracers " <<
           // forwardTracerParticles->hitWall[addIndex] << std::endl;
-#if USE3DTETGEOM > 0
+    if( USE3DTETGEOM > 0 )
+    {
+//#if USE3DTETGEOM > 0
           addIndex = i + j * nR_Lc + k * nR_Lc * nY_Lc;
-#else
+    }
+    else
+    {
+//#else
         addIndex = i + k * nR_Lc;
-#endif
+//#endif
+    }
           if (forwardTracerParticles->hitWall[addIndex] > 0) {
             forwardDist = forwardTracerParticles->distanceTraveled[addIndex];
           } else {
@@ -1475,10 +1496,14 @@ if( generate_lc > 0 )
     NcDim nc_nRLc = ncFileLC.addDim("nR", nR_Lc);
     dims_lc.push_back(nc_nRLc);
 
-#if USE3DTETGEOM
-    NcDim nc_nYLc = ncFileLC.addDim("nY", nY_Lc);
+    NcDim nc_nYLc;
+    if( USE3DTETGEOM )
+    {
+//#if USE3DTETGEOM
+    nc_nYLc = ncFileLC.addDim("nY", nY_Lc);
     dims_lc.push_back(nc_nYLc);
-#endif
+//#endif
+    }
 
     NcDim nc_nZLc = ncFileLC.addDim("nZ", nZ_Lc);
     dims_lc.push_back(nc_nZLc);
@@ -1493,9 +1518,13 @@ if( generate_lc > 0 )
     NcVar nc_btz = ncFileLC.addVar("bz", netcdf_precision, dims_lc);
     NcVar nc_nI = ncFileLC.addVar("noIntersection", netcdf_precision, dims_lc);
     NcVar nc_gridRLc = ncFileLC.addVar("gridR", netcdf_precision, nc_nRLc);
-#if USE3DTETGEOM
-    NcVar nc_gridYLc = ncFileLC.addVar("gridY", netcdf_precision, nc_nYLc);
-#endif
+    NcVar nc_gridYLc;
+    if( USE3DTETGEOM )
+    {
+//#if USE3DTETGEOM
+    nc_gridYLc = ncFileLC.addVar("gridY", netcdf_precision, nc_nYLc);
+//#endif
+    }
     NcVar nc_gridZLc = ncFileLC.addVar("gridZ", netcdf_precision, nc_nZLc);
    //FIXME - commented these because of disrupted workflow compile errors
     //nc_Lc.putVar(&Lc[0]);
@@ -1508,9 +1537,12 @@ if( generate_lc > 0 )
     //nc_btz.putVar(&backwardTracerZ[0]);
     //nc_nI.putVar(&noIntersectionNodes[0]);
     //nc_gridRLc.putVar(&gridRLc[0]);
-#if USE3DTETGEOM
+    if( USE3DTETGEOM )
+    {
+//#if USE3DTETGEOM
     nc_gridYLc.putVar(&gridYLc[0]);
-#endif
+//#endif
+    }
     nc_gridZLc.putVar(&gridZLc[0]);
     ncFileLC.close();
 #if USE_MPI > 0
@@ -3102,11 +3134,17 @@ if( flowv_interp == 1 )
     for (int i = 0; i < nLines; i++) {
       if (boundaries[i].Z == sourceMaterialZ) {
         nSourceBoundaries++;
-#if USE3DTETGEOM
+    if( USE3DTETGEOM )
+    {
+//#if USE3DTETGEOM
         accumulatedLengthArea = accumulatedLengthArea + boundaries[i].area;
-#else
+//#else
+    }
+    else
+    {
         accumulatedLengthArea = accumulatedLengthArea + boundaries[i].length;
-#endif
+//#endif
+    }
       }
     }
   } else {
@@ -3119,15 +3157,21 @@ if( flowv_interp == 1 )
                 << std::endl;
     }
     for (int i = 0; i < nSourceBoundaries; i++) {
-#if USE3DTETGEOM
+    if( USE3DTETGEOM )
+    {
+//#if USE3DTETGEOM
       accumulatedLengthArea =
           accumulatedLengthArea +
           boundaries[int(particleSourceSetting["surfaceIndices"][i])].area;
-#else
+//#else
+    }
+    else
+    {
       accumulatedLengthArea =
           accumulatedLengthArea +
           boundaries[int(particleSourceSetting["surfaceIndices"][i])].length;
-#endif
+//#endif
+    }
     }
   }
   if (cfg_particles.lookupValue("particleSource.sourceSampleResolution",
@@ -3430,9 +3474,6 @@ if( flowv_interp == 1 )
   //}
 #endif
   std::cout << "particle file import done" << std::endl;
-#if USE3DTETGEOM > 0
-  // MPI_Bcast(&boundaries[0].area, nLines,MPI_FLOAT,0,MPI_COMM_WORLD);
-#endif
   sim::Array<gitr_precision> pSurfNormX(nP), pSurfNormY(nP), pSurfNormZ(nP), px(nP),
       py(nP), pz(nP), pvx(nP), pvy(nP), pvz(nP);
   int surfIndexMod = 0;
@@ -3440,7 +3481,9 @@ if( flowv_interp == 1 )
   for (int i = 0; i < nP; i++) {
   //std::cout<< "setting particle " << i << std::endl;
 #if PARTICLE_SOURCE_SPACE > 0 // File source
-#if USE3DTETGEOM > 0
+    if( USE3DTETGEOM > 0 )
+    {
+//#if USE3DTETGEOM > 0
     surfIndexMod = i % nSourceSurfaces;
     gitr_precision xCentroid = (boundaries[sourceElements[surfIndexMod]].x1 +
                        boundaries[sourceElements[surfIndexMod]].x2 +
@@ -3467,7 +3510,10 @@ if( flowv_interp == 1 )
         bufferLaunch * boundaries[sourceElements[surfIndexMod]].c /
             boundaries[sourceElements[surfIndexMod]]
                 .plane_norm; // boundaries[sourceElements[surfIndexMod]].z1;
-#else
+//#else
+    }
+    else
+    {
     // x = sampled
     rand0 = dist01(s0);
     gitr_precision distAlongSegs =
@@ -3495,7 +3541,8 @@ if( flowv_interp == 1 )
     z = z - buffer * boundaries[currentSegment].c /
                 boundaries[currentSegment]
                     .plane_norm; // boundaries[sourceElements[surfIndexMod]].z1;
-#endif
+//#endif
+    }
 #endif
 #if PARTICLE_SOURCE_ENERGY > 0
     randE = dist01E(sE);
@@ -4533,7 +4580,9 @@ for(int i=0; i<nP ; i++)
       if (particleArray->hitWall[i] > 0.0)
         totalHitWall++;
     }
-#if USE3DTETGEOM > 0
+    if( USE3DTETGEOM > 0 )
+    {
+//#if USE3DTETGEOM > 0
     gitr_precision meanTransitTime0 = 0.0;
     /*
     for (int i=0; i<nP; i++)
@@ -4586,7 +4635,10 @@ std::cout << "bound 255p " << tally00[255] << std::endl;
 std::cout << "bound 164 " << boundaries[164].impacts << std::endl;
 std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 */
-#else
+    }
+    else
+    {
+//#else
   gitr_precision *impacts = new gitr_precision[nLines];
   gitr_precision *startingParticles = new gitr_precision[nLines];
   gitr_precision *surfZ = new gitr_precision[nLines];
@@ -4596,7 +4648,8 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     startingParticles[i] = boundaries[i].startingParticles;
     surfZ[i] = boundaries[i].Z;
   }
-#endif
+//#endif
+    }
     // add initial particle erosion to surface counting
     int closestBoundaryIndex = 0;
     int surfIndex = 0;

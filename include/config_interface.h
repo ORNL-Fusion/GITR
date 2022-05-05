@@ -241,8 +241,7 @@ class use final : public config_module_base
     compatibility_check,
     surface_potential,
     cylsymm,
-    sort,
-    use_adaptive_dt
+    sort
   };
 
   use( class libconfig_string_query const &query,
