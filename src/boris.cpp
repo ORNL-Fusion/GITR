@@ -100,13 +100,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
 
     if( USE3DTETGEOM > 0 )
     {
-    Emag = 0.0;
-    Er = 0.0;
-    Et = 0.0;
     gitr_precision p0[3] = {x0,y,z};
-    angle = 0.0;
-    fd = 0.0;
-    pot = 0.0;
       gitr_precision a = 0.0;
       gitr_precision b = 0.0;
       gitr_precision c = 0.0;
@@ -373,16 +367,8 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
              //if (fabs(pointToPlaneDistance0) < minDistance)
              //{
                 perpDist = std::abs(pointToPlaneDistance0); 
-                //minDistance = fabs(pointToPlaneDistance0);
-                //std::cout << "p " << p[0] << " " << p[1] << " " << p[2] << std::endl;
-                //std::cout << "p0 " << p0[0] << " " << p0[1] << " " << p0[2] << std::endl;
                 vectorSubtract(p,p0 ,normalVector);
-                //std::cout << "unit vec " << directionUnitVector[0] << " " << directionUnitVector[1] << 
-                //    " " << directionUnitVector[2] << std::endl;
                 vectorNormalize(normalVector,normalVector);
-                //std::cout << "unit vec " << directionUnitVector[0] << " " << directionUnitVector[1] << 
-                //    " " << directionUnitVector[2] << std::endl;
-                //std::cout << "perp distance " << std::endl;
              distances[0] = perpDist;   
              normals[0] = boundaryVector[i].unit_vec0; //normalVector[0];
              normals[1] = boundaryVector[i].unit_vec1; //normalVector[1];
@@ -393,59 +379,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
          {
              perpDist = 1.0e12;
              distances[0] = perpDist;   
-             /*
-             if (p0Anorm < p0Bnorm)
-             {
-                     if (p0Anorm < p0Cnorm)
-                     {
-                        if (p0Anorm < minDistance)
-                        {
-                         minDistance = p0Anorm;
-                         vectorAssign(p0A[0]/p0Anorm,p0A[1]/p0Anorm,p0A[2]/p0Anorm,
-                                      directionUnitVector);
-                         minIndex = i;
-                        std::cout << "p0A " << std::endl;
-                        }
-                     }
-                     else
-                     {
-                        if (p0Cnorm < minDistance)
-                        {
-                         minDistance = p0Cnorm;
-                         vectorAssign(p0C[0]/p0Cnorm,p0C[1]/p0Cnorm,p0C[2]/p0Cnorm,
-                                      directionUnitVector);
-                         minIndex = i;
-                        std::cout << "p0C " << p0Cnorm << std::endl;
-                        }
-                     }
-             }
-             else
-             {
-                     if (p0Bnorm < p0Cnorm)
-                     {
-                        if (p0Bnorm < minDistance)
-                        {
-                         minDistance = p0Bnorm;
-                         vectorAssign(p0B[0]/p0Bnorm,p0B[1]/p0Bnorm,p0B[2]/p0Bnorm,
-                                      directionUnitVector);
-                         minIndex = i;
-                        std::cout << "p0B " << std::endl;
-                        }
-                     }
-                     else
-                     {
-                        if (p0Cnorm < minDistance)
-                        {
-                         minDistance = p0Cnorm;
-                         vectorAssign(p0C[0]/p0Cnorm,p0C[1]/p0Cnorm,p0C[2]/p0Cnorm,
-                                      directionUnitVector);
-                         minIndex = i;
-                        std::cout << "p0C two " << std::endl;
-                        }
-                     }
-
-             }      
-             */
          }
          int index = 0;
          for(int j = 0; j < 7; j++)
@@ -482,23 +415,14 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     else
     {
                 
-    gitr_precision Emag = 0.0;
-	gitr_precision fd = 0.0;
-	gitr_precision pot = 0.0;
-    int minIndex = 0;
-    gitr_precision minDistance = 1e12;
     int direction_type;
     gitr_precision tol = 1e12;
     gitr_precision point1_dist;
     gitr_precision point2_dist;
     gitr_precision perp_dist;
-    gitr_precision directionUnitVector[3] = {0.0,0.0,0.0};
     gitr_precision vectorMagnitude;
     gitr_precision max = 0.0;
     gitr_precision min = 0.0;
-    gitr_precision angle = 0.0;
-    gitr_precision Er = 0.0;
-    gitr_precision Et = 0.0;
     gitr_precision Bfabsfperp = 0.0;
     gitr_precision distanceToParticle = 0.0;
     int pointLine=0;
@@ -531,10 +455,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     for (int j=0; j< nLines; j++)
     {  //std::cout << " surface check " << j << std::endl;
 #endif
-        //if(j > nLines)
-        //{
-        //    j = 0;
-        //}
        gitr_precision boundZhere = boundaryVector[j].Z;
        
         if (boundZhere != 0.0)
@@ -551,10 +471,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
 	  {
 	   perp_dist = x0 - boundaryVector[j].x1;
 	  }
-	//std::cout << " x0 z " << x0 << " " << z << " slope " << boundaryVector[j].slope_dzdx << " intercept " << boundaryVector[j].intercept_z << std::endl;
-        
-	//std::cout << " surface check " << j << " point1dist " << point1_dist << " point2_dist " << point2_dist <<  
-	   //           " perp_dist " << perp_dist << std::endl;
             if (point1_dist > point2_dist)
             {
                 max = point1_dist;
@@ -565,18 +481,14 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
                 max = point2_dist;
                 min = point1_dist;
             }
-    //        std::cout << "p1dist p2dist perpDist " << point1_dist << " " << point2_dist << " " << perp_dist << std::endl;
             if (boundaryVector[j].length*boundaryVector[j].length + perp_dist*perp_dist >=
                     max*max)
             {
-                //boundaryVector[j].distanceToParticle =fabsf( perp_dist);
                 distanceToParticle = std::abs(perp_dist);
-                //boundaryVector[j].pointLine = 1;
                 pointLine = 1;
             }
             else
             {
-                //boundaryVector[j].distanceToParticle = min;
                 distanceToParticle = min;
                 if (boundaryVector[j].distanceToParticle == point1_dist)
                 {
@@ -600,49 +512,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
         {
             distanceToParticle = tol;
         }
-    //int thisTmp=0;
-    //int Bperiodic = boundaryVector[minIndex].periodic;
-    //int BpointLine = boundaryVector[minIndex].pointLine;
-    //int BsurfaceNumber = boundaryVector[minIndex].surfaceNumber;
-    //int Bsurface = boundaryVector[minIndex].surface;
-    //gitr_precision Bx1 = boundaryVector[minIndex].x1;
-    //gitr_precision By1 = boundaryVector[minIndex].y1;
-    //gitr_precision Bz1 = boundaryVector[minIndex].z1;
-    //gitr_precision Bx2 = boundaryVector[minIndex].x2;
-    //gitr_precision By2 = boundaryVector[minIndex].y2;
-    //gitr_precision Bz2 = boundaryVector[minIndex].z2;
-    //gitr_precision Ba = boundaryVector[minIndex].a;
-    //gitr_precision Bb = boundaryVector[minIndex].b;
-    //gitr_precision Bc = boundaryVector[minIndex].c;
-    //gitr_precision Bd = boundaryVector[minIndex].d;
-    //gitr_precision Bplane_norm = boundaryVector[minIndex].plane_norm;
-    //#if USE3DTETGEOM > 0
-    //  gitr_precision Bx3 = boundaryVector[minIndex].x3;
-    //  gitr_precision By3 = boundaryVector[minIndex].y3;
-    //  gitr_precision Bz3 = boundaryVector[minIndex].z3;
-    //  gitr_precision Barea = boundaryVector[minIndex].area;
-    //#else
-    //  gitr_precision Bslope_dzdx = boundaryVector[minIndex].slope_dzdx;
-    //  gitr_precision Bintercept_z = boundaryVector[minIndex].intercept_z;
-    //#endif     
-    //gitr_precision BZ = boundaryVector[minIndex].Z;
-    //gitr_precision Bamu = boundaryVector[minIndex].amu;
-    //gitr_precision Bpotential = boundaryVector[minIndex].potential;
-	//
-    //gitr_precision BhitWall = boundaryVector[minIndex].hitWall;
-    //gitr_precision Blength = boundaryVector[minIndex].length;
-    //gitr_precision BdistanceToParticle = boundaryVector[minIndex].distanceToParticle;
-    //gitr_precision Bangle = boundaryVector[minIndex].angle;
-    //gitr_precision Bfd = boundaryVector[minIndex].fd;
-    //gitr_precision Bdensity = boundaryVector[minIndex].density;
-    //gitr_precision Bti = boundaryVector[minIndex].ti;
-    //gitr_precision Bne = boundaryVector[minIndex].ne;
-    //gitr_precision Bte = boundaryVector[minIndex].te;
-    //gitr_precision BdebyeLength = boundaryVector[minIndex].debyeLength;
-    //gitr_precision BlarmorRadius = boundaryVector[minIndex].larmorRadius;
-    //   if(x0==0.0 && z > 1.0e-3 && minDistance<1.0e-9)
-    //       thisTmp=1;
-    //std::cout << "min distance " << j << " " << minDistance << std::endl;
     }
     if (direction_type == 1)
     {
@@ -664,23 +533,19 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
             directionUnitVector[0] = 1.0 * std::copysign(1.0,(z - boundaryVector[minIndex].intercept_z)/(boundaryVector[minIndex].slope_dzdx) - x0);
             directionUnitVector[1] = 0.0;
             directionUnitVector[2] = 1.0 * std::copysign(1.0,perp_dist)/(boundaryVector[minIndex].slope_dzdx);
-        //std::cout << "sign boundarVec.slope  sign perp_dist " << sgn(boundaryVector[minIndex].slope_dzdx) << " " << sgn(perp_dist) << std::endl;
         }
-        //std::cout << "direction_type 1 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     }
     else if (direction_type == 2)
     {
         directionUnitVector[0] = (boundaryVector[minIndex].x1 - x);
         directionUnitVector[1] = 0.0;
         directionUnitVector[2] = (boundaryVector[minIndex].z1 - z);
-        //std::cout << "direction_type 2 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     }
     else
     {
         directionUnitVector[0] = (boundaryVector[minIndex].x2 - x);
         directionUnitVector[1] = 0.0;
         directionUnitVector[2] = (boundaryVector[minIndex].z2 - z);
-        //std::cout << "direction_type 3 " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     }
 
     vectorMagnitude = std::sqrt(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
@@ -688,16 +553,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
-    //gitr_precision surfaceNormalVector[3] = {0.0};
-    //boundaryVector[minIndex].getSurfaceNormal(surfaceNormalVector,y,x);
-    //directionUnitVector[0]= boundaryVector[minIndex].inDir*surfaceNormalVector[0];
-    //directionUnitVector[1]= boundaryVector[minIndex].inDir*surfaceNormalVector[1];
-    //directionUnitVector[2]= boundaryVector[minIndex].inDir*surfaceNormalVector[2];
-    //vectorMagnitude = std::sqrt(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
-    //                            + directionUnitVector[2]*directionUnitVector[2]);
-    //directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
-    //directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
-    //directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
     }
 #if BIASED_SURFACE > 0
     pot = boundaryVector[minIndex].potential;
@@ -706,22 +561,13 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     angle = boundaryVector[minIndex].angle;    
     fd  = boundaryVector[minIndex].fd;
     pot = boundaryVector[minIndex].potential;
-     //std::cout << "potential and debye length " << pot << " " << boundaryVector[minIndex].debyeLength << " " << pot/boundaryVector[minIndex].debyeLength << std::endl;
-    //std::cout << " larmorRad " << boundaryVector[minIndex].larmorRadius << std::endl;
         gitr_precision debyeLength = boundaryVector[minIndex].debyeLength;
         gitr_precision larmorRadius = boundaryVector[minIndex].larmorRadius;
         Emag = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength))+ (1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
         gitr_precision part1 = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)));
         gitr_precision part2 = pot*(1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius);
-        //if(isnan(Emag)){
-	//printf("Emag %f ", Emag);
-	//}
-        //if(isnan(directionUnitVector[0]) ||isnan(directionUnitVector[1]) || isnan(directionUnitVector[2]) ){
-	//printf("direction %f %f %f \n", directionUnitVector[0],directionUnitVector[1],directionUnitVector[2]);
-	//}
-        //std::cout << "fd " << fd << std::endl;
-        //std::cout << "minDistance " << minDistance << std::endl;
 #endif
+        /* Captain! This appears to be skipped? */
     if(minDistance == 0.0 || boundaryVector[minIndex].larmorRadius == 0.0)
     {
         Emag = 0.0;

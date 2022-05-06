@@ -312,9 +312,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    std::cout << "Ahoy, Captain!" << std::endl;
     int nSurfaces = importGeometry( cfg_geom, boundaries );
-    std::cout << "Ahoy, Captain!" << std::endl;
 
     REQUIRE( nSurfaces == 2 );
 

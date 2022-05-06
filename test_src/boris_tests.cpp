@@ -13,6 +13,9 @@
 #include "slow_math.h"
 #include "constants.h"
 
+/*
+    REQUIRE(compareVectors<gitr_precision>(gitrE,gold,epsilon,margin));
+*/
 template <typename T=double>
 bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
 {
@@ -786,7 +789,7 @@ TEST_CASE( "Complex Boris Motion" )
 
     for(int i=0;i<gold.size();i++)
     {
-      std::cout << gold[i] << std::endl;
+      std::cout << gold[i] << " " << gitrE[ i ] << std::endl;
     }
 
     gold[0] = 0.0;
@@ -797,3 +800,23 @@ TEST_CASE( "Complex Boris Motion" )
     REQUIRE(compareVectors<gitr_precision>(gitrE,gold,epsilon,margin));
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

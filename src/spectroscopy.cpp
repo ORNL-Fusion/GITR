@@ -33,16 +33,17 @@ void spec_bin::operator()(std::size_t indx) const {
     gitr_precision z = particlesPointer->zprevious[indx];
     gitr_precision dt_particle = 0.0;
 
+    gitr_precision dim1;
 #if SPECTROSCOPY > 2
-    gitr_precision dim1 = particlesPointer->xprevious[indx];
+    dim1 = particlesPointer->xprevious[indx];
 #else
      if( USECYLSYMM > 0 )
      {
-    gitr_precision dim1 = std::sqrt(x*x + y*y);
+    dim1 = std::sqrt(x*x + y*y);
     }
     else
     {
-    gitr_precision dim1 = x;
+    dim1 = x;
     }
 #endif
 
