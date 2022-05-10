@@ -1,5 +1,5 @@
-# Set cylsymm to 0 for first test, to 1 for second test
-# Anti-pattern: build-time options - these will be converted to runtime options in the future
+# straight field line test: USECYLSYMM = 0, USEPERPDIFFUSION=1
+# curved field line test: USECYLSYMM = 1, USEPERPDIFFUSION=2
 
 # String description for each option
 set( description "(no description added - see define_options.cmake)" )
@@ -9,7 +9,7 @@ set( GITR_USE_MPI 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_DOUBLE 1 CACHE STRING "${description}" FORCE )
 set( GITR_USE_IONIZATION 1 CACHE STRING "${description}" FORCE ) # if ionization is on, recombination on
 set( GITR_USE_RECOMBINATION 1 CACHE STRING "${description}" FORCE )
-set( GITR_USE_PERP_DIFFUSION 2 CACHE STRING "${description}" FORCE )
+set( GITR_USE_PERP_DIFFUSION 1 CACHE STRING "${description}" FORCE )
 set( GITR_USE_COULOMB_COLLISIONS 1 CACHE STRING "${description}" FORCE ) # if collisions are on, friction, scattering, heating
 set( GITR_USE_FRICTION 1 CACHE STRING "${description}" FORCE )
 set( GITR_USE_ANGLE_SCATTERING 1 CACHE STRING "${description}" FORCE )
@@ -43,7 +43,7 @@ set( GITR_PARTICLE_SOURCE_ANGLE 0 CACHE STRING "${description}" FORCE )
 set( GITR_PARTICLE_SOURCE_FILE 0 CACHE STRING "${description}" FORCE )
 set( GITR_SPECTROSCOPY 2 CACHE STRING "${description}" FORCE )
 set( GITR_USE_3DTET_GEOM 0 CACHE STRING "${description}" FORCE )
-set( GITR_USE_CYLSYMM 1 CACHE STRING "${description}" FORCE )
+set( GITR_USE_CYLSYMM 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_FIELD_ALIGNED_VALUES 0 CACHE STRING "${description}" FORCE )
 set( GITR_FLUX_EA 1 CACHE STRING "${description}" FORCE )
 set( GITR_FORCE_EVAL 0 CACHE STRING "${description}" FORCE )

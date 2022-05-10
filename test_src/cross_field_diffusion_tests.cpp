@@ -43,8 +43,6 @@ TEST_CASE( "cross-field diffusion operator" )
     GITR_USE_PERP_DIFFUSION=1
     USE_CYLSYMM=0
 
-    This technically will also pass with GITR_USE_PERP_DIFFUSION=2. Unsure which is correct.
-
   */
   SECTION( "cross-field diffusion, straight field lines" )
   {
