@@ -2626,13 +2626,13 @@ if( flowv_interp == 1 )
             << net_nZ << std::endl;
   if( SPECTROSCOPY < 3 )
   {
-  net_Bins_size = ((nBins + 1) * net_nX * net_nZ, 0.0);
-  net_BinsTotal_size = ((nBins + 1) * net_nX * net_nZ, 0.0);
+  net_Bins_size = ((nBins + 1) * net_nX * net_nZ);
+  net_BinsTotal_size = ((nBins + 1) * net_nX * net_nZ);
   }
   else
   {
-  net_Bins_size = ((nBins + 1) * net_nX * net_nY * net_nZ, 0.0);
-  net_BinsTotal_size = ((nBins + 1) * net_nX * net_nY * net_nZ, 0.0);
+  net_Bins_size = ((nBins + 1) * net_nX * net_nY * net_nZ);
+  net_BinsTotal_size = ((nBins + 1) * net_nX * net_nY * net_nZ);
   }
 
   gridX_bins.resize(net_nX);
@@ -3179,14 +3179,11 @@ if( flowv_interp == 1 )
         nSourceBoundaries++;
     if( USE3DTETGEOM )
     {
-//#if USE3DTETGEOM
         accumulatedLengthArea = accumulatedLengthArea + boundaries[i].area;
-//#else
     }
     else
     {
         accumulatedLengthArea = accumulatedLengthArea + boundaries[i].length;
-//#endif
     }
       }
     }
@@ -3202,18 +3199,15 @@ if( flowv_interp == 1 )
     for (int i = 0; i < nSourceBoundaries; i++) {
     if( USE3DTETGEOM )
     {
-//#if USE3DTETGEOM
       accumulatedLengthArea =
           accumulatedLengthArea +
           boundaries[int(particleSourceSetting["surfaceIndices"][i])].area;
-//#else
     }
     else
     {
       accumulatedLengthArea =
           accumulatedLengthArea +
           boundaries[int(particleSourceSetting["surfaceIndices"][i])].length;
-//#endif
     }
     }
   }
@@ -4275,6 +4269,7 @@ if( flowv_interp == 1 )
 
       if( SPECTROSCOPY > 0 )
       {
+        std::cout << "Ahoy, Captain!" << std::endl;
       thrust::for_each(thrust::device, particleBegin, particleEnd, spec_bin0);
       }
 
@@ -4545,12 +4540,6 @@ for(int i=0; i<nP ; i++)
               &weightHistoryGather[0], phpn, displ, MPI_FLOAT, 0,
               MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
-// if(world_rank ==0)
-//{
-// for(int i=0;i<401;i++)
-//{
-//  std::cout << "Rank " << world_rank << "z " << positionHistoryZgather[i] <<
-//  nSpec,
 #endif
 
   if( SPECTROSCOPY > 0 )
