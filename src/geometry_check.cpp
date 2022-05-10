@@ -268,9 +268,17 @@ void geometry_check::operator()(std::size_t indx) const {
                    particlesPointer->zprevious[indx]};
     gitr_precision p1[3] = {particlesPointer->x[indx], particlesPointer->y[indx],
                    particlesPointer->z[indx]};
-#if GEOM_HASH > 0
-    // find which hash
+
+    int top_limit = -1;
+
+    int buffIndx;
+    int rInd;
+    int zInd;
+    int yInd;
     int nHash = 0;
+
+    if( GEOM_HASH > 0 )
+    {
     int rHashInd = 0;
     int yHashInd = 0;
     int zHashInd = 0;
@@ -323,12 +331,12 @@ void geometry_check::operator()(std::size_t indx) const {
     gitr_precision dr = closeGeomGridr[rHashInd + 1] - closeGeomGridr[rHashInd];
     gitr_precision dz = closeGeomGridz[zHashInd + 1] - closeGeomGridz[zHashInd];
     gitr_precision dy = closeGeomGridy[yHashInd + 1] - closeGeomGridy[yHashInd];
-    int rInd = std::floor((r_position - closeGeomGridr[rHashInd]) / dr + 0.5);
-    int zInd = std::floor(
+    rInd = std::floor((r_position - closeGeomGridr[rHashInd]) / dr + 0.5);
+    zInd = std::floor(
         (particlesPointer->zprevious[indx] - closeGeomGridz[zHashInd]) / dz +
         0.5);
     int i = 0;
-    int yInd = std::floor(
+    yInd = std::floor(
         (particlesPointer->yprevious[indx] - closeGeomGridy[yHashInd]) / dy +
         0.5);
     // std::cout << "rHashInd " << rHashInd << " " << yHashInd << " " <<
@@ -351,21 +359,33 @@ void geometry_check::operator()(std::size_t indx) const {
       yInd = 0;
       zInd = 0;
     }
-    int buffIndx = 0;
+    buffIndx = 0;
     if (nHash > 0)
       buffIndx = nR_closeGeom[nHash - 1] * nY_closeGeom[nHash - 1] *
                  nZ_closeGeom[nHash - 1] * n_closeGeomElements[nHash - 1];
-    // std::cout << "buff Index " << buffIndx << std::endl;
-    for (int j = 0; j < n_closeGeomElements[nHash]; j++) {
+
+    top_limit = n_closeGeomElements[ nHash ];
+    }
+
+    else top_limit = nLines;
+
+    /* Captain! */
+    for( int k = 0; k < top_limit; k++ )
+    {
+      int i = -1;
+
+      if( GEOM_HASH > 0 )
+      {
+
       i = closeGeom[buffIndx +
                     zInd * nY_closeGeom[nHash] * nR_closeGeom[nHash] *
                         n_closeGeomElements[nHash] +
                     yInd * nR_closeGeom[nHash] * n_closeGeomElements[nHash] +
-                    rInd * n_closeGeomElements[nHash] + j];
-      // std::cout << "i's " << i << std::endl;
-#else
-    for (int i = 0; i < nLines; i++) {
-#endif
+                    rInd * n_closeGeomElements[nHash] + k];
+      }
+
+      else i = k;
+
       a = boundaryVector[i].a;
       b = boundaryVector[i].b;
       c = boundaryVector[i].c;
@@ -588,7 +608,15 @@ else{
 //std::cout << "r0 " << particlesPointer->x[indx] << " " <<
 //particlesPointer->y[indx] << " " <<
 //particlesPointer->z[indx]<< std::endl;
-#if GEOM_HASH > 0
+
+int top_limit = -1;
+int closeIndx = 0;
+
+int rInd;
+int zInd;
+
+if( GEOM_HASH > 0 )
+{
     gitr_precision r_position;
 
      if( USECYLSYMM > 0 )
@@ -602,47 +630,39 @@ else{
     {
     r_position = particlesPointer->xprevious[indx];
     }
+
     gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
     gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
-    int rInd = std::floor((r_position - closeGeomGridr[0]) / dr + 0.5);
-    int zInd = std::floor(
+
+    rInd = std::floor((r_position - closeGeomGridr[0]) / dr + 0.5);
+    zInd = std::floor(
         (particlesPointer->zprevious[indx] - closeGeomGridz[0]) / dz + 0.5);
-    if (rInd < 0 || rInd >= nR_closeGeom[0])
-      rInd = 0;
-    if (zInd < 0 || zInd >= nZ_closeGeom[0])
-      zInd = 0;
-    int i = 0;
-    int closeIndx = 0;
-    for (int j = 0; j < n_closeGeomElements[0]; j++) {
+
+    if (rInd < 0 || rInd >= nR_closeGeom[0]) rInd = 0;
+
+    if (zInd < 0 || zInd >= nZ_closeGeom[0]) zInd = 0;
+
+    top_limit = n_closeGeomElements[ 0 ];
+}
+
+else top_limit = nLines;
+
+    for ( int k = 0; k < top_limit; k++ ) 
+    {
+
+      int i = -1;
+
+      if( GEOM_HASH > 0 )
+      {
+
       closeIndx = zInd * nR_closeGeom[0] * n_closeGeomElements[0] +
-                  rInd * n_closeGeomElements[0] + j;
-      // if(zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      // rInd*n_closeGeomElements[0] + j < 0)
-      //{
-      //        zInd=0;
-      //        rInd=0;
-      //        j=0;
-      //    //std::cout << "index " <<
-      //    zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      //    rInd*n_closeGeomElements[0] + j << std::endl;
-      //}
-      //    if(zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      //    rInd*n_closeGeomElements[0] + j > 1309440)
-      //    {
-      //        zInd=0;
-      //        rInd=0;
-      //        j=0;
-      //        //std::cout << "index " <<
-      //        zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      //        rInd*n_closeGeomElements[0] + j << std::endl;
-      //    }
+                  rInd * n_closeGeomElements[0] + k;
+
       i = closeGeom[closeIndx];
+      }
+      
+      else i = k;
     
-#else
-    for (int i = 0; i < nLines; i++) {
-#endif
-      // std::cout << "vert geom " << i << "  " <<
-      // fabs(boundaryVector[i].slope_dzdx) << " " << tol << std::endl;
       if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75) 
       {
         signPoint = std::copysign(1.0, pdim1 - boundaryVector[i].x1);

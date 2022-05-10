@@ -166,50 +166,59 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
       gitr_precision normals[21] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,
                            0.0,0.0,0.0,0.0,0.0,0.0,0.0,
                            0.0,0.0,0.0,0.0,0.0,0.0,0.0};
-#if GEOM_HASH_SHEATH > 0
-  gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
-  gitr_precision dy = closeGeomGridy[1] - closeGeomGridy[0];
-  gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
-  int rInd = std::floor((x0 - closeGeomGridr[0])/dr + 0.5);
-  int yInd = std::floor((y - closeGeomGridy[0])/dy + 0.5);
-  int zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
-  int i;
-  if(rInd < 0 || rInd >= nR_closeGeom)
-    rInd =0;
-  if(yInd < 0 || yInd >= nY_closeGeom)
-    yInd =0;
-  if(zInd < 0 || zInd >= nZ_closeGeom)
-    zInd =0;
+  int top_limit = -1;
 
-  for (int k=0; k< n_closeGeomElements; k++) //n_closeGeomElements
+  gitr_precision dr;
+  gitr_precision dy;
+  gitr_precision dz;
+
+  int rInd;
+  int yInd;
+  int zInd;
+
+  if( GEOM_HASH_SHEATH > 0 )
+  {
+    dr = closeGeomGridr[1] - closeGeomGridr[0];
+    dy = closeGeomGridy[1] - closeGeomGridy[0];
+    dz = closeGeomGridz[1] - closeGeomGridz[0];
+    rInd = std::floor((x0 - closeGeomGridr[0])/dr + 0.5);
+    yInd = std::floor((y - closeGeomGridy[0])/dy + 0.5);
+    zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
+
+    if(rInd < 0 || rInd >= nR_closeGeom) rInd =0;
+    
+    if(yInd < 0 || yInd >= nY_closeGeom) yInd =0;
+
+    if(zInd < 0 || zInd >= nZ_closeGeom) zInd =0;
+
+    top_limit = n_closeGeomElements;
+  }
+
+  else top_limit = nLines;
+
+  for (int k=0; k < top_limit; k++) //n_closeGeomElements
+  {
+    int i = -1;
+
+    if( GEOM_HASH_SHEATH > 0 )
     {
        i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements 
                    + yInd*nR_closeGeom*n_closeGeomElements
                    + rInd*n_closeGeomElements + k];
-       //closestBoundaryIndex = i;
-       //std::cout << "closest boundaries to check " << i << std::endl;
-#else
-      for (int i=0; i<nLines; i++)
-      {
-#endif
-    //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
-    //if (boundaryVector[i].Z != 0.0)
-    //{
-    //std::cout << "Z and index " << boundaryVector[i].Z << " " << i << std::endl;
+    }
+
+    else
+    {
+      i = k;
+    }
+
     a = boundaryVector[i].a;
     b = boundaryVector[i].b;
     c = boundaryVector[i].c;
     d = boundaryVector[i].d;
     plane_norm = boundaryVector[i].plane_norm;
     pointToPlaneDistance0 = (a * p0[0] + b * p0[1] + c * p0[2] + d) / plane_norm;
-    //std::cout << "abcd plane_norm "<< a  << " " << b << " " << c << " " << d << " " << plane_norm << std::endl;
-    //std::cout << i << std::endl;// " point to plane dist "  << pointToPlaneDistance0 << std::endl;
-    //pointToPlaneDistance1 = (a*p1[0] + b*p1[1] + c*p1[2] + d)/plane_norm;
-    //signPoint0 = std::copysign(1.0,pointToPlaneDistance0);
-    //signPoint1 = std::copysign(1.0,pointToPlaneDistance1);
     vectorAssign(a / plane_norm, b / plane_norm, c / plane_norm, normalVector);
-    //vectorNormalize(normalVector,normalVector);
-    //std::cout << "normal " << normalVector[0] << " " << normalVector[1] << " " << normalVector[2] << std::endl;
     vectorAssign(p0[0] - pointToPlaneDistance0 * normalVector[0],
                  p0[1] - pointToPlaneDistance0 * normalVector[1],
                  p0[2] - pointToPlaneDistance0 * normalVector[2], p);
@@ -233,32 +242,10 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     vectorCrossProduct(AB, Ap, crossABAp);
     vectorCrossProduct(BC, Bp, crossBCBp);
     vectorCrossProduct(CA, Cp, crossCACp);
-    /*  
-         dot0 = vectorDotProduct(crossABAp,normalVector);
-            dot1 = vectorDotProduct(crossBCBp,normalVector);
-            dot2 = vectorDotProduct(crossCACp,normalVector);
-         */
     signDot0 = std::copysign(1.0,vectorDotProduct(crossABAp, normalVector));
     signDot1 = std::copysign(1.0,vectorDotProduct(crossBCBp, normalVector));
     signDot2 = std::copysign(1.0,vectorDotProduct(crossCACp, normalVector));
-    /*  
-         if(dot0 == 0.0) signDot0 = 1;
-         if(dot1 == 0.0) signDot1 = 1;
-         if(dot2 == 0.0) signDot2 = 1;
-         
-         if(vectorNorm(crossABAp) == 0.0) signDot0 = 1;
-         if(vectorNorm(crossBCBp) == 0.0) signDot1 = 1;
-         if(vectorNorm(crossCACp) == 0.0) signDot2 = 1;
-         */
          totalSigns = std::abs(signDot0 + signDot1 + signDot2);
-         /*
-         if(vectorNorm(crossABAp) == 0.0) totalSigns = 3;
-         if(vectorNorm(crossBCBp) == 0.0) totalSigns = 3;
-         if(vectorNorm(crossCACp) == 0.0) totalSigns = 3;
-         */
-         //std::cout << dot0 << " signDot0 " << signDot0 << std::endl;
-         //std::cout << dot1 << " signDot1 " << signDot1 << std::endl;
-         //std::cout << dot2 << " signDot2 " << signDot2 << std::endl;
          vectorSubtract(A,p0,p0A);
          vectorSubtract(B,p0,p0B);
          vectorSubtract(C,p0,p0C);
@@ -278,9 +265,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
              normals[9] = p0C[0]/p0Cnorm;
              normals[10] = p0C[1]/p0Cnorm;
              normals[11] = p0C[2]/p0Cnorm;
-         //std::cout << "point to plane " << pointToPlaneDistance0 << std::endl;
-         //std::cout << "point to ABC " << p0Anorm << " " << p0Bnorm << " " << p0Cnorm << std::endl;
-         //std::cout << "total Signs " << totalSigns << std::endl;
          normAB = vectorNorm(AB);
          normBC = vectorNorm(BC);
          normCA = vectorNorm(CA);
@@ -294,17 +278,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
          tAB = -1.0*tAB;
          tBC = -1.0*tBC;
          tCA = -1.0*tCA;
-         /*
-         std::cout << "A " << A[0] << " " << A[1] << " " << A[2] << std::endl;   
-         std::cout << "B " << B[0] << " " << B[1] << " " << B[2] << std::endl;   
-         std::cout << "C " << C[0] << " " << C[1] << " " << C[2] << std::endl;   
-         std::cout << "ABhat " << ABhat[0] << " " << ABhat[1] << " " << ABhat[2] << std::endl; 
-         std::cout << "CAhat " << CAhat[0] << " " << CAhat[1] << " " << CAhat[2] << std::endl; 
-         std::cout << "p0C " << p0C[0] << " " << p0C[1] << " " << p0C[2] << std::endl; 
-         std::cout << "tAB and norm AB " << tAB << " "<<  normAB << std::endl;  
-         std::cout << "tBC and norm BC " << tBC << " "<<  normBC << std::endl;  
-         std::cout << "tCA and norm CA " << tCA << " "<<  normCA << std::endl;  
-         */
          if((tAB > 0.0) && (tAB < normAB))
          {
              vectorScalarMult(tAB,ABhat,projP0AB);
@@ -398,10 +371,8 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
           closestBoundaryIndex = i;
           minIndex = i;
          }
-         //std::cout << "perp dist " << perpDist << std::endl;
-         //std::cout << "point to AB BC CA " << p0ABdist << " " << p0BCdist << " " << p0CAdist << std::endl;
-        //}
-       }
+  }
+
     if(isnan(directionUnitVector[0]) || isnan(directionUnitVector[1]) || isnan(directionUnitVector[2])){
 	    //printf("minDist %f \n", minDistance);
 	    //printf("directionV %f %f %f \n", directionUnitVector[0],directionUnitVector[1],directionUnitVector[2]);
@@ -426,7 +397,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     gitr_precision Bfabsfperp = 0.0;
     gitr_precision distanceToParticle = 0.0;
     int pointLine=0;
-//#if EFIELD_INTERP ==1
     gitr_precision x;
      if( USECYLSYMM > 0 )
      {
@@ -437,24 +407,45 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     x = x0;
     }
 
-#if GEOM_HASH_SHEATH > 0
-  gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
-  gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
-  int rInd = std::floor((x - closeGeomGridr[0])/dr + 0.5);
-  int zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
+    int top_limit = -1;
+    gitr_precision dr;
+    gitr_precision dz;
+
+    int rInd;
+    int zInd;
+
+  if( GEOM_HASH_SHEATH > 0 )
+  {
+  dr = closeGeomGridr[1] - closeGeomGridr[0];
+
+  dz = closeGeomGridz[1] - closeGeomGridz[0];
+
+  rInd = std::floor((x - closeGeomGridr[0])/dr + 0.5);
+
+  zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
+
   if(rInd >= nR_closeGeom) rInd = nR_closeGeom -1;
+
   if(zInd >= nZ_closeGeom) zInd = nZ_closeGeom -1;
+
   if(rInd < 0) rInd = 0;
+
   if(zInd < 0) zInd = 0;
-  int j;
-  for (int k=0; k< n_closeGeomElements; k++) //n_closeGeomElements
+
+  top_limit = n_closeGeomElements;
+  }
+
+  else top_limit = nLines;
+  
+  for( int k = 0; k < top_limit; k++) //n_closeGeomElements
     {
+      int j = -1;
+
+      if( GEOM_HASH_SHEATH > 0 )
        j = closeGeom[zInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + k];
 
-#else
-    for (int j=0; j< nLines; j++)
-    {  //std::cout << " surface check " << j << std::endl;
-#endif
+      else j = k;
+
        gitr_precision boundZhere = boundaryVector[j].Z;
        
         if (boundZhere != 0.0)
