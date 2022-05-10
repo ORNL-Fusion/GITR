@@ -2222,7 +2222,17 @@ if( flowv_interp == 1 )
   int nPSEs = 1;
   std::string PSECfg = "backgroundPlasmaProfiles.Efield.";
 // sim::Array<float> preSheathEGridy(1);
-#if USEPRESHEATHEFIELD > 0
+
+  sim::Array< gitr_precision > PSEr( nPSEs );
+  sim::Array< gitr_precision > PSEz( nPSEs );
+  sim::Array< gitr_precision > PSEt( nPSEs );
+
+  sim::Array< gitr_precision > preSheathEGridr( nR_PreSheathEfield );
+  sim::Array< gitr_precision > preSheathEGridy( nY_PreSheathEfield );
+  sim::Array< gitr_precision > preSheathEGridz( nZ_PreSheathEfield );
+
+  if( USEPRESHEATHEFIELD > 0 )
+  {
 
   std::cout << "Using presheath Efield " << std::endl;
 #if PRESHEATH_INTERP == 1
@@ -2252,10 +2262,17 @@ if( flowv_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 #endif
+
+  preSheathEGridr.resize( nR_PreSheathEfield );
+  preSheathEGridy.resize( nY_PreSheathEfield );
+  preSheathEGridz.resize( nZ_PreSheathEfield );
+
   nPSEs = nR_PreSheathEfield * nY_PreSheathEfield * nZ_PreSheathEfield;
-  sim::Array<gitr_precision> preSheathEGridr(nR_PreSheathEfield),
-      preSheathEGridy(nY_PreSheathEfield), preSheathEGridz(nZ_PreSheathEfield);
-  sim::Array<gitr_precision> PSEr(nPSEs), PSEz(nPSEs), PSEt(nPSEs);
+
+  PSEr.resize( nPSEs );
+  PSEz.resize( nPSEs );
+  PSEt.resize( nPSEs );
+
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
@@ -2409,13 +2426,16 @@ if( flowv_interp == 1 )
   nc_PSEt.putVar(&PSEt[0]);
   nc_PSEz.putVar(&PSEz[0]);
 #endif
-#else
+  }
+  else
+  {
   nPSEs = nR_PreSheathEfield * nY_PreSheathEfield * nZ_PreSheathEfield;
   sim::Array<gitr_precision> preSheathEGridr(nR_PreSheathEfield),
       preSheathEGridy(nY_PreSheathEfield), preSheathEGridz(nZ_PreSheathEfield);
   sim::Array<gitr_precision> PSEr(nPSEs), PSEz(nPSEs), PSEt(nPSEs);
 
-#endif
+  }
+
   std::string outnamePSEfieldR = "PSEfieldR.m";
   std::string outnamePSEfieldZ = "PSEfieldZ.m";
   std::string outnamePSEGridR = "PSEgridR.m";
@@ -2433,7 +2453,8 @@ if( flowv_interp == 1 )
       Efieldz(nR_Bfield * nZ_Bfield), Efieldt(nR_Bfield * nZ_Bfield),
       minDist(nR_Bfield * nZ_Bfield);
 
-#if USESHEATHEFIELD > 0
+  if( USESHEATHEFIELD > 0 )
+  {
   gitr_precision thisE0[3] = {0.0, 0.0, 0.0};
   gitr_precision minDist0 = 0.0;
   int minInd_bnd = 0;
@@ -2515,12 +2536,14 @@ if( flowv_interp == 1 )
       cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
       cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
 #endif
-#else
+  }
+  else
+  {
   int nR_dtsEfield = 1;
   int nZ_dtsEfield = 1;
   sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
   sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
-#endif
+  }
 
   std::string outnameEfieldR = "EfieldR.m";
   std::string outnameEfieldZ = "EfieldZ.m";
