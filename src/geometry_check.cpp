@@ -990,7 +990,8 @@ else top_limit = nLines;
     }
     if (particlesPointer->hitWall[indx] == 1.0) {
 
-#if (FLUX_EA > 0 && USESURFACEMODEL == 0)
+      if( FLUX_EA > 0 && USESURFACEMODEL == 0 )
+      {
       gitr_precision E0 = 0.0;
       gitr_precision thetaImpact = 0.0;
       gitr_precision particleTrackVector[3] = {0.0};
@@ -1079,9 +1080,11 @@ else top_limit = nLines;
 #endif
         }
       }
-#elif (FLUX_EA == 0 && USESURFACEMODEL == 0)
+      }
+      else if( FLUX_EA == 0 && USESURFACEMODEL == 0 )
+      {
         particlesPointer->weight[indx] = 0.0;
-#endif
+      }
       // particlesPointer->transitTime[indx] = tt*dt;
     }
   }
