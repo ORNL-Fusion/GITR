@@ -141,7 +141,8 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         b.larmorRadius = 1.44e-4*std::sqrt(background_amu*b.ti/2)/(background_Z*norm_B);
         b.flux = 0.25*b.density*std::sqrt(8.0*b.ti*1.602e-19/(3.1415*background_amu));
         b.impacts = 0.0;
-#if BIASED_SURFACE
+        if( BIASED_SURFACE )
+        {
         b.potential = potential;
         //gitr_precision cs = std::sqrt(2*b.ti*1.602e-19/(1.66e-27*background_amu));
         //gitr_precision jsat_ion = 1.602e-19*b.density*cs;
@@ -154,11 +155,13 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         else
         { b.ChildLangmuirDist = 1e12;
         }
-#elif USE_SURFACE_POTENTIAL >0 
-#else
+        }
+        else if( USE_SURFACE_POTENTIAL <= 0 )
+        {
         b.potential = sheath_fac*b.te;
-        std::cout << "Surface number " << b.surfaceNumber << " has te and potential " << b.te << " " << b.potential << std::endl; 
-#endif        
+        std::cout << "Surface number " << b.surfaceNumber << " has te and potential " 
+                  << b.te << " " << b.potential << std::endl; 
+        }
         //if(b.Z > 0.0)
         //{
         //std::cout << "Boundary ti density potensial and CLdist " <<b.ti << " " << 
