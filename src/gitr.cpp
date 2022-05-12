@@ -3973,10 +3973,9 @@ if( PRESHEATH_INTERP == 1 )
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
       nEdist, E0dist, Edist, nAdist, A0dist, Adist);
-#if USE_SORT > 0
+
   sortParticles sort0(particleArray, nP,dev_tt, 10000,
                       nActiveParticlesOnRank.data());
-#endif
   spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt);
@@ -4272,7 +4271,8 @@ if( PRESHEATH_INTERP == 1 )
        density and the result. Loop over timesteps, each operator loops over a section of
        the particles... find 0 */
     for (tt; tt < nT; tt++) {
-#if USE_SORT > 0
+       if( USE_SORT > 0 )
+       {
        dev_tt[0] = tt;
       //std::cout << " tt " << tt << std::endl;
       thrust::for_each(thrust::host, particleBegin, particleOne, sort0);
@@ -4280,7 +4280,7 @@ if( PRESHEATH_INTERP == 1 )
 #ifdef __CUDACC__
       cudaDeviceSynchronize();
 #endif
-#endif
+       }
 
 #if PARTICLE_TRACKS > 0
       thrust::for_each(thrust::device, particleBegin, particleEnd, history0);
