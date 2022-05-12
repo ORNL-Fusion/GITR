@@ -97,12 +97,10 @@ void geometry_check::operator()(std::size_t indx) const {
     gitr_precision dpath =
         std::sqrt((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev) +
                   (z - zprev) * (z - zprev));
-#if FLUX_EA > 0
     gitr_precision dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
     gitr_precision dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
     int AdistInd = 0;
     int EdistInd = 0;
-#endif
     gitr_precision vxy[3] = {0.0};
     gitr_precision vtheta[3] = {0.0};
      if( USECYLSYMM )
