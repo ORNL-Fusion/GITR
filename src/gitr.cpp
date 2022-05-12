@@ -3967,7 +3967,6 @@ if( flowv_interp == 1 )
   if( USEIONIZATION > 0 )
   {
 #if USE_CUDA > 0
-  gitr_precision *uni;
   cudaMallocManaged(&uni, sizeof(gitr_precision));
 #else
   *uni = new gitr_precision[1];
