@@ -1184,6 +1184,10 @@ else if( geom_hash_sheath > 1 )
   int nTraceSteps;
   std::string connLengthCfg = "connectionLength.";
   std::string lcFile;
+/* Captain! */
+    NcFile ncFileLC("LcS.nc", NcFile::replace);
+    NcDim nc_nTracers = ncFileLC.addDim("nTracers", nTracers);
+
 if (world_rank == 0) {
 if( generate_lc > 0 )
 {
@@ -1490,19 +1494,15 @@ if( generate_lc > 0 )
       }
     }
 
-    NcFile ncFileLC("LcS.nc", NcFile::replace);
     vector<NcDim> dims_lc;
-    NcDim nc_nTracers = ncFileLC.addDim("nTracers", nTracers);
     NcDim nc_nRLc = ncFileLC.addDim("nR", nR_Lc);
     dims_lc.push_back(nc_nRLc);
 
     NcDim nc_nYLc;
     if( USE3DTETGEOM )
     {
-//#if USE3DTETGEOM
     nc_nYLc = ncFileLC.addDim("nY", nY_Lc);
     dims_lc.push_back(nc_nYLc);
-//#endif
     }
 
     NcDim nc_nZLc = ncFileLC.addDim("nZ", nZ_Lc);
@@ -1521,9 +1521,7 @@ if( generate_lc > 0 )
     NcVar nc_gridYLc;
     if( USE3DTETGEOM )
     {
-//#if USE3DTETGEOM
     nc_gridYLc = ncFileLC.addVar("gridY", netcdf_precision, nc_nYLc);
-//#endif
     }
     NcVar nc_gridZLc = ncFileLC.addVar("gridZ", netcdf_precision, nc_nZLc);
    //FIXME - commented these because of disrupted workflow compile errors
@@ -1829,6 +1827,13 @@ if( density_interp == 0 )
   MPI_Bcast(flowVz.data(), n_flowV, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+  gitr_precision surroundingMinimumR = 0.0;
+  gitr_precision surroundingMinimumY = 0.0;
+  gitr_precision surroundingMinimumZ = 0.0;
+  int iterIndex = 0;
+  int nFlowVs;
+
 if( flowv_interp == 1 )
 {
   for (int i = 0; i < nR_flowV; i++) {
@@ -1842,7 +1847,7 @@ if( flowv_interp == 1 )
     flowVGridz[i] = gridZLc[i];
   }
   std::cout << " !!! flowvgridr0 " << flowVGridr[0] << std::endl;
-  int nFlowVs = nR_Lc * nZ_Lc;
+  nFlowVs = nR_Lc * nZ_Lc;
   if( lc_interp == 3 )
   {
   for (int i = 0; i < nY_flowV; i++)
@@ -1909,10 +1914,6 @@ if( flowv_interp == 1 )
   std::cout << "Done with initial calculation, beginning sorting" << std::endl;
   sim::Array<gitr_precision> flowVrSub(nFlowVs), flowVzSub(nFlowVs), flowVySub(nFlowVs);
   sim::Array<int> noIntersectionNearestMax(nFlowVs);
-  gitr_precision surroundingMinimumR = 0.0;
-  gitr_precision surroundingMinimumY = 0.0;
-  gitr_precision surroundingMinimumZ = 0.0;
-  int iterIndex = 0;
   for (int i = 0; i < nR_Lc; i++) {
     std::cout << "i of " << i << " " << nR_Lc << std::endl;
     for (int j = 0; j < nY_Lc; j++) {
@@ -2408,7 +2409,7 @@ if( PRESHEATH_INTERP == 1 )
   for (int i = 0; i < nR_Lc; i++) {
     for (int j = 0; j < nY_Lc; j++) {
       for (int k = 0; k < nZ_Lc; k++) {
-        index = i + j * nR_Lc + k * nR_Lc * nY_Lc;
+        int index = i + j * nR_Lc + k * nR_Lc * nY_Lc;
         if (noIntersectionNodes[index] == 1) {
           surroundingMinimumR = 0.0;
           surroundingMinimumY = 0.0;
