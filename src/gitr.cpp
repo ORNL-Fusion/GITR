@@ -4052,7 +4052,8 @@ if( PRESHEATH_INTERP == 1 )
                    &velocityHistoryZ.front(), &chargeHistory.front(),
                    &weightHistory.front());
 #endif
-#if FORCE_EVAL > 0
+  if( FORCE_EVAL > 0 )
+  {
   if (world_rank == 0) {
     int nR_force, nZ_force;
     gitr_precision forceX0, forceX1, forceZ0, forceZ1, testEnergy;
@@ -4194,7 +4195,7 @@ if( PRESHEATH_INTERP == 1 )
     particleArray->setParticleV(0, px[0], py[0], pz[0], pvx[0], pvy[0], pvz[0],
                                 Z, amu, charge, dt);
   }
-#endif
+}
 
   auto start_clock = gitr_time::now();
   std::chrono::duration<gitr_precision> fs1 = start_clock - gitr_start_clock;

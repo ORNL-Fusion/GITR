@@ -44,7 +44,7 @@ TEST_CASE( "cross-field diffusion operator" )
     USE_CYLSYMM=0
 
   */
-  SECTION( "cross-field diffusion, straight field lines" )
+  SECTION( "straight" )
   {
     /* timesteps */
     int nT = 500000;
@@ -280,7 +280,7 @@ TEST_CASE( "cross-field diffusion operator" )
     USE_ADAPTIVE_DT=0
 
   */
-  SECTION( "cross-field diffusion, curved field lines" )
+  SECTION( "curved" )
   {
     /* timesteps */
     int nT = 200000;
