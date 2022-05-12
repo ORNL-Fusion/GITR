@@ -3890,8 +3890,7 @@ if( flowv_interp == 1 )
         USESURFACEMODEL > 0 )
     {
 #if USE_CUDA
-  // if(world_rank == 0)
-  //{
+
   int *dev_i;
   cudaMallocManaged(&dev_i, sizeof(int));
   dev_i[0] = 0;
@@ -3962,14 +3961,19 @@ if( flowv_interp == 1 )
   spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt);
-#if USEIONIZATION > 0
+
+  gitr_precision *uni;
+
+  if( USEIONIZATION > 0 )
+  {
 #if USE_CUDA > 0
   gitr_precision *uni;
   cudaMallocManaged(&uni, sizeof(gitr_precision));
 #else
-  gitr_precision *uni = new gitr_precision[1];
+  *uni = new gitr_precision[1];
   *uni = 0;
 #endif
+  }
 
   ionize<rand_type> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
@@ -3977,23 +3981,13 @@ if( flowv_interp == 1 )
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
       &rateCoeff_Ionization.front(),uni);
-  //if(gitr_flags.USE_IONIZATION > 0) ionize0.func = &ionize::operator();
-  //else ionize0.func = &ionize::operator1;
-  //void (ionize::*func)(std::size_t) = &ionize::operator();
-  //ionize * ionize_ptr = &ionize0;
-  //void (*func11)(std::size_t)  = &ionize0.operator();
-  //if(gitr_flags.USE_IONIZATION > 0) &func = &ionize::operator1;
-  //else func = NULL;
-  //auto func1 = *func;
-#endif
-#if USERECOMBINATION > 0
+
   recombine<rand_type> recombine0(
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
       gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags);
-#endif
 
   crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
@@ -4091,12 +4085,13 @@ if( flowv_interp == 1 )
         particleArray->setParticle(0, forceR[i], 0.0, forceZ[j], testTi, 0.0,
                                    0.0, Z, amu, charge + 1.0);
         move_boris0(0);
-#if USEIONIZATION > 0
-        thrust::for_each(thrust::device,particleBegin,particleBegin,ionize0);
-#endif
-#if USERECOMBINATION > 0
-	thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
-#endif
+
+        if( USEIONIZATION > 0 )
+        {
+          thrust::for_each(thrust::device,particleBegin,particleBegin,ionize0);
+	        thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
+        }
+
 #if USECOULOMBCOLLISIONS > 0
         thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
 #endif
@@ -4109,12 +4104,13 @@ if( flowv_interp == 1 )
         dvBr[j * nR_force + i] = move_boris0.magneticForce[0];
         dvBz[j * nR_force + i] = move_boris0.magneticForce[2];
         dvBt[j * nR_force + i] = move_boris0.magneticForce[1];
-#if USEIONIZATION > 0
-        tIon[j * nR_force + i] = ionize0.tion;
-#endif
-#if USERECOMBINATION > 0
-        tRecomb[j * nR_force + i] = recombine0.tion;
-#endif
+
+        if( USEIONIZATION > 0 )
+        {
+          tIon[j * nR_force + i] = ionize0.tion;
+          tRecomb[j * nR_force + i] = recombine0.tion;
+        }
+
 #if USECOULOMBCOLLISIONS > 0
         dvCollr[j * nR_force + i] = coulombCollisions0.dv[0];
         dvCollz[j * nR_force + i] = coulombCollisions0.dv[2];
@@ -4292,19 +4288,11 @@ if( flowv_interp == 1 )
       thrust::for_each(thrust::device, particleBegin, particleEnd, spec_bin0);
       }
 
-#if USEIONIZATION > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd,ionize0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
-
-#if USERECOMBINATION > 0
-      thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
+      if( USEIONIZATION > 0 )
+      {
+        thrust::for_each(thrust::device, particleBegin, particleEnd,ionize0);
+        thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
+      }
 
       if( USEPERPDIFFUSION > 0 )
       {
