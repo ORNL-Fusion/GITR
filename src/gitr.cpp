@@ -2254,13 +2254,17 @@ if( flowv_interp == 1 )
   {
 
   std::cout << "Using presheath Efield " << std::endl;
-#if PRESHEATH_INTERP == 1
+  if( PRESHEATH_INTERP == 1 )
+  {
   nR_PreSheathEfield = nR_Lc;
   nY_PreSheathEfield = nY_Lc;
   nZ_PreSheathEfield = nZ_Lc;
-#endif
-#if PRESHEATH_INTERP > 1
+  }
+
   std::string efieldFile;
+
+  if( PRESHEATH_INTERP > 1 )
+  {
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
@@ -2269,10 +2273,13 @@ if( flowv_interp == 1 )
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNrString");
     nZ_PreSheathEfield =
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNzString");
-#if PRESHEATH_INTERP > 2
+
+    if( PRESHEATH_INTERP > 2 )
+    {
     nY_PreSheathEfield =
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNyString");
-#endif
+    }
+
 #if USE_MPI > 0
   }
   MPI_Bcast(&nR_PreSheathEfield, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -2280,7 +2287,7 @@ if( flowv_interp == 1 )
   MPI_Bcast(&nZ_PreSheathEfield, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
+  }
 
   preSheathEGridr.resize( nR_PreSheathEfield );
   preSheathEGridy.resize( nY_PreSheathEfield );
@@ -2295,19 +2302,23 @@ if( flowv_interp == 1 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-#if PRESHEATH_INTERP == 0
+    if( PRESHEATH_INTERP == 0 )
+    {
     getVariable(cfg, PSECfg + "Er", PSEr[0]);
     getVariable(cfg, PSECfg + "Et", PSEt[0]);
     getVariable(cfg, PSECfg + "Ez", PSEz[0]);
-#elif PRESHEATH_INTERP > 1
+    }
+    else if( PRESHEATH_INTERP > 1 )
+    {
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridRString",
                  preSheathEGridr[0]);
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridZString",
                  preSheathEGridz[0]);
-#if PRESHEATH_INTERP > 2
+  if( PRESHEATH_INTERP > 2 )
+  {
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridYString",
                  preSheathEGridy[0]);
-#endif
+  }
 
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "radialComponentString",
                  PSEr[0]);
@@ -2315,7 +2326,8 @@ if( flowv_interp == 1 )
                  "toroidalComponentString", PSEt[0]);
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "axialComponentString",
                  PSEz[0]);
-#endif
+    }
+
 #if USE_MPI > 0
   }
   MPI_Bcast(preSheathEGridr.data(), nR_PreSheathEfield, MPI_FLOAT, 0,
@@ -2330,7 +2342,8 @@ if( flowv_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-#if PRESHEATH_INTERP == 1
+if( PRESHEATH_INTERP == 1 )
+{
 
   for (int i = 0; i < nR_PreSheathEfield; i++) {
     preSheathEGridr[i] = gridRLc[i];
@@ -2444,7 +2457,7 @@ if( flowv_interp == 1 )
   nc_PSEr.putVar(&PSEr[0]);
   nc_PSEt.putVar(&PSEt[0]);
   nc_PSEz.putVar(&PSEz[0]);
-#endif
+}
   }
   else
   {
