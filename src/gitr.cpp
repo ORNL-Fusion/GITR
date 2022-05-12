@@ -2487,6 +2487,9 @@ if( flowv_interp == 1 )
                &closeGeom_sheath.front(), minInd_bnd);
       //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
   }
+  /* Captain! Decayed block, leave for reference */
+  /*
+
 #if EFIELD_INTERP == 1
   gitr_precision thisE[3] = {0.0, 0.0, 0.0};
 
@@ -2529,7 +2532,9 @@ if( flowv_interp == 1 )
   int d4 = read_profile2d(
       cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
       cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
-#elif EFIELD_INTERP == 2
+  */
+  if( EFIELD_INTERP == 2 )
+  {
   int nR_dtsEfield, nZ_dtsEfield;
 
   int d1 = read_profileNs(
@@ -2554,7 +2559,7 @@ if( flowv_interp == 1 )
   int d4 = read_profile2d(
       cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
       cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
-#endif
+  }
   }
   else
   {
