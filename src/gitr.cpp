@@ -2093,8 +2093,20 @@ if( flowv_interp == 1 )
   int nTemperaturesIonize = 1, nDensitiesIonize = 1;
   int i0, i1, i2, i3, i4;
   int nTemperaturesRecombine = 1, nDensitiesRecombine = 1;
-#if USEIONIZATION > 0
+
+  sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
+                                         nDensitiesIonize);
+  sim::Array<gitr_precision> gridTemperature_Ionization(nTemperaturesIonize),
+      gridDensity_Ionization(nDensitiesIonize);
+  sim::Array<gitr_precision> rateCoeff_Recombination(
+      nCS_Recombine * nTemperaturesRecombine * nDensitiesRecombine);
+  sim::Array<gitr_precision> gridTemperature_Recombination(nTemperaturesRecombine),
+      gridDensity_Recombination(nDensitiesRecombine);
+
+  if( USEIONIZATION > 0 )
+  {
   if (world_rank == 0) {
+
     if (cfg.lookupValue("impurityParticleSource.ionization.fileString",
                         ionizeFile) &&
         cfg.lookupValue("impurityParticleSource.ionization.nChargeStateString",
@@ -2108,16 +2120,19 @@ if( flowv_interp == 1 )
         cfg.lookupValue("impurityParticleSource.ionization.DensGridVarName",
                         ionizeDensGrid) &&
         cfg.lookupValue("impurityParticleSource.ionization.CoeffVarName",
-                        ionizeRCvarChar)) {
+                        ionizeRCvarChar)) 
+    {
       std::cout << "Ionization rate coefficient file: " << ionizeFile
                 << std::endl;
-    } else {
+    } 
+
+    else 
+    {
       std::cout
           << "ERROR: Could not get ionization string info from input file "
           << std::endl;
     }
-#endif
-#if USERECOMBINATION > 0
+    
     if (cfg.lookupValue("impurityParticleSource.recombination.fileString",
                         recombFile) &&
         cfg.lookupValue(
@@ -2140,8 +2155,7 @@ if( flowv_interp == 1 )
           << "ERROR: Could not get ionization string info from input file "
           << std::endl;
     }
-#endif
-#if USEIONIZATION > 0
+    
     i0 = read_profileNs(input_path + ionizeFile, ionizeNcs, recombNcs,
                         nCS_Ionize, nCS_Recombine);
 
@@ -2160,29 +2174,34 @@ if( flowv_interp == 1 )
   MPI_Bcast(&nDensitiesRecombine, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#endif
-  sim::Array<gitr_precision> rateCoeff_Ionization(nCS_Ionize * nTemperaturesIonize *
-                                         nDensitiesIonize);
-  sim::Array<gitr_precision> gridTemperature_Ionization(nTemperaturesIonize),
-      gridDensity_Ionization(nDensitiesIonize);
-  sim::Array<gitr_precision> rateCoeff_Recombination(
-      nCS_Recombine * nTemperaturesRecombine * nDensitiesRecombine);
-  sim::Array<gitr_precision> gridTemperature_Recombination(nTemperaturesRecombine),
-      gridDensity_Recombination(nDensitiesRecombine);
+
+  rateCoeff_Ionization.resize( nCS_Ionize * nTemperaturesIonize * nDensitiesIonize );
+
+  gridTemperature_Ionization.resize( nTemperaturesIonize );
+
+  gridDensity_Ionization.resize( nDensitiesIonize );
+
+  rateCoeff_Recombination.resize( nCS_Recombine * 
+                                  nTemperaturesRecombine * nDensitiesRecombine );
+
+  gridTemperature_Recombination.resize( nTemperaturesRecombine );
+
+  gridDensity_Recombination.resize( nDensitiesRecombine );
+
   if (world_rank == 0) {
-#if USEIONIZATION > 0
+
     i2 = read_profiles(
         input_path + ionizeFile, nTemperaturesIonize, nDensitiesIonize,
         ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
         gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
-#endif
-#if USERECOMBINATION > 0
+
     i4 = read_profiles(
         input_path + recombFile, nTemperaturesRecombine, nDensitiesRecombine,
         recombTempGrid, gridTemperature_Recombination, recombDensGrid,
         gridDensity_Recombination, recombRCvarChar, rateCoeff_Recombination);
-#endif
   }
+  }
+
 #if USE_MPI > 0
   MPI_Bcast(&rateCoeff_Ionization[0],
             nCS_Ionize * nTemperaturesIonize * nDensitiesIonize, MPI_FLOAT, 0,
