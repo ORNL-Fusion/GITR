@@ -4012,7 +4012,6 @@ if( PRESHEATH_INTERP == 1 )
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
       &bz.front(), &by.front());
 
-#if USECOULOMBCOLLISIONS > 0
   coulombCollisions coulombCollisions0(
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
       &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),
@@ -4022,7 +4021,6 @@ if( PRESHEATH_INTERP == 1 )
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
       &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(),gitr_flags);
 
-#endif
 #if USETHERMALFORCE > 0
   thermalForce thermalForce0(gitr_flags,
       particleArray, dt, background_amu, nR_gradT, nZ_gradT, gradTGridr.data(),
@@ -4110,9 +4108,11 @@ if( PRESHEATH_INTERP == 1 )
 	        thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
         }
 
-#if USECOULOMBCOLLISIONS > 0
+        if( USECOULOMBCOLLISIONS > 0 )
+        {
         thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
-#endif
+        }
+
 #if USETHERMALFORCE > 0
         thrust::for_each(thrust::device,particleBegin,particleBegin,thermalForce0);
 #endif
@@ -4129,11 +4129,12 @@ if( PRESHEATH_INTERP == 1 )
           tRecomb[j * nR_force + i] = recombine0.tion;
         }
 
-#if USECOULOMBCOLLISIONS > 0
+        if( USECOULOMBCOLLISIONS > 0 )
+        {
         dvCollr[j * nR_force + i] = coulombCollisions0.dv[0];
         dvCollz[j * nR_force + i] = coulombCollisions0.dv[2];
         dvCollt[j * nR_force + i] = coulombCollisions0.dv[1];
-#endif
+        }
 #if USETHERMALFORCE > 0
         dvITGr[j * nR_force + i] = thermalForce0.dv_ITGx;
         dvITGz[j * nR_force + i] = thermalForce0.dv_ITGz;
@@ -4320,13 +4321,11 @@ if( PRESHEATH_INTERP == 1 )
                        geometry_check0);
       }
 
-#if USECOULOMBCOLLISIONS > 0
+      if( USECOULOMBCOLLISIONS > 0 )
+      {
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        coulombCollisions0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
+      }
 
 #if USETHERMALFORCE > 0
       thrust::for_each(thrust::device, particleBegin, particleEnd,
