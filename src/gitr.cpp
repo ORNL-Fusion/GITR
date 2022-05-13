@@ -3806,7 +3806,9 @@ if( PRESHEATH_INTERP == 1 )
   }
 #endif
 
-#if GEOM_TRACE > 0
+  /*
+  if( GEOM_TRACE > 0 )
+  {
   std::uniform_real_distribution<gitr_precision> dist2(0, 1);
   // std::random_device rd2;
   // std::default_random_engine generator2(rd2());
@@ -3822,7 +3824,8 @@ if( PRESHEATH_INTERP == 1 )
     particleArray->vy[i] = mag_trace * std::sin(theta_trace) * std::sin(phi_trace);
     particleArray->vz[i] = mag_trace * std::cos(phi_trace);
   }
-#endif
+  }
+  */
 
 #if PARTICLE_TRACKS > 0
   int subSampleFac = 1;
