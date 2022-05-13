@@ -6,6 +6,27 @@ cancel sirius xm radio service:
 
 account number: 489 721 1916 98
 
+Captain!!! Could we make GITR into a conda environment? Then simply wrap it in a script and
+then... read it into Galaxy? Could that be possible? Have to get rid of netcdf first...
+
+You'd need to figure out how to make a conda package for HPC code?
+
+Today:
+
+1. Line up test cases from Tim. Hook into CTest.
+2. Convert to build-time variables with runtime control flow ---> runtime vars runtime cflow
+3. Migrate the options.txt file to the README
+4. Add a link in the README to the GITR_processing repo
+5. Tag a new release of GITR, submit for testing on the gitr channel
+
+Later:
+
+6. Start an issue-thon?
+7. Ask about removing netcdf and multi-species/time-dependence tests? Similar to the Tim ones?
+8. Meet with JonChan and Kurte Kudeep and Marthi if possible to talk about AGILE?
+9. Work on the C++ file? Do it on Gitlab?
+10. Do Galaxy stuff
+
 
 
 SECTION FOR MULTI-DIM:

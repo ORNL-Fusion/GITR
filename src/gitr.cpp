@@ -3827,7 +3827,6 @@ if( PRESHEATH_INTERP == 1 )
   }
   */
 
-#if PARTICLE_TRACKS > 0
   int subSampleFac = 1;
   if (world_rank == 0) {
     if (cfg.lookupValue("diagnostics.trackSubSampleFactor", subSampleFac)) {
@@ -3845,14 +3844,6 @@ if( PRESHEATH_INTERP == 1 )
 #endif
   int nHistoriesPerParticle = (nT / subSampleFac) + 1;
   int nHistories = nHistoriesPerParticle * nP;
-  for (int i = 0; i < world_size; i++) {
-    pDisplacement[i] = pStartIndx[i] * nHistoriesPerParticle;
-    pHistPerNode[i] = nPPerRank[i] * nHistoriesPerParticle;
-  }
-  const int *displ = &pDisplacement[0];
-  const int *phpn = &pHistPerNode[0];
-  std::cout << "History array length " << nHistories << std::endl;
-#if USE_CUDA > 0
   sim::Array<gitr_precision> positionHistoryX(nHistories);
   sim::Array<gitr_precision> positionHistoryXgather(nHistories, 0.0);
   sim::Array<gitr_precision> positionHistoryY(nHistories);
@@ -3871,27 +3862,19 @@ if( PRESHEATH_INTERP == 1 )
   sim::Array<gitr_precision> chargeHistoryGather(nHistories);
   sim::Array<gitr_precision> weightHistory(nHistories);
   sim::Array<gitr_precision> weightHistoryGather(nHistories);
-#else
-  std::vector<gitr_precision> positionHistoryX(nHistories);
-  std::vector<gitr_precision> positionHistoryXgather(nHistories, 0.0);
-  std::vector<gitr_precision> positionHistoryY(nHistories);
-  std::vector<gitr_precision> positionHistoryYgather(nHistories);
-  std::vector<gitr_precision> positionHistoryZ(nHistories);
-  std::vector<gitr_precision> positionHistoryZgather(nHistories);
-  std::vector<gitr_precision> velocityHistory(nHistories);
-  std::vector<gitr_precision> velocityHistoryX(nHistories);
-  std::vector<gitr_precision> velocityHistoryY(nHistories);
-  std::vector<gitr_precision> velocityHistoryZ(nHistories);
-  std::vector<gitr_precision> velocityHistorygather(nHistories);
-  std::vector<gitr_precision> velocityHistoryXgather(nHistories);
-  std::vector<gitr_precision> velocityHistoryYgather(nHistories);
-  std::vector<gitr_precision> velocityHistoryZgather(nHistories);
-  std::vector<gitr_precision> chargeHistory(nHistories);
-  std::vector<gitr_precision> chargeHistoryGather(nHistories);
-  std::vector<gitr_precision> weightHistory(nHistories);
-  std::vector<gitr_precision> weightHistoryGather(nHistories);
-#endif
-#endif
+
+  if( PARTICLE_TRACKS > 0 )
+  {
+
+  for (int i = 0; i < world_size; i++) {
+    pDisplacement[i] = pStartIndx[i] * nHistoriesPerParticle;
+    pHistPerNode[i] = nPPerRank[i] * nHistoriesPerParticle;
+  }
+
+  const int *displ = &pDisplacement[0];
+  const int *phpn = &pHistPerNode[0];
+  std::cout << "History array length " << nHistories << std::endl;
+  }
   gitr_precision *finalPosX = new gitr_precision[nP];
   gitr_precision *finalPosY = new gitr_precision[nP];
   gitr_precision *finalPosZ = new gitr_precision[nP];
@@ -4070,14 +4053,13 @@ if( PRESHEATH_INTERP == 1 )
       EDist_CDF_R_regrid.data(), AphiDist_CDF_R_regrid.data(), nEdist, E0dist,
       Edist, nAdist, A0dist, Adist);
 
-#if PARTICLE_TRACKS > 0
   history history0(particleArray, dev_tt, nT, subSampleFac, nP,
                    &positionHistoryX.front(), &positionHistoryY.front(),
                    &positionHistoryZ.front(), &velocityHistory.front(),
                    &velocityHistoryX.front(), &velocityHistoryY.front(),
                    &velocityHistoryZ.front(), &chargeHistory.front(),
                    &weightHistory.front());
-#endif
+
   if( FORCE_EVAL > 0 )
   {
   if (world_rank == 0) {
@@ -4314,12 +4296,10 @@ if( PRESHEATH_INTERP == 1 )
 #endif
        }
 
-#if PARTICLE_TRACKS > 0
+      if( PARTICLE_TRACKS > 0 )
+      {
       thrust::for_each(thrust::device, particleBegin, particleEnd, history0);
-#ifdef __CUDACC__
-      // cudaThreadSynchronize();
-#endif
-#endif
+      }
       // std::cout << " world rank pstart nactive " << world_rank << " " <<
       // pStartIndx[world_rank] << "  " << nActiveParticlesOnRank[world_rank] <<
       // std::endl; thrust::for_each(thrust::device,particleBegin,particleOne,
@@ -4371,12 +4351,13 @@ if( PRESHEATH_INTERP == 1 )
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
   }
     }
-#if PARTICLE_TRACKS > 0
+    if( PARTICLE_TRACKS > 0 )
+    {
     tt = nT;
     // dev_tt[0] = tt;
     // std::cout << " tt for final history " << tt << std::endl;
     thrust::for_each(thrust::device, particleBegin, particleEnd, history0);
-#endif
+    }
 
   // Ensure that all time step loop GPU kernels are complete before proceeding
 #ifdef __CUDACC__
@@ -4521,7 +4502,9 @@ for(int i=0; i<nP ; i++)
              nP / world_size, MPI_FLOAT, &test1Gather[0], nP / world_size,
              MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
-#if PARTICLE_TRACKS > 0
+
+  if( PARTICLE_TRACKS > 0 )
+  {
 
   std::vector<gitr_precision> exampleArray(4, 0.0);
   std::vector<gitr_precision> exampleArrayGather(4, 0.0);
@@ -4593,7 +4576,7 @@ for(int i=0; i<nP ; i++)
               &weightHistoryGather[0], phpn, displ, MPI_FLOAT, 0,
               MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
-#endif
+  }
 
   if( SPECTROSCOPY > 0 )
   {
@@ -5020,7 +5003,8 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     ncFile1.close();
   }
 #endif
-#if PARTICLE_TRACKS > 0
+  if( PARTICLE_TRACKS > 0 )
+  {
 
     // Write netCDF output for histories
     netCDF::NcFile ncFile_hist("output/history.nc", netCDF::NcFile::replace);
@@ -5074,7 +5058,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_charge.putVar(&chargeHistory[0]);
 #endif
     ncFile_hist.close();
-#endif
+  }
     if( SPECTROSCOPY > 0 )
     {
     // Write netCDF output for density data
