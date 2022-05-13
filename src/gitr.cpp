@@ -3172,7 +3172,9 @@ if( PRESHEATH_INTERP == 1 )
 #endif
 
   int nSourceSurfaces = 0;
-#if PARTICLE_SOURCE_SPACE == 0 // Point Source
+  int currentSegment = 0;
+  if( PARTICLE_SOURCE_SPACE == 0 )
+  {
   if (world_rank == 0) {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.x_start",
                         x) &&
@@ -3194,8 +3196,11 @@ if( PRESHEATH_INTERP == 1 )
   MPI_Bcast(&z, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#elif PARTICLE_SOURCE_SPACE > 0 // Material Surfaces - flux weighted source
-  Config cfg_particles;
+  }
+// Material Surfaces - flux weighted source
+  else if( PARTICLE_SOURCE_SPACE > 0 )
+  {
+  libconfig::Config cfg_particles;
   std::string particleSourceFile;
   getVariable(cfg, "particleSource.fileString", particleSourceFile);
   std::cout << "Open particle source file " << input_path + particleSourceFile
@@ -3204,7 +3209,7 @@ if( PRESHEATH_INTERP == 1 )
   std::cout << "Successfully staged input and particle source file "
             << std::endl;
 
-  Setting &particleSourceSetting = cfg_particles.lookup("particleSource");
+  libconfig::Setting &particleSourceSetting = cfg_particles.lookup("particleSource");
   std::cout << "Successfully set particleSource setting " << std::endl;
   int nSourceBoundaries = 0, nSourceElements = 0;
   gitr_precision sourceMaterialZ = 0.0, accumulatedLengthArea = 0.0,
@@ -3271,7 +3276,11 @@ if( PRESHEATH_INTERP == 1 )
       particleSourceSpaceGrid(nSourceElements, 0.0);
   sim::Array<int> particleSourceIndices(nSourceElements, 0),
       particleSourceBoundaryIndices(nSourceBoundaries, 0);
-#if PARTICLE_SOURCE_SPACE == 1
+
+      /* Captain! Decayed code block, leave for reference */
+      /*
+      if( PARTICLE_SOURCE_SPACE == 1 )
+      {
   for (int i = 0; i < nSourceBoundaries; i++) {
     particleSourceBoundaryIndices[i] =
         particleSourceSetting["surfaceIndices"][i];
@@ -3360,10 +3369,12 @@ if( PRESHEATH_INTERP == 1 )
   gitr_precision rand0 = 0.0;
   int lowInd = 0;
   int currentSegment = 0;
-#else
-#endif
-#endif
-#if PARTICLE_SOURCE_ENERGY == 0
+      }
+      */
+  }
+
+  if( PARTICLE_SOURCE_ENERGY == 0 )
+  {
   if (world_rank == 0) {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.energy_eV",
                         E)) {
@@ -3379,8 +3390,11 @@ if( PRESHEATH_INTERP == 1 )
   MPI_Bcast(&E, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-#elif PARTICLE_SOURCE_ENERGY > 0
-#if PARTICLE_SOURCE_ENERGY == 1
+  }
+  else if( PARTICLE_SOURCE_ENERGY > 0 )
+  {
+    if( PARTICLE_SOURCE_ENERGY == 1 )
+    {
   // Create Thompson Distribution
   gitr_precision surfaceBindingEnergy =
       cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
@@ -3416,14 +3430,14 @@ if( PRESHEATH_INTERP == 1 )
     // std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " <<
     // CumulativeDFThompson[i] << std::endl;
   }
-#elif PARTICLE_SOURCE_ENERGY == 2
-#endif
+    }
   //boost::random::mt19937 sE;
   //boost::random::uniform_01<> dist01E;
   gitr_precision randE = 0.0;
   int lowIndE = 0;
-#endif
-#if PARTICLE_SOURCE_ANGLE == 0
+  }
+  if( PARTICLE_SOURCE_ANGLE == 0 )
+  {
   if (world_rank == 0) {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.phi", phi) &&
         cfg.lookupValue("impurityParticleSource.initialConditions.theta",
@@ -3453,12 +3467,12 @@ if( PRESHEATH_INTERP == 1 )
     vy = 0.0;
     vz = vtotal;
   }
-#elif PARTICLE_SOURCE_ANGLE > 0
+  }
+  else if( PARTICLE_SOURCE_ANGLE > 0 )
+  {
 
   std::cout << "Read particle source " << std::endl;
-#if PARTICLE_SOURCE_ENERGY < 2
-  Config cfg_particles;
-#endif
+
   // cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
   // Setting& particleSource = cfg_particles.lookup("particleSource");
   // int nSegmentsAngle = particleSource["nSegmentsAngle"];
@@ -3475,12 +3489,13 @@ if( PRESHEATH_INTERP == 1 )
   std::uniform_real_distribution<gitr_precision> dist01A(0.0, 1.0);
   gitr_precision randA = 0.0;
   int lowIndA = 0;
-#endif
+  }
   std::cout << "Starting psourcefile import " << std::endl;
-#if PARTICLE_SOURCE_FILE > 0 // File source
-  libconfig::Config cfg_particles;
   vector<gitr_precision> xpfile(nP), ypfile(nP), zpfile(nP), vxpfile(nP), vypfile(nP),
       vzpfile(nP);
+      if( PARTICLE_SOURCE_FILE > 0 )
+      {
+  libconfig::Config cfg_particles;
   std::string ncParticleSourceFile;
   int nPfile = 0;
   if (world_rank == 0) {
@@ -3550,7 +3565,7 @@ if( PRESHEATH_INTERP == 1 )
   //    << zpfile[i] << std::endl; std::cout << " Exyz from file " << Expfile[i]
   //    << " " << Eypfile[i] << " " << Ezpfile[i] << std::endl;
   //}
-#endif
+      }
   std::cout << "particle file import done" << std::endl;
   sim::Array<gitr_precision> pSurfNormX(nP), pSurfNormY(nP), pSurfNormZ(nP), px(nP),
       py(nP), pz(nP), pvx(nP), pvy(nP), pvz(nP);
@@ -3558,7 +3573,10 @@ if( PRESHEATH_INTERP == 1 )
   gitr_precision eVec[3] = {0.0};
   for (int i = 0; i < nP; i++) {
   //std::cout<< "setting particle " << i << std::endl;
-#if PARTICLE_SOURCE_SPACE > 0 // File source
+  /* Captain! Decayed block below */
+      /*
+    if( PARTICLE_SOURCE_SPACE > 0 )
+    {
     if( USE3DTETGEOM > 0 )
     {
 //#if USE3DTETGEOM > 0
@@ -3621,7 +3639,10 @@ if( PRESHEATH_INTERP == 1 )
                     .plane_norm; // boundaries[sourceElements[surfIndexMod]].z1;
 //#endif
     }
-#endif
+    }
+      */
+      /* Captain! Another decayed block */
+      /*
 #if PARTICLE_SOURCE_ENERGY > 0
     randE = dist01E(sE);
 #if PARTICLE_SOURCE_ENERGY == 1
@@ -3649,15 +3670,19 @@ if( PRESHEATH_INTERP == 1 )
               << " puts the particle energy to " << E << std::endl;
 #endif
 #endif
-#if PARTICLE_SOURCE_ANGLE == 1 // Analytic normal incidence
+              */
+              if( PARTICLE_SOURCE_ANGLE == 1 )
+              {
     Ex = -E * boundaries[currentSegment].a /
          boundaries[currentSegment].plane_norm;
     Ey = -E * boundaries[currentSegment].b /
          boundaries[currentSegment].plane_norm;
     Ez = -E * boundaries[currentSegment].c /
          boundaries[currentSegment].plane_norm;
+              }
 
-#elif PARTICLE_SOURCE_ANGLE > 1
+    /* Captain! Decayed code block below */
+    /*
     randA = dist01A(sA);
     gitr_precision sputtA =
         interp3d(randA, localAngle, std::log10(3.0 * localT),
@@ -3722,25 +3747,28 @@ if( PRESHEATH_INTERP == 1 )
     std::cout << "Transformed E " << Ex << " " << Ey << " " << Ez << " "
               << std::endl;
     // particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
-#endif
+    */
 
-#if PARTICLE_SOURCE_FILE > 0 // File source
+   if( PARTICLE_SOURCE_FILE > 0 ) 
+   {
     x = xpfile[i];
     y = ypfile[i];
     z = zpfile[i];
     vx = vxpfile[i];
     vy = vypfile[i];
     vz = vzpfile[i];
-#endif
+    }
     particleArray->setParticleV(i, x, y, z, vx, vy, vz, Z, amu, charge,dt);
-#if PARTICLE_SOURCE_SPACE > 0
+
+    if( PARTICLE_SOURCE_SPACE > 0 )
+    {
     pSurfNormX[i] =
         -boundaries[currentSegment].a / boundaries[currentSegment].plane_norm;
     pSurfNormY[i] =
         -boundaries[currentSegment].b / boundaries[currentSegment].plane_norm;
     pSurfNormZ[i] =
         -boundaries[currentSegment].c / boundaries[currentSegment].plane_norm;
-#endif
+    }
     px[i] = x;
     py[i] = y;
     pz[i] = z;
