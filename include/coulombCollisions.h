@@ -96,10 +96,16 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   gitr_precision nu_parallel_e;
   gitr_precision nu_energy_e;
                 
-#if FLOWV_INTERP == 3
+  if( FLOWV_INTERP == 3 )
+  {
+    exit( 0 );
+    /*
   interp3dVector (&flowVelocity[0], x,y,z,nR_flowV,nY_flowV,nZ_flowV,
                    flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
-#elif FLOWV_INTERP < 3    
+    */
+  }
+  else if( FLOWV_INTERP < 3 )
+  {
   if( USEFIELDALIGNEDVALUES > 0 )
   {
   interpFieldAlignedVector(&flowVelocity[0],x,y,z,
@@ -115,7 +121,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
            nR_flowV,nZ_flowV,
            flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
   }
-#endif
+  }
   relativeVelocity[0] = vx - flowVelocity[0];
   relativeVelocity[1] = vy - flowVelocity[1];
   relativeVelocity[2] = vz - flowVelocity[2];
@@ -364,10 +370,13 @@ void operator()(std::size_t indx) {
     gitr_precision vy = particlesPointer->vy[indx];
     gitr_precision vz = particlesPointer->vz[indx];
 
-#if FLOWV_INTERP == 3 
+    if( FLOWV_INTERP == 3 )
+    {
     interp3dVector (&flowVelocity[0], particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_flowV,nY_flowV,nZ_flowV,
                 flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
-#elif FLOWV_INTERP < 3    
+    }
+    else if( FLOWV_INTERP < 3 )
+    {
     if( USEFIELDALIGNEDVALUES > 0 )
     {
     interpFieldAlignedVector(&flowVelocity[0],
@@ -384,7 +393,7 @@ void operator()(std::size_t indx) {
                         nR_flowV,nZ_flowV,
                         flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
     }
-#endif
+    }
 
     relativeVelocity[0] = vx - flowVelocity[0];
     relativeVelocity[1] = vy - flowVelocity[1];
