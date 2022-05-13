@@ -2002,19 +2002,24 @@ if( flowv_interp == 1 )
   std::string gradTCfg = "backgroundPlasmaProfiles.gradT.";
   std::string gradTFile;
   if (world_rank == 0) {
-#if GRADT_INTERP > 0
+    if( GRADT_INTERP > 0 )
+    {
     getVariable(cfg, gradTCfg + "fileString", gradTFile);
     nR_gradT =
         getDimFromFile(cfg, input_path + gradTFile, gradTCfg, "gridNrString");
-#endif
-#if GRADT_INTERP > 1
+    }
+
+    if( GRADT_INTERP > 1 )
+    {
     nZ_gradT =
         getDimFromFile(cfg, input_path + gradTFile, gradTCfg, "gridNzString");
-#endif
-#if GRADT_INTERP > 2
+    }
+
+    if( GRADT_INTERP > 2 )
+    {
     nY_gradT =
         getDimFromFile(cfg, input_path + gradTFile, gradTCfg, "gridNyString");
-#endif
+    }
   }
 #if USE_MPI > 0
   MPI_Bcast(&nR_gradT, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -2029,28 +2034,35 @@ if( flowv_interp == 1 )
       gradTiR(n_gradT), gradTiZ(n_gradT), gradTiY(n_gradT);
 
   if (world_rank == 0) {
-#if GRADT_INTERP == 0
+
+    if( GRADT_INTERP == 0 )
+    {
     getVariable(cfg, gradTCfg + "gradTeR", gradTeR[0]);
     getVariable(cfg, gradTCfg + "gradTeY", gradTeY[0]);
     getVariable(cfg, gradTCfg + "gradTeZ", gradTeZ[0]);
     getVariable(cfg, gradTCfg + "gradTiR", gradTiR[0]);
     getVariable(cfg, gradTCfg + "gradTiY", gradTiY[0]);
     getVariable(cfg, gradTCfg + "gradTiZ", gradTiZ[0]);
-#else
+    }
+    else
+    {
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gridRString",
                    gradTGridr[0]);
-#if GRADT_INTERP > 1
+    if( GRADT_INTERP > 1 )
+    {
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gridZString",
                    gradTGridz[0]);
-#endif
-#if GRADT_INTERP > 2
+    }
+
+    if( GRADT_INTERP > 2 )
+    {
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gridYString",
                    gradTGridy[0]);
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gradTeYString",
                    gradTeY[0]);
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gradTiYString",
                    gradTiY[0]);
-#endif
+    }
 
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gradTiRString",
                    gradTiR[0]);
@@ -2064,7 +2076,7 @@ if( flowv_interp == 1 )
                    gradTeY[0]);
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gradTiYString",
                    gradTiY[0]);
-#endif
+    }
   }
 #if USE_MPI > 0
   MPI_Bcast(&gradTGridr[0], nR_gradT, MPI_FLOAT, 0, MPI_COMM_WORLD);
