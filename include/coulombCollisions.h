@@ -400,7 +400,6 @@ void operator()(std::size_t indx) {
     relativeVelocity[2] = vz - flowVelocity[2];
     velocityRelativeNorm = vectorNorm(relativeVelocity);
 
-#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
     gitr_precision n1 = curand_normal(&state[indx]);
     gitr_precision n2 = curand_normal(&state[indx]);
@@ -418,19 +417,7 @@ void operator()(std::size_t indx) {
     gitr_precision r3 = dist(state[indx]);
     gitr_precision xsi = dist(state[indx]);
 #endif
-#else
-#if __CUDACC__
-    gitr_precision n1 = curand_normal(&state[indx]);
-    gitr_precision n2 = curand_normal(&state[indx]);
-    gitr_precision xsi = curand_uniform(&state[indx]);
-#else
-    std::normal_distribution<double> distribution(0.0,1.0);
-    std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
-    gitr_precision n1 = distribution(state[indx]);
-    gitr_precision n2 = distribution(state[indx]);
-    gitr_precision xsi = dist(state[indx]);
-#endif
-#endif
+
     getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
                              x, y, z,
                              vx, vy, vz,

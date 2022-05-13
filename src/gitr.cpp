@@ -3920,7 +3920,6 @@ if( PRESHEATH_INTERP == 1 )
   thrust::counting_iterator<std::size_t> particleZero(0);
   auto randInitStart_clock = gitr_time::now();
 
-#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
      typedef curandState rand_type;
 #else
@@ -3965,7 +3964,6 @@ if( PRESHEATH_INTERP == 1 )
   cudaDeviceSynchronize();
 #endif
 }
-#endif
   auto randInitEnd_clock = gitr_time::now();
   std::chrono::duration<gitr_precision> fsRandInit = randInitEnd_clock - randInitStart_clock;
   printf(

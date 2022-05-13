@@ -40,13 +40,11 @@ class Particle  {
       	float Z;
       	float amu;
         float charge;
-#if PARTICLESEEDS > 0
     #ifdef __CUDACC__
 	curandState streams[7];
 	#else
         std::mt19937 streams[7];
         #endif
-#endif
 	float hitWall;
     float transitTime;
     int wallIndex;
