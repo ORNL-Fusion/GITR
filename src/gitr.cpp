@@ -4229,17 +4229,20 @@ if( PRESHEATH_INTERP == 1 )
   printf("Initialize time for node %i          is %6.3f (secs) \n", world_rank,
          fs1.count());
   gitr_precision testFlowVec[3] = {0.0};
-#if USEFIELDALIGNEDVALUES > 0
+  if( USEFIELDALIGNEDVALUES > 0 )
+  {
   interpFieldAlignedVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV,
                            nZ_flowV, flowVGridr.data(), flowVGridz.data(),
                            flowVr.data(), flowVz.data(), flowVt.data(),
                            nR_Bfield, nZ_Bfield, bfieldGridr.data(),
                            bfieldGridz.data(), br.data(), bz.data(), by.data());
-#else
+  }
+  else
+  {
   interp2dVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV, nZ_flowV,
                  flowVGridr.data(), flowVGridz.data(), flowVr.data(),
                  flowVz.data(), flowVt.data());
-#endif
+  }
 
   gitr_precision leakZ = 0.0;
   if (world_rank == 0) {

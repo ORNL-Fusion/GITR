@@ -100,18 +100,21 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   interp3dVector (&flowVelocity[0], x,y,z,nR_flowV,nY_flowV,nZ_flowV,
                    flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
 #elif FLOWV_INTERP < 3    
-#if USEFIELDALIGNEDVALUES > 0
+  if( USEFIELDALIGNEDVALUES > 0 )
+  {
   interpFieldAlignedVector(&flowVelocity[0],x,y,z,
                            nR_flowV,nZ_flowV,
                            flowVGridr,flowVGridz,flowVr,
                            flowVz,flowVt,nR_Bfield,nZ_Bfield,
                            BfieldGridR,BfieldGridZ,BfieldR,
                            BfieldZ,BfieldT);
-#else
+  }
+  else
+  {
   interp2dVector(&flowVelocity[0],x,y,z,
            nR_flowV,nZ_flowV,
            flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
-#endif
+  }
 #endif
   relativeVelocity[0] = vx - flowVelocity[0];
   relativeVelocity[1] = vy - flowVelocity[1];
@@ -365,7 +368,8 @@ void operator()(std::size_t indx) {
     interp3dVector (&flowVelocity[0], particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_flowV,nY_flowV,nZ_flowV,
                 flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
 #elif FLOWV_INTERP < 3    
-#if USEFIELDALIGNEDVALUES > 0
+    if( USEFIELDALIGNEDVALUES > 0 )
+    {
     interpFieldAlignedVector(&flowVelocity[0],
                                  particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                                  nR_flowV,nZ_flowV,
@@ -373,11 +377,13 @@ void operator()(std::size_t indx) {
                                  flowVz,flowVt,nR_Bfield,nZ_Bfield,
                                  BfieldGridR,BfieldGridZ,BfieldR,
                                  BfieldZ,BfieldT);
-#else
+    }
+    else
+    {
     interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
                         flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
-#endif
+    }
 #endif
 
     relativeVelocity[0] = vx - flowVelocity[0];
