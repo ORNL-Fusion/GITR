@@ -66,3 +66,15 @@ if( GITR_USE_CUDA )
   endforeach()
 
 endif()
+
+# Captain! Add a "ninja clean that will delete all the 
+# add simple system tests
+add_test( NAME system_particle_straightline 
+          COMMAND GITR -c input/gitrInput.cfg
+          WORKING_DIRECTORY
+          "${CMAKE_BINARY_DIR}/examples/particle_trajectories/straightLine/2Dgeom" )
+
+add_test( NAME system_particle_gyro
+          COMMAND GITR -c input/gitrInput.cfg
+          WORKING_DIRECTORY
+          "${CMAKE_BINARY_DIR}/examples/particle_trajectories/gyroMotion" )

@@ -71,3 +71,8 @@ set( test_file_name "test_data/netcdf_file_py.nc" )
 set( source_path "${CMAKE_SOURCE_DIR}/${test_file_name}" )
 set( destination_path "${CMAKE_BINARY_DIR}/${test_file_name}" )
 configure_file( ${source_path} ${destination_path} COPYONLY )
+
+# copy examples folder to the binary directory
+set( source_path "${CMAKE_SOURCE_DIR}/examples/" )
+set( destination_path "${CMAKE_BINARY_DIR}/examples" )
+file( COPY ${source_path} DESTINATION ${destination_path} )
