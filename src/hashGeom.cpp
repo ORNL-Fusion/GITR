@@ -108,11 +108,11 @@ void hashGeom::operator()(std::size_t indx) {
   gitr_precision kk = indx/(nR[0]);
   int k = std::floor(kk);
   int i = indx - k*(nR[0]);
-  gitr_precision x0 = x[i];
-  gitr_precision y0 = 0.0;
-  gitr_precision z0 = z[k];
-  int xyzIndx = indx;
-  int buffIndx=(k*(nR[0])+ i)*n_closeGeomElements[0];
+  x0 = x[i];
+  y0 = 0.0;
+  z0 = z[k];
+  xyzIndx = indx;
+  buffIndx=(k*(nR[0])+ i)*n_closeGeomElements[0];
   //std::cout << "point "  <<nHash<< " " <<   x0 << " " <<  z0 << " "
   //     <<  buffIndx << std::endl;
 
