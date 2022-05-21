@@ -870,15 +870,29 @@ if( geom_hash == 1 )
                          netCDF::NcFile::replace);
       std::cout << "opened file" << std::endl;
       netCDF::NcDim hashNR = ncFile_hash.addDim("nR", nR_closeGeom[i]);
+      netCDF::NcDim hashNY;
+      if( use_3d_geom > 0 )
+      {
+        hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
+      }
       netCDF::NcDim hashNZ = ncFile_hash.addDim("nZ", nZ_closeGeom[i]);
       netCDF::NcDim hashN = ncFile_hash.addDim("n", n_closeGeomElements[i]);
       vector<netCDF::NcDim> geomHashDim;
       geomHashDim.push_back(hashNR);
       std::cout << "created dims" << std::endl;
+      if( use_3d_geom > 0 )
+      {
+        geomHashDim.push_back(hashNY);
+      }
       geomHashDim.push_back(hashNZ);
       geomHashDim.push_back(hashN);
       netCDF::NcVar hash_gridR = ncFile_hash.addVar("gridR", netcdf_precision, hashNR);
       std::cout << "created dims2" << std::endl;
+      netCDF::NcVar hash_gridY;
+      if( use_3d_geom > 0 )
+      {
+        hash_gridY = ncFile_hash.addVar("gridY", netcdf_precision, hashNY);
+      }
       netCDF::NcVar hash_gridZ = ncFile_hash.addVar("gridZ", netcdf_precision, hashNZ);
       netCDF::NcVar hash = ncFile_hash.addVar("hash", netCDF::ncInt, geomHashDim);
       std::cout << "created vars" << std::endl;
@@ -888,9 +902,6 @@ if( geom_hash == 1 )
       hash_gridR.putVar(&closeGeomGridr[ncIndex]);
       if( use_3d_geom > 0 )
       {
-        netCDF::NcDim hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
-        geomHashDim.push_back(hashNY);
-        netCDF::NcVar hash_gridY = ncFile_hash.addVar("gridY", netcdf_precision, hashNY);
         if (i > 0)
           ncIndex = nY_closeGeom[i - 1];
         hash_gridY.putVar(&closeGeomGridy[ncIndex]);
