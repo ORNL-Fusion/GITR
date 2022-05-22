@@ -309,8 +309,6 @@ int main(int argc, char **argv, char **envp) {
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-  /* Ahoy! Is the +1 the index that indicates the type? the // if periodic <--- comment in
-     geometryCheck.h */
   sim::Array<Boundary> boundaries(nLines + 1, Boundary());
   if (world_rank == 0) {
     nSurfaces = importGeometry(cfg_geom, boundaries);
@@ -459,8 +457,8 @@ int main(int argc, char **argv, char **envp) {
   int nHashPointsTotal = 1;
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
-  //int use_3d_geom = 1;
-  if(geom_hash)
+
+  if( geom_hash == 1 )
   {
   //nR_closeGeomTotal = 0;
   //nY_closeGeomTotal = 0;
@@ -481,7 +479,7 @@ int main(int argc, char **argv, char **envp) {
   sim::Array<int> nHashPoints(nHashes, 0);
   sim::Array<int> n_closeGeomElements(nHashes, 0);
 
-  if(geom_hash)
+  if( geom_hash == 1 )
   {
   if (world_rank == 0) {
     importHashNs(cfg, input_path, nHashes, "geometry_hash", nR_closeGeom.data(),
@@ -517,7 +515,7 @@ int main(int argc, char **argv, char **envp) {
       nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
       nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
     }
-    if(use_3d_geom)
+    if( use_3d_geom > 0 )
     {
      if(nHashes > 1)
     {
@@ -919,6 +917,7 @@ if( geom_hash == 1 )
   }
       std::cout << "created vars2" << std::endl;
 }
+
 else if( geom_hash > 1 )
 {
   if (world_rank == 0) {
@@ -1195,7 +1194,6 @@ else if( geom_hash_sheath > 1 )
   int nTraceSteps;
   std::string connLengthCfg = "connectionLength.";
   std::string lcFile;
-/* Captain! */
     NcFile ncFileLC("LcS.nc", NcFile::replace);
     NcDim nc_nTracers = ncFileLC.addDim("nTracers", nTracers);
 
@@ -4304,7 +4302,7 @@ if( PRESHEATH_INTERP == 1 )
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
 #endif
-    /* Ahoy! this is a 3 level 4-loop to calculate density n = (x, y, q). To show the spacial
+    /* this is a 3 level 4-loop to calculate density n = (x, y, q). To show the spacial
        density and the result. Loop over timesteps, each operator loops over a section of
        the particles... find 0 */
     for (tt; tt < nT; tt++) {
