@@ -24,6 +24,7 @@ void hashGeom::operator()(std::size_t indx) {
   int nYhashSum=0;
   int nZhashSum=0;
   int nHashPoints=0;
+  /* Captain! Iterate over the number of hash files */
   for(int i=0;i<nHashes;i++)
   {  
     nRhashSum = nRhashSum + nR[i];
@@ -264,7 +265,7 @@ void hashGeom::operator()(std::size_t indx) {
     else
     {
     //
-    gitr_precision minEdge = distE1;
+    minEdge = distE1;
     }
     //std::cout << "edgeDistances " << distE1 << " " << distE2 << " " << distE3 << std::endl;
     gitr_precision d1 =std::sqrt((x0 - boundary[l].x1)*(x0 - boundary[l].x1)
