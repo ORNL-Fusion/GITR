@@ -244,6 +244,8 @@ set( GITR_PARTICLE_SOURCE_ENERGY 0 CACHE STRING "${description}" )
 set( GITR_PARTICLE_SOURCE_ANGLE 0 CACHE STRING "${description}" )
 set( GITR_PARTICLE_SOURCE_FILE 0 CACHE STRING "${description}" )
 
+Everything below is just uneccesary information
+
 add_compile_definitions( 
         USE_CUDA=${GITR_USE_CUDA}
         USE_MPI=${GITR_USE_MPI}
