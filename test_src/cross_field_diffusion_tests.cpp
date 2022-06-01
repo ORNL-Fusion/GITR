@@ -139,7 +139,7 @@ TEST_CASE( "cross-field diffusion operator" )
     sim::Array<gitr_precision> gridX_bins(net_nX), gridY_bins(1), gridZ_bins(net_nZ);
 
     sim::Array<gitr_precision> gridX_midpoints(net_nX-1);
-    sim::Array<double> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
+    sim::Array<gitr_precision> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
 //net_Bins needs adjusting to be in the middle of the grids
     for (int i = 0; i < net_nX; i++) {
       gridX_bins[i] = netX0 + 1.0 / (net_nX - 1) * i * (netX1 - netX0);
@@ -182,7 +182,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
   sim::Array<gitr_precision> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
 
-  double zero = 0;
+  gitr_precision zero = 0;
   std::string empty = "";
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   importVectorField(cfg_geom, "", BFIELD_INTERP, bfieldCfg, nR_Bfield,
@@ -370,7 +370,7 @@ TEST_CASE( "cross-field diffusion operator" )
     sim::Array<gitr_precision> gridX_bins(net_nX), gridY_bins(1), gridZ_bins(net_nZ);
 
     sim::Array<gitr_precision> gridX_midpoints(net_nX-1);
-    sim::Array<double> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
+    sim::Array<gitr_precision> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
 //net_Bins needs adjusting to be in the middle of the grids
     for (int i = 0; i < net_nX; i++) {
       gridX_bins[i] = netX0 + 1.0 / (net_nX - 1) * i * (netX1 - netX0);
@@ -413,7 +413,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
   sim::Array<gitr_precision> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
 
-  double zero = 0;
+  gitr_precision zero = 0;
   std::string empty = "";
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   importVectorField(cfg_geom, "", BFIELD_INTERP, bfieldCfg, nR_Bfield,

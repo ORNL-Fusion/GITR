@@ -2710,9 +2710,9 @@ if( PRESHEATH_INTERP == 1 )
   }
 }
 
-  sim::Array<double> net_Bins( net_Bins_size, 0.0 );
+  sim::Array<gitr_precision> net_Bins( net_Bins_size, 0.0 );
 
-  sim::Array<double> net_BinsTotal( net_BinsTotal_size, 0.0 );
+  sim::Array<gitr_precision> net_BinsTotal( net_BinsTotal_size, 0.0 );
 
   // Perp DiffusionCoeff initialization - only used when Diffusion interpolator
   // is = 0
