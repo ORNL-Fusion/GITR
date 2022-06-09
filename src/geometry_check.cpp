@@ -62,7 +62,9 @@ geometry_check::geometry_check(
   gitr_precision _Edist,
   int _nAdist,
   gitr_precision _A0dist,
-  gitr_precision _Adist )
+  gitr_precision _Adist,
+  int flux_ea_,
+  int surface_model_ )
   :
 
     particlesPointer(_particlesPointer), nLines(_nLines),
@@ -73,7 +75,7 @@ geometry_check::geometry_check(
     closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy),
     closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
     E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
-    Adist(_Adist) {}
+    Adist(_Adist), flux_ea( flux_ea_ ), surface_model( surface_model_ ) {}
 
 __host__  __device__
 void geometry_check::operator()(std::size_t indx) const {
@@ -988,7 +990,7 @@ else top_limit = nLines;
     }
     if (particlesPointer->hitWall[indx] == 1.0) {
 
-      if( FLUX_EA > 0 && USESURFACEMODEL == 0 )
+      if( flux_ea > 0 && surface_model == 0 )
       {
       gitr_precision E0 = 0.0;
       gitr_precision thetaImpact = 0.0;
@@ -1079,7 +1081,7 @@ else top_limit = nLines;
         }
       }
       }
-      else if( FLUX_EA == 0 && USESURFACEMODEL == 0 )
+      else if( surface_model == 0 && surface_model == 0 )
       {
         particlesPointer->weight[indx] = 0.0;
       }

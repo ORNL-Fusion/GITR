@@ -37,8 +37,9 @@
     gitr_precision _Edist,
     int _nAdist,
     gitr_precision _A0dist,
-    gitr_precision _Adist) :
-particles(_particles),
+    gitr_precision _Adist,
+    int flux_ea_ ) :
+                             particles(_particles),
                              dt(_dt),
                              nLines(_nLines),
                              boundaryVector(_boundaryVector),
@@ -72,7 +73,9 @@ particles(_particles),
                              nAdist(_nAdist),
                              A0dist(_A0dist),
                              Adist(_Adist),
-                             state(_state) { }
+                             state(_state),
+                             flux_ea( flux_ea_ )
+                             { }
 
 CUDA_CALLABLE_MEMBER_DEVICE
 void reflection::operator()(std::size_t indx) const {
@@ -112,7 +115,7 @@ void reflection::operator()(std::size_t indx) const {
     gitr_precision dEdist;
     gitr_precision dAdist;
 
-    if( FLUX_EA > 0 )
+    if( flux_ea > 0 )
     {
       dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
       dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
@@ -200,7 +203,7 @@ void reflection::operator()(std::size_t indx) const {
 
          newWeight = weight*(totalYR);
 
-        if( FLUX_EA > 0 )
+        if( flux_ea > 0 )
         {
         EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
         AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
@@ -242,7 +245,7 @@ void reflection::operator()(std::size_t indx) const {
                  energyDistGrid01,A_sputtRefDistIn,E_sputtRefDistIn,EDist_CDF_Y_regrid);
 		    
         newWeight=weight*totalYR;
-      if( FLUX_EA > 0 )
+      if( flux_ea > 0 )
       {
         EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
         AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
@@ -319,7 +322,7 @@ void reflection::operator()(std::size_t indx) const {
         surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
       //boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
     #endif
-    if( FLUX_EA > 0 )
+    if( flux_ea > 0 )
     {
         EdistInd = std::floor((E0_for_flux_binning-E0dist)/dEdist);
         AdistInd = std::floor((thetaImpact-A0dist)/dAdist);

@@ -51,7 +51,8 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
     int nR_Bfield, int nZ_Bfield,
     gitr_precision* BfieldGridR ,gitr_precision* BfieldGridZ ,
     gitr_precision* BfieldR ,gitr_precision* BfieldZ ,
-    gitr_precision* BfieldT,gitr_precision &T_background ) 
+    gitr_precision* BfieldT,gitr_precision &T_background,
+    int flowv_interp ) 
 {
   //int feenableexcept(FE_INVALID | FE_OVERFLOW); //enables trapping of the floating-point exceptions
   gitr_precision Q = 1.60217662e-19;
@@ -96,7 +97,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   gitr_precision nu_parallel_e;
   gitr_precision nu_energy_e;
                 
-  if( FLOWV_INTERP == 3 )
+  if( flowv_interp == 3 )
   {
     exit( 0 );
     /*
@@ -104,7 +105,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
                    flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
     */
   }
-  else if( FLOWV_INTERP < 3 )
+  else if( flowv_interp < 3 )
   {
   if( USEFIELDALIGNEDVALUES > 0 )
   {
@@ -286,6 +287,8 @@ struct coulombCollisions {
             std::mt19937 *state;
 #endif
 
+    int flowv_interp;
+
     coulombCollisions(Particles *_particlesPointer,gitr_precision _dt, 
 #if __CUDACC__
                             curandState *_state,
@@ -302,7 +305,7 @@ struct coulombCollisions {
                         int _nR_Bfield, int _nZ_Bfield,
                         gitr_precision * _BfieldGridR ,gitr_precision * _BfieldGridZ ,
                         gitr_precision * _BfieldR ,gitr_precision * _BfieldZ ,
-                 gitr_precision * _BfieldT, Flags* _gitr_flags )
+                 gitr_precision * _BfieldT, Flags* _gitr_flags, int flowv_interp_ )
       : particlesPointer(_particlesPointer),
         dt(_dt),
         nR_flowV(_nR_flowV),
@@ -336,7 +339,8 @@ struct coulombCollisions {
         BfieldT(_BfieldT),
 	gitr_flags(_gitr_flags),
         dv{0.0, 0.0, 0.0},
-        state(_state) {
+        state(_state),
+        flowv_interp( flowv_interp_ ) {
   }
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) { 
@@ -370,12 +374,12 @@ void operator()(std::size_t indx) {
     gitr_precision vy = particlesPointer->vy[indx];
     gitr_precision vz = particlesPointer->vz[indx];
 
-    if( FLOWV_INTERP == 3 )
+    if( flowv_interp == 3 )
     {
     interp3dVector (&flowVelocity[0], particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_flowV,nY_flowV,nZ_flowV,
                 flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
     }
-    else if( FLOWV_INTERP < 3 )
+    else if( flowv_interp < 3 )
     {
     if( USEFIELDALIGNEDVALUES > 0 )
     {
@@ -434,7 +438,7 @@ void operator()(std::size_t indx) {
                              BfieldGridZ,
                              BfieldR,
                              BfieldZ,
-                             BfieldT, T_background);
+                             BfieldT, T_background, flowv_interp );
 
     getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );

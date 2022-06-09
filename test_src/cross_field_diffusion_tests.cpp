@@ -44,8 +44,15 @@ TEST_CASE( "cross-field diffusion operator" )
     USE_CYLSYMM=0
 
   */
+
+  int const flux_ea = 1;
+  int const surface_model = 1;
+  int const bfield_interp = 0;
+
   SECTION( "straight" )
   {
+    int const perp_diffusion = 1;
+
     /* timesteps */
     int nT = 500000;
 
@@ -115,7 +122,7 @@ TEST_CASE( "cross-field diffusion operator" )
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model );
 
 
     /* data collection variables */
@@ -185,15 +192,15 @@ TEST_CASE( "cross-field diffusion operator" )
   gitr_precision zero = 0;
   std::string empty = "";
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
-  importVectorField(cfg_geom, "", BFIELD_INTERP, bfieldCfg, nR_Bfield,
+  importVectorField(cfg_geom, "", bfield_interp, bfieldCfg, nR_Bfield,
       0, nZ_Bfield, bfieldGridr.front(),
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
 
-  crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
+  crossFieldDiffusion crossFieldDiffusion0( gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front());
+      &bz.front(), &by.front(), perp_diffusion );
     
   // half-side length
     double s = 0.2;
@@ -282,6 +289,7 @@ TEST_CASE( "cross-field diffusion operator" )
   */
   SECTION( "curved" )
   {
+    int const perp_diffusion = 2;
     /* timesteps */
     int nT = 200000;
 
@@ -346,7 +354,7 @@ TEST_CASE( "cross-field diffusion operator" )
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model );
 
 
     /* data collection variables */
@@ -416,15 +424,15 @@ TEST_CASE( "cross-field diffusion operator" )
   gitr_precision zero = 0;
   std::string empty = "";
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
-  importVectorField(cfg_geom, "", BFIELD_INTERP, bfieldCfg, nR_Bfield,
+  importVectorField(cfg_geom, "", bfield_interp, bfieldCfg, nR_Bfield,
       0, nZ_Bfield, bfieldGridr.front(),
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
 
-  crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
+  crossFieldDiffusion crossFieldDiffusion0( gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front());
+      &bz.front(), &by.front(), perp_diffusion );
     
   // half-side length
     double s = 0.2;

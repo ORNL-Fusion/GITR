@@ -118,6 +118,8 @@ struct crossFieldDiffusion {
 #else
         std::mt19937 *state;
 #endif
+        int perp_diffusion;
+
     crossFieldDiffusion(Flags* _flags, Particles *_particlesPointer, gitr_precision _dt,
 #if __CUDACC__
         curandState *_state,
@@ -128,7 +130,7 @@ struct crossFieldDiffusion {
         int _nR_Bfield, int _nZ_Bfield,
         gitr_precision * _BfieldGridRDevicePointer,gitr_precision * _BfieldGridZDevicePointer,
         gitr_precision * _BfieldRDevicePointer,gitr_precision * _BfieldZDevicePointer,
-        gitr_precision * _BfieldTDevicePointer)
+        gitr_precision * _BfieldTDevicePointer, int perp_diffusion_ )
       : flags(_flags), particlesPointer(_particlesPointer),
         dt(_dt),
         diffusionCoefficient(_diffusionCoefficient),
@@ -139,8 +141,9 @@ struct crossFieldDiffusion {
         BfieldRDevicePointer(_BfieldRDevicePointer),
         BfieldZDevicePointer(_BfieldZDevicePointer),
         BfieldTDevicePointer(_BfieldTDevicePointer),
-        state(_state) {
-  }
+        state(_state),
+        perp_diffusion( perp_diffusion_ )
+        { }
 
 /* Monte Carlo solution to diffusion equation - we need this tested */
 /* semi-non-deterministic test - tolerance type test */
@@ -209,7 +212,7 @@ void operator()(std::size_t indx) const {
       /* m^2 / sec units for diffusionCoefficient */
       step = std::sqrt(4*diffusionCoefficient*dt_step);
       /* Captain! Is an "else" even needed here? It doesn't appear to be so */
-      if( USEPERPDIFFUSION <= 1 )
+      if( perp_diffusion <= 1 )
       {
         legacy_code_block_0( particlesPointer, indx, B_unit, step, r3 );
       }
