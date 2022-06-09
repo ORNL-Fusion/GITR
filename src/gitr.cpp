@@ -122,7 +122,7 @@ int main(int argc, char **argv, char **envp) {
   int usethermalforce = use.get< int >( use::thermal_force );
   int use_sheath_efield = use.get< int >( use::sheath_efield );
   int use_presheath_efield = use.get< int >( use::presheath_efield );
-  int use_ionization = use.get< int >( use::ionization );
+  int ionization = use.get< int >( use::ionization );
   int use_coulomb_collisions = use.get< int >( use::coulomb_collisions );
   int use_perp_diffusion = use.get< int >( use::perp_diffusion );
 
@@ -2125,7 +2125,7 @@ if( flowv_interp == 1 )
   sim::Array<gitr_precision> gridTemperature_Recombination(nTemperaturesRecombine),
       gridDensity_Recombination(nDensitiesRecombine);
 
-  if( USEIONIZATION > 0 )
+  if( ionization > 0 )
   {
   if (world_rank == 0) {
 
@@ -3937,7 +3937,7 @@ if( PRESHEATH_INTERP == 1 )
 #else
   sim::Array<rand_type> state1(nParticles);
 #endif
-    if( USEIONIZATION > 0 ||
+    if( ionization > 0 ||
         USEPERPDIFFUSION > 0 ||
         USECOULOMBCOLLISIONS > 0 ||
         USESURFACEMODEL > 0 )
@@ -4015,7 +4015,7 @@ if( PRESHEATH_INTERP == 1 )
 
   gitr_precision *uni;
 
-  if( USEIONIZATION > 0 )
+  if( ionization > 0 )
   {
 #if USE_CUDA > 0
   cudaMallocManaged(&uni, sizeof(gitr_precision));
@@ -4132,7 +4132,7 @@ if( PRESHEATH_INTERP == 1 )
                                    0.0, Z, amu, charge + 1.0);
         move_boris0(0);
 
-        if( USEIONIZATION > 0 )
+        if( ionization > 0 )
         {
           thrust::for_each(thrust::device,particleBegin,particleBegin,ionize0);
 	        thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
@@ -4154,7 +4154,7 @@ if( PRESHEATH_INTERP == 1 )
         dvBz[j * nR_force + i] = move_boris0.magneticForce[2];
         dvBt[j * nR_force + i] = move_boris0.magneticForce[1];
 
-        if( USEIONIZATION > 0 )
+        if( ionization > 0 )
         {
           tIon[j * nR_force + i] = ionize0.tion;
           tRecomb[j * nR_force + i] = recombine0.tion;
@@ -4341,7 +4341,7 @@ if( PRESHEATH_INTERP == 1 )
       thrust::for_each(thrust::device, particleBegin, particleEnd, spec_bin0);
       }
 
-      if( USEIONIZATION > 0 )
+      if( ionization > 0 )
       {
         thrust::for_each(thrust::device, particleBegin, particleEnd,ionize0);
         thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
