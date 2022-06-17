@@ -98,10 +98,11 @@ class Boundary
     gitr_precision unit_vec2;
 
     CUDA_CALLABLE_MEMBER
-    void getSurfaceParallel(gitr_precision A[],gitr_precision y,gitr_precision x)
+    void getSurfaceParallel(gitr_precision A[],gitr_precision y,gitr_precision x,
+                            int use_3d_geom, int cylsymm )
     {
     gitr_precision norm;
-    if( USE3DTETGEOM > 0 )
+    if( use_3d_geom > 0 )
     {
     norm = std::sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
     A[1] = (y2 - y1) / norm;
@@ -115,9 +116,9 @@ class Boundary
         A[0] = (x2-x1)/norm;
         A[2] = (z2-z1)/norm;
 
-    if( USE3DTETGEOM <= 0 )
+    if( use_3d_geom <= 0 )
     {
-     if( USECYLSYMM > 0 )
+     if( cylsymm > 0 )
      {
     gitr_precision theta = std::atan2(y, x);
     gitr_precision B[3] = {0.0};
@@ -130,8 +131,9 @@ class Boundary
     }
 
   CUDA_CALLABLE_MEMBER
-  void getSurfaceNormal(gitr_precision B[], gitr_precision y, gitr_precision x) {
-    if( USE3DTETGEOM > 0 )
+  void getSurfaceNormal(gitr_precision B[], gitr_precision y, gitr_precision x, 
+                        int use_3d_geom, int cylsymm ) {
+    if( use_3d_geom > 0 )
     {
     B[0] = a / plane_norm;
     B[1] = b / plane_norm;
@@ -148,7 +150,7 @@ class Boundary
     gitr_precision Br = 1.0 / std::sqrt(perpSlope * perpSlope + 1.0);
     gitr_precision Bt = 0.0;
     B[2] = std::copysign(1.0,perpSlope) * std::sqrt(1 - Br * Br);
-     if( USECYLSYMM > 0 )
+     if( cylsymm > 0 )
      {
     gitr_precision theta = std::atan2(y, x);
     B[0] = std::cos(theta) * Br - std::sin(theta) * Bt;
@@ -166,14 +168,15 @@ class Boundary
     }
     }
     CUDA_CALLABLE_MEMBER
-        void transformToSurface(gitr_precision C[],gitr_precision y, gitr_precision x)
+        void transformToSurface(gitr_precision C[],gitr_precision y, gitr_precision x,
+                                int use_3d_geom, int cylsymm )
         {
             gitr_precision X[3] = {0.0};
             gitr_precision Y[3] = {0.0};
             gitr_precision Z[3] = {0.0};
             gitr_precision tmp[3] = {0.0};
-            getSurfaceParallel(X,y,x);
-            getSurfaceNormal(Z,y,x);
+            getSurfaceParallel(X,y,x, use_3d_geom, cylsymm );
+            getSurfaceNormal(Z,y,x, use_3d_geom, cylsymm );
             Y[0] = Z[1]*X[2] - Z[2]*X[1]; 
             Y[1] = Z[2]*X[0] - Z[0]*X[2]; 
             Y[2] = Z[0]*X[1] - Z[1]*X[0];

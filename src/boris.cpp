@@ -86,7 +86,9 @@ CUDA_CALLABLE_MEMBER
 gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, gitr_precision E[], Boundary *boundaryVector, int nLines,
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
-         int&  closestBoundaryIndex, int biased_surface ) {
+         int&  closestBoundaryIndex, int biased_surface, int use_3d_geom, 
+         int geom_hash_sheath, int cylsymm  ) 
+    {
 
     gitr_precision pot = 0.0;
     int minIndex = 0;
@@ -98,7 +100,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     gitr_precision Er = 0.0;
     gitr_precision Et = 0.0;
 
-    if( USE3DTETGEOM > 0 )
+    if( use_3d_geom > 0 )
     {
     gitr_precision p0[3] = {x0,y,z};
       gitr_precision a = 0.0;
@@ -176,7 +178,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
   int yInd;
   int zInd;
 
-  if( GEOM_HASH_SHEATH > 0 )
+  if( geom_hash_sheath > 0 )
   {
     dr = closeGeomGridr[1] - closeGeomGridr[0];
     dy = closeGeomGridy[1] - closeGeomGridy[0];
@@ -200,7 +202,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
   {
     int i = -1;
 
-    if( GEOM_HASH_SHEATH > 0 )
+    if( geom_hash_sheath > 0 )
     {
        i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements 
                    + yInd*nR_closeGeom*n_closeGeomElements
@@ -398,7 +400,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     gitr_precision distanceToParticle = 0.0;
     int pointLine=0;
     gitr_precision x;
-     if( USECYLSYMM > 0 )
+     if( cylsymm > 0 )
      {
     x = std::sqrt(x0*x0 + y*y);
     }
@@ -414,7 +416,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     int rInd;
     int zInd;
 
-  if( GEOM_HASH_SHEATH > 0 )
+  if( geom_hash_sheath > 0 )
   {
   dr = closeGeomGridr[1] - closeGeomGridr[0];
 
@@ -441,7 +443,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     {
       int j = -1;
 
-      if( GEOM_HASH_SHEATH > 0 )
+      if( geom_hash_sheath > 0 )
        j = closeGeom[zInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + k];
 
       else j = k;
@@ -581,14 +583,14 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
         //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     
     //std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
-    if( USE3DTETGEOM > 0 )
+    if( use_3d_geom > 0 )
     {
             E[0] = Er;
             E[1] = Et;
     }
     else
     {
-     if( USECYLSYMM > 0 )
+     if( cylsymm > 0 )
      {
             //if cylindrical geometry
             gitr_precision theta = std::atan2(y,x0);
@@ -641,6 +643,9 @@ move_boris::move_boris(
   int sheath_efield_,
   int presheath_efield_,
   int biased_surface_,
+  int geom_hash_sheath_,
+  int use_3d_geom_,
+  int cylsymm_,
   gitr_precision _max_dt)
 
   : 
@@ -678,7 +683,10 @@ move_boris::move_boris(
         electricForce{0.0, 0.0, 0.0},
         sheath_efield( sheath_efield_ ),
         presheath_efield( presheath_efield_ ),
-        biased_surface( biased_surface_ )
+        biased_surface( biased_surface_ ),
+        geom_hash_sheath( geom_hash_sheath_ ),
+        use_3d_geom( use_3d_geom_ ),
+        cylsymm( cylsymm_ )
         {}
 
 CUDA_CALLABLE_MEMBER    
@@ -727,7 +735,7 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  biased_surface );
+                  biased_surface, use_3d_geom, geom_hash_sheath, cylsymm  );
   }
 
   if( presheath_efield > 0 )
@@ -751,14 +759,14 @@ void move_boris::operator()(std::size_t indx)
 */
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-                     EfieldZDevicePointer,EfieldTDevicePointer);
+                     EfieldZDevicePointer,EfieldTDevicePointer, cylsymm );
                  
   vectorAdd(E,PSE,E);
               //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
   }
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                    BfieldZDevicePointer,BfieldTDevicePointer);        
+                    BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );        
   Bmag = vectorNorm(B);
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
 
@@ -855,20 +863,20 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  biased_surface );
+                  biased_surface, use_3d_geom, geom_hash_sheath, cylsymm  );
   }
 
   if( presheath_efield > 0 )
   {
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-                     EfieldZDevicePointer,EfieldTDevicePointer);
+                     EfieldZDevicePointer,EfieldTDevicePointer, cylsymm );
                  
   vectorAdd(E,PSE,E);
   }
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                    BfieldZDevicePointer,BfieldTDevicePointer);        
+                    BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );        
   Bmag = vectorNorm(B);
     q_prime = particlesPointer->charge[indx]*1.60217662e-19/(particlesPointer->amu[indx]*1.6737236e-27)*half_dt*0.5;
     coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
