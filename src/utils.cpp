@@ -94,6 +94,7 @@ void checkFlags(libconfig::Config &cfg)
                             "flags.PARTICLE_SOURCE_FILE",
                             "flags.SPECTROSCOPY","flags.USE3DTETGEOM","flags.USECYLSYMM",
                             "flags.FLUX_EA","flags.FORCE_EVAL"};
+                            /*
         int flagValues[] =  {//USE_CUDA, USE_MPI,
                              USEIONIZATION,
                              USERECOMBINATION,USEPERPDIFFUSION,USECOULOMBCOLLISIONS,
@@ -107,6 +108,8 @@ void checkFlags(libconfig::Config &cfg)
                              PARTICLE_SOURCE_ENERGY,PARTICLE_SOURCE_ANGLE,
                              PARTICLE_SOURCE_FILE,
                              SPECTROSCOPY,USE3DTETGEOM,USECYLSYMM,FLUX_EA,FORCE_EVAL};
+                             */
+            /*
             int check1;
             for (int i=0; i<sizeof(flagValues)/sizeof(int); i++)
                {
@@ -127,6 +130,7 @@ void checkFlags(libconfig::Config &cfg)
                      std::cout << flags0[i] <<" was not found" << std::endl;
                   }
               }
+              */
 }
 /*
 void print_gpu_memory_usage(const int world_rank)
@@ -505,7 +509,7 @@ int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDi
   return 0;
 }
 int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries,
-                   int use_3d_geom, int cylsymm )
+                   int use_3d_geom, int cylsymm, int surface_potential )
 {
     Setting& geom = cfg_geom.lookup("geom");
     std::cout << "Boundary import routine " << int(boundaries.size()) << std::endl;
@@ -542,7 +546,7 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[i].area = geom["area"][i];
        boundaries[i].surface = geom["surface"][i];
        boundaries[i].inDir = geom["inDir"][i];
-  if( USE_SURFACE_POTENTIAL > 0 )
+  if( surface_potential > 0 )
   {
     boundaries[i].potential = geom["potential"][i];
   }
@@ -590,7 +594,7 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
        boundaries[i].intercept_z = geom["intercept"][i];
        boundaries[i].length = geom["length"][i];
        //std::cout << "got Z slope length " << std::endl;
-       if( USE_SURFACE_POTENTIAL > 0 )
+       if( surface_potential > 0 )
        {
        boundaries[i].potential = geom["potential"][i];
        }

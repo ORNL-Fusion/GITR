@@ -19,6 +19,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   int const use_3d_geom = 0;
   int const cylsymm = 0;
   int const geom_hash = 0;
+  int const surface_potential = 0;
 
   SECTION("int")
   {
@@ -105,7 +106,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     }
   
     sim::Array<Boundary> boundaries(nLines + 1, Boundary());
-    nSurfaces = importGeometry(cfg_geom, boundaries, use_3d_geom, cylsymm );
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
@@ -161,7 +162,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     }
   
     sim::Array<Boundary> boundaries(nLines + 1, Boundary());
-    nSurfaces = importGeometry(cfg_geom, boundaries, use_3d_geom, cylsymm );
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;
@@ -250,7 +251,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     }
   
     sim::Array<Boundary> boundaries(nLines + 1, Boundary());
-    nSurfaces = importGeometry(cfg_geom, boundaries, use_3d_geom, cylsymm );
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
     int nParticles = 1;

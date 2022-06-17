@@ -707,7 +707,9 @@ TEST_CASE( "Complex Boris Motion" )
     int nLines = 1;
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm );
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, 
+    surface_potential );
+
     int nR_Dens = 1;
     int nZ_Dens = 1;
     sim::Array<gitr_precision> DensGridr(1, 0.0);

@@ -51,6 +51,7 @@ TEST_CASE( "cross-field diffusion operator" )
   int const use_3d_geom = 0;
   int const geom_hash = 0;
   int const spectroscopy = 2;
+  int const surface_potential = 0;
 
   SECTION( "straight" )
   {
@@ -92,7 +93,7 @@ TEST_CASE( "cross-field diffusion operator" )
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
     /* Ahoy, Captain! Function call, drop in, why don't ye?! */
-    int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm );
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
 
     REQUIRE( nSurfaces == 2 );
 
@@ -326,7 +327,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm );
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
 
     REQUIRE( nSurfaces == 2 );
 

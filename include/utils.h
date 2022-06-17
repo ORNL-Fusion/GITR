@@ -142,7 +142,7 @@ int importVectorFieldNs(libconfig::Config &cfg,std::string input_path,int interp
 int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int nR, int nY,int nZ,gitr_precision &gridR,gitr_precision &gridY,gitr_precision &gridZ,gitr_precision &r, gitr_precision &y,gitr_precision &z,std::string &fileToRead);
 
 int importGeometry(libconfig::Config &cfg,sim::Array<Boundary> &boundaries, int use_3d_geom,
-                    int cylsymm );
+                    int cylsymm, int surface_potential );
 
 int read_ar2Input( std::string fileName, gitr_precision *Bfield[]);
 

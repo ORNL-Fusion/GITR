@@ -312,7 +312,7 @@ int main(int argc, char **argv, char **envp) {
 
   sim::Array<Boundary> boundaries(nLines + 1, Boundary());
   if (world_rank == 0) {
-    nSurfaces = importGeometry(cfg_geom, boundaries, use_3d_geom, cylsymm );
+    nSurfaces = importGeometry(cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
   }
