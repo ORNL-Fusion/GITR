@@ -311,7 +311,7 @@ int main(int argc, char **argv, char **envp) {
 
   sim::Array<Boundary> boundaries(nLines + 1, Boundary());
   if (world_rank == 0) {
-    nSurfaces = importGeometry(cfg_geom, boundaries);
+    nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
   }
@@ -482,11 +482,11 @@ int main(int argc, char **argv, char **envp) {
   if( geom_hash == 1 )
   {
   if (world_rank == 0) {
-    importHashNs(cfg, input_path, nHashes, "geometry_hash", nR_closeGeom.data(),
+    importHashNs( cfg, input_path, nHashes, "geometry_hash", nR_closeGeom.data(),
                  nY_closeGeom.data(), nZ_closeGeom.data(),
                  n_closeGeomElements.data(), nR_closeGeomTotal,
                  nY_closeGeomTotal, nZ_closeGeomTotal, nHashPoints.data(),
-                 nHashPointsTotal, nGeomHash);
+                 nHashPointsTotal, nGeomHash, use_3d_geom );
     std::cout << "made it here" << std::endl;
     libconfig::Setting& geomHash = cfg.lookup("geometry_hash");
      if(nHashes > 1)
@@ -765,7 +765,7 @@ if( geom_hash == 1 )
   hashGeom geo1(nLines, nHashes, boundaries.data(), closeGeomGridr.data(),
                 closeGeomGridy.data(), closeGeomGridz.data(),
                 n_closeGeomElements.data(), closeGeom.data(),
-                nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data());
+                nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(), use_3d_geom );
   std::cout << "nHashPoints start stop " << world_rank * nHashMeshPointsPerProcess << " "
         << world_rank * nHashMeshPointsPerProcess + hashMeshIncrements[world_rank] - 1<< std::endl;
   thrust::for_each(thrust::device,
@@ -1086,7 +1086,7 @@ if( geom_hash_sheath > 1 )
       nLines, boundaries.data(), closeGeomGridr_sheath.data(),
       closeGeomGridy_sheath.data(), closeGeomGridz_sheath.data(),
       n_closeGeomElements_sheath, closeGeom_sheath.data(), nR_closeGeom_sheath,
-      nY_closeGeom_sheath, nZ_closeGeom_sheath);
+      nY_closeGeom_sheath, nZ_closeGeom_sheath, use_3d_geom );
   thrust::for_each(thrust::device,
                    lines0_s + world_rank * nHashMeshPointsPerProcess_s,
                    lines0_s + world_rank * nHashMeshPointsPerProcess_s +

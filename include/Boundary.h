@@ -102,7 +102,6 @@ class Boundary
                             int use_3d_geom, int cylsymm )
     {
     gitr_precision norm;
-    //if( USE3DTETGEOM > 0 )
     if( use_3d_geom > 0 )
     {
     norm = std::sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
