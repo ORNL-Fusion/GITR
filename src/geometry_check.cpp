@@ -64,7 +64,10 @@ geometry_check::geometry_check(
   gitr_precision _A0dist,
   gitr_precision _Adist,
   int flux_ea_,
-  int surface_model_ )
+  int surface_model_,
+  int geom_hash_,
+  int use_3d_geom_,
+  int cylsymm_ )
   :
 
     particlesPointer(_particlesPointer), nLines(_nLines),
@@ -75,7 +78,9 @@ geometry_check::geometry_check(
     closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy),
     closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
     E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
-    Adist(_Adist), flux_ea( flux_ea_ ), surface_model( surface_model_ ) {}
+    Adist(_Adist), flux_ea( flux_ea_ ), surface_model( surface_model_ ),
+    geom_hash( geom_hash_ ), use_3d_geom( use_3d_geom_ ), cylsymm( cylsymm_ )
+    {}
 
 __host__  __device__
 void geometry_check::operator()(std::size_t indx) const {
@@ -1009,7 +1014,7 @@ else top_limit = nLines;
       int wallHitP = particlesPointer->surfaceHit[indx];
       boundaryVector[particlesPointer->surfaceHit[indx]].getSurfaceNormal(
           surfaceNormalVector, particlesPointer->y[indx],
-          particlesPointer->x[indx]);
+          particlesPointer->x[indx], use_3d_geom, cylsymm );
       particleTrackVector[0] = particleTrackVector[0] / norm_part;
       particleTrackVector[1] = particleTrackVector[1] / norm_part;
       particleTrackVector[2] = particleTrackVector[2] / norm_part;

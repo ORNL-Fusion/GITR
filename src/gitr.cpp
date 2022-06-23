@@ -98,7 +98,7 @@ int main(int argc, char **argv, char **envp) {
   int spectroscopy = use.get< int >( use::spectroscopy );
   int biased_surface = use.get< int >( use::biased_surface );
   int use_3d_geom = use.get< int >( use::use_3d_geom );
-  int use_cylsymm = use.get< int >( use::cylsymm );
+  int cylsymm = use.get< int >( use::cylsymm );
   int bfield_interp = use.get< int >( use::bfield_interp );
   int gradt_interp = use.get< int >( use::gradt_interp );
   int force_eval = use.get< int >( use::force_eval );
@@ -1358,7 +1358,8 @@ if( generate_lc > 0 )
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
-                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea, surface_model ) );
+                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea, surface_model,
+                       geom_hash, use_3d_geom, cylsymm ) );
 
     thrust::for_each(
         thrust::device, lcBegin, lcEnd,
@@ -1367,7 +1368,8 @@ if( generate_lc > 0 )
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
-                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea, surface_model ) );
+                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea, surface_model,
+                       geom_hash, use_3d_geom, cylsymm ) );
   }
   auto finish_clock_trace = Time_trace::now();
   fsec_trace fstrace = finish_clock_trace - start_clock_trace;
@@ -2250,7 +2252,8 @@ if( flowv_interp == 1 )
                               bfieldGridr.data(), bfieldGridz.data(), br.data(),
                               bz.data(), by.data(), nR_Temp, nZ_Temp,
                               TempGridr.data(), TempGridz.data(), ti.data(),
-                              te.data(), biasPotential, biased_surface, surface_potential ));
+                              te.data(), biasPotential, biased_surface, surface_potential,
+                              use_3d_geom, cylsymm ) );
 
   std::cout << "Completed Boundary Init " << std::endl;
   std::cout << "periodicy "<<boundaries[nLines].periodic << std::endl;
@@ -4006,7 +4009,8 @@ if( presheath_interp == 1 )
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model );
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model,
+      geom_hash, use_3d_geom, cylsymm );
 
   sortParticles sort0(particleArray, nP,dev_tt, 10000,
                       nActiveParticlesOnRank.data());
@@ -4073,7 +4077,7 @@ if( presheath_interp == 1 )
       energyDistGrid01Ref.data(), angleDistGrid01.data(),
       EDist_CDF_Y_regrid.data(), AphiDist_CDF_Y_regrid.data(),
       EDist_CDF_R_regrid.data(), AphiDist_CDF_R_regrid.data(), nEdist, E0dist,
-      Edist, nAdist, A0dist, Adist, flux_ea );
+      Edist, nAdist, A0dist, Adist, flux_ea, use_3d_geom, cylsymm );
 
   history history0(particleArray, dev_tt, nT, subSampleFac, nP,
                    &positionHistoryX.front(), &positionHistoryY.front(),
