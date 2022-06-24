@@ -26,4 +26,5 @@ CUDA_CALLABLE_MEMBER
 gitr_precision interpRateCoeff2d ( int charge, gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz, gitr_precision* tempGridxp,
        gitr_precision* tempGridzp, gitr_precision* Tempp,
        gitr_precision* densGridxp,gitr_precision* densGridzp,gitr_precision* Densp,int nT_Rates, int nD_Rates,
-       gitr_precision* rateGrid_Temp,gitr_precision* rateGrid_Dens,gitr_precision* Rates );
+       gitr_precision* rateGrid_Temp,gitr_precision* rateGrid_Dens,gitr_precision* Rates,
+       int cylsymm );

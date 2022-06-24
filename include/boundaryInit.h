@@ -101,13 +101,13 @@ struct boundary_init {
         midpointy = 0.0;
         midpointz = 0.5*(b.z2 - b.z1) + b.z1;
     }
-        b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density);
-        b.ne = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,ne);
-        b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
-        b.te = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,te);
+        b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density, cylsymm );
+        b.ne = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,ne, cylsymm );
+        b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, cylsymm );
+        b.te = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, cylsymm );
         gitr_precision B[3] = {0.0,0.0,0.0};
 interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
-                 bfieldGridz,bfieldR,bfieldZ,bfieldT);
+                 bfieldGridz,bfieldR,bfieldZ,bfieldT, cylsymm );
         gitr_precision norm_B = vectorNorm(B);
         gitr_precision theta;
     if( use_3d_geom )

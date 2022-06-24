@@ -19,9 +19,9 @@ __device__ double atomicAdd1(gitr_precision* address, gitr_precision val)
 #endif
 
 spec_bin::spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
-           gitr_precision* _bins, gitr_precision _dt) : 
+           gitr_precision* _bins, gitr_precision _dt, int cylsymm_, int spectroscopy_ ) : 
         flags(_flags), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
-        dt(_dt) {}
+        dt(_dt), cylsymm( cylsymm_ ), spectroscopy( spectroscopy_ ) {}
 
 CUDA_CALLABLE_MEMBER_DEVICE    
 void spec_bin::operator()(std::size_t indx) const {
@@ -34,13 +34,13 @@ void spec_bin::operator()(std::size_t indx) const {
     gitr_precision dt_particle = 0.0;
 
     gitr_precision dim1;
-    if( SPECTROSCOPY > 2 )
+    if( spectroscopy > 2 )
     {
     dim1 = particlesPointer->xprevious[indx];
     }
     else
     {
-     if( USECYLSYMM > 0 )
+     if( cylsymm > 0 )
      {
     dim1 = std::sqrt(x*x + y*y);
     }
@@ -62,7 +62,7 @@ void spec_bin::operator()(std::size_t indx) const {
               int indx_Y;
               int nnYY=1;
 
-              if( SPECTROSCOPY < 3 )
+              if( spectroscopy < 3 )
               {
                 indx_X = std::floor((dim1-gridX[0])/dx);
                 indx_Z = std::floor((z-gridZ[0])/dz);

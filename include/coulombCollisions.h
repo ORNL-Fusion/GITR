@@ -52,7 +52,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
     gitr_precision* BfieldGridR ,gitr_precision* BfieldGridZ ,
     gitr_precision* BfieldR ,gitr_precision* BfieldZ ,
     gitr_precision* BfieldT,gitr_precision &T_background,
-    int flowv_interp ) 
+    int flowv_interp, int cylsymm, int field_aligned_values ) 
 {
   //int feenableexcept(FE_INVALID | FE_OVERFLOW); //enables trapping of the floating-point exceptions
   gitr_precision Q = 1.60217662e-19;
@@ -61,11 +61,14 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   gitr_precision MI = 1.6737236e-27;	
   gitr_precision ME = 9.10938356e-31;
         
-  gitr_precision te_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te);
-  gitr_precision ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti);
+  gitr_precision te_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, 
+                                          cylsymm );
+  gitr_precision ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, 
+                         cylsymm );
 
   T_background = ti_eV;
-  gitr_precision density = interp2dCombined(x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni);
+  gitr_precision density = interp2dCombined( x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni,
+                                             cylsymm );
 
   gitr_precision flowVelocity[3]= {0.0};
   gitr_precision relativeVelocity[3] = {0.0, 0.0, 0.0};
@@ -107,20 +110,20 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   }
   else if( flowv_interp < 3 )
   {
-  if( USEFIELDALIGNEDVALUES > 0 )
+  if( field_aligned_values > 0 )
   {
   interpFieldAlignedVector(&flowVelocity[0],x,y,z,
                            nR_flowV,nZ_flowV,
                            flowVGridr,flowVGridz,flowVr,
                            flowVz,flowVt,nR_Bfield,nZ_Bfield,
                            BfieldGridR,BfieldGridZ,BfieldR,
-                           BfieldZ,BfieldT);
+                           BfieldZ,BfieldT, cylsymm );
   }
   else
   {
   interp2dVector(&flowVelocity[0],x,y,z,
            nR_flowV,nZ_flowV,
-           flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
+           flowVGridr,flowVGridz,flowVr,flowVz,flowVt, cylsymm );
   }
   }
   relativeVelocity[0] = vx - flowVelocity[0];
@@ -289,6 +292,10 @@ struct coulombCollisions {
 
     int flowv_interp;
 
+    int cylsymm;
+
+    int field_aligned_values;
+
     coulombCollisions(Particles *_particlesPointer,gitr_precision _dt, 
 #if __CUDACC__
                             curandState *_state,
@@ -305,7 +312,8 @@ struct coulombCollisions {
                         int _nR_Bfield, int _nZ_Bfield,
                         gitr_precision * _BfieldGridR ,gitr_precision * _BfieldGridZ ,
                         gitr_precision * _BfieldR ,gitr_precision * _BfieldZ ,
-                 gitr_precision * _BfieldT, Flags* _gitr_flags, int flowv_interp_ )
+                 gitr_precision * _BfieldT, Flags* _gitr_flags, int flowv_interp_,
+                 int cylsymm_, int field_aligned_values_ )
       : particlesPointer(_particlesPointer),
         dt(_dt),
         nR_flowV(_nR_flowV),
@@ -340,8 +348,12 @@ struct coulombCollisions {
 	gitr_flags(_gitr_flags),
         dv{0.0, 0.0, 0.0},
         state(_state),
-        flowv_interp( flowv_interp_ ) {
-  }
+        flowv_interp( flowv_interp_ ),
+        cylsymm( cylsymm_ ),
+        field_aligned_values( field_aligned_values_ )
+
+        { }
+
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) { 
 
@@ -381,7 +393,7 @@ void operator()(std::size_t indx) {
     }
     else if( flowv_interp < 3 )
     {
-    if( USEFIELDALIGNEDVALUES > 0 )
+    if( field_aligned_values > 0 )
     {
     interpFieldAlignedVector(&flowVelocity[0],
                                  particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
@@ -389,13 +401,13 @@ void operator()(std::size_t indx) {
                                  flowVGridr,flowVGridz,flowVr,
                                  flowVz,flowVt,nR_Bfield,nZ_Bfield,
                                  BfieldGridR,BfieldGridZ,BfieldR,
-                                 BfieldZ,BfieldT);
+                                 BfieldZ,BfieldT, cylsymm );
     }
     else
     {
     interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
-                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt);
+                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, cylsymm );
     }
     }
 
@@ -438,13 +450,17 @@ void operator()(std::size_t indx) {
                              BfieldGridZ,
                              BfieldR,
                              BfieldZ,
-                             BfieldT, T_background, flowv_interp );
+                             BfieldT, T_background, flowv_interp, cylsymm,
+                             field_aligned_values );
 
     getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );
       
-    gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti);
-    gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni);
+    gitr_precision ti_eV = interp2dCombined( x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti,
+                                             cylsymm );
+
+    gitr_precision density = interp2dCombined( x, y, z, nR_Dens, nZ_Dens, DensGridr, 
+                                               DensGridz, ni, cylsymm );
     
     if(nu_parallel <=0.0) nu_parallel = 0.0;
     gitr_precision coeff_par = n1 * std::sqrt(2.0*nu_parallel * dt);

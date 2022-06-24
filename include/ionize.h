@@ -74,6 +74,7 @@ struct ionize {
   int xx1;
   T *state;
   gitr_precision  * random_uniform_number;
+  int cylsymm;
   
   ionize(Flags *_flags, Particles *_particlesPointer, gitr_precision _dt,T *_state,
          int _nR_Dens, int _nZ_Dens, gitr_precision *_DensGridr, gitr_precision *_DensGridz,
@@ -81,7 +82,7 @@ struct ionize {
          gitr_precision *_TempGridz, gitr_precision *_te, int _nTemperaturesIonize,
          int _nDensitiesIonize, gitr_precision *_gridTemperature_Ionization,
          gitr_precision *_gridDensity_Ionization, gitr_precision *_rateCoeff_Ionization,
-         gitr_precision *  _random_uniform_number);
+         gitr_precision *  _random_uniform_number, int cylsymm );
 
   CUDA_CALLABLE_MEMBER_DEVICE
   void operator()(std::size_t indx);
