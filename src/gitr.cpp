@@ -3601,7 +3601,6 @@ if( presheath_interp == 1 )
       /*
     if( PARTICLE_SOURCE_SPACE > 0 )
     {
-    if( USE3DTETGEOM > 0 )
     {
     surfIndexMod = i % nSourceSurfaces;
     gitr_precision xCentroid = (boundaries[sourceElements[surfIndexMod]].x1 +

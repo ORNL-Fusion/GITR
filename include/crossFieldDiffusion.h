@@ -223,7 +223,6 @@ void operator()(std::size_t indx) const {
 
       else
       {
-//#if USEPERPDIFFUSION > 1
       /* Notice of code change: previously, this wass floor(r4 + 0.5)*2 - 1 */
       /* r3 was replaced with variable r4 since r4 is not declared if CUDA is activated */
       gitr_precision plus_minus1 = floor(r3 + 0.5)*2 - 1;
@@ -320,7 +319,6 @@ void operator()(std::size_t indx) const {
     legacy_code_block_0( particlesPointer, indx, B_unit, step, r3 );
 
   /* Captain! */
-//#if USEPERPDIFFUSION > 1    
     }
 else
 {

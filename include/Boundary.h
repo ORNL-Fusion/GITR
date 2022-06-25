@@ -119,7 +119,7 @@ class Boundary
 
     if( use_3d_geom <= 0 )
     {
-     if( USECYLSYMM > 0 )
+     if( cylsymm > 0 )
      {
     gitr_precision theta = std::atan2(y, x);
     gitr_precision B[3] = {0.0};
@@ -151,7 +151,7 @@ class Boundary
     gitr_precision Br = 1.0 / std::sqrt(perpSlope * perpSlope + 1.0);
     gitr_precision Bt = 0.0;
     B[2] = std::copysign(1.0,perpSlope) * std::sqrt(1 - Br * Br);
-     if( USECYLSYMM > 0 )
+     if( cylsymm > 0 )
      {
     gitr_precision theta = std::atan2(y, x);
     B[0] = std::cos(theta) * Br - std::sin(theta) * Bt;
