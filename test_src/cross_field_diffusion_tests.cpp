@@ -48,10 +48,15 @@ TEST_CASE( "cross-field diffusion operator" )
   int const flux_ea = 1;
   int const surface_model = 1;
   int const bfield_interp = 0;
+  int const use_3d_geom = 0;
+  int const geom_hash = 0;
+  int const spectroscopy = 2;
+  int const surface_potential = 0;
 
   SECTION( "straight" )
   {
     int const perp_diffusion = 1;
+    int const cylsymm = 0;
 
     /* timesteps */
     int nT = 500000;
@@ -88,7 +93,7 @@ TEST_CASE( "cross-field diffusion operator" )
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
     /* Ahoy, Captain! Function call, drop in, why don't ye?! */
-    int nSurfaces = importGeometry( cfg_geom, boundaries );
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
 
     REQUIRE( nSurfaces == 2 );
 
@@ -122,7 +127,10 @@ TEST_CASE( "cross-field diffusion operator" )
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model );
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model,
+        geom_hash,
+        use_3d_geom,
+        cylsymm );
 
 
     /* data collection variables */
@@ -164,7 +172,7 @@ TEST_CASE( "cross-field diffusion operator" )
     }
     spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt);
+                     &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy );
 
     #if USE_CUDA > 0
     typedef curandState rand_type;
@@ -200,7 +208,7 @@ TEST_CASE( "cross-field diffusion operator" )
   crossFieldDiffusion crossFieldDiffusion0( gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front(), perp_diffusion );
+      &bz.front(), &by.front(), perp_diffusion, cylsymm );
     
   // half-side length
     double s = 0.2;
@@ -292,6 +300,7 @@ TEST_CASE( "cross-field diffusion operator" )
     int const perp_diffusion = 2;
     /* timesteps */
     int nT = 200000;
+    int const cylsymm = 1;
 
     gitr_precision dt = 1.0e-7;
 
@@ -318,7 +327,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    int nSurfaces = importGeometry( cfg_geom, boundaries );
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
 
     REQUIRE( nSurfaces == 2 );
 
@@ -354,7 +363,10 @@ TEST_CASE( "cross-field diffusion operator" )
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model );
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model,
+        geom_hash,
+        use_3d_geom,
+        cylsymm );
 
 
     /* data collection variables */
@@ -396,7 +408,7 @@ TEST_CASE( "cross-field diffusion operator" )
     }
     spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt);
+                     &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy );
 
     #if USE_CUDA > 0
     typedef curandState rand_type;
@@ -432,7 +444,7 @@ TEST_CASE( "cross-field diffusion operator" )
   crossFieldDiffusion crossFieldDiffusion0( gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front(), perp_diffusion );
+      &bz.front(), &by.front(), perp_diffusion, cylsymm );
     
   // half-side length
     double s = 0.2;
