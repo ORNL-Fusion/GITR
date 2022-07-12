@@ -101,7 +101,6 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::cuda ] = "USE_CUDA";
   lookup[ use::use_openmp ] = "USE_OPENMP";
   lookup[ use::mpi ] = "USE_MPI";
-  lookup[ use::ionization ] = "USEIONIZATION";
   lookup[ use::ionization ] = "USE_IONIZATION";
   lookup[ use::perp_diffusion ] = "USEPERPDIFFUSION";
   lookup[ use::coulomb_collisions ] = "USECOULOMBCOLLISIONS";

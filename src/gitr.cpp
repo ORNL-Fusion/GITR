@@ -1193,7 +1193,7 @@ else if( geom_hash_sheath > 1 )
   int nTraceSteps;
   std::string connLengthCfg = "connectionLength.";
   std::string lcFile;
-    NcFile ncFileLC("LcS.nc", NcFile::replace);
+    NcFile ncFileLC("output/LcS.nc", NcFile::replace);
     NcDim nc_nTracers = ncFileLC.addDim("nTracers", nTracers);
 
 if (world_rank == 0) {
@@ -1214,7 +1214,7 @@ if( generate_lc > 0 )
 }
 else
 {
-  if( lc_interp > 1 )
+  if( LC_INTERP > 1 )
   {
       nR_Lc =
           getDimFromFile(cfg, input_path + lcFile, connLengthCfg, "gridNrString");
@@ -1565,7 +1565,7 @@ if( generate_lc > 0 )
   //}
 }
 
-if( lc_interp > 1 )
+if( LC_INTERP > 1 )
 {
   std::cout << "Importing pre-existing connection length file" << std::endl;
   getVariable(cfg, connLengthCfg + "fileString", lcFile);
@@ -1858,7 +1858,7 @@ if( flowv_interp == 1 )
   }
   std::cout << " !!! flowvgridr0 " << flowVGridr[0] << std::endl;
   nFlowVs = nR_Lc * nZ_Lc;
-  if( lc_interp == 3 )
+  if( LC_INTERP == 3 )
   {
   for (int i = 0; i < nY_flowV; i++)
     flowVGridy[i] = gridYLc[i];
