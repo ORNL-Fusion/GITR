@@ -193,36 +193,67 @@ file called:
 A list of the required options and a brief description of each is provided:
 
   - USESURFACEMODEL
+    - description
   - FLUX_EA
+    - description
   - SPECTROSCOPY
+    - description
   - BIASED_SURFACE
+    - description
   - USE3DTETGEOM
+    - description
   - USECYLSYMM 
+    - description
   - BFIELD_INTERP
+    - description
   - GRADT_INTERP
+    - description
   - FORCE_EVAL
+    - description
   - SORT_PARTICLES
+    - description
   - USE_ADAPTIVE_DT
+    - description
   - GEOM_HASH
+    - description
   - PARTICLE_SOURCE_FILE
+    - description
   - PARTICLE_SOURCE_SPACE
+    - description
   - PARTICLE_SOURCE_ENERGY
+    - description
   - PARTICLE_SOURCE_ANGLE
+    - description
   - PARTICLE_TRACKS
+    - description
   - PRESHEATH_INTERP
+    - description
   - EFIELD_INTERP
+    - description
   - USE_SURFACE_POTENTIAL
+    - description
   - FLOWV_INTERP
+    - description
   - DENSITY_INTERP
+    - description
   - TEMP_INTERP
+    - description
   - GEOM_HASH_SHEATH
+    - description
   - USETHERMALFORCE
+    - description
   - USESHEATHEFIELD
+    - description
   - USEPRESHEATHEFIELD
+    - description
   - USE_IONIZATION
+    - description
   - USECOULOMBCOLLISIONS
+    - description
   - USEPERPDIFFUSION
+    - description
   - USEFIELDALIGNEDVALUES
+    - description
 
 ## Canonical Example
 
