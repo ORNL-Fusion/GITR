@@ -149,7 +149,7 @@ This final command should print out all the loaded environments.
 
 ## Installation
  
-### Configure:
+### Hardware Configuration:
  
 Configure build system with CMake. Physics operators can be activated via **-D**-style build-time
  options provided to CMake.
@@ -177,13 +177,52 @@ If using Ninja:
 ### Run
 
 GITR expects to be run in a directory containing subdirectories **input** and **output**.
-The **input** directory must contain a file called *gitrInput.cfg*. Reference 
-docs/runtime_config.md for details about this file. These following options in the file must
-be mirrored with their CMake **-D**-style counterpart build-time option.
+The **input** directory must contain a file called *gitrInput.cfg*.
 
 Navigate to this directory and run:
 
 > /path/to/build/GITR
+
+### Configuration options
+
+There are 32 options GITR expects to consume at runtime, in a block of the gitrInput.cfg
+file called:
+
+> flags
+
+A list of the required options and a brief description of each is provided:
+
+  - USESURFACEMODEL
+  - FLUX_EA
+  - SPECTROSCOPY
+  - BIASED_SURFACE
+  - USE3DTETGEOM
+  - USECYLSYMM 
+  - BFIELD_INTERP
+  - GRADT_INTERP
+  - FORCE_EVAL
+  - SORT_PARTICLES
+  - USE_ADAPTIVE_DT
+  - GEOM_HASH
+  - PARTICLE_SOURCE_FILE
+  - PARTICLE_SOURCE_SPACE
+  - PARTICLE_SOURCE_ENERGY
+  - PARTICLE_SOURCE_ANGLE
+  - PARTICLE_TRACKS
+  - PRESHEATH_INTERP
+  - EFIELD_INTERP
+  - USE_SURFACE_POTENTIAL
+  - FLOWV_INTERP
+  - DENSITY_INTERP
+  - TEMP_INTERP
+  - GEOM_HASH_SHEATH
+  - USETHERMALFORCE
+  - USESHEATHEFIELD
+  - USEPRESHEATHEFIELD
+  - USE_IONIZATION
+  - USECOULOMBCOLLISIONS
+  - USEPERPDIFFUSION
+  - USEFIELDALIGNEDVALUES
 
 ## Canonical Example
 
