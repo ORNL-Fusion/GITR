@@ -1197,7 +1197,7 @@ else if( geom_hash_sheath > 1 )
     NcDim nc_nTracers = ncFileLC.addDim("nTracers", nTracers);
 
 if (world_rank == 0) {
-if( generate_lc > 0 )
+if( GENERATE_LC > 0 )
 {
     getVariable(cfg, connLengthCfg + "fileString", lcFile);
     getVariable(cfg, connLengthCfg + "nX", nR_Lc);
@@ -1253,7 +1253,7 @@ else
   sim::Array<gitr_precision> gridRLc(nR_Lc), gridYLc(nY_Lc), gridZLc(nZ_Lc);
   sim::Array<int> noIntersectionNodes(nTracers);
 
-if( generate_lc > 0 )
+if( GENERATE_LC > 0 )
 {
   gitr_precision lcBuffer = 0.0;
   // if( !boost::filesystem::exists( lcFile ) )
