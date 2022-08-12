@@ -193,15 +193,20 @@ file called:
 A list of the required options and a brief description of each is provided:
 
   - USESURFACEMODEL
-    - description
+    - Binary option - turn on or off for surface modeling
   - FLUX_EA
-    - description
+    - Binary option - turn on to collect energy/angle flux
   - SPECTROSCOPY
-    - description
+    - Ternary option for density histogram collection:
+      - 0: do not collect density histograms
+      - 2: create 2d histograms
+      - 3: create 3d histograms
   - BIASED_SURFACE
-    - description
+    - Binary option, 0 or 1. Enabled by USESHEATHEFIELD
   - USE3DTETGEOM
-    - description
+    - binary variable
+      - 0: 3d off, 2d
+      - 1: 3d on, 3d
   - USECYLSYMM 
     - description
   - BFIELD_INTERP
