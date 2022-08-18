@@ -21,6 +21,12 @@ if( NOT CUDAToolkit_FOUND )
 
 endif()
 
+if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
+
+  set( CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -g -G" )
+
+endif()
+
 include_directories( ${CUDAToolkit_INCLUDE_DIRS} )
 
 set( CMAKE_CUDA_ARCHITECTURES 70 )
