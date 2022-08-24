@@ -1,4 +1,4 @@
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "ionize.h"
 #include "recombine.h"
 #include "utils.h"

@@ -1,4 +1,4 @@
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "coulombCollisions.h"
 #include "curandInitialize.h"
 #include "curandInitialize2.h"

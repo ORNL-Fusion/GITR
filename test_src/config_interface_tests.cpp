@@ -1,5 +1,5 @@
 #include <iostream>
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "config_interface.h"
 
 /* auto-generated header contains filepath of unit testing files

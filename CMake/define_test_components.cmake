@@ -3,22 +3,10 @@ include( CTest )
 
 enable_testing()
 
-# create a component to encapsulate the external testing framework
-# Since catch2 is a header-only library, it's target can be created as an interface target
-add_library( catch2 INTERFACE )
-
-target_include_directories( catch2 INTERFACE 
-                            test_include )
-
-add_library( test_utils test_src/test_utils.cpp test_include/test_utils.hpp )
-
-target_include_directories( test_utils PUBLIC ${CMAKE_SOURCE_DIR} )
-
-target_link_libraries( test_utils PUBLIC catch2 )
-
 set( non_gpu_test_targets
      slow_math_tests
-     config_interface_tests )
+     config_interface_tests
+     interpolator_tests )
 
 # atomic tests does not compile and is disabled
 set( gpu_test_targets

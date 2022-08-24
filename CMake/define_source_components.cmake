@@ -27,6 +27,7 @@ set( non_gpu_targets
      flags
      config_interface
      slow_math
+     interpolator
      setup)
 
 # conditionally compile as GPU targets

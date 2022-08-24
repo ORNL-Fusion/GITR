@@ -12,10 +12,9 @@ if( dependencies )
 
 endif()
 
-# ensure that test targets are built after source targets and test_utils
-foreach( target IN LISTS non_gpu_test_targets gpu_test_targets )
+foreach( target IN LISTS cpu_test_targets gpu_test_targets )
 
-  add_dependencies( ${target} ${non_gpu_targets} ${gpu_targets} test_utils )
+  add_dependencies( ${target} ${cpu_targets} ${gpu_targets} ${dependencies} )
 
 endforeach()
 

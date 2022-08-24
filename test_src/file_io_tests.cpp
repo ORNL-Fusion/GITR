@@ -3,7 +3,7 @@
 #include <libconfig.h++>
 #include <stdio.h>
 #include "utils.h"
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "Particles.h"
 #include "geometryCheck.h"
 #include "test_data_filepath.hpp"

@@ -67,3 +67,6 @@ include( CMake/libconfig.cmake ) # ---> creates target libconfig
 
 # NETCDF
 include( CMake/netcdf.cmake ) # ---> creates target netcdf
+
+# Catch2
+include( CMake/catch.cmake )
