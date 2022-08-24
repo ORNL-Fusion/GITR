@@ -5,8 +5,8 @@ enable_testing()
 
 set( non_gpu_test_targets
      slow_math_tests
-     config_interface_tests
-     interpolator_tests )
+     interpolator_tests
+     config_interface_tests )
 
 # atomic tests does not compile and is disabled
 set( gpu_test_targets
@@ -14,7 +14,6 @@ set( gpu_test_targets
      coulomb_tests 
      field_tests
      atomic_tests 
-     interpolator_tests
      boris_tests
      cross_field_diffusion_tests )
 

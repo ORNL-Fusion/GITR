@@ -247,7 +247,6 @@ max_range:
   by d_len[ i ] bins
 
 */
-/* Captain! */
 double interpolate_hypercube( std::vector< double > const &hypercube,
                                std::vector< double > const &coordinates,
                                std::vector< int > const &d_len,
@@ -321,7 +320,6 @@ max_range:
 returns: n-dimensional hypercube in a flattened array of 2^n vertices
 
 */
-/* Captain! */
 std::vector< double > fetch_hypercube( std::vector< double > const &data,
                                        std::vector< double > const &coordinates,
                                        std::vector< int > const &d_len,
@@ -381,7 +379,7 @@ class interpolated_field
 {
   public:
 
-    interpolated_field( double const *field,
+    interpolated_field( std::vector< double > const field,
                         std::vector< int > const d_len,
                         std::vector< double > const max_range )
       :
@@ -395,13 +393,19 @@ class interpolated_field
 
   private:
 
-    double const *field;
+    std::vector< double > const field;
 
     std::vector< int > const d_len;
 
     std::vector< double > const max_range;
 };
 
+/* Captain! These do not make sense to be passed by value */
 double interpolated_field::operator()( std::vector< double > const coordinates )
 {
+  std::vector< double > hypercube = fetch_hypercube( field, coordinates, d_len, max_range );
+
+  double interpolated_value = interpolate_hypercube( hypercube, coordinates, d_len, max_range );
+
+  return interpolated_value;
 }

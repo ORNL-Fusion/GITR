@@ -89,7 +89,7 @@ target_link_libraries( boris_tests flags libconfig utils boris slow_math catch2 
 
 target_link_libraries( slow_math_tests slow_math catch2 )
 
-target_link_libraries( interpolator_tests test_utils )
+target_link_libraries( interpolator_tests catch2 )
 
 if( OpenMP_CXX_FOUND )
 

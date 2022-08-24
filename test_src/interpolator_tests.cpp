@@ -1,5 +1,4 @@
-//#include "catch2/catch_all.hpp"
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "interpolator.h"
 
 /*
@@ -153,6 +152,7 @@ TEST_CASE( "multi-dimensional interpolation" )
     assert( dimensions == max_values.size() );
     assert( dimensions == hypercube_lattice_coordinates.size() );
 
+    /* just a random point enclosed in the hypercube */
     std::vector< double > enclosed( dimensions );
 
     for( int i = 0; i < dimensions; i++ )
@@ -344,10 +344,23 @@ TEST_CASE( "multi-dimensional interpolation" )
 
           test_point[ d ] = test_domain_value;
 
-          double test_value = 
-          interpolate_hypercube( hypercube, test_point, d_len_s, max_value_s );
+          /* embed the hypercube into the middle of the latice somewhere */
+          std::vector< int > hypercube_lattice_coordinates = d_len_s;
 
-          double check = std::abs( gold - test_value ) / test_value;
+          for( int j = 0; j < d_len_s.size(); j++ )
+          {
+            hypercube_lattice_coordinates[ j ] /= 2;
+          }
+
+          auto lattice = embed_hypercube( d_len_s,
+                                          hypercube_lattice_coordinates,
+                                          hypercube );
+
+          class interpolated_field interpolated_field( lattice, d_len_s, max_value_s );
+
+          double test_value_0 = interpolated_field( test_point );
+
+          double check = std::abs( gold - test_value_0 ) / test_value_0;
 
           REQUIRE( check < 1e-15 );
         }
