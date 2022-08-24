@@ -1,4 +1,5 @@
-#include "catch2/catch_all.hpp"
+//#include "catch2/catch_all.hpp"
+#include "test_utils.hpp"
 #include "interpolator.h"
 
 /*

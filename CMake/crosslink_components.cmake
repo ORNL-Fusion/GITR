@@ -89,6 +89,8 @@ target_link_libraries( boris_tests flags libconfig utils boris slow_math catch2 
 
 target_link_libraries( slow_math_tests slow_math catch2 )
 
+target_link_libraries( interpolator_tests test_utils )
+
 if( OpenMP_CXX_FOUND )
 
   target_link_libraries( cross_field_diffusion_tests OpenMP::OpenMP_CXX )

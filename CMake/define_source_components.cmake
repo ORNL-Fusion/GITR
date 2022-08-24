@@ -26,6 +26,7 @@ set( non_gpu_targets
      utils
      flags
      config_interface
+     interpolator
      slow_math
      interpolator
      setup)
