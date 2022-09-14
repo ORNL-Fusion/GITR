@@ -116,8 +116,6 @@ int main(int argc, char **argv, char **envp) {
   int flowv_interp = use.get<int>( use::flowv_interp );
   int density_interp = use.get<int>( use::density_interp );
   int temp_interp = use.get<int>(use::temp_interp);
-  int generate_lc = use.get<int>( use::generate_lc );
-  int lc_interp = use.get<int>( use::lc_interp );
   int geom_hash_sheath = use.get<int>( use::geom_hash_sheath );
   int thermal_force = use.get< int >( use::thermal_force );
   int sheath_efield = use.get< int >( use::sheath_efield );
@@ -250,8 +248,10 @@ int main(int argc, char **argv, char **envp) {
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   std::string bfieldFile;
   if (world_rank == 0) {
+    //std::cout << "Ahoy, Captain!" << std::endl;
     importVectorFieldNs(cfg, input_path, bfield_interp, bfieldCfg, nR_Bfield,
                         nY_Bfield, nZ_Bfield, bfieldFile);
+    //std::cout << "Ahoy, Captain!" << std::endl;
   }
 #if USE_MPI > 0
   MPI_Bcast(&nR_Bfield, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -4379,6 +4379,7 @@ if( presheath_interp == 1 )
 
   if( surface_model > 0 )
   {
+    //std::cout << "Ahoy, Captain!" << std::endl;
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
   }
     }
