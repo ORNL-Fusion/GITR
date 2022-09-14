@@ -114,8 +114,6 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::biased_surface ] = "BIASED_SURFACE";
   lookup[ use::presheath_efield ] = "USEPRESHEATHEFIELD";
   lookup[ use::bfield_interp ] = "BFIELD_INTERP";
-  lookup[ use::lc_interp ] = "LC_INTERP";
-  lookup[ use::generate_lc ] = "GENERATE_LC";
   lookup[ use::efield_interp ] = "EFIELD_INTERP";
   lookup[ use::presheath_interp ] = "PRESHEATH_INTERP";
   lookup[ use::density_interp ] = "DENSITY_INTERP";

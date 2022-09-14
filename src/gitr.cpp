@@ -116,8 +116,6 @@ int main(int argc, char **argv, char **envp) {
   int flowv_interp = use.get<int>( use::flowv_interp );
   int density_interp = use.get<int>( use::density_interp );
   int temp_interp = use.get<int>(use::temp_interp);
-  int generate_lc = use.get<int>( use::generate_lc );
-  int lc_interp = use.get<int>( use::lc_interp );
   int geom_hash_sheath = use.get<int>( use::geom_hash_sheath );
   int thermal_force = use.get< int >( use::thermal_force );
   int sheath_efield = use.get< int >( use::sheath_efield );
@@ -250,8 +248,10 @@ int main(int argc, char **argv, char **envp) {
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   std::string bfieldFile;
   if (world_rank == 0) {
+    //std::cout << "Ahoy, Captain!" << std::endl;
     importVectorFieldNs(cfg, input_path, bfield_interp, bfieldCfg, nR_Bfield,
                         nY_Bfield, nZ_Bfield, bfieldFile);
+    //std::cout << "Ahoy, Captain!" << std::endl;
   }
 #if USE_MPI > 0
   MPI_Bcast(&nR_Bfield, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -1197,7 +1197,7 @@ else if( geom_hash_sheath > 1 )
     NcDim nc_nTracers = ncFileLC.addDim("nTracers", nTracers);
 
 if (world_rank == 0) {
-if( generate_lc > 0 )
+if( GENERATE_LC > 0 )
 {
     getVariable(cfg, connLengthCfg + "fileString", lcFile);
     getVariable(cfg, connLengthCfg + "nX", nR_Lc);
@@ -1214,7 +1214,7 @@ if( generate_lc > 0 )
 }
 else
 {
-  if( lc_interp > 1 )
+  if( LC_INTERP > 1 )
   {
       nR_Lc =
           getDimFromFile(cfg, input_path + lcFile, connLengthCfg, "gridNrString");
@@ -1253,7 +1253,7 @@ else
   sim::Array<gitr_precision> gridRLc(nR_Lc), gridYLc(nY_Lc), gridZLc(nZ_Lc);
   sim::Array<int> noIntersectionNodes(nTracers);
 
-if( generate_lc > 0 )
+if( GENERATE_LC > 0 )
 {
   gitr_precision lcBuffer = 0.0;
   // if( !boost::filesystem::exists( lcFile ) )
@@ -1565,7 +1565,7 @@ if( generate_lc > 0 )
   //}
 }
 
-if( lc_interp > 1 )
+if( LC_INTERP > 1 )
 {
   std::cout << "Importing pre-existing connection length file" << std::endl;
   getVariable(cfg, connLengthCfg + "fileString", lcFile);
@@ -1858,7 +1858,7 @@ if( flowv_interp == 1 )
   }
   std::cout << " !!! flowvgridr0 " << flowVGridr[0] << std::endl;
   nFlowVs = nR_Lc * nZ_Lc;
-  if( lc_interp == 3 )
+  if( LC_INTERP == 3 )
   {
   for (int i = 0; i < nY_flowV; i++)
     flowVGridy[i] = gridYLc[i];
@@ -4379,6 +4379,7 @@ if( presheath_interp == 1 )
 
   if( surface_model > 0 )
   {
+    //std::cout << "Ahoy, Captain!" << std::endl;
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
   }
     }

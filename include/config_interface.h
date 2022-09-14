@@ -213,8 +213,6 @@ class use final : public config_module_base
     presheath_efield,
     bfield_interp,
     adaptive_dt,
-    lc_interp,
-    generate_lc,
     efield_interp,
     presheath_interp,
     density_interp,
