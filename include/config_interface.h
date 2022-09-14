@@ -220,8 +220,6 @@ class use final : public config_module_base
     flowv_interp,
     gradt_interp,
     odeint,
-    fixedseeds,
-    fixed_seeds,
     particleseeds ,
     geom_trace ,
     geom_hash,
