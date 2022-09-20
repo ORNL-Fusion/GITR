@@ -104,6 +104,7 @@ void operator()(std::size_t indx)  {
        interp2dVector(&B[0],p->xprevious[indx],p->yprevious[indx],p->zprevious[indx],nR_Bfield,nZ_Bfield,
              BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );    
         Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1]+ B[2]*B[2]);
+        /* Captain! These are not checked for zero! Check them for zero! */
         B_unit[0] = B[0]/Bmag;
         B_unit[1] = B[1]/Bmag;
         B_unit[2] = B[2]/Bmag;
