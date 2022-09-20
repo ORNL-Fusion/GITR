@@ -96,7 +96,9 @@ int main(int argc, char **argv, char **envp) {
   int surface_model = use.get< int >( use::surface_model );
   int flux_ea = use.get<int>(use::flux_ea);
   int spectroscopy = use.get< int >( use::spectroscopy );
-  int biased_surface = use.get< int >( use::biased_surface );
+  // hardcoded to 0 for now, taken out of config_interface
+  //int biased_surface = use.get< int >( use::biased_surface );
+  int biased_surface = BIASED_SURFACE;
   int use_3d_geom = use.get< int >( use::use_3d_geom );
   int cylsymm = use.get< int >( use::cylsymm );
   int bfield_interp = use.get< int >( use::bfield_interp );

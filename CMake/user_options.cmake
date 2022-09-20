@@ -12,4 +12,5 @@ add_compile_definitions(
 	      USE_DOUBLE=${GITR_USE_DOUBLE}
         LC_INTERP=0
         GENERATE_LC=0
+        BIASED_SURFACE=0
         ODEINT=0 )

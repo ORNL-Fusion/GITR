@@ -110,7 +110,8 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::thermal_force ] = "USETHERMALFORCE";
   lookup[ use::surface_model ] = "USESURFACEMODEL";
   lookup[ use::sheath_efield ] = "USESHEATHEFIELD";
-  lookup[ use::biased_surface ] = "BIASED_SURFACE";
+  // hardcoded to 0 for now
+  //lookup[ use::biased_surface ] = "BIASED_SURFACE";
   lookup[ use::presheath_efield ] = "USEPRESHEATHEFIELD";
   lookup[ use::bfield_interp ] = "BFIELD_INTERP";
   lookup[ use::efield_interp ] = "EFIELD_INTERP";
