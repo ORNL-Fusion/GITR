@@ -108,13 +108,18 @@ void operator()(std::size_t indx)  {
         B_unit[1] = B[1]/Bmag;
         B_unit[2] = B[2]/Bmag;
 
-	dv_ETG[0] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[0]));
-	dv_ETG[1] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[1]));
-	dv_ETG[2] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[2]));
+	dv_ETG[0] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[0]))*B_unit[0];
+	dv_ETG[1] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[1]))*B_unit[1];
+	dv_ETG[2] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[2]))*B_unit[2];
+
+	dv_ETGx = dv_ETG[0];
+	dv_ETGy = dv_ETG[1];
+	dv_ETGz = dv_ETG[2];
 
 	dv_ITG[0] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[0]))*B_unit[0];
 	dv_ITG[1] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[1]))*B_unit[1];
 	dv_ITG[2] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[2]))*B_unit[2];
+
 	dv_ITGx = dv_ITG[0];
 	dv_ITGy = dv_ITG[1];
 	dv_ITGz = dv_ITG[2];
