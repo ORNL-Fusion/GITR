@@ -104,9 +104,9 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::ionization ] = "USE_IONIZATION";
   lookup[ use::perp_diffusion ] = "USEPERPDIFFUSION";
   lookup[ use::coulomb_collisions ] = "USECOULOMBCOLLISIONS";
-  lookup[ use::friction ] = "USEFRICTION";
-  lookup[ use::angle_scattering ] = "USEANGLESCATTERING";
-  lookup[ use::heating ] = "USEHEATING";
+  //lookup[ use::friction ] = "USEFRICTION";
+  //lookup[ use::angle_scattering ] = "USEANGLESCATTERING";
+  //lookup[ use::heating ] = "USEHEATING";
   lookup[ use::thermal_force ] = "USETHERMALFORCE";
   lookup[ use::surface_model ] = "USESURFACEMODEL";
   lookup[ use::sheath_efield ] = "USESHEATHEFIELD";
@@ -136,7 +136,7 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::cylsymm ] = "USECYLSYMM";
   lookup[ use::field_aligned_values ] = "USEFIELDALIGNEDVALUES";
   lookup[ use::force_eval ] = "FORCE_EVAL";
-  lookup[ use::compatibility_check ] = "CHECK_COMPATIBILITY";
+  //lookup[ use::compatibility_check ] = "CHECK_COMPATIBILITY";
   lookup[ use::sort ] = "USE_SORT";
   lookup[ use::adaptive_dt ] = "USE_ADAPTIVE_DT";
   lookup[ use::surface_potential ] = "USE_SURFACE_POTENTIAL";
