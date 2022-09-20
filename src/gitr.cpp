@@ -111,6 +111,10 @@ int main(int argc, char **argv, char **envp) {
   int particle_source_space = use.get< int >( use::particle_source_space );
   int particle_source_energy = use.get< int >( use::particle_source_energy );
   int particle_source_angle = use.get< int >( use::particle_source_angle );
+
+  //int particle_source_space = use.get< int >( use::particle_source_space );
+  //int particle_source_energy = use.get< int >( use::particle_source_energy );
+  //int particle_source_angle = use.get< int >( use::particle_source_angle );
   int particle_tracks = use.get< int >( use::particle_tracks );
   int presheath_interp = use.get< int >( use::presheath_interp );
   int efield_interp = use.get< int >( use::efield_interp );
@@ -121,7 +125,9 @@ int main(int argc, char **argv, char **envp) {
   int geom_hash_sheath = use.get<int>( use::geom_hash_sheath );
   int thermal_force = use.get< int >( use::thermal_force );
   int sheath_efield = use.get< int >( use::sheath_efield );
-  int presheath_efield = use.get< int >( use::presheath_efield );
+  // hardcoded to 1 for now
+  //int presheath_efield = use.get< int >( use::presheath_efield );
+  int presheath_efield = 1;
   int ionization = use.get< int >( use::ionization );
   int coulomb_collisions = use.get< int >( use::coulomb_collisions );
   int perp_diffusion = use.get< int >( use::perp_diffusion );
@@ -2511,6 +2517,7 @@ if( presheath_interp == 1 )
       Efieldz(nR_Bfield * nZ_Bfield), Efieldt(nR_Bfield * nZ_Bfield),
       minDist(nR_Bfield * nZ_Bfield);
 
+  /* Captain! Likely dead block below */
   if( sheath_efield > 0 )
   {
   gitr_precision thisE0[3] = {0.0, 0.0, 0.0};

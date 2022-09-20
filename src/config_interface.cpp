@@ -112,7 +112,7 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::sheath_efield ] = "USESHEATHEFIELD";
   // hardcoded to 0 for now
   //lookup[ use::biased_surface ] = "BIASED_SURFACE";
-  lookup[ use::presheath_efield ] = "USEPRESHEATHEFIELD";
+  //lookup[ use::presheath_efield ] = "USEPRESHEATHEFIELD";
   lookup[ use::bfield_interp ] = "BFIELD_INTERP";
   lookup[ use::efield_interp ] = "EFIELD_INTERP";
   lookup[ use::presheath_interp ] = "PRESHEATH_INTERP";
