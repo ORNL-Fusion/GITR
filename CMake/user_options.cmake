@@ -10,6 +10,7 @@ add_compile_definitions(
         USE_MPI=${GITR_USE_MPI}
         USE_OPENMP=${GITR_USE_OPENMP}
 	USE_DOUBLE=${GITR_USE_DOUBLE}
+        FIELD_ALIGNED_VALUES=0
         LC_INTERP=0
         GENERATE_LC=0
         BIASED_SURFACE=0
