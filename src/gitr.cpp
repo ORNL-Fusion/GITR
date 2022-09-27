@@ -80,9 +80,10 @@ int main(int argc, char **argv, char **envp) {
 
   CLI::App app{ "!" };
 
-  std::string file_name = "";
+  std::string file_name = "input/gitrInput.cfg";
 
-  app.add_option( "-c", file_name, "config filepath" )->required();
+  //app.add_option( "-c", file_name, "config filepath" )->required();
+  app.add_option( "-c", file_name, "config filepath" );
 
   CLI11_PARSE( app, argc, argv );
 
