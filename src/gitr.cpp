@@ -131,7 +131,9 @@ int main(int argc, char **argv, char **envp) {
   int ionization = use.get< int >( use::ionization );
   int coulomb_collisions = use.get< int >( use::coulomb_collisions );
   int perp_diffusion = use.get< int >( use::perp_diffusion );
-  int field_aligned_values = use.get< int >( use::field_aligned_values );
+  // hardcoded to 1 for now
+  //int field_aligned_values = use.get< int >( use::field_aligned_values );
+  int field_aligned_values = 0;
   bool fixed_seeds = bool( use.get< int >( use::fixed_seeds ) );
 
   // Set default processes per node to 1
