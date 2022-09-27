@@ -32,20 +32,33 @@ struct curandInitialize{
   CUDA_CALLABLE_MEMBER_DEVICE
   void operator()(std::size_t indx)
   {
+
 #if USE_CUDA > 0
-    curand_init(indx, 0, 0, &s[indx]);
+
+    if( fixed )
+    {
+      curand_init(indx, 0, 0, &s[indx]);
+    }
+    else
+    {
+      curand_init( clock64(), 0, 0, &s[indx] );
+    }
+
 #else
+
     if (fixed)
     {
       T s0(1234^indx);
       s[indx] = s0;
     }
+
     else
     {
       std::random_device randDevice;
       std::mt19937 s0(randDevice());
       s[indx] = s0;
     }
+
 #endif
   }
 };

@@ -121,7 +121,7 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::flowv_interp ] = "FLOWV_INTERP";
   lookup[ use::gradt_interp ] = "GRADT_INTERP";
   lookup[ use::odeint ] = "ODEINT";
-  lookup[ use::particleseeds  ] = "PARTICLESEEDS ";
+  lookup[ use::fixed_seeds ] = "FIXED_SEEDS";
   lookup[ use::geom_trace  ] = "GEOM_TRACE ";
   lookup[ use::geom_hash ] = "GEOM_HASH";
   lookup[ use::geom_hash_sheath ] = "GEOM_HASH_SHEATH";

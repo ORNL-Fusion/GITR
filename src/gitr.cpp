@@ -132,6 +132,7 @@ int main(int argc, char **argv, char **envp) {
   int coulomb_collisions = use.get< int >( use::coulomb_collisions );
   int perp_diffusion = use.get< int >( use::perp_diffusion );
   int field_aligned_values = use.get< int >( use::field_aligned_values );
+  bool fixed_seeds = bool( use.get< int >( use::fixed_seeds ) );
 
   // Set default processes per node to 1
   int ppn = 1;
@@ -3963,7 +3964,7 @@ if( presheath_interp == 1 )
                    // world_rank*nP/world_size,particleBegin +
                    // (world_rank+1)*nP/world_size-10,
                    // curandInitialize(&state1[0],randDeviceInit,0));
-                   curandInitialize<>(&state1.front(), 0));
+                   curandInitialize<>( &state1.front(), fixed_seeds ));
   std::cout << " finished curandInit" << std::endl;
 #else
   std::random_device randDeviceInit;
