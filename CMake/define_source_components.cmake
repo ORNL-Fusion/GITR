@@ -40,8 +40,7 @@ set( gpu_targets
      hashGeom
      fields
      spectroscopy
-     geometry_check
-     curandInitialize)
+     geometry_check )
 
 if( NOT GITR_USE_CUDA )
 

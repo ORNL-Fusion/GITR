@@ -3974,11 +3974,15 @@ if( presheath_interp == 1 )
   // world_rank*nP/world_size,particleBegin + (world_rank+1)*nP/world_size,
   //                     curandInitialize(&state1[0],randDeviceInit,0));
   // std::mt19937 s0(randDeviceInit);
+  thrust::for_each( thrust::device, particleBegin, particleEnd,
+                    curandInitialize<>( &state1.front(), fixed_seeds ) );
+  /*
   for (int i = world_rank * nP / world_size;
        i < (world_rank + 1) * nP / world_size; i++) {
     std::mt19937 s0(randDeviceInit());
     state1[i] = s0;
   }
+  */
 #endif
 #if USE_CUDA
   cudaDeviceSynchronize();
