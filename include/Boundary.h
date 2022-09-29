@@ -109,7 +109,6 @@ class Boundary
     }
     else
     {
-      exit( 0 );
     norm = std::sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
     A[1] = 0.0;
     }
