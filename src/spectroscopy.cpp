@@ -82,7 +82,6 @@ void spec_bin::operator()(std::size_t indx) const {
                 if (indx_Y < 0 || indx_Y >= nY) indx_Y = 0;
 
                 nnYY = nY;
-              }
 
               if (indx_X < 0 || indx_X >= nX) indx_X = 0;
 
@@ -120,20 +119,18 @@ void spec_bin::operator()(std::size_t indx) const {
               }
 
 #else
+
               #pragma omp atomic
-              //bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY  +indx_Y*nX +indx_X] = 
-	            //              bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY+ indx_Y*nX + indx_X] + specWeight;
               bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY  +indx_Y*nX +indx_X] += specWeight;
 
               if(charge < nBins)
               {
                 #pragma omp atomic
-                //bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX + indx_X] = 
-		            //      bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY+indx_Y*nX + indx_X] + specWeight;
                 bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX + indx_X] += specWeight;
               }
 #endif
             }
           }
+          }// end
        }
     }
