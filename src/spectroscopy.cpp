@@ -68,6 +68,53 @@ void spec_bin::operator()(std::size_t indx) const {
                 indx_Z = std::floor((z-gridZ[0])/dz);
                 indx_Y = 0;
                 nnYY=1;
+              if (indx_X < 0 || indx_X >= nX) indx_X = 0;
+
+              if (indx_Z < 0 || indx_Z >= nZ) indx_Z = 0;
+
+              int charge = std::floor(particlesPointer->charge[indx]);
+
+              gitr_precision specWeight = 0.0;
+
+              if(particlesPointer->hitWall[indx]== 0.0)
+              {
+                if (flags->USE_ADAPTIVE_DT) 
+                {
+	                if(particlesPointer->advance[indx])
+                  {
+                    dt_particle = particlesPointer->dt[indx];
+                    specWeight = particlesPointer->weight[indx]*dt_particle/dt;
+		              }
+                }
+
+                else
+                {
+                  specWeight = particlesPointer->weight[indx];
+                }
+#if USE_CUDA >0
+
+	              int index = nBins*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX+ indx_X;
+
+                atomicAdd1(&bins[index], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
+
+              if(charge < nBins)
+              {
+                atomicAdd1( &bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY + indx_Y*nX+ indx_X],
+                            1.0*specWeight);
+              }
+
+#else
+
+              #pragma omp atomic
+              bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY  +indx_Y*nX +indx_X] += specWeight;
+
+              if(charge < nBins)
+              {
+                #pragma omp atomic
+                bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX + indx_X] += specWeight;
+              }
+#endif
+            }
               }
 
               else if((y > gridY[0]) && (y < gridY[nY-1]))
