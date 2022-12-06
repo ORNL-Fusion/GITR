@@ -51,7 +51,9 @@ CUDA_CALLABLE_MEMBER
 gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, gitr_precision E[], Boundary *boundaryVector, int nLines,
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
-         int&  closestBoundaryIndex); 
+         int&  closestBoundaryIndex, int biased_surface, int use_3d_geom,
+         int geom_hash_sheath,
+         int cylsymm ); 
 
 struct move_boris { 
 
@@ -89,6 +91,12 @@ struct move_boris {
     const int nLines;
     gitr_precision magneticForce[3];
     gitr_precision electricForce[3];
+    int sheath_efield;
+    int presheath_efield;
+    int biased_surface;
+    int geom_hash_sheath;
+    int use_3d_geom;
+    int cylsymm;
 
     move_boris(Particles *_particlesPointer, gitr_precision _span, Boundary *_boundaryVector,int _nLines,
             int _nR_Bfield, int _nZ_Bfield,
@@ -104,7 +112,12 @@ struct move_boris {
             gitr_precision * _EfieldRDevicePointer,
             gitr_precision * _EfieldZDevicePointer,
             gitr_precision * _EfieldTDevicePointer,
-            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, gitr_precision *_closeGeomGridr,gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, int *_closeGeom, Flags* _gitr_flags, gitr_precision _max_dt = 1.0e5);
+            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, int _n_closeGeomElements, gitr_precision *_closeGeomGridr,gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, int *_closeGeom, Flags* _gitr_flags, int sheath_efield_, int presheath_efield_,
+            int biased_surface_,
+            int geom_hash_sheath_,
+            int use_3d_geom_,
+            int cylsymm_,
+            gitr_precision _max_dt = 1.0e5);
 
     CUDA_CALLABLE_MEMBER    
     void operator()(std::size_t indx); 

@@ -1,6 +1,28 @@
 # Add thrust
 
-if( NOT GITR_USE_CUDA )
+# set the thrust backend accelerator
+if( GITR_USE_CUDA )
+
+  add_compile_definitions( THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA )
+
+elseif( GITR_USE_OPENMP )
+
+  # Captain! Once OpenMP does not appear in GITR source code, check for OpenMP here.
+  add_compile_definitions( THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP )
+
+else()
+
+  add_compile_definitions( THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP )
+
+endif()
+
+# If CUDA is specified, use the thrust that ships with the CUDA package
+if( GITR_USE_CUDA )
+
+  set( THRUST_INCLUDE_DIR "${CUDAToolkit_INCLUDE_DIRS}" CACHE PATH "" FORCE )
+
+# Otherwise, it must be downloaded
+else()
 
   set( THRUST_INCLUDE_DIR "${prefix}/thrust" CACHE PATH "" FORCE )
 
@@ -24,12 +46,9 @@ if( NOT GITR_USE_CUDA )
 
   endif()
 
-else()
-
-  set( THRUST_INCLUDE_DIR "${CUDAToolkit_INCLUDE_DIRS}" CACHE PATH "" FORCE )
-
 endif()
 
+# Captain! Why is this here? Who actually needs this? Remove it after tests pass
 set(THRUST_INCLUDE_DIRS ${THRUST_INCLUDE_DIR} CACHE PATH "" FORCE )
 
 add_library( thrust INTERFACE )
@@ -43,3 +62,5 @@ endif()
 include_directories( ${THRUST_INCLUDE_DIR} )
 
 target_include_directories( thrust INTERFACE ${THRUST_INCLUDE_DIR} )
+
+list( APPEND dependencies thrust )

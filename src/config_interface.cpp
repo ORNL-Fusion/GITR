@@ -8,34 +8,41 @@ libconfig_string_query::libconfig_string_query( std::string libconfig_file )
     cfg.readFile( libconfig_file.c_str() );
   }
 
+  /* bad file */
   catch(const libconfig::FileIOException &fioex)
   {
     std::cerr << "I/O error while reading file." << std::endl;
+    exit( 0 );
   }
 
+  /* bad format */
   catch(const libconfig::ParseException &pex)
   {
     std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
               << " - " << pex.getError() << std::endl;
+    exit( 0 );
   }
 }
 
-/* geta config value */
-template< typename T >
-T config_module_base::get( int key )
+geometry::
+geometry( class libconfig_string_query const &query,
+          std::string module_path )
+  :
+  config_module_base( query, module_path )
 {
-  auto access = lookup.find( key );
-  if( access == lookup.end() )
-  {
-    std::cout << "error: value key not found" << std::endl;
-    exit(0);
-  }
-
-  T val;
-
-  query( get_module_path() + "." + access->second, val );
-  
-  return val;
+  lookup[ geometry::slope ] = "slope";
+  lookup[ geometry::intercept ] = "intercept";
+  lookup[ geometry::length ] = "length";
+  lookup[ geometry::z ] = "Z";
+  lookup[ geometry::surface ] = "surface";
+  lookup[ geometry::in_dir ] = "in_dir";
+  lookup[ geometry::periodic ] = "periodic";
+  lookup[ geometry::x1 ] = "x1";
+  lookup[ geometry::x2 ] = "x2";
+  lookup[ geometry::y1 ] = "y1";
+  lookup[ geometry::y2 ] = "y2";
+  lookup[ geometry::z1 ] = "z1";
+  lookup[ geometry::z2 ] = "z2";
 }
 
 impurity_particle_source::
@@ -94,22 +101,19 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::cuda ] = "USE_CUDA";
   lookup[ use::use_openmp ] = "USE_OPENMP";
   lookup[ use::mpi ] = "USE_MPI";
-  lookup[ use::useionization ] = "USEIONIZATION";
-  lookup[ use::use_ionization ] = "USE_IONIZATION";
-  lookup[ use::userecombination ] = "USERECOMBINATION";
-  lookup[ use::useperpdiffusion ] = "USEPERPDIFFUSION";
-  lookup[ use::usecoulombcollisions ] = "USECOULOMBCOLLISIONS";
-  lookup[ use::usefriction ] = "USEFRICTION";
-  lookup[ use::useanglescattering ] = "USEANGLESCATTERING";
-  lookup[ use::useheating ] = "USEHEATING";
-  lookup[ use::usethermalforce ] = "USETHERMALFORCE";
-  lookup[ use::usesurfacemodel ] = "USESURFACEMODEL";
-  lookup[ use::usesheathefield ] = "USESHEATHEFIELD";
-  lookup[ use::biased_surface ] = "BIASED_SURFACE";
-  lookup[ use::usepresheathefield ] = "USEPRESHEATHEFIELD";
+  lookup[ use::ionization ] = "USE_IONIZATION";
+  lookup[ use::perp_diffusion ] = "USEPERPDIFFUSION";
+  lookup[ use::coulomb_collisions ] = "USECOULOMBCOLLISIONS";
+  //lookup[ use::friction ] = "USEFRICTION";
+  //lookup[ use::angle_scattering ] = "USEANGLESCATTERING";
+  //lookup[ use::heating ] = "USEHEATING";
+  lookup[ use::thermal_force ] = "USETHERMALFORCE";
+  lookup[ use::surface_model ] = "USESURFACEMODEL";
+  lookup[ use::sheath_efield ] = "USESHEATHEFIELD";
+  // hardcoded to 0 for now
+  //lookup[ use::biased_surface ] = "BIASED_SURFACE";
+  //lookup[ use::presheath_efield ] = "USEPRESHEATHEFIELD";
   lookup[ use::bfield_interp ] = "BFIELD_INTERP";
-  lookup[ use::lc_interp ] = "LC_INTERP";
-  lookup[ use::generate_lc ] = "GENERATE_LC";
   lookup[ use::efield_interp ] = "EFIELD_INTERP";
   lookup[ use::presheath_interp ] = "PRESHEATH_INTERP";
   lookup[ use::density_interp ] = "DENSITY_INTERP";
@@ -117,9 +121,7 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::flowv_interp ] = "FLOWV_INTERP";
   lookup[ use::gradt_interp ] = "GRADT_INTERP";
   lookup[ use::odeint ] = "ODEINT";
-  lookup[ use::fixedseeds ] = "FIXEDSEEDS";
   lookup[ use::fixed_seeds ] = "FIXED_SEEDS";
-  lookup[ use::particleseeds  ] = "PARTICLESEEDS ";
   lookup[ use::geom_trace  ] = "GEOM_TRACE ";
   lookup[ use::geom_hash ] = "GEOM_HASH";
   lookup[ use::geom_hash_sheath ] = "GEOM_HASH_SHEATH";
@@ -129,14 +131,15 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::particle_source_angle ] = "PARTICLE_SOURCE_ANGLE";
   lookup[ use::particle_source_file ] = "PARTICLE_SOURCE_FILE";
   lookup[ use::spectroscopy ] = "SPECTROSCOPY";
-  lookup[ use::use3dtetgeom ] = "USE3DTETGEOM";
+  lookup[ use::use_3d_geom ] = "USE3DTETGEOM";
   lookup[ use::flux_ea ] = "FLUX_EA";
-  lookup[ use::usecylsymm ] = "USECYLSYMM";
-  lookup[ use::usefieldalignedvalues ] = "USEFIELDALIGNEDVALUES";
+  lookup[ use::cylsymm ] = "USECYLSYMM";
+  lookup[ use::field_aligned_values ] = "USEFIELDALIGNEDVALUES";
   lookup[ use::force_eval ] = "FORCE_EVAL";
-  lookup[ use::compatibility_check ] = "CHECK_COMPATIBILITY";
-  lookup[ use::use_sort ] = "USE_SORT";
-  lookup[ use::use_adaptive_dt ] = "USE_ADAPTIVE_DT";
+  //lookup[ use::compatibility_check ] = "CHECK_COMPATIBILITY";
+  lookup[ use::sort ] = "USE_SORT";
+  lookup[ use::adaptive_dt ] = "USE_ADAPTIVE_DT";
+  lookup[ use::surface_potential ] = "USE_SURFACE_POTENTIAL";
 }
 
 config_module_base::config_module_base( class libconfig_string_query const &query,
@@ -146,14 +149,67 @@ config_module_base::config_module_base( class libconfig_string_query const &quer
   query( query )
 { }
 
-/* explicit instantiations of that template */
+/* general "get" for values  */
+template< typename T >
+T config_module_base::get( int key )
+{
+  auto access = lookup.find( key );
+
+  if( access == lookup.end() )
+  {
+    throw unregistered_config_mapping( key );
+  }
+
+  T val;
+
+  try
+  {
+    query( get_module_path() + "." + access->second, val );
+  }
+
+  catch( class invalid_key const &exception )
+  {
+    std::string const error_message{ exception.what() };
+
+    std::string const error_key{ exception.get_key() };
+
+    std::cout << error_message << error_key << std::endl;
+
+    throw invalid_key( error_key );
+  }
+
+  catch( class lookup_failed const &exception )
+  {
+    std::string const error_message{ exception.what() };
+
+    std::string const error_key{ exception.get_key() };
+
+    std::cout << error_message << error_key << std::endl;
+
+    throw lookup_failed( error_key );
+  }
+  
+  return val;
+}
+
+/* instantiations for singleton config setting values */
 template int config_module_base::get<int>( int key );
 template float config_module_base::get<float>( int key );
 template double config_module_base::get<double>( int key );
 template bool config_module_base::get<bool>( int key );
 template std::string config_module_base::get<std::string>( int key ); 
 
-/* get a config submodule */
+/* instantiations for vector/array config setting values */
+template std::vector< int > config_module_base::get< std::vector< int > >( int key );
+template std::vector< float >
+config_module_base::get< std::vector< float > >( int key );
+template std::vector< double >
+config_module_base::get< std::vector< double > >( int key );
+template std::vector< bool > config_module_base::get< std::vector< bool > >( int key );
+template std::vector< std::string >
+config_module_base::get< std::vector< std::string > >( int key ); 
+
+/* template specialization for non-specified type: specialization for default T from header */
 template<>
 std::shared_ptr< config_module_base >
 config_module_base::get( int key )
@@ -162,8 +218,7 @@ config_module_base::get( int key )
 
   if( access == sub_modules.end() )
   {
-    std::cout << "error: config_module key not found" << std::endl;
-    exit( 0 );
+    throw( unregistered_config_mapping( key ) );
   }
 
   return access->second;

@@ -17,6 +17,80 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 
+CUDA_CALLABLE_MEMBER_DEVICE    
+void legacy_code_block_0( Particles *particlesPointer, 
+                          int indx,
+                          gitr_precision *B_unit,
+                          gitr_precision step,
+                          gitr_precision r3 )
+{
+      gitr_precision perpVector[3]= {0, 0, 0};
+
+      gitr_precision phi_random = 2*3.14159265*r3;
+      perpVector[0] = std::cos(phi_random);
+      perpVector[1] = std::sin(phi_random);
+      perpVector[2] = 0.0;
+    
+      gitr_precision ez1 = B_unit[0];
+      gitr_precision ez2 = B_unit[1];
+      gitr_precision ez3 = B_unit[2];
+
+      // Get perpendicular velocity unit vectors
+      // this comes from a cross product of
+      // (ez1,ez2,ez3)x(0,0,1)
+      gitr_precision ex1 = ez2;
+      gitr_precision ex2 = -ez1;
+      gitr_precision ex3 = 0.0;
+    
+      // The above cross product will be zero for particles
+      // with a pure z-directed (ez3) velocity
+      // here we find those particles and get the perpendicular 
+      // unit vectors by taking the cross product
+      // (ez1,ez2,ez3)x(0,1,0) instead
+      gitr_precision exnorm = std::sqrt(ex1*ex1 + ex2*ex2);
+      if(std::abs(exnorm) < 1.0e-12)
+      {
+        ex1 = -ez3;
+        ex2 = 0.0;
+        ex3 = ez1;
+      }
+
+      // Ensure all the perpendicular direction vectors
+      // ex are unit
+      exnorm = std::sqrt(ex1*ex1+ex2*ex2 + ex3*ex3);
+      ex1 = ex1/exnorm;
+      ex2 = ex2/exnorm;
+      ex3 = ex3/exnorm;
+      
+      // Find the second perpendicular direction 
+      // by taking the cross product
+      // (ez1,ez2,ez3)x(ex1,ex2,ex3)
+      gitr_precision ey1 = ez2*ex3 - ez3*ex2;
+      gitr_precision ey2 = ez3*ex1 - ez1*ex3;
+      gitr_precision ey3 = ez1*ex2 - ez2*ex1;
+
+      gitr_precision tmp[3] = {0.0};
+      tmp[0] = ex1*perpVector[0] + ey1*perpVector[1] + ez1*perpVector[2];
+      tmp[1] = ex2*perpVector[0] + ey2*perpVector[1] + ez2*perpVector[2];
+      tmp[2] = ex3*perpVector[0] + ey3*perpVector[1] + ez3*perpVector[2];
+
+      perpVector[0] = tmp[0];
+      perpVector[1] = tmp[1];
+      perpVector[2] = tmp[2];
+
+      gitr_precision norm = 
+      std::sqrt( perpVector[0]*perpVector[0] + 
+                  perpVector[1]*perpVector[1] +
+                  perpVector[2]*perpVector[2] );
+
+      perpVector[0] = perpVector[0]/norm;
+      perpVector[1] = perpVector[1]/norm;
+      perpVector[2] = perpVector[2]/norm;
+      particlesPointer->x[indx] = particlesPointer->xprevious[indx] + step*perpVector[0];
+      particlesPointer->y[indx] = particlesPointer->yprevious[indx] + step*perpVector[1];
+      particlesPointer->z[indx] = particlesPointer->zprevious[indx] + step*perpVector[2];
+}
+
 /* How do particles move perpendicular to the B field */
 struct crossFieldDiffusion {
     /* control flow */
@@ -44,6 +118,10 @@ struct crossFieldDiffusion {
 #else
         std::mt19937 *state;
 #endif
+        int perp_diffusion;
+
+        int cylsymm;
+
     crossFieldDiffusion(Flags* _flags, Particles *_particlesPointer, gitr_precision _dt,
 #if __CUDACC__
         curandState *_state,
@@ -54,7 +132,7 @@ struct crossFieldDiffusion {
         int _nR_Bfield, int _nZ_Bfield,
         gitr_precision * _BfieldGridRDevicePointer,gitr_precision * _BfieldGridZDevicePointer,
         gitr_precision * _BfieldRDevicePointer,gitr_precision * _BfieldZDevicePointer,
-        gitr_precision * _BfieldTDevicePointer)
+        gitr_precision * _BfieldTDevicePointer, int perp_diffusion_, int cylsymm_ )
       : flags(_flags), particlesPointer(_particlesPointer),
         dt(_dt),
         diffusionCoefficient(_diffusionCoefficient),
@@ -65,8 +143,10 @@ struct crossFieldDiffusion {
         BfieldRDevicePointer(_BfieldRDevicePointer),
         BfieldZDevicePointer(_BfieldZDevicePointer),
         BfieldTDevicePointer(_BfieldTDevicePointer),
-        state(_state) {
-  }
+        state(_state),
+        perp_diffusion( perp_diffusion_ ),
+        cylsymm( cylsymm_ )
+        { }
 
 /* Monte Carlo solution to diffusion equation - we need this tested */
 /* semi-non-deterministic test - tolerance type test */
@@ -84,12 +164,11 @@ void operator()(std::size_t indx) const {
       gitr_precision B[3] = {0.0,0.0,0.0};
       gitr_precision Bmag = 0.0;
       gitr_precision B_unit[3] = {0.0, 0.0, 0.0};
-      gitr_precision phi_random;
       gitr_precision norm;
       gitr_precision step;
       gitr_precision dt_step = dt;
 
-      if (flags->USE_ADAPTIVE_DT) 
+      if ( flags->USE_ADAPTIVE_DT ) 
       {
         if(particlesPointer->advance[indx])
         {
@@ -110,7 +189,8 @@ void operator()(std::size_t indx) const {
                           particlesPointer->zprevious[indx],
                           nR_Bfield,nZ_Bfield,
                           BfieldGridRDevicePointer,BfieldGridZDevicePointer,
-                          BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
+                          BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer,
+                          cylsymm );
         
       Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
       if(Bmag < 1.0e-12) 
@@ -124,7 +204,6 @@ void operator()(std::size_t indx) const {
       B_unit[1] = B[1]/Bmag;
       B_unit[2] = B[2]/Bmag;
 
-#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
       gitr_precision r3 = curand_uniform(&state[indx]);
 #else
@@ -132,21 +211,18 @@ void operator()(std::size_t indx) const {
       gitr_precision r3=dist(state[indx]);
       gitr_precision r4=dist(state[indx]);
 #endif 
-#else
-#if __CUDACC__
-      gitr_precision r3 = curand_uniform(&state[2]);
-#else
-      std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
-      gitr_precision r3=dist(state[2]);
-#endif
-#endif
+
       /* magnitude of spacial step for 1 particle? */
       /* m^2 / sec units for diffusionCoefficient */
       step = std::sqrt(4*diffusionCoefficient*dt_step);
-      //printf("B_unit %f %f %f" ,B_unit[0], B_unit[1], B_unit[2]);
-      //printf("step %f" ,step);
-  //   printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
-#if USEPERPDIFFUSION > 1
+      /* Captain! Is an "else" even needed here? It doesn't appear to be so */
+      if( perp_diffusion <= 1 )
+      {
+        legacy_code_block_0( particlesPointer, indx, B_unit, step, r3 );
+      }
+
+      else
+      {
       /* Notice of code change: previously, this wass floor(r4 + 0.5)*2 - 1 */
       /* r3 was replaced with variable r4 since r4 is not declared if CUDA is activated */
       gitr_precision plus_minus1 = floor(r3 + 0.5)*2 - 1;
@@ -158,7 +234,10 @@ void operator()(std::size_t indx) const {
       gitr_precision B_plus[3] = {0.0};
       
       interp2dVector(&B_plus[0],x_plus,y_plus,z_plus,nR_Bfield,nZ_Bfield,
-                               BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);
+                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,
+                     BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer,
+                     cylsymm );
+
         gitr_precision Bmag_plus = std::sqrt(B_plus[0]*B_plus[0] + B_plus[1]*B_plus[1] + B_plus[2]*B_plus[2]);
     
     gitr_precision B_deriv1[3] = {0.0};
@@ -226,113 +305,29 @@ void operator()(std::size_t indx) const {
     vectorCrossProduct(B, B_deriv1, y_dir);
     gitr_precision x_comp = s*std::cos(theta0);
     gitr_precision y_comp = s*std::sin(theta0);
+
     gitr_precision x_transform = x_comp*perpVector[0] + y_comp*y_dir[0];
     gitr_precision y_transform = x_comp*perpVector[1] + y_comp*y_dir[1];
     gitr_precision z_transform = x_comp*perpVector[2] + y_comp*y_dir[2];
 
     if(std::abs(denom) < 1.0e-8)
     {
-#endif
-    perpVector[0] = 0.0;
-    perpVector[1] = 0.0;
-    perpVector[2] = 0.0;
-    phi_random = 2*3.14159265*r3;
-    perpVector[0] = std::cos(phi_random);
-    perpVector[1] = std::sin(phi_random);
-    perpVector[2] = 0.0;//(-perpVector[0]*B_unit[0] - perpVector[1]*B_unit[1])/B_unit[2];
-      //printf("perp_vec 1 %f %f %f \n" ,perpVector[0], perpVector[1], perpVector[2]);
-  
-    gitr_precision ez1 = B_unit[0];
-    gitr_precision ez2 = B_unit[1];
-    gitr_precision ez3 = B_unit[2];
-      //printf("ez  %f %f %f \n" ,ez1, ez2, ez3);
-    // Get perpendicular velocity unit vectors
-  // this comes from a cross product of
-  // (ez1,ez2,ez3)x(0,0,1)
-  gitr_precision ex1 = ez2;
-  gitr_precision ex2 = -ez1;
-  gitr_precision ex3 = 0.0;
-      //printf("ex 1  %f %f %f \n" ,ex1, ex2, ex3);
-  
-  // The above cross product will be zero for particles
-  // with a pure z-directed (ez3) velocity
-  // here we find those particles and get the perpendicular 
-  // unit vectors by taking the cross product
-  // (ez1,ez2,ez3)x(0,1,0) instead
-  gitr_precision exnorm = std::sqrt(ex1*ex1 + ex2*ex2);
-  if(std::abs(exnorm) < 1.0e-12){
-  ex1 = -ez3;
-  ex2 = 0.0;
-  ex3 = ez1;
-  }
-      //printf("ex 2 %f %f %f \n" ,ex1, ex2, ex3);
-  // Ensure all the perpendicular direction vectors
-  // ex are unit
-  exnorm = std::sqrt(ex1*ex1+ex2*ex2 + ex3*ex3);
-  ex1 = ex1/exnorm;
-  ex2 = ex2/exnorm;
-  ex3 = ex3/exnorm;
-      //printf("ex unit %f %f %f \n" ,ex1, ex2, ex3);
-  
-  //if(isnan(ex1) || isnan(ex2) || isnan(ex3)){
-  //   //printf("ex nan %f %f %f v %f", ez1, ez2, ez3,v);
-  //}
-  // Find the second perpendicular direction 
-  // by taking the cross product
-  // (ez1,ez2,ez3)x(ex1,ex2,ex3)
-  gitr_precision ey1 = ez2*ex3 - ez3*ex2;
-  gitr_precision ey2 = ez3*ex1 - ez1*ex3;
-  gitr_precision ey3 = ez1*ex2 - ez2*ex1;
-      //printf("ey %f %f %f \n" ,ey1, ey2, ey3);
+//#endif
+    /* Captain! Turn this into a function. Move stuff from the block into the comment then
+       move it all and butcher the control flow. Define and call the lambda function here */
+    //f( perpVector, particlesPointer, indx, B_unit, step )
+    legacy_code_block_0( particlesPointer, indx, B_unit, step, r3 );
 
-  gitr_precision tmp[3] = {0.0};
-  tmp[0] = ex1*perpVector[0] + ey1*perpVector[1] + ez1*perpVector[2];
-  tmp[1] = ex2*perpVector[0] + ey2*perpVector[1] + ez2*perpVector[2];
-  tmp[2] = ex3*perpVector[0] + ey3*perpVector[1] + ez3*perpVector[2];
-
-  perpVector[0] = tmp[0];
-  perpVector[1] = tmp[1];
-  perpVector[2] = tmp[2];
-      //printf("perp_vec %f %f %f \n" ,perpVector[0], perpVector[1], perpVector[2]);
-      //printf("step %f \n" ,step);
-//    if (B_unit[2] == 0)
-//    {
-//      perpVector[2] = perpVector[1];
-//      perpVector[1] = (-perpVector[0]*B_unit[0] - perpVector[2]*B_unit[2])/B_unit[1];
-//    }
-//
-//    if ((B_unit[0] == 1.0 && B_unit[1] ==0.0 && B_unit[2] ==0.0) || (B_unit[0] == -1.0 && B_unit[1] ==0.0 && B_unit[2] ==0.0))
-//    {
-//      perpVector[2] = perpVector[0];
-//      perpVector[0] = 0;
-//      perpVector[1] = sin(phi_random);
-//    }
-//    else if ((B_unit[0] == 0.0 && B_unit[1] ==1.0 && B_unit[2] ==0.0) || (B_unit[0] == 0.0 && B_unit[1] ==-1.0 && B_unit[2] ==0.0))
-//   {
-//     perpVector[1] = 0.0;
-//   }
-//   else if ((B_unit[0] == 0.0 && B_unit[1] ==0.0 && B_unit[2] ==1.0) || (B_unit[0] == 0.0 && B_unit[1] ==0.0 && B_unit[2] ==-1.0))
-//   {
-//     perpVector[2] = 0;
-//   }
-
-   norm = std::sqrt(perpVector[0]*perpVector[0] + perpVector[1]*perpVector[1] + perpVector[2]*perpVector[2]);
-
-   perpVector[0] = perpVector[0]/norm;
-   perpVector[1] = perpVector[1]/norm;
-   perpVector[2] = perpVector[2]/norm;
-   particlesPointer->x[indx] = particlesPointer->xprevious[indx] + step*perpVector[0];
-   particlesPointer->y[indx] = particlesPointer->yprevious[indx] + step*perpVector[1];
-   particlesPointer->z[indx] = particlesPointer->zprevious[indx] + step*perpVector[2];
-#if USEPERPDIFFUSION > 1    
-}
+  /* Captain! */
+    }
 else
 {
     particlesPointer->x[indx] = x0 + x_transform;
     particlesPointer->y[indx] = y0 + y_transform;
     particlesPointer->z[indx] = z0 + z_transform;
 }
-#endif
+      }
+//#endif
     }
     } }
 };

@@ -12,7 +12,11 @@
 #include "Surfaces.h"
 #include "surfaceModel.h"
 #include "boris.h"
+
+#if USE_OPENMP == 1
 #include "omp.h"
+#endif
+
 #include <cmath>
 
 #if USE_DOUBLE
@@ -52,6 +56,11 @@ struct geometry_check {
   int nAdist;
   gitr_precision A0dist;
   gitr_precision Adist;
+  int flux_ea;
+  int surface_model;
+  int geom_hash;
+  int use_3d_geom;
+  int cylsymm;
 
   geometry_check(Particles *_particlesPointer, int _nLines,
                  Boundary *_boundaryVector, Surfaces *_surfaces, gitr_precision _dt,
@@ -60,7 +69,12 @@ struct geometry_check {
                  gitr_precision *_closeGeomGridr, gitr_precision *_closeGeomGridy,
                  gitr_precision *_closeGeomGridz, int *_closeGeom, int _nEdist,
                  gitr_precision _E0dist, gitr_precision _Edist, int _nAdist, gitr_precision _A0dist,
-                 gitr_precision _Adist);
+                 gitr_precision _Adist,
+                 int flux_ea_,
+                 int surface_model_,
+                 int geom_hash_,
+                 int use_3d_geom_,
+                 int cylsymm_ );
 
   //CUDA_CALLABLE_MEMBER_DEVICE
  __host__  __device__

@@ -44,6 +44,7 @@ struct thermalForce {
 	    gitr_precision dv_ETGx=0.0;
 	    gitr_precision dv_ETGy=0.0;
 	    gitr_precision dv_ETGz=0.0;
+      int cylsymm;
             
     thermalForce(Flags* _flags,Particles *_p,gitr_precision _dt, gitr_precision _background_amu,int _nR_gradT, int _nZ_gradT, gitr_precision* _gradTGridr, gitr_precision* _gradTGridz,
             gitr_precision* _gradTiR, gitr_precision* _gradTiZ, gitr_precision* _gradTiT, gitr_precision* _gradTeR, gitr_precision* _gradTeZ,gitr_precision* _gradTeT,
@@ -52,13 +53,14 @@ struct thermalForce {
             gitr_precision * _BfieldGridZDevicePointer,
             gitr_precision * _BfieldRDevicePointer,
             gitr_precision * _BfieldZDevicePointer,
-            gitr_precision * _BfieldTDevicePointer)
+            gitr_precision * _BfieldTDevicePointer,
+            int cylsymm_ )
         
             : flags(_flags),p(_p), dt(_dt), background_amu(_background_amu),nR_gradT(_nR_gradT),nZ_gradT(_nZ_gradT),
         gradTGridr(_gradTGridr), gradTGridz(_gradTGridz),
         gradTiR(_gradTiR), gradTiZ(_gradTiZ),gradTiT(_gradTiT), gradTeR(_gradTeR), gradTeZ(_gradTeZ),gradTeT(_gradTeT), 
              nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
-    BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer) {}
+    BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer), cylsymm( cylsymm_ ) {}
 
 CUDA_CALLABLE_MEMBER    
 void operator()(std::size_t indx)  { 
@@ -90,29 +92,35 @@ void operator()(std::size_t indx)  {
                 }
       // std:cout << " grad Ti interp " << std::endl;
       interp2dVector(&gradTi[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,
-                     gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT);
+                     gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT, cylsymm );
       //std::cout << "Position r z" << sqrt(p->xprevious*p->xprevious + p->yprevious*p->yprevious) << " " << p->zprevious << std::endl;
       //std::cout << "grad Ti " << std::copysign(1.0,gradTi[0])*sqrt(gradTi[0]*gradTi[0] + gradTi[1]*gradTi[1]) << " " << gradTi[2] << std::endl;
       interp2dVector(&gradTe[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,
-                     gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT);
+                     gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT, cylsymm );
       mu = p->amu[indx] / (background_amu + p->amu[indx]);
       alpha = p->charge[indx] * p->charge[indx] * 0.71;
       beta = 3 * (mu + 5 * std::sqrt(2.0) * p->charge[indx] * p->charge[indx] * (1.1 * std::pow(mu, (5 / 2)) - 0.35 * std::pow(mu, (3 / 2))) - 1) / (2.6 - 2 * mu + 5.4 * std::pow(mu, 2));
        
        interp2dVector(&B[0],p->xprevious[indx],p->yprevious[indx],p->zprevious[indx],nR_Bfield,nZ_Bfield,
-             BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);    
+             BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );    
         Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1]+ B[2]*B[2]);
+        /* Captain! These are not checked for zero! Check them for zero! */
         B_unit[0] = B[0]/Bmag;
         B_unit[1] = B[1]/Bmag;
         B_unit[2] = B[2]/Bmag;
 
-	dv_ETG[0] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[0]));
-	dv_ETG[1] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[1]));
-	dv_ETG[2] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[2]));
+	dv_ETG[0] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[0]))*B_unit[0];
+	dv_ETG[1] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[1]))*B_unit[1];
+	dv_ETG[2] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[2]))*B_unit[2];
+
+	dv_ETGx = dv_ETG[0];
+	dv_ETGy = dv_ETG[1];
+	dv_ETGz = dv_ETG[2];
 
 	dv_ITG[0] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[0]))*B_unit[0];
 	dv_ITG[1] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[1]))*B_unit[1];
 	dv_ITG[2] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[2]))*B_unit[2];
+
 	dv_ITGx = dv_ITG[0];
 	dv_ITGy = dv_ITG[1];
 	dv_ITGz = dv_ITG[2];

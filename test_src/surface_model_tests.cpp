@@ -1,7 +1,9 @@
+/* Sample the out-distribution? */
+/* bin the in-distribution? */
 #include <iostream>
 #include <fstream>
 #include <thrust/execution_policy.h>
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "config_interface.h"
 #include "test_data_filepath.hpp"
 #include "utils.h"

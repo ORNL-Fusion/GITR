@@ -1,5 +1,5 @@
 #include <iostream>
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "crossFieldDiffusion.h"
 #include "test_data_filepath.hpp"
 #include "Particles.h"
@@ -7,6 +7,7 @@
 #include "spectroscopy.h"
 #include "curandInitialize.h"
 #include <thrust/execution_policy.h>
+#include "config_interface.h"
 
 template <typename T=double>
 bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
@@ -15,8 +16,8 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
   for (size_t i = 0; i < a.size(); i++) 
   {
     
-    bool margin_check = (a[i] != Approx(b[i]).margin(margin));
-    bool epsilon_check = (a[i] != Approx(b[i]).epsilon(epsilon));
+    bool margin_check = (a[i] != Catch::Approx(b[i]).margin(margin));
+    bool epsilon_check = (a[i] != Catch::Approx(b[i]).epsilon(epsilon));
     
     if (margin_check && epsilon_check)
     {
@@ -42,11 +43,21 @@ TEST_CASE( "cross-field diffusion operator" )
     GITR_USE_PERP_DIFFUSION=1
     USE_CYLSYMM=0
 
-    This technically will also pass with GITR_USE_PERP_DIFFUSION=2. Unsure which is correct.
-
   */
-  SECTION( "cross-field diffusion, straight field lines" )
+
+  int const flux_ea = 1;
+  int const surface_model = 1;
+  int const bfield_interp = 0;
+  int const use_3d_geom = 0;
+  int const geom_hash = 0;
+  int const spectroscopy = 2;
+  int const surface_potential = 0;
+
+  SECTION( "straight" )
   {
+    int const perp_diffusion = 1;
+    int const cylsymm = 0;
+
     /* timesteps */
     int nT = 500000;
 
@@ -57,6 +68,12 @@ TEST_CASE( "cross-field diffusion operator" )
     cfg_geom.setAutoConvert(true);
 
     importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE);
+
+    /* Captain! Instantiate a "use" module here? Get the config values following... */
+    class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
+
+    /* Captain! This will replace "flags" */
+    auto use = std::make_shared< class use >( query );
 
     auto gitr_flags = new Flags( cfg_geom );
 
@@ -75,10 +92,12 @@ TEST_CASE( "cross-field diffusion operator" )
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    int nSurfaces = importGeometry( cfg_geom, boundaries );
+    /* Ahoy, Captain! Function call, drop in, why don't ye?! */
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
 
     REQUIRE( nSurfaces == 2 );
 
+    /* Ahoy, Captain! Function call, drop in, why don't ye?! */
     auto particleArray = new Particles( nP, 1, cfg_geom, gitr_flags );
     std::cout << "p " << particleArray->charge[0] << " x " << particleArray->xprevious[0]<<std::endl;
 
@@ -102,12 +121,16 @@ TEST_CASE( "cross-field diffusion operator" )
       closeGeomGridy(1), closeGeomGridz(1);
     sim::Array<int> closeGeom(1, 0);
 
+    /* Captain! Tons of build_time options in geometry_check */
     geometry_check geometry_check0(
         particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model,
+        geom_hash,
+        use_3d_geom,
+        cylsymm );
 
 
     /* data collection variables */
@@ -131,7 +154,7 @@ TEST_CASE( "cross-field diffusion operator" )
     sim::Array<gitr_precision> gridX_bins(net_nX), gridY_bins(1), gridZ_bins(net_nZ);
 
     sim::Array<gitr_precision> gridX_midpoints(net_nX-1);
-    sim::Array<double> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
+    sim::Array<gitr_precision> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
 //net_Bins needs adjusting to be in the middle of the grids
     for (int i = 0; i < net_nX; i++) {
       gridX_bins[i] = netX0 + 1.0 / (net_nX - 1) * i * (netX1 - netX0);
@@ -149,7 +172,7 @@ TEST_CASE( "cross-field diffusion operator" )
     }
     spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt);
+                     &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy );
 
     #if USE_CUDA > 0
     typedef curandState rand_type;
@@ -162,7 +185,7 @@ TEST_CASE( "cross-field diffusion operator" )
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nP);
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize<rand_type>(&state1.front(), 0));
+                   curandInitialize<rand_type>(&state1.front(), true));
 
   gitr_precision perpDiffusionCoeff = 0.0;
   cfg_geom.lookupValue("backgroundPlasmaProfiles.Diffusion.Dperp",
@@ -174,18 +197,18 @@ TEST_CASE( "cross-field diffusion operator" )
 
   sim::Array<gitr_precision> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
 
-  double zero = 0;
+  gitr_precision zero = 0;
   std::string empty = "";
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
-  importVectorField(cfg_geom, "", BFIELD_INTERP, bfieldCfg, nR_Bfield,
+  importVectorField(cfg_geom, "", bfield_interp, bfieldCfg, nR_Bfield,
       0, nZ_Bfield, bfieldGridr.front(),
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
 
-  crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
+  crossFieldDiffusion crossFieldDiffusion0( gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front());
+      &bz.front(), &by.front(), perp_diffusion, cylsymm );
     
   // half-side length
     double s = 0.2;
@@ -266,11 +289,18 @@ TEST_CASE( "cross-field diffusion operator" )
     GITR_USE_PERP_DIFFUSION=2
     USE_CYLSYMM=1
 
+    USE3DTETGEOM=0
+    USE_SURFACE_POTENTIAL=0
+    PARTICLE_SOURCE_FILE=0
+    USE_ADAPTIVE_DT=0
+
   */
-  SECTION( "cross-field diffusion, curved field lines" )
+  SECTION( "curved" )
   {
+    int const perp_diffusion = 2;
     /* timesteps */
     int nT = 200000;
+    int const cylsymm = 1;
 
     gitr_precision dt = 1.0e-7;
 
@@ -295,18 +325,9 @@ TEST_CASE( "cross-field diffusion operator" )
 
     int nP = impurity[ "nP" ];
 
-    /* Correct flags for this unit test */
-    /*
-    USE3DTETGEOM=0
-    USE_SURFACE_POTENTIAL=0
-    PARTICLE_SOURCE_FILE=0
-    USEPERPDIFFUSION=1 (PARDIFFUSION is deprecated )
-    USE_ADAPTIVE_DT=0
-    */
-
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    int nSurfaces = importGeometry( cfg_geom, boundaries );
+    int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
 
     REQUIRE( nSurfaces == 2 );
 
@@ -342,7 +363,10 @@ TEST_CASE( "cross-field diffusion operator" )
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
         n_closeGeomElements.data(), &closeGeomGridr.front(),
         &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-        nEdist, E0dist, Edist, nAdist, A0dist, Adist);
+        nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model,
+        geom_hash,
+        use_3d_geom,
+        cylsymm );
 
 
     /* data collection variables */
@@ -366,7 +390,7 @@ TEST_CASE( "cross-field diffusion operator" )
     sim::Array<gitr_precision> gridX_bins(net_nX), gridY_bins(1), gridZ_bins(net_nZ);
 
     sim::Array<gitr_precision> gridX_midpoints(net_nX-1);
-    sim::Array<double> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
+    sim::Array<gitr_precision> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
 //net_Bins needs adjusting to be in the middle of the grids
     for (int i = 0; i < net_nX; i++) {
       gridX_bins[i] = netX0 + 1.0 / (net_nX - 1) * i * (netX1 - netX0);
@@ -384,7 +408,7 @@ TEST_CASE( "cross-field diffusion operator" )
     }
     spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt);
+                     &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy );
 
     #if USE_CUDA > 0
     typedef curandState rand_type;
@@ -397,7 +421,7 @@ TEST_CASE( "cross-field diffusion operator" )
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nP);
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
-                   curandInitialize<rand_type>(&state1.front(), 0));
+                   curandInitialize<rand_type>(&state1.front(), true));
 
   gitr_precision perpDiffusionCoeff = 0.0;
   cfg_geom.lookupValue("backgroundPlasmaProfiles.Diffusion.Dperp",
@@ -409,18 +433,18 @@ TEST_CASE( "cross-field diffusion operator" )
 
   sim::Array<gitr_precision> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
 
-  double zero = 0;
+  gitr_precision zero = 0;
   std::string empty = "";
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
-  importVectorField(cfg_geom, "", BFIELD_INTERP, bfieldCfg, nR_Bfield,
+  importVectorField(cfg_geom, "", bfield_interp, bfieldCfg, nR_Bfield,
       0, nZ_Bfield, bfieldGridr.front(),
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
 
-  crossFieldDiffusion crossFieldDiffusion0(gitr_flags,
+  crossFieldDiffusion crossFieldDiffusion0( gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front());
+      &bz.front(), &by.front(), perp_diffusion, cylsymm );
     
   // half-side length
     double s = 0.2;

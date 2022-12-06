@@ -15,7 +15,11 @@
 #include <cmath>
 #include "boris.h"
 #include "spectroscopy.h"
+
+#if USE_OPENMP == 1
 #include "omp.h"
+#endif
+
 #ifdef __CUDACC__
 #include <thrust/random.h>
 #else
@@ -68,6 +72,10 @@ struct reflection {
 #else
         std::mt19937 *state;
 #endif
+    int flux_ea;
+    int use_3d_geom;
+    int cylsymm;
+
     reflection(Particles* _particles, double _dt,
 #if __CUDACC__
                             curandState *_state,
@@ -104,7 +112,10 @@ struct reflection {
     gitr_precision _Edist,
     int _nAdist,
     gitr_precision _A0dist,
-    gitr_precision _Adist);
+    gitr_precision _Adist,
+    int flux_ea_,
+    int use_3d_geom_,
+    int cylsymm_ );
 
 CUDA_CALLABLE_MEMBER_DEVICE
 void operator()(std::size_t indx) const;

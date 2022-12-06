@@ -37,8 +37,11 @@
     gitr_precision _Edist,
     int _nAdist,
     gitr_precision _A0dist,
-    gitr_precision _Adist) :
-particles(_particles),
+    gitr_precision _Adist,
+    int flux_ea_,
+    int use_3d_geom_,
+    int cylsymm_ ) :
+                             particles(_particles),
                              dt(_dt),
                              nLines(_nLines),
                              boundaryVector(_boundaryVector),
@@ -72,7 +75,11 @@ particles(_particles),
                              nAdist(_nAdist),
                              A0dist(_A0dist),
                              Adist(_Adist),
-                             state(_state) { }
+                             state(_state),
+                             flux_ea( flux_ea_ ),
+                             use_3d_geom( use_3d_geom_ ),
+                             cylsymm( cylsymm_ )
+                             { }
 
 CUDA_CALLABLE_MEMBER_DEVICE
 void reflection::operator()(std::size_t indx) const {
@@ -107,12 +114,17 @@ void reflection::operator()(std::size_t indx) const {
     gitr_precision vx = particles->vx[indx];
     gitr_precision vy = particles->vy[indx];
     gitr_precision vz = particles->vz[indx];
-#if FLUX_EA > 0
-    gitr_precision dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
-    gitr_precision dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
     int AdistInd = 0;
     int EdistInd = 0;
-#endif
+    gitr_precision dEdist;
+    gitr_precision dAdist;
+
+    if( flux_ea > 0 )
+    {
+      dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
+      dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
+    }
+
     particles->firstCollision[indx] = 1;
     particleTrackVector[0] = vx;
     particleTrackVector[1] = vy;
@@ -128,7 +140,7 @@ void reflection::operator()(std::size_t indx) const {
          E0_for_flux_binning = Edist;
       
     wallIndex = particles->wallIndex[indx];
-    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx]);
+    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx], use_3d_geom, cylsymm );
     particleTrackVector[0] = particleTrackVector[0] / norm_part;
     particleTrackVector[1] = particleTrackVector[1] / norm_part;
     particleTrackVector[2] = particleTrackVector[2] / norm_part;
@@ -162,7 +174,6 @@ void reflection::operator()(std::size_t indx) const {
     
     totalYR = Y0 + R0;
 
-#if PARTICLESEEDS > 0
 #ifdef __CUDACC__
     gitr_precision r7 = curand_uniform(&state[indx]);
     gitr_precision r8 = curand_uniform(&state[indx]);
@@ -176,18 +187,6 @@ void reflection::operator()(std::size_t indx) const {
     gitr_precision r10 = dist(state[indx]);
 #endif
 
-#else
-  #if __CUDACC__
-    gitr_precision r7 = curand_uniform(&state[6]);
-    gitr_precision r8 = curand_uniform(&state[7]);
-    gitr_precision r9 = curand_uniform(&state[8]);
-  #else
-    std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
-    gitr_precision r7=dist(state[6]);
-    gitr_precision r8=dist(state[7]);
-    gitr_precision r9=dist(state[8]);
-  #endif
-#endif
     //particle either reflects or deposits
     gitr_precision sputtProb = Y0/totalYR;
     int didReflect = 0;
@@ -207,7 +206,9 @@ void reflection::operator()(std::size_t indx) const {
                              E_sputtRefDistIn,EDist_CDF_R_regrid );
 
          newWeight = weight*(totalYR);
-#if FLUX_EA > 0
+
+        if( flux_ea > 0 )
+        {
         EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
         AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
         if((EdistInd >= 0) && (EdistInd < nEdist) && 
@@ -220,7 +221,7 @@ void reflection::operator()(std::size_t indx) const {
                 surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
         #endif
         }
-#endif
+        }
         if(surface > 0)
         {
 
@@ -229,9 +230,11 @@ void reflection::operator()(std::size_t indx) const {
                 atomicAdd1(&surfaces->grossErosion[surfaceHit],weight*Y0);
         #else
                 #pragma omp atomic
-                surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
+                //surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
+                surfaces->grossDeposition[surfaceHit] += ( weight*(1.0-R0) );
                 #pragma omp atomic
-                surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit]+weight*Y0;
+                //surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit]+weight*Y0;
+                surfaces->grossErosion[surfaceHit] += ( weight * Y0 );
         #endif
         }
       }
@@ -246,7 +249,8 @@ void reflection::operator()(std::size_t indx) const {
                  energyDistGrid01,A_sputtRefDistIn,E_sputtRefDistIn,EDist_CDF_Y_regrid);
 		    
         newWeight=weight*totalYR;
-      #if FLUX_EA > 0
+      if( flux_ea > 0 )
+      {
         EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
         AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
         if((EdistInd >= 0) && (EdistInd < nEdist) && 
@@ -259,7 +263,7 @@ void reflection::operator()(std::size_t indx) const {
                 surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
         #endif 
         }
-	    #endif
+      }
         if(sputtProb == 0.0) newWeight = 0.0;
         if(surface > 0)
         {
@@ -322,7 +326,8 @@ void reflection::operator()(std::size_t indx) const {
         surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
       //boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
     #endif
-    #if FLUX_EA > 0
+    if( flux_ea > 0 )
+    {
         EdistInd = std::floor((E0_for_flux_binning-E0dist)/dEdist);
         AdistInd = std::floor((thetaImpact-A0dist)/dAdist);
       
@@ -338,7 +343,7 @@ void reflection::operator()(std::size_t indx) const {
           surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
 #endif
         }
-#endif
+    }
       }
       //reflect with weight and new initial conditions
       
@@ -352,7 +357,9 @@ void reflection::operator()(std::size_t indx) const {
       vSampled[0] = V0 * std::sin(aInterpVal * 3.1415 / 180) * std::cos(2.0 * 3.1415 * r10);
       vSampled[1] = V0 * std::sin(aInterpVal * 3.1415 / 180) * std::sin(2.0 * 3.1415 * r10);
       vSampled[2] = V0 * std::cos(aInterpVal * 3.1415 / 180);
-      boundaryVector[wallHit].transformToSurface(vSampled, particles->y[indx], particles->x[indx]);
+      boundaryVector[wallHit].transformToSurface(vSampled, particles->y[indx],
+                                                 particles->x[indx], use_3d_geom,
+                                                 cylsymm );
       particles->vx[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[0];
       particles->vy[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[1];
       particles->vz[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[2];

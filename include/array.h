@@ -56,6 +56,7 @@ namespace sim {
       if(err != cudaSuccess){
         throw std::runtime_error("error allocating managed memory");
       }
+      /* Captain! What are the contents of the "bin" variables in the CUDA vs OpenMP case?? */
       return data;
 #else
       return new T[capacity_];
@@ -110,9 +111,12 @@ namespace sim {
       free_data();
     }
 
+    /* Captain! Is this needed? Delete the copy assignment and copy constructor */
     /*! Copy constructor
      */
-    Array(const Array &source) {
+    Array(const Array &source) = delete;
+    /*
+    {
       capacity_ = source.capacity_;
       size_ = source.size_;
       data_ = alloc_data();
@@ -123,8 +127,10 @@ namespace sim {
         }
       }
     }
+    */
 
-    Array &operator=(const Array &source)// = delete;
+    Array &operator=(const Array &source) = delete;
+    /*
     {
         for(int i=0;i<source.size();i++)
         {
@@ -132,6 +138,7 @@ namespace sim {
         }
         return *this;
     }
+    */
     
     Array &operator=(const std::vector<T> &source)// = delete;
     {
@@ -236,22 +243,26 @@ namespace sim {
     /*! Remove element from end of the array
      * Remove element from end of array by reducing size by 1, element is not destructed
      */
+    /*
     void pop_back() {
       if (size_ == 0)
         throw std::runtime_error("Array popped_back with 0 size");
       else
         size_--;
     }
+    */
 
     /*! Remove multiple elements from end of the array
      * Remove element from end of array by reducing size by 1, element is not destructed
      */
+     /*
     void pop_back(std::size_t pop_count) {
       if (size_ == 0 && pop_count != 0)
         throw std::runtime_error("Array popped_back with 0 size");
       else
         size_ -= pop_count;
     }
+    */
 
     /*! Getter for pointer to underlying data
      */
@@ -331,19 +342,23 @@ void print(std::string const label)
 
   /*! begin iterator for range based for loops
    */
+  /*
   template<typename T>
   DEVICE_CALLABLE
   const T *begin(const Array<T> &array) {
     return array.data();
   }
+  */
 
   /*! end iterator for range based for loops
    */
+   /*
   template<typename T>
   DEVICE_CALLABLE
   const T *end(const Array<T> &array) {
     return array.data() + array.size();
   }
+  */
 
 
 

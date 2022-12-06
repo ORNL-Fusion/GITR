@@ -1,4 +1,4 @@
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "slow_math.h"
 #include "constants.h"
 

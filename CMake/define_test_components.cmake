@@ -3,21 +3,9 @@ include( CTest )
 
 enable_testing()
 
-# create a component to encapsulate the external testing framework
-# Since catch2 is a header-only library, it's target can be created as an interface target
-add_library( catch2 INTERFACE )
-
-target_include_directories( catch2 INTERFACE 
-                            test_include )
-
-add_library( test_utils test_src/test_utils.cpp test_include/test_utils.hpp )
-
-target_include_directories( test_utils PUBLIC ${CMAKE_SOURCE_DIR} )
-
-target_link_libraries( test_utils PUBLIC catch2 )
-
-set( cpu_test_targets
+set( non_gpu_test_targets
      slow_math_tests
+     interpolator_tests
      config_interface_tests )
 
 # atomic tests does not compile and is disabled
@@ -27,16 +15,15 @@ set( gpu_test_targets
      field_tests
      atomic_tests 
      boris_tests
-     surface_model_tests
      cross_field_diffusion_tests )
 
 if( NOT GITR_USE_CUDA )
 
-  set( cpu_test_targets ${cpu_test_targets} ${gpu_test_targets} )
+  set( non_gpu_test_targets ${non_gpu_test_targets} ${gpu_test_targets} )
 
 endif()
 
-foreach( component IN LISTS cpu_test_targets )
+foreach( component IN LISTS non_gpu_test_targets )
 
   add_executable( ${component} test_src/${component}.cpp )
 
@@ -67,3 +54,15 @@ if( GITR_USE_CUDA )
   endforeach()
 
 endif()
+
+# Captain! Add a "ninja clean that will delete all the 
+# add simple system tests
+add_test( NAME system_particle_straightline 
+          COMMAND GITR -c input/gitrInput.cfg
+          WORKING_DIRECTORY
+          "${CMAKE_BINARY_DIR}/examples/particle_trajectories/straightLine/2Dgeom" )
+
+add_test( NAME system_particle_gyro
+          COMMAND GITR -c input/gitrInput.cfg
+          WORKING_DIRECTORY
+          "${CMAKE_BINARY_DIR}/examples/particle_trajectories/gyroMotion" )

@@ -4,7 +4,7 @@
 # before linking 
 if( dependencies )
 
-  foreach( component IN LISTS cpu_targets gpu_targets )
+  foreach( component IN LISTS non_gpu_targets gpu_targets )
 
     add_dependencies( ${component} ${dependencies} )
 
@@ -12,15 +12,14 @@ if( dependencies )
 
 endif()
 
-# ensure that test targets are built after source targets
 foreach( target IN LISTS cpu_test_targets gpu_test_targets )
 
-  add_dependencies( ${target} ${cpu_targets} ${gpu_targets} test_utils )
+  add_dependencies( ${target} ${cpu_targets} ${gpu_targets} ${dependencies} )
 
 endforeach()
 
 # ensure that all source targets are built before GITR
-add_dependencies( GITR ${cpu_targets} ${gpu_targets} )
+add_dependencies( GITR ${non_gpu_targets} ${gpu_targets} )
 
 # ensure that hdf5 is build before netcdf
 add_dependencies( netcdf hdf5 )

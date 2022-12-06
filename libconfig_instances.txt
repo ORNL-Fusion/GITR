@@ -1,0 +1,129 @@
+./tasks.txt:14:   safe replacement for libconfig.
+./tasks.txt:16:   - make a list of every libconfig invocation and how it can be replaced with json
+./tasks.txt:18:   - make a list of all the places that libconfig is used
+Binary file ./src/.gitr.cpp.swp matches
+./src/utils.cpp:2:#include "libconfig.h++"
+./src/utils.cpp:13:#include "libconfig.h++"
+./src/utils.cpp:37:using namespace libconfig;
+./src/utils.cpp:72:void checkFlags(libconfig::Config &cfg)
+./src/utils.cpp:177:T getVariable (libconfig::Config &cfg,const std::string& s, T &a)
+./src/utils.cpp:192:template int getVariable(libconfig::Config &cfg,const std::string& s, int &a);
+./src/utils.cpp:193:template float getVariable(libconfig::Config &cfg,const std::string& s, float &a);
+./src/utils.cpp:194:template double getVariable(libconfig::Config &cfg,const std::string& s, double &a);
+./src/utils.cpp:195:template std::string getVariable(libconfig::Config &cfg,const std::string& s, std::string &a);
+./src/utils.cpp:198:T get_variable(libconfig::Config &cfg, const std::string s) {
+./src/utils.cpp:209:template int get_variable(libconfig::Config &cfg, const std::string s);
+./src/utils.cpp:210:template float get_variable(libconfig::Config &cfg, const std::string s);
+./src/utils.cpp:211:template double get_variable(libconfig::Config &cfg, const std::string s);
+./src/utils.cpp:212:template const char* get_variable(libconfig::Config &cfg, const std::string s);
+./src/utils.cpp:215:T getVariable_cfg (libconfig::Config &cfg,const std::string& s)
+./src/utils.cpp:230:template int getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+./src/utils.cpp:231:template unsigned int getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+./src/utils.cpp:232:template float getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+./src/utils.cpp:233:template double getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+./src/utils.cpp:234:template std::string getVariable_cfg(libconfig::Config &cfg,const std::string& s);
+./src/utils.cpp:236:int getDimFromFile (libconfig::Config &cfg,const std::string& file,const std::string& section,
+./src/utils.cpp:443:int importLibConfig(libconfig::Config &cfg, std::string filepath)
+./src/utils.cpp:460:    std::cout << "Finished libconfig import  "<< filepath.c_str() << std::endl;
+./src/utils.cpp:464:int importVectorFieldNs(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int &nR, int &nY,int &nZ,std::string &fileToRead)
+./src/utils.cpp:482:int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int nR, int nY,int nZ,gitr_precision &gridR,gitr_precision &gridY,gitr_precision &gridZ,gitr_precision &r, gitr_precision &y,gitr_precision &z,std::string &fileToRead)
+./src/utils.cpp:507:int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries)
+./src/utils.cpp:620:int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::string fieldCfgString,int *nR, int *nY,int *nZ,int *n,int &nRTotal,int &nYTotal,int &nZTotal,int *nHashPoints, int &nHashPointsTotal,int &nGeomHash)
+./src/fields.cpp:18:Field::Field(libconfig::Config &cfg, std::string field_name) {
+./src/curandInitialize.cpp:12:#include "libconfig.h++"
+./src/flags.cpp:11:bool Flags::initialize_flags(libconfig::Config &cfg,std::string s) 
+./src/config_interface.cpp:3:libconfig_string_query::libconfig_string_query( std::string libconfig_file )
+./src/config_interface.cpp:8:    cfg.readFile( libconfig_file.c_str() );
+./src/config_interface.cpp:11:  catch(const libconfig::FileIOException &fioex)
+./src/config_interface.cpp:16:  catch(const libconfig::ParseException &pex)
+./src/config_interface.cpp:42:impurity_particle_source( class libconfig_string_query const &query,
+./src/config_interface.cpp:75:  ionization_process( class libconfig_string_query const &query,
+./src/config_interface.cpp:89:use::use( class libconfig_string_query const &query,
+./src/config_interface.cpp:142:config_module_base::config_module_base( class libconfig_string_query const &query,
+./src/setup.cpp:6:#include <libconfig.h++>
+./src/setup.cpp:11:void INIT(int nP, Particle p[], libconfig::Config &cfg)
+./src/gitr.cpp:35:#include <libconfig.h++>
+./src/gitr.cpp:97:  class libconfig_string_query query( "input/gitrInput.cfg" );
+./src/gitr.cpp:143:  libconfig::Config cfg, cfg_geom;
+./src/gitr.cpp:267:      libconfig::Setting &geom = cfg_geom.lookup("geom");
+./src/gitr.cpp:273:    } catch (const libconfig::SettingNotFoundException &nfex) {
+./src/gitr.cpp:468:    libconfig::Setting& geomHash = cfg.lookup("geometry_hash");
+./src/gitr.cpp:554:	  libconfig::Setting &geomHash = cfg.lookup("geometry_hash");
+./src/gitr.cpp:616:    libconfig::Setting &geomHash = cfg.lookup("geometry_hash");
+./src/gitr.cpp:3340:  libconfig::Config cfg_particles;
+./include/flags.hpp:10:#include "libconfig.h++"
+./include/flags.hpp:21:   Flags(libconfig::Config &cfg) : 
+./include/flags.hpp:25:   bool initialize_flags(libconfig::Config &cfg, std::string s);
+./include/curandInitialize2.h:12:#include "libconfig.h++"
+./include/h1.cuh:13:#include "libconfig.h++"
+./include/h1.cuh:26:void INIT(int nP, Particle p[], libconfig::Config &cfg);
+./include/Fields.h:18:#include <libconfig.h++>
+./include/Fields.h:48:  CUDA_CALLABLE_MEMBER Field(libconfig::Config &cfg, std::string field_name); 
+./include/Particles.h:13:#include <libconfig.h++>
+./include/Particles.h:251:  Particles(std::size_t nP,std::size_t nStreams,libconfig::Config &cfg, Flags *gitr_flags) :
+./include/config_interface.h:7:#include "libconfig.h++"
+./include/config_interface.h:9:/* This class wraps the libconfig object and inserts
+./include/config_interface.h:16:class libconfig_string_query
+./include/config_interface.h:20:  libconfig_string_query( std::string libconfig_file = "" );
+./include/config_interface.h:36:  libconfig::Config cfg;
+./include/config_interface.h:43:  config_module_base( class libconfig_string_query const &query,
+./include/config_interface.h:69:  class libconfig_string_query const &query;
+./include/config_interface.h:87:  ionization_process( class libconfig_string_query const &query,
+./include/config_interface.h:102:  impurity_particle_source( class libconfig_string_query const &query,
+./include/config_interface.h:160:  use( class libconfig_string_query const &query,
+./include/utils.h:19:#include "libconfig.h++"
+./include/utils.h:20:#include <libconfig.h++>
+./include/utils.h:29:void checkFlags(libconfig::Config &cfg);
+./include/utils.h:40:T getVariable (libconfig::Config &cfg,const std::string& s, T &a);
+./include/utils.h:42:T getVariable_cfg (libconfig::Config &cfg,const std::string& s);
+./include/utils.h:44:extern template int getVariable(libconfig::Config &cfg,const std::string& s, int &a);
+./include/utils.h:45:extern template float getVariable(libconfig::Config &cfg,const std::string& s, float &a);
+./include/utils.h:46:extern template double getVariable(libconfig::Config &cfg,const std::string& s, double &a);
+./include/utils.h:47:extern template std::string getVariable(libconfig::Config &cfg,const std::string& s, std::string &a);
+./include/utils.h:50:P get_variable(libconfig::Config &cfg, const std::string s);
+./include/utils.h:52:extern template int get_variable(libconfig::Config &cfg, const std::string s);
+./include/utils.h:53:extern template float get_variable(libconfig::Config &cfg, const std::string s);
+./include/utils.h:54:extern template double get_variable(libconfig::Config &cfg, const std::string s);
+./include/utils.h:55:extern template const char* get_variable(libconfig::Config &cfg, const std::string s);
+./include/utils.h:129:int getVarFromFile (libconfig::Config &cfg,const std::string& file,const std::string& section,
+./include/utils.h:137:int getDimFromFile(libconfig::Config &cfg,const std::string& file,const std::string& section,const std::string& s);
+./include/utils.h:140:int importLibConfig(libconfig::Config &cfg,std::string filepath);
+./include/utils.h:141:int importVectorFieldNs(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int &nR, int &nY,int &nZ,std::string &fileToRead);
+./include/utils.h:142:int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int nR, int nY,int nZ,gitr_precision &gridR,gitr_precision &gridY,gitr_precision &gridZ,gitr_precision &r, gitr_precision &y,gitr_precision &z,std::string &fileToRead);
+./include/utils.h:143:int importGeometry(libconfig::Config &cfg,sim::Array<Boundary> &boundaries);
+./include/utils.h:168:int importHashNs(libconfig::Config &cfg,std::string input_path,int nHashes,std::string fieldCfgString,int *nR, int *nY,int *nZ,int *n,int &nRTotal,int &nYTotal,int &nZTotal,int *nHashPoints, int &nHashPointsTotal,int &nGeomHash);
+./include/curandInitialize.h:12:#include "libconfig.h++"
+./test_src/atomic_tests.cpp:46:    libconfig::Config cfg;
+./test_src/atomic_tests.cpp:229:    libconfig::Config cfg;
+./test_src/atomic_tests.cpp:408:    libconfig::Config cfg;
+./test_src/field_tests.cpp:25:    libconfig::Config cfg;
+./test_src/field_tests.cpp:43:    libconfig::Config cfg;
+./test_src/file_io_tests.cpp:3:#include <libconfig.h++>
+./test_src/file_io_tests.cpp:20:    libconfig::Config cfg;
+./test_src/file_io_tests.cpp:35:    libconfig::Config cfg;
+./test_src/file_io_tests.cpp:52:    libconfig::Config cfg;
+./test_src/file_io_tests.cpp:69:    libconfig::Config cfg;
+./test_src/file_io_tests.cpp:82:  libconfig::Config cfg,cfg_geom;
+./test_src/file_io_tests.cpp:90:      libconfig::Setting &geom = cfg_geom.lookup("geom");
+./test_src/file_io_tests.cpp:96:    } catch (const libconfig::SettingNotFoundException &nfex) {
+./test_src/file_io_tests.cpp:137:  libconfig::Config cfg, cfg_geom;
+./test_src/file_io_tests.cpp:145:      libconfig::Setting &geom = cfg_geom.lookup("geom");
+./test_src/file_io_tests.cpp:151:    } catch (const libconfig::SettingNotFoundException &nfex) {
+./test_src/file_io_tests.cpp:223:  libconfig::Config cfg,cfg_geom;
+./test_src/file_io_tests.cpp:231:      libconfig::Setting &geom = cfg_geom.lookup("geom");
+./test_src/file_io_tests.cpp:237:    } catch (const libconfig::SettingNotFoundException &nfex) {
+./test_src/boris_tests.cpp:256:    libconfig::Config cfg_geom;
+./test_src/boris_tests.cpp:497:    libconfig::Config cfg_geom;
+./test_src/boris_tests.cpp:679:    libconfig::Config cfg_geom;
+./test_src/cross_field_diffusion_tests.cpp:55:    libconfig::Config cfg_geom;
+./test_src/cross_field_diffusion_tests.cpp:65:    libconfig::Setting &geom = cfg_geom.lookup( "geom" );
+./test_src/cross_field_diffusion_tests.cpp:72:    libconfig::Setting &impurity = cfg_geom.lookup( "impurityParticleSource" );
+./test_src/cross_field_diffusion_tests.cpp:277:    libconfig::Config cfg_geom;
+./test_src/cross_field_diffusion_tests.cpp:287:    libconfig::Setting &geom = cfg_geom.lookup( "geom" );
+./test_src/cross_field_diffusion_tests.cpp:294:    libconfig::Setting &impurity = cfg_geom.lookup( "impurityParticleSource" );
+./test_src/surface_model_tests.cpp:50:    libconfig::Config cfg;
+./test_src/surface_model_tests.cpp:58:    libconfig::Setting &impurity = cfg.lookup( "impurityParticleSource" );
+./test_src/coulomb_tests.cpp:224:    libconfig::Config cfg;
+./test_src/coulomb_tests.cpp:351:    libconfig::Config cfg;
+./test_src/config_interface_tests.cpp:12:  class libconfig_string_query query( CONFIG_INTERFACE_UNIT_TEST_FILE );
+./test_src/config_interface_tests.cpp:14:  SECTION( "read raw libconfig data" )

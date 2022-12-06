@@ -116,3 +116,5 @@ target_link_libraries( netcdf INTERFACE
                        ${NETCDF_LIBRARY}
                        ${NETCDF_CXX_LIBRARY}
                        ${HDF5_LIBRARIES} )
+
+list( APPEND dependencies netcdf )

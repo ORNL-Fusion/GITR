@@ -62,7 +62,12 @@ geometry_check::geometry_check(
   gitr_precision _Edist,
   int _nAdist,
   gitr_precision _A0dist,
-  gitr_precision _Adist )
+  gitr_precision _Adist,
+  int flux_ea_,
+  int surface_model_,
+  int geom_hash_,
+  int use_3d_geom_,
+  int cylsymm_ )
   :
 
     particlesPointer(_particlesPointer), nLines(_nLines),
@@ -73,7 +78,9 @@ geometry_check::geometry_check(
     closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy),
     closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
     E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
-    Adist(_Adist) {}
+    Adist(_Adist), flux_ea( flux_ea_ ), surface_model( surface_model_ ),
+    geom_hash( geom_hash_ ), use_3d_geom( use_3d_geom_ ), cylsymm( cylsymm_ )
+    {}
 
 __host__  __device__
 void geometry_check::operator()(std::size_t indx) const {
@@ -97,15 +104,14 @@ void geometry_check::operator()(std::size_t indx) const {
     gitr_precision dpath =
         std::sqrt((x - xprev) * (x - xprev) + (y - yprev) * (y - yprev) +
                   (z - zprev) * (z - zprev));
-#if FLUX_EA > 0
     gitr_precision dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
     gitr_precision dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
     int AdistInd = 0;
     int EdistInd = 0;
-#endif
     gitr_precision vxy[3] = {0.0};
     gitr_precision vtheta[3] = {0.0};
-#if USECYLSYMM > 0
+     if( cylsymm )
+     {
     if (boundaryVector[nLines].periodic) // if periodic
     {
       gitr_precision pi = 3.14159265;
@@ -169,7 +175,9 @@ void geometry_check::operator()(std::size_t indx) const {
         particlesPointer->vy[indx] = vy0;
       }
     }
-#else
+    }
+    else
+    {
     /* Ahoy! So what happens if x[ index ] is to far away from the boundary condition
        to get mapped? Shouldn't this be if( x < -x_size * 0.5 ) x = x + x_size ? */
        /* will this result in incorrect behavior from the PBC equation from wikipedia */
@@ -209,8 +217,9 @@ void geometry_check::operator()(std::size_t indx) const {
             (particlesPointer->y[indx] - boundaryVector[nLines].y2);
       }
     }
-#endif
-#if USE3DTETGEOM > 0
+    }
+    if( use_3d_geom > 0 )
+    {
 
     gitr_precision a = 0.0;
     gitr_precision b = 0.0;
@@ -264,9 +273,17 @@ void geometry_check::operator()(std::size_t indx) const {
                    particlesPointer->zprevious[indx]};
     gitr_precision p1[3] = {particlesPointer->x[indx], particlesPointer->y[indx],
                    particlesPointer->z[indx]};
-#if GEOM_HASH > 0
-    // find which hash
+
+    int top_limit = -1;
+
+    int buffIndx;
+    int rInd;
+    int zInd;
+    int yInd;
     int nHash = 0;
+
+    if( geom_hash > 0 )
+    {
     int rHashInd = 0;
     int yHashInd = 0;
     int zHashInd = 0;
@@ -319,12 +336,12 @@ void geometry_check::operator()(std::size_t indx) const {
     gitr_precision dr = closeGeomGridr[rHashInd + 1] - closeGeomGridr[rHashInd];
     gitr_precision dz = closeGeomGridz[zHashInd + 1] - closeGeomGridz[zHashInd];
     gitr_precision dy = closeGeomGridy[yHashInd + 1] - closeGeomGridy[yHashInd];
-    int rInd = std::floor((r_position - closeGeomGridr[rHashInd]) / dr + 0.5);
-    int zInd = std::floor(
+    rInd = std::floor((r_position - closeGeomGridr[rHashInd]) / dr + 0.5);
+    zInd = std::floor(
         (particlesPointer->zprevious[indx] - closeGeomGridz[zHashInd]) / dz +
         0.5);
     int i = 0;
-    int yInd = std::floor(
+    yInd = std::floor(
         (particlesPointer->yprevious[indx] - closeGeomGridy[yHashInd]) / dy +
         0.5);
     // std::cout << "rHashInd " << rHashInd << " " << yHashInd << " " <<
@@ -347,21 +364,33 @@ void geometry_check::operator()(std::size_t indx) const {
       yInd = 0;
       zInd = 0;
     }
-    int buffIndx = 0;
+    buffIndx = 0;
     if (nHash > 0)
       buffIndx = nR_closeGeom[nHash - 1] * nY_closeGeom[nHash - 1] *
                  nZ_closeGeom[nHash - 1] * n_closeGeomElements[nHash - 1];
-    // std::cout << "buff Index " << buffIndx << std::endl;
-    for (int j = 0; j < n_closeGeomElements[nHash]; j++) {
+
+    top_limit = n_closeGeomElements[ nHash ];
+    }
+
+    else top_limit = nLines;
+
+    /* Captain! */
+    for( int k = 0; k < top_limit; k++ )
+    {
+      int i = -1;
+
+      if( geom_hash > 0 )
+      {
+
       i = closeGeom[buffIndx +
                     zInd * nY_closeGeom[nHash] * nR_closeGeom[nHash] *
                         n_closeGeomElements[nHash] +
                     yInd * nR_closeGeom[nHash] * n_closeGeomElements[nHash] +
-                    rInd * n_closeGeomElements[nHash] + j];
-      // std::cout << "i's " << i << std::endl;
-#else
-    for (int i = 0; i < nLines; i++) {
-#endif
+                    rInd * n_closeGeomElements[nHash] + k];
+      }
+
+      else i = k;
+
       a = boundaryVector[i].a;
       b = boundaryVector[i].b;
       c = boundaryVector[i].c;
@@ -523,26 +552,40 @@ else{
             particlesPointer->z[indx] = temp_position_xyz[2];
             particlesPointer->surfaceHit[indx] = nearest_boundary_index;
 }
-#else // 2D geometry
-#if USECYLSYMM > 0
-    gitr_precision pdim1 = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
-                       particlesPointer->y[indx] * particlesPointer->y[indx]);
-    gitr_precision pdim1previous = std::sqrt(particlesPointer->xprevious[indx] *
-                                   particlesPointer->xprevious[indx] +
-                               particlesPointer->yprevious[indx] *
-                                   particlesPointer->yprevious[indx]);
-    gitr_precision theta0 = std::atan2(particlesPointer->yprevious[indx],
-                          particlesPointer->xprevious[indx]);
-    gitr_precision theta1 =
-        std::atan2(particlesPointer->y[indx], particlesPointer->x[indx]);
+    }
+    // 2D geometry
+    else
+    {
+    gitr_precision pdim1;
+    gitr_precision pdim1previous;
+    gitr_precision theta0;
+    gitr_precision theta1;
     gitr_precision thetaNew = 0;
     gitr_precision rNew = 0;
     gitr_precision xNew = 0;
     gitr_precision yNew = 0;
-#else
-    gitr_precision pdim1 = particlesPointer->x[indx];
-    gitr_precision pdim1previous = particlesPointer->xprevious[indx];
-#endif
+     if( cylsymm > 0 )
+     {
+    pdim1 = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
+                       particlesPointer->y[indx] * particlesPointer->y[indx]);
+    pdim1previous = std::sqrt(particlesPointer->xprevious[indx] *
+                                   particlesPointer->xprevious[indx] +
+                               particlesPointer->yprevious[indx] *
+                                   particlesPointer->yprevious[indx]);
+    theta0 = std::atan2(particlesPointer->yprevious[indx],
+                          particlesPointer->xprevious[indx]);
+    theta1 =
+        std::atan2(particlesPointer->y[indx], particlesPointer->x[indx]);
+    thetaNew = 0;
+    rNew = 0;
+    xNew = 0;
+    yNew = 0;
+    }
+    else
+    {
+    pdim1 = particlesPointer->x[indx];
+    pdim1previous = particlesPointer->xprevious[indx];
+    }
     gitr_precision particle_slope =
         (particlesPointer->z[indx] - particlesPointer->zprevious[indx]) /
         (pdim1 - pdim1previous);
@@ -570,56 +613,61 @@ else{
 //std::cout << "r0 " << particlesPointer->x[indx] << " " <<
 //particlesPointer->y[indx] << " " <<
 //particlesPointer->z[indx]<< std::endl;
-#if GEOM_HASH > 0
-#if USECYLSYMM > 0
-    gitr_precision r_position = std::sqrt(particlesPointer->xprevious[indx] *
+
+int top_limit = -1;
+int closeIndx = 0;
+
+int rInd;
+int zInd;
+
+if( geom_hash > 0 )
+{
+    gitr_precision r_position;
+
+     if( cylsymm > 0 )
+     {
+    r_position = std::sqrt(particlesPointer->xprevious[indx] *
                                  particlesPointer->xprevious[indx] +
                              particlesPointer->yprevious[indx] *
                                  particlesPointer->yprevious[indx]);
-#else
-    gitr_precision r_position = particlesPointer->xprevious[indx];
-#endif
+    }
+    else
+    {
+    r_position = particlesPointer->xprevious[indx];
+    }
+
     gitr_precision dr = closeGeomGridr[1] - closeGeomGridr[0];
     gitr_precision dz = closeGeomGridz[1] - closeGeomGridz[0];
-    int rInd = std::floor((r_position - closeGeomGridr[0]) / dr + 0.5);
-    int zInd = std::floor(
+
+    rInd = std::floor((r_position - closeGeomGridr[0]) / dr + 0.5);
+    zInd = std::floor(
         (particlesPointer->zprevious[indx] - closeGeomGridz[0]) / dz + 0.5);
-    if (rInd < 0 || rInd >= nR_closeGeom[0])
-      rInd = 0;
-    if (zInd < 0 || zInd >= nZ_closeGeom[0])
-      zInd = 0;
-    int i = 0;
-    int closeIndx = 0;
-    for (int j = 0; j < n_closeGeomElements[0]; j++) {
+
+    if (rInd < 0 || rInd >= nR_closeGeom[0]) rInd = 0;
+
+    if (zInd < 0 || zInd >= nZ_closeGeom[0]) zInd = 0;
+
+    top_limit = n_closeGeomElements[ 0 ];
+}
+
+else top_limit = nLines;
+
+    for ( int k = 0; k < top_limit; k++ ) 
+    {
+
+      int i = -1;
+
+      if( geom_hash > 0 )
+      {
+
       closeIndx = zInd * nR_closeGeom[0] * n_closeGeomElements[0] +
-                  rInd * n_closeGeomElements[0] + j;
-      // if(zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      // rInd*n_closeGeomElements[0] + j < 0)
-      //{
-      //        zInd=0;
-      //        rInd=0;
-      //        j=0;
-      //    //std::cout << "index " <<
-      //    zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      //    rInd*n_closeGeomElements[0] + j << std::endl;
-      //}
-      //    if(zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      //    rInd*n_closeGeomElements[0] + j > 1309440)
-      //    {
-      //        zInd=0;
-      //        rInd=0;
-      //        j=0;
-      //        //std::cout << "index " <<
-      //        zInd*nR_closeGeom[0]*n_closeGeomElements[0] +
-      //        rInd*n_closeGeomElements[0] + j << std::endl;
-      //    }
+                  rInd * n_closeGeomElements[0] + k;
+
       i = closeGeom[closeIndx];
+      }
+      
+      else i = k;
     
-#else
-    for (int i = 0; i < nLines; i++) {
-#endif
-      // std::cout << "vert geom " << i << "  " <<
-      // fabs(boundaryVector[i].slope_dzdx) << " " << tol << std::endl;
       if (std::abs(boundaryVector[i].slope_dzdx) >= tol * 0.75) 
       {
         signPoint = std::copysign(1.0, pdim1 - boundaryVector[i].x1);
@@ -770,7 +818,8 @@ else{
         // particlesPointer->test0[indx] = -100.0;
         if (particle_slope >= tol * 0.75) 
         {
-#if USECYLSYMM > 0
+     if( cylsymm > 0 )
+     {
           gitr_precision x0 = particlesPointer->xprevious[indx];
           gitr_precision x1 = particlesPointer->x[indx];
           gitr_precision y0 = particlesPointer->yprevious[indx];
@@ -786,7 +835,9 @@ else{
                          (theta1 - theta0);
           particlesPointer->y[indx] = yNew;
           particlesPointer->yprevious[indx] = yNew;
-#else
+    }
+    else
+    {
           // std::cout << "Particle index " << indx << " hit wall and is
           // calculating y point " << particlesPointer->y[indx] << std::endl;
           particlesPointer->y[indx] =
@@ -802,11 +853,12 @@ else{
           // particlesPointer->z[indx] << " " << particlesPointer->y[indx] <<
           // std::endl;
 
-#endif
+    }
         } 
         else 
         {
-#if USECYLSYMM > 0
+     if( cylsymm > 0 )
+     {
           gitr_precision x0 = particlesPointer->xprevious[indx];
           gitr_precision x1 = particlesPointer->x[indx];
           gitr_precision y0 = particlesPointer->yprevious[indx];
@@ -836,7 +888,9 @@ else{
           // yNew " << xNew << " " << yNew << std::endl; std::cout <<
           // "intersectionx " << intersectionx[0] << std::endl;
           //}
-#else
+    }
+    else
+    {
           // std::cout << "Particle index " << indx << " hit wall and is
           // calculating y point " << particlesPointer->y[indx] << std::endl;
           particlesPointer->y[indx] =
@@ -851,15 +905,18 @@ else{
           // "<< particlesPointer->zprevious[indx] << " " <<
           // particlesPointer->z[indx] << " " << particlesPointer->y[indx] <<
           // std::endl;
-#endif
+          }
         }
-#if USECYLSYMM > 0
+     if( cylsymm > 0 )
+     {
         particlesPointer->xprevious[indx] = xNew;
         particlesPointer->x[indx] = particlesPointer->xprevious[indx];
-#else
+    }
+    else
+    {
         particlesPointer->x[indx] = intersectionx[0];
         particlesPointer->xprevious[indx] = intersectionx[0];
-#endif
+    }
         particlesPointer->zprevious[indx] = intersectiony[0];
         particlesPointer->z[indx] = intersectiony[0];
         // std::cout << "nInt = 1 position " << intersectionx[0] << " " <<
@@ -884,7 +941,8 @@ else{
         particlesPointer->wallIndex[indx] = intersectionIndices[minDistInd];
         particlesPointer->surfaceHit[indx] = intersectionIndices[minDistInd];
         particlesPointer->hitWall[indx] = 1.0;
-#if USECYLSYMM > 0
+     if( cylsymm )
+     {
         thetaNew = theta0 + (intersectionx[minDistInd] - pdim1previous) /
                                 (pdim1 - pdim1previous) * (theta1 - theta0);
         particlesPointer->yprevious[indx] =
@@ -894,7 +952,9 @@ else{
         // intersectionx[minDistInd]*cosf(thetaNew);
         particlesPointer->x[indx] =
             intersectionx[minDistInd] * std::cos(thetaNew);
-#else
+    }
+    else
+    {
         // std::cout << "Particle index " << indx << " hit wall and is
         // calculating y point " << particlesPointer->yprevious[indx] << " " <<
         // particlesPointer->y[indx] << std::endl;
@@ -917,7 +977,7 @@ else{
         // particlesPointer->z[indx] << " " << particlesPointer->y[indx] <<
         // std::endl;
         particlesPointer->x[indx] = intersectionx[minDistInd];
-#endif
+    }
         particlesPointer->z[indx] = intersectiony[minDistInd];
       }
     ////}
@@ -932,10 +992,11 @@ else{
       //        particlesPointer->hitWall[indx] = 1.0;
       //    }
       //}
-#endif
+    }
     if (particlesPointer->hitWall[indx] == 1.0) {
 
-#if (FLUX_EA > 0 && USESURFACEMODEL == 0)
+      if( flux_ea > 0 && surface_model == 0 )
+      {
       gitr_precision E0 = 0.0;
       gitr_precision thetaImpact = 0.0;
       gitr_precision particleTrackVector[3] = {0.0};
@@ -953,7 +1014,7 @@ else{
       int wallHitP = particlesPointer->surfaceHit[indx];
       boundaryVector[particlesPointer->surfaceHit[indx]].getSurfaceNormal(
           surfaceNormalVector, particlesPointer->y[indx],
-          particlesPointer->x[indx]);
+          particlesPointer->x[indx], use_3d_geom, cylsymm );
       particleTrackVector[0] = particleTrackVector[0] / norm_part;
       particleTrackVector[1] = particleTrackVector[1] / norm_part;
       particleTrackVector[2] = particleTrackVector[2] / norm_part;
@@ -1000,26 +1061,35 @@ else{
 #else
 
             #pragma omp atomic
+          /*
           surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                        EdistInd * nAdist + AdistInd] =
               surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                            EdistInd * nAdist + AdistInd] +
               weight;
+              */
+          surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
+                                       EdistInd * nAdist + AdistInd] += weight;
             #pragma omp atomic
-          surfaces->sumWeightStrike[surfaceHit] =
-              surfaces->sumWeightStrike[surfaceHit] + weight;
+          //surfaces->sumWeightStrike[surfaceHit] =
+           //   surfaces->sumWeightStrike[surfaceHit] + weight;
+          surfaces->sumWeightStrike[surfaceHit] += weight;
             #pragma omp atomic
-          surfaces->sumParticlesStrike[surfaceHit] =
-              surfaces->sumParticlesStrike[surfaceHit] + 1;
+          //surfaces->sumParticlesStrike[surfaceHit] =
+          //    surfaces->sumParticlesStrike[surfaceHit] + 1;
+          surfaces->sumParticlesStrike[surfaceHit]++;
             #pragma omp atomic
-          surfaces->grossDeposition[surfaceHit] =
-              surfaces->grossDeposition[surfaceHit] + weight;
+          //surfaces->grossDeposition[surfaceHit] =
+          //    surfaces->grossDeposition[surfaceHit] + weight;
+          surfaces->grossDeposition[surfaceHit] += weight;
 #endif
         }
       }
-#elif (FLUX_EA == 0 && USESURFACEMODEL == 0)
+      }
+      else if( surface_model == 0 && surface_model == 0 )
+      {
         particlesPointer->weight[indx] = 0.0;
-#endif
+      }
       // particlesPointer->transitTime[indx] = tt*dt;
     }
   }

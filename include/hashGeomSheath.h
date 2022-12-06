@@ -43,6 +43,7 @@ struct hashGeom_sheath {
    int nR;
    int nY;
    int nZ;
+   int use_3d_geom;
 
 
    hashGeom_sheath(int _nLines,
@@ -52,34 +53,42 @@ struct hashGeom_sheath {
                 gitr_precision* _z, 
                 int _n_closeGeomElements, //gitr_precision *_minDist, 
                 int *_closeGeom,
-                int _nR, int _nY, int _nZ)
+                int _nR, int _nY, int _nZ, int use_3d_geom_ )
                : nLines(_nLines),boundary(_boundary), x(_x), y(_y), z(_z), 
                n_closeGeomElements(_n_closeGeomElements), 
                //minDist(_minDist), 
-               closeGeom(_closeGeom), nR(_nR), nY(_nY), nZ(_nZ) {}
+               closeGeom(_closeGeom), nR(_nR), nY(_nY), nZ(_nZ),
+               use_3d_geom( use_3d_geom_ ) {}
     
     CUDA_CALLABLE_MEMBER_DEVICE 
     void operator()(std::size_t indx) const { 
-      #if USE3DTETGEOM > 0
-       gitr_precision kk = indx/(nR*nY);
+
+       gitr_precision x0;
+       gitr_precision y0;
+       gitr_precision z0;
+       gitr_precision kk;
+
+    if( use_3d_geom > 0 )
+    {
+       kk = indx/(nR*nY);
        int k = std::floor(kk);
        int jjj = indx - k*nR*nY;
        gitr_precision jj = 1.0*jjj/nR;
        int j = std::floor(jj);
        int i = indx - j*nR - k*(nR*nY);
-       int xyzIndx = indx;
-       gitr_precision x0 = x[i];
-       gitr_precision y0 = y[j];
-       gitr_precision z0 = z[k];
-      #else
-       gitr_precision kk = indx/(nR);
+       x0 = x[i];
+       y0 = y[j];
+       z0 = z[k];
+    }
+    else
+    {
+       kk = indx/(nR);
        int k = std::floor(kk);
        int i = indx - k*(nR);
-       gitr_precision x0 = x[i];
-       gitr_precision y0 = 0.0;
-       gitr_precision z0 = z[k];
-       int xyzIndx = indx;
-      #endif
+       x0 = x[i];
+       y0 = 0.0;
+       z0 = z[k];
+    }
        gitr_precision A[3] = {0.0,0.0,0.0};
             gitr_precision B[3] = {0.0,0.0,0.0};
             gitr_precision C[3] = {0.0,0.0,0.0};
@@ -115,24 +124,28 @@ struct hashGeom_sheath {
                        gitr_precision b = boundary[l].b;
                        gitr_precision c = boundary[l].c;
                        gitr_precision d = boundary[l].d;
-    #if USE3DTETGEOM > 0
+      gitr_precision perpDist;
+    if( use_3d_geom > 0 )
+    {
       gitr_precision plane_norm = boundary[l].plane_norm;
       gitr_precision t = -(a*x0 + b*y0 + c*z0 + d)/(a*a + b*b + c*c);
       p[0] = a*t + x0;
       p[1] = b*t + y0;
       p[2] = c*t + z0;
-      gitr_precision perpDist = std::sqrt((x0-p[0])*(x0-p[0]) + (y0-p[1])*(y0-p[1]) + (z0-p[2])*(z0-p[2]));
-    #endif
+      perpDist = std::sqrt((x0-p[0])*(x0-p[0]) + (y0-p[1])*(y0-p[1]) + (z0-p[2])*(z0-p[2]));
+    }
       vectorAssign(boundary[l].x1, boundary[l].y1, 
           boundary[l].z1, A);    
       vectorAssign(boundary[l].x2, boundary[l].y2, 
           boundary[l].z2, B);    
-    #if USE3DTETGEOM > 0
+    if( use_3d_geom > 0 )
+    {
       vectorAssign(boundary[l].x3, boundary[l].y3, 
           boundary[l].z3, C); 
-    #endif
+    }
       vectorSubtract(B,A,AB);
-    #if USE3DTETGEOM > 0
+    if( use_3d_geom > 0 )
+    {
       vectorSubtract(C,A,AC);
       vectorSubtract(C,B,BC);
       vectorSubtract(A,C,CA);
@@ -153,7 +166,7 @@ struct hashGeom_sheath {
         if (totalSigns == 3.0) {
         } else
           perpDist = 1.0e6;
-#endif
+    }
         p[0] = x0;
         p[1] = y0;
         p[2] = z0;
@@ -168,7 +181,9 @@ struct hashGeom_sheath {
           vectorSubtract(pA, cEdge1, dEdge1);
           distE1 = std::sqrt(vectorDotProduct(dEdge1, dEdge1));
         }
-#if USE3DTETGEOM > 0
+        gitr_precision minEdge;
+    if( use_3d_geom > 0 )
+    {
         gitr_precision pB[3] = {0.0};
         gitr_precision cEdge2[3] = {0.0};
         gitr_precision dEdge2[3] = {0.0};
@@ -191,30 +206,35 @@ struct hashGeom_sheath {
           vectorSubtract(pC, cEdge3, dEdge3);
           distE3 = std::sqrt(vectorDotProduct(dEdge3, dEdge3));
         }
-        gitr_precision minEdge = std::min(distE1, distE2);
+        minEdge = std::min(distE1, distE2);
         minEdge = std::min(distE3, minEdge);
-#else
-          //
-          gitr_precision minEdge = distE1;
-#endif
+    }
+    else
+    {
+          minEdge = distE1;
+    }
         gitr_precision d1 =std::sqrt((x0 - boundary[l].x1)*(x0 - boundary[l].x1)
                 +  (y0 - boundary[l].y1)*(y0 - boundary[l].y1)
                 +  (z0 - boundary[l].z1)*(z0 - boundary[l].z1));
         gitr_precision d2 =std::sqrt((x0 - boundary[l].x2)*(x0 - boundary[l].x2)
                 +  (y0 - boundary[l].y2)*(y0 - boundary[l].y2)
                 +  (z0 - boundary[l].z2)*(z0 - boundary[l].z2));
-          #if USE3DTETGEOM > 0
-            gitr_precision d3 =std::sqrt((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
+            gitr_precision d3;
+    if( use_3d_geom > 0 )
+    {
+            /* Ahoy, Captain! */
+            d3 =std::sqrt((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
                     +  (y0 - boundary[l].y3)*(y0 - boundary[l].y3)
                     +  (z0 - boundary[l].z3)*(z0 - boundary[l].z3));
-          #endif
+    }
           gitr_precision minOf3 = std::min(d1,d2);
           minOf3 = std::min(minOf3,minEdge);
         //std::cout << "min of two " << minOf3 << std::endl;
-          #if USE3DTETGEOM > 0
+    if( use_3d_geom > 0 )
+    {
           minOf3 = std::min(minOf3,perpDist);
             minOf3 = std::min(minOf3,d3);
-          #endif
+    }
           int minIndClose = n_closeGeomElements;
            for(int m=0; m< n_closeGeomElements; m++)
            {

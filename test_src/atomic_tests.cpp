@@ -1,4 +1,4 @@
-#include "test_utils.hpp"
+#include "catch2/catch_all.hpp"
 #include "ionize.h"
 #include "recombine.h"
 #include "utils.h"
@@ -21,8 +21,8 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
   for (size_t i = 0; i < a.size(); i++) 
   {
     
-    bool margin_check = (a[i] != Approx(b[i]).margin(margin));
-    bool epsilon_check = (a[i] != Approx(b[i]).epsilon(epsilon));
+    bool margin_check = (a[i] != Catch::Approx(b[i]).margin(margin));
+    bool epsilon_check = (a[i] != Catch::Approx(b[i]).epsilon(epsilon));
     
     if (margin_check && epsilon_check)
     {
@@ -40,6 +40,9 @@ bool compareVectors(std::vector<T> a, std::vector<T> b, T epsilon, T margin)
 }
 
 TEST_CASE("Atomic physics", "tests") {
+
+  int const cylsymm = 0;
+
   SECTION("ionize - test fixed random seeds")
   {
     // Creat cfg object and set to autoconvert types
@@ -188,7 +191,7 @@ TEST_CASE("Atomic physics", "tests") {
       &gridTemperature_Ionization.front(),
       &gridDensity_Ionization.front(),
       &rateCoeff_Ionization.front(),
-      &dev_f.front());
+      &dev_f.front(), cylsymm );
 
     // Create a vector to store values in
     std::vector<gitr_precision> values(nParticles,0.0);
@@ -363,7 +366,7 @@ TEST_CASE("Atomic physics", "tests") {
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(), &dev_f.front());
+      &rateCoeff_Ionization.front(), &dev_f.front(), cylsymm );
   
     std::vector<gitr_precision> values(nParticles,0.0);
     for (int i=0;i<nParticles;i++)
@@ -551,14 +554,14 @@ TEST_CASE("Atomic physics", "tests") {
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(),&dev_f.front());
+      &rateCoeff_Ionization.front(),&dev_f.front(), cylsymm );
   
     recombine<rand_type> recombine0(
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
-      gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags);
+      gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags, cylsymm );
 
     typedef std::chrono::high_resolution_clock gitr_time;
     auto gitr_start_clock = gitr_time::now();
