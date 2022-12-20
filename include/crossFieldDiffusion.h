@@ -215,7 +215,7 @@ void operator()(std::size_t indx) const {
       /* magnitude of spacial step for 1 particle? */
       /* m^2 / sec units for diffusionCoefficient */
       step = std::sqrt(4*diffusionCoefficient*dt_step);
-      /* Captain! Is an "else" even needed here? It doesn't appear to be so */
+      /* Is an "else" even needed here? It doesn't appear to be so */
       if( perp_diffusion <= 1 )
       {
         legacy_code_block_0( particlesPointer, indx, B_unit, step, r3 );
@@ -312,13 +312,7 @@ void operator()(std::size_t indx) const {
 
     if(std::abs(denom) < 1.0e-8)
     {
-//#endif
-    /* Captain! Turn this into a function. Move stuff from the block into the comment then
-       move it all and butcher the control flow. Define and call the lambda function here */
-    //f( perpVector, particlesPointer, indx, B_unit, step )
-    legacy_code_block_0( particlesPointer, indx, B_unit, step, r3 );
-
-  /* Captain! */
+      legacy_code_block_0( particlesPointer, indx, B_unit, step, r3 );
     }
 else
 {

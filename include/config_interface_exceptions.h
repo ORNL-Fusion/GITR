@@ -78,7 +78,6 @@ class config_exception_base : public std::exception
     message{ "configuration interface error - key not found: " };
 };
 
-/* Captain! Use config_base above to make a different message for each type of exception? */
 class invalid_key: public std::exception
 {
   public:
@@ -88,8 +87,6 @@ class invalid_key: public std::exception
       query_key( query_key )
     { }
 
-    /* Captain! All of these are identical. Template on int vs string for the unregistered
-       lookups exception and then replace all this repeated code */
     std::string get_key() const { return query_key; }
 
     std::string static get_message() { return message; }

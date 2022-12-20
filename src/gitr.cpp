@@ -260,10 +260,8 @@ int main(int argc, char **argv, char **envp) {
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   std::string bfieldFile;
   if (world_rank == 0) {
-    //std::cout << "Ahoy, Captain!" << std::endl;
     importVectorFieldNs(cfg, input_path, bfield_interp, bfieldCfg, nR_Bfield,
                         nY_Bfield, nZ_Bfield, bfieldFile);
-    //std::cout << "Ahoy, Captain!" << std::endl;
   }
 #if USE_MPI > 0
   MPI_Bcast(&nR_Bfield, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -2542,7 +2540,7 @@ if( presheath_interp == 1 )
       Efieldz(nR_Bfield * nZ_Bfield), Efieldt(nR_Bfield * nZ_Bfield),
       minDist(nR_Bfield * nZ_Bfield);
 
-  /* Captain! Likely dead block below */
+  /* decayed block below */
   if( sheath_efield > 0 )
   {
   gitr_precision thisE0[3] = {0.0, 0.0, 0.0};
@@ -2559,7 +2557,7 @@ if( presheath_interp == 1 )
                use_3d_geom, geom_hash_sheath, cylsymm );
       //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
   }
-  /* Captain! Decayed block, leave for reference */
+  /* decayed block, leave for reference */
   /*
 
 #if EFIELD_INTERP == 1
@@ -3335,7 +3333,7 @@ if( presheath_interp == 1 )
   sim::Array<int> particleSourceIndices(nSourceElements, 0),
       particleSourceBoundaryIndices(nSourceBoundaries, 0);
 
-      /* Captain! Decayed code block, leave for reference */
+      /* decayed code block, leave for reference */
       /*
       if( PARTICLE_SOURCE_SPACE == 1 )
       {
@@ -3631,7 +3629,7 @@ if( presheath_interp == 1 )
   gitr_precision eVec[3] = {0.0};
   for (int i = 0; i < nP; i++) {
   //std::cout<< "setting particle " << i << std::endl;
-  /* Captain! Decayed block below */
+  /* decayed block below */
       /*
     if( PARTICLE_SOURCE_SPACE > 0 )
     {
@@ -3697,7 +3695,6 @@ if( presheath_interp == 1 )
     }
     }
       */
-      /* Captain! Another decayed block */
       /*
 #if PARTICLE_SOURCE_ENERGY > 0
     randE = dist01E(sE);
@@ -3737,7 +3734,6 @@ if( presheath_interp == 1 )
          boundaries[currentSegment].plane_norm;
               }
 
-    /* Captain! Decayed code block below */
     /*
     randA = dist01A(sA);
     gitr_precision sputtA =
@@ -4417,7 +4413,6 @@ if( presheath_interp == 1 )
 
   if( surface_model > 0 )
   {
-    //std::cout << "Ahoy, Captain!" << std::endl;
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
   }
     }

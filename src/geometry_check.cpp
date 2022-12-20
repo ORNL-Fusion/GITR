@@ -374,7 +374,6 @@ void geometry_check::operator()(std::size_t indx) const {
 
     else top_limit = nLines;
 
-    /* Captain! */
     for( int k = 0; k < top_limit; k++ )
     {
       int i = -1;

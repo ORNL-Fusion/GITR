@@ -563,7 +563,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
         gitr_precision part1 = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)));
         gitr_precision part2 = pot*(1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius);
     }
-        /* Captain! This appears to be skipped? */
     if(minDistance == 0.0 || boundaryVector[minIndex].larmorRadius == 0.0)
     {
         Emag = 0.0;
@@ -771,7 +770,7 @@ void move_boris::operator()(std::size_t indx)
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
 
   //q_prime = 9.572528104401468e7*particlesPointer->charge[indx] / particlesPointer->amu[indx] * dt * 0.5;
-  /* Captain! original code above, new code below. q_prime = q * dt / ( 2 * m ) */
+  /* original code above, new code below. q_prime = q * dt / ( 2 * m ) */
   q_prime = particlesPointer->charge[ indx ] * gitr_constants::electron_volt * dt * 0.5 /
             ( particlesPointer->amu[ indx ] * gitr_constants::dalton );
 

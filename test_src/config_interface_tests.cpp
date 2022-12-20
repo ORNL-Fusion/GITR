@@ -130,7 +130,6 @@ TEST_CASE( "Simulation Configuration - not fully implemented" )
 
       std::string const error_key{ exception.get_key() };
 
-      /* Captain! Template this whole function */
       REQUIRE( error_key == "3" );
 
       std::cout << error_message << error_key << std::endl;

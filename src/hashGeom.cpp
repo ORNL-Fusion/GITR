@@ -23,7 +23,6 @@ void hashGeom::operator()(std::size_t indx) {
   int nYhashSum=0;
   int nZhashSum=0;
   int nHashPoints=0;
-  /* Captain! Iterate over the number of hash files */
   for(int i=0;i<nHashes;i++)
   {  
     nRhashSum = nRhashSum + nR[i];

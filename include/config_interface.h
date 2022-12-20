@@ -65,9 +65,7 @@ void libconfig_string_query::operator()( std::string const query_key,
 
   else
   {
-    /* Captain! */
     throw 0;
-    //throw not_an_array( query_key );
   }
 }
 
@@ -83,8 +81,6 @@ void libconfig_string_query::operator()( std::string const query_key, T &query_v
 
   if( setting.isArray() )
   {
-    /* Captain! */
-    //throw not_a_scalar( query_key );
     throw 0;
   }
 

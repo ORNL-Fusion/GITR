@@ -56,7 +56,6 @@ namespace sim {
       if(err != cudaSuccess){
         throw std::runtime_error("error allocating managed memory");
       }
-      /* Captain! What are the contents of the "bin" variables in the CUDA vs OpenMP case?? */
       return data;
 #else
       return new T[capacity_];
@@ -111,7 +110,6 @@ namespace sim {
       free_data();
     }
 
-    /* Captain! Is this needed? Delete the copy assignment and copy constructor */
     /*! Copy constructor
      */
     Array(const Array &source) = delete;

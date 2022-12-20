@@ -212,7 +212,7 @@ TEST_CASE( "surface model" )
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
 
-  /* Captain! To make this test work, you must put the filestring in test_data.
+  /* To make this test work, you must put the filestring in test_data.
      Currently, that needed file is nowhere to be found so you should disable this test for
      now. "input_path" is set to a dummy variable */
     std::string input_path = "";
@@ -342,7 +342,7 @@ TEST_CASE( "surface model" )
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AthetaDist_R.data(), AthetaDist_CDF_R.data());
 
-    /* Captain! Looks like a repeated function call here */
+    /* Looks like a repeated function call here */
     make2dCDF(nE_sputtRefDistIn, nA_sputtRefDistIn, nA_sputtRefDistOut,
               AthetaDist_R.data(), AthetaDist_CDF_R.data());
 
@@ -410,7 +410,7 @@ TEST_CASE( "surface model" )
                        reflection0 );
     }
 
-    /* Captain! What should this distribution match? One of the input distributions? */
+    /* What should this distribution match? One of the input distributions? */
     std::ofstream myfile;
   myfile.open ("sputtered_v.txt");
     for (int i = 0; i < nParticles; i++)

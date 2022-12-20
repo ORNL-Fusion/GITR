@@ -400,7 +400,7 @@ class interpolated_field
     std::vector< double > const max_range;
 };
 
-/* Captain! These do not make sense to be passed by value */
+/* These do not make sense to be passed by value */
 double interpolated_field::operator()( std::vector< double > const coordinates )
 {
   std::vector< double > hypercube = fetch_hypercube( field, coordinates, d_len, max_range );

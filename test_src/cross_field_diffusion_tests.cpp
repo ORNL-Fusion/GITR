@@ -69,10 +69,8 @@ TEST_CASE( "cross-field diffusion operator" )
 
     importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE);
 
-    /* Captain! Instantiate a "use" module here? Get the config values following... */
     class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
 
-    /* Captain! This will replace "flags" */
     auto use = std::make_shared< class use >( query );
 
     auto gitr_flags = new Flags( cfg_geom );
@@ -92,12 +90,10 @@ TEST_CASE( "cross-field diffusion operator" )
 
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-    /* Ahoy, Captain! Function call, drop in, why don't ye?! */
     int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
 
     REQUIRE( nSurfaces == 2 );
 
-    /* Ahoy, Captain! Function call, drop in, why don't ye?! */
     auto particleArray = new Particles( nP, 1, cfg_geom, gitr_flags );
     std::cout << "p " << particleArray->charge[0] << " x " << particleArray->xprevious[0]<<std::endl;
 
@@ -121,7 +117,6 @@ TEST_CASE( "cross-field diffusion operator" )
       closeGeomGridy(1), closeGeomGridz(1);
     sim::Array<int> closeGeom(1, 0);
 
-    /* Captain! Tons of build_time options in geometry_check */
     geometry_check geometry_check0(
         particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
         nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),

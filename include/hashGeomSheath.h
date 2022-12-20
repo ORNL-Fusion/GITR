@@ -222,7 +222,6 @@ struct hashGeom_sheath {
             gitr_precision d3;
     if( use_3d_geom > 0 )
     {
-            /* Ahoy, Captain! */
             d3 =std::sqrt((x0 - boundary[l].x3)*(x0 - boundary[l].x3)
                     +  (y0 - boundary[l].y3)*(y0 - boundary[l].y3)
                     +  (z0 - boundary[l].z3)*(z0 - boundary[l].z3));
