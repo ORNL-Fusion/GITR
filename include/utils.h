@@ -93,15 +93,9 @@ int readFileVar(const std::string& fileName,const std::string& section,const std
            xx.getVar(&x);
            if(numberOfDimensions == 2)
            {
-            //OUTPUT2d(profiles_folder,section+varName+".m",
-            //        (xx.getDim(0)).getSize(), (xx.getDim(1)).getSize(),
-            //         &x[0]);
            }
            else if(numberOfDimensions ==3)
            {
-            //OUTPUT3d(profiles_folder,section+varName+".m",
-            //        (xx.getDim(0)).getSize(), (xx.getDim(1)).getSize(), 
-            //        (xx.getDim(2)).getSize(), &x[0]);
            }
            return nTotal;
        }
@@ -154,15 +148,6 @@ int read_profile3d( std::string fileName,std::string dataName, sim::Array<int>& 
 
 int read_profiles( std::string fileName, int &n_x, int &n_z,std::string gridxName, sim::Array<gitr_precision>& gridx,std::string gridzName,
                             sim::Array<gitr_precision>& gridz, std::string dataName, sim::Array<gitr_precision>& data);
-//void OUTPUT(char outname[],int nX, int nY, float **array2d);
-//void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, float *array2d);
-//void OUTPUT1d(std::string folder,std::string outname,int nX, float *array2d);
-//void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, float *array3d);
-//void OUTPUT2d(std::string folder,std::string outname,int nX, int nY, int *array2d);
-//void OUTPUT1d(std::string folder,std::string outname,int nX, int *array2d);
-//void OUTPUT3d(std::string folder,std::string outname,int nX, int nY, int nZ, int *array3d);
-
-
 
 int readFileDim(const std::string& fileName,const std::string& varName);
 int ncdfIO(int rwCode,const std::string& fileName,std::vector< std::string> dimNames,std::vector<int> dims,

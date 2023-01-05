@@ -98,6 +98,7 @@ use::use( class libconfig_string_query const &query,
   :
   config_module_base( query, module_path )
 {
+  lookup[ use::restart] = "RESTART";
   lookup[ use::cuda ] = "USE_CUDA";
   lookup[ use::use_openmp ] = "USE_OPENMP";
   lookup[ use::mpi ] = "USE_MPI";

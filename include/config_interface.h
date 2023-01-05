@@ -197,6 +197,7 @@ class use final : public config_module_base
 
   enum : int
   {
+    restart,
     cuda,
     use_openmp,
     mpi,
