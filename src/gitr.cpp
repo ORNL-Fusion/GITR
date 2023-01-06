@@ -47,10 +47,6 @@
 //#include <experimental/filesystem>
 #endif
 
-#if USE_MPI
-#include <mpi.h>
-#endif
-
 #include </opt/homebrew/opt/libomp/include/omp.h>
 
 #include "sortParticles.h"
@@ -68,7 +64,6 @@ using namespace netCDF;
 #if USE_DOUBLE
 typedef double gitr_precision;
 netCDF::NcType netcdf_precision = netCDF::ncDouble;
-//MPI_Datatype mpi_precision = MPI_DOUBLE
 #else
 typedef float gitr_precision;
 netCDF::NcType netcdf_precision = netCDF::ncFloat;
@@ -137,41 +132,13 @@ int main(int argc, char **argv, char **envp) {
  // Set default input file string
  std::string inputFile = file_name;
 
-#if USE_MPI > 0
- // Initialize the MPI environment
- MPI_Init(&argc, &argv);
-#endif
-
  // read comand line arguments for specifying number of ppn (or gpus per node)
  // and specify input file if different than default
  // -nGPUPerNode and -i respectively
  read_comand_line_args(argc,argv,ppn,inputFile);
 
-#if USE_MPI > 0
- // Get the number of processes
- int world_size;
- MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
- // Get the rank of the process
- int world_rank;
- MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-
- // Get the name of the processor
- char processor_name[MPI_MAX_PROCESSOR_NAME];
- int name_len;
- MPI_Get_processor_name(processor_name, &name_len);
-
- // Print off a hello world message
- printf("\nHello world from processor %s, rank %d"
-        " out of %d processors\n",
-        processor_name, world_rank, world_size);
-#if USE_CUDA > 0
- cudaSetDevice(world_rank % ppn);
-#endif
-#else
  int world_rank = 0;
  int world_size = 1;
-#endif
 //cudaSetDevice(1);
  // Prepare config files for import
  libconfig::Config cfg, cfg_geom;
@@ -880,13 +847,7 @@ if( GENERATE_LC > 0 )
       {
         gridZLc[j] = z0_Lc + j * dz_Lc;
       }
-    if (nTracers % world_size != 0) {
-      std::cout << "nTracers for Lc not divisible by num MPI threads"
-                << std::endl;
-      exit(0);
-    }
- std::pair<size_t, size_t> pair{world_rank * nTracers / world_size,
-                                (world_rank + 1) * nTracers / world_size};
+ std::pair<size_t, size_t> pair{world_rank * nTracers / world_size, (world_rank + 1) * nTracers / world_size};
  std::cout << "Group " << (world_rank + 1) << ": [" << pair.first << ","
            << pair.second << ") - " << (pair.second - pair.first)
            << " elements." << std::endl;
@@ -917,7 +878,6 @@ if( GENERATE_LC > 0 )
       }
    }
   }
-
  // dummy surfaces for Lcs calculation (geometry_check)
  auto dummy_surfaces = new Surfaces(1, 1, 1);
  dummy_surfaces->setSurface(1, 1, 1, 1, 1, 1);
@@ -931,13 +891,9 @@ if( GENERATE_LC > 0 )
 #if USE_CUDA
    cudaDeviceSynchronize();
 #endif
-   thrust::for_each(thrust::device, lcBegin, lcEnd,
-                    field_line_trace(1.0, forwardTracerParticles, dr,
-                                     boundaries.data(), nLines, nR_Lc, nZ_Lc,
-                                     gridRLc.data(), gridZLc.data(), Lc.data(),
-                                     nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-                                     &bfieldGridz.front(), &br.front(),
-                                     &bz.front(), &by.front(), cylsymm ));
+   thrust::for_each(thrust::device, lcBegin, lcEnd,field_line_trace(1.0, forwardTracerParticles, dr,boundaries.data(),
+        nLines, nR_Lc, nZ_Lc,gridRLc.data(), gridZLc.data(), Lc.data(),nR_Bfield, nZ_Bfield, bfieldGridr.data(),&bfieldGridz.front(),
+        &br.front(), &bz.front(), &by.front(), cylsymm ));
 
    thrust::for_each(thrust::device, lcBegin, lcEnd,
                     field_line_trace(-1.0, backwardTracerParticles, dr,
@@ -1074,7 +1030,6 @@ if( GENERATE_LC > 0 )
 #endif
  //}
 }
-
 if( LC_INTERP > 1 )
 {
  std::cout << "Importing pre-existing connection length file" << std::endl;
@@ -1088,7 +1043,6 @@ if( LC_INTERP > 1 )
  getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "LcString", Lc);
  getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "SString", s);
 }
-
  // Background Plasma Temperature Initialization
  int nR_Temp = 1;
  int nY_Temp = 1;
@@ -1116,7 +1070,7 @@ if(temp_interp > 0 )
  n_Temp = nR_Temp * nY_Temp * nZ_Temp;
  sim::Array<gitr_precision> ti(n_Temp), te(n_Temp);
 
-   if( temp_interp == 0 )
+if( temp_interp == 0 )
    {
    getVariable(cfg, tempCfg + "ti", ti[0]);
    getVariable(cfg, tempCfg + "te", te[0]);
@@ -2841,42 +2795,23 @@ if( presheath_interp == 1 )
     }
       }
       if( particle_tracks > 0 )
-      {
-      tt = nT;
-      // dev_tt[0] = tt;
-      // std::cout << " tt for final history " << tt << std::endl;
-      thrust::for_each(thrust::device, particleBegin, particleEnd, history0);
-      }
-
+        {
+        tt = nT;
+        // dev_tt[0] = tt;
+        // std::cout << " tt for final history " << tt << std::endl;
+        thrust::for_each(thrust::device, particleBegin, particleEnd, history0);
+        }
     // Ensure that all time step loop GPU kernels are complete before proceeding
     #ifdef __CUDACC__
     cudaDeviceSynchronize();
     #endif
-
     auto finish_clock = gitr_time::now();
     std::chrono::duration<gitr_precision> fs = finish_clock - start_clock;
     printf("Time taken          is %6.3f (secs) \n", fs.count());
     printf("Time taken per step is %6.3f (secs) \n", fs.count() / (gitr_precision)nT);
-    // for(int i=0; i<nP;i++)
-    //{
-    //    std::cout << "Particle test value r1: " << i << " " <<
-    //    particleArray->test[i] << std::endl;
-    //}
-
-    /*
-    for(int i=0; i<nP ; i++)
-    {
-    std::cout << "particle " << i << " first rnd# " <<
-        particleArray->test[i] << " and x " << particleArray->xprevious[i] <<
-          " hitwall " << particleArray->hitWall[i] <<
-          " trans " << particleArray->transitTime[i] << std::endl;
-    }
-    */
-    // float tmp202 =0.0;
     #if USE_CUDA
     cudaDeviceSynchronize();
     #endif
-
     if (world_rank == 0) {
       auto MPIfinish_clock = gitr_time::now();
       std::chrono::duration<gitr_precision> fsmpi = MPIfinish_clock - finish_clock;
@@ -2901,36 +2836,36 @@ if( presheath_interp == 1 )
       gitr_precision *redeposit = new gitr_precision[nLines];
       gitr_precision *startingParticles = new gitr_precision[nLines];
       gitr_precision *surfZ = new gitr_precision[nLines];
-      for (int i = 0; i < nLines; i++) {
-        impacts[i] = boundaries[i].impacts;
-        redeposit[i] = boundaries[i].redeposit;
-        startingParticles[i] = boundaries[i].startingParticles;
-        if (boundaries[i].impacts > max_impacts) {
-          max_impacts = boundaries[i].impacts;
-          max_boundary = i;
+      for (int i = 0; i < nLines; i++) 
+        {
+          impacts[i] = boundaries[i].impacts;
+          redeposit[i] = boundaries[i].redeposit;
+          startingParticles[i] = boundaries[i].startingParticles;
+          if (boundaries[i].impacts > max_impacts) 
+            {
+              max_impacts = boundaries[i].impacts;
+              max_boundary = i;
+            }
+          surfZ[i] = boundaries[i].Z;
         }
-        surfZ[i] = boundaries[i].Z;
-      }
 
-      for (int i = 0; i < nP; i++) {
-        xOut[i] = particleArray->x[i];
-      }
-      }
+      for (int i = 0; i < nP; i++) 
+        {
+          xOut[i] = particleArray->x[i];
+        }
+          }
       else
-      {
-    //#else
-    gitr_precision *impacts = new gitr_precision[nLines];
-    gitr_precision *startingParticles = new gitr_precision[nLines];
-    gitr_precision *surfZ = new gitr_precision[nLines];
-    // float* impactEnergy = new float[nLines*1000];
-    for (int i = 0; i < nLines; i++) {
-      impacts[i] = boundaries[i].impacts;
-      startingParticles[i] = boundaries[i].startingParticles;
-      surfZ[i] = boundaries[i].Z;
-    }
-    //#endif
-      }
-      // add initial particle erosion to surface counting
+          {
+            gitr_precision *impacts = new gitr_precision[nLines];
+            gitr_precision *startingParticles = new gitr_precision[nLines];
+            gitr_precision *surfZ = new gitr_precision[nLines];
+            for (int i = 0; i < nLines; i++)
+                {
+                  impacts[i] = boundaries[i].impacts;
+                  startingParticles[i] = boundaries[i].startingParticles;
+                  surfZ[i] = boundaries[i].Z;
+                }
+          }
       int closestBoundaryIndex = 0;
       int surfIndex = 0;
       gitr_precision minDistance = 0.0;
@@ -2979,102 +2914,28 @@ if( presheath_interp == 1 )
       netCDF::NcVar nc_time0 = ncFile0.addVar("time", netcdf_precision, dims0);
       netCDF::NcVar nc_dt0 = ncFile0.addVar("dt", netcdf_precision, dims0);
       netCDF::NcVar nc_mass = ncFile0.addVar("mass", netcdf_precision, dims0);
-    #if USE_MPI > 0
-      nc_x0.putVar(&xGather[0]);
-      nc_y0.putVar(&yGather[0]);
-      nc_z0.putVar(&zGather[0]);
-      nc_vx0.putVar(&vxGather[0]);
-      nc_vy0.putVar(&vyGather[0]);
-      nc_vz0.putVar(&vzGather[0]);
+
+      std::cout << "not using mpi output" << std::endl;
+      nc_x0.putVar(&particleArray->xprevious[0]);
+      nc_y0.putVar(&particleArray->yprevious[0]);
+      nc_z0.putVar(&particleArray->zprevious[0]);
+      nc_vx0.putVar(&particleArray->vx[0]);
+      nc_vy0.putVar(&particleArray->vy[0]);
+      nc_vz0.putVar(&particleArray->vz[0]);
       nc_trans0.putVar(&particleArray->transitTime[0]);
-      nc_impact0.putVar(&hitWallGather[0]);
-      nc_surfHit0.putVar(&surfaceHitGather[0]);
-      nc_weight0.putVar(&weightGather[0]);
-      nc_charge0.putVar(&chargeGather[0]);
-      nc_leak0.putVar(&hasLeakedGather[0]);
-    #else
-    std::cout << "not using mpi output" << std::endl;
-    nc_x0.putVar(&particleArray->xprevious[0]);
-    nc_y0.putVar(&particleArray->yprevious[0]);
-    nc_z0.putVar(&particleArray->zprevious[0]);
-    nc_vx0.putVar(&particleArray->vx[0]);
-    nc_vy0.putVar(&particleArray->vy[0]);
-    nc_vz0.putVar(&particleArray->vz[0]);
-    nc_trans0.putVar(&particleArray->transitTime[0]);
-    nc_impact0.putVar(&particleArray->hitWall[0]);
-    nc_surfHit0.putVar(&particleArray->surfaceHit[0]);
-    nc_weight0.putVar(&particleArray->weight[0]);
-    nc_charge0.putVar(&particleArray->charge[0]);
-    nc_leak0.putVar(&particleArray->hasLeaked[0]);
-    nc_dist0.putVar(&particleArray->distTraveled[0]);
-    nc_time0.putVar(&particleArray->time[0]);
-    nc_dt0.putVar(&particleArray->dt[0]);
-    nc_mass.putVar(&particleArray->amu[0]);
-    #endif
+      nc_impact0.putVar(&particleArray->hitWall[0]);
+      nc_surfHit0.putVar(&particleArray->surfaceHit[0]);
+      nc_weight0.putVar(&particleArray->weight[0]);
+      nc_charge0.putVar(&particleArray->charge[0]);
+      nc_leak0.putVar(&particleArray->hasLeaked[0]);
+      nc_dist0.putVar(&particleArray->distTraveled[0]);
+      nc_time0.putVar(&particleArray->time[0]);
+      nc_dt0.putVar(&particleArray->dt[0]);
+      nc_mass.putVar(&particleArray->amu[0]);
+  
       ncFile0.close();
     if( surface_model > 0 || flux_ea > 0 )
     {
-    #if USE_MPI > 0
-      std::vector<int> surfaceNumbers(nSurfaces, 0);
-      int srf = 0;
-      for (int i = 0; i < nLines; i++) {
-        if (boundaries[i].surface) {
-          surfaceNumbers[srf] = i;
-
-          srf = srf + 1;
-        }
-      }
-      netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
-      netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
-      vector<netCDF::NcDim> dims1;
-      dims1.push_back(nc_nLines);
-
-      vector<netCDF::NcDim> dimsSurfE;
-      dimsSurfE.push_back(nc_nLines);
-      netCDF::NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
-      netCDF::NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
-      dimsSurfE.push_back(nc_nAngles);
-      dimsSurfE.push_back(nc_nEnergies);
-      netCDF::NcVar nc_grossDep = ncFile1.addVar("grossDeposition", netcdf_precision, nc_nLines);
-      netCDF::NcVar nc_grossEro = ncFile1.addVar("grossErosion", netcdf_precision, nc_nLines);
-      netCDF::NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", netcdf_precision, nc_nLines);
-      netCDF::NcVar nc_spylCounts = ncFile1.addVar("spylCounts", netCDF::ncInt, nc_nLines);
-      netCDF::NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", netCDF::ncInt, nc_nLines);
-      netCDF::NcVar nc_sumParticlesStrike =
-          ncFile1.addVar("sumParticlesStrike", netCDF::ncInt, nc_nLines);
-      netCDF::NcVar nc_sumWeightStrike =
-          ncFile1.addVar("sumWeightStrike", netcdf_precision, nc_nLines);
-      nc_grossDep.putVar(&grossDeposition[0]);
-      nc_surfNum.putVar(&surfaceNumbers[0]);
-      nc_grossEro.putVar(&grossErosion[0]);
-      nc_aveSpyl.putVar(&aveSputtYld[0]);
-      nc_spylCounts.putVar(&sputtYldCount[0]);
-      nc_sumParticlesStrike.putVar(&sumParticlesStrike[0]);
-      nc_sumWeightStrike.putVar(&sumWeightStrike[0]);
-      // NcVar nc_surfImpacts = ncFile1.addVar("impacts",netcdf_precision,dims1);
-      // NcVar nc_surfRedeposit = ncFile1.addVar("redeposit",netcdf_precision,dims1);
-      // NcVar nc_surfStartingParticles =
-      // ncFile1.addVar("startingParticles",netcdf_precision,dims1); NcVar nc_surfZ =
-      // ncFile1.addVar("Z",netcdf_precision,dims1);
-      netCDF::NcVar nc_surfEDist = ncFile1.addVar("surfEDist", netcdf_precision, dimsSurfE);
-      netCDF::NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", netcdf_precision, dimsSurfE);
-      netCDF::NcVar nc_surfSputtDist =
-          ncFile1.addVar("surfSputtDist", netcdf_precision, dimsSurfE);
-      // nc_surfImpacts.putVar(impacts);
-      //#if USE3DTETGEOM > 0
-      // nc_surfRedeposit.putVar(redeposit);
-      //#endif
-      // nc_surfStartingParticles.putVar(startingParticles);
-      // nc_surfZ.putVar(surfZ);
-      nc_surfEDist.putVar(&energyDistribution[0]);
-      nc_surfReflDist.putVar(&reflDistribution[0]);
-      nc_surfSputtDist.putVar(&sputtDistribution[0]);
-      // NcVar nc_surfEDistGrid = ncFile1.addVar("gridE",ncDouble,nc_nEnergies);
-      // nc_surfEDistGrid.putVar(&surfaces->gridE[0]);
-      // NcVar nc_surfADistGrid = ncFile1.addVar("gridA",ncDouble,nc_nAngles);
-      // nc_surfADistGrid.putVar(&surfaces->gridA[0]);
-      ncFile1.close();
-    #else
       std::vector<int> surfaceNumbers(nSurfaces, 0);
       int srf = 0;
       for (int i = 0; i < nLines; i++) {
@@ -3119,41 +2980,41 @@ if( presheath_interp == 1 )
       nc_surfSputtDist.putVar(&surfaces->sputtDistribution[0]);
       ncFile1.close();
     }
-    #endif
     if( particle_tracks > 0 )
         {
-              // Write netCDF output for histories
-              netCDF::NcFile ncFile_hist("output/history.nc", netCDF::NcFile::replace);
-              netCDF::NcDim nc_nT = ncFile_hist.addDim("nT", nHistoriesPerParticle);
-              netCDF::NcDim nc_nP = ncFile_hist.addDim("nP", nP);
-              vector<netCDF::NcDim> dims_hist;
-              dims_hist.push_back(nc_nP);
-              dims_hist.push_back(nc_nT);
-              netCDF::NcVar nc_x = ncFile_hist.addVar("x", netCDF::ncDouble, dims_hist);
-              netCDF::NcVar nc_y = ncFile_hist.addVar("y", netCDF::ncDouble, dims_hist);
-              netCDF::NcVar nc_z = ncFile_hist.addVar("z", netCDF::ncDouble, dims_hist);
+          // Write netCDF output for histories
+          netCDF::NcFile ncFile_hist("output/history.nc", netCDF::NcFile::replace);
+          netCDF::NcDim nc_nT = ncFile_hist.addDim("nT", nHistoriesPerParticle);
+          netCDF::NcDim nc_nP = ncFile_hist.addDim("nP", nP);
+          vector<netCDF::NcDim> dims_hist;
+          dims_hist.push_back(nc_nP);
+          dims_hist.push_back(nc_nT);
+          netCDF::NcVar nc_x = ncFile_hist.addVar("x", netCDF::ncDouble, dims_hist);
+          netCDF::NcVar nc_y = ncFile_hist.addVar("y", netCDF::ncDouble, dims_hist);
+          netCDF::NcVar nc_z = ncFile_hist.addVar("z", netCDF::ncDouble, dims_hist);
 
-              netCDF::NcVar nc_v = ncFile_hist.addVar("v", netCDF::ncDouble, dims_hist);
-              netCDF::NcVar nc_vx = ncFile_hist.addVar("vx", netCDF::ncDouble, dims_hist);
-              netCDF::NcVar nc_vy = ncFile_hist.addVar("vy", netCDF::ncDouble, dims_hist);
-              netCDF::NcVar nc_vz = ncFile_hist.addVar("vz", netCDF::ncDouble, dims_hist);
+          netCDF::NcVar nc_v = ncFile_hist.addVar("v", netCDF::ncDouble, dims_hist);
+          netCDF::NcVar nc_vx = ncFile_hist.addVar("vx", netCDF::ncDouble, dims_hist);
+          netCDF::NcVar nc_vy = ncFile_hist.addVar("vy", netCDF::ncDouble, dims_hist);
+          netCDF::NcVar nc_vz = ncFile_hist.addVar("vz", netCDF::ncDouble, dims_hist);
 
-              netCDF::NcVar nc_charge = ncFile_hist.addVar("charge", netCDF::ncDouble, dims_hist);
-              netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", netCDF::ncDouble, dims_hist);
-              netCDF::NcVar nc_mass = ncFile_hist.addVar("mass", netCDF::ncDouble, dims_hist);
+          netCDF::NcVar nc_charge = ncFile_hist.addVar("charge", netCDF::ncDouble, dims_hist);
+          netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", netCDF::ncDouble, dims_hist);
+          netCDF::NcVar nc_mass = ncFile_hist.addVar("mass", netCDF::ncDouble, dims_hist);
 
-  
-              nc_x.putVar(&positionHistoryX[0]);
-              nc_y.putVar(&positionHistoryY[0]);
-              nc_z.putVar(&positionHistoryZ[0]);
 
-              nc_vx.putVar(&velocityHistoryX[0]);
-              nc_vy.putVar(&velocityHistoryY[0]);
-              nc_vz.putVar(&velocityHistoryZ[0]);
-              nc_charge.putVar(&chargeHistory[0]);
-              nc_mass.putVar(&particleArray->amu[0]);
+          nc_x.putVar(&positionHistoryX[0]);
+          nc_y.putVar(&positionHistoryY[0]);
+          nc_z.putVar(&positionHistoryZ[0]);
 
-              ncFile_hist.close();
+          nc_vx.putVar(&velocityHistoryX[0]);
+          nc_vy.putVar(&velocityHistoryY[0]);
+          nc_vz.putVar(&velocityHistoryZ[0]);
+          nc_charge.putVar(&chargeHistory[0]);
+          nc_weight.putVar(&weightHistory[0]);
+          nc_mass.putVar(&particleArray->amu[0]);
+
+          ncFile_hist.close();
           }
     if( spectroscopy > 0 )
       {
