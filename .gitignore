@@ -1,5 +1,4 @@
 .DS_Store
-build
 external
 .*.swp
 test_include/test_data_filepath.hpp
