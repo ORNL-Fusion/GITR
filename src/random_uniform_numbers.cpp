@@ -1,6 +1,7 @@
 #include "random_uniform_numbers.h"
 
-__device__
+  #if USE_CUDA
+__hardware_specifier__d
 void
 random_uniform_numbers::device_rand_init( long n_particles )
 {
@@ -12,8 +13,8 @@ random_uniform_numbers::device_rand_init( long n_particles )
                     end,
                     curandInitialize<>( &particle_state.front(), 0 ) );
 }
-
-__host__ __device__
+#endif
+__hardware_specifier__h __hardware_specifier__d
 random_uniform_numbers::random_uniform_numbers( long n_particles )
   :
   particle_state( n_particles )

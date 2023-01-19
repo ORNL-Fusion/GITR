@@ -61,7 +61,7 @@
 #include <thrust/sort.h>
 #include <thrust/transform.h>
 #include "config_interface.h"
-#include "CLI/CLI.hpp"
+//#include "CLI/CLI.hpp"
 
 using namespace netCDF;
 
@@ -78,14 +78,14 @@ int main(int argc, char **argv, char **envp) {
 
   /* Placeholder code for runtime CLI */
 
-  CLI::App app{ "!" };
+  //CLI::App app{ "!" };
 
   std::string file_name = "input/gitrInput.cfg";
 
   //app.add_option( "-c", file_name, "config filepath" )->required();
-  app.add_option( "-c", file_name, "config filepath" );
+  //app.add_option( "-c", file_name, "config filepath" );
 
-  CLI11_PARSE( app, argc, argv );
+  //CLI11_PARSE( app, argc, argv );
 
   std::cout << "file_name read from stdin: " << file_name << std::endl;
 
@@ -134,7 +134,7 @@ int main(int argc, char **argv, char **envp) {
   int perp_diffusion = use.get< int >( use::perp_diffusion );
   // hardcoded to 1 for now
   //int field_aligned_values = use.get< int >( use::field_aligned_values );
-  int field_aligned_values = FIELD_ALIGNED_VALUES;
+  int field_aligned_values = USEFIELDALIGNEDVALUES;
   bool fixed_seeds = bool( use.get< int >( use::fixed_seeds ) );
 
   // Set default processes per node to 1
