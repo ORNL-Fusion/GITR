@@ -37,7 +37,7 @@ class random_uniform_numbers
 {
   public:
 
-    __hardware_specifier__d __hardware_specifier__h
+    __hardware_specifier__d
     random_uniform_numbers( long n_particles = 0 );
 
   #if USE_CUDA
