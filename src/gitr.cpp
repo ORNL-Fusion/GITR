@@ -47,6 +47,7 @@
 //#include <experimental/filesystem>
 #endif
 
+//#include </opt/homebrew/opt/libomp/include/omp.h>
 #include </opt/homebrew/opt/libomp/include/omp.h>
 
 #include "sortParticles.h"
@@ -58,6 +59,13 @@
 #include <thrust/transform.h>
 #include "config_interface.h"
 #include "CLI/CLI.hpp"
+
+/* start */
+// List of refactored functions to be put in separate file when it safe.
+void writeParticleData(Particles* particleArray, int nP); 
+void writeDensity(int nP, int spectroscopy, int nBins, int gridX_bins_, int gridY_bins_, int gridZ_bins_, int net_nX, int net_nY, int net_nZ);
+
+ /* end */
 
 using namespace netCDF;
 
@@ -1157,7 +1165,6 @@ if( density_interp == 0 )
                                  &DensGridr.front(), &DensGridz.front(),
                                  &ne.front(), cylsymm )
              << std::endl;
-
  // Background Plasma flow velocity initialization
   std::cout << "Starting flow import " << endl;
   int nR_flowV = 1;
@@ -1190,7 +1197,6 @@ if( density_interp == 0 )
  n_flowV = nR_flowV * nY_flowV * nZ_flowV;
  sim::Array<gitr_precision> flowVr(n_flowV), flowVz(n_flowV), flowVt(n_flowV);
 
-
  if( flowv_interp == 0 )
     {
       getVariable(cfg, flowVCfg + "flowVr", flowVr[0]);
@@ -1212,7 +1218,6 @@ if( density_interp == 0 )
             getVarFromFile(cfg, input_path + flowVFile, flowVCfg, "gridYString", flowVGridy[0]);
           }
     }
-
   gitr_precision surroundingMinimumR = 0.0;
   gitr_precision surroundingMinimumY = 0.0;
   gitr_precision surroundingMinimumZ = 0.0;
@@ -1370,6 +1375,7 @@ if( density_interp == 0 )
     OUTPUT2d(profiles_folder, outnameFlowVt, nR_flowV, nZ_flowV, &flowVt.front());
   #endif
 }
+
  // Background plasma temperature gradient field intitialization
  int nR_gradT = 1;
  int nY_gradT = 1;
@@ -1450,6 +1456,7 @@ if( density_interp == 0 )
  sim::Array<gitr_precision> rateCoeff_Recombination(nCS_Recombine * nTemperaturesRecombine * nDensitiesRecombine);
  sim::Array<gitr_precision> gridTemperature_Recombination(nTemperaturesRecombine),gridDensity_Recombination(nDensitiesRecombine);
 
+ /* Ionization/Recombination calculation  and interpolation: this should live in ionization_recomb.cpp */
  if( ionization > 0 )
  {
  if (world_rank == 0) 
@@ -1487,14 +1494,12 @@ if( density_interp == 0 )
    i1 = read_profileNs(input_path + ionizeFile, ionizeNDens, ionizeNTemp, nDensitiesIonize, nTemperaturesIonize);
    i3 = read_profileNs(input_path + recombFile, recombNDens, recombNTemp,nDensitiesRecombine, nTemperaturesRecombine);
  }
-
  rateCoeff_Ionization.resize( nCS_Ionize * nTemperaturesIonize * nDensitiesIonize );
  gridTemperature_Ionization.resize( nTemperaturesIonize );
  gridDensity_Ionization.resize( nDensitiesIonize );
  rateCoeff_Recombination.resize( nCS_Recombine * nTemperaturesRecombine * nDensitiesRecombine );
  gridTemperature_Recombination.resize( nTemperaturesRecombine );
  gridDensity_Recombination.resize( nDensitiesRecombine );
-
  if (world_rank == 0) 
     {
       i2 = read_profiles(
@@ -1508,6 +1513,7 @@ if( density_interp == 0 )
           gridDensity_Recombination, recombRCvarChar, rateCoeff_Recombination);
     }
  }
+ /* End Ionization/Recombination calculation  and interpolation */
 
  // Applying background values at material boundaries
  std::for_each(boundaries.begin(), boundaries.end() - 1,
@@ -1519,32 +1525,8 @@ if( density_interp == 0 )
                              TempGridr.data(), TempGridz.data(), ti.data(),
                              te.data(), biasPotential, biased_surface, surface_potential,
                              use_3d_geom, cylsymm ));
-
- std::cout << "Completed Boundary Init " << std::endl;
- std::cout << "periodicy "<<boundaries[nLines].periodic << std::endl;
- std::cout << "periodicx "<<boundaries[nLines].periodic_bc_x << std::endl;
-
- std::vector<double> surface_potential_out(nLines,0.0);
- std::vector<double> surface_te_out(nLines,0.0);
- std::vector<double> surface_ti_out(nLines,0.0);
-
- for( int i=0; i<nLines; i++)
-    {
-    surface_potential_out[i] = boundaries[i].potential;
-    surface_te_out[i] = boundaries[i].te;
-    surface_ti_out[i] = boundaries[i].ti;
-    }
-  netCDF::NcFile ncFile_boundary("output/boundary_values.nc", netCDF::NcFile::replace);
-  netCDF::NcDim nc_nLine = ncFile_boundary.addDim("nBoundaries", nLines);
-
-  netCDF::NcVar nc_bound_potential = ncFile_boundary.addVar("potential", netcdf_precision,nc_nLine);
-  netCDF::NcVar nc_bound_te = ncFile_boundary.addVar("te", netcdf_precision,nc_nLine);
-  netCDF::NcVar nc_bound_ti = ncFile_boundary.addVar("ti", netcdf_precision,nc_nLine);
-  nc_bound_potential.putVar(&surface_potential_out[0]);
-  nc_bound_te.putVar(&surface_te_out[0]);
-  nc_bound_ti.putVar(&surface_ti_out[0]);
-  ncFile_boundary.close();
-
+ 
+ /* Same here reading E field should be its own file*/
  // Efield
  int nR_PreSheathEfield = 1;
  int nY_PreSheathEfield = 1;
@@ -1559,7 +1541,6 @@ if( density_interp == 0 )
  sim::Array< gitr_precision > preSheathEGridr( nR_PreSheathEfield );
  sim::Array< gitr_precision > preSheathEGridy( nY_PreSheathEfield );
  sim::Array< gitr_precision > preSheathEGridz( nZ_PreSheathEfield );
-
  if( presheath_efield > 0 )
     {
 
@@ -1747,59 +1728,10 @@ if( presheath_interp == 1 )
       minDist(nR_Bfield * nZ_Bfield);
 
  /* Captain! Likely dead block below */
-  if( sheath_efield > 0 )
-  {
-  gitr_precision thisE0[3] = {0.0, 0.0, 0.0};
-  gitr_precision minDist0 = 0.0;
-  int minInd_bnd = 0;
-  for (int i = 0; i < 1000; i++) {
-      minDist0 =
-          getE(0.0, 0.0, 1.0E-6*i, thisE0, boundaries.data(),
-                nLines,
-                nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
-                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
-                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-                &closeGeom_sheath.front(), minInd_bnd, biased_surface,
-                use_3d_geom, geom_hash_sheath, cylsymm );
-      //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
-  }
- 
-  if( efield_interp == 2 )
-    {
-        int nR_dtsEfield, nZ_dtsEfield;
-
-        int d1 = read_profileNs(
-            cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-            cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNrString"),
-            cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNzString"),
-            nR_dtsEfield, nZ_dtsEfield);
-
-        sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
-        sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
-
-        int d2 = read_profile1d(
-            cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-            cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridRString"),
-            dtsEfieldGridr);
-
-        int d3 = read_profile1d(
-            cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-            cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridZString"),
-            dtsEfieldGridz);
-
-        int d4 = read_profile2d(
-            cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-            cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
-    }
-  }
-  else
-    {
     int nR_dtsEfield = 1;
     int nZ_dtsEfield = 1;
     sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
     sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
-    }
-
   std::string outnameEfieldR = "EfieldR.m";
   std::string outnameEfieldZ = "EfieldZ.m";
   std::string outnameEfieldT = "EfieldT.m";
@@ -1885,6 +1817,8 @@ if( presheath_interp == 1 )
       gridZ_bins[i] = netZ0 + i * 1.0 / (net_nZ - 1) * (netZ1 - netZ0);
     }
 }
+
+
   sim::Array<gitr_precision> net_Bins( net_Bins_size, 0.0 );
   sim::Array<gitr_precision> net_BinsTotal( net_BinsTotal_size, 0.0 );
   gitr_precision perpDiffusionCoeff = 0.0;
@@ -1898,6 +1832,8 @@ if( presheath_interp == 1 )
     }
   }
 
+ // Surface model import
+ 
  // Surface model import
  int nE_sputtRefCoeff = 1, nA_sputtRefCoeff = 1;
  int nE_sputtRefDistIn = 1, nA_sputtRefDistIn = 1;
@@ -1931,7 +1867,6 @@ if( presheath_interp == 1 )
           AphiDist_CDF_Y(nDistA_surfaceModel),AthetaDist_CDF_Y(nDistA_surfaceModel), EDist_CDF_Y(nDistE_surfaceModel),AphiDist_CDF_R(nDistA_surfaceModel),
           AthetaDist_CDF_R(nDistA_surfaceModel), EDist_CDF_R(nDistE_surfaceModelRef),AphiDist_CDF_Y_regrid(nDistA_surfaceModel),AthetaDist_CDF_Y_regrid(nDistA_surfaceModel),
           EDist_CDF_Y_regrid(nDistE_surfaceModel),AphiDist_CDF_R_regrid(nDistA_surfaceModel), AthetaDist_CDF_R_regrid(nDistA_surfaceModel), EDist_CDF_R_regrid(nDistE_surfaceModelRef);
-
  if( surface_model > 0 )
       {
         getVarFromFile(cfg, input_path + surfaceModelFile, surfaceModelCfg, "E_sputtRefCoeff", E_sputtRefCoeff[0]);
@@ -2004,6 +1939,7 @@ if( presheath_interp == 1 )
       std::cout << "Finished surface model import sputtering" << spylAInterpVal << " " << spylAthetaInterpVal << " " << sputEInterpVal << std::endl;
       std::cout << "Finished surface model import reflection" << rfylAInterpVal << " " << rfylAthetaInterpVal << " " << rflEInterpVal << std::endl;
  }
+ /* END SURFACE IMPORT*/
     #ifdef __CUDACC__
     cout << "Using THRUST" << endl;
     #else
@@ -2563,143 +2499,9 @@ if( presheath_interp == 1 )
                         &velocityHistoryZ.front(), &chargeHistory.front(),
                          &weightHistory.front());
 
-      if( force_eval > 0 )
-          {
-              if (world_rank == 0) 
-                {
-                    int nR_force, nZ_force;
-                    gitr_precision forceX0, forceX1, forceZ0, forceZ1, testEnergy;
-                    std::string forceCfg = "forceEvaluation.";
-
-                    getVariable(cfg, forceCfg + "nR", nR_force);
-                    getVariable(cfg, forceCfg + "nZ", nZ_force);
-                    std::vector<gitr_precision> forceR(nR_force, 0.0), forceZ(nZ_force, 0.0);
-                    std::vector<gitr_precision> tIon(nR_force * nZ_force, 0.0), tRecomb(nR_force * nZ_force, 0.0);
-                    std::vector<gitr_precision> dvEr(nR_force * nZ_force, 0.0),dvEz(nR_force * nZ_force, 0.0), dvEt(nR_force * nZ_force, 0.0);
-                    std::vector<gitr_precision> dvBr(nR_force * nZ_force, 0.0), dvBz(nR_force * nZ_force, 0.0), dvBt(nR_force * nZ_force, 0.0);
-                    std::vector<gitr_precision> dvCollr(nR_force * nZ_force, 0.0), dvCollz(nR_force * nZ_force, 0.0), dvCollt(nR_force * nZ_force, 0.0);
-                    std::vector<gitr_precision> dvITGr(nR_force * nZ_force, 0.0), dvITGz(nR_force * nZ_force, 0.0), dvITGt(nR_force * nZ_force, 0.0);
-                    std::vector<gitr_precision> dvETGr(nR_force * nZ_force, 0.0),dvETGz(nR_force * nZ_force, 0.0), dvETGt(nR_force * nZ_force, 0.0);
-                    getVariable(cfg, forceCfg + "X0", forceX0);
-                    getVariable(cfg, forceCfg + "X1", forceX1);
-                    getVariable(cfg, forceCfg + "Z0", forceZ0);
-                    getVariable(cfg, forceCfg + "Z1", forceZ1);
-                    getVariable(cfg, forceCfg + "particleEnergy", testEnergy);
-                    for (int i = 0; i < nR_force; i++) 
-                          {
-                            forceR[i] = forceX0 + (forceX1 - forceX0) * i / (nR_force - 1);
-                          }
-                    for (int i = 0; i < nZ_force; i++) 
-                          {
-                            forceZ[i] = forceZ0 + (forceZ1 - forceZ0) * i / (nZ_force - 1);
-                          }
-                    gitr_precision Btotal = 0.0;
-                    for (int i = 0; i < nR_force; i++)
-                       {
-                          for (int j = 0; j < nZ_force; j++)
-                            {
-                                interp2dVector(&Btest[0], forceR[i], 0.0, forceZ[j], nR_Bfield, nZ_Bfield, bfieldGridr.data(), bfieldGridz.data(),br.data(), bz.data(), by.data(), cylsymm );
-                                Btotal = vectorNorm(Btest);
-                                gitr_precision testTi =
-                                    interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),TempGridz.data(), ti.data(), cylsymm );
-                                particleArray->setParticle(0, forceR[i], 0.0, forceZ[j], testTi, 0.0,0.0, Z, amu, charge + 1.0);
-                                move_boris0(0);
-
-                                if( ionization > 0 )
-                                    {
-                                      thrust::for_each(thrust::device,particleBegin,particleBegin,ionize0);
-                                        thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
-                                    }
-
-                                if( coulomb_collisions > 0 )
-                                    {
-                                        thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
-                                    }
-
-                                if( thermal_force > 0 )
-                                    {
-                                        thrust::for_each(thrust::device,particleBegin,particleBegin,thermalForce0);
-                                    }
-                                dvEr[j * nR_force + i] = move_boris0.electricForce[0];
-                                dvEz[j * nR_force + i] = move_boris0.electricForce[2];
-                                dvEt[j * nR_force + i] = move_boris0.electricForce[1];
-                                dvBr[j * nR_force + i] = move_boris0.magneticForce[0];
-                                dvBz[j * nR_force + i] = move_boris0.magneticForce[2];
-                                dvBt[j * nR_force + i] = move_boris0.magneticForce[1];
-
-                                if( ionization > 0 )
-                                {
-                                  tIon[j * nR_force + i] = ionize0.tion;
-                                  tRecomb[j * nR_force + i] = recombine0.tion;
-                                }
-
-                                if( coulomb_collisions > 0 )
-                                    {
-                                        dvCollr[j * nR_force + i] = coulombCollisions0.dv[0];
-                                        dvCollz[j * nR_force + i] = coulombCollisions0.dv[2];
-                                        dvCollt[j * nR_force + i] = coulombCollisions0.dv[1];
-                                    }
-                                if( thermal_force > 0 )
-                                    {
-                                        dvITGr[j * nR_force + i] = thermalForce0.dv_ITGx;
-                                        dvITGz[j * nR_force + i] = thermalForce0.dv_ITGz;
-                                        dvITGt[j * nR_force + i] = thermalForce0.dv_ITGy;
-                                        dvETGr[j * nR_force + i] = thermalForce0.dv_ETGx;
-                                        dvETGz[j * nR_force + i] = thermalForce0.dv_ETGz;
-                                        dvETGt[j * nR_force + i] = thermalForce0.dv_ETGy;
-                                    }
-                             }
-                        }
-
-                std::cout << " about to write ncFile_forces " << std::endl;
-                netCDF::NcFile ncFile_force("output/forces.nc", netCDF::NcFile::replace);
-                netCDF::NcDim nc_nRf = ncFile_force.addDim("nR", nR_force);
-                netCDF::NcDim nc_nZf = ncFile_force.addDim("nZ", nZ_force);
-                vector<netCDF::NcDim> forceDims;
-                forceDims.push_back(nc_nZf);
-                forceDims.push_back(nc_nRf);
-                netCDF::NcVar forceRf = ncFile_force.addVar("r", netcdf_precision, nc_nRf);
-                netCDF::NcVar forceZf = ncFile_force.addVar("z", netcdf_precision, nc_nZf);
-                netCDF::NcVar nction = ncFile_force.addVar("tIon", netcdf_precision, forceDims);
-                netCDF::NcVar nctrec = ncFile_force.addVar("tRec", netcdf_precision, forceDims);
-                netCDF::NcVar dvErf = ncFile_force.addVar("dvEr", netcdf_precision, forceDims);
-                netCDF::NcVar dvEzf = ncFile_force.addVar("dvEz", netcdf_precision, forceDims);
-                netCDF::NcVar dvEtf = ncFile_force.addVar("dvEt", netcdf_precision, forceDims);
-                netCDF::NcVar dvBrf = ncFile_force.addVar("dvBr", netcdf_precision, forceDims);
-                netCDF::NcVar dvBzf = ncFile_force.addVar("dvBz", netcdf_precision, forceDims);
-                netCDF::NcVar dvBtf = ncFile_force.addVar("dvBt", netcdf_precision, forceDims);
-                netCDF::NcVar dvCollrf = ncFile_force.addVar("dvCollr", netcdf_precision, forceDims);
-                netCDF::NcVar dvCollzf = ncFile_force.addVar("dvCollz", netcdf_precision, forceDims);
-                netCDF::NcVar dvColltf = ncFile_force.addVar("dvCollt", netcdf_precision, forceDims);
-                netCDF::NcVar dvITGrf = ncFile_force.addVar("dvITGr", netcdf_precision, forceDims);
-                netCDF::NcVar dvITGzf = ncFile_force.addVar("dvITGz", netcdf_precision, forceDims);
-                netCDF::NcVar dvITGtf = ncFile_force.addVar("dvITGt", netcdf_precision, forceDims);
-                netCDF::NcVar dvETGrf = ncFile_force.addVar("dvETGr", netcdf_precision, forceDims);
-                netCDF::NcVar dvETGzf = ncFile_force.addVar("dvETGz", netcdf_precision, forceDims);
-                netCDF::NcVar dvETGtf = ncFile_force.addVar("dvETGt", netcdf_precision, forceDims);
-                forceRf.putVar(&forceR[0]);
-                forceZf.putVar(&forceZ[0]);
-                nction.putVar(&tIon[0]);
-                nctrec.putVar(&tRecomb[0]);
-                dvErf.putVar(&dvEr[0]);
-                dvEzf.putVar(&dvEz[0]);
-                dvEtf.putVar(&dvEt[0]);
-                dvBrf.putVar(&dvBr[0]);
-                dvBzf.putVar(&dvBz[0]);
-                dvBtf.putVar(&dvBt[0]);
-                dvCollrf.putVar(&dvCollr[0]);
-                dvCollzf.putVar(&dvCollz[0]);
-                dvColltf.putVar(&dvCollt[0]);
-                dvITGrf.putVar(&dvITGr[0]);
-                dvITGzf.putVar(&dvITGz[0]);
-                dvITGtf.putVar(&dvITGt[0]);
-                dvETGrf.putVar(&dvETGr[0]);
-                dvETGzf.putVar(&dvETGz[0]);
-                dvETGtf.putVar(&dvETGt[0]);
-                ncFile_force.close();
-                particleArray->setParticleV(0, px[0], py[0], pz[0], pvx[0], pvy[0], pvz[0],Z, amu, charge, dt);
-              }
-          }
+//
+// Remove the force_eval diagnostic for clarity, too long.  Write later a function call to evaluate forces  if( force_eval > 0
+//
         auto start_clock = gitr_time::now();
         std::chrono::duration<gitr_precision> fs1 = start_clock - gitr_start_clock;
         printf("Initialize time for node %i          is %6.3f (secs) \n", world_rank,fs1.count());
@@ -2884,103 +2686,144 @@ if( presheath_interp == 1 )
           grossErosion[surfIndex] = grossErosion[surfIndex] + 1.0;
         }
       }
-      ofstream outfile2;
-      outfile2.open("output/positions.m");
-      for (int i = 1; i < nP + 1; i++) {
-        outfile2 << "Pos( " << i << ",:) = [ ";
-        outfile2 << particleArray->x[i - 1] << " " << particleArray->y[i - 1]
-                  << " " << particleArray->z[i - 1] << " ];" << std::endl;
-      }
-      outfile2.close();
-      // Write netCDF output for positions
-      netCDF::NcFile ncFile0("output/positions.nc", netCDF::NcFile::replace);
-      netCDF::NcDim nc_nP0 = ncFile0.addDim("nP", nP);
-      vector<netCDF::NcDim> dims0;
-      dims0.push_back(nc_nP0);
 
-      netCDF::NcVar nc_x0 = ncFile0.addVar("x", netcdf_precision, dims0);
-      netCDF::NcVar nc_y0 = ncFile0.addVar("y", netcdf_precision, dims0);
-      netCDF::NcVar nc_z0 = ncFile0.addVar("z", netcdf_precision, dims0);
-      netCDF::NcVar nc_vx0 = ncFile0.addVar("vx", netcdf_precision, dims0);
-      netCDF::NcVar nc_vy0 = ncFile0.addVar("vy", netcdf_precision, dims0);
-      netCDF::NcVar nc_vz0 = ncFile0.addVar("vz", netcdf_precision, dims0);
-      netCDF::NcVar nc_trans0 = ncFile0.addVar("transitTime", netcdf_precision, dims0);
-      netCDF::NcVar nc_impact0 = ncFile0.addVar("hitWall", netcdf_precision, dims0);
-      netCDF::NcVar nc_surfHit0 = ncFile0.addVar("surfaceHit", netCDF::ncInt, dims0);
-      netCDF::NcVar nc_weight0 = ncFile0.addVar("weight", netcdf_precision, dims0);
-      netCDF::NcVar nc_charge0 = ncFile0.addVar("charge", netcdf_precision, dims0);
-      netCDF::NcVar nc_leak0 = ncFile0.addVar("hasLeaked", netCDF::ncInt, dims0);
-      netCDF::NcVar nc_dist0 = ncFile0.addVar("distTraveled", netcdf_precision, dims0);
-      netCDF::NcVar nc_time0 = ncFile0.addVar("time", netcdf_precision, dims0);
-      netCDF::NcVar nc_dt0 = ncFile0.addVar("dt", netcdf_precision, dims0);
-      netCDF::NcVar nc_mass = ncFile0.addVar("mass", netcdf_precision, dims0);
+      // Dump initial particles information
+      writeParticleData(particleArray, nP);
 
-      std::cout << "not using mpi output" << std::endl;
-      nc_x0.putVar(&particleArray->xprevious[0]);
-      nc_y0.putVar(&particleArray->yprevious[0]);
-      nc_z0.putVar(&particleArray->zprevious[0]);
-      nc_vx0.putVar(&particleArray->vx[0]);
-      nc_vy0.putVar(&particleArray->vy[0]);
-      nc_vz0.putVar(&particleArray->vz[0]);
-      nc_trans0.putVar(&particleArray->transitTime[0]);
-      nc_impact0.putVar(&particleArray->hitWall[0]);
-      nc_surfHit0.putVar(&particleArray->surfaceHit[0]);
-      nc_weight0.putVar(&particleArray->weight[0]);
-      nc_charge0.putVar(&particleArray->charge[0]);
-      nc_leak0.putVar(&particleArray->hasLeaked[0]);
-      nc_dist0.putVar(&particleArray->distTraveled[0]);
-      nc_time0.putVar(&particleArray->time[0]);
-      nc_dt0.putVar(&particleArray->dt[0]);
-      nc_mass.putVar(&particleArray->amu[0]);
-  
-      ncFile0.close();
-    if( surface_model > 0 || flux_ea > 0 )
-    {
-      std::vector<int> surfaceNumbers(nSurfaces, 0);
-      int srf = 0;
-      for (int i = 0; i < nLines; i++) {
-        if (boundaries[i].surface) {
-          surfaceNumbers[srf] = i;
+      // void writeSurfaceData(); 
+      // Write history 
+      //  void writeHistoryData( particleArray, nP, particle_tracks);
+      // dump spectroscopy file
+      //  writeDensity( nP,  spectroscopy,  nBins,  &gridX_bins[0],  &gridY_bins[0],  &gridZ_bins[0],  net_nX,  net_nY,  net_nZ);
 
-          surfaces->grossErosion[srf] = surfaces->grossErosion[srf] + grossErosion[srf];
-          srf = srf + 1;
+
+    #ifdef __CUDACC__
+      cudaDeviceSynchronize();
+    #endif
+    #ifdef __CUDACC__
+    cudaError_t err = cudaDeviceReset();
+    // cudaProfilerStop();
+    #endif
+    if (world_rank == 0) 
+        {
+          auto gitr_finish_clock = gitr_time::now();
+          std::chrono::duration<gitr_precision> fstotal = gitr_finish_clock - gitr_start_clock;
+          printf("Total runtime for GITR is %6.3f (secs) \n", fstotal.count());
         }
-      }
-      netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
-      netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
-      vector<netCDF::NcDim> dims1;
-      dims1.push_back(nc_nLines);
+  return 0;
+}
+//END OF MAIN
 
-      vector<netCDF::NcDim> dimsSurfE;
-      dimsSurfE.push_back(nc_nLines);
-      netCDF::NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
-      netCDF::NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
-      dimsSurfE.push_back(nc_nEnergies);
-      dimsSurfE.push_back(nc_nAngles);
-      netCDF::NcVar nc_grossDep = ncFile1.addVar("grossDeposition", netcdf_precision, nc_nLines);
-      netCDF::NcVar nc_grossEro = ncFile1.addVar("grossErosion", netcdf_precision, nc_nLines);
-      netCDF::NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", netcdf_precision, nc_nLines);
-      netCDF::NcVar nc_spylCounts = ncFile1.addVar("spylCounts", netCDF::ncInt, nc_nLines);
-      netCDF::NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", netCDF::ncInt, nc_nLines);
-      netCDF::NcVar nc_sumParticlesStrike = ncFile1.addVar("sumParticlesStrike", netCDF::ncInt, nc_nLines);
-      netCDF::NcVar nc_sumWeightStrike = ncFile1.addVar("sumWeightStrike", netcdf_precision, nc_nLines);
-      nc_grossDep.putVar(&surfaces->grossDeposition[0]);
-      nc_surfNum.putVar(&surfaceNumbers[0]);
-      nc_grossEro.putVar(&surfaces->grossErosion[0]);
-      nc_aveSpyl.putVar(&surfaces->aveSputtYld[0]);
-      nc_spylCounts.putVar(&surfaces->sputtYldCount[0]);
-      nc_sumParticlesStrike.putVar(&surfaces->sumParticlesStrike[0]);
-      nc_sumWeightStrike.putVar(&surfaces->sumWeightStrike[0]);
-      netCDF::NcVar nc_surfEDist = ncFile1.addVar("surfEDist", netcdf_precision, dimsSurfE);
-      netCDF::NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", netcdf_precision, dimsSurfE);
-      netCDF::NcVar nc_surfSputtDist =
-          ncFile1.addVar("surfSputtDist", netcdf_precision, dimsSurfE);
-      nc_surfEDist.putVar(&surfaces->energyDistribution[0]);
-      nc_surfReflDist.putVar(&surfaces->reflDistribution[0]);
-      nc_surfSputtDist.putVar(&surfaces->sputtDistribution[0]);
-      ncFile1.close();
+/************************************************************************************************************************************/
+/************************************************************************************************************************************/
+/************************************************************************************************************************************/
+/*First, pass to refactor the code. The objective is to have a clear separation to help understand the physics models implemented in this code
+and reduce overhead to introduce new physics.
+*/
+/*The functions below will be eventually move out of the main*/
+
+void writeParticleData(Particles* particleArray, int nP) {
+    /**
+    * writeParticleData:
+    * Writes particle data to both a .m file and a .nc file.
+    *
+    * @param particleArray: pointer to a Particles object containing the data to be written
+    * @param nP: number of particles in the particleArray
+    */
+    std::ofstream outfile;
+    outfile.open("output/positions.m");
+    for (int i = 1; i < nP + 1; i++) {
+        outfile << "Pos( " << i << ",:) = [ ";
+        outfile << particleArray->x[i - 1] << " " << particleArray->y[i - 1] << " " << particleArray->z[i - 1] << " ];" << std::endl;
     }
-    if( particle_tracks > 0 )
+    outfile.close();
+   
+    netCDF::NcFile ncFile("output/positions.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nP = ncFile.addDim("nP", nP);
+    std::vector<netCDF::NcDim> dims;
+    dims.push_back(nc_nP);
+    netCDF::NcType netcdf_precision = netCDF::ncDouble;
+    netCDF::NcVar nc_x = ncFile.addVar("x", netcdf_precision, dims);
+    netCDF::NcVar nc_y = ncFile.addVar("y", netcdf_precision, dims);
+    netCDF::NcVar nc_z = ncFile.addVar("z", netcdf_precision, dims);
+    netCDF::NcVar nc_vx = ncFile.addVar("vx", netcdf_precision, dims);
+    netCDF::NcVar nc_vy = ncFile.addVar("vy", netcdf_precision, dims);
+    netCDF::NcVar nc_vz = ncFile.addVar("vz", netcdf_precision, dims);
+    netCDF::NcVar nc_trans = ncFile.addVar("transitTime", netcdf_precision, dims);
+    netCDF::NcVar nc_impact = ncFile.addVar("hitWall", netcdf_precision, dims);
+    netCDF::NcVar nc_surfHit = ncFile.addVar("surfaceHit", netCDF::ncInt, dims);
+    netCDF::NcVar nc_weight = ncFile.addVar("weight", netcdf_precision, dims);
+    netCDF::NcVar nc_charge = ncFile.addVar("charge", netcdf_precision, dims);
+    netCDF::NcVar nc_leak = ncFile.addVar("hasLeaked", netCDF::ncInt, dims);
+    netCDF::NcVar nc_dist = ncFile.addVar("distTraveled", netcdf_precision, dims);
+    netCDF::NcVar nc_time = ncFile.addVar("time", netcdf_precision, dims);
+    netCDF::NcVar nc_dt = ncFile.addVar("df", netcdf_precision, dims);
+
+    nc_x.putVar(&particleArray->xprevious[0]);
+    nc_y.putVar(&particleArray->yprevious[0]);
+    nc_z.putVar(&particleArray->zprevious[0]);
+    
+    nc_vx.putVar(&particleArray->vx[0]);
+    nc_vy.putVar(&particleArray->vy[0]);
+    nc_vz.putVar(&particleArray->vz[0]);
+    
+    nc_trans.putVar(&particleArray->transitTime[0]);
+    nc_impact.putVar(&particleArray->hitWall[0]);
+    nc_surfHit.putVar(&particleArray->surfaceHit[0]);
+    nc_weight.putVar(&particleArray->weight[0]);
+    nc_charge.putVar(&particleArray->charge[0]);
+    nc_leak.putVar(&particleArray->hasLeaked[0]);
+    nc_dist.putVar(&particleArray->distTraveled[0]);
+    
+    nc_time.putVar(&particleArray->time[0]);
+    nc_dt.putVar(&particleArray->dt[0]);
+    
+    ncFile.close();
+}
+//FIXME --> not currently working
+void writeDensity(int nP, int spectroscopy, int nBins, int gridX_bins_, int gridY_bins_, int gridZ_bins_, int net_nX, int net_nY, int net_nZ) {
+     if( spectroscopy > 0 )
+      {
+          // Write netCDF output for density data
+          netCDF::NcFile ncFile("output/spec.nc", netCDF::NcFile::replace);
+          netCDF::NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
+          netCDF::NcDim nc_nR = ncFile.addDim("nR", net_nX);
+          netCDF::NcDim nc_nY;
+          if( spectroscopy > 2 )
+              {
+              nc_nY = ncFile.addDim("nY", net_nY);
+              }
+          netCDF::NcDim nc_nZ = ncFile.addDim("nZ", net_nZ);
+          vector<netCDF::NcDim> dims;
+          dims.push_back(nc_nBins);
+          dims.push_back(nc_nZ);
+          if( spectroscopy > 2 )
+              {
+              dims.push_back(nc_nY);
+              }
+          dims.push_back(nc_nR);
+          netCDF::NcVar nc_n = ncFile.addVar("n", netcdf_precision, dims);
+          netCDF::NcVar nc_gridR = ncFile.addVar("gridR", netcdf_precision, nc_nR);
+          netCDF::NcVar nc_gridZ = ncFile.addVar("gridZ", netcdf_precision, nc_nZ);
+          nc_gridR.putVar(&gridX_bins_);
+          nc_gridZ.putVar(&gridX_bins_);
+          if( spectroscopy > 2 )
+              {
+              netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netcdf_precision, nc_nY);
+              nc_gridY.putVar(&gridY_bins_);
+              }
+          // nc_n.putVar(&net_Bins[0]);
+          ncFile.close();
+        }
+ }
+
+// FIXME --> not currently working
+ void writeHistoryData(Particles* particleArray, int nP, int particle_tracks, int nHistoriesPerParticle, sim::Array<gitr_precision> positionHistoryX,
+ sim::Array<gitr_precision> positionHistoryY, sim::Array<gitr_precision> positionHistoryZ,
+sim::Array<gitr_precision> velocityHistoryX,sim::Array<gitr_precision> velocityHistoryY,sim::Array<gitr_precision> velocityHistoryZ,
+     sim::Array<gitr_precision> chargeHistory, sim::Array<gitr_precision> weightHistory ) {
+   
+        if( particle_tracks > 0 )
         {
           // Write netCDF output for histories
           netCDF::NcFile ncFile_hist("output/history.nc", netCDF::NcFile::replace);
@@ -3016,52 +2859,106 @@ if( presheath_interp == 1 )
 
           ncFile_hist.close();
           }
-    if( spectroscopy > 0 )
-      {
-          // Write netCDF output for density data
-          netCDF::NcFile ncFile("output/spec.nc", netCDF::NcFile::replace);
-          netCDF::NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
-          netCDF::NcDim nc_nR = ncFile.addDim("nR", net_nX);
-          netCDF::NcDim nc_nY;
-          if( spectroscopy > 2 )
-              {
-              nc_nY = ncFile.addDim("nY", net_nY);
-              }
-          netCDF::NcDim nc_nZ = ncFile.addDim("nZ", net_nZ);
-          vector<netCDF::NcDim> dims;
-          dims.push_back(nc_nBins);
-          dims.push_back(nc_nZ);
-          if( spectroscopy > 2 )
-              {
-              dims.push_back(nc_nY);
-              }
-
-          dims.push_back(nc_nR);
-          netCDF::NcVar nc_n = ncFile.addVar("n", netcdf_precision, dims);
-          netCDF::NcVar nc_gridR = ncFile.addVar("gridR", netcdf_precision, nc_nR);
-          netCDF::NcVar nc_gridZ = ncFile.addVar("gridZ", netcdf_precision, nc_nZ);
-          nc_gridR.putVar(&gridX_bins[0]);
-          nc_gridZ.putVar(&gridZ_bins[0]);
-          if( spectroscopy > 2 )
-              {
-              netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netcdf_precision, nc_nY);
-              nc_gridY.putVar(&gridY_bins[0]);
-              }
-          nc_n.putVar(&net_Bins[0]);
-          ncFile.close();
-        }
-    #ifdef __CUDACC__
-      cudaDeviceSynchronize();
-    #endif
-    #ifdef __CUDACC__
-    cudaError_t err = cudaDeviceReset();
-    // cudaProfilerStop();
-    #endif
-    if (world_rank == 0) 
-        {
-          auto gitr_finish_clock = gitr_time::now();
-          std::chrono::duration<gitr_precision> fstotal = gitr_finish_clock - gitr_start_clock;
-          printf("Total runtime for GITR is %6.3f (secs) \n", fstotal.count());
-        }
-  return 0;
 }
+
+
+//FIXME --> obviously not finish
+// void writeSurfaceData(int nLines, int surface_model, int flux_ea, int nSurfaces, sim::Array<gitr_precision> surfaces ) {
+
+//  if( surface_model > 0 || flux_ea > 0 )
+//     {
+//       std::vector<int> surfaceNumbers(nSurfaces, 0);
+//       int srf = 0;
+//       for (int i = 0; i < nLines; i++) {
+//         if (boundaries[i].surface) {
+//           surfaceNumbers[srf] = i;
+
+//           surfaces->grossErosion[srf] = surfaces->grossErosion[srf] + grossErosion[srf];
+//           srf = srf + 1;
+//         }
+//       }
+
+//       netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
+//       netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
+//       vector<netCDF::NcDim> dims1;
+//       dims1.push_back(nc_nLines);
+
+//       vector<netCDF::NcDim> dimsSurfE;
+//       dimsSurfE.push_back(nc_nLines);
+//       netCDF::NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
+//       netCDF::NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
+//       dimsSurfE.push_back(nc_nEnergies);
+//       dimsSurfE.push_back(nc_nAngles);
+//       netCDF::NcVar nc_grossDep = ncFile1.addVar("grossDeposition", netcdf_precision, nc_nLines);
+//       netCDF::NcVar nc_grossEro = ncFile1.addVar("grossErosion", netcdf_precision, nc_nLines);
+//       netCDF::NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", netcdf_precision, nc_nLines);
+//       netCDF::NcVar nc_spylCounts = ncFile1.addVar("spylCounts", netCDF::ncInt, nc_nLines);
+//       netCDF::NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", netCDF::ncInt, nc_nLines);
+//       netCDF::NcVar nc_sumParticlesStrike = ncFile1.addVar("sumParticlesStrike", netCDF::ncInt, nc_nLines);
+//       netCDF::NcVar nc_sumWeightStrike = ncFile1.addVar("sumWeightStrike", netcdf_precision, nc_nLines);
+//       nc_grossDep.putVar(&surfaces->grossDeposition[0]);
+//       nc_surfNum.putVar(&surfaceNumbers[0]);
+//       nc_grossEro.putVar(&surfaces->grossErosion[0]);
+//       nc_aveSpyl.putVar(&surfaces->aveSputtYld[0]);
+//       nc_spylCounts.putVar(&surfaces->sputtYldCount[0]);
+//       nc_sumParticlesStrike.putVar(&surfaces->sumParticlesStrike[0]);
+//       nc_sumWeightStrike.putVar(&surfaces->sumWeightStrike[0]);
+//       netCDF::NcVar nc_surfEDist = ncFile1.addVar("surfEDist", netcdf_precision, dimsSurfE);
+//       netCDF::NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", netcdf_precision, dimsSurfE);
+//       netCDF::NcVar nc_surfSputtDist =
+//           ncFile1.addVar("surfSputtDist", netcdf_precision, dimsSurfE);
+//       nc_surfEDist.putVar(&surfaces->energyDistribution[0]);
+//       nc_surfReflDist.putVar(&surfaces->reflDistribution[0]);
+//       nc_surfSputtDist.putVar(&surfaces->sputtDistribution[0]);
+//       ncFile1.close();
+//     }
+// }
+
+// void writeForceData(){
+//                 std::cout << " about to write ncFile_forces " << std::endl;
+//                 netCDF::NcFile ncFile_force("output/forces.nc", netCDF::NcFile::replace);
+//                 netCDF::NcDim nc_nRf = ncFile_force.addDim("nR", nR_force);
+//                 netCDF::NcDim nc_nZf = ncFile_force.addDim("nZ", nZ_force);
+//                 vector<netCDF::NcDim> forceDims;
+//                 forceDims.push_back(nc_nZf);
+//                 forceDims.push_back(nc_nRf);
+//                 netCDF::NcVar forceRf = ncFile_force.addVar("r", netcdf_precision, nc_nRf);
+//                 netCDF::NcVar forceZf = ncFile_force.addVar("z", netcdf_precision, nc_nZf);
+//                 netCDF::NcVar nction = ncFile_force.addVar("tIon", netcdf_precision, forceDims);
+//                 netCDF::NcVar nctrec = ncFile_force.addVar("tRec", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvErf = ncFile_force.addVar("dvEr", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvEzf = ncFile_force.addVar("dvEz", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvEtf = ncFile_force.addVar("dvEt", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvBrf = ncFile_force.addVar("dvBr", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvBzf = ncFile_force.addVar("dvBz", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvBtf = ncFile_force.addVar("dvBt", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvCollrf = ncFile_force.addVar("dvCollr", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvCollzf = ncFile_force.addVar("dvCollz", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvColltf = ncFile_force.addVar("dvCollt", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvITGrf = ncFile_force.addVar("dvITGr", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvITGzf = ncFile_force.addVar("dvITGz", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvITGtf = ncFile_force.addVar("dvITGt", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvETGrf = ncFile_force.addVar("dvETGr", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvETGzf = ncFile_force.addVar("dvETGz", netcdf_precision, forceDims);
+//                 netCDF::NcVar dvETGtf = ncFile_force.addVar("dvETGt", netcdf_precision, forceDims);
+//                 forceRf.putVar(&forceR[0]);
+//                 forceZf.putVar(&forceZ[0]);
+//                 nction.putVar(&tIon[0]);
+//                 nctrec.putVar(&tRecomb[0]);
+//                 dvErf.putVar(&dvEr[0]);
+//                 dvEzf.putVar(&dvEz[0]);
+//                 dvEtf.putVar(&dvEt[0]);
+//                 dvBrf.putVar(&dvBr[0]);
+//                 dvBzf.putVar(&dvBz[0]);
+//                 dvBtf.putVar(&dvBt[0]);
+//                 dvCollrf.putVar(&dvCollr[0]);
+//                 dvCollzf.putVar(&dvCollz[0]);
+//                 dvColltf.putVar(&dvCollt[0]);
+//                 dvITGrf.putVar(&dvITGr[0]);
+//                 dvITGzf.putVar(&dvITGz[0]);
+//                 dvITGtf.putVar(&dvITGt[0]);
+//                 dvETGrf.putVar(&dvETGr[0]);
+//                 dvETGzf.putVar(&dvETGz[0]);
+//                 dvETGtf.putVar(&dvETGt[0]);
+//                 ncFile_force.close();
+// }
