@@ -38,7 +38,7 @@ set( dependencies "" )
 include( CMake/CLI11.cmake ) # ---> creates target cli11
 
 # HDF5
-find_package( HDF5 COMPONENTS C HL )
+include( CMake/hdf5.cmake )
 
 # CUDA
 if( GITR_USE_CUDA )
