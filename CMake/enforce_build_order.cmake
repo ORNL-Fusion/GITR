@@ -20,6 +20,3 @@ endforeach()
 
 # ensure that all source targets are built before GITR
 add_dependencies( GITR ${non_gpu_targets} ${gpu_targets} )
-
-# ensure that hdf5 is build before netcdf
-add_dependencies( netcdf hdf5 )

@@ -34,6 +34,9 @@ set( dependencies "" )
 
 # The following lines populate the "dependencies" variable
 
+# Catch2
+include( CMake/catch.cmake )
+
 # CLI11
 include( CMake/CLI11.cmake ) # ---> creates target cli11
 
@@ -67,6 +70,3 @@ include( CMake/libconfig.cmake ) # ---> creates target libconfig
 
 # NETCDF
 include( CMake/netcdf.cmake ) # ---> creates target netcdf
-
-# Catch2
-include( CMake/catch.cmake )
