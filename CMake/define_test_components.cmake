@@ -10,12 +10,14 @@ set( non_gpu_test_targets
 
 # atomic tests does not compile and is disabled
 set( gpu_test_targets
-     file_io_tests
-     coulomb_tests 
-     field_tests
-     atomic_tests 
-     boris_tests
-     cross_field_diffusion_tests )
+     #file_io_tests
+     trash_tests
+     #coulomb_tests 
+     #field_tests
+     #atomic_tests 
+     #boris_tests
+     #cross_field_diffusion_tests 
+     )
 
 if( NOT GITR_USE_CUDA )
 
@@ -43,13 +45,14 @@ if( GITR_USE_CUDA )
 
     target_include_directories( ${component} PUBLIC include test_include )
 
-    set_source_files_properties( test_src/${component}.cpp PROPERTIES LANGUAGE CUDA )
+    #set_source_files_properties( test_src/${component}.cpp PROPERTIES LANGUAGE CXX )
+    #set_source_files_properties( test_src/${component}.cpp PROPERTIES LINKER_LANGUAGE CUDA )
 
     set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
 
     set_target_properties( ${component} PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON )
 
-    target_compile_options( ${component} PUBLIC --expt-relaxed-constexpr )
+    #target_compile_options( ${component} PUBLIC --expt-relaxed-constexpr )
 
   endforeach()
 

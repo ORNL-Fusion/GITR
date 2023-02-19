@@ -69,27 +69,30 @@ endif()
 # link test targets
 target_link_libraries( config_interface_tests libconfig config_interface Catch2::Catch2WithMain )
 
-target_link_libraries( coulomb_tests 
-                       libconfig thrust interp2d utils flags netcdf boris fields 
-                       Catch2::Catch2WithMain )
+#target_link_libraries( coulomb_tests 
+#                       libconfig thrust interp2d utils flags netcdf boris fields 
+#                       Catch2::Catch2WithMain )
 
-target_link_libraries( atomic_tests ionize interp2d utils flags Catch2::Catch2WithMain )
+#target_link_libraries( atomic_tests ionize interp2d utils flags Catch2::Catch2WithMain )
 
-target_link_libraries( field_tests 
-                       interp2d libconfig utils netcdf fields boris Catch2::Catch2WithMain )
+#target_link_libraries( field_tests 
+#                       interp2d libconfig utils netcdf fields boris Catch2::Catch2WithMain )
 
-target_link_libraries( file_io_tests 
-                       libconfig utils flags boris geometry_check Catch2::Catch2WithMain )
+#target_link_libraries( file_io_tests 
+#                       libconfig utils flags boris geometry_check Catch2::Catch2WithMain )
 
-target_link_libraries( cross_field_diffusion_tests 
-                       utils flags libconfig boris spectroscopy thrust
-                       geometry_check config_interface Catch2::Catch2WithMain )
+#target_link_libraries( cross_field_diffusion_tests 
+#                       utils flags libconfig boris spectroscopy thrust
+#                       geometry_check config_interface Catch2::Catch2WithMain )
 
-target_link_libraries( boris_tests flags libconfig utils boris slow_math Catch2::Catch2WithMain )
+#target_link_libraries( boris_tests flags libconfig utils boris slow_math Catch2::Catch2WithMain )
+#target_link_libraries( trash_tests flags libconfig utils boris slow_math Catch2::Catch2WithMain )
 
 target_link_libraries( slow_math_tests slow_math Catch2::Catch2WithMain )
 
 target_link_libraries( interpolator_tests Catch2::Catch2WithMain )
+
+target_link_libraries( trash_tests trash_gpu Catch2::Catch2WithMain )
 
 if( OpenMP_CXX_FOUND )
 

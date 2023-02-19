@@ -272,6 +272,8 @@ TEST_CASE( "Complex Boris Motion" )
 
     auto gitr_flags = new Flags( cfg_geom );
 
+    /* Captain! You need to separate the cuda stuff OUT of this file */
+
     /* create a particle */
     auto particleArray =
       new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
@@ -433,6 +435,7 @@ TEST_CASE( "Complex Boris Motion" )
 
     for (int i = 0; i < n_timesteps; i++)
     {
+      /* Captain!!! This does not need to be set at every timestep, just check the final one */
       /* save particle velocity/position */
       v_x_test[ i ] = particleArray->vx[ 0 ];
       v_y_test[ i ] = particleArray->vy[ 0 ];
@@ -824,23 +827,3 @@ TEST_CASE( "Complex Boris Motion" )
     REQUIRE(compareVectors<gitr_precision>(gitrE,gold,epsilon,margin));
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

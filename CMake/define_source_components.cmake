@@ -39,6 +39,7 @@ set( gpu_targets
      boris
      hashGeom
      fields
+     trash_gpu
      spectroscopy
      geometry_check )
 

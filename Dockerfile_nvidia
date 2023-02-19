@@ -1,0 +1,49 @@
+# syntax=docker/dockerfile:1
+FROM docker as stage_0
+COPY --from=docker/buildx-bin:latest /buildx /usr/libexec/docker/cli-plugins/docker-buildx
+RUN docker buildx version
+
+# Captain! Is there any reason to be using the development image? I think not...
+# It's just bigger... try to build it off of a different image?
+#from nvidia/cuda:11.8.0-base-ubuntu20.04 as stage_1
+from nvidia/cuda:11.8.0-devel-ubuntu20.04 as stage_1
+
+# we need git and build essential
+
+run apt update
+run apt install -y git
+run DEBIAN_FRONTEND=noninteractive apt install -y cmake
+run apt install -y libhdf5-dev
+run apt install -y libnetcdf-dev
+run apt install -y libnetcdf-c++4-dev
+
+
+# no! bad!
+#run git clone https://github.com/ORNL-Fusion/GITR.git
+
+from stage_1 as stage_2
+
+run apt install ninja-build
+run apt install -y vim
+run apt install -y libconfig-dev
+run apt install -y libconfig++-dev
+
+# how do we get catch2...
+# still need libconfig
+# still need cli11
+
+from stage_2 as stage_3
+
+run DEBIAN_FRONTEND=noninteractive apt install -y cuda
+
+from stage_3 as stage_4
+
+# the only thing left to install is CLI11 and CMake
+run apt install wget
+
+# do all the package adding keys etc
+
+# apt install -y cmake <--- should get you the newest version. See if this allows you to
+# actually build gitr in a gpu container...
+
+volume /host
