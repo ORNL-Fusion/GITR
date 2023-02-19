@@ -1,0 +1,9 @@
+/home/5n4/spack/opt/spack/linux-ubuntu20.04-skylake/gcc-11.2.0/netcdf-cxx4-4.3.1-xygkmoabzkvwyvbu5prxjx6lueywqwru/lib/libnetcdf_c++4.so.1.1.0
+
+what should I do here.
+
+Well, I guess I can spack load this stuff...
+
+alright. So what we have here is an issue. what is the solution?
+
+Ok, so... the spack package is broken. Can it be fixed?
