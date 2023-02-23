@@ -226,9 +226,51 @@ Final Calculation:
 
 */
 #include <iostream>
-#include <vector>
 #include <cassert>
 #include <cmath>
+#include "flat_array.h"
+
+template< typename T >
+class interpolated_field : public tensor< T >
+{
+  public:
+
+    interpolated_field( std::vector< T > const &data,
+                        std::vector< long long unsigned int > const dims,
+                        std::vector< T > const max_range )
+      :
+      tensor< T >( data.data(), dims ),
+      max_range( max_range )
+      { 
+        /* Captain! Move all the asserts up to here */
+        spacing.resize( max_range.size() );
+
+        for( int i = 0; i < spacing.size(); i++ )
+        {
+          spacing[ i ] = max_range[ i ] / T(dims[ i ]);
+        }
+      }
+
+
+    /* Captain! Where do "coordinates" get replaced with int versions? mark it with coordinate
+       transform */
+    T operator()( std::vector< T > const coordinates );
+
+    std::vector< T > fetch_hypercube( std::vector< T > const coordinates );
+
+    T interpolate_hypercube( std::vector< T > const hypercube,
+                             std::vector< T > const coordinates );
+
+  private:
+
+    /* Captain! Create some private methods here! Move the fetch and interpolate functions
+       into here. They should not calculate their own offset factors... */
+
+    /* Captain! Does this handle edge cases for points off of the grid? */
+    std::vector< T > const max_range;
+
+    std::vector< T > spacing;
+};
 
 /*
 
@@ -247,22 +289,10 @@ max_range:
   by d_len[ i ] bins
 
 */
-double interpolate_hypercube( std::vector< double > const &hypercube,
-                               std::vector< double > const &coordinates,
-                               std::vector< int > const &d_len,
-                               std::vector< double > const &max_range )
+template< typename T >
+T interpolated_field< T >::interpolate_hypercube( std::vector< T > const hypercube,
+                                             std::vector< T > const coordinates )
 {
-  assert( coordinates.size() == d_len.size() );
-
-  assert( coordinates.size() == max_range.size() );
-
-  std::vector< double > spacing( max_range.size() );
-
-  for( int i = 0; i < spacing.size(); i++ )
-  {
-    spacing[ i ] = max_range[ i ] / double(d_len[ i ]);
-  }
-
   /* the "upper" and "lower" fractions for each dimension */
   std::vector< double > normalized_fractions( coordinates.size() * 2 );
 
@@ -296,6 +326,11 @@ double interpolate_hypercube( std::vector< double > const &hypercube,
   return sum;
 }
 
+/* Captain! Coordinates here go from small stride to large stride! */
+/* thus, d_len also goes from small stride to large stride offsets. grows like ---> */
+
+/* you simply need to change the calculation of d_len in here and the order of 
+   coordinates in the test file */
 
 /*
 
@@ -320,30 +355,35 @@ max_range:
 returns: n-dimensional hypercube in a flattened array of 2^n vertices
 
 */
-std::vector< double > fetch_hypercube( std::vector< double > const &data,
-                                       std::vector< double > const &coordinates,
-                                       std::vector< int > const &d_len,
-                                       std::vector< double > const &max_range )
+template< typename T >
+std::vector< T > interpolated_field< T >::fetch_hypercube( std::vector< T > const coordinates )
 {
-  assert( coordinates.size() == d_len.size() );
+  assert( coordinates.size() == tensor< T >::dims.size() );
 
   assert( coordinates.size() == max_range.size() );
 
   /* d_multipliers[ i ] indicates the stride of dimension "i" */
-  std::vector< int > d_multipliers( d_len.size(), 1 );
+  std::vector< int > d_multipliers( tensor< T >::dims.size(), 1 );
 
+  /*
   for( int i = 0; i < d_multipliers.size() - 1; i++ )
   {
     d_multipliers[ i + 1 ] = d_multipliers[ i ] * d_len[ i ];
   }
+  */
+  /* Captain! reversal! this variable should no longer be needed... */
+  for( int i = d_multipliers.size() - 1; i > 0; i-- )
+  {
+    d_multipliers[ i - 1 ] = d_multipliers[ i ] * tensor< T >::dims[ i ];
+  }
 
-  assert( data.size() == d_multipliers.back() * d_len.back() );
+  //assert( data.size() == d_multipliers.back() * d_len.back() );
 
   std::vector< double > spacing( max_range.size() );
 
   for( int i = 0; i < spacing.size(); i++ )
   {
-    spacing[ i ] = max_range[ i ] / double(d_len[ i ]);
+    spacing[ i ] = max_range[ i ] / double(tensor< T >::dims[ i ]);
   }
 
   /* find the index of the first vertex in the hypercube */
@@ -352,10 +392,10 @@ std::vector< double > fetch_hypercube( std::vector< double > const &data,
   for( int i = 0; i < coordinates.size(); i++ )
   {
     corner_vertex_index += 
-    ( std::floor( coordinates[ i ] / spacing[ i ] ) * d_multipliers[ i ] );
+    ( std::floor( coordinates[ i ] / spacing[ i ] ) * tensor< T >::offset_factors[ i ] );
   }
 
-  std::vector< double > hypercube( 1 << d_len.size() );
+  std::vector< double > hypercube( 1 << tensor< T >::dims.size() );
 
   /* find the indices of the other vertices in the hypercube by offsetting from the
      first vertex */
@@ -365,47 +405,22 @@ std::vector< double > fetch_hypercube( std::vector< double > const &data,
 
     for( int j = 0; j < coordinates.size(); j++ )
     {
-      flat_index += ( ( ( i >> j ) & 0x1 ) * d_multipliers[ j ] );
+      flat_index += ( ( ( i >> j ) & 0x1 ) * tensor< T >::offset_factors[ j ] );
     }
 
-    hypercube[ i ] = data[ flat_index ];
+    hypercube[ i ] = tensor< T >::data[ flat_index ];
   }
 
   return hypercube;
 }
 
-/* class to encapsulate interpolation functionality */
-class interpolated_field
-{
-  public:
-
-    interpolated_field( std::vector< double > const field,
-                        std::vector< int > const d_len,
-                        std::vector< double > const max_range )
-      :
-      field( field ),
-      d_len( d_len ),
-      max_range( max_range )
-      { }
-
-
-    double operator()( std::vector< double > const coordinates );
-
-  private:
-
-    std::vector< double > const field;
-
-    std::vector< int > const d_len;
-
-    std::vector< double > const max_range;
-};
-
 /* These do not make sense to be passed by value */
-double interpolated_field::operator()( std::vector< double > const coordinates )
+template< typename T >
+T interpolated_field< T >::operator()( std::vector< T > const coordinates )
 {
-  std::vector< double > hypercube = fetch_hypercube( field, coordinates, d_len, max_range );
+  std::vector< T > hypercube = fetch_hypercube( coordinates );
 
-  double interpolated_value = interpolate_hypercube( hypercube, coordinates, d_len, max_range );
+  T interpolated_value = interpolate_hypercube( hypercube, coordinates );
 
   return interpolated_value;
 }

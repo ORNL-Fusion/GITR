@@ -5,7 +5,6 @@ enable_testing()
 
 set( non_gpu_test_targets
      slow_math_tests
-     interpolator_tests
      config_interface_tests )
 
 # Captain! Next, you simply have to go through and re-activate the rest of the tests.
@@ -58,8 +57,6 @@ if( GITR_USE_CUDA )
 
 endif()
 
-# Captain! Add a "ninja clean that will delete all the 
-# add simple system tests
 add_test( NAME system_particle_straightline 
           COMMAND GITR -c input/gitrInput.cfg
           WORKING_DIRECTORY
@@ -69,3 +66,22 @@ add_test( NAME system_particle_gyro
           COMMAND GITR -c input/gitrInput.cfg
           WORKING_DIRECTORY
           "${CMAKE_BINARY_DIR}/examples/particle_trajectories/gyroMotion" )
+
+# Captain! New code
+add_executable( hdf5_tests test_src/hdf5_tests.cpp )
+
+add_test( NAME hdf5_tests COMMAND hdf5_tests )
+
+target_include_directories( hdf5_tests PUBLIC include test_include )
+
+add_executable( interpolator_tests test_src/interpolator_tests.cpp )
+
+add_test( NAME interpolator_tests COMMAND interpolator_tests )
+
+target_include_directories( interpolator_tests PUBLIC include test_include )
+
+add_executable( netcdf_tests test_src/netcdf_tests.cpp )
+
+add_test( NAME netcdf_tests COMMAND netcdf_tests )
+
+target_include_directories( netcdf_tests PUBLIC include test_include )

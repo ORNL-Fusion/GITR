@@ -22,14 +22,6 @@ endif()
 
 set( CMAKE_BUILD_WITH_INSTALL_RPATH True )
 
-# ensure shared dependency libs are discoverable at load-time
-#set( CMAKE_INSTALL_RPATH
-#     "${CMAKE_BINARY_DIR}"
-#     "${prefix}/libconfig_install/lib"
-#     "${prefix}/netcdf-c-install/lib"
-#     "${prefix}/netcdf-cxx4-install/lib" )
-
-# Captain! Rename to "common dependency set" or something more descriptive
 set( dependencies "" )
 
 # The following lines populate the "dependencies" variable
