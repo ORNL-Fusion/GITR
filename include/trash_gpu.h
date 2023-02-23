@@ -1,5 +1,6 @@
 #include "array.h"
 
+/**/
 class operate_boris
 {
   public:
@@ -12,6 +13,7 @@ class operate_boris
   double *data;
 };
 
+/* data class contains all sim arrays and data members */
 class run_boris
 {
   public:

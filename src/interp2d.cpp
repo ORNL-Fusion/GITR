@@ -88,6 +88,7 @@ gitr_precision interp2dCombined ( gitr_precision x, gitr_precision y, gitr_preci
     {
     dim1 = x;
     }
+    /* Captain! */
     gitr_precision d_dim1 = gridx[1] - gridx[0];
     gitr_precision dz = gridz[1] - gridz[0];
     int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
@@ -216,6 +217,7 @@ int nx, int nz,
 gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, 
 gitr_precision* datat, int cylsymm ) {
 
+   /* Captain! */
    gitr_precision Ar = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, cylsymm );
    gitr_precision At = interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, cylsymm );
    field[2] = interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );

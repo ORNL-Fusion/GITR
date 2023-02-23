@@ -1,6 +1,5 @@
 #include "catch2/catch_all.hpp"
-#include "ionize.h"
-#include "recombine.h"
+#include "Fields.h"
 #include "utils.h"
 #include "test_data_filepath.hpp"
 

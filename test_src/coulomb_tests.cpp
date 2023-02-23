@@ -1,7 +1,9 @@
+#include "coulomb_data_broker.h"
 #include "catch2/catch_all.hpp"
-#include "coulombCollisions.h"
-#include "curandInitialize.h"
-#include "curandInitialize2.h"
+//Captain! added utils below
+#include "utils.h"
+#include "flags.hpp"
+#include "Particles.h"
 #include "Fields.h"
 #include <thrust/execution_policy.h>
 #include <fstream>
@@ -45,7 +47,6 @@ TEST_CASE("Coulomb collision", "tests") {
 
   SECTION("Frequency")
   {
-
     gitr_precision nu_friction = 0.0;
     gitr_precision nu_deflection = 0.0;
     gitr_precision nu_parallel = 0.0;
@@ -92,6 +93,8 @@ TEST_CASE("Coulomb collision", "tests") {
     sim::Array<gitr_precision> BfieldT(1,0.0);
     gitr_precision T_background  = 20.0;
     
+    /* Captain! This won't work anymore - fix the test */
+    /*
     getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
                              x, y, z,
                              vx, vy, vz,
@@ -111,16 +114,19 @@ TEST_CASE("Coulomb collision", "tests") {
                              BfieldZ.data(),
                              BfieldT.data(), T_background, flowv_interp, cylsymm,
                              field_aligned_values );
+    */
 
       std::cout << "nu_friction " << nu_friction << std::endl;
       std::cout << "nu_deflection " << nu_deflection << std::endl;
       std::cout << "nu_parallel " << nu_parallel << std::endl;
       std::cout << "nu_energy " << nu_energy << std::endl;
+      /*
     std::vector<gitr_precision> vals(4,0.0);
     vals[0] = nu_friction;
     vals[1] = nu_deflection;
     vals[2] = nu_parallel;
     vals[3] = nu_energy;
+    */
 
     std::vector<gitr_precision> gold(4,0.0);
     gold[0] = 762.588;
@@ -130,6 +136,13 @@ TEST_CASE("Coulomb collision", "tests") {
 
     gitr_precision margin = 0.01;
     gitr_precision epsilon = 1.0;
+
+    /* Captain! new code */
+    coulomb_data_broker data_broker;
+
+    std::vector< gitr_precision > vals = data_broker.run_1();
+    /* end new code */
+
     REQUIRE(compareVectors<gitr_precision>(vals,gold,epsilon,margin));
   }
   
@@ -190,6 +203,7 @@ TEST_CASE("Coulomb collision", "tests") {
     
     for(int i=0;i<nT;i++)
     {
+      /*
       getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
                              x, y, z,
                              vx, vy, vz,
@@ -209,13 +223,16 @@ TEST_CASE("Coulomb collision", "tests") {
                              BfieldZ.data(),
                              BfieldT.data(), T_background, flowv_interp, cylsymm,
                              field_aligned_values );
+      */
      
       vx = vx + (flowVr[0] - vx)*dt*nu_friction;
     }
     
+    /*
     std::vector<gitr_precision> vals(2,0.0);
     vals[0] = vx;
     vals[1] = nu_friction;
+    */
 
     std::vector<gitr_precision> gold(2,0.0);
     gold[1] = 762.588;
@@ -223,8 +240,12 @@ TEST_CASE("Coulomb collision", "tests") {
 
     gitr_precision margin = 0.01;
     gitr_precision epsilon = 1.0;
-    REQUIRE(compareVectors<gitr_precision>(vals,gold,epsilon,margin));
 
+    /* Captain! new code. Above is trash */
+    coulomb_data_broker data_broker;
+    std::vector< gitr_precision > vals = data_broker.run();
+    /* end new code */
+    REQUIRE(compareVectors<gitr_precision>(vals,gold,epsilon,margin));
   }
  
   SECTION("Temperature")
@@ -242,6 +263,7 @@ TEST_CASE("Coulomb collision", "tests") {
     
     auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
     
+    /*
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
 
@@ -255,6 +277,7 @@ TEST_CASE("Coulomb collision", "tests") {
 
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
                    curandInitialize<rand_type>(&state1.front(), 0));
+    */
     
     gitr_precision amu = 184.0;
     
@@ -299,6 +322,7 @@ TEST_CASE("Coulomb collision", "tests") {
     int nT = getVariable_cfg<int> (cfg,"timeStep.nT");
     auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     
+    /*
     coulombCollisions coulombCollisions0(
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
       &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),
@@ -308,6 +332,7 @@ TEST_CASE("Coulomb collision", "tests") {
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
       &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags,
       flowv_interp, cylsymm, field_aligned_values );
+    */
     
     typedef std::chrono::high_resolution_clock gitr_time;
     auto gitr_start_clock = gitr_time::now();
@@ -315,7 +340,7 @@ TEST_CASE("Coulomb collision", "tests") {
     for(int i=0; i<nT; i++)
     {
       if(i%(nT/100) == 0) std::cout << 100.0f*i/nT << " % done" << std::endl;
-      thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,coulombCollisions0);
+      //thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,coulombCollisions0);
     }
     
     auto finish_clock0nc = gitr_time::now();
@@ -352,6 +377,13 @@ TEST_CASE("Coulomb collision", "tests") {
   
     gitr_precision tolerance = 1.0e-11;
     printf("mse and tol %e %e ", mse, tolerance);
+
+    /* Captain! new code */
+    coulomb_data_broker data_broker;
+
+    mse = data_broker.run_2();
+    /* end new code */
+
     REQUIRE(mse <= tolerance);
   }
   
@@ -371,6 +403,7 @@ TEST_CASE("Coulomb collision", "tests") {
     
     for(int i=0; i<nParticles; i++) particleArray->vz[i] = 4580.0;
     
+    /*
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
     
@@ -401,6 +434,8 @@ TEST_CASE("Coulomb collision", "tests") {
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
                    curandInitialize2<rand_type>(&state1.front(),&seed.front(), &sequence.front(),&offset.front()));
     
+    */
+
     gitr_precision nu_friction = 0.0;
     gitr_precision nu_deflection = 0.0;
     gitr_precision nu_parallel = 0.0;
@@ -460,6 +495,7 @@ TEST_CASE("Coulomb collision", "tests") {
     
     auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     
+    /*
     coulombCollisions coulombCollisions0(
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
       &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),
@@ -469,6 +505,7 @@ TEST_CASE("Coulomb collision", "tests") {
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
       &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags,
       flowv_interp, cylsymm, field_aligned_values );
+    */
     
     typedef std::chrono::high_resolution_clock gitr_time;
     auto gitr_start_clock = gitr_time::now();
@@ -477,6 +514,7 @@ TEST_CASE("Coulomb collision", "tests") {
     myfile.open ("drag.txt");
     for(int i=0; i<nT; i++)
     {
+      /*
       getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
                              x, y, z,
                              vx, vy, vz,
@@ -496,6 +534,7 @@ TEST_CASE("Coulomb collision", "tests") {
                              BfieldZ.data(),
                              BfieldT.data(), T_background, flowv_interp, cylsymm,
                              field_aligned_values );
+      */
 
       vx = vx - nu_friction*dt*(vx - flowVr[0]); 
       vy = vy - nu_friction*dt*(vy - flowVt[0]); 
@@ -510,7 +549,7 @@ TEST_CASE("Coulomb collision", "tests") {
      
       ave_vx = ave_vx/nParticles;
       myfile  << ave_vx << " "<< vx << std::endl;
-      thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,coulombCollisions0);
+      //thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,coulombCollisions0);
     }
   
     myfile.close();
@@ -550,7 +589,41 @@ TEST_CASE("Coulomb collision", "tests") {
     }
     
     printf("ave_vx %e \n", ave_vx);
+
+    /* Captain! new code */
+    coulomb_data_broker data_broker;
+
+    ave_vx = data_broker.run_3();
+    /* end new code */
+
     REQUIRE(ave_vx == Catch::Approx(flowVr[0]).margin(100.0));
   }
-
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

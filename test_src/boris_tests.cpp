@@ -13,6 +13,8 @@
 #include "slow_math.h"
 #include "constants.h"
 
+#include "boris_data_broker.h"
+
 /*
     REQUIRE(compareVectors<gitr_precision>(gitrE,gold,epsilon,margin));
 */
@@ -272,15 +274,10 @@ TEST_CASE( "Complex Boris Motion" )
 
     auto gitr_flags = new Flags( cfg_geom );
 
-    /* Captain! You need to separate the cuda stuff OUT of this file */
-
+    /* Captain! data_class member */
     /* create a particle */
     auto particleArray =
       new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
-
-    thrust::counting_iterator<std::size_t> particle_iterator_start(0);
-
-    thrust::counting_iterator<std::size_t> particle_iterator_end(1);
 
     particleArray->setParticleV( particle_array_index, 
         initial_x,
@@ -294,6 +291,7 @@ TEST_CASE( "Complex Boris Motion" )
         ion_charge,
         dt );
 
+    /* Captain! Data class members below */
     /* dummy variables start */
 
     /* hashing dummies */
@@ -424,7 +422,7 @@ TEST_CASE( "Complex Boris Motion" )
         use_3d_geom,
         cylsymm );
 
-    /* time loop */
+    /* Captain! Storage variables for comparing correct particle positions */
     std::vector< double > v_x_test( n_timesteps );
     std::vector< double > v_y_test( n_timesteps );
     std::vector< double > v_z_test( n_timesteps );
@@ -433,10 +431,38 @@ TEST_CASE( "Complex Boris Motion" )
     std::vector< double > pos_y_test( n_timesteps );
     std::vector< double > pos_z_test( n_timesteps );
 
+
+    //thrust::counting_iterator<std::size_t> particle_iterator_start(0);
+    //thrust::counting_iterator<std::size_t> particle_iterator_end(1);
+
+    /* Captain! New code */
+    boris_data_broker data_broker( particleArray, 
+                                   num_particles,
+                                   n_timesteps,
+                                   dt,
+                                   gitr_flags,
+                                   sheath_efield,
+                                   presheath_efield,
+                                   biased_surface,
+                                   geom_hash_sheath,
+                                   use_3d_geom,
+                                   cylsymm,
+                                   b_field_x,
+                                   b_field_y,
+                                   b_field_z,
+                                   e_field_x,
+                                   e_field_y,
+                                   e_field_z );
+
+    data_broker.run_boris();
+
+    /* Captain! End new code */
+
+    /* time loop */
+    /*
     for (int i = 0; i < n_timesteps; i++)
     {
-      /* Captain!!! This does not need to be set at every timestep, just check the final one */
-      /* save particle velocity/position */
+      // save particle velocity/position
       v_x_test[ i ] = particleArray->vx[ 0 ];
       v_y_test[ i ] = particleArray->vy[ 0 ];
       v_z_test[ i ] = particleArray->vz[ 0 ];
@@ -445,35 +471,36 @@ TEST_CASE( "Complex Boris Motion" )
       pos_y_test[ i ] = particleArray->y[ 0 ];
       pos_z_test[ i ] = particleArray->z[ 0 ];
 
-      /* update particle velocity/position */
+      // update particle velocity/position
       thrust::for_each( thrust::device,
           particle_iterator_start,
           particle_iterator_end,
           boris );
 
-      /* manually advance the particle */
+      // manually advance the particle 
       particleArray->xprevious[ 0 ] = particleArray->x[0];
       particleArray->yprevious[ 0 ] = particleArray->y[0];
       particleArray->zprevious[ 0 ] = particleArray->z[0];
 
     }
+    */
 
     /* rmse check the output vs analytical */
     double tolerance = 1e-6;
 
-    REQUIRE( rmse_based_comparison( pos_x, pos_x_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( pos_x, data_broker.pos_x_test, tolerance ) );
 
-    REQUIRE( rmse_based_comparison( pos_y, pos_y_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( pos_y, data_broker.pos_y_test, tolerance ) );
 
-    REQUIRE( rmse_based_comparison( pos_z, pos_z_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( pos_z, data_broker.pos_z_test, tolerance ) );
 
-    REQUIRE( rmse_based_comparison( v_x, v_x_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( v_x, data_broker.v_x_test, tolerance ) );
 
     tolerance = 1e-5;
 
-    REQUIRE( rmse_based_comparison( v_y, v_y_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( v_y, data_broker.v_y_test, tolerance ) );
 
-    REQUIRE( rmse_based_comparison( v_z, v_z_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( v_z, data_broker.v_z_test, tolerance ) );
   }
 
   /*
@@ -484,13 +511,13 @@ TEST_CASE( "Complex Boris Motion" )
   */
   SECTION( "exb drift experiment - Wein Filter" )
   {
-    /* parameters */
+    // parameters
     int nT = 1e1;
 
     gitr_precision dt = 1.0e-2;
     gitr_precision vtotal = 1000;
 
-    /* total final displacement in y should be vtotal * nT * dt = 1000 * 10 * 1e-2 = 100 */
+    // total final displacement in y should be vtotal * nT * dt = 1000 * 10 * 1e-2 = 100
 
     int particle_array_index = 0;
 
@@ -504,7 +531,7 @@ TEST_CASE( "Complex Boris Motion" )
 
     int material_z = 0;
 
-    /* amu and error in the "y" dimension appear to be inversely correlated */
+    // amu and error in the "y" dimension appear to be inversely correlated
     gitr_precision amu = 27;
 
     int charge = 2.0;
@@ -513,7 +540,7 @@ TEST_CASE( "Complex Boris Motion" )
 
     int num_particles = 1;
 
-    /* configuration flags */
+    // configuration flags
     libconfig::Config cfg_geom;
 
     cfg_geom.setAutoConvert(true);
@@ -522,13 +549,13 @@ TEST_CASE( "Complex Boris Motion" )
 
     auto gitr_flags = new Flags( cfg_geom );
 
-    /* create a particle */
+    // create a particle
     auto particleArray =
     new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
 
-    thrust::counting_iterator<std::size_t> particle_iterator_start(0);
+    //thrust::counting_iterator<std::size_t> particle_iterator_start(0);
 
-    thrust::counting_iterator<std::size_t> particle_iterator_end(1);
+    //thrust::counting_iterator<std::size_t> particle_iterator_end(1);
 
     particleArray->setParticleV( particle_array_index, 
                                  initial_x,
@@ -542,9 +569,9 @@ TEST_CASE( "Complex Boris Motion" )
                                  charge,
                                  dt );
 
-    /* dummy variables start */
+    // dummy variables start
 
-    /* hashing dummies */
+    // hashing dummies
     int nHashes = 1;
     sim::Array<int> nR_closeGeom(nHashes, 0);
     sim::Array<int> nY_closeGeom(nHashes, 0);
@@ -562,7 +589,7 @@ TEST_CASE( "Complex Boris Motion" )
     sim::Array<gitr_precision> closeGeomGridz(1);
     sim::Array<int> closeGeom(1, 0);
 
-    /* boundary dummies */
+    // boundary dummies
     int nLines = 0;
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
@@ -585,7 +612,7 @@ TEST_CASE( "Complex Boris Motion" )
 
     sim::Array<int>            closeGeom_sheath(nGeomHash_sheath);
 
-    /* presheath efield is in the bulk plasma and sheath efield is at the surface of the wall */
+    // presheath efield is in the bulk plasma and sheath efield is at the surface of the wall
 
     int nR_PreSheathEfield = 1;
     int nY_PreSheathEfield = 1;
@@ -597,44 +624,45 @@ TEST_CASE( "Complex Boris Motion" )
     int n_Bfield = 1;
 
 
-    /* electric field array declarations */
+    // electric field array declarations
 
-    /* domain grid */
+    // domain grid
     sim::Array<gitr_precision> preSheathEGridr(nR_PreSheathEfield);
     sim::Array<gitr_precision> preSheathEGridy(nY_PreSheathEfield);
     sim::Array<gitr_precision> preSheathEGridz(nZ_PreSheathEfield);
 
-    /* values */
+    // values
     sim::Array<gitr_precision> PSEr(nPSEs); 
     sim::Array<gitr_precision> PSEz(nPSEs); 
     sim::Array<gitr_precision> PSEt(nPSEs);
 
-    /* magnetic field array declarations */
+    // magnetic field array declarations
     
-    /* domain grid */
+    // domain grid
     sim::Array<gitr_precision> bfieldGridr(nR_Bfield);
     sim::Array<gitr_precision> bfieldGridz(nZ_Bfield);
 
-    /* values */
+    // values
     sim::Array<gitr_precision> br(n_Bfield); 
     sim::Array<gitr_precision> by(n_Bfield);
     sim::Array<gitr_precision> bz(n_Bfield);
 
-    /* dummy variables end */
+    // dummy variables end
 
-    /* uniform bfield */
+    // uniform bfield
     br[ 0 ] = 1;
     by[ 0 ] = 0;
     bz[ 0 ] = 0;
 
-    /* r is x */
-    /* y is t */
+    // r is x 
+    // y is t 
     PSEr[ 0 ] = 0;
     PSEz[ 0 ] = 1000;
     PSEt[ 0 ] = 0;
 
 
-    /* create boris operator */
+    // create boris operator
+    /*
     move_boris boris( particleArray,
                       dt,
                       boundaries.data(),
@@ -671,31 +699,42 @@ TEST_CASE( "Complex Boris Motion" )
                       use_3d_geom,
                       cylsymm );
 
-    /* time loop */
+*/
+    // time loop
     for (int tt = 0; tt < nT; tt++)
     {
 
+      /*
       thrust::for_each( thrust::device,
                         particle_iterator_start,
                         particle_iterator_end,
                         boris );
+      */
 
 
-      /* manually advance the particle */
+      // manually advance the particle 
       particleArray->xprevious[ 0 ] = particleArray->x[0];
       particleArray->yprevious[ 0 ] = particleArray->y[0];
       particleArray->zprevious[ 0 ] = particleArray->z[0];
 
     }
 
-    /* total final displacement in y should be vtotal * nT * dt = 1000 * 10 * 1e-2 = 100 */
+    // total final displacement in y should be vtotal * nT * dt = 1000 * 10 * 1e-2 = 100
+    /*
     std::vector< double > final_position{ particleArray->x[ 0 ],
                                           particleArray->y[ 0 ],
                                           particleArray->z[ 0 ] };
+    */
     
     std::vector< double > gold{ 0, 100, 0 };
 
     double tolerance = 1e-9;
+
+    /* Captain! new code */
+    boris_data_broker_0 data_broker;
+
+    std::vector< double > final_position = data_broker.run_1();
+    /* end new code */
 
     REQUIRE( root_mean_squared_error( final_position, gold ) < tolerance );
   }
@@ -730,18 +769,18 @@ TEST_CASE( "Complex Boris Motion" )
     
     int nR_Bfield = 1, nZ_Bfield = 1, n_Bfield = 1;
 
-    /* required option: USE_PRESHEATH_EFIELD=1 and GITR_BFIELD_INTERP=1 */
-    /* create a unified setup script */
+    // required option: USE_PRESHEATH_EFIELD=1 and GITR_BFIELD_INTERP=1
+    // create a unified setup script
     sim::Array<gitr_precision> br(n_Bfield), by(n_Bfield), bz(n_Bfield);
 
-    /* uniform bfield */
+    // uniform bfield //
     br[ 0 ] = std::cos(M_PI*5.0/180);
-    /* large bfield in teslas gives smaller gyromotion radius */
+    // large bfield in teslas gives smaller gyromotion radius 
     by[ 0 ] = 0;
     bz[ 0 ] = -std::sin(M_PI*5.0/180);;
 
-    /* for the uniform efield, set efield to 1000 in z just make the cross product geometry */
-    /* presheath efield is in the bulk plasma and sheath efield is at the surface of the wall */
+    // for the uniform efield, set efield to 1000 in z just make the cross product geometry 
+    // presheath efield is in the bulk plasma and sheath efield is at the surface of the wall 
 
     sim::Array<gitr_precision> bfieldGridr(nR_Bfield), bfieldGridz(nZ_Bfield);
     gitr_precision background_Z = 1;
@@ -824,6 +863,23 @@ TEST_CASE( "Complex Boris Motion" )
     // Compare vectors to ensure reproducibility
     gitr_precision margin = 0.1;
     gitr_precision epsilon = 0.001;
-    REQUIRE(compareVectors<gitr_precision>(gitrE,gold,epsilon,margin));
+
+    /* Captain! new code */
+
+    boris_data_broker_0 data_broker;
+
+    std::vector< double > gitr_e = data_broker.run_2();
+
+    /* end new code */
+
+    REQUIRE(compareVectors<gitr_precision>(gitr_e,gold,epsilon,margin));
   }
 }
+
+
+
+
+
+
+
+

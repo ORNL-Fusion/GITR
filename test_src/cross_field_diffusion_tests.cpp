@@ -1,12 +1,9 @@
-#include <iostream>
 #include "catch2/catch_all.hpp"
-#include "crossFieldDiffusion.h"
+#include "cross_field_diffusion_broker.h"
 #include "test_data_filepath.hpp"
 #include "Particles.h"
 #include "geometryCheck.h"
 #include "spectroscopy.h"
-#include "curandInitialize.h"
-#include <thrust/execution_policy.h>
 #include "config_interface.h"
 
 template <typename T=double>
@@ -88,6 +85,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     int nP = impurity[ "nP" ];
 
+    /* Captain! This is the first variable to be converted */
     sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
     int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
@@ -113,9 +111,11 @@ TEST_CASE( "cross-field diffusion operator" )
 
     auto surfaces = new Surfaces(nSurfaces, nEdist, nAdist);
     surfaces->setSurface(nEdist, E0dist, Edist, nAdist, A0dist, Adist);
-    sim::Array<gitr_precision> closeGeomGridr(1),
-      closeGeomGridy(1), closeGeomGridz(1);
+
+    sim::Array<gitr_precision> closeGeomGridr(1), closeGeomGridy(1), closeGeomGridz(1);
+
     sim::Array<int> closeGeom(1, 0);
+    /* end dummy variables */
 
     geometry_check geometry_check0(
         particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
@@ -146,29 +146,41 @@ TEST_CASE( "cross-field diffusion operator" )
       std::cout << "Spectroscopy net imported" << std::endl;
     }
 
+    /* Captain! New block of cuda stuff */
     sim::Array<gitr_precision> gridX_bins(net_nX), gridY_bins(1), gridZ_bins(net_nZ);
 
     sim::Array<gitr_precision> gridX_midpoints(net_nX-1);
+
     sim::Array<gitr_precision> net_Bins((nBins + 1) * net_nX * net_nZ, 0.0);
-//net_Bins needs adjusting to be in the middle of the grids
+
+    //net_Bins needs adjusting to be in the middle of the grids
     for (int i = 0; i < net_nX; i++) {
+
       gridX_bins[i] = netX0 + 1.0 / (net_nX - 1) * i * (netX1 - netX0);
+
       std::cout << i << " " << gridX_bins[i] << std::endl;
     }
 
     double dx = gridX_bins[1] - gridX_bins[0];
+
     for (int i = 0; i < net_nX-1; i++) {
+
       gridX_midpoints[i] = gridX_bins[i] + 0.5*dx;
+
       std::cout << i << " " << gridX_midpoints[i] << std::endl;
     }
 
     for (int i = 0; i < net_nZ; i++) {
+
       gridZ_bins[i] = netZ0 + i * 1.0 / (net_nZ - 1) * (netZ1 - netZ0);
+
     }
+
     spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy );
 
+    /*
     #if USE_CUDA > 0
     typedef curandState rand_type;
     #else
@@ -181,11 +193,15 @@ TEST_CASE( "cross-field diffusion operator" )
     thrust::counting_iterator<std::size_t> particle_iterator_end(nP);
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
                    curandInitialize<rand_type>(&state1.front(), true));
+    */
+
+    /* Captain! end block of cuda stuff */
 
   gitr_precision perpDiffusionCoeff = 0.0;
   cfg_geom.lookupValue("backgroundPlasmaProfiles.Diffusion.Dperp",
                         perpDiffusionCoeff);
 
+  /* Captain! begin cuda stuff */
   int nR_Bfield = 1, nZ_Bfield = 1, n_Bfield = 1;
 
   sim::Array<gitr_precision> br(n_Bfield), by(n_Bfield), bz(n_Bfield);
@@ -200,12 +216,16 @@ TEST_CASE( "cross-field diffusion operator" )
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
 
+  /*
   crossFieldDiffusion crossFieldDiffusion0( gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
       &bz.front(), &by.front(), perp_diffusion, cylsymm );
+  */
+
+  /* Captain! end cuda stuff */
     
-  // half-side length
+    // half-side length
     double s = 0.2;
     std::vector<gitr_precision> gold(net_nX-1,0.0);
     for( int x_bin = 0; x_bin < net_nX-1; ++x_bin )
@@ -214,28 +234,32 @@ TEST_CASE( "cross-field diffusion operator" )
       gold[x_bin] = 0.5/perpDiffusionCoeff*(s-gridX_midpoints[x_bin]);
     }
 
+    /* Captain! This entire loop below needs to be moved to cuda area */
     for (int tt = 0; tt < nT; tt++)
     {
       if(tt%(nT/10) == 0) std::cout << 100.0f*tt/nT << " % done" << std::endl;
-      /* call spec_bin */
+      /*
+      // call spec_bin
       thrust::for_each(thrust::device,
                       particle_iterator0, 
                        particle_iterator_end, 
                        spec_bin0 );
 
-      /* call diffusion */
+      // call diffusion
       thrust::for_each(thrust::device,
                        particle_iterator0, 
                        particle_iterator_end, 
                        crossFieldDiffusion0 );
 
-      /* call geometry check */
+      // call geometry check
       thrust::for_each(thrust::device,
                        particle_iterator0, 
                        particle_iterator_end, 
                        geometry_check0 );
+      */
     }
 
+    /* Captain! This statistical measure needs to be moved to a separate function */
     /* examine histogram */
     /* output x */
     /* analytical equation we expect */
@@ -274,6 +298,16 @@ TEST_CASE( "cross-field diffusion operator" )
     std::cout << "number of particles not finished " << not_hit << std::endl;
     gitr_precision margin = 0.1;
     gitr_precision epsilon = 0.05;
+
+
+
+    /* Captain! New code! Above is just trash */
+    cross_field_diffusion_broker data_broker;
+
+    rms_error = data_broker.run();
+
+    /* Captain! End new code */
+
     REQUIRE(rms_error<6.0e-4);
   }
 
@@ -293,7 +327,7 @@ TEST_CASE( "cross-field diffusion operator" )
   SECTION( "curved" )
   {
     int const perp_diffusion = 2;
-    /* timesteps */
+    // timesteps
     int nT = 200000;
     int const cylsymm = 1;
 
@@ -315,7 +349,7 @@ TEST_CASE( "cross-field diffusion operator" )
 
     REQUIRE( nLines == 2 );
 
-    /* particles */
+    // particles
     libconfig::Setting &impurity = cfg_geom.lookup( "impurityParticleSource" );
 
     int nP = impurity[ "nP" ];
@@ -333,7 +367,7 @@ TEST_CASE( "cross-field diffusion operator" )
     }
     std::cout << "p " << particleArray->charge[0] << " x " << particleArray->xprevious[0]<<std::endl;
 
-    /* dummy variables for hashing */
+    // dummy variables for hashing
     int nHashes = 1;
     sim::Array<int> nR_closeGeom(nHashes, 0);
     sim::Array<int> nY_closeGeom(nHashes, 0);
@@ -347,6 +381,7 @@ TEST_CASE( "cross-field diffusion operator" )
     gitr_precision A0dist = 0.0;
     gitr_precision Adist = 0.0;
 
+    /*
     auto surfaces = new Surfaces(nSurfaces, nEdist, nAdist);
     surfaces->setSurface(nEdist, E0dist, Edist, nAdist, A0dist, Adist);
     sim::Array<gitr_precision> closeGeomGridr(1),
@@ -362,15 +397,16 @@ TEST_CASE( "cross-field diffusion operator" )
         geom_hash,
         use_3d_geom,
         cylsymm );
+    */
 
 
-    /* data collection variables */
+    // data collection variables
     gitr_precision netX0 = 0.0;
     gitr_precision netX1 = 0.0, netY0 = 0.0, netY1 = 0.0, netZ0 = 0.0, netZ1 = 0.0;
     int net_nX = 0, net_nY = 0, net_nZ = 0;
     int nBins = 0;
 
-    /* populate from diagnostics */
+    // populate from diagnostics
     if (cfg_geom.lookupValue("diagnostics.netx0", netX0) &&
         cfg_geom.lookupValue("diagnostics.netx1", netX1) &&
         cfg_geom.lookupValue("diagnostics.netz0", netZ0) &&
@@ -401,6 +437,7 @@ TEST_CASE( "cross-field diffusion operator" )
     for (int i = 0; i < net_nZ; i++) {
       gridZ_bins[i] = netZ0 + i * 1.0 / (net_nZ - 1) * (netZ1 - netZ0);
     }
+    /*
     spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy );
@@ -417,6 +454,7 @@ TEST_CASE( "cross-field diffusion operator" )
     thrust::counting_iterator<std::size_t> particle_iterator_end(nP);
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
                    curandInitialize<rand_type>(&state1.front(), true));
+    */
 
   gitr_precision perpDiffusionCoeff = 0.0;
   cfg_geom.lookupValue("backgroundPlasmaProfiles.Diffusion.Dperp",
@@ -436,10 +474,12 @@ TEST_CASE( "cross-field diffusion operator" )
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
 
+  /*
   crossFieldDiffusion crossFieldDiffusion0( gitr_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
       &bz.front(), &by.front(), perp_diffusion, cylsymm );
+  */
     
   // half-side length
     double s = 0.2;
@@ -454,34 +494,34 @@ TEST_CASE( "cross-field diffusion operator" )
     for (int tt = 0; tt < nT; tt++)
     {
       if(tt%(nT/10) == 0) std::cout << 100.0f*tt/nT << " % done" << std::endl;
-      /* call spec_bin */
+
+      /*
       thrust::for_each(thrust::device,
                       particle_iterator0, 
                        particle_iterator_end, 
                        spec_bin0 );
 
-      /* call diffusion */
       thrust::for_each(thrust::device,
                        particle_iterator0, 
                        particle_iterator_end, 
                        crossFieldDiffusion0 );
 
-      /* call geometry check */
       thrust::for_each(thrust::device,
                        particle_iterator0, 
                        particle_iterator_end, 
                        geometry_check0 );
+      */
     }
 
-    /* examine histogram */
-    /* output x */
-    /* analytical equation we expect */
+    // examine histogram
+    // output x
+    // analytical equation we expect
     std::vector<double> density(net_nX-1,0.0);
     double sum = 0;
     double rms_error = 0;
     for( int x_bin = 0; x_bin < net_nX-1; ++x_bin )
     {
-      /* sum over z? */
+      // sum over z?
       for( int z_bin = 0; z_bin < net_nZ; ++z_bin )
       {
         sum += net_Bins[ nBins * net_nX * net_nZ +
@@ -508,6 +548,13 @@ for (int i=0; i< nP; i++ )
     std::cout << "number of particles not finished " << not_hit << std::endl;
     gitr_precision margin = 0.1;
     gitr_precision epsilon = 0.05;
-    REQUIRE(rms_error<5.0e-4);
+
+    /* Captain! New code! Above is just trash */
+    cross_field_diffusion_broker data_broker;
+
+    rms_error = data_broker.run_1();
+
+    /* Captain! End new code */
+    REQUIRE( rms_error < 5.0e-4 );
   }
 }

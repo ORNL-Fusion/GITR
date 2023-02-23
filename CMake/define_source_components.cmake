@@ -43,6 +43,12 @@ set( gpu_targets
      spectroscopy
      geometry_check )
 
+set( gpu_broker_targets
+     boris_data_broker
+     atomic_data_broker
+     coulomb_data_broker
+     cross_field_diffusion_broker )
+
 if( NOT GITR_USE_CUDA )
 
   set( non_gpu_targets ${non_gpu_targets} ${gpu_targets} )
@@ -53,14 +59,14 @@ foreach( component IN LISTS non_gpu_targets )
 
   add_library( ${component} src/${component}.cpp )
 
-  target_include_directories( ${component} PUBLIC include )
+  target_include_directories( ${component} PUBLIC include test_include )
 
 endforeach()
 
 # Compile gpu_targets
 if( GITR_USE_CUDA )
 
-  foreach( component IN LISTS gpu_targets )
+  foreach( component IN LISTS gpu_targets gpu_broker_targets )
 
     add_library( ${component} src/${component}.cpp )
 
@@ -68,7 +74,7 @@ if( GITR_USE_CUDA )
 
     set_target_properties( ${component} PROPERTIES COMPILE_FLAGS "-dc" )
 
-    target_include_directories( ${component} PUBLIC include )
+    target_include_directories( ${component} PUBLIC include test_include )
 
     target_compile_options( ${component} PRIVATE --expt-relaxed-constexpr )
 

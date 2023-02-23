@@ -1,4 +1,3 @@
-//#include "file_io.hpp"
 #include <iostream>
 #include <libconfig.h++>
 #include <stdio.h>
@@ -85,6 +84,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     std::cout << "this thing values " << this_thing << std::endl;
     REQUIRE(this_thing == "netcdf_file_py.nc");
   }
+  /*
   SECTION("geom test")
   {
   libconfig::Config cfg,cfg_geom;
@@ -140,6 +140,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       use_3d_geom,
       cylsymm );
   }
+  */
   
   SECTION("geom test - flat line")
   {
@@ -226,7 +227,16 @@ TEST_CASE("Factorials are computed", "[factorial]") {
     
     geometry_check0(0);
     std::cout << "particle x and z " << particleArray->x[0] << " " <<  particleArray->z[0] << std::endl;
+
+    /* Captain! new code */
+
+    //file_io_data_broker data_broker;
+
+    //bool pass = data_broker.run_0();
+
+    /* end new code */
     REQUIRE(particleArray->hitWall[0] == 1);
+   // REQUIRE( pass );
 
   }
   

@@ -8,16 +8,16 @@ set( non_gpu_test_targets
      interpolator_tests
      config_interface_tests )
 
+# Captain! Next, you simply have to go through and re-activate the rest of the tests.
+# once all the tests are reactivated, test them all out in CPU mode too. Then add in
+# your new tests. No documentation, do that tomorrow
 # atomic tests does not compile and is disabled
 set( gpu_test_targets
-     #file_io_tests
-     trash_tests
-     #coulomb_tests 
-     #field_tests
-     #atomic_tests 
-     #boris_tests
-     #cross_field_diffusion_tests 
-     )
+     file_io_tests
+     coulomb_tests 
+     atomic_tests 
+     cross_field_diffusion_tests
+     boris_tests )
 
 if( NOT GITR_USE_CUDA )
 

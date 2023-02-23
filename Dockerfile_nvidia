@@ -41,6 +41,10 @@ from stage_3 as stage_4
 # the only thing left to install is CLI11 and CMake
 run apt install wget
 
+# Captain! The only things left to do are:
+# 0. CLI11 - just grind it out
+# 1. CMake - you know how
+
 # do all the package adding keys etc
 
 # apt install -y cmake <--- should get you the newest version. See if this allows you to
