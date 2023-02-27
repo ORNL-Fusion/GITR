@@ -111,9 +111,9 @@ if( OpenMP_CXX_FOUND )
 
 endif()
 
-target_link_libraries( hdf5_tests Catch2::Catch2WithMain  hdf5::hdf5 )
+target_link_libraries( hdf5_tests hdf5 Catch2::Catch2WithMain )
 
-target_link_libraries( interpolator_tests Catch2::Catch2WithMain  hdf5::hdf5 )
+target_link_libraries( interpolator_tests Catch2::Catch2WithMain hdf5 )
 
 target_link_libraries( netcdf_tests Catch2::Catch2WithMain netcdf )
 

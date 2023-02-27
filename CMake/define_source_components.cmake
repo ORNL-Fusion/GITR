@@ -39,7 +39,6 @@ set( gpu_targets
      boris
      hashGeom
      fields
-     trash_gpu
      spectroscopy
      geometry_check )
 
@@ -55,6 +54,8 @@ if( NOT GITR_USE_CUDA )
 
 endif()
 
+# Captain! This is all wrong and needs to be fixed - won't compile
+# in CPU mode
 foreach( component IN LISTS non_gpu_targets )
 
   add_library( ${component} src/${component}.cpp )

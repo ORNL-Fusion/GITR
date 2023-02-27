@@ -756,6 +756,7 @@ void move_boris::operator()(std::size_t indx)
 
 #else
 */
+  /* Captain! interp to change here */
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer, cylsymm );
@@ -763,6 +764,7 @@ void move_boris::operator()(std::size_t indx)
   vectorAdd(E,PSE,E);
               //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
   }
+  /* Captain! interp to change here */
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );        
@@ -867,12 +869,14 @@ void move_boris::operator()(std::size_t indx)
 
   if( presheath_efield > 0 )
   {
+  /* Captain! interp to change here */
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer, cylsymm );
                  
   vectorAdd(E,PSE,E);
   }
+  /* Captain! interp to change here */
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );        
