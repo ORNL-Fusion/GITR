@@ -10,6 +10,120 @@
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
 
+/* Ahoy, Captain! new code */
+CUDA_CALLABLE_MEMBER
+gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
+    gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data, int cylsymm ) {
+    
+    gitr_precision fxz = 0.0;
+    gitr_precision fx_z1 = 0.0;
+    gitr_precision fx_z2 = 0.0; 
+    if(nx*nz == 1)
+    {
+        fxz = data[0];
+    }
+    else{
+    gitr_precision dim1;
+     if( cylsymm )
+     {
+    dim1 = std::sqrt(x*x + y*y);
+    }
+    else
+    {
+    dim1 = x;
+    }
+    /* Captain! */
+    gitr_precision d_dim1 = gridx[1] - gridx[0];
+    gitr_precision dz = gridz[1] - gridz[0];
+    int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
+    int j = std::floor((z - gridz[0])/dz);
+    
+    //gitr_precision interp_value = data[i + j*nx];
+    if (i < 0) i=0;
+    if (j < 0) j=0;
+    if (i >=nx-1 && j>=nz-1)
+    {
+        fxz = data[nx-1+(nz-1)*nx];
+    }
+    else if (i >=nx-1)
+    {
+        fx_z1 = data[nx-1+j*nx];
+        fx_z2 = data[nx-1+(j+1)*nx];
+        fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+    }
+    else if (j >=nz-1)
+    {
+        fx_z1 = data[i+(nz-1)*nx];
+        fx_z2 = data[i+(nz-1)*nx];
+        fxz = ((gridx[i+1]-dim1)*fx_z1+(dim1 - gridx[i])*fx_z2)/d_dim1;
+        
+    }
+    else
+    {
+      fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
+      fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
+      fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+    }
+    }
+
+    /* Ahoy, Captain!!! Interpolate and return here. If this ran in openmp mode things
+       would be easier... maybe it's time to fix that too... ugh...
+       
+       I guess you could go ahead and identify which parameters are which... 
+
+       we need data, assuming row major I think this should work. Dims are the discrete
+       number of elements in each dimension. 
+
+       max_range is the mapping - the highest value 
+
+       construction:
+
+       interpolated_field< gitr_precision > electric_field( data, dims, max_extent );
+
+       data - obvious
+       dims - I think this is just nx and nz
+       max_extent - this should simply be the final element of the grid
+
+       invokation:
+
+       fxz = electric_field( { x, y, z } );
+
+       next steps: make sure the field class can handle the case of single element fields:
+       easy edge case that will not apply with the bfield stuff. Print all that out too
+       just to make sure you are getting the same values.
+
+    */
+
+    return fxz;
+}
+
+CUDA_CALLABLE_MEMBER
+void move_boris::interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,
+int nx, int nz,
+gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, 
+gitr_precision* datat, int cylsymm ) {
+
+   /* Captain! You'll want to put all this data into a managed class. Grind out this
+      work first. */
+   gitr_precision Ar = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, cylsymm );
+   gitr_precision At = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, cylsymm );
+   field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
+     if( cylsymm )
+     {
+            gitr_precision theta = std::atan2(y,x);   
+            field[0] = std::cos(theta)*Ar - std::sin(theta)*At;
+            field[1] = std::sin(theta)*Ar + std::cos(theta)*At;
+    }
+    else
+    {
+            field[0] = Ar;
+            field[1] = At;
+    }
+
+}
+
+/* end new code */
+
 CUDA_CALLABLE_MEMBER
 void vectorAdd(gitr_precision A[], gitr_precision B[],gitr_precision C[])
 {
@@ -757,7 +871,7 @@ void move_boris::operator()(std::size_t indx)
 #else
 */
   /* Captain! interp to change here */
-  interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
+  this->interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer, cylsymm );
                  
@@ -765,7 +879,7 @@ void move_boris::operator()(std::size_t indx)
               //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
   }
   /* Captain! interp to change here */
-  interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
+  this->interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );        
   Bmag = vectorNorm(B);
@@ -870,14 +984,14 @@ void move_boris::operator()(std::size_t indx)
   if( presheath_efield > 0 )
   {
   /* Captain! interp to change here */
-  interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
+  this->interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer, cylsymm );
                  
   vectorAdd(E,PSE,E);
   }
   /* Captain! interp to change here */
-  interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
+  this->interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );        
   Bmag = vectorNorm(B);

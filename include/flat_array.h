@@ -1,3 +1,4 @@
+/* Captain! You must remove vector as a dependency if this is to run on gpus */
 #include <vector>
 
 template< typename T >

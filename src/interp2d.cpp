@@ -68,6 +68,7 @@ gitr_precision interp2d ( gitr_precision x, gitr_precision z,int nx, int nz,
 
     return fxz;
 }
+/* Ahoy, Captain! You'll need to change interp2dCombined! */
 gitr_precision interp2dCombined ( gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
     gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data, int cylsymm ) {
     
@@ -211,6 +212,7 @@ void interp3dVector (gitr_precision* field, gitr_precision x, gitr_precision y, 
     field[1] =  interp3d (x,y,z,nx,ny,nz,gridx, gridy,gridz,datat );
     field[2] =  interp3d (x,y,z,nx,ny,nz,gridx, gridy,gridz,dataz );
 }
+/* Ahoy, Captain! This is part of the call stack */
 CUDA_CALLABLE_MEMBER
 void interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,
 int nx, int nz,

@@ -225,6 +225,7 @@ Final Calculation:
   ( lower_fraction if b is '0' or upper_fraction if b is '1' ) 
 
 */
+
 #include <iostream>
 #include <cassert>
 #include <cmath>

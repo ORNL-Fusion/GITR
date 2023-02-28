@@ -57,6 +57,32 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
 
 struct move_boris { 
 
+    /* Ahoy, Captain! new code for class based boris interpolation */
+    CUDA_CALLABLE_MEMBER    
+    gitr_precision interp2dCombined ( gitr_precision x,
+                                      gitr_precision y,
+                                      gitr_precision z,
+                                      int nx,
+                                      int nz,
+                                      gitr_precision* gridx,
+                                      gitr_precision* gridz,
+                                      gitr_precision* data,
+                                      int cylsymm );
+
+    CUDA_CALLABLE_MEMBER    
+    void interp2dVector( gitr_precision* field, 
+                         gitr_precision x,
+                         gitr_precision y,
+                         gitr_precision z,
+                         int nx,
+                         int nz,
+                         gitr_precision* gridx,
+                         gitr_precision* gridz,
+                         gitr_precision* datar,
+                         gitr_precision* dataz,
+                         gitr_precision* datat,
+                         int cylsymm );
+
     Particles *particlesPointer;
     //int& tt;
     Boundary *boundaryVector;
