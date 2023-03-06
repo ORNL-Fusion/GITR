@@ -72,21 +72,13 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
       int constexpr n_dims = 2;
       double coordinates[ 2 ] = { dim1, z };
 
-      offset_factors[0] = 1;
-      for( int k = 1; k < n_dims; k++ )
-      {
-        offset_factors[ k ] = dims[ k - 1 ] * offset_factors[ k - 1 ];
-      }
-
       /* domain boundary values */
       double global_lower_bounds[ 2 ] = { gridx[0], gridz[0] };
       double global_upper_bounds[ 2 ] = { gridx[ dims[0] - 1 ], gridz[ dims[ 1 ] - 1 ] };
 
-      double z_spacing = gridz[1] - gridz[0];
-      double x_spacing = gridx[1] - gridx[0];
-
       /* Captain! replace this */
-      double spacing[ 2 ] = { x_spacing, z_spacing };
+      double spacing[ 2 ] = { gridx[1] - gridx[0], 
+                              gridz[1] - gridz[0] };
 
       int ii = std::floor((coordinates[ 0 ] - global_lower_bounds[0])/spacing[ 0 ]);
       int jj = std::floor((coordinates[ 1 ] - global_lower_bounds[1])/spacing[ 1 ]);
@@ -101,18 +93,75 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
       double x_low = ( upper_bounds[ 0 ] - coordinates[ 0 ] );
       double x_high = ( coordinates[ 0 ]  - lower_bounds[ 0 ] );
 
-      double fractions[ 4 ] = { x_low, x_high, z_low, z_high };
+      double fractions[ 4 ]; // = { x_low, x_high, z_low, z_high };
+
+      /* populate fractions now - there is a low and a high for each one */
+      for( int i = 0; i < n_dims; i++ )
+      {
+        fractions[ i * 2 ] = upper_bounds[ i ] - coordinates[ i ];
+        fractions[ i * 2 + 1 ] = coordinates[ i ] - lower_bounds[ i ];
+      }
 
       int x_index = 0;
       int z_index = 1;
 
-      /* spacing for each dimension - if this doesn't work, just parameterize it.
-         could you use a lambda function for it?
-      */
-      /* explicit indices */
-      /* then loops over the indices */
-      int corner_vertex_index = ii + jj * nx;
+      /* calculate this in a loop now */
+      offset_factors[0] = 1;
 
+      for( int k = 1; k < n_dims; k++ )
+      {
+        offset_factors[ k ] = dims[ k - 1 ] * offset_factors[ k - 1 ];
+      }
+
+      int corner_vertex_index = 0;//ii + jj * nx;
+
+      for( int i = 0; i < n_dims; i++ )
+      {
+        int index = std::floor((coordinates[ i ] - global_lower_bounds[i])/spacing[ i ]);
+        index *= offset_factors[ i ];
+        corner_vertex_index += index;
+      }
+
+      /* first fetch hypercube here */
+      int hypercube_indices[ 1 << 2 ];
+      for( int i = 0; i < ( 1 << n_dims ); i++ )
+      {
+        int flat_index = corner_vertex_index;
+
+        for( int j = 0; j < n_dims; j++ )
+        {
+          /* "i" contains n_dims bits: zyx order */
+          flat_index += ( ( ( i >> j ) & 0x1 ) * offset_factors[ j ] );
+        }
+
+        hypercube_indices[ i ] = flat_index;
+      }
+
+      double hypercube[ 1 << 2 ];
+      for( int i = 0; i < ( 1 << n_dims ); i++ )
+      {
+        hypercube[ i ] = data[ hypercube_indices[ i ] ];
+      }
+
+      /* next, interpolate hypercube in a loop: */
+
+      /* this will be fun! Let's go! */
+
+      /* the loop runs over it all */
+      for( int i = 0; i < n_dims; i++ )
+      {
+      }
+
+      fx_z1 = ( fractions[0] * hypercube[ 0 ] + 
+                fractions[1] * hypercube[ 1 ] ) / 
+                spacing[ 0 ];
+
+      fx_z2 = ( fractions[0] * hypercube[ 2 ] + 
+                fractions[1] * hypercube[ 3 ] ) / spacing[ 0 ]; 
+
+      fxz = ( fractions[2] * fx_z1 + fractions[3] * fx_z2 ) / spacing[ 1 ];
+
+      /*
       fx_z1 = ( fractions[0] * data[ corner_vertex_index ] + 
                 fractions[1] * data[ corner_vertex_index + 1 ] ) / 
                 spacing[ 0 ];
@@ -121,6 +170,7 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
                 fractions[1] * data[ corner_vertex_index + nx + 1 ])/spacing[ 0 ]; 
 
       fxz = ( fractions[2] * fx_z1 + fractions[3] * fx_z2 )/spacing[ 1 ];
+      */
     }
     }
 
