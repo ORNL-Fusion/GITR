@@ -122,7 +122,7 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
         corner_vertex_index += index;
       }
 
-      /* first fetch hypercube here */
+      /* first fetch hypercube here - this appears to be working */
       int hypercube_indices[ 1 << 2 ];
       for( int i = 0; i < ( 1 << n_dims ); i++ )
       {
@@ -143,15 +143,29 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
         hypercube[ i ] = data[ hypercube_indices[ i ] ];
       }
 
-      /* next, interpolate hypercube in a loop: */
-
-      /* this will be fun! Let's go! */
-
-      /* the loop runs over it all */
+      /* Captain! Something is wrong with this... */
+      /* next, interpolate the hypercube in a loop: */
+      /* break! 2 */
       for( int i = 0; i < n_dims; i++ )
       {
+        int reach = 1 << i;
+
+        int step = reach << 1;
+
+        for( int j = 0; j < 1 << n_dims; j += step )
+        {
+          /* Captain! The dot product will be here! */
+          hypercube[ j ] = 
+          ( fractions[ i * 2 ] * hypercube[ j ] + 
+          fractions[ i * 2 + 1 ] * hypercube[ j + reach ] ) /
+          spacing[ i ];
+        }
       }
 
+      return hypercube[ 0 ];
+
+
+      /*
       fx_z1 = ( fractions[0] * hypercube[ 0 ] + 
                 fractions[1] * hypercube[ 1 ] ) / 
                 spacing[ 0 ];
@@ -160,6 +174,7 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
                 fractions[1] * hypercube[ 3 ] ) / spacing[ 0 ]; 
 
       fxz = ( fractions[2] * fx_z1 + fractions[3] * fx_z2 ) / spacing[ 1 ];
+      */
 
       /*
       fx_z1 = ( fractions[0] * data[ corner_vertex_index ] + 
@@ -188,6 +203,7 @@ gitr_precision* datat, int cylsymm ) {
       work first. */
    gitr_precision Ar = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, cylsymm );
    gitr_precision At = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, cylsymm );
+   /* break! 1 */
    field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
      if( cylsymm )
      {
@@ -960,6 +976,7 @@ void move_boris::operator()(std::size_t indx)
               //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
   }
   /* Captain! interp to change here */
+  /* break! 0 */
   this->interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
                     BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );        
