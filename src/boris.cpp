@@ -32,13 +32,14 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
     {
     dim1 = x;
     }
-    /* Captain! */
     gitr_precision d_dim1 = gridx[1] - gridx[0];
     gitr_precision dz = gridz[1] - gridz[0];
+
+
     int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
     int j = std::floor((z - gridz[0])/dz);
     
-    //gitr_precision interp_value = data[i + j*nx];
+    /* edge cases */
     if (i < 0) i=0;
     if (j < 0) j=0;
     if (i >=nx-1 && j>=nz-1)
@@ -60,43 +61,73 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
     }
     else
     {
-      fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
-      fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
-      fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+      /* Captain! put everything into simple functions that mirror your interpolator */
+      /* then replace this with interpolator calls. If it works, move them up out of
+         the class */
+      int constexpr arbitrary_max = 10;
+      int offset_factors[ arbitrary_max ];
+      int dims[ arbitrary_max ];
+      dims[0] = nx;
+      dims[1] = nz;
+      int constexpr n_dims = 2;
+      double coordinates[ 2 ] = { dim1, z };
+
+      offset_factors[0] = 1;
+      for( int k = 1; k < n_dims; k++ )
+      {
+        offset_factors[ k ] = dims[ k - 1 ] * offset_factors[ k - 1 ];
+      }
+
+      /* domain boundary values */
+      double global_lower_bounds[ 2 ] = { gridx[0], gridz[0] };
+      double global_upper_bounds[ 2 ] = { gridx[ dims[0] - 1 ], gridz[ dims[ 1 ] - 1 ] };
+
+      double z_spacing = gridz[1] - gridz[0];
+      double x_spacing = gridx[1] - gridx[0];
+
+      /* Captain! replace this */
+      double spacing[ 2 ] = { x_spacing, z_spacing };
+
+      int ii = std::floor((coordinates[ 0 ] - global_lower_bounds[0])/spacing[ 0 ]);
+      int jj = std::floor((coordinates[ 1 ] - global_lower_bounds[1])/spacing[ 1 ]);
+
+      double lower_bounds[ 2 ] = { gridx[ ii ], gridz[ jj ] };
+      double upper_bounds[ 2 ] = { gridx[ ii + 1 ], gridz[ jj + 1 ] };
+
+      /* Captain! Replace these */
+      double z_low = ( upper_bounds[ 1 ] - coordinates[ 1 ] );
+      double z_high = ( coordinates[ 1 ] - lower_bounds[ 1 ] );
+
+      double x_low = ( upper_bounds[ 0 ] - coordinates[ 0 ] );
+      double x_high = ( coordinates[ 0 ]  - lower_bounds[ 0 ] );
+
+      double fractions[ 4 ] = { x_low, x_high, z_low, z_high };
+
+      int x_index = 0;
+      int z_index = 1;
+
+      /* spacing for each dimension - if this doesn't work, just parameterize it.
+         could you use a lambda function for it?
+      */
+      /* explicit indices */
+      /* then loops over the indices */
+      int corner_vertex_index = ii + jj * nx;
+
+      fx_z1 = ( fractions[0] * data[ corner_vertex_index ] + 
+                fractions[1] * data[ corner_vertex_index + 1 ] ) / 
+                spacing[ 0 ];
+
+      fx_z2 = ( fractions[0] * data[ corner_vertex_index + nx ] + 
+                fractions[1] * data[ corner_vertex_index + nx + 1 ])/spacing[ 0 ]; 
+
+      fxz = ( fractions[2] * fx_z1 + fractions[3] * fx_z2 )/spacing[ 1 ];
     }
     }
-
-    /* Ahoy, Captain!!! Interpolate and return here. If this ran in openmp mode things
-       would be easier... maybe it's time to fix that too... ugh...
-       
-       I guess you could go ahead and identify which parameters are which... 
-
-       we need data, assuming row major I think this should work. Dims are the discrete
-       number of elements in each dimension. 
-
-       max_range is the mapping - the highest value 
-
-       construction:
-
-       interpolated_field< gitr_precision > electric_field( data, dims, max_extent );
-
-       data - obvious
-       dims - I think this is just nx and nz
-       max_extent - this should simply be the final element of the grid
-
-       invokation:
-
-       fxz = electric_field( { x, y, z } );
-
-       next steps: make sure the field class can handle the case of single element fields:
-       easy edge case that will not apply with the bfield stuff. Print all that out too
-       just to make sure you are getting the same values.
-
-    */
 
     return fxz;
 }
 
+/* Captain! New strategy! Try to change this one instead 0.0 from inside out... */
 CUDA_CALLABLE_MEMBER
 void move_boris::interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,
 int nx, int nz,
