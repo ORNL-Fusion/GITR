@@ -229,48 +229,65 @@ Final Calculation:
 #include <iostream>
 #include <cassert>
 #include <cmath>
+#include <vector>
 #include "flat_array.h"
+
+#ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER __host__ __device__
+#define CUDA_CALLABLE_MEMBER_DEVICE __device__
+#else
+#define CUDA_CALLABLE_MEMBER
+#define CUDA_CALLABLE_MEMBER_DEVICE
+#endif
 
 template< typename T >
 class interpolated_field : public tensor< T >
 {
   public:
 
-    interpolated_field( std::vector< T > const &data,
-                        std::vector< long long unsigned int > const dims,
-                        std::vector< T > const max_range )
+    interpolated_field( T const *data,
+                        long long unsigned int const *dims,
+                        T const *max_range_init,
+                        T const *min_range_init,
+                        int n_dims_init )
       :
-      tensor< T >( data.data(), dims ),
-      max_range( max_range )
+      tensor< T >( data, dims, n_dims_init )
       { 
-        /* Captain! Move all the asserts up to here */
-        spacing.resize( max_range.size() );
+        data_size = 1;
 
-        for( int i = 0; i < spacing.size(); i++ )
-        {
-          spacing[ i ] = max_range[ i ] / T(dims[ i ]);
-        }
+        /* Captain! This should be n_bins + 1 */
+        for( int i = 0; i < this->n_dims; i++ ) data_size *= dims[ i ];
+        for( int i = 0; i < this->n_dims; i++ ) max_range[ i ] = max_range_init[ i ];
+        for( int i = 0; i < this->n_dims; i++ ) min_range[ i ] = min_range_init[ i ];
+
+        /* Captain!!! This should be number of bins, not dims! */
+        for( int i = 0; i < this->n_dims; i++ ) 
+          spacing[ i ] = ( max_range[ i ] - min_range[ i ] ) / ( T(dims[ i ]) );
+
       }
 
 
-    /* Captain! Where do "coordinates" get replaced with int versions? mark it with coordinate
-       transform */
-    T operator()( std::vector< T > const coordinates );
+    CUDA_CALLABLE_MEMBER
+    T operator()( T const *coordinates );
 
-    std::vector< T > fetch_hypercube( std::vector< T > const coordinates );
+    CUDA_CALLABLE_MEMBER
+    void fetch_hypercube( T const *coordinates, T *hypercube );
 
-    T interpolate_hypercube( std::vector< T > const hypercube,
-                             std::vector< T > const coordinates );
-
-  private:
+    CUDA_CALLABLE_MEMBER
+    T interpolate_hypercube( T const *hypercube,
+                             T const *coordinates );
 
     /* Captain! Create some private methods here! Move the fetch and interpolate functions
        into here. They should not calculate their own offset factors... */
 
     /* Captain! Does this handle edge cases for points off of the grid? */
-    std::vector< T > const max_range;
+    T max_range[ tensor< T >::n_dims_arbitrary_max ];
 
-    std::vector< T > spacing;
+    T min_range[ tensor< T >::n_dims_arbitrary_max ];
+
+    T spacing[ tensor< T >::n_dims_arbitrary_max ];
+
+    int data_size;
 };
 
 /*
@@ -291,17 +308,19 @@ max_range:
 
 */
 template< typename T >
-T interpolated_field< T >::interpolate_hypercube( std::vector< T > const hypercube,
-                                             std::vector< T > const coordinates )
+T interpolated_field< T >::interpolate_hypercube( T const *hypercube,
+                                                  T const *coordinates )
 {
   /* the "upper" and "lower" fractions for each dimension */
-  std::vector< double > normalized_fractions( coordinates.size() * 2 );
+  double normalized_fractions[ this->n_dims_arbitrary_max * 2 ];
 
-  for( int i = 0; i < coordinates.size(); i++ )
+  /* break! 4 */
+  for( int i = 0; i < this->n_dims; i++ )
   {
     /* high fraction, matches with a 1 bit */
     normalized_fractions[ i * 2 + 1 ] =
-    ( coordinates[ i ] - ( std::floor( coordinates[ i ] / spacing[ i ] ) * spacing[ i ] ) ) /
+    ( coordinates[ i ] - min_range[ i ] 
+    - ( std::floor( ( coordinates[ i ] - min_range[ i ]) / spacing[ i ] ) * spacing[ i ] ) ) /
     spacing[ i ];
 
     /* low fraction, matches with a 0 bit */
@@ -311,12 +330,12 @@ T interpolated_field< T >::interpolate_hypercube( std::vector< T > const hypercu
   /* sum the value of each vertex weighted properly... */
   double sum = 0;
 
-  for( int i = 0; i < hypercube.size(); i++ )
+  for( int i = 0; i < ( 1 << this->n_dims ); i++ )
   {
     double weight = 1;
 
     /* iterate the bits in "i" */
-    for( int j = 0; j < coordinates.size(); j++ )
+    for( int j = 0; j < this->n_dims; j++ )
     {
       weight *= normalized_fractions[ j * 2 + ( ( i >> j ) & 0x1 ) ];
     }
@@ -357,69 +376,45 @@ returns: n-dimensional hypercube in a flattened array of 2^n vertices
 
 */
 template< typename T >
-std::vector< T > interpolated_field< T >::fetch_hypercube( std::vector< T > const coordinates )
+void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercube )
 {
-  assert( coordinates.size() == tensor< T >::dims.size() );
-
-  assert( coordinates.size() == max_range.size() );
-
-  /* d_multipliers[ i ] indicates the stride of dimension "i" */
-  std::vector< int > d_multipliers( tensor< T >::dims.size(), 1 );
-
-  /*
-  for( int i = 0; i < d_multipliers.size() - 1; i++ )
-  {
-    d_multipliers[ i + 1 ] = d_multipliers[ i ] * d_len[ i ];
-  }
-  */
-  /* Captain! reversal! this variable should no longer be needed... */
-  for( int i = d_multipliers.size() - 1; i > 0; i-- )
-  {
-    d_multipliers[ i - 1 ] = d_multipliers[ i ] * tensor< T >::dims[ i ];
-  }
-
-  //assert( data.size() == d_multipliers.back() * d_len.back() );
-
-  std::vector< double > spacing( max_range.size() );
-
-  for( int i = 0; i < spacing.size(); i++ )
-  {
-    spacing[ i ] = max_range[ i ] / double(tensor< T >::dims[ i ]);
-  }
-
   /* find the index of the first vertex in the hypercube */
+  /* break! 3 */
   int corner_vertex_index = 0;
 
-  for( int i = 0; i < coordinates.size(); i++ )
+  long unsigned int *of = this->offset_factors;
+
+  for( int i = 0; i < this->n_dims; i++ )
   {
     corner_vertex_index += 
-    ( std::floor( coordinates[ i ] / spacing[ i ] ) * tensor< T >::offset_factors[ i ] );
+    ( std::floor( ( coordinates[ i ] - min_range[ i ] ) / spacing[ i ] ) * this->offset_factors[ i ] );
   }
-
-  std::vector< double > hypercube( 1 << tensor< T >::dims.size() );
 
   /* find the indices of the other vertices in the hypercube by offsetting from the
      first vertex */
-  for( int i = 0; i < hypercube.size(); i++ )
+     /* Captain! populate hypercube in column major order instead of this way */
+  for( int i = 0; i < ( 1 << this->n_dims ); i++ )
   {
     int flat_index = corner_vertex_index;
 
-    for( int j = 0; j < coordinates.size(); j++ )
+    for( int j = 0; j < this->n_dims; j++ )
     {
-      flat_index += ( ( ( i >> j ) & 0x1 ) * tensor< T >::offset_factors[ j ] );
+      flat_index += ( ( ( i >> j ) & 0x1 ) * this->offset_factors[ j ] );
     }
 
-    hypercube[ i ] = tensor< T >::data[ flat_index ];
-  }
+    if( flat_index >= data_size ) assert( flat_index < data_size );
 
-  return hypercube;
+    hypercube[ i ] = this->data[ flat_index ];
+  }
 }
 
 /* These do not make sense to be passed by value */
 template< typename T >
-T interpolated_field< T >::operator()( std::vector< T > const coordinates )
+T interpolated_field< T >::operator()( T const *coordinates )
 {
-  std::vector< T > hypercube = fetch_hypercube( coordinates );
+  T hypercube[ 1 << this->n_dims_arbitrary_max ];
+
+  fetch_hypercube( coordinates, hypercube );
 
   T interpolated_value = interpolate_hypercube( hypercube, coordinates );
 

@@ -108,6 +108,7 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
       /* calculate this in a loop now */
       offset_factors[0] = 1;
 
+      /* Captain! You can make this loop more elegant with a constant index transformation */
       for( int k = 1; k < n_dims; k++ )
       {
         offset_factors[ k ] = dims[ k - 1 ] * offset_factors[ k - 1 ];

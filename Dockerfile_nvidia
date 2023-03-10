@@ -62,8 +62,7 @@ run apt install kitware-archive-keyring
 
 run DEBIAN_FRONTEND=noninteractive apt install -y cmake
 
-# apt install -y cmake <--- should get you the newest version. See if this allows you to
-# actually build gitr in a gpu container...
+run apt install -y gdb
 
 volume /host
 

@@ -106,7 +106,7 @@ TEST_CASE( "hdf5" )
     REQUIRE( status > -1 );
 
     /* create a flat tensor out of data_buffer_1 and the dimensions */
-    tensor< double > t( (double *)(data_buffer_1), dims );
+    tensor< double > t( (double *)(data_buffer_1), dims.data(), n_dataspace_dims );
 
     int index = 0;
     /* print out the contents of the file */
@@ -116,8 +116,9 @@ TEST_CASE( "hdf5" )
       {
         for( int iii = 0; iii < 13; iii++ )
         {
+          long long unsigned int point[ 3 ] = { i, ii, iii };
           /* Captain! Make the buffer multidimensional */
-          REQUIRE( t.get( { i, ii, iii } ) == data_buffer_1[ i ][ ii ][ iii ] );
+          REQUIRE( t.get( point ) == data_buffer_1[ i ][ ii ][ iii ] );
         }
       }
     }

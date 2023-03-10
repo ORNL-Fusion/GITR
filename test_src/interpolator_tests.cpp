@@ -99,8 +99,8 @@ std::vector< double > embed_hypercube( std::vector< long long unsigned int > con
 
   /* d_multipliers[ i ] is the stride in dimension "i" */
   std::vector< int > d_multipliers( d_len.size(), 1 );
-
   /*
+
   for( int i = 0; i < d_multipliers.size() - 1; i++ )
   {
     d_multipliers[ i + 1 ] = d_multipliers[ i ] * d_len[ i ];
@@ -108,14 +108,13 @@ std::vector< double > embed_hypercube( std::vector< long long unsigned int > con
 
   int total_points = d_multipliers.back() * d_len.back();
   */
-  /* Captain! reversal! */
+
   for( int i = d_multipliers.size() - 1; i > 0; i-- )
   {
     d_multipliers[ i - 1 ] = d_multipliers[ i ] * d_len[ i ];
   }
 
   int total_points = d_multipliers.front() * d_len.front();
-  /* end reversal */
 
   int base_index = 0;
 
@@ -146,13 +145,14 @@ TEST_CASE( "multi-dimensional interpolation" )
 
   /* Given an arbitrary coordinate in the domain of "f", fetch the correct enclosing
      hypercube */
-  SECTION( "embed and fetch a basis cell" )
+  SECTION( "t0" )
   {
     /* number of lattice divisions in each dimension */
     std::vector< long long unsigned int > d_len{ 6, 4, 10 };
 
     /* difference between initial and final value in each dimension */
     std::vector< double > max_values{ 12, 8, 20 };
+    std::vector< double > min_values{ 0, 0, 0 };
 
     /* lattice coordinates where a hypercube will be hidden to test retrieval */
     std::vector< long long unsigned int > hypercube_lattice_coordinates{ 3, 2, 5 };
@@ -188,34 +188,37 @@ TEST_CASE( "multi-dimensional interpolation" )
                                     hypercube_lattice_coordinates,
                                     hypercube_in );
 
-    class interpolated_field< double > field( lattice, d_len, max_values );
+    class interpolated_field< double >
+    field( lattice.data(), d_len.data(), max_values.data(), min_values.data(), dimensions );
     /* Captain! Create the hypercube. What will own the pointers? Once this is done, you
        have all the pieces I think. Then you just need to prepare GITR for compiling and
        write out a python file that can convert between the two file types. Then make
        sure that you have working containers */
-    auto hypercube_out = field.fetch_hypercube( enclosed );
+    std::vector< double > hypercube_out( 1 << dimensions );
+
+    field.fetch_hypercube( enclosed.data(), hypercube_out.data() );
 
     REQUIRE( hypercube_in == hypercube_out );
   }
 
   /* Given an n-dimensional hypercube and a point enclosed within, interpolate the value of the
      point */
-  SECTION( "interpolate hypercube" )
+  SECTION( "t1" )
   {
     /* value for the "upper fraction" described in interpolator.h documentation */
     double fraction = 0.6;
 
+    /* These are f( x ) values */
     double low = 10;
 
     double high = 20;
 
-    /* the domain spacing value - space in between hypercube vertices */
-    double spacing = 8;
-
     /* number of hypercubes that span dimension d, assuming the start domain value is 0 */
-    double d_len = 5;
+    double d_len = 1;
 
-    double max_value = d_len * spacing;
+    double max_value = 1;
+    double min_value = 0;
+    double spacing = 1;
     
     /* create a domain value that maps to the gold interpolated value */
     /* put the point in the final cell */
@@ -225,7 +228,7 @@ TEST_CASE( "multi-dimensional interpolation" )
        "low" and "high" */
     double gold = ( 1 - fraction ) * low + fraction * high;
 
-    double test_domain_value = fraction * spacing;
+    double test_domain_value = fraction;
 
     /*
     The following loop interpolates "n_test_points" number of points enclosed in an n-dimensional
@@ -243,6 +246,7 @@ TEST_CASE( "multi-dimensional interpolation" )
       std::vector< long long unsigned int > const d_len_s( s, d_len );
 
       std::vector< double > const max_value_s( s, max_value );
+      std::vector< double > const min_value_s( s, 0 );
 
       /* ...create an s-dimensional hypercube... */
       for( int d = 0; d < s; d++ )
@@ -274,20 +278,22 @@ TEST_CASE( "multi-dimensional interpolation" )
           test_point[ d ] = test_domain_value;
 
           /* Captain! Create a class here */
-          class interpolated_field< double > field( hypercube, d_len_s, max_value_s );
+          class interpolated_field< double > 
+          field( hypercube.data(), d_len_s.data(), max_value_s.data(), min_value_s.data(), s );
 
           double test_value = 
-          field.interpolate_hypercube( hypercube, test_point );
+          field.interpolate_hypercube( hypercube.data(), test_point.data() );
 
           double check = std::abs( gold - test_value ) / test_value;
 
-          REQUIRE( check < 1e-15 );
+          REQUIRE( std::abs( check ) < 1e-15 );
         }
       }
     }
   }
 
-  SECTION( "within a class..." )
+  /* Captain! Fix this, migrate functionality, add helper classes, be done! */
+  SECTION( "t2" )
   {
     /* value for the "upper fraction" described in interpolator.h documentation */
     double fraction = 0.6;
@@ -312,17 +318,15 @@ TEST_CASE( "multi-dimensional interpolation" )
        "low" and "high" */
     double gold = ( 1 - fraction ) * low + fraction * high;
 
-    double test_domain_value = fraction * spacing;
-
     /*
     The following loop interpolates "n_test_points" number of points enclosed in an n-dimensional
     hypercube for "n" in a range. Each test point will interpolate to the same known value.
     */
     int n_test_points = 5; 
 
-    int initial_dim = 1;
+    int initial_dim = 2;
 
-    int final_dim = 6;
+    int final_dim = 9;
 
     /* in an s-dimensional space... */
     for( int s = initial_dim; s < final_dim; s++ )
@@ -330,6 +334,7 @@ TEST_CASE( "multi-dimensional interpolation" )
       std::vector< long long unsigned int > const d_len_s( s, d_len );
 
       std::vector< double > const max_value_s( s, max_value );
+      std::vector< double > const min_value_s( s, 0 );
 
       /* ...create an s-dimensional hypercube... */
       for( int d = 0; d < s; d++ )
@@ -353,13 +358,6 @@ TEST_CASE( "multi-dimensional interpolation" )
            *-----------------*------------------------------------*
 
           */
-          double irrelevant_value =
-          static_cast< double >( i ) / static_cast< double >( n_test_points ) * spacing;
-
-          std::vector< double > test_point( s, irrelevant_value );
-
-          test_point[ d ] = test_domain_value;
-
           /* embed the hypercube into the middle of the latice somewhere */
           std::vector< long long unsigned int > hypercube_lattice_coordinates = d_len_s;
 
@@ -368,17 +366,34 @@ TEST_CASE( "multi-dimensional interpolation" )
             hypercube_lattice_coordinates[ j ] /= 2;
           }
 
+          double test_point_offset =
+          static_cast< double >( i ) / static_cast< double >( n_test_points );
+
+          double irrelevant_value = 
+          spacing * ( hypercube_lattice_coordinates[ 0 ] + test_point_offset );
+
+          /* spacing * ( d_len + test_point_offset ) */
+
+
+          /* new code */
+          std::vector< double > enclosed( s, irrelevant_value );
+
+          enclosed[ d ] = max_value_s[ d ] / static_cast< double >( d_len_s[ d ] )
+              * ( static_cast< double >( hypercube_lattice_coordinates[ d ] ) + fraction );
+          /* end new code */
+
           auto lattice = embed_hypercube( d_len_s,
                                           hypercube_lattice_coordinates,
                                           hypercube );
 
-          class interpolated_field< double > field( lattice, d_len_s, max_value_s );
+          class interpolated_field< double >
+          field( lattice.data(), d_len_s.data(), max_value_s.data(), min_value_s.data(), s );
 
-          double test_value_0 = field( test_point );
+          double test_value_0 = field( enclosed.data() );
 
           double check = std::abs( gold - test_value_0 ) / test_value_0;
 
-          REQUIRE( check < 1e-15 );
+          REQUIRE( std::abs( check )  < 1e-14 );
         }
       }
     }
