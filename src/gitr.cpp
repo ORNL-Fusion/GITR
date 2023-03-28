@@ -78,14 +78,14 @@ int main(int argc, char **argv, char **envp) {
 
   /* Placeholder code for runtime CLI */
 
-  CLI::App app{ "!" };
+  //CLI::App app{ "!" };
 
   std::string file_name = "input/gitrInput.cfg";
 
   //app.add_option( "-c", file_name, "config filepath" )->required();
-  app.add_option( "-c", file_name, "config filepath" );
+  //app.add_option( "-c", file_name, "config filepath" );
 
-  CLI11_PARSE( app, argc, argv );
+  //CLI11_PARSE( app, argc, argv );
 
   std::cout << "file_name read from stdin: " << file_name << std::endl;
 
@@ -4055,7 +4055,7 @@ if( presheath_interp == 1 )
       cylsymm );
 
   sortParticles sort0(particleArray, nP,dev_tt, 10000,
-                      nActiveParticlesOnRank.data());
+                      nActiveParticlesOnRank.data(),surface_model);
   spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy );
@@ -4859,6 +4859,9 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_dist0 = ncFile0.addVar("distTraveled", netcdf_precision, dims0);
     netCDF::NcVar nc_time0 = ncFile0.addVar("time", netcdf_precision, dims0);
     netCDF::NcVar nc_dt0 = ncFile0.addVar("dt", netcdf_precision, dims0);
+    netCDF::NcVar nc_angle0 = ncFile0.addVar("angle", netcdf_precision, dims0);
+    netCDF::NcVar nc_maxz0 = ncFile0.addVar("maxz", netcdf_precision, dims0);
+    netCDF::NcVar nc_ind0 = ncFile0.addVar("index", netCDF::ncInt, dims0);
 #if USE_MPI > 0
     nc_x0.putVar(&xGather[0]);
     nc_y0.putVar(&yGather[0]);
@@ -4889,6 +4892,9 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
   nc_dist0.putVar(&particleArray->distTraveled[0]);
   nc_time0.putVar(&particleArray->time[0]);
   nc_dt0.putVar(&particleArray->dt[0]);
+  nc_angle0.putVar(&particleArray->angle[0]);
+  nc_maxz0.putVar(&particleArray->max_z[0]);
+  nc_ind0.putVar(&particleArray->index[0]);
 #endif
     ncFile0.close();
     // auto particleArray2 = new Particles(1);

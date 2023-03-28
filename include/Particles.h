@@ -73,8 +73,8 @@ public:
   sim::Array<gitr_precision> test0;
   sim::Array<gitr_precision> test1;
   sim::Array<gitr_precision> test2;
-  sim::Array<gitr_precision> test3;
-  sim::Array<gitr_precision> test4;
+  sim::Array<gitr_precision> angle;
+  sim::Array<gitr_precision> max_z;
   sim::Array<gitr_precision> distanceTraveled;
   sim::Array<gitr_precision> weight;
   sim::Array<gitr_precision> firstIonizationZ;
@@ -167,6 +167,8 @@ public:
     gitr_precision vdT = this->vD[indx];
     int hlT = this->hasLeaked[indx];
     gitr_precision lzT = this->leakZ[indx];
+    gitr_precision max_zT = this->max_z[indx];
+    gitr_precision angleT = this->angle[indx];
     gitr_precision wT = this->weight[indx];
     gitr_precision hWT = this->hitWall[indx];
     int wIT = this->wallIndex[indx];
@@ -201,6 +203,8 @@ public:
     this->vD[indx] = this->vD[n];
     this->hasLeaked[indx] = this->hasLeaked[n];
     this->leakZ[indx] = this->leakZ[n];
+    this->max_z[indx] = this->max_z[n];
+    this->angle[indx] = this->angle[n];
     this->weight[indx] = this->weight[n];
     this->hitWall[indx] = this->hitWall[n];
     this->wallIndex[indx] = this->wallIndex[n];
@@ -233,6 +237,8 @@ public:
     this->vD[n] = vdT;
     this->hasLeaked[n] = hlT;
     this->leakZ[n] = lzT;
+    this->max_z[n] = max_zT;
+    this->angle[n] = angleT;
     this->weight[n] = wT;
     this->hitWall[n] = hWT;
     this->wallIndex[n] = wIT;
@@ -303,8 +309,8 @@ public:
     test0{nParticles, 0.0},
     test1{nParticles, 0.0},
     test2{nParticles, 0.0},
-    test3{nParticles, 0.0},
-    test4{nParticles, 0.0},
+    max_z{nParticles, 0.0},
+    angle{nParticles, 0.0},
     distanceTraveled{nParticles,0.0},
     weight{nParticles, 1.0},
     firstIonizationZ{nParticles, 0.0},

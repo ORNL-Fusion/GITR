@@ -40,10 +40,11 @@ struct sortParticles {
     int* tt;
     int nDtPerApply;
     int* nActiveParticles;
+    int surface_model;
 
-    sortParticles(Particles *_particles,int _nP, int* _tt,int _nDtPerApply, int* _nActiveParticles)
+    sortParticles(Particles *_particles,int _nP, int* _tt,int _nDtPerApply, int* _nActiveParticles, int _surface_model)
     
-		    : particles(_particles),nP(_nP), tt(_tt),nDtPerApply(_nDtPerApply), nActiveParticles(_nActiveParticles) {}
+		    : particles(_particles),nP(_nP), tt(_tt),nDtPerApply(_nDtPerApply), nActiveParticles(_nActiveParticles), surface_model(_surface_model) {}
     
     CUDA_CALLABLE_MEMBER_HOST 
     void operator()(std::size_t indx) const 
@@ -57,6 +58,13 @@ struct sortParticles {
        
        for(int i=0;i<nPonRank;i++)
        {
+if (surface_model > 0)
+{
+}
+else
+{
+        if(particles->hitWall[i] == 1.0) particles->weight[i] = 0.0;
+}
         if(particles->weight[i] < 0.0001)
 	{
           particles->hitWall[i] = 2.0;
