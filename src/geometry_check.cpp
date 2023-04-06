@@ -1046,15 +1046,15 @@ else top_limit = nLines;
             (AdistInd < nAdist)) {
 #if USE_CUDA > 0
 #if __CUDA_ARCH__		  
-          atomicAdd(
+          atomicAdd1(
               &surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                             EdistInd * nAdist + AdistInd],
               particlesPointer->weight[indx]);
-          atomicAdd(&surfaces->grossDeposition[surfaceHit],
+          atomicAdd1(&surfaces->grossDeposition[surfaceHit],
                     particlesPointer->weight[indx]);
-          atomicAdd(&surfaces->sumWeightStrike[surfaceHit],
+          atomicAdd1(&surfaces->sumWeightStrike[surfaceHit],
                     particlesPointer->weight[indx]);
-          atomicAdd(&surfaces->sumParticlesStrike[surfaceHit], 1);
+          atomicAdd1(&surfaces->sumParticlesStrike[surfaceHit], 1);
 #else
 #endif
     
