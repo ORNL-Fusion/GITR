@@ -82,6 +82,7 @@ public:
   sim::Array<gitr_precision> dt;
   sim::Array<gitr_precision> time;
   sim::Array<bool> advance;
+  sim::Array<gitr_precision> f_psi;
 
   CUDA_CALLABLE_MEMBER
   void setParticle(int indx, gitr_precision x, gitr_precision y, gitr_precision z,
@@ -317,7 +318,8 @@ public:
     firstIonizationT{nParticles, 0.0},
     dt{nParticles,0.0},
     time{nParticles,0.0},
-    advance{nParticles,false} {};
+    advance{nParticles,false},
+    f_psi{nParticles,1.0} {};
 };
 
 #endif

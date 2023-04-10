@@ -101,7 +101,7 @@ void ionize< T >::operator()(std::size_t indx)
           particlesPointer->y[indx], particlesPointer->z[indx], nR_Temp,
           nZ_Temp, TempGridr, TempGridz, te, DensGridr, DensGridz, ne,
           nTemperaturesIonize, nDensitiesIonize, gridTemperature_Ionization,
-          gridDensity_Ionization, rateCoeff_Ionization, cylsymm );
+          gridDensity_Ionization, rateCoeff_Ionization, cylsymm,particlesPointer->f_psi[indx] );
     
     gitr_precision P = exp(-dt / tion);
     gitr_precision P1 = 1.0 - P;
