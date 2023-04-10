@@ -205,6 +205,7 @@ int main(int argc, char **argv, char **envp) {
   }
   auto gitr_flags = new Flags(cfg);
     std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
+    std::cout << "USE_SHEATH_DENSITY " << gitr_flags->USE_SHEATH_DENSITY << std::endl;
     //auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     //FIXME: work on new field struct
     //auto field1 = new Field();

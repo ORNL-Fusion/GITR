@@ -1,6 +1,6 @@
 #include "interpRateCoeff.hpp"
 
-gitr_precision rateCoeffInterp(int charge, gitr_precision te, gitr_precision ne,int nT, int nD, gitr_precision* rateGrid_Tempp,gitr_precision* rateGrid_Densp,gitr_precision* Ratesp, gitr_precision f_psi){
+gitr_precision rateCoeffInterp(int charge, gitr_precision te, gitr_precision ne,int nT, int nD, gitr_precision* rateGrid_Tempp,gitr_precision* rateGrid_Densp,gitr_precision* Ratesp){
     
     // indices for temperature and density
     int indT = 0;
@@ -50,7 +50,7 @@ gitr_precision interpRateCoeff2d ( int charge, gitr_precision x, gitr_precision 
        gitr_precision* tempGridzp, gitr_precision* Tempp,
        gitr_precision* densGridxp,gitr_precision* densGridzp,gitr_precision* Densp,int nT_Rates, int nD_Rates,
        gitr_precision* rateGrid_Temp,gitr_precision* rateGrid_Dens,gitr_precision* Rates,
-       int cylsymm )
+       int cylsymm, gitr_precision f_psi )
 {
     
   gitr_precision tlocal = interp2dCombined( x,y,z,nx,nz,tempGridxp,tempGridzp,Tempp, cylsymm );
