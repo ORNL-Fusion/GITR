@@ -2542,6 +2542,7 @@ if( presheath_interp == 1 )
       Efieldz(nR_Bfield * nZ_Bfield), Efieldt(nR_Bfield * nZ_Bfield),
       minDist(nR_Bfield * nZ_Bfield);
 
+  gitr_precision f_psi = 1.0;
   /* Captain! Likely dead block below */
   if( sheath_efield > 0 )
   {
@@ -2556,7 +2557,7 @@ if( presheath_interp == 1 )
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), minInd_bnd, biased_surface,
-               use_3d_geom, geom_hash_sheath, cylsymm );
+               use_3d_geom, geom_hash_sheath, cylsymm, f_psi );
       //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
   }
   /* Captain! Decayed block, leave for reference */
@@ -4791,7 +4792,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface,
-               use_3d_geom, geom_hash_sheath, cylsymm );
+               use_3d_geom, geom_hash_sheath, cylsymm, f_psi );
       
       if (boundaries[closestBoundaryIndex].Z > 0.0) {
         surfIndex = boundaries[closestBoundaryIndex].surfaceNumber;

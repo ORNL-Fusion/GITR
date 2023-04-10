@@ -87,7 +87,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
          int&  closestBoundaryIndex, int biased_surface, int use_3d_geom, 
-         int geom_hash_sheath, int cylsymm  ) 
+         int geom_hash_sheath, int cylsymm, gitr_precision f_psi  ) 
     {
 
     gitr_precision pot = 0.0;
@@ -562,11 +562,13 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
         Emag = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength))+ (1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
         gitr_precision part1 = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)));
         gitr_precision part2 = pot*(1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius);
+        f_psi = fd*(1.0-exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)))+ (1.0 - fd)*(1.0     -exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
     }
         /* Captain! This appears to be skipped? */
     if(minDistance == 0.0 || boundaryVector[minIndex].larmorRadius == 0.0)
     {
         Emag = 0.0;
+        f_psi = 0.0;
         directionUnitVector[0] = 0.0;
         directionUnitVector[1] = 0.0;
         directionUnitVector[2] = 0.0;
@@ -727,6 +729,7 @@ void move_boris::operator()(std::size_t indx)
   gitr_precision half_dt = 0.5*dt;
   gitr_precision new_dt = 0.0;
   gitr_precision new_advance = false;
+  gitr_precision f_psi = 1.0;
   if( sheath_efield > 0 )
   {
   minDist = getE(position[0], position[1], position[2],
@@ -735,7 +738,8 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  biased_surface, use_3d_geom, geom_hash_sheath, cylsymm  );
+                  biased_surface, use_3d_geom, geom_hash_sheath, cylsymm, f_psi  );
+      particlesPointer->f_psi[indx] = f_psi;
   }
 
   if( presheath_efield > 0 )
@@ -864,7 +868,7 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  biased_surface, use_3d_geom, geom_hash_sheath, cylsymm  );
+                  biased_surface, use_3d_geom, geom_hash_sheath, cylsymm, f_psi  );
   }
 
   if( presheath_efield > 0 )
