@@ -739,7 +739,11 @@ void move_boris::operator()(std::size_t indx)
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
                   biased_surface, use_3d_geom, geom_hash_sheath, cylsymm, f_psi  );
-      particlesPointer->f_psi[indx] = f_psi;
+      if (gitr_flags->USE_SHEATH_DENSITY)
+      {
+        particlesPointer->f_psi[indx] = f_psi;
+      }
+
   }
 
   if( presheath_efield > 0 )
