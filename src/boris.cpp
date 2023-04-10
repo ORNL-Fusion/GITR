@@ -87,7 +87,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
          int&  closestBoundaryIndex, int biased_surface, int use_3d_geom, 
-         int geom_hash_sheath, int cylsymm, gitr_precision f_psi  ) 
+         int geom_hash_sheath, int cylsymm, gitr_precision& f_psi  ) 
     {
 
     gitr_precision pot = 0.0;
@@ -562,7 +562,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
         Emag = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength))+ (1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
         gitr_precision part1 = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)));
         gitr_precision part2 = pot*(1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius);
-        f_psi = fd*(1.0-exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)))+ (1.0 - fd)*(1.0     -exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
+        f_psi = fd*(1.0-std::exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)))+ (1.0 - fd)*(1.0     -std::exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
     }
         /* Captain! This appears to be skipped? */
     if(minDistance == 0.0 || boundaryVector[minIndex].larmorRadius == 0.0)
