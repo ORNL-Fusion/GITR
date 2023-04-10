@@ -54,7 +54,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
          int&  closestBoundaryIndex, int biased_surface, int use_3d_geom,
          int geom_hash_sheath,
          int cylsymm,
-         gitr_precision f_psi ); 
+         gitr_precision& f_psi ); 
 
 struct move_boris { 
 
