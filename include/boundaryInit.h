@@ -145,6 +145,8 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
 	gitr_precision norm = std::acos(std::pow(std::exp(1),-sheath_fac));
 	gitr_precision fd = 1.0+std::log(std::cos(angle/90.0*norm))/sheath_fac;
 	if(fd < 0.0) fd = 0.0;
+	if(b.te <= 0.0) fd = 0.0;
+        if(b.te <= 0.0) sheath_fac = 0.0;
 	b.fd = fd;
   std::cout << "fd " << fd << " " << sheath_fac << std::endl; 
 	if(b.ne == 0.0) b.debyeLength = 1.0e12;
