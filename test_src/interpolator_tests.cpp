@@ -252,7 +252,7 @@ TEST_CASE( "multi-dimensional interpolation" )
       for( int d = 0; d < s; d++ )
       {
         /* ...that is symmetric about dimension "d"... */
-        std::vector< double > const hypercube =
+        std::vector< double > hypercube =
         generate_hypercube( s, d, low, high );
 
         /* ...in this hypercube, interpolate the value of n_test_points number of points and
@@ -277,14 +277,21 @@ TEST_CASE( "multi-dimensional interpolation" )
 
           test_point[ d ] = test_domain_value;
 
-          /* Captain! Create a class here */
+          /* Captain! The problem appears to be that you are using hypercube.data()
+             and aren't copying it or something... */
+          std::vector< double > hypercube_workspace = hypercube;
+
+          /* note: you are using the hypercube as the entire data lattice just to test
+             interpolation functionality independent of hypercube fetching */
           class interpolated_field< double > 
           field( hypercube.data(), d_len_s.data(), max_value_s.data(), min_value_s.data(), s );
 
           double test_value = 
-          field.interpolate_hypercube( hypercube.data(), test_point.data() );
+          field.interpolate_hypercube( hypercube_workspace.data(), test_point.data() );
 
           double check = std::abs( gold - test_value ) / test_value;
+
+          std::cout << "gold: " << gold << " test_value: " << test_value << std::endl;
 
           REQUIRE( std::abs( check ) < 1e-15 );
         }
@@ -340,7 +347,7 @@ TEST_CASE( "multi-dimensional interpolation" )
       for( int d = 0; d < s; d++ )
       {
         /* ...that is symmetric about dimension "d"... */
-        std::vector< double > const hypercube =
+        std::vector< double > hypercube =
         generate_hypercube( s, d, low, high );
 
         /* ...in this hypercube, interpolate the value of n_test_points number of points and

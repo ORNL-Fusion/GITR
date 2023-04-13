@@ -274,7 +274,7 @@ class interpolated_field : public tensor< T >
     void fetch_hypercube( T const *coordinates, T *hypercube );
 
     CUDA_CALLABLE_MEMBER
-    T interpolate_hypercube( T const *hypercube,
+    T interpolate_hypercube( T *hypercube,
                              T const *coordinates );
 
     /* Captain! Create some private methods here! Move the fetch and interpolate functions
@@ -308,33 +308,49 @@ max_range:
 
 */
 template< typename T >
-T interpolated_field< T >::interpolate_hypercube( T const *hypercube,
+T interpolated_field< T >::interpolate_hypercube( T *hypercube,
                                                   T const *coordinates )
 {
   /* the "upper" and "lower" fractions for each dimension */
   double normalized_fractions[ this->n_dims_arbitrary_max * 2 ];
 
   /* break! 4 */
+  /* linear iteration over the dimensions in parallel with coordinates. This imples that the
+     coordinates here are in zyx order. */
   for( int i = 0; i < this->n_dims; i++ )
   {
     /* high fraction, matches with a 1 bit */
     normalized_fractions[ i * 2 + 1 ] =
     ( coordinates[ i ] - min_range[ i ] 
-    - ( std::floor( ( coordinates[ i ] - min_range[ i ]) / spacing[ i ] ) * spacing[ i ] ) ) /
-    spacing[ i ];
+    - ( std::floor( ( coordinates[ i ] - min_range[ i ]) / spacing[ i ] ) * spacing[ i ] ) )
+    ;// / spacing[ i ];
 
+    /* Captain! I think the 1 minus is the thing that is the problem!!! */
     /* low fraction, matches with a 0 bit */
-    normalized_fractions[ i * 2 ] = 1 - normalized_fractions[ i * 2 + 1 ];
+    //normalized_fractions[ i * 2 ] = 1 - normalized_fractions[ i * 2 + 1 ];
+
+    normalized_fractions[ i * 2 ] =
+    ( ( ( std::floor( ( coordinates[ i ] - min_range[ i ]) / spacing[ i ] ) + 1 ) * spacing[ i ] )
+    - ( coordinates[ i ] - min_range[ i ] ) );// / spacing[ i ];
   }
 
   /* sum the value of each vertex weighted properly... */
   double sum = 0;
 
+  /* Captain!!! move one level up now */
+
+  /* linear iteration over the hypercube bits in xyz bit mapping and counting from 
+     0 to 2^n - 1 */
+
+  /* each xyz cell index represented by the xyz interpretation of the bits in the index itself,
+     are iterated upon and consumed linearly in zyx order in parallel to what must be the order
+     of the normalized fractions. This implies that normalized_fractions has the same inherent
+     ordering in dimensionality as the strides in offset_factors.  */
+  /*
   for( int i = 0; i < ( 1 << this->n_dims ); i++ )
   {
     double weight = 1;
 
-    /* iterate the bits in "i" */
     for( int j = 0; j < this->n_dims; j++ )
     {
       weight *= normalized_fractions[ j * 2 + ( ( i >> j ) & 0x1 ) ];
@@ -344,9 +360,37 @@ T interpolated_field< T >::interpolate_hypercube( T const *hypercube,
   }
 
   return sum;
+  */
+      std::cout << "Ahoy!" << std::endl;
+      for( int i = 0; i < this->n_dims; i++ )
+      {
+        int reach = 1 << i;
+
+        int step = reach << 1;
+
+        std::cout << "reducing dim " << i << std::endl;
+
+        for( int j = 0; j < 1 << this->n_dims; j += step )
+        {
+          std::cout << "summing hypercube vertices " << j << " and " << j + reach << std::endl;
+          std::cout << hypercube[ j ] << " " << hypercube[ j + reach ] << std::endl;
+          std::cout << "pairing with fractions " << i*2 << " and " << i*2+1 << std::endl;
+          std::cout << normalized_fractions[i*2] << " " << normalized_fractions[i*2+1] 
+                    << std::endl;
+
+          hypercube[ j ] = 
+          ( normalized_fractions[ i * 2 ] * hypercube[ j ] + 
+          normalized_fractions[ i * 2 + 1 ] * hypercube[ j + reach ] )
+          / spacing[ i ];
+
+          std::cout << "result: " << hypercube[ j ] << std::endl;
+        }
+      }
+
+      return hypercube[ 0 ];
 }
 
-/* Captain! Coordinates here go from small stride to large stride! */
+/* Coordinates here go from small stride to large stride! */
 /* thus, d_len also goes from small stride to large stride offsets. grows like ---> */
 
 /* you simply need to change the calculation of d_len in here and the order of 
@@ -392,13 +436,30 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
 
   /* find the indices of the other vertices in the hypercube by offsetting from the
      first vertex */
-     /* Captain! populate hypercube in column major order instead of this way */
   for( int i = 0; i < ( 1 << this->n_dims ); i++ )
   {
     int flat_index = corner_vertex_index;
 
     for( int j = 0; j < this->n_dims; j++ )
     {
+      /* Captain!!! How do your fractions relate to the order of the offset_factors? */
+
+      /* let's examine... */
+
+      /* "i" the linear index of a hypercube cell index contains n_dims bits: 
+         these represent xyz order, such that consumption goes zyx in parallel with
+         the linear indices of offset_factors */
+
+      /* thus, the order of the hypercube cell coordinates follows 0 ---> 2^n in binary
+         where bits represent xyz order: note that the fastest changing dimension in this
+         enumeration is the leading dimension! 
+
+         That seems a bit bad for memory access...
+         what if we had overlapping memory regions to mitigate these factors? That would be
+         awesome... memory cubes where locality is better or square or something... maybe
+         nested squares? Could that work? Yeah... that seems like a better data tiling
+         layout... 
+          */
       flat_index += ( ( ( i >> j ) & 0x1 ) * this->offset_factors[ j ] );
     }
 
