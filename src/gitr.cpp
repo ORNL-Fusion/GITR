@@ -3902,6 +3902,9 @@ if( presheath_interp == 1 )
 #endif
   int nHistoriesPerParticle = (nT / subSampleFac) + 1;
   int nHistories = nHistoriesPerParticle * nP;
+	
+  if(particle_tracks == 0) nHistories = 1;
+	
   sim::Array<gitr_precision> positionHistoryX(nHistories);
   sim::Array<gitr_precision> positionHistoryXgather(nHistories, 0.0);
   sim::Array<gitr_precision> positionHistoryY(nHistories);
