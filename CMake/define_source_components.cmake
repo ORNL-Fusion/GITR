@@ -48,14 +48,8 @@ set( gpu_broker_targets
      coulomb_data_broker
      cross_field_diffusion_broker )
 
-if( NOT GITR_USE_CUDA )
-
-  set( non_gpu_targets ${non_gpu_targets} ${gpu_targets} )
-
-endif()
-
-# Captain! This is all wrong and needs to be fixed - won't compile
-# in CPU mode
+# Captain! New code:
+# compile all cpu targets first
 foreach( component IN LISTS non_gpu_targets )
 
   add_library( ${component} src/${component}.cpp )
@@ -64,7 +58,6 @@ foreach( component IN LISTS non_gpu_targets )
 
 endforeach()
 
-# Compile gpu_targets
 if( GITR_USE_CUDA )
 
   foreach( component IN LISTS gpu_targets gpu_broker_targets )
@@ -78,6 +71,16 @@ if( GITR_USE_CUDA )
     target_include_directories( ${component} PUBLIC include test_include )
 
     target_compile_options( ${component} PRIVATE --expt-relaxed-constexpr )
+
+  endforeach()
+
+else()
+
+  foreach( component IN LISTS gpu_targets gpu_broker_targets )
+
+    add_library( ${component} src/${component}.cpp )
+
+    target_include_directories( ${component} PUBLIC include test_include )
 
   endforeach()
 

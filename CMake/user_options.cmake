@@ -1,7 +1,7 @@
 # String description for each option
 set( description "(no description added - see define_options.cmake)" )
 # Captain! Don't forget to turn this on for the nvidia build
-set( GITR_USE_CUDA 1 CACHE STRING "${description}" FORCE )
+set( GITR_USE_CUDA 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_OPENMP 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_MPI 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_DOUBLE 1 CACHE STRING "${description}" FORCE )

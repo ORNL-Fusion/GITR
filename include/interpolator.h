@@ -361,29 +361,31 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
 
   return sum;
   */
-      std::cout << "Ahoy!" << std::endl;
+      //std::cout << "Ahoy!" << std::endl;
       for( int i = 0; i < this->n_dims; i++ )
       {
         int reach = 1 << i;
 
         int step = reach << 1;
 
-        std::cout << "reducing dim " << i << std::endl;
+        //std::cout << "reducing dim " << i << std::endl;
 
         for( int j = 0; j < 1 << this->n_dims; j += step )
         {
+          /*
           std::cout << "summing hypercube vertices " << j << " and " << j + reach << std::endl;
           std::cout << hypercube[ j ] << " " << hypercube[ j + reach ] << std::endl;
           std::cout << "pairing with fractions " << i*2 << " and " << i*2+1 << std::endl;
           std::cout << normalized_fractions[i*2] << " " << normalized_fractions[i*2+1] 
                     << std::endl;
+                    */
 
           hypercube[ j ] = 
           ( normalized_fractions[ i * 2 ] * hypercube[ j ] + 
           normalized_fractions[ i * 2 + 1 ] * hypercube[ j + reach ] )
           / spacing[ i ];
 
-          std::cout << "result: " << hypercube[ j ] << std::endl;
+          //std::cout << "result: " << hypercube[ j ] << std::endl;
         }
       }
 

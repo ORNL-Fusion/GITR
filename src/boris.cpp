@@ -1,5 +1,6 @@
 #include "boris.h"
 #include "constants.h"
+#include "interpolator.h"
 
 /* Are these preprocessor defines necessary? */
 #ifdef __CUDACC__
@@ -200,12 +201,19 @@ int nx, int nz,
 gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, 
 gitr_precision* datat, int cylsymm ) {
 
-   /* Captain! You'll want to put all this data into a managed class. Grind out this
-      work first. */
    gitr_precision Ar = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, cylsymm );
    gitr_precision At = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, cylsymm );
+   /* Captain! create an interpolated field class here */
+   long long unsigned int dims[ 2 ] = { nx, nz };
+   double min_range_init[ 2 ] = { gridx[0], gridz[0] };
+   double max_range_init[ 2 ] = { gridx[ dims[0] - 1 ], gridz[ dims[ 1 ] - 1 ] };
+   int n_dims_init = 2;
+   double coordinates[ 2 ] = { x, z };
+   class interpolated_field< double > 
+   ifield( dataz, dims, max_range_init, min_range_init, n_dims_init );
    /* break! 1 */
    field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
+   //field[2] = ifield( coordinates );
      if( cylsymm )
      {
             gitr_precision theta = std::atan2(y,x);   
