@@ -46,6 +46,7 @@
 #else
 //#include <experimental/filesystem>
 #endif
+#include <filesystem>
 
 #if USE_MPI
 #include <mpi.h>
@@ -643,6 +644,20 @@ if( geom_hash > 1 )
       closeGeomGridy(nY_closeGeomTotal), closeGeomGridz(nZ_closeGeomTotal);
   sim::Array<int> closeGeom(nGeomHash, 0);
   std::cout << "allocating closGeomGrids finished" << std::endl;
+
+  //Section to create output folder if needed
+  std::string dirName = "output";
+    std::error_code err1;
+        if (!std::filesystem::exists(dirName))
+        {
+    if (std::filesystem::create_directories(dirName, err1))
+    {
+    }
+    else
+    {
+        printf("CreateDirectoryRecuresive: FAILED to create [%s], err:%s\n", dirName.c_str(), err1.message().c_str());
+    }
+        }
 
 if( geom_hash == 1 )
 {
