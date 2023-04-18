@@ -260,7 +260,7 @@ class interpolated_field : public tensor< T >
         for( int i = 0; i < this->n_dims; i++ ) max_range[ i ] = max_range_init[ i ];
         for( int i = 0; i < this->n_dims; i++ ) min_range[ i ] = min_range_init[ i ];
 
-        /* Captain!!! This should be number of bins, not dims! */
+        /* Captain! This should be passed in externally not calculated */
         for( int i = 0; i < this->n_dims; i++ ) 
           spacing[ i ] = ( max_range[ i ] - min_range[ i ] ) / ( T(dims[ i ]) );
 
@@ -475,6 +475,8 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
 template< typename T >
 T interpolated_field< T >::operator()( T const *coordinates )
 {
+  if( data_size == 1 ) return this->data[ 0 ];
+
   T hypercube[ 1 << this->n_dims_arbitrary_max ];
 
   fetch_hypercube( coordinates, hypercube );

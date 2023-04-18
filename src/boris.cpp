@@ -11,7 +11,6 @@
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
 
-/* Ahoy, Captain! new code */
 CUDA_CALLABLE_MEMBER
 gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
     gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data, int cylsymm ) {
@@ -35,6 +34,7 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
     }
     gitr_precision d_dim1 = gridx[1] - gridx[0];
     gitr_precision dz = gridz[1] - gridz[0];
+
 
 
     int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
@@ -212,8 +212,8 @@ gitr_precision* datat, int cylsymm ) {
    class interpolated_field< double > 
    ifield( dataz, dims, max_range_init, min_range_init, n_dims_init );
    /* break! 1 */
-   field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
-   //field[2] = ifield( coordinates );
+   //field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
+   field[2] = ifield( coordinates );
      if( cylsymm )
      {
             gitr_precision theta = std::atan2(y,x);   
@@ -227,8 +227,6 @@ gitr_precision* datat, int cylsymm ) {
     }
 
 }
-
-/* end new code */
 
 CUDA_CALLABLE_MEMBER
 void vectorAdd(gitr_precision A[], gitr_precision B[],gitr_precision C[])

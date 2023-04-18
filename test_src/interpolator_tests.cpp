@@ -405,4 +405,24 @@ TEST_CASE( "multi-dimensional interpolation" )
       }
     }
   }
+
+  /* edge case testing */
+  SECTION( "t3" )
+  {
+  }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
