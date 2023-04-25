@@ -5159,6 +5159,10 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     {
     // Write netCDF output for density data
     netCDF::NcFile ncFile("output/spec.nc", netCDF::NcFile::replace);
+    netCDF::NcVar spec_nP = ncFile.addVar("nP", netCDF::ncInt);
+    spec_nP.putVar(&nP);
+    netCDF::NcVar spec_dt = ncFile.addVar("dt", netCDF::ncDouble);
+    spec_dt.putVar(&dt);
     netCDF::NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
     netCDF::NcDim nc_nR = ncFile.addDim("nR", net_nX);
     netCDF::NcDim nc_nY;
