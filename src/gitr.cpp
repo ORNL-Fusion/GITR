@@ -110,15 +110,15 @@ int main(int argc, char **argv, char **envp) {
   int use_adaptive_dt = use.get< int >( use::adaptive_dt );
   int geom_hash = use.get<int>( use::geom_hash);
   int particle_source_file = use.get< int >( use::particle_source_file );
-  int particle_source_space = use.get< int >( use::particle_source_space );
-  int particle_source_energy = use.get< int >( use::particle_source_energy );
-  int particle_source_angle = use.get< int >( use::particle_source_angle );
+  int particle_source_space = 0;//use.get< int >( use::particle_source_space );
+  int particle_source_energy = 0; //use.get< int >( use::particle_source_energy );
+  int particle_source_angle = 0; //use.get< int >( use::particle_source_angle );
 
   //int particle_source_space = use.get< int >( use::particle_source_space );
   //int particle_source_energy = use.get< int >( use::particle_source_energy );
   //int particle_source_angle = use.get< int >( use::particle_source_angle );
   int particle_tracks = use.get< int >( use::particle_tracks );
-  int presheath_interp = use.get< int >( use::presheath_interp );
+  //int presheath_interp = use.get< int >( use::presheath_interp );
   int efield_interp = use.get< int >( use::efield_interp );
   int surface_potential = use.get< int >( use::surface_potential );
   int flowv_interp = use.get<int>( use::flowv_interp );
@@ -2327,7 +2327,7 @@ if( flowv_interp == 1 )
   {
 
   std::cout << "Using presheath Efield " << std::endl;
-  if( presheath_interp == 1 )
+  if( efield_interp == 1 )
   {
   nR_PreSheathEfield = nR_Lc;
   nY_PreSheathEfield = nY_Lc;
@@ -2336,7 +2336,7 @@ if( flowv_interp == 1 )
 
   std::string efieldFile;
 
-  if( presheath_interp > 1 )
+  if( efield_interp > 1 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -2347,7 +2347,7 @@ if( flowv_interp == 1 )
     nZ_PreSheathEfield =
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNzString");
 
-    if( presheath_interp > 2 )
+    if( efield_interp > 2 )
     {
     nY_PreSheathEfield =
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNyString");
@@ -2375,19 +2375,19 @@ if( flowv_interp == 1 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-    if( presheath_interp == 0 )
+    if( efield_interp == 0 )
     {
     getVariable(cfg, PSECfg + "Er", PSEr[0]);
     getVariable(cfg, PSECfg + "Et", PSEt[0]);
     getVariable(cfg, PSECfg + "Ez", PSEz[0]);
     }
-    else if( presheath_interp > 1 )
+    else if( efield_interp > 1 )
     {
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridRString",
                  preSheathEGridr[0]);
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridZString",
                  preSheathEGridz[0]);
-  if( presheath_interp > 2 )
+  if( efield_interp > 2 )
   {
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridYString",
                  preSheathEGridy[0]);
@@ -2415,7 +2415,7 @@ if( flowv_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-if( presheath_interp == 1 )
+if( efield_interp == 1 )
 {
 
   for (int i = 0; i < nR_PreSheathEfield; i++) {
@@ -2622,33 +2622,6 @@ if( presheath_interp == 1 )
       cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
       cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
   */
-  if( efield_interp == 2 )
-  {
-  int nR_dtsEfield, nZ_dtsEfield;
-
-  int d1 = read_profileNs(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNrString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNzString"),
-      nR_dtsEfield, nZ_dtsEfield);
-
-  sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
-  sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
-
-  int d2 = read_profile1d(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridRString"),
-      dtsEfieldGridr);
-
-  int d3 = read_profile1d(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridZString"),
-      dtsEfieldGridz);
-
-  int d4 = read_profile2d(
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-      cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
-  }
   }
   else
   {
@@ -2657,7 +2630,6 @@ if( presheath_interp == 1 )
   sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
   sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
   }
-
   std::string outnameEfieldR = "EfieldR.m";
   std::string outnameEfieldZ = "EfieldZ.m";
   std::string outnameEfieldT = "EfieldT.m";
@@ -3227,8 +3199,8 @@ if( presheath_interp == 1 )
   if (world_rank == 0) {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.impurity_amu",
                         amu) &&
-        cfg.lookupValue("impurityParticleSource.initialConditions.impurity_Z",
-                        Z) &&
+        //cfg.lookupValue("impurityParticleSource.initialConditions.impurity_Z",
+        //                Z) &&
         cfg.lookupValue("impurityParticleSource.initialConditions.charge",
                         charge)) {
       std::cout << "Impurity amu Z charge: " << amu << " " << Z << " " << charge

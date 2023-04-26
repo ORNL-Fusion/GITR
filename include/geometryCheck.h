@@ -3,8 +3,10 @@
 
 #ifdef __CUDACC__
 #define CUDA_CALLABLE_MEMBER_DEVICE __device__
+#define CUDA_CALLABLE_HOST_DEVICE __host__ __device__
 #else
 #define CUDA_CALLABLE_MEMBER_DEVICE
+#define CUDA_CALLABLE_HOST_DEVICE
 #endif
 
 #include "Boundary.h"
@@ -25,7 +27,7 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 
-__host__ __device__
+CUDA_CALLABLE_HOST_DEVICE
 gitr_precision
 findT( gitr_precision x0, 
        gitr_precision x1,
@@ -76,8 +78,8 @@ struct geometry_check {
                  int use_3d_geom_,
                  int cylsymm_ );
 
-  //CUDA_CALLABLE_MEMBER_DEVICE
- __host__  __device__
+
+  CUDA_CALLABLE_HOST_DEVICE
   void operator()(std::size_t indx) const;
 };
 

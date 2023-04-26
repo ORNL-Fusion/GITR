@@ -1,6 +1,6 @@
 #include "geometryCheck.h"
 
-__host__ __device__
+CUDA_CALLABLE_HOST_DEVICE
 gitr_precision
 findT( gitr_precision x0, 
        gitr_precision x1,
@@ -82,7 +82,7 @@ geometry_check::geometry_check(
     geom_hash( geom_hash_ ), use_3d_geom( use_3d_geom_ ), cylsymm( cylsymm_ )
     {}
 
-__host__  __device__
+CUDA_CALLABLE_HOST_DEVICE
 void geometry_check::operator()(std::size_t indx) const {
 
   // std::cout << "geometry check particle x" << particlesPointer->x[indx] <<

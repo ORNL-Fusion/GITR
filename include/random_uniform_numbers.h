@@ -15,6 +15,8 @@
   #include <random>
   using rand_type = std::mt19937;
   #define __hardware_specifier__  __host__;
+  #define __hardware_specifier__d ;
+  #define __hardware_specifier__h ;
 
 #endif
 
