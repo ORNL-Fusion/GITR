@@ -3,43 +3,70 @@ import numpy.matlib
 import netCDF4
 #generate particle source and profiles
 
+##################
+# INPUTS SECTION #
+##################
+
+# Simulated particle mass (amu)
+m=12;
+
 # Domain half-length
-L=10;
-flowSpeed = 750;
-sv = 1.2;
+L=10; # meters
+
+# Flow speed toward the left boundary
+flowSpeed = -750;
+
+# Location at which plasma flow ends
+sv = 1.2; #meters
+
+# Ion temperature at the left boundary
 TD0 = 10;
 
 # Temperature gradient
 dT_ds = 1.38;
+
 # Number of simulated particles
 nP=1e6;
 
 # Spatial particle distribution - evenly between 10 and  20 cm
-# May want to try varying this
 z0=0.1;
 z1=0.2;
 x0 = 0;
 x1= 0;
+
+# Plasma profile resolution
+nR = 10;
+nZ = 10001;
+
+#########################
+# END OF INPUTS SECTION #
+#########################
+
+##################################
+# DEFINITIION OF PARTICLE SOURCE #
+##################################
+
+# Initialize particle positions randomly between x0 to x1, z0 to z1, y=0
 x = (x1-x0)*np.random.uniform(0,1,int(nP))+x0;
 z = (z1-z0)*np.random.uniform(0,1,int(nP))+z0;
 y = 0.0*np.ones(int(nP));
 
-T=10;
-m=12;
-
-vTh = np.sqrt(2*T*1.602e-19/m/1.66e-27);
+# Initialize particle velocities to be thermal distribution at TD0
+# Create 1D Maxwellian spped distribution
+vTh = np.sqrt(2*TD0*1.602e-19/m/1.66e-27);
 k = 1.38e-23*11604;
-B = m*1.66e-27/(2*T*k);
+B = m*1.66e-27/(2*TD0*k);
 vgrid = np.linspace(-3*vTh,3*vTh,1000000);
 fv1 = np.sqrt(B/np.pi)*np.exp(-B*np.multiply(vgrid,vgrid));
 fv1CDF = np.cumsum(fv1);
 fv1CDF = fv1CDF/fv1CDF[-1];
 
+# Sample 1D Maxwellian speed distribution in all velocity components
 vx = np.interp(np.random.uniform(0,1,int(nP)),fv1CDF,vgrid);
 vy = np.interp(np.random.uniform(0,1,int(nP)),fv1CDF,vgrid);
 vz = np.interp(np.random.uniform(0,1,int(nP)),fv1CDF,vgrid);
 
-
+# Write to netcdf file
 rootgrp = netCDF4.Dataset("input/particleSource.nc", "w", format="NETCDF4")
 npp = rootgrp.createDimension("nP", int(nP))
 xxx = rootgrp.createVariable("x","f8",("nP"))
@@ -56,31 +83,32 @@ vyy[:] = vy
 vzz[:] = vz
 rootgrp.close()
 
+##########################
+# END OF PARTICLE SOURCE #
+##########################
 
+##################################
+# DEFINITIION OF PLASMA PROFILES #
+##################################
 
-
-nR = 10;
+# Define 2D plasma profile grid
 r = np.linspace(-300,300,nR);
-nZ = 10001;
 z = np.linspace(0.0,2*L,nZ);
 
 # Flow velocity setup
 vz = np.zeros(nZ);
-vz[np.where(z<=sv)] = -flowSpeed;
+vz[np.where(z<=sv)] = flowSpeed;
 vz2D = np.matlib.repmat(vz,nR,1);
 
-# Ion temperature - may want to try constant with constant dT_ds
+# Ion temperature
 Ti =np.zeros(nZ);
-Ti = 10+dT_ds*z;
+Ti = TD0+dT_ds*z;
 Ti2D = np.matlib.repmat(Ti,nR,1);
 
 vz2D = np.transpose(vz2D)
 Ti2D = np.transpose(Ti2D)
-# Ion temperature gradient
-gradTi = np.zeros(nZ);
-gradTi[:] = dT_ds;
-gradTi2D = np.matlib.repmat(gradTi,nR,1);
 
+# Write 2D plasma profiles to netcdf
 rootgrp = netCDF4.Dataset("input/profiles.nc", "w", format="NETCDF4")
 nrr = rootgrp.createDimension("nR", int(nR))
 nzz = rootgrp.createDimension("nZ", int(nZ))
@@ -101,3 +129,6 @@ tii[:] = Ti2D
 tee[:] = Ti2D
 rootgrp.close()
 
+##########################
+# END OF PARTICLE SOURCE #
+##########################

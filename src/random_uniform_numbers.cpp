@@ -33,7 +33,10 @@ random_uniform_numbers::random_uniform_numbers( long n_particles )
   #endif
 }
 
+//__hardware_specifier__d
+#if USE_CUDA
 __device__
+#endif
 float random_uniform_numbers::operator()( int particle_index )
 {
   #if USE_CUDA

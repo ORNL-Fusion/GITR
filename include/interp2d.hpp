@@ -9,7 +9,7 @@
 #define CUDA_CALLABLE_MEMBER_DEVICE
 #endif
 
-#include <thrust/device_vector.h>
+//#include <thrust/device_vector.h>
 #include <vector>
 #include "math.h"
 //using namespace std;
