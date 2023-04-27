@@ -111,13 +111,13 @@ IF (_MPI)
   target_link_libraries(GITR ${MPI_CXX_LIBRARIES})
 endif()
 
-#enable_testing()
-#add_test(TestName tests)
+enable_testing()
+#add_test(TestName sft_a)
 ##add_test(atomic_tests atomic_tests)
 #
-#find_package (Python3 COMPONENTS Interpreter)
-#message( STATUS "python stuff " ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR} ${EXECUTABLE_OUTPUT_PATH})
-#add_test(NAME sample_test COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_test.py WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test )
+find_package (Python3 COMPONENTS Interpreter)
+message( STATUS "python stuff " ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR} ${EXECUTABLE_OUTPUT_PATH})
+add_test(NAME sample_test COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/examples/sft_a/test.py WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/examples/sft_a )
 #add_test(TestName geom_test)
 # end test comment
 

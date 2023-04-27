@@ -21,16 +21,13 @@ def process_out():
     dens = n[nBins - 1, :, :]
     plt.close()
     plt.figure(1, figsize=(10, 6), dpi=2000)
-    flux_strength = 1;
+    flux_strength = 2*np.tanh(1);
     dens_1d = flux_strength*dt/nP/dz*np.sum(n[nBins-1,:,:], axis=1)
     
     plt.plot(z+0.5*dz,dens_1d)
     plt.title("Case A C Impurity Density")
     plt.xlabel("z [m]")
     plt.ylabel("n [m-3]")
-    d0 = np.loadtxt("density_cuda.txt")
-    plt.plot(d0[:,1]+0.5*dz,d0[:,0])
-    
     plt.show()
     plt.savefig('density.png')
     
