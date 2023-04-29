@@ -28,8 +28,11 @@ grossDep = ncread(file,'grossDeposition');
 grossEro = ncread(file,'grossErosion');
 
 edist = ncread(file,'surfEDist');
-Egrid = linspace(0,1000,1000);
-Agrid = linspace(0,90,90);
+ncid = netcdf.open(file,'NC_NOWRITE');
+[dimname, Elen] = netcdf.inqDim(ncid,1);
+[dimname, Alen] = netcdf.inqDim(ncid,2);
+Egrid = linspace(0,1000,Elen);
+Agrid = linspace(0,90,Alen);
 sumWeightStrike = ncread(file,'sumWeightStrike');
 aveSpyl = ncread(file,'aveSpyl');
 spylCounts = ncread(file,'spylCounts');
@@ -81,7 +84,7 @@ set(gca,'fontsize',16)
 set(cb1,'fontsize',14);
 % axis equal
     figure(3)
-    edist2d = reshape(sum(edist,3),90,1000);
+    edist2d = reshape(sum(edist,3),length(Agrid),length(Egrid));
 h = pcolor(Egrid,Agrid,edist2d)
 h.EdgeColor = 'none';
 cb1 = colorbar
