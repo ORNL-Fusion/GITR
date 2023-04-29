@@ -84,6 +84,7 @@
 CUDA_CALLABLE_MEMBER_DEVICE
 void reflection::operator()(std::size_t indx) const {
     
+  // Surface model only applies to particles that have hit a surface
   if (particles->hitWall[indx] == 1.0) 
   {
     gitr_precision E0_for_surface_model = 0.0;
@@ -132,31 +133,40 @@ void reflection::operator()(std::size_t indx) const {
     norm_part = std::sqrt(particleTrackVector[0] * particleTrackVector[0] + particleTrackVector[1] * particleTrackVector[1] + particleTrackVector[2] * particleTrackVector[2]);
     E0_for_surface_model = 0.5 * particles->amu[indx] * 1.6737236e-27 * (norm_part * norm_part) / 1.60217662e-19;
     E0_for_flux_binning = E0_for_surface_model;
+
     gitr_precision maxE_for_surface_model = std::pow(10.0,Elog_sputtRefCoeff[nE_sputtRefCoeff-1]);
-     if (E0_for_surface_model > maxE_for_surface_model)
+    if (E0_for_surface_model > maxE_for_surface_model)
          E0_for_surface_model = maxE_for_surface_model;
      
-     if (E0_for_flux_binning > Edist)
+    if (E0_for_flux_binning > Edist)
          E0_for_flux_binning = Edist;
       
     wallIndex = particles->wallIndex[indx];
+    
     boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx], use_3d_geom, cylsymm );
+    
     particleTrackVector[0] = particleTrackVector[0] / norm_part;
     particleTrackVector[1] = particleTrackVector[1] / norm_part;
     particleTrackVector[2] = particleTrackVector[2] / norm_part;
 
     partDotNormal = vectorDotProduct(particleTrackVector, surfaceNormalVector);
     thetaImpact = std::acos(partDotNormal);
-    if (thetaImpact > 3.14159265359 * 0.5) {
+    
+    if (thetaImpact > 3.14159265359 * 0.5)
+    {
       thetaImpact = std::abs(thetaImpact - (3.14159265359));
     }
     thetaImpact = thetaImpact * 180.0 / 3.14159265359;
+   
     if (thetaImpact < 0.0)
       thetaImpact = 0.0;
+   
     signPartDotNormal = std::copysign(1.0,partDotNormal);
+   
     if (E0_for_surface_model == 0.0) {
       thetaImpact = 0.0;
     }
+   
     if (boundaryVector[wallHit].Z > 0.0) 
     {
       Y0 = interp2d(thetaImpact, std::log10(E0_for_surface_model), nA_sputtRefCoeff,
@@ -200,42 +210,43 @@ void reflection::operator()(std::size_t indx) const {
               nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                         angleDistGrid01,A_sputtRefDistIn,
                         E_sputtRefDistIn,ADist_CDF_R_regrid);
-         eInterpVal = interp3d ( r9,thetaImpact,std::log10(E0_for_surface_model),
+        
+        eInterpVal = interp3d ( r9,thetaImpact,std::log10(E0_for_surface_model),
                nE_sputtRefDistOutRef,nA_sputtRefDistIn,nE_sputtRefDistIn,
                              energyDistGrid01Ref,A_sputtRefDistIn,
                              E_sputtRefDistIn,EDist_CDF_R_regrid );
 
-         newWeight = weight*(totalYR);
+        newWeight = weight*(totalYR);
 
         if( flux_ea > 0 )
         {
-        EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
-        AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
-        if((EdistInd >= 0) && (EdistInd < nEdist) && 
-           (AdistInd >= 0) && (AdistInd < nAdist))
-        {
-        #if USE_CUDA > 0
-              atomicAdd1(&surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd],newWeight);
-        #else      
-              surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
+          EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
+          AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
+          if((EdistInd >= 0) && (EdistInd < nEdist) && 
+              (AdistInd >= 0) && (AdistInd < nAdist))
+          {
+             #if USE_CUDA > 0
+               atomicAdd1(&surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd],newWeight);
+             #else      
+               #pragma omp atomic
+               surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
                 surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
-        #endif
+             #endif
+          }
         }
-        }
+        
         if(surface > 0)
         {
 
-        #if USE_CUDA > 0
-                atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
-                atomicAdd1(&surfaces->grossErosion[surfaceHit],weight*Y0);
-        #else
-                #pragma omp atomic
-                //surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
-                surfaces->grossDeposition[surfaceHit] += ( weight*(1.0-R0) );
-                #pragma omp atomic
-                //surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit]+weight*Y0;
-                surfaces->grossErosion[surfaceHit] += ( weight * Y0 );
-        #endif
+          #if USE_CUDA > 0
+            atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
+            atomicAdd1(&surfaces->grossErosion[surfaceHit],weight*Y0);
+          #else
+            #pragma omp atomic
+            surfaces->grossDeposition[surfaceHit] += ( weight*(1.0-R0) );
+            #pragma omp atomic
+            surfaces->grossErosion[surfaceHit] += ( weight * Y0 );
+          #endif
         }
       }
       else //sputters
@@ -249,40 +260,49 @@ void reflection::operator()(std::size_t indx) const {
                  energyDistGrid01,A_sputtRefDistIn,E_sputtRefDistIn,EDist_CDF_Y_regrid);
 		    
         newWeight=weight*totalYR;
-      if( flux_ea > 0 )
-      {
-        EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
-        AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
-        if((EdistInd >= 0) && (EdistInd < nEdist) && 
-           (AdistInd >= 0) && (AdistInd < nAdist))
+      
+        if( flux_ea > 0 )
         {
-        #if USE_CUDA > 0
+          EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
+          AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
+          if((EdistInd >= 0) && (EdistInd < nEdist) && 
+             (AdistInd >= 0) && (AdistInd < nAdist))
+          {
+            #if USE_CUDA > 0
               atomicAdd1(&surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd],newWeight);
-        #else      
+            #else      
               surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
                 surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
-        #endif 
+            #endif 
+          }
         }
-      }
+        
         if(sputtProb == 0.0) newWeight = 0.0;
         if(surface > 0)
         {
-        #if USE_CUDA > 0
-          atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
-          atomicAdd1(&surfaces->grossErosion[surfaceHit],weight*Y0);
-          atomicAdd1(&surfaces->aveSputtYld[surfaceHit],Y0);
-          if(weight > 0.0)
-          {
+          #if USE_CUDA > 0
+            atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
+            atomicAdd1(&surfaces->grossErosion[surfaceHit],weight*Y0);
+          
+            if(weight > 0.0)
+            {
+              atomicAdd1(&surfaces->aveSputtYld[surfaceHit],Y0);
               atomicAdd1(&surfaces->sputtYldCount[surfaceHit],1.0);
-          }
-        #else
-          #pragma omp atomic
-          surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
-          #pragma omp atomic
-          surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit] + weight*Y0;
-          surfaces->aveSputtYld[surfaceHit] = surfaces->aveSputtYld[surfaceHit] + Y0;
-          surfaces->sputtYldCount[surfaceHit] = surfaces->sputtYldCount[surfaceHit] + 1;
-        #endif
+            }
+          #else
+            #pragma omp atomic
+            surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*(1.0-R0);
+            #pragma omp atomic
+            surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit] + weight*Y0;
+          
+            if(weight > 0.0)
+            {
+              #pragma omp atomic
+              surfaces->aveSputtYld[surfaceHit] = surfaces->aveSputtYld[surfaceHit] + Y0;
+              #pragma omp atomic
+              surfaces->sputtYldCount[surfaceHit] = surfaces->sputtYldCount[surfaceHit] + 1;
+            }
+          #endif
         }
       }
     }
@@ -293,10 +313,10 @@ void reflection::operator()(std::size_t indx) const {
       if(surface > 0)
       {
         #if USE_CUDA > 0
-                atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight);
+          atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight);
         #else
-                #pragma omp atomic
-                surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
+          #pragma omp atomic
+          surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
         #endif
 	    }
     }
@@ -307,12 +327,15 @@ void reflection::operator()(std::size_t indx) const {
       particles->hitWall[indx] = 2.0;
       if(surface > 0)
       {
-      #if USE_CUDA > 0
-              atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*R0);
-              atomicAdd1(&surfaces->grossDeposition[surfaceHit],-weight*Y0);
-      #else
-              surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
-      #endif
+        #if USE_CUDA > 0
+          atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*R0);
+          atomicAdd1(&surfaces->grossDeposition[surfaceHit],-weight*Y0);
+        #else
+          #pragma omp atomic
+          surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*R0;
+          #pragma omp atomic
+          surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]-weight*Y0;
+        #endif
 		  }
     }
     
@@ -322,29 +345,32 @@ void reflection::operator()(std::size_t indx) const {
         atomicAdd1(&surfaces->sumWeightStrike[surfaceHit],weight);
         atomicAdd1(&surfaces->sumParticlesStrike[surfaceHit],1.0);
     #else
-        surfaces->sumWeightStrike[surfaceHit] =surfaces->sumWeightStrike[surfaceHit] +weight;
-        surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
-      //boundaryVector[wallHit].impacts = boundaryVector[wallHit].impacts +  particles->weight[indx];
+      #pragma omp atomic
+      surfaces->sumWeightStrike[surfaceHit] =surfaces->sumWeightStrike[surfaceHit] +weight;
+      #pragma omp atomic
+      surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
     #endif
-    if( flux_ea > 0 )
-    {
+    
+      if( flux_ea > 0 )
+      {
         EdistInd = std::floor((E0_for_flux_binning-E0dist)/dEdist);
         AdistInd = std::floor((thetaImpact-A0dist)/dAdist);
       
 	      if((EdistInd >= 0) && (EdistInd < nEdist) && 
         (AdistInd >= 0) && (AdistInd < nAdist))
         {
-#if USE_CUDA > 0
-          atomicAdd1(&surfaces->energyDistribution[surfaceHit*nEdist*nAdist + 
+          #if USE_CUDA > 0
+            atomicAdd1(&surfaces->energyDistribution[surfaceHit*nEdist*nAdist + 
                                                EdistInd*nAdist + AdistInd], weight);
-#else
+          #else
 
-          surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
-          surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
-#endif
+            #pragma omp atomic
+            surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
+            surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
+          #endif
         }
-    }
       }
+    }
       //reflect with weight and new initial conditions
       
     if (boundaryVector[wallHit].Z > 0.0 && newWeight > 0.0)

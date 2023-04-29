@@ -1086,7 +1086,7 @@ else top_limit = nLines;
         }
       }
       }
-      else if( surface_model == 0 && surface_model == 0 )
+      else if( flux_ea == 0 && surface_model == 0 )
       {
         particlesPointer->weight[indx] = 0.0;
       }
