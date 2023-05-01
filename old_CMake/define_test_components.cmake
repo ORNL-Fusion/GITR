@@ -55,8 +55,14 @@ if( GITR_USE_CUDA )
 
 endif()
 
-# Captain! system tests
+# Captain! Add a "ninja clean that will delete all the 
 # add simple system tests
-add_test(NAME sample_test COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/examples/sft_a/test.py WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/examples/sft_a )
+add_test( NAME system_particle_straightline 
+          COMMAND GITR -c input/gitrInput.cfg
+          WORKING_DIRECTORY
+          "${CMAKE_BINARY_DIR}/examples/particle_trajectories/straightLine/2Dgeom" )
 
-
+add_test( NAME system_particle_gyro
+          COMMAND GITR -c input/gitrInput.cfg
+          WORKING_DIRECTORY
+          "${CMAKE_BINARY_DIR}/examples/particle_trajectories/gyroMotion" )

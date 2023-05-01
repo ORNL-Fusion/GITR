@@ -22,15 +22,23 @@ endif()
 
 set( CMAKE_BUILD_WITH_INSTALL_RPATH True )
 
+# ensure shared dependency libs are discoverable at load-time
+set( CMAKE_INSTALL_RPATH
+     "${CMAKE_BINARY_DIR}"
+     "${prefix}/libconfig_install/lib"
+     "${prefix}/netcdf-c-install/lib"
+     "${prefix}/netcdf-cxx4-install/lib" )
+
+# Captain! Rename to "common dependency set" or something more descriptive
 set( dependencies "" )
 
 # The following lines populate the "dependencies" variable
 
-# Catch2
-include( CMake/catch.cmake )
-
 # CLI11
 include( CMake/CLI11.cmake ) # ---> creates target cli11
+
+# HDF5
+find_package( HDF5 COMPONENTS C HL )
 
 # CUDA
 if( GITR_USE_CUDA )
@@ -60,4 +68,5 @@ include( CMake/libconfig.cmake ) # ---> creates target libconfig
 # NETCDF
 include( CMake/netcdf.cmake ) # ---> creates target netcdf
 
-find_package( Python3 COMPONENTS Interpreter )
+# Catch2
+include( CMake/catch.cmake )

@@ -12,5 +12,14 @@ if( dependencies )
 
 endif()
 
+foreach( target IN LISTS cpu_test_targets gpu_test_targets )
+
+  add_dependencies( ${target} ${cpu_targets} ${gpu_targets} ${dependencies} )
+
+endforeach()
+
 # ensure that all source targets are built before GITR
 add_dependencies( GITR ${non_gpu_targets} ${gpu_targets} )
+
+# ensure that hdf5 is build before netcdf
+add_dependencies( netcdf hdf5 )

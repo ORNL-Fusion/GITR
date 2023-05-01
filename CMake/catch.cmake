@@ -1,42 +1,21 @@
-# catch2
+# Captain! If catch2 alpine files do not exist, fetch content
+if( NOT EXISTS "usr/include/catch2/" OR 
+    NOT EXISTS "usr/lib/libCatch2Main.a" OR
+    NOT EXISTS "usr/lib/libCatch2.a" )
 
-set( catch2_library_file_0
-     "${prefix}/catch2-install/lib/libCatch2Main.a"
-     CACHE FILEPATH ""
-     FORCE )
+  message( "Ahoy! Not found in system locations - installing from source..." )
 
-set( catch2_library_file_1
-     "${prefix}/catch2-install/lib/libCatch2.a"
-     CACHE FILEPATH ""
-     FORCE )
+  include(FetchContent)
 
-set( catch2_url "https://github.com/catchorg/Catch2.git" )
+  FetchContent_Declare(
+    Catch2
+      GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG        v3.0.1 ) 
 
-set( download_command git clone ${catch2_url} ${prefix}/catch2 )
+  FetchContent_MakeAvailable(Catch2)
 
-set( configure_command
-     ${CMAKE_COMMAND}
-     -S ${prefix}/catch2
-     -B ${prefix}/catch2-build
-     -DCMAKE_INSTALL_PREFIX=${prefix}/catch2-install )
+else()
 
-ExternalProject_Add( catch2_download
-                     PREFIX ${prefix}
-                     DOWNLOAD_COMMAND ${download_command}
-                     CONFIGURE_COMMAND ${configure_command}
-                     BUILD_BYPRODUCTS ${catch2_library_file_0} ${catch2_library_file_1}
-                     BUILD_COMMAND ${CMAKE_COMMAND} 
-                     --build ${prefix}/catch2-build --target install -- -j
-                     INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/catch2-build )
+find_package( Catch2 3 )
 
-add_library( catch2 INTERFACE )
-
-add_dependencies( catch2 catch2_download )
-
-target_include_directories( catch2 INTERFACE ${prefix}/catch2-install/include )
-
-target_link_libraries( catch2 INTERFACE 
-                       ${catch2_library_file_0}
-                       ${catch2_library_file_1} )
-
-list( APPEND dependencies catch2 )
+endif()
