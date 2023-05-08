@@ -4047,7 +4047,7 @@ if( efield_interp == 1 )
       cylsymm );
 
   sortParticles sort0(particleArray, nP,dev_tt, 10000,
-                      nActiveParticlesOnRank.data(),surface_model);
+                      nActiveParticlesOnRank.data(),surface_model,nT);
   spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy );
