@@ -52,7 +52,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
     gitr_precision* BfieldGridR ,gitr_precision* BfieldGridZ ,
     gitr_precision* BfieldR ,gitr_precision* BfieldZ ,
     gitr_precision* BfieldT,gitr_precision &T_background,
-    int flowv_interp, int cylsymm, int field_aligned_values ) 
+    int flowv_interp, int cylsymm, int field_aligned_values, bool use_sheath_density, gitr_precision f_psi )
 {
   //int feenableexcept(FE_INVALID | FE_OVERFLOW); //enables trapping of the floating-point exceptions
   gitr_precision Q = 1.60217662e-19;
@@ -70,6 +70,10 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   gitr_precision density = interp2dCombined( x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni,
                                              cylsymm );
 
+  if( use_sheath_density )
+  {
+    density = density*f_psi;
+  }
   gitr_precision flowVelocity[3]= {0.0};
   gitr_precision relativeVelocity[3] = {0.0, 0.0, 0.0};
   gitr_precision velocityNorm = 0.0;
@@ -357,6 +361,111 @@ struct coulombCollisions {
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) { 
 
+  // Hard-coded option to use binary collision operator or not
+  bool use_bca = false;
+
+  if (use_bca)
+  {
+    if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
+    {
+    // Physical constants (should be replaced with system/better precision values)
+    double ME = 9.10938356e-31;
+    double MI = 1.6737236e-27;
+    double Q = 1.60217662e-19;
+    double EPS0 = 8.854187e-12;
+    double PI = 3.141592653589793;
+
+    // Get particle attributes
+    gitr_precision x = particlesPointer->xprevious[indx];
+    gitr_precision y = particlesPointer->yprevious[indx];
+    gitr_precision z = particlesPointer->zprevious[indx];
+    gitr_precision vx = particlesPointer->vx[indx];
+    gitr_precision vy = particlesPointer->vy[indx];
+    gitr_precision vz = particlesPointer->vz[indx];
+    gitr_precision charge = particlesPointer->charge[indx];
+    gitr_precision amu = particlesPointer->amu[indx];
+    gitr_precision mu = amu*background_amu/(amu+background_amu);
+    gitr_precision flowVelocity[3]= {0.0};
+    
+    // Interpolate ion temperature
+    gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti,cylsymm);
+    
+    // Interpolate ion density
+    gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni,cylsymm);
+
+    // Calculate standard deviation for Gaussian - representing Maxwellian velocity distribution
+    gitr_precision standard_deviation = 1.0/std::sqrt(2*background_amu*1.6737236e-27/(2*ti_eV*1.60217662e-19));
+
+    // Draw random normal background ion velocities to use in collision
+    double ux_gas = standard_deviation*curand_normal(&state[indx]);
+    double uy_gas = standard_deviation*curand_normal(&state[indx]);
+    double uz_gas = standard_deviation*curand_normal(&state[indx]);
+
+    // Interpolate flow velocity - for this problem, it is set to zero
+    interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
+                        nR_flowV,nZ_flowV,
+                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, cylsymm );
+             
+    // Shift background ion velocities by bulk flow velocities
+    ux_gas = ux_gas + flowVelocity[0];
+    uy_gas = uy_gas + flowVelocity[1];
+    uz_gas = uz_gas + flowVelocity[2];
+
+    // Get relative velocities and norms
+    double ux = vx - ux_gas;
+    double uy = vy - uy_gas;
+    double uz = vz - uz_gas;
+    double v_norm = std::sqrt(vx*vx + vy*vy + vz*vz);
+       
+    double u = std::sqrt(ux*ux + uy*uy + uz*uz);
+    double u_perp = std::sqrt(ux*ux + uy*uy);
+
+    // Calculation of the coulomb logarithm
+    double lam_d = std::sqrt(EPS0*ti_eV/(density*Q));//%only one q in order to convert to J
+    double lam = 12*PI*density*std::pow(lam_d,3);
+    
+    // Collision frequency
+    double nu_0 = (1.0/std::pow(u,3.0))*std::pow(Q,4.0)*charge*charge*background_Z*background_Z*std::log(lam)*density/((mu*mu*MI*MI)*8.0*PI*EPS0*EPS0);
+
+    // Calculate the scattering angles
+    double chi_squared = dt*nu_0;
+    gitr_precision r1 = curand_uniform(&state[indx]);
+    gitr_precision r2 = curand_uniform(&state[indx]);
+    double chi = std::sqrt(-2.0*chi_squared*std::log(r1));
+    //sampling normal dist. approach
+    double delta = std::sqrt(chi_squared)*curand_normal(&state[indx]);
+    chi = 2.0*std::atan(delta);
+    double psi = 2.0*PI*r2;
+
+    double d_ux = 0.0;
+    double d_uy = 0.0;
+    double d_uz = 0.0;
+    // Special case where u_perp = 0
+    if (u_perp == 0.0)
+    {
+             d_ux = u*std::sin(chi)*std::cos(psi);
+             d_uy = u*std::sin(chi)*std::sin(psi);
+             d_uz = -u*(1.0-std::cos(chi));
+
+    }
+    //if (u_perp == 0.0) u_perp = 1.0;
+    //if (ux == 0.0) ux = 1.0;
+    //if (uy == 0.0) uy = 1.0;
+    //if (uz == 0.0) uz = 1.0;
+    else {    
+             d_ux = ux/u_perp*uz*std::sin(chi)*std::cos(psi) - uy/u_perp*u*std::sin(chi)*std::sin(psi) - ux*(1-std::cos(chi));
+             d_uy = uy/u_perp*uz*std::sin(chi)*std::cos(psi) + ux/u_perp*u*std::sin(chi)*std::sin(psi) - uy*(1.0-std::cos(chi));
+             d_uz = -u_perp*std::sin(chi)*std::cos(psi) - uz*(1.0-std::cos(chi));
+    }
+
+             particlesPointer->vx[indx] = particlesPointer->vx[indx] + mu/amu*d_ux;
+             particlesPointer->vy[indx] = particlesPointer->vy[indx] + mu/amu*d_uy;
+             particlesPointer->vz[indx] = particlesPointer->vz[indx] + mu/amu*d_uz;
+             particlesPointer->test[indx] = particlesPointer->vz[indx] - vz;
+    }
+  }
+  else
+  {
   if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
   {
     if(gitr_flags->USE_ADAPTIVE_DT)
@@ -451,7 +560,7 @@ void operator()(std::size_t indx) {
                              BfieldR,
                              BfieldZ,
                              BfieldT, T_background, flowv_interp, cylsymm,
-                             field_aligned_values );
+                             field_aligned_values,gitr_flags->USE_ADAPTIVE_DT,particlesPointer->f_psi[indx]  );
 
     getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );
@@ -462,6 +571,7 @@ void operator()(std::size_t indx) {
     gitr_precision density = interp2dCombined( x, y, z, nR_Dens, nZ_Dens, DensGridr, 
                                                DensGridz, ni, cylsymm );
     
+//    printf("speed %f temp %f density %4.3e nu_slowing_down %4.3e \n",velocityRelativeNorm,ti_eV,density, nu_friction);
     if(nu_parallel <=0.0) nu_parallel = 0.0;
     gitr_precision coeff_par = n1 * std::sqrt(2.0*nu_parallel * dt);
     gitr_precision cosXsi = cos(2.0 * pi * xsi) - 0.0028;
@@ -498,6 +608,7 @@ void operator()(std::size_t indx) {
       this->dv[1] = velocityCollisions[1];
       this->dv[2] = velocityCollisions[2];
     }
+  }
   }
 };
 

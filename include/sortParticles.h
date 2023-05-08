@@ -41,10 +41,11 @@ struct sortParticles {
     int nDtPerApply;
     int* nActiveParticles;
     int surface_model;
+    int nT;
 
-    sortParticles(Particles *_particles,int _nP, int* _tt,int _nDtPerApply, int* _nActiveParticles, int _surface_model)
+    sortParticles(Particles *_particles,int _nP, int* _tt,int _nDtPerApply, int* _nActiveParticles, int _surface_model, int _nT)
     
-		    : particles(_particles),nP(_nP), tt(_tt),nDtPerApply(_nDtPerApply), nActiveParticles(_nActiveParticles), surface_model(_surface_model) {}
+		    : particles(_particles),nP(_nP), tt(_tt),nDtPerApply(_nDtPerApply), nActiveParticles(_nActiveParticles), surface_model(_surface_model), nT(_nT) {}
     
     CUDA_CALLABLE_MEMBER_HOST 
     void operator()(std::size_t indx) const 
@@ -90,7 +91,8 @@ else
        //std::cout << " nPartivles under thresh " << nUnderThresh << std::endl;
        int nSwapsNeeded=0;
        int goodParticles = nPonRank-nUnderThresh;
-       std::cout << " n good particles " << goodParticles << std::endl;
+       double pct_done = 1.0*tt[0]/nT;
+       std::cout << " n good particles " << goodParticles << " % done on time "<< pct_done     << std::endl;
        for(int i=0;i<nUnderThresh;i++)
        {
         if(pairs[nPonRank-nUnderThresh+i].first < goodParticles)
