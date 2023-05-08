@@ -5,15 +5,15 @@ add_library( netcdf INTERFACE )
 # Captain! Find file:
 find_file( netcdf_cxx_shared_lib 
            NAMES libnetcdf_c++4.so 
-           HINTS "/usr/lib/x86_64-linux-gnu" "/usr/lib" )
+           HINTS ${NETCDF_CXX_SHARED_LIB_DIR} )
 
 find_file( netcdf_c_shared_lib 
            NAMES libnetcdf.so 
-           HINTS "/usr/lib/x86_64-linux-gnu" "/usr/lib" )
+           HINTS ${NETCDF_C_SHARED_LIB_DIR} )
 
 find_path( netcdf_headers
            NAMES netcdf
-           HINTS "/usr/include" )
+           HINTS ${NETCDF_HEADERS_DIR} )
 
 target_include_directories( netcdf INTERFACE ${netcdf_headers} )
 
