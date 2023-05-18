@@ -9,8 +9,14 @@ find_file( libconfig_c_lib
            NAMES libconfig.so
            HINTS ${LIBCONFIG_C_LIB_DIR} )
 
-find_path( libconfig_headers 
-           NAMES libconfig.h )
-target_include_directories( libconfig INTERFACE ${libconfig_headers} )
+find_path( libconfig_c_headers 
+           NAMES libconfig.h 
+           HINTS ${LIBCONFIG_C_HEADERS_DIR} )
 
-target_link_libraries( libconfig INTERFACE "${libconfig_cxx_lib}" "${libconfig_c_lib}" )
+find_path( libconfig_cxx_headers 
+           NAMES libconfig.h++
+           HINTS ${LIBCONFIG_CXX_HEADERS_DIR} )
+
+target_include_directories( libconfig INTERFACE ${libconfig_c_headers} ${libconfig_cxx_headers} )
+
+target_link_libraries( libconfig INTERFACE ${libconfig_cxx_lib} ${libconfig_c_lib} )

@@ -1,5 +1,7 @@
 # Link previously defined CMake compilation "targets" together as needed
 
+target_link_libraries( efield_interp libconfig )
+
 # link source targets
 target_link_libraries( ionize interpRateCoeff )
 
@@ -43,7 +45,6 @@ target_link_libraries( GITR
                        flags
                        hashGeom
                        geometry_check
-                       cli11
                        config_interface )
 
 if( GITR_USE_CUDA )

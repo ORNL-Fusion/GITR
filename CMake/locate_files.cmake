@@ -30,7 +30,7 @@ set( dependencies "" )
 include( CMake/catch.cmake )
 
 # CLI11
-include( CMake/CLI11.cmake ) # ---> creates target cli11
+# include( CMake/CLI11.cmake ) # ---> creates target cli11
 
 # CUDA
 if( GITR_USE_CUDA )
