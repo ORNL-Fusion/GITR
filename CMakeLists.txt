@@ -3,6 +3,8 @@ cmake_minimum_required( VERSION 3.13 )
 
 project( gitr CXX C )
 
+set( CMAKE_INSTALL_RPATH_USE_LINK_PATH True )
+
 # CMake options configurable with -D<option_string>
 include( CMake/compile_time_options.cmake )
 

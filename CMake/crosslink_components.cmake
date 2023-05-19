@@ -1,19 +1,22 @@
 # Link previously defined CMake compilation "targets" together as needed
 
-target_link_libraries( efield_interp libconfig )
+target_link_libraries( efield_interp libconfig_cxx libconfig_c )
 
 # link source targets
 target_link_libraries( ionize interpRateCoeff )
 
 target_link_libraries( interp2d thrust )
 
-target_link_libraries( flags libconfig thrust )
+target_link_libraries( flags libconfig_cxx libconfig_c thrust )
 
 target_link_libraries( utils 
-                       libconfig
+                       libconfig_cxx
+                       libconfig_c
+                       ${HDF5_LIBRARIES}
                        thrust
                        interp2d
-                       netcdf )
+                       netcdf_cxx
+                       netcdf_c )
 
 target_link_libraries( boris thrust )
 
@@ -36,9 +39,12 @@ target_link_libraries( geometry_check boris )
 target_link_libraries( GITR 
                        ionize
                        interp2d
-                       netcdf 
+                       ${netcdf_cxx_shared_lib}
+                       ${netcdf_c_shared_lib}
+                       ${HDF5_LIBRARIES}
                        spectroscopy
-                       libconfig
+                       libconfig_cxx
+                       libconfig_c
                        utils
                        boris
                        surface_model
