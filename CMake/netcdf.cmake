@@ -2,7 +2,7 @@
 
 # Captain! Find file:
 find_file( netcdf_cxx_shared_lib 
-              NAMES libnetcdf-cxx4.so
+              NAMES libnetcdf-cxx4.so libnetcdf_c++4.so
               HINTS ${NETCDF_CXX_SHARED_LIB_DIR} )
 
 find_file( netcdf_c_shared_lib 
