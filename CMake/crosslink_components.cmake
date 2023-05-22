@@ -12,7 +12,6 @@ target_link_libraries( flags libconfig_cxx libconfig_c thrust )
 target_link_libraries( utils 
                        libconfig_cxx
                        libconfig_c
-                       ${HDF5_LIBRARIES}
                        thrust
                        interp2d
                        netcdf_cxx
@@ -41,7 +40,6 @@ target_link_libraries( GITR
                        interp2d
                        ${netcdf_cxx_shared_lib}
                        ${netcdf_c_shared_lib}
-                       ${HDF5_LIBRARIES}
                        spectroscopy
                        libconfig_cxx
                        libconfig_c

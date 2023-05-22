@@ -27,4 +27,4 @@ target_include_directories( netcdf_cxx INTERFACE ${netcdf_cxx_headers} )
 target_include_directories( netcdf_c INTERFACE ${netcdf_c_headers} )
 
 
-include_directories( ${netcdf_cxx_headers} ${netcdf_c_headers} ${HDF5_INCLUDE_DIRS} )
+include_directories( ${netcdf_cxx_headers} ${netcdf_c_headers} )

@@ -57,11 +57,11 @@ endif()
 # Libconfig
 include( CMake/libconfig.cmake ) # ---> creates target libconfig
 
-find_package( HDF5 COMPONENTS C HL )
+#find_package( HDF5 COMPONENTS C HL )
 
-if( HDF5_FOUND )
-  message( "Captain! HDF5 located!" )
-endif()
+#if( HDF5_FOUND )
+#  message( "Captain! HDF5 located!" )
+#endif()
 
 # NETCDF
 include( CMake/netcdf.cmake ) # ---> creates target netcdf
