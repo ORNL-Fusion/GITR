@@ -821,6 +821,7 @@ void move_boris::operator()(std::size_t indx)
      v[2] = v_h[2] + qpE[2];
   //if(indx == 0){
   //printf("qprime qpexyz %.16e %.16e %.16e %.16e ",q_prime, qpE[0], qpE[1],qpE[2]);
+
   //////printf("vhxyz %.16e %.16e %.16e ",v_h[0], v_h[1], v_h[2]);
   //////printf("vmxyz %.16e %.16e %.16e ",v_minus[0], v_minus[1], v_minus[2]);
   ////printf("xyz %.16e %.16e %.16e ",position0[0], position0[1], position0[2]);

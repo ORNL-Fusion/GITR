@@ -19,140 +19,160 @@ __device__ double atomicAdd1(gitr_precision* address, gitr_precision val)
 #endif
 
 spec_bin::spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
-           gitr_precision* _bins, gitr_precision _dt, int cylsymm_, int spectroscopy_ ) : 
+           gitr_precision* _bins, gitr_precision _dt, int cylsymm_, int spectroscopy_,
+           gitr_precision* _bins_vx, gitr_precision* _bins_vy, gitr_precision* _bins_vz ) : 
         flags(_flags), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
-        dt(_dt), cylsymm( cylsymm_ ), spectroscopy( spectroscopy_ ) {}
+        dt(_dt), cylsymm( cylsymm_ ), spectroscopy( spectroscopy_ ),
+        bins_vx(_bins_vx), bins_vy(_bins_vy), bins_vz(_bins_vz) {}
 
 CUDA_CALLABLE_MEMBER_DEVICE    
 void spec_bin::operator()(std::size_t indx) const {
-    gitr_precision dx = 0.0;
-    gitr_precision dy = 0.0;
-    gitr_precision dz = 0.0;
-    gitr_precision x = particlesPointer->xprevious[indx];
-    gitr_precision y = particlesPointer->yprevious[indx];
-    gitr_precision z = particlesPointer->zprevious[indx];
-    gitr_precision dt_particle = 0.0;
 
-    gitr_precision dim1;
-    if( spectroscopy > 2 )
-    {
+  gitr_precision dx = 0.0;
+  gitr_precision dy = 0.0;
+  gitr_precision dz = 0.0;
+
+  gitr_precision x = particlesPointer->xprevious[indx];
+  gitr_precision y = particlesPointer->yprevious[indx];
+  gitr_precision z = particlesPointer->zprevious[indx];
+
+  gitr_precision dt_particle = 0.0;
+
+  gitr_precision dim1;
+
+  if( spectroscopy > 2 )
+  {
     dim1 = particlesPointer->xprevious[indx];
+  }
+  else
+  {
+    if( cylsymm > 0 )
+    {
+      dim1 = std::sqrt(x*x + y*y);
     }
     else
     {
-     if( cylsymm > 0 )
-     {
-    dim1 = std::sqrt(x*x + y*y);
+      dim1 = x;
     }
-    else
-    {
-    dim1 = x;
-    }
-    }
+  }
 
-    if ((z > gridZ[0]) && (z < gridZ[nZ-1]))
+  if ((z > gridZ[0]) && (z < gridZ[nZ-1]))
+  {
+    if((dim1 > gridX[0]) && (dim1 < gridX[nX-1]))
+    {
+      dx = gridX[1] - gridX[0];
+      dz = gridZ[1] - gridZ[0];
+
+      int indx_X;
+      int indx_Z;
+      int indx_Y;
+      int nnYY=1;
+
+      if( spectroscopy < 3 )
+      {
+        indx_X = std::floor((dim1-gridX[0])/dx);
+        indx_Z = std::floor((z-gridZ[0])/dz);
+        indx_Y = 0;
+        nnYY=1;
+      
+        if (indx_X < 0 || indx_X >= nX) indx_X = 0;
+
+        if (indx_Z < 0 || indx_Z >= nZ) indx_Z = 0;
+
+        int charge = std::floor(particlesPointer->charge[indx]);
+
+        gitr_precision specWeight = 0.0;
+
+        if(particlesPointer->hitWall[indx]== 0.0)
         {
-          if((dim1 > gridX[0]) && (dim1 < gridX[nX-1]))
+          if (flags->USE_ADAPTIVE_DT) 
           {
-              dx = gridX[1] - gridX[0];
-              dz = gridZ[1] - gridZ[0];
-
-              int indx_X;
-              int indx_Z;
-              int indx_Y;
-              int nnYY=1;
-
-              if( spectroscopy < 3 )
-              {
-                indx_X = std::floor((dim1-gridX[0])/dx);
-                indx_Z = std::floor((z-gridZ[0])/dz);
-                indx_Y = 0;
-                nnYY=1;
-              if (indx_X < 0 || indx_X >= nX) indx_X = 0;
-
-              if (indx_Z < 0 || indx_Z >= nZ) indx_Z = 0;
-
-              int charge = std::floor(particlesPointer->charge[indx]);
-
-              gitr_precision specWeight = 0.0;
-
-              if(particlesPointer->hitWall[indx]== 0.0)
-              {
-                if (flags->USE_ADAPTIVE_DT) 
-                {
-	                if(particlesPointer->advance[indx])
-                  {
-                    dt_particle = particlesPointer->dt[indx];
-                    specWeight = particlesPointer->weight[indx]*dt_particle/dt;
-		              }
-                }
-
-                else
-                {
-                  specWeight = particlesPointer->weight[indx];
-                }
+            if(particlesPointer->advance[indx])
+            {
+              dt_particle = particlesPointer->dt[indx];
+              specWeight = particlesPointer->weight[indx]*dt_particle/dt;
+            }
+          }
+          else
+          {
+            specWeight = particlesPointer->weight[indx];
+          }
 #if USE_CUDA >0
 
-	              int index = nBins*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX+ indx_X;
+          int index = nBins*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX+ indx_X;
 
-                atomicAdd1(&bins[index], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
+          atomicAdd1(&bins[index], specWeight);//0*nX*nZ + indx_Z*nZ + indx_X
 
-              if(charge < nBins)
-              {
-                atomicAdd1( &bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY + indx_Y*nX+ indx_X],
+//          if( charge == 0)
+//          {
+
+          gitr_precision theta_position = std::atan2(y,x);
+          gitr_precision theta_velocity = std::atan2(particlesPointer->vy[indx],particlesPointer->vx[indx]);
+          gitr_precision v0 = std::sqrt(particlesPointer->vy[indx]*particlesPointer->vy[indx] + particlesPointer->vx[indx]*particlesPointer->vx[indx]);
+
+          gitr_precision vr = v0*std::cos(theta_position - theta_velocity);
+          gitr_precision vt = -v0*std::sin(theta_position - theta_velocity);
+
+          atomicAdd1(&bins_vx[indx_Z*nX + indx_X], 1.0*specWeight*vr);
+          atomicAdd1(&bins_vy[indx_Z*nX + indx_X], 1.0*specWeight*vt);
+          atomicAdd1(&bins_vz[indx_Z*nX + indx_X], 1.0*specWeight*particlesPointer->vz[indx]);
+//          }
+
+          if(charge < nBins)
+          {
+            atomicAdd1( &bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY + indx_Y*nX+ indx_X],
                             1.0*specWeight);
-              }
+          }
 
 #else
 
-              #pragma omp atomic
-              bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY  +indx_Y*nX +indx_X] += specWeight;
+          #pragma omp atomic
+          bins[nBins*nX*nnYY*nZ + indx_Z*nX*nnYY  +indx_Y*nX +indx_X] += specWeight;
 
-              if(charge < nBins)
-              {
-                #pragma omp atomic
-                bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX + indx_X] += specWeight;
-              }
+          if(charge < nBins)
+          {
+            #pragma omp atomic
+            bins[charge*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX + indx_X] += specWeight;
+          }
 #endif
-            }
-              }
+        }
+      }
+      else if((y > gridY[0]) && (y < gridY[nY-1]))
+      { 
+        indx_X = std::floor((dim1-gridX[0])/dx);
+        indx_Z = std::floor((z-gridZ[0])/dz);
 
-              else if((y > gridY[0]) && (y < gridY[nY-1]))
-              { 
-                indx_X = std::floor((dim1-gridX[0])/dx);
-                indx_Z = std::floor((z-gridZ[0])/dz);
+        dy = gridY[1] - gridY[0];
 
-                dy = gridY[1] - gridY[0];
+        indx_Y = std::floor((y-gridY[0])/dy);
 
-                indx_Y = std::floor((y-gridY[0])/dy);
+        if (indx_Y < 0 || indx_Y >= nY) indx_Y = 0;
 
-                if (indx_Y < 0 || indx_Y >= nY) indx_Y = 0;
+        nnYY = nY;
 
-                nnYY = nY;
+        if (indx_X < 0 || indx_X >= nX) indx_X = 0;
 
-              if (indx_X < 0 || indx_X >= nX) indx_X = 0;
+        if (indx_Z < 0 || indx_Z >= nZ) indx_Z = 0;
 
-              if (indx_Z < 0 || indx_Z >= nZ) indx_Z = 0;
+        int charge = std::floor(particlesPointer->charge[indx]);
 
-              int charge = std::floor(particlesPointer->charge[indx]);
+        gitr_precision specWeight = 0.0;
 
-              gitr_precision specWeight = 0.0;
+        if(particlesPointer->hitWall[indx]== 0.0)
+        {
+          if (flags->USE_ADAPTIVE_DT) 
+          {
+	          if(particlesPointer->advance[indx])
+            {
+              dt_particle = particlesPointer->dt[indx];
+              specWeight = particlesPointer->weight[indx]*dt_particle/dt;
+		        }
+          }
 
-              if(particlesPointer->hitWall[indx]== 0.0)
-              {
-                if (flags->USE_ADAPTIVE_DT) 
-                {
-	                if(particlesPointer->advance[indx])
-                  {
-                    dt_particle = particlesPointer->dt[indx];
-                    specWeight = particlesPointer->weight[indx]*dt_particle/dt;
-		              }
-                }
-
-                else
-                {
-                  specWeight = particlesPointer->weight[indx];
-                }
+          else
+          {
+            specWeight = particlesPointer->weight[indx];
+          }
 #if USE_CUDA >0
 
 	              int index = nBins*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX+ indx_X;

@@ -2737,6 +2737,9 @@ if( efield_interp == 1 )
 }
 
   sim::Array<gitr_precision> net_Bins( net_Bins_size, 0.0 );
+  sim::Array<gitr_precision> net_Bins_vx( net_nX * net_nZ, 0.0 );
+  sim::Array<gitr_precision> net_Bins_vy( net_nX * net_nZ, 0.0 );
+  sim::Array<gitr_precision> net_Bins_vz( net_nX * net_nZ, 0.0 );
 
   sim::Array<gitr_precision> net_BinsTotal( net_BinsTotal_size, 0.0 );
 
@@ -3824,29 +3827,29 @@ if( efield_interp == 1 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-    std::cout << "writing particles out file" << std::endl;
-    netCDF::NcFile ncFile_particles("output/particleSource.nc", netCDF::NcFile::replace);
-    netCDF::NcDim pNP = ncFile_particles.addDim("nP", nP);
-    netCDF::NcVar p_surfNormx = ncFile_particles.addVar("surfNormX", netcdf_precision, pNP);
-    netCDF::NcVar p_surfNormy = ncFile_particles.addVar("surfNormY", netcdf_precision, pNP);
-    netCDF::NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ", netcdf_precision, pNP);
-    netCDF::NcVar p_vx = ncFile_particles.addVar("vx", netcdf_precision, pNP);
-    netCDF::NcVar p_vy = ncFile_particles.addVar("vy", netcdf_precision, pNP);
-    netCDF::NcVar p_vz = ncFile_particles.addVar("vz", netcdf_precision, pNP);
-    netCDF::NcVar p_x = ncFile_particles.addVar("x", netcdf_precision, pNP);
-    netCDF::NcVar p_y = ncFile_particles.addVar("y", netcdf_precision, pNP);
-    netCDF::NcVar p_z = ncFile_particles.addVar("z", netcdf_precision, pNP);
-    p_surfNormx.putVar(&pSurfNormX[0]);
-    p_surfNormy.putVar(&pSurfNormY[0]);
-    p_surfNormz.putVar(&pSurfNormZ[0]);
-    p_vx.putVar(&pvx[0]);
-    p_vy.putVar(&pvy[0]);
-    p_vz.putVar(&pvz[0]);
-    p_x.putVar(&px[0]);
-    p_y.putVar(&py[0]);
-    p_z.putVar(&pz[0]);
-    ncFile_particles.close();
-    std::cout << "finished writing particles out file" << std::endl;
+//    std::cout << "writing particles out file" << std::endl;
+//    netCDF::NcFile ncFile_particles("output/particleSource.nc", netCDF::NcFile::replace);
+//    netCDF::NcDim pNP = ncFile_particles.addDim("nP", nP);
+//    netCDF::NcVar p_surfNormx = ncFile_particles.addVar("surfNormX", netcdf_precision, pNP);
+//    netCDF::NcVar p_surfNormy = ncFile_particles.addVar("surfNormY", netcdf_precision, pNP);
+//    netCDF::NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ", netcdf_precision, pNP);
+//    netCDF::NcVar p_vx = ncFile_particles.addVar("vx", netcdf_precision, pNP);
+//    netCDF::NcVar p_vy = ncFile_particles.addVar("vy", netcdf_precision, pNP);
+//    netCDF::NcVar p_vz = ncFile_particles.addVar("vz", netcdf_precision, pNP);
+//    netCDF::NcVar p_x = ncFile_particles.addVar("x", netcdf_precision, pNP);
+//    netCDF::NcVar p_y = ncFile_particles.addVar("y", netcdf_precision, pNP);
+//    netCDF::NcVar p_z = ncFile_particles.addVar("z", netcdf_precision, pNP);
+//    p_surfNormx.putVar(&pSurfNormX[0]);
+//    p_surfNormy.putVar(&pSurfNormY[0]);
+//    p_surfNormz.putVar(&pSurfNormZ[0]);
+//    p_vx.putVar(&pvx[0]);
+//    p_vy.putVar(&pvy[0]);
+//    p_vz.putVar(&pvz[0]);
+//    p_x.putVar(&px[0]);
+//    p_y.putVar(&py[0]);
+//    p_z.putVar(&pz[0]);
+//    ncFile_particles.close();
+//    std::cout << "finished writing particles out file" << std::endl;
 #if USE_MPI > 0
   }
 #endif
@@ -4050,7 +4053,8 @@ if( efield_interp == 1 )
                       nActiveParticlesOnRank.data(),surface_model,nT);
   spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
-                     &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy );
+                     &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy,
+                     &net_Bins_vx.front(),&net_Bins_vy.front(),&net_Bins_vz.front() );
 
   gitr_precision *uni;
 
@@ -4339,9 +4343,50 @@ if( efield_interp == 1 )
     //}
     //// transfer data back to host
     // thrust::copy(d_vec.begin(), d_vec.end(), h_vec.begin());
+#if USE_CUDA
+  if (world_rank == 0) {
+    size_t free_byte;
+    size_t total_byte;
+    cudaError_t cuda_status = cudaMemGetInfo(&free_byte, &total_byte);
+
+    if (cudaSuccess != cuda_status) {
+
+      printf("Error: cudaMemGetInfo fails, %s \n",
+             cudaGetErrorString(cuda_status));
+      exit(1);
+    }
+
+    double free_db = (double)free_byte;
+    double total_db = (double)total_byte;
+    double used_db = total_db - free_db;
+
+    printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
+           used_db / 1024.0 / 1024.0, free_db / 1024.0 / 1024.0,
+           total_db / 1024.0 / 1024.0);
+    int nDevices;
+    int nThreads;
+    cudaGetDeviceCount(&nDevices);
+    std::cout << "number of devices gotten " << nDevices << std::endl;
+    for (int i = 0; i < nDevices; i++) {
+      cudaDeviceProp prop;
+      cudaGetDeviceProperties(&prop, i);
+      printf("Device Number: %d\n", i);
+      printf("  Device name: %s\n", prop.name);
+      printf("  Memory Clock Rate (KHz): %d\n", prop.memoryClockRate);
+      printf("  Memory Bus Width (bits): %d\n", prop.memoryBusWidth);
+      printf("  Peak Memory Bandwidth (GB/s): %f\n\n",
+             2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6);
+      printf("  Total number of threads: %d\n",
+             prop.maxThreadsPerMultiProcessor);
+      nThreads = prop.maxThreadsPerMultiProcessor;
+    }
+  }
+std::cout << "here 1" << std::endl;
+#endif
 #ifdef __CUDACC__
     cudaDeviceSynchronize();
 #endif
+std::cout << "here 2" << std::endl;
     /* this is a 3 level 4-loop to calculate density n = (x, y, q). To show the spacial
        density and the result. Loop over timesteps, each operator loops over a section of
        the particles... find 0 */
@@ -5145,8 +5190,10 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 
     netCDF::NcDim nc_nZ = ncFile.addDim("nZ", net_nZ);
     vector<netCDF::NcDim> dims;
+    vector<netCDF::NcDim> dimsrz;
     dims.push_back(nc_nBins);
     dims.push_back(nc_nZ);
+    dimsrz.push_back(nc_nZ);
 
     if( spectroscopy > 2 )
     {
@@ -5154,8 +5201,12 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     }
 
     dims.push_back(nc_nR);
+    dimsrz.push_back(nc_nR);
 
     netCDF::NcVar nc_n = ncFile.addVar("n", netcdf_precision, dims);
+    netCDF::NcVar nc_nvx = ncFile.addVar("nvx", netcdf_precision, dimsrz);
+    netCDF::NcVar nc_nvy = ncFile.addVar("nvy", netcdf_precision, dimsrz);
+    netCDF::NcVar nc_nvz = ncFile.addVar("nvz", netcdf_precision, dimsrz);
     netCDF::NcVar nc_gridR = ncFile.addVar("gridR", netcdf_precision, nc_nR);
     netCDF::NcVar nc_gridZ = ncFile.addVar("gridZ", netcdf_precision, nc_nZ);
     nc_gridR.putVar(&gridX_bins[0]);
@@ -5170,6 +5221,9 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_n.putVar(&net_BinsTotal[0]);
 #else
     nc_n.putVar(&net_Bins[0]);
+    nc_nvx.putVar(&net_Bins_vx[0]);
+    nc_nvy.putVar(&net_Bins_vy[0]);
+    nc_nvz.putVar(&net_Bins_vz[0]);
 #endif
     ncFile.close();
     }

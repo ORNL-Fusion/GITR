@@ -50,7 +50,22 @@ struct sortParticles {
     CUDA_CALLABLE_MEMBER_HOST 
     void operator()(std::size_t indx) const 
     { 
-    if((tt[0]%nDtPerApply==0) & (tt[0]>0))
+      int nDtPerApply2 = 10000;
+
+      if(tt[0] < 100) 
+      {
+        nDtPerApply2 = 10;
+       }
+      else if ( tt[0] < 1000)
+      {
+        nDtPerApply2 = 100;
+      }
+      else if (tt[0] < 10000)
+      {
+        nDtPerApply2 = 1000;
+      }
+
+    if((tt[0]%nDtPerApply2==0) & (tt[0]>0))
     {
        int nPonRank = nActiveParticles[0];
        int end = nPonRank-1;
