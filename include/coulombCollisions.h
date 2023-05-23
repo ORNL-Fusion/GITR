@@ -361,6 +361,48 @@ struct coulombCollisions {
 CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) { 
 
+  //bool use_ion_neutral = false;
+  //if (use_ion_neutral)
+  //{
+  //  if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
+  //  {
+  //  gitr_precision vx = particlesPointer->vx[indx];
+  //  gitr_precision vy = particlesPointer->vy[indx];
+  //  gitr_precision vz = particlesPointer->vz[indx];
+  //  gitr_precision charge = particlesPointer->charge[indx];
+  //  gitr_precision amu = particlesPointer->amu[indx];
+  //  gitr_precision mu = amu*background_amu/(amu+background_amu);
+  //    double sigma = 1.5e-11;
+  //    double neutral_density = 1.0e19;
+  //    double v_norm = std::sqrt(vx*vx + vy*vy + vz*vz);
+  //    double nu = neutral_density*sigma*v_norm;
+  //    double P = 1.0 - std::exp(-dt*nu);
+  //    double r1 = curand_uniform(&state[indx]);
+  //    if ( r1 < P )
+  //      {
+  //        double psi = 2*M_PI*curand_uniform(&state[indx]);
+  //        double chi = std::acos(1 - 2*curand_uniform(&state[indx]));
+  //        double ux = vx;
+  //        double uy = vy;
+  //        double uz = vz;
+  //        double u = std::sqrt(ux*ux + uy*uy + uz*uz);
+  //        double u_perp = std::sqrt(ux*ux + uy*uy);
+ 
+  //        if (u_perp == 0.0) u_perp = 1.0;
+  //        if (ux == 0.0) ux = 1.0;
+  //        if (uy == 0.0) uy = 1.0;
+  //        if (uz == 0.0) uz = 1.0;
+
+  //        double d_ux = ux/u_perp*uz*std::sin(chi)*std::cos(psi) - uy/u_perp*u*std::sin    (chi)*std::sin(psi) - ux*(1-std::cos(chi));
+  //        double d_uy = uy/u_perp*uz*std::sin(chi)*std::cos(psi) + ux/u_perp*u*std::sin    (chi)*std::sin(psi) - uy*(1.0-std::cos(chi));
+  //        double d_uz = -u_perp*std::sin(chi)*std::cos(psi) - uz*(1.0-std::cos(chi));
+ 
+  //           particlesPointer->vx[indx] = particlesPointer->vx[indx] + mu/amu*d_ux;
+  //           particlesPointer->vy[indx] = particlesPointer->vy[indx] + mu/amu*d_uy;
+  //           particlesPointer->vz[indx] = particlesPointer->vz[indx] + mu/amu*d_uz;
+  //      }
+  //  }
+  //}
   // Hard-coded option to use binary collision operator or not
   bool use_bca = false;
 
@@ -571,7 +613,8 @@ void operator()(std::size_t indx) {
     gitr_precision density = interp2dCombined( x, y, z, nR_Dens, nZ_Dens, DensGridr, 
                                                DensGridz, ni, cylsymm );
     
-//    printf("speed %f temp %f density %4.3e nu_slowing_down %4.3e \n",velocityRelativeNorm,ti_eV,density, nu_friction);
+    //printf("speed %f temp %f density %4.3e charge %2.2f nu_slowing_down %4.3e \n",velocityRelativeNorm,ti_eV,density,particlesPointer->charge[indx], nu_friction);
+    //printf("nu_deflection %4.3e nu_parallel %4.3e nu_energy %4.3e \n",nu_deflection, nu_parallel, nu_energy);
     if(nu_parallel <=0.0) nu_parallel = 0.0;
     gitr_precision coeff_par = n1 * std::sqrt(2.0*nu_parallel * dt);
     gitr_precision cosXsi = cos(2.0 * pi * xsi) - 0.0028;

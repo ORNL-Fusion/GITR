@@ -48,13 +48,17 @@ def generate():
     
     # Initialize particle velocities to be thermal distribution at TD0
     nPoints = 200;
-    maxE = 20;
+    maxE = 50;
     Eb = 8.79; # Surface binding energy
-    a = 5; # Free parameter
+    a = 4; #5; # Free parameter
     E = np.linspace(0,maxE,nPoints);
     dE = E[1];
     thompson2 = a*(a-1)*E*(Eb**(a-1))/(E+Eb)**(a+1);
-
+    plt.close()
+    plt.plot(E,thompson2)
+    
+    plt.show()
+    plt.savefig('thompson.png')
     ecdf = np.cumsum(thompson2);
     ecdf = ecdf/ecdf[-1];
 
@@ -136,7 +140,7 @@ def generate():
     plt.show()
     plt.savefig('dens.png')
 
-    v_para = 2e4*((z-L)**9)/2.5**9
+    v_para = 0.1*2e4*((z-L)**9)/2.5**9
     v2D = np.matlib.repmat(v_para,nR,1);
     vr2D = np.cos(angle)*v2D;
     vz2D = np.sin(angle)*v2D;
