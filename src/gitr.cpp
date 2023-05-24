@@ -2737,9 +2737,10 @@ if( efield_interp == 1 )
 }
 
   sim::Array<gitr_precision> net_Bins( net_Bins_size, 0.0 );
-  sim::Array<gitr_precision> net_Bins_vx( net_nX * net_nZ, 0.0 );
-  sim::Array<gitr_precision> net_Bins_vy( net_nX * net_nZ, 0.0 );
-  sim::Array<gitr_precision> net_Bins_vz( net_nX * net_nZ, 0.0 );
+  sim::Array<gitr_precision> net_Bins_vx( net_Bins_size/(nBins + 1), 0.0 );
+  sim::Array<gitr_precision> net_Bins_vy( net_Bins_size/(nBins + 1), 0.0 );
+  sim::Array<gitr_precision> net_Bins_vz( net_Bins_size/(nBins + 1), 0.0 );
+  sim::Array<gitr_precision> net_Bins_E( net_Bins_size/(nBins + 1), 0.0 );
 
   sim::Array<gitr_precision> net_BinsTotal( net_BinsTotal_size, 0.0 );
 
@@ -4054,7 +4055,7 @@ if( efield_interp == 1 )
   spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy,
-                     &net_Bins_vx.front(),&net_Bins_vy.front(),&net_Bins_vz.front() );
+                     &net_Bins_vx.front(),&net_Bins_vy.front(),&net_Bins_vz.front(), &net_Bins_E.front() );
 
   gitr_precision *uni;
 
@@ -4095,7 +4096,7 @@ if( efield_interp == 1 )
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
       &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(),gitr_flags, flowv_interp,
-      cylsymm, field_aligned_values );
+      cylsymm, field_aligned_values, coulomb_collisions );
 
   thermalForce thermalForce0(gitr_flags,
       particleArray, dt, background_amu, nR_gradT, nZ_gradT, gradTGridr.data(),
@@ -5198,6 +5199,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     if( spectroscopy > 2 )
     {
     dims.push_back(nc_nY);
+    dimsrz.push_back(nc_nY);
     }
 
     dims.push_back(nc_nR);
@@ -5207,6 +5209,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_nvx = ncFile.addVar("nvx", netcdf_precision, dimsrz);
     netCDF::NcVar nc_nvy = ncFile.addVar("nvy", netcdf_precision, dimsrz);
     netCDF::NcVar nc_nvz = ncFile.addVar("nvz", netcdf_precision, dimsrz);
+    netCDF::NcVar nc_nE = ncFile.addVar("nE", netcdf_precision, dimsrz);
     netCDF::NcVar nc_gridR = ncFile.addVar("gridR", netcdf_precision, nc_nR);
     netCDF::NcVar nc_gridZ = ncFile.addVar("gridZ", netcdf_precision, nc_nZ);
     nc_gridR.putVar(&gridX_bins[0]);
@@ -5224,6 +5227,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_nvx.putVar(&net_Bins_vx[0]);
     nc_nvy.putVar(&net_Bins_vy[0]);
     nc_nvz.putVar(&net_Bins_vz[0]);
+    nc_nE.putVar(&net_Bins_E[0]);
 #endif
     ncFile.close();
     }

@@ -11,6 +11,8 @@ def process_out():
     nR = ncFile.dimensions['nR'].size
     nZ = ncFile.dimensions['nZ'].size
     n = np.array(ncFile.variables['n'])
+    nvz = np.array(ncFile.variables['nvz'])
+    nE = np.array(ncFile.variables['nE'])
     z = np.array(ncFile.variables['gridZ'])
     nP = np.array(ncFile.variables['nP'])
     dt = np.array(ncFile.variables['dt'])
@@ -23,14 +25,11 @@ def process_out():
     plt.figure(1, figsize=(10, 6), dpi=2000)
     flux_strength = 2*np.tanh(1);
     dens_1d = flux_strength*dt/nP/dz*np.sum(n[nBins-1,:,:], axis=1)
+    flux_1d = flux_strength*dt/nP/dz*np.sum(nvz, axis=1)
+    temp_1d = flux_strength*dt/nP/dz*np.sum(nE, axis=1)
     
-    plt.plot(z+0.5*dz,dens_1d)
-    plt.title("Case A C Impurity Density")
-    plt.xlabel("z [m]")
-    plt.ylabel("n [m-3]")
-    plt.show()
-    plt.savefig('density.png')
-    
-    np.savetxt("density.txt", np.c_[z+0.5*dz, dens_1d])
+    np.savetxt("dens_flux_temp.txt", np.c_[z+0.5*dz, dens_1d, flux_1d, temp_1d])
+
+    return z, dens_1d, flux_1d, temp_1d
 if __name__ == "__main__":
     process_out()
