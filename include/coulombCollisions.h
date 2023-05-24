@@ -299,6 +299,7 @@ struct coulombCollisions {
     int cylsymm;
 
     int field_aligned_values;
+    int coulomb_collisions;
 
     coulombCollisions(Particles *_particlesPointer,gitr_precision _dt, 
 #if __CUDACC__
@@ -317,7 +318,7 @@ struct coulombCollisions {
                         gitr_precision * _BfieldGridR ,gitr_precision * _BfieldGridZ ,
                         gitr_precision * _BfieldR ,gitr_precision * _BfieldZ ,
                  gitr_precision * _BfieldT, Flags* _gitr_flags, int flowv_interp_,
-                 int cylsymm_, int field_aligned_values_ )
+                 int cylsymm_, int field_aligned_values_ , int _coulomb_collisions)
       : particlesPointer(_particlesPointer),
         dt(_dt),
         nR_flowV(_nR_flowV),
@@ -354,7 +355,8 @@ struct coulombCollisions {
         state(_state),
         flowv_interp( flowv_interp_ ),
         cylsymm( cylsymm_ ),
-        field_aligned_values( field_aligned_values_ )
+        field_aligned_values( field_aligned_values_ ),
+        coulomb_collisions(_coulomb_collisions)
 
         { }
 
@@ -404,12 +406,16 @@ void operator()(std::size_t indx) {
   //  }
   //}
   // Hard-coded option to use binary collision operator or not
-  bool use_bca = false;
-
-  if (use_bca)
+  //bool use_bca = false;
+  if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
   {
-    if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
+    if(gitr_flags->USE_ADAPTIVE_DT)
     {
+      dt = particlesPointer->dt[indx];	   
+    }
+
+  if ( coulomb_collisions == 2)
+  {
     // Physical constants (should be replaced with system/better precision values)
     double ME = 9.10938356e-31;
     double MI = 1.6737236e-27;
@@ -434,14 +440,34 @@ void operator()(std::size_t indx) {
     
     // Interpolate ion density
     gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni,cylsymm);
+  
+    if( gitr_flags->USE_SHEATH_DENSITY )
+    {
+     density = density*particlesPointer->f_psi[indx];
+    }
 
     // Calculate standard deviation for Gaussian - representing Maxwellian velocity distribution
     gitr_precision standard_deviation = 1.0/std::sqrt(2*background_amu*1.6737236e-27/(2*ti_eV*1.60217662e-19));
 
+#ifdef __CUDACC__
+    gitr_precision r1 = curand_normal(&state[indx]);
+    gitr_precision r2 = curand_normal(&state[indx]);
+    gitr_precision r3 = curand_normal(&state[indx]);
+    gitr_precision r4 = curand_normal(&state[indx]);
+    gitr_precision r5 = curand_uniform(&state[indx]);
+#else
+    std::normal_distribution<gitr_precision> distribution(0.0,1.0);
+    gitr_precision r1 = distribution(state[indx]);
+    gitr_precision r2 = distribution(state[indx]);
+    gitr_precision r3 = distribution(state[indx]);
+    gitr_precision r4 = distribution(state[indx]);
+    std::uniform_real_distribution<gitr_precision> dist(0.0, 1.0);
+    gitr_precision r5 = dist(state[indx]);
+#endif
     // Draw random normal background ion velocities to use in collision
-    double ux_gas = standard_deviation*curand_normal(&state[indx]);
-    double uy_gas = standard_deviation*curand_normal(&state[indx]);
-    double uz_gas = standard_deviation*curand_normal(&state[indx]);
+    double ux_gas = standard_deviation*r1;
+    double uy_gas = standard_deviation*r2;
+    double uz_gas = standard_deviation*r3;
 
     // Interpolate flow velocity - for this problem, it is set to zero
     interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
@@ -471,13 +497,12 @@ void operator()(std::size_t indx) {
 
     // Calculate the scattering angles
     double chi_squared = dt*nu_0;
-    gitr_precision r1 = curand_uniform(&state[indx]);
-    gitr_precision r2 = curand_uniform(&state[indx]);
-    double chi = std::sqrt(-2.0*chi_squared*std::log(r1));
+    //gitr_precision r1 = curand_uniform(&state[indx]);
+    //double chi = std::sqrt(-2.0*chi_squared*std::log(r1));
     //sampling normal dist. approach
-    double delta = std::sqrt(chi_squared)*curand_normal(&state[indx]);
-    chi = 2.0*std::atan(delta);
-    double psi = 2.0*PI*r2;
+    double delta = std::sqrt(chi_squared)*r4;
+    double chi = 2.0*std::atan(delta);
+    double psi = 2.0*PI*r5;
 
     double d_ux = 0.0;
     double d_uy = 0.0;
@@ -499,21 +524,29 @@ void operator()(std::size_t indx) {
              d_uy = uy/u_perp*uz*std::sin(chi)*std::cos(psi) + ux/u_perp*u*std::sin(chi)*std::sin(psi) - uy*(1.0-std::cos(chi));
              d_uz = -u_perp*std::sin(chi)*std::cos(psi) - uz*(1.0-std::cos(chi));
     }
+    
+    if(gitr_flags->USE_ADAPTIVE_DT)
+      {
+        if (particlesPointer->advance[indx])
+        {
 
              particlesPointer->vx[indx] = particlesPointer->vx[indx] + mu/amu*d_ux;
              particlesPointer->vy[indx] = particlesPointer->vy[indx] + mu/amu*d_uy;
              particlesPointer->vz[indx] = particlesPointer->vz[indx] + mu/amu*d_uz;
              particlesPointer->test[indx] = particlesPointer->vz[indx] - vz;
-    }
-  }
-  else
-  {
-  if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
-  {
-    if(gitr_flags->USE_ADAPTIVE_DT)
+        }
+      }
+    else
     {
-      dt = particlesPointer->dt[indx];	   
+             particlesPointer->vx[indx] = particlesPointer->vx[indx] + mu/amu*d_ux;
+             particlesPointer->vy[indx] = particlesPointer->vy[indx] + mu/amu*d_uy;
+             particlesPointer->vz[indx] = particlesPointer->vz[indx] + mu/amu*d_uz;
+             particlesPointer->test[indx] = particlesPointer->vz[indx] - vz;
     }
+    
+  }
+  else if (coulomb_collisions == 1)
+  {
      
     gitr_precision pi = 3.14159265;   
     //gitr_precision k_boltz = 1.38e-23*11604/1.66e-27;
@@ -602,7 +635,7 @@ void operator()(std::size_t indx) {
                              BfieldR,
                              BfieldZ,
                              BfieldT, T_background, flowv_interp, cylsymm,
-                             field_aligned_values,gitr_flags->USE_ADAPTIVE_DT,particlesPointer->f_psi[indx]  );
+                             field_aligned_values,gitr_flags->USE_SHEATH_DENSITY,particlesPointer->f_psi[indx]  );
 
     getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );
@@ -650,6 +683,157 @@ void operator()(std::size_t indx) {
       this->dv[0] = velocityCollisions[0];
       this->dv[1] = velocityCollisions[1];
       this->dv[2] = velocityCollisions[2];
+    }
+    else if (coulomb_collisions == 3)
+    {
+    // Physical constants (should be replaced with system/better precision values)
+    double ME = 9.10938356e-31;
+    double MI = 1.6737236e-27;
+    double Q = 1.60217662e-19;
+    double EPS0 = 8.854187e-12;
+    double PI = 3.141592653589793;
+
+    // Get particle attributes
+    gitr_precision x = particlesPointer->xprevious[indx];
+    gitr_precision y = particlesPointer->yprevious[indx];
+    gitr_precision z = particlesPointer->zprevious[indx];
+    gitr_precision vx = particlesPointer->vx[indx];
+    gitr_precision vy = particlesPointer->vy[indx];
+    gitr_precision vz = particlesPointer->vz[indx];
+    gitr_precision charge = particlesPointer->charge[indx];
+    gitr_precision amu = particlesPointer->amu[indx];
+    gitr_precision mu = amu*background_amu/(amu+background_amu);
+    gitr_precision v_flow[3]= {0.0};
+    gitr_precision b[3]= {0.0};
+    
+    gitr_precision nu_s = 0.0;
+    gitr_precision nu_d = 0.0;
+    gitr_precision nu_par = 0.0;
+    gitr_precision nu_E = 0.0;
+    
+    gitr_precision T_background = 0.0;
+   // // Interpolate ion temperature
+   // gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti,cylsymm);
+   // 
+   // // Interpolate ion density
+   // gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni,cylsymm);
+  
+   // if( use_sheath_density )
+   // {
+   //  density = density*particlesPointer->f_psi[indx];
+   // }
+    
+    interp2dVector(v_flow,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
+                        nR_flowV,nZ_flowV,
+                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, cylsymm );
+    
+    gitr_precision wx = vx - v_flow[0];
+    gitr_precision wy = vy - v_flow[1];
+    gitr_precision wz = vz - v_flow[2];
+
+    gitr_precision vnorm = std::sqrt(v_flow[0]*v_flow[0] + v_flow[1]*v_flow[1] + v_flow[2]*v_flow[2]);
+
+    if (vnorm < 1.0e-12)
+    {
+      b[0] = 0;
+      b[1] = 1;
+      b[2] = 0;
+    }
+    else
+    {
+      b[0] = v_flow[0]/vnorm;
+      b[1] = v_flow[1]/vnorm;
+      b[2] = v_flow[2]/vnorm;
+    }
+
+    gitr_precision w_norm = std::sqrt(wx*wx + wy*wy + wz*wz);
+    gitr_precision w1x = wx/w_norm;
+    gitr_precision w1y = wy/w_norm;
+    gitr_precision w1z = wz/w_norm;
+
+    if (w1x == b[0] && w1y == b[1] && w1z == b[2])
+    {
+        wz = wz + 1e-2;
+    }
+
+    gitr_precision w_norm_squared = wx*wx + wy*wy + wz*wz;
+    w_norm = std::sqrt(w_norm_squared);
+
+    w1x = wx/w_norm;
+    w1y = wy/w_norm;
+    w1z = wz/w_norm;
+
+    gitr_precision w1_dot_b = b[0]*w1x + b[1]*w1y +b[2]*w1z;
+    
+    gitr_precision sqrt_term = sqrt(1-w1_dot_b*w1_dot_b);
+
+    gitr_precision w2x = 1.0/sqrt_term*(w1_dot_b*w1x - b[0]);
+    gitr_precision w2y = 1.0/sqrt_term*(w1_dot_b*w1y - b[1]);
+    gitr_precision w2z = 1.0/sqrt_term*(w1_dot_b*w1z - b[2]);
+
+    gitr_precision w3x = 1.0/sqrt_term*(b[2]*w1y - b[1]*w1z);
+    gitr_precision w3y = 1.0/sqrt_term*(b[0]*w1z - b[2]*w1x);
+    gitr_precision w3z = 1.0/sqrt_term*(b[1]*w1x - b[0]*w1y);
+
+//[nu_s nu_d nu_par nu_E] = getFrequencies(w_norm,T,m,mD,nD,z,zD);
+    getSlowDownFrequencies(nu_s, nu_d, nu_par, nu_E,
+                             x, y, z,
+                             vx, vy, vz,
+                             particlesPointer->charge[indx], particlesPointer->amu[indx],
+                             nR_flowV, nZ_flowV, flowVGridr,
+                             flowVGridz, flowVr,
+                             flowVz, flowVt,
+                             nR_Dens, nZ_Dens, DensGridr,
+                             DensGridz, ni, nR_Temp, nZ_Temp,
+                             TempGridr, TempGridz, ti, te, background_Z, background_amu,
+                             nR_Bfield,
+                             nZ_Bfield,
+                             BfieldGridR,
+                             BfieldGridZ,
+                             BfieldR,
+                             BfieldZ,
+                             BfieldT, T_background, flowv_interp, cylsymm,
+                             field_aligned_values,gitr_flags->USE_ADAPTIVE_DT,particlesPointer->f_psi[indx]  );
+
+
+//gamma1 = normrnd(0,1,nP,1);
+//gamma2 = normrnd(0,1,nP,1);
+//gamma3 = normrnd(0,1,nP,1);
+#ifdef __CUDACC__
+    gitr_precision gamma1 = curand_normal(&state[indx]);
+    gitr_precision gamma2 = curand_normal(&state[indx]);
+    gitr_precision gamma3 = curand_normal(&state[indx]);
+#else
+    std::normal_distribution<gitr_precision> distribution(0.0,1.0);
+    gitr_precision gamma1 = distribution(state[indx]);
+    gitr_precision gamma2 = distribution(state[indx]);
+    gitr_precision gamma3 = distribution(state[indx]);
+#endif
+    gitr_precision term1 = dt*(-nu_s*w_norm);
+    gitr_precision term2 = std::sqrt(dt*w_norm_squared*nu_par)*gamma1;
+    gitr_precision term3 = std::sqrt(0.5*dt*w_norm_squared*nu_d)*gamma2;
+    gitr_precision term4 = std::sqrt(0.5*dt*w_norm_squared*nu_d)*gamma3;
+
+gitr_precision dvx = w1x*term1 + w1x*term2 + w2x*term3 + w3x*term4;
+gitr_precision dvy = w1y*term1 + w1y*term2 + w2y*term3 + w3y*term4;
+gitr_precision dvz = w1z*term1 + w1z*term2 + w2z*term3 + w3z*term4;
+
+    if(gitr_flags->USE_ADAPTIVE_DT)
+      {
+        if (particlesPointer->advance[indx])
+        {
+        particlesPointer->vx[indx] = vx + dvx; 
+        particlesPointer->vy[indx] = vy + dvy; 
+        particlesPointer->vz[indx] = vz + dvz;
+        }
+      }
+      else
+      {
+        particlesPointer->vx[indx] = vx + dvx; 
+        particlesPointer->vy[indx] = vy + dvy; 
+        particlesPointer->vz[indx] = vz + dvz;
+      }
+
     }
   }
   }
