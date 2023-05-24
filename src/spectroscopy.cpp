@@ -51,10 +51,12 @@ void spec_bin::operator()(std::size_t indx) const {
 
     gitr_precision dim1;
         
-    int indx_X;
-    int indx_Z;
-    int indx_Y;
+    int indx_X=0;
+    int indx_Z=0;
+    int indx_Y=0;
     int nnYY=1;
+
+    bool add=false;
 
     // Determine particle dt and relative contribution
     if (flags->USE_ADAPTIVE_DT)
@@ -99,17 +101,21 @@ void spec_bin::operator()(std::size_t indx) const {
         indx_Z = std::floor((z-gridZ[0])/dz);
         indx_Y = 0;
         nnYY=1;
+
+        if(spectroscopy < 3) add = true;
         
         if (indx_X < 0 || indx_X >= nX) indx_X = 0;
 
         if (indx_Z < 0 || indx_Z >= nZ) indx_Z = 0;
 
-        if( spectroscopy > 3 )
+        if( spectroscopy > 2 )
         {
         
           if((y > gridY[0]) && (y < gridY[nY-1]))
           {
             dy = gridY[1] - gridY[0];
+            
+            add = true;
 
             indx_Y = std::floor((y-gridY[0])/dy);
 
@@ -135,6 +141,8 @@ void spec_bin::operator()(std::size_t indx) const {
           vt = -v0*std::sin(theta_position - theta_velocity);
     }
 
+    if (add)
+    {
     // Total density index
     int index = nBins*nX*nnYY*nZ + indx_Z*nX*nnYY +indx_Y*nX+ indx_X;
     int index_charge = charge*nX*nnYY*nZ + indx_Z*nX*nnYY + indx_Y*nX+ indx_X;
@@ -176,5 +184,6 @@ void spec_bin::operator()(std::size_t indx) const {
           #pragma omp atomic
           bins_E[index_flux] += specWeight*E0;
 #endif
+    }
   }
 }
