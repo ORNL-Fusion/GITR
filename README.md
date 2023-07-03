@@ -31,7 +31,7 @@ fields and profiles of the background.
 . Top Level: Top level build system file **CMakeLists.txt**, LICENSE file, README.md (this file)
 ├── CMake           ---> build system files
 ├── images          ---> repo visuals for websites and presentations
-├── examples        ---> contains a post-processing example script
+├── examples        ---> example problems
 ├── include         ---> C++ header files
 ├── src             ---> C++ source files
 ├── test_include    ---> C++ unit test header files
@@ -40,7 +40,30 @@ fields and profiles of the background.
 
 ## Environment
 
-The GITR software relies on several other software installations to operate. These *dependencies* fall under *system dependencies* and *3rd-party dependencies*. GITR's advanced build system downloads and builds all 3rd-party dependencies automatically, but this is not the case with system dependencies. These must all be installed by the user prior to attempting to build GITR. Numerous approaches are available to the user for installing/updating/managing system dependencies. An approach using the **spack** utility is briefly described below, loosely following https://spack-tutorial.readthedocs.io/en/latest/.
+The GITR software relies on several other software installations to operate. These *dependencies* can be satisfied two ways:
+
+1. Build GITR within a Docker container image that contains all dependencies.
+2. Point the buildsystem to dependency files installed on the host and build GITR directly on the host.
+
+### Container Environment
+
+1. Ensure Docker is up and running, version 20 or earlier
+2. For CPU-only, small alpine based container, build the alpine image: bash build_alpine.sh.
+3. For GPU capability, build the nvidia image: bash build_nvidia.sh
+4. Once this completes, navigate to the directory above GITR and run: bash run_nvidia.sh.
+5. You should then be dropped into the container environment at the filepath "/".
+6. Navigate to "/host" within the container. You should be able to see your GITR directory.
+7. Follow the normal build process.
+
+### Host environment, no container:
+
+1. Open the file build.sh in the GITR directory.
+2. Set all build variables to their respective locations on your machine.
+3. run bash build.sh with two command line arguments: bash build.sh gitr_source_directory_path gitr_build_directory_path
+
+## Dependency details:
+
+The GITR software relies on several other software installations to operate. These *dependencies* fall under *system dependencies* and *3rd-party dependencies*. All must be installed by the user prior to attempting to build GITR. Numerous approaches are available to the user for installing/updating/managing system dependencies. An approach using the **spack** utility is briefly described below, loosely following https://spack-tutorial.readthedocs.io/en/latest/.
 
 ### Ubuntu 20.04
 
@@ -158,7 +181,7 @@ Configure build system with CMake. Physics operators can be activated via **-D**
 
 The list of options can be viewed in:
 
-> CMake/user_options.cmake
+> CMake/compile_time_options.cmake
 
 ### Build
 
