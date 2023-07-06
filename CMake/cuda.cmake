@@ -20,9 +20,7 @@ if( NOT CUDAToolkit_FOUND )
   with CMake" )
 
 endif()
-#set( CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -fPIE" )
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-
+add_compile_options("-fPIE")
 
 if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
 

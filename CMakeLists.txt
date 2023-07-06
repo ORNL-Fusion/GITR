@@ -1,6 +1,5 @@
 # required first two lines of CMake file
 cmake_minimum_required( VERSION 3.13 )
-
 project( gitr CXX C )
 
 set( CMAKE_INSTALL_RPATH_USE_LINK_PATH True )
