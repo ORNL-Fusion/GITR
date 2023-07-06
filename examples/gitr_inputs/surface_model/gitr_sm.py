@@ -22,9 +22,11 @@ def main():
 ##################
 
     #scripts/materials.py has a number of potential ions and targets
-    ion = helium
+    ion = tungsten
     target = tungsten
 
+    # Make the ion Z slightly different than the target so that yield doesn't count reflections as well
+    ion['Z'] = ion['Z'] + 1.0e-5
     #For smooth distributions and good statistics, you should use at least 10k ions
     number_ions = 10000
 
@@ -195,11 +197,11 @@ def main():
     spyld = rootgrp.createVariable("spyld","f8",("nE","nA"))
     rfyld = rootgrp.createVariable("rfyld","f8",("nE","nA"))
     edist = rootgrp.createVariable("energyDist","f8",("nE","nA","nEdistBins"))
-    phidist = rootgrp.createVariable("cosXDist","f8",("nE","nA","nPhidistBins"))
-    thetadist = rootgrp.createVariable("cosYDist","f8",("nE","nA","nThetadistBins"))
+    phidist = rootgrp.createVariable("phiDist","f8",("nE","nA","nPhidistBins"))
+    thetadist = rootgrp.createVariable("thetaDist","f8",("nE","nA","nThetadistBins"))
     edist_ref = rootgrp.createVariable("energyDistRef","f8",("nE","nA","nEdistBinsRef"))
-    phidist_ref = rootgrp.createVariable("cosXDistRef","f8",("nE","nA","nPhidistBinsRef"))
-    thetadist_ref = rootgrp.createVariable("cosYDistRef","f8",("nE","nA","nThetadistBinsRef"))
+    phidist_ref = rootgrp.createVariable("phiDistRef","f8",("nE","nA","nPhidistBinsRef"))
+    thetadist_ref = rootgrp.createVariable("thetaDistRef","f8",("nE","nA","nThetadistBinsRef"))
     
     ee[:] = E_vector
     aa[:] = A_vector
