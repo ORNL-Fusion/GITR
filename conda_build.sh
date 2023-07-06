@@ -9,4 +9,4 @@ cmake -S ${PWD} -B $1  \
 -D LIBCONFIG_C_LIB_DIR=${CONDA_PREFIX}/lib \
 -D LIBCONFIG_CXX_LIB_DIR=${CONDA_PREFIX}/lib \
 -DCMAKE_VERBOSE_MAKEFILE=ON
-cmake --build $1ls
+cmake --build $1

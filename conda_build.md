@@ -4,7 +4,7 @@
 The environment is created using the `git_env.yaml` file:
 ```
 cd <root of repository>
-mamba env create -f git_env.yaml
+mamba env create -f gitr_env.yaml
 conda activate gitr_env
 ```
 
