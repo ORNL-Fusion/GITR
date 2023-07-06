@@ -5,11 +5,12 @@ channels:
   - conda-forge
 
 dependencies:
-  - gcc=11
-  - gxx=11
+  - gcc=12
+  - gxx=12
   - hdf5
   - netcdf-cxx4=4.3.1
   - libconfig
-  - cuda-toolkit
+  - cuda-toolkit=12
   - cmake
   - ninja
+  - sysroot_linux-64=2.17
