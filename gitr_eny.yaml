@@ -1,16 +1,15 @@
 name: gitr_env
 
 channels:
-  - nvidia
   - conda-forge
 
 dependencies:
-  - gcc=12
-  - gxx=12
+  - gcc=11
+  - gxx=11
+  - cudatoolkit-dev=11
   - hdf5
   - netcdf-cxx4=4.3.1
   - libconfig
-  - cuda-toolkit=12
   - cmake
   - ninja
   - sysroot_linux-64=2.17
