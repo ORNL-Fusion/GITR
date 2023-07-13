@@ -305,6 +305,25 @@ void reflection::operator()(std::size_t indx) const {
           #endif
         }
       }
+    
+      if(eInterpVal <= 0.0)
+    {       
+      newWeight = 0.0;
+    particles->hitWall[indx] = 2.0;
+    //printf("shouldn't be here");
+      if(surface > 0)
+      {
+        #if USE_CUDA > 0
+          atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*R0);
+          atomicAdd1(&surfaces->grossErosion[surfaceHit],-weight*Y0);
+        #else
+          #pragma omp atomic
+          surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*R0;
+          #pragma omp atomic
+          surfaces->grossErosion[surfaceHit] = surfaces->grossErosion[surfaceHit]-weight*Y0;
+        #endif
+		  }
+    }
     }
     else
     {       
@@ -321,23 +340,6 @@ void reflection::operator()(std::size_t indx) const {
 	    }
     }
 	    
-    if(eInterpVal <= 0.0)
-    {       
-      newWeight = 0.0;
-      particles->hitWall[indx] = 2.0;
-      if(surface > 0)
-      {
-        #if USE_CUDA > 0
-          atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*R0);
-          atomicAdd1(&surfaces->grossDeposition[surfaceHit],-weight*Y0);
-        #else
-          #pragma omp atomic
-          surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight*R0;
-          #pragma omp atomic
-          surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]-weight*Y0;
-        #endif
-		  }
-    }
     
     if(surface)
     {
@@ -399,6 +401,7 @@ void reflection::operator()(std::size_t indx) const {
     else 
     {
       particles->hitWall[indx] = 2.0;
+      particles->weight[indx] = newWeight;
     } 
   }  
 }
