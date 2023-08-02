@@ -1,10 +1,17 @@
-# String description for each option
-set( description "(no description added - see define_options.cmake)" )
+# specify C++ standard
+set( CMAKE_CXX_STANDARD 20 )
+
+# options are "Debug" and "Release" and "RelWithDebInfo"
+set( CMAKE_BUILD_TYPE "Debug" )
+
+# preprocessor definitions in source code are defined below:
+set( description "(no description added yet)" )
 set( GITR_USE_CUDA 1 CACHE STRING "${description}" FORCE )
 set( GITR_USE_OPENMP 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_MPI 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_DOUBLE 1 CACHE STRING "${description}" FORCE )
 
+# there are also deprecated options in this list - frozen at a particular value
 add_compile_definitions( 
         USE_CUDA=${GITR_USE_CUDA}
         USE_MPI=${GITR_USE_MPI}

@@ -1,4 +1,4 @@
-set( cli_include_dir ${prefix}/cli11_install/include )
+set( cli_include_dir ${prefix}/cli11/include )
 
 if( NOT EXISTS ${cli_include_dir} )
 
@@ -19,9 +19,9 @@ if( NOT EXISTS ${cli_include_dir} )
   ExternalProject_Add( cli11_download
                        PREFIX ${prefix}
                        DOWNLOAD_COMMAND ${download_command}
-                       CONFIGURE_COMMAND ${configure_command}
-                       BUILD_COMMAND ${CMAKE_COMMAND} --build ${prefix}/cli11_build -- -j
-                       INSTALL_COMMAND ${CMAKE_COMMAND} --install ${prefix}/cli11_build )
+                       CONFIGURE_COMMAND ""
+                       BUILD_COMMAND ""
+                       INSTALL_COMMAND "" )
 
 endif()
 
