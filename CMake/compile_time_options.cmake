@@ -2,7 +2,7 @@
 set( CMAKE_CXX_STANDARD 20 )
 
 # options are "Debug" and "Release" and "RelWithDebInfo"
-set( CMAKE_BUILD_TYPE "Debug" )
+set( CMAKE_BUILD_TYPE "Release" )
 
 # preprocessor definitions in source code are defined below:
 set( description "(no description added yet)" )
