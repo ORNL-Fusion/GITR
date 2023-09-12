@@ -2151,13 +2151,8 @@ if( presheath_interp == 1 )
 }
   auto randInitEnd_clock = gitr_time::now();
   std::chrono::duration<gitr_precision> fsRandInit = randInitEnd_clock - randInitStart_clock;
-  printf(
-      "Random Number Initialize time for node %i          is %6.3f (secs) \n",
-      world_rank, fsRandInit.count());
+  printf("Random Number Initialize time for node %i          is %6.3f (secs) \n", world_rank, fsRandInit.count());
 
-  gitr_precision moveTime = 0.0;
-  gitr_precision geomCheckTime = 0.0;
-  gitr_precision ionizTime = 0.0;
 #if USE_CUDA > 0
   int *dev_tt;
   cudaMallocManaged(&dev_tt, sizeof(int));
@@ -2255,150 +2250,6 @@ if( presheath_interp == 1 )
                    &weightHistory.front());
 
 
-// if( force_eval > 0 )
-//   {
-//   if (world_rank == 0) {
-//     int nR_force, nZ_force;
-//     gitr_precision forceX0, forceX1, forceZ0, forceZ1, testEnergy;
-//     std::string forceCfg = "forceEvaluation.";
-
-//     getVariable(cfg, forceCfg + "nR", nR_force);
-//     getVariable(cfg, forceCfg + "nZ", nZ_force);
-//     std::vector<gitr_precision> forceR(nR_force, 0.0), forceZ(nZ_force, 0.0);
-//     std::vector<gitr_precision> tIon(nR_force * nZ_force, 0.0),
-//         tRecomb(nR_force * nZ_force, 0.0);
-//     std::vector<gitr_precision> dvEr(nR_force * nZ_force, 0.0),
-//         dvEz(nR_force * nZ_force, 0.0), dvEt(nR_force * nZ_force, 0.0);
-//     std::vector<gitr_precision> dvBr(nR_force * nZ_force, 0.0),
-//         dvBz(nR_force * nZ_force, 0.0), dvBt(nR_force * nZ_force, 0.0);
-//     std::vector<gitr_precision> dvCollr(nR_force * nZ_force, 0.0),
-//         dvCollz(nR_force * nZ_force, 0.0), dvCollt(nR_force * nZ_force, 0.0);
-//     std::vector<gitr_precision> dvITGr(nR_force * nZ_force, 0.0),
-//         dvITGz(nR_force * nZ_force, 0.0), dvITGt(nR_force * nZ_force, 0.0);
-//     std::vector<gitr_precision> dvETGr(nR_force * nZ_force, 0.0),
-//         dvETGz(nR_force * nZ_force, 0.0), dvETGt(nR_force * nZ_force, 0.0);
-//     getVariable(cfg, forceCfg + "X0", forceX0);
-//     getVariable(cfg, forceCfg + "X1", forceX1);
-//     getVariable(cfg, forceCfg + "Z0", forceZ0);
-//     getVariable(cfg, forceCfg + "Z1", forceZ1);
-//     getVariable(cfg, forceCfg + "particleEnergy", testEnergy);
-//     for (int i = 0; i < nR_force; i++) {
-//       forceR[i] = forceX0 + (forceX1 - forceX0) * i / (nR_force - 1);
-//     }
-//     for (int i = 0; i < nZ_force; i++) {
-//       forceZ[i] = forceZ0 + (forceZ1 - forceZ0) * i / (nZ_force - 1);
-//     }
-//     gitr_precision Btotal = 0.0;
-//     for (int i = 0; i < nR_force; i++) {
-//       for (int j = 0; j < nZ_force; j++) {
-//         interp2dVector(&Btest[0], forceR[i], 0.0, forceZ[j], nR_Bfield,
-//                        nZ_Bfield, bfieldGridr.data(), bfieldGridz.data(),
-//                        br.data(), bz.data(), by.data(), cylsymm );
-//         Btotal = vectorNorm(Btest);
-//         gitr_precision testTi =
-//             interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),
-//                              TempGridz.data(), ti.data(), cylsymm );
-//         particleArray->setParticle(0, forceR[i], 0.0, forceZ[j], testTi, 0.0,
-//                                    0.0, pZ[0], pamu[0], pcharge[0] + 1.0,1);
-//         move_boris0(0);
-
-//         if( ionization > 0 )
-//         {
-//           thrust::for_each(thrust::device,particleBegin,particleBegin,ionize0);
-// 	        thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
-//         }
-
-//         if( coulomb_collisions > 0 )
-//         {
-//         thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
-//         }
-
-//         if( thermal_force > 0 )
-//         {
-//         thrust::for_each(thrust::device,particleBegin,particleBegin,thermalForce0);
-//         }
-//         dvEr[j * nR_force + i] = move_boris0.electricForce[0];
-//         dvEz[j * nR_force + i] = move_boris0.electricForce[2];
-//         dvEt[j * nR_force + i] = move_boris0.electricForce[1];
-//         dvBr[j * nR_force + i] = move_boris0.magneticForce[0];
-//         dvBz[j * nR_force + i] = move_boris0.magneticForce[2];
-//         dvBt[j * nR_force + i] = move_boris0.magneticForce[1];
-
-//         if( ionization > 0 )
-//         {
-//           tIon[j * nR_force + i] = ionize0.tion;
-//           tRecomb[j * nR_force + i] = recombine0.tion;
-//         }
-
-//         if( coulomb_collisions > 0 )
-//         {
-//         dvCollr[j * nR_force + i] = coulombCollisions0.dv[0];
-//         dvCollz[j * nR_force + i] = coulombCollisions0.dv[2];
-//         dvCollt[j * nR_force + i] = coulombCollisions0.dv[1];
-//         }
-//         if( thermal_force > 0 )
-//         {
-//         dvITGr[j * nR_force + i] = thermalForce0.dv_ITGx;
-//         dvITGz[j * nR_force + i] = thermalForce0.dv_ITGz;
-//         dvITGt[j * nR_force + i] = thermalForce0.dv_ITGy;
-//         dvETGr[j * nR_force + i] = thermalForce0.dv_ETGx;
-//         dvETGz[j * nR_force + i] = thermalForce0.dv_ETGz;
-//         dvETGt[j * nR_force + i] = thermalForce0.dv_ETGy;
-//         }
-//       }
-//     }
-//     std::cout << " about to write ncFile_forces " << std::endl;
-//     netCDF::NcFile ncFile_force("output/forces.nc", netCDF::NcFile::replace);
-//     netCDF::NcDim nc_nRf = ncFile_force.addDim("nR", nR_force);
-//     netCDF::NcDim nc_nZf = ncFile_force.addDim("nZ", nZ_force);
-//     vector<netCDF::NcDim> forceDims;
-//     forceDims.push_back(nc_nZf);
-//     forceDims.push_back(nc_nRf);
-//     netCDF::NcVar forceRf = ncFile_force.addVar("r", netcdf_precision, nc_nRf);
-//     netCDF::NcVar forceZf = ncFile_force.addVar("z", netcdf_precision, nc_nZf);
-//     netCDF::NcVar nction = ncFile_force.addVar("tIon", netcdf_precision, forceDims);
-//     netCDF::NcVar nctrec = ncFile_force.addVar("tRec", netcdf_precision, forceDims);
-//     netCDF::NcVar dvErf = ncFile_force.addVar("dvEr", netcdf_precision, forceDims);
-//     netCDF::NcVar dvEzf = ncFile_force.addVar("dvEz", netcdf_precision, forceDims);
-//     netCDF::NcVar dvEtf = ncFile_force.addVar("dvEt", netcdf_precision, forceDims);
-//     netCDF::NcVar dvBrf = ncFile_force.addVar("dvBr", netcdf_precision, forceDims);
-//     netCDF::NcVar dvBzf = ncFile_force.addVar("dvBz", netcdf_precision, forceDims);
-//     netCDF::NcVar dvBtf = ncFile_force.addVar("dvBt", netcdf_precision, forceDims);
-//     netCDF::NcVar dvCollrf = ncFile_force.addVar("dvCollr", netcdf_precision, forceDims);
-//     netCDF::NcVar dvCollzf = ncFile_force.addVar("dvCollz", netcdf_precision, forceDims);
-//     netCDF::NcVar dvColltf = ncFile_force.addVar("dvCollt", netcdf_precision, forceDims);
-//     netCDF::NcVar dvITGrf = ncFile_force.addVar("dvITGr", netcdf_precision, forceDims);
-//     netCDF::NcVar dvITGzf = ncFile_force.addVar("dvITGz", netcdf_precision, forceDims);
-//     netCDF::NcVar dvITGtf = ncFile_force.addVar("dvITGt", netcdf_precision, forceDims);
-//     netCDF::NcVar dvETGrf = ncFile_force.addVar("dvETGr", netcdf_precision, forceDims);
-//     netCDF::NcVar dvETGzf = ncFile_force.addVar("dvETGz", netcdf_precision, forceDims);
-//     netCDF::NcVar dvETGtf = ncFile_force.addVar("dvETGt", netcdf_precision, forceDims);
-//     forceRf.putVar(&forceR[0]);
-//     forceZf.putVar(&forceZ[0]);
-//     nction.putVar(&tIon[0]);
-//     nctrec.putVar(&tRecomb[0]);
-//     dvErf.putVar(&dvEr[0]);
-//     dvEzf.putVar(&dvEz[0]);
-//     dvEtf.putVar(&dvEt[0]);
-//     dvBrf.putVar(&dvBr[0]);
-//     dvBzf.putVar(&dvBz[0]);
-//     dvBtf.putVar(&dvBt[0]);
-//     dvCollrf.putVar(&dvCollr[0]);
-//     dvCollzf.putVar(&dvCollz[0]);
-//     dvColltf.putVar(&dvCollt[0]);
-//     dvITGrf.putVar(&dvITGr[0]);
-//     dvITGzf.putVar(&dvITGz[0]);
-//     dvITGtf.putVar(&dvITGt[0]);
-//     dvETGrf.putVar(&dvETGr[0]);
-//     dvETGzf.putVar(&dvETGz[0]);
-//     dvETGtf.putVar(&dvETGt[0]);
-//     ncFile_force.close();
-//     particleArray->setParticleV(0, px[0], py[0], pz[0], pvx[0], pvy[0], pvz[0],
-//                                 pZ[0], pamu[0], pcharge[0], dt);
-//   }
-// }
-
-
   auto start_clock = gitr_time::now();
   std::chrono::duration<gitr_precision> fs1 = start_clock - gitr_start_clock;
   printf("Initialize time for node %i          is %6.3f (secs) \n", world_rank,
@@ -2450,7 +2301,6 @@ if( presheath_interp == 1 )
        if( sort_particles > 0 )
        {
        dev_tt[0] = tt;
-      //std::cout << " tt " << tt << std::endl;
       thrust::for_each(thrust::host, particleBegin, particleOne, sort0);
       particleEnd = particleZero + nActiveParticlesOnRank[0];
 #ifdef __CUDACC__
@@ -2516,7 +2366,6 @@ if( presheath_interp == 1 )
     thrust::for_each(thrust::device, particleBegin, particleEnd, history0);
     }
 
-
   // Ensure that all time step loop GPU kernels are complete before proceeding
 #ifdef __CUDACC__
   cudaDeviceSynchronize();
@@ -2539,76 +2388,18 @@ if( presheath_interp == 1 )
     if( surface_model > 0 || flux_ea > 0 )
     {ParticleErosionToSurface(boundaries.data(), nLines, grossErosion.data(), nSurfaces, surfaces, nEdist, nAdist);
     }
-
-  if( particle_tracks > 0 )
-  {
-    // Write netCDF output for histories
-    netCDF::NcFile ncFile_hist("output/history.nc", netCDF::NcFile::replace);
-    netCDF::NcDim nc_nT = ncFile_hist.addDim("nT", nHistoriesPerParticle);
-    netCDF::NcDim nc_nP = ncFile_hist.addDim("nP", nP);
-    vector<netCDF::NcDim> dims_hist;
-    dims_hist.push_back(nc_nP);
-    dims_hist.push_back(nc_nT);
-    netCDF::NcVar nc_x = ncFile_hist.addVar("x", netCDF::ncDouble, dims_hist);
-    netCDF::NcVar nc_y = ncFile_hist.addVar("y", netCDF::ncDouble, dims_hist);
-    netCDF::NcVar nc_z = ncFile_hist.addVar("z", netCDF::ncDouble, dims_hist);
-
-    netCDF::NcVar nc_v = ncFile_hist.addVar("v", netCDF::ncDouble, dims_hist);
-    netCDF::NcVar nc_vx = ncFile_hist.addVar("vx", netCDF::ncDouble, dims_hist);
-    netCDF::NcVar nc_vy = ncFile_hist.addVar("vy", netCDF::ncDouble, dims_hist);
-    netCDF::NcVar nc_vz = ncFile_hist.addVar("vz", netCDF::ncDouble, dims_hist);
-
-    netCDF::NcVar nc_charge = ncFile_hist.addVar("charge", netCDF::ncDouble, dims_hist);
-    netCDF::NcVar nc_Z = ncFile_hist.addVar("Z", netCDF::ncDouble, dims_hist);
-    netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", netCDF::ncDouble, dims_hist);
-    nc_x.putVar(&positionHistoryX[0]);
-    nc_y.putVar(&positionHistoryY[0]);
-    nc_z.putVar(&positionHistoryZ[0]);
-
-    nc_vx.putVar(&velocityHistoryX[0]);
-    nc_vy.putVar(&velocityHistoryY[0]);
-    nc_vz.putVar(&velocityHistoryZ[0]);
-
-    nc_charge.putVar(&chargeHistory[0]);
-    nc_Z.putVar(&ZHistory[0]);
-    ncFile_hist.close();
+    //3. store particle history 
+  if( particle_tracks > 0 ){
+        writeParticleDataHistories(
+        positionHistoryX, positionHistoryY, positionHistoryZ,
+        velocityHistoryX, velocityHistoryY, velocityHistoryZ,
+        chargeHistory, ZHistory, weightHistory,
+        nHistoriesPerParticle, nP
+    );
   }
     if( spectroscopy > 0 )
     {
-    // Write netCDF output for density data
-    netCDF::NcFile ncFile("output/spec.nc", netCDF::NcFile::replace);
-    netCDF::NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
-    netCDF::NcDim nc_nR = ncFile.addDim("nR", net_nX);
-    netCDF::NcDim nc_nY;
-    if( spectroscopy > 2 )
-    {
-    nc_nY = ncFile.addDim("nY", net_nY);
-    }
-
-    netCDF::NcDim nc_nZ = ncFile.addDim("nZ", net_nZ);
-    vector<netCDF::NcDim> dims;
-    dims.push_back(nc_nBins);
-    dims.push_back(nc_nZ);
-
-    if( spectroscopy > 2 )
-    {
-    dims.push_back(nc_nY);
-    }
-
-    dims.push_back(nc_nR);
-
-    netCDF::NcVar nc_n = ncFile.addVar("n", netcdf_precision, dims);
-    netCDF::NcVar nc_gridR = ncFile.addVar("gridR", netcdf_precision, nc_nR);
-    netCDF::NcVar nc_gridZ = ncFile.addVar("gridZ", netcdf_precision, nc_nZ);
-    nc_gridR.putVar(&gridX_bins[0]);
-    nc_gridZ.putVar(&gridZ_bins[0]);
-    if( spectroscopy > 2 )
-    {
-    netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netcdf_precision, nc_nY);
-    nc_gridY.putVar(&gridY_bins[0]);
-    }
-    nc_n.putVar(&net_Bins[0]);
-    ncFile.close();
+    writeSpecData(nBins, net_nX, net_nY, net_nZ, spectroscopy, gridX_bins, gridY_bins, gridZ_bins, net_Bins);
     }
 #ifdef __CUDACC__
     cudaDeviceSynchronize();

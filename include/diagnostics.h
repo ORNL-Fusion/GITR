@@ -18,7 +18,19 @@
 //        - Takes in a base filename, particle array, and the number of particles.
 //        - Writes particle data to a netCDF file format.
 //        - Variables include particle position, velocity, transit time, and more.
-//
+//     2. ParticleErosionToSurface:
+//        - Takes in a boundary array, number of boundaries, gross erosion array,
+//          number of surfaces, surface array, number of energy bins, and number
+//          of angle bins.
+//        - Writes surface data to a netCDF file format.
+//        - Variables include gross deposition, gross erosion, average sputter
+//          yield, and more.
+//     3. writeParticleDataHistories:
+//        - Takes in particle position, velocity, charge, atomic number, weight,
+//          number of histories per particle, and number of particles.
+//        - Writes particle history data to a netCDF file format.
+//        - Variables include particle position, velocity, charge, atomic number,
+//          weight, and more.
 // Note:
 //     This file is a component of the GITR codebase.
 //
@@ -138,52 +150,101 @@ void ParticleErosionToSurface(Boundary* boundaries, int nLines, gitr_precision* 
     }
 
 
-// void writeSurfaceData( int surface_model, 
-//         {
-//     if( surface_model > 0 || flux_ea > 0 )
-//     {
-//         int nSpecies = 0;
-//         std::vector<int> surfaceNumbers(nSurfaces, 0);
-//         int srf = 0;
-//         for (int i = 0; i < nLines; i++) {
-//         if (boundaries[i].surface) {
-//             surfaceNumbers[srf] = i;
 
-//             surfaces->grossErosion[srf] = surfaces->grossErosion[srf] + grossErosion[srf];
-//             srf = srf + 1;
-//         }
-//         }  
-//         netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
-//         netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
-//         vector<netCDF::NcDim> dims1;
-//         dims1.push_back(nc_nLines);
+void writeParticleDataHistories(
+        const sim::Array<gitr_precision>& positionHistoryX, 
+        const sim::Array<gitr_precision>& positionHistoryY, 
+        const sim::Array<gitr_precision>& positionHistoryZ,
+        const sim::Array<gitr_precision>& velocityHistoryX, 
+        const sim::Array<gitr_precision>& velocityHistoryY, 
+        const sim::Array<gitr_precision>& velocityHistoryZ, 
+        const sim::Array<gitr_precision>& chargeHistory,
+        const sim::Array<gitr_precision>& ZHistory,
+        const sim::Array<gitr_precision>& weightHistory,
+        int nHistoriesPerParticle, 
+        int nP
+    ) {
+        // Write netCDF output for histories
+        netCDF::NcFile ncFile_hist("output/history.nc", netCDF::NcFile::replace);
 
-//         vector<netCDF::NcDim> dimsSurfE;
-//         dimsSurfE.push_back(nc_nLines);
-//         netCDF::NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
-//         netCDF::NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
-//         dimsSurfE.push_back(nc_nEnergies);
-//         dimsSurfE.push_back(nc_nAngles);
-//         netCDF::NcVar nc_grossDep = ncFile1.addVar("grossDeposition", netcdf_precision, nc_nLines);
-//         netCDF::NcVar nc_grossEro = ncFile1.addVar("grossErosion", netcdf_precision, nc_nLines);
-//         netCDF::NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", netcdf_precision, nc_nLines);
-//         netCDF::NcVar nc_spylCounts = ncFile1.addVar("spylCounts", netCDF::ncInt, nc_nLines);
-//         netCDF::NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", netCDF::ncInt, nc_nLines);
-//         netCDF::NcVar nc_sumParticlesStrike = ncFile1.addVar("sumParticlesStrike", netCDF::ncInt, nc_nLines);
-//         netCDF::NcVar nc_sumWeightStrike = ncFile1.addVar("sumWeightStrike", netcdf_precision, nc_nLines);
-//         nc_grossDep.putVar(&surfaces->grossDeposition[0]);
-//         nc_surfNum.putVar(&surfaceNumbers[0]);
-//         nc_grossEro.putVar(&surfaces->grossErosion[0]);
-//         nc_aveSpyl.putVar(&surfaces->aveSputtYld[0]);
-//         nc_spylCounts.putVar(&surfaces->sputtYldCount[0]);
-//         nc_sumParticlesStrike.putVar(&surfaces->sumParticlesStrike[0]);
-//         nc_sumWeightStrike.putVar(&surfaces->sumWeightStrike[0]);
-//         netCDF::NcVar nc_surfEDist = ncFile1.addVar("surfEDist", netcdf_precision, dimsSurfE);
-//         netCDF::NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", netcdf_precision, dimsSurfE);
-//         netCDF::NcVar nc_surfSputtDist = ncFile1.addVar("surfSputtDist", netcdf_precision, dimsSurfE);
-//         nc_surfEDist.putVar(&surfaces->energyDistribution[0]);
-//         nc_surfReflDist.putVar(&surfaces->reflDistribution[0]);
-//         nc_surfSputtDist.putVar(&surfaces->sputtDistribution[0]);
-//         ncFile1.close();
-//     }
-// }
+        netCDF::NcDim nc_nT = ncFile_hist.addDim("nT", nHistoriesPerParticle);
+        netCDF::NcDim nc_nP = ncFile_hist.addDim("nP", nP);
+        
+        std::vector<netCDF::NcDim> dims_hist;
+        dims_hist.push_back(nc_nP);
+        dims_hist.push_back(nc_nT);
+
+        netCDF::NcVar nc_x = ncFile_hist.addVar("x", netcdf_precision, dims_hist);
+        netCDF::NcVar nc_y = ncFile_hist.addVar("y", netcdf_precision, dims_hist);
+        netCDF::NcVar nc_z = ncFile_hist.addVar("z", netcdf_precision, dims_hist);
+
+        netCDF::NcVar nc_vx = ncFile_hist.addVar("vx", netcdf_precision, dims_hist);
+        netCDF::NcVar nc_vy = ncFile_hist.addVar("vy", netcdf_precision, dims_hist);
+        netCDF::NcVar nc_vz = ncFile_hist.addVar("vz", netcdf_precision, dims_hist);
+
+        netCDF::NcVar nc_charge = ncFile_hist.addVar("charge", netcdf_precision, dims_hist);
+        netCDF::NcVar nc_Z = ncFile_hist.addVar("Z", netcdf_precision, dims_hist);
+        netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", netcdf_precision, dims_hist);
+
+        nc_x.putVar(&positionHistoryX.data()[0]);
+        nc_y.putVar(&positionHistoryY.data()[0]);
+        nc_z.putVar(&positionHistoryZ.data()[0]);
+
+        nc_vx.putVar(&velocityHistoryX.data()[0]);
+        nc_vy.putVar(&velocityHistoryY.data()[0]);
+        nc_vz.putVar(&velocityHistoryZ.data()[0]);
+
+        nc_charge.putVar(&chargeHistory.data()[0]);
+        nc_Z.putVar(&ZHistory.data()[0]);
+        nc_weight.putVar(&weightHistory.data()[0]);
+
+        ncFile_hist.close();
+    }
+
+
+
+void writeSpecData(
+    int nBins, 
+    int net_nX, 
+    int net_nY, 
+    int net_nZ, 
+    int spectroscopy, 
+    const sim::Array<gitr_precision>&gridX_bins, 
+    const sim::Array<gitr_precision>&gridY_bins, 
+    const sim::Array<gitr_precision>&gridZ_bins, 
+    const sim::Array<gitr_precision>&net_Bins
+) {
+    // Write netCDF output for density data
+    netCDF::NcFile ncFile("output/spec.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
+    netCDF::NcDim nc_nR = ncFile.addDim("nR", net_nX);
+    netCDF::NcDim nc_nY;
+    if(spectroscopy > 2) {
+        nc_nY = ncFile.addDim("nY", net_nY);
+    }
+
+    netCDF::NcDim nc_nZ = ncFile.addDim("nZ", net_nZ);
+    std::vector<netCDF::NcDim> dims;
+    dims.push_back(nc_nBins);
+    dims.push_back(nc_nZ);
+
+    if(spectroscopy > 2) {
+        dims.push_back(nc_nY);
+    }
+
+    dims.push_back(nc_nR);
+    netCDF::NcVar nc_n = ncFile.addVar("n", netcdf_precision, dims);
+    netCDF::NcVar nc_gridR = ncFile.addVar("gridR", netcdf_precision, nc_nR); 
+    netCDF::NcVar nc_gridZ = ncFile.addVar("gridZ", netcdf_precision, nc_nZ); 
+
+    nc_gridR.putVar(&gridX_bins[0]);
+    nc_gridZ.putVar(&gridZ_bins[0]);
+
+    if(spectroscopy > 2) {
+        netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netcdf_precision, nc_nY); 
+        nc_gridY.putVar(&gridY_bins[0]);
+    }
+    
+    nc_n.putVar(&net_Bins[0]);
+    ncFile.close();
+}
