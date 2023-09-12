@@ -55,12 +55,6 @@ endif()
 # Thrust
 include( CMake/thrust.cmake ) # ---> creates target thrust
 
-# MPI 
-if( GITR_USE_MPI )
-
-  include( CMake/mpi.cmake ) # ---> creates target mpi
-
-endif()
 
 # Libconfig
 include( CMake/libconfig.cmake ) # ---> creates target libconfig
