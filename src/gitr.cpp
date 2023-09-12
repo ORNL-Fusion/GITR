@@ -439,20 +439,20 @@ int main(int argc, char **argv, char **envp) {
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
   }
-  auto surfaces = new Surfaces(nSurfaces, nspecies, nEdist, nAdist);
+  auto surfaces = new Surfaces(nSurfaces, nEdist, nAdist);
   surfaces->setSurface(nEdist, E0dist, Edist, nAdist, A0dist, Adist);
 
   //#if USE_MPI > 0
   // Arrays used for reduction at end of sim
-  sim::Array<gitr_precision> grossDeposition(nSurfaces * nspecies, 0.0);
-  sim::Array<gitr_precision> grossErosion(nSurfaces * nspecies, 0.0);
-  sim::Array<gitr_precision> sumWeightStrike(nSurfaces * nspecies, 0.0);
-  sim::Array<gitr_precision> energyDistribution(nSurfaces * nspecies * nEdist * nAdist, 0.0);
-  sim::Array<gitr_precision> reflDistribution(nSurfaces * nspecies * nEdist * nAdist, 0.0);
-  sim::Array<gitr_precision> sputtDistribution(nSurfaces * nspecies * nEdist * nAdist, 0.0);
-  sim::Array<gitr_precision> aveSputtYld(nSurfaces * nspecies, 0.0);
-  sim::Array<int> sputtYldCount(nSurfaces * nspecies, 0);
-  sim::Array<int> sumParticlesStrike(nSurfaces * nspecies, 0);
+  sim::Array<gitr_precision> grossDeposition(nSurfaces , 0.0);
+  sim::Array<gitr_precision> grossErosion(nSurfaces , 0.0);
+  sim::Array<gitr_precision> sumWeightStrike(nSurfaces , 0.0);
+  sim::Array<gitr_precision> energyDistribution(nSurfaces  * nEdist * nAdist, 0.0);
+  sim::Array<gitr_precision> reflDistribution(nSurfaces  * nEdist * nAdist, 0.0);
+  sim::Array<gitr_precision> sputtDistribution(nSurfaces  * nEdist * nAdist, 0.0);
+  sim::Array<gitr_precision> aveSputtYld(nSurfaces , 0.0);
+  sim::Array<int> sputtYldCount(nSurfaces , 0);
+  sim::Array<int> sumParticlesStrike(nSurfaces , 0);
 
 
   int nHashes = 1;
@@ -1295,7 +1295,7 @@ if( GENERATE_LC > 0 )
   }
 
   // dummy surfaces for Lcs calculation (geometry_check)
-  auto dummy_surfaces = new Surfaces(1, 1, 1, 1);
+  auto dummy_surfaces = new Surfaces(1, 1, 1);
   dummy_surfaces->setSurface(1, 1, 1, 1, 1, 1);
 
   typedef std::chrono::high_resolution_clock Time_trace;

@@ -167,11 +167,7 @@ void reflection::operator()(std::size_t indx) const {
                       nE_sputtRefDistOutRef, nA_sputtRefDistIn, nE_sputtRefDistIn,
                       energyDistGrid01Ref.data(), A_sputtRefDistIn.data(),
                       E_sputtRefDistIn.data(), EDist_CDF_R_regrid.data());
-      
-      
-  
          newWeight = weight*(totalYR);
-
         if( flux_ea > 0 )
         {
         EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
@@ -191,7 +187,7 @@ void reflection::operator()(std::size_t indx) const {
         {
 
         #if USE_CUDA > 0
-                atomicAdd1(&surfaces->grossDeposition[surfaceHit + species_indx],weight*(1.0-R0));
+                atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
                 atomicAdd1(&surfaces->grossErosion[surfaceHit + species_indx ],weight*Y0);
         #else
                 #pragma omp atomic
@@ -201,7 +197,7 @@ void reflection::operator()(std::size_t indx) const {
                 // surfaces->grossDeposition[surfaceHit] += ( weight*(1.0-R0) );
                 #pragma omp atomic
                 // surfaces->grossErosion[surfaceHit] += ( weight * Y0 );
-                surfaces->grossErosion[surfaceHit + species_indx] += ( weight * Y0 );
+                surfaces->grossErosion[surfaceHit] += ( weight * Y0 );
         #endif
         }
       }
@@ -279,9 +275,9 @@ void reflection::operator()(std::size_t indx) const {
           #pragma omp atomic
           surfaces->grossDeposition[surfaceHit + species_indx ] = surfaces->grossDeposition[surfaceHit + species_indx ]+weight*(1.0-R0);
           #pragma omp atomic
-          surfaces->grossErosion[surfaceHit + species_indx ] = surfaces->grossErosion[surfaceHit + species_indx] + weight*Y0;
-          surfaces->aveSputtYld[surfaceHit + species_indx ] = surfaces->aveSputtYld[surfaceHit + species_indx] + Y0;
-          surfaces->sputtYldCount[surfaceHit + species_indx] = surfaces->sputtYldCount[surfaceHit + species_indx] + 1;
+          surfaces->grossErosion[surfaceHit + species_indx ] = surfaces->grossErosion[surfaceHit] + weight*Y0;
+          surfaces->aveSputtYld[surfaceHit + species_indx ] = surfaces->aveSputtYld[surfaceHit] + Y0;
+          surfaces->sputtYldCount[surfaceHit] = surfaces->sputtYldCount[surfaceHit] + 1;
         #endif
         }
       }
@@ -296,7 +292,7 @@ void reflection::operator()(std::size_t indx) const {
                 atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight);
         #else
                 #pragma omp atomic
-                surfaces->grossDeposition[surfaceHit + species_indx] = surfaces->grossDeposition[surfaceHit + species_indx]+weight;
+                surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
         #endif
 	    }
     }
@@ -308,8 +304,8 @@ void reflection::operator()(std::size_t indx) const {
       if(surface > 0)
       {
       #if USE_CUDA > 0
-              atomicAdd1(&surfaces->grossDeposition[surfaceHit + species_indx],weight*R0);
-              atomicAdd1(&surfaces->grossDeposition[surfaceHit + species_indx],-weight*Y0);
+              atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*R0);
+              atomicAdd1(&surfaces->grossDeposition[surfaceHit],-weight*Y0);
       #else
               surfaces->grossDeposition[surfaceHit + species_indx ] = surfaces->grossDeposition[surfaceHit + species_indx ]+weight;
       #endif
