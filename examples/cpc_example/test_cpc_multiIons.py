@@ -18,7 +18,9 @@ import subprocess as sp
 import os
 import shutil
 from os.path import join
-from plotter import plot_particles, plot_surface
+
+# import plotter for visualization purposes from tools
+# from plotter import plot_particles, plot_surface
 
 #
 def read_config(filename):
@@ -135,7 +137,7 @@ print("Simulation finished!")
 #EOF
 
 # # Plot the results
-path2data = "output/"
+# path2data = "output/"
 
-plot_particles(path2data)
-plot_surface(path2data)
+# plot_particles(path2data)
+# plot_surface(path2data)
