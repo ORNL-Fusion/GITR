@@ -248,3 +248,50 @@ void writeSpecData(
     nc_n.putVar(&net_Bins[0]);
     ncFile.close();
 }
+
+
+#include <netcdf>
+#include <vector>
+#include <iostream>
+
+void writeParticleSourceFile(
+    int nP,
+   const sim::Array<gitr_precision>& pvx,
+   const sim::Array<gitr_precision>& pvy,
+   const sim::Array<gitr_precision>& pvz,
+   const sim::Array<gitr_precision>& px,
+   const sim::Array<gitr_precision>& py,
+   const sim::Array<gitr_precision>& pz,
+   const sim::Array<gitr_precision>& pcharge,
+   const sim::Array<gitr_precision>& pamu,
+   const sim::Array<gitr_precision>& pZ,
+   const sim::Array<int>& speciesType
+) {
+    std::cout << "writing particles out file" << std::endl;
+
+    netCDF::NcFile ncFile_particles("output/particleSource.nc", netCDF::NcFile::replace);
+    netCDF::NcDim pNP = ncFile_particles.addDim("nP", nP);
+    netCDF::NcVar p_vx = ncFile_particles.addVar("vx", netcdf_precision, pNP);
+    netCDF::NcVar p_vy = ncFile_particles.addVar("vy", netcdf_precision, pNP);
+    netCDF::NcVar p_vz = ncFile_particles.addVar("vz", netcdf_precision, pNP);
+    netCDF::NcVar p_x = ncFile_particles.addVar("x", netcdf_precision, pNP);
+    netCDF::NcVar p_y = ncFile_particles.addVar("y", netcdf_precision, pNP);
+    netCDF::NcVar p_z = ncFile_particles.addVar("z", netcdf_precision, pNP);
+    netCDF::NcVar p_charge = ncFile_particles.addVar("charge", netcdf_precision, pNP);
+    netCDF::NcVar p_amu = ncFile_particles.addVar("amu", netcdf_precision, pNP);
+    netCDF::NcVar p_Z = ncFile_particles.addVar("Z", netcdf_precision, pNP);
+    netCDF::NcVar p_speciesType = ncFile_particles.addVar("speciesType", netCDF::ncInt, pNP);
+
+    p_vx.putVar(&pvx[0]);
+    p_vy.putVar(&pvy[0]);
+    p_vz.putVar(&pvz[0]);
+    p_x.putVar(&px[0]);
+    p_y.putVar(&py[0]);
+    p_z.putVar(&pz[0]);
+    p_charge.putVar(&pcharge[0]);
+    p_amu.putVar(&pamu[0]);
+    p_Z.putVar(&pZ[0]);
+    p_speciesType.putVar(&speciesType[0]);
+
+    ncFile_particles.close();
+}

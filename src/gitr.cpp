@@ -2020,37 +2020,10 @@ if( presheath_interp == 1 )
       std::cerr << "Error: Invalid value for particle_source_file." << std::endl;
   }
   initializeParticleArray(particleData, particleArray, px, py, pz, pvx, pvy, pvz, pZ, pamu, pcharge, dt, speciesType);
-
   std::cout << "writing particles out file" << std::endl;
-  netCDF::NcFile ncFile_particles("output/particleSource.nc", netCDF::NcFile::replace);
-  netCDF::NcDim pNP = ncFile_particles.addDim("nP", nP);
-  netCDF::NcVar p_surfNormx = ncFile_particles.addVar("surfNormX", netcdf_precision, pNP);
-  netCDF::NcVar p_surfNormy = ncFile_particles.addVar("surfNormY", netcdf_precision, pNP);
-  netCDF::NcVar p_surfNormz = ncFile_particles.addVar("surfNormZ", netcdf_precision, pNP);
-  netCDF::NcVar p_vx = ncFile_particles.addVar("vx", netcdf_precision, pNP);
-  netCDF::NcVar p_vy = ncFile_particles.addVar("vy", netcdf_precision, pNP);
-  netCDF::NcVar p_vz = ncFile_particles.addVar("vz", netcdf_precision, pNP);
-  netCDF::NcVar p_x = ncFile_particles.addVar("x", netcdf_precision, pNP);
-  netCDF::NcVar p_y = ncFile_particles.addVar("y", netcdf_precision, pNP);
-  netCDF::NcVar p_z = ncFile_particles.addVar("z", netcdf_precision, pNP);
-  netCDF::NcVar p_charge = ncFile_particles.addVar("charge", netcdf_precision, pNP);
-  netCDF::NcVar p_amu = ncFile_particles.addVar("amu", netcdf_precision, pNP);
-  netCDF::NcVar p_Z = ncFile_particles.addVar("Z", netcdf_precision, pNP);
-  // add species type
-  netCDF::NcVar p_speciesType = ncFile_particles.addVar("speciesType", netCDF::ncInt, pNP);
-  p_vx.putVar(&pvx[0]);
-  p_vy.putVar(&pvy[0]);
-  p_vz.putVar(&pvz[0]);
-  p_x.putVar(&px[0]);
-  p_y.putVar(&py[0]);
-  p_z.putVar(&pz[0]);
-  p_charge.putVar(&pcharge[0]);
-  p_amu.putVar(&pamu[0]);
-  p_Z.putVar(&pZ[0]);
-  p_speciesType.putVar(&speciesType[0]);
-  ncFile_particles.close();
-
+  writeParticleSourceFile(nP, pvx, pvy, pvz, px, py, pz, pcharge, pamu, pZ, speciesType);
   std::cout << "finished writing particles out file" << std::endl;
+
   int subSampleFac = 1;
   if (world_rank == 0) {
     if (cfg.lookupValue("diagnostics.trackSubSampleFactor", subSampleFac)) {
@@ -2353,13 +2326,11 @@ if( presheath_interp == 1 )
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        thermalForce0);
       }
-
       if( surface_model > 0 )
       {
           thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
       }
     }
-  
     if( particle_tracks > 0 )
     {
     tt = nT;
@@ -2407,7 +2378,6 @@ if( presheath_interp == 1 )
 
 #ifdef __CUDACC__
   cudaError_t err = cudaDeviceReset();
-// cudaProfilerStop();
 #endif
   if (world_rank == 0) {
     auto gitr_finish_clock = gitr_time::now();
