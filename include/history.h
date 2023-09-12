@@ -30,12 +30,15 @@ struct history {
     gitr_precision *histvy;
     gitr_precision *histvz;
     gitr_precision *histcharge;
+    gitr_precision *hist_Z;
     gitr_precision *histweight;
 
     history(Particles *_particlesPointer, int* _tt, int _nT,int _subSampleFac, int _nP, gitr_precision *_histX,gitr_precision *_histY,gitr_precision *_histZ,
-          gitr_precision *_histv,gitr_precision *_histvx,gitr_precision *_histvy,gitr_precision *_histvz, gitr_precision * _histcharge, gitr_precision * _histweight) : 
+          gitr_precision *_histv,gitr_precision *_histvx,gitr_precision *_histvy,gitr_precision *_histvz, gitr_precision * _histcharge,
+            gitr_precision * _hist_Z, gitr_precision * _histweight) :
         particlesPointer(_particlesPointer), tt(_tt),nT(_nT),subSampleFac(_subSampleFac), nP(_nP), 
-        histX(_histX),histY(_histY),histZ(_histZ),histv(_histv),histvx(_histvx),histvy(_histvy),histvz(_histvz), histcharge(_histcharge), histweight(_histweight) {}
+        histX(_histX),histY(_histY),histZ(_histZ),histv(_histv),histvx(_histvx),histvy(_histvy),histvz(_histvz), histcharge(_histcharge),
+    hist_Z(_hist_Z), histweight(_histweight) {}
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const 
@@ -59,6 +62,7 @@ void operator()(std::size_t indx) const
           histvy[histInd] = particlesPointer->vy[indexP];
           histvz[histInd] = particlesPointer->vz[indexP];
           histcharge[histInd] = particlesPointer->charge[indexP];
+            hist_Z[histInd] = particlesPointer->Z[indexP];
           histweight[histInd] = particlesPointer->weight[indexP];
         }
         //else

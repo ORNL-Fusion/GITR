@@ -1,6 +1,6 @@
 #include "geometryCheck.h"
 
-CUDA_CALLABLE_HOST_DEVICE
+__host__ __device__
 gitr_precision
 findT( gitr_precision x0, 
        gitr_precision x1,
@@ -82,7 +82,7 @@ geometry_check::geometry_check(
     geom_hash( geom_hash_ ), use_3d_geom( use_3d_geom_ ), cylsymm( cylsymm_ )
     {}
 
-CUDA_CALLABLE_HOST_DEVICE
+__host__  __device__
 void geometry_check::operator()(std::size_t indx) const {
 
   // std::cout << "geometry check particle x" << particlesPointer->x[indx] <<
@@ -1046,15 +1046,15 @@ else top_limit = nLines;
             (AdistInd < nAdist)) {
 #if USE_CUDA > 0
 #if __CUDA_ARCH__		  
-          atomicAdd1(
+          atomicAdd(
               &surfaces->energyDistribution[surfaceHit * nEdist * nAdist +
                                             EdistInd * nAdist + AdistInd],
               particlesPointer->weight[indx]);
-          atomicAdd1(&surfaces->grossDeposition[surfaceHit],
+          atomicAdd(&surfaces->grossDeposition[surfaceHit],
                     particlesPointer->weight[indx]);
-          atomicAdd1(&surfaces->sumWeightStrike[surfaceHit],
+          atomicAdd(&surfaces->sumWeightStrike[surfaceHit],
                     particlesPointer->weight[indx]);
-          atomicAdd1(&surfaces->sumParticlesStrike[surfaceHit], 1);
+          atomicAdd(&surfaces->sumParticlesStrike[surfaceHit], 1);
 #else
 #endif
     
@@ -1086,7 +1086,7 @@ else top_limit = nLines;
         }
       }
       }
-      else if( flux_ea == 0 && surface_model == 0 )
+      else if( surface_model == 0 && surface_model == 0 )
       {
         particlesPointer->weight[indx] = 0.0;
       }

@@ -54,28 +54,24 @@ class lookup_failed: public std::exception
 
 class config_exception_base : public std::exception
 {
-  public:
-
-    config_exception_base()
-      :
-      query_key( query_key )
+public:
+    explicit config_exception_base(const std::string& key)
+        : query_key(key)
     { }
 
     std::string get_key() const { return query_key; }
 
     std::string get_message() const { return message; }
 
-    const char* what() const throw() 
+    const char* what() const noexcept override
     {
-      return message.c_str();
+        return message.c_str();
     }
 
-  private:
-    
-    std::string const query_key;
+private:
+    const std::string query_key;
 
-    std::string static const inline 
-    message{ "configuration interface error - key not found: " };
+    static const inline std::string message{ "configuration interface error - key not found: " };
 };
 
 /* Captain! Use config_base above to make a different message for each type of exception? */

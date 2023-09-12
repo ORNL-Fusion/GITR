@@ -39,14 +39,9 @@ struct spec_bin {
     gitr_precision dt;
     int cylsymm;
     int spectroscopy;
-    gitr_precision *bins_vx;
-    gitr_precision *bins_vy;
-    gitr_precision *bins_vz;
-    gitr_precision *bins_E;
 
     spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
-           gitr_precision* _bins, gitr_precision _dt, int cylsymm_, int spectroscopy_,
-           gitr_precision* _bins_vx,gitr_precision* _bins_vy,gitr_precision* _bins_vz, gitr_precision* _bins_E );
+           gitr_precision* _bins, gitr_precision _dt, int cylsymm_, int spectroscopy_ );
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const;

@@ -28,6 +28,13 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 
+CUDA_CALLABLE_MEMBER_DEVICE
+gitr_precision interp2dCombined ( gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
+    gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data );
+
+CUDA_CALLABLE_MEMBER_DEVICE
+gitr_precision rateCoeffInterp(int charge, gitr_precision te, gitr_precision ne, int nT, int nD, const std::vector<double>& rateGrid_Tempp, const std::vector<double>& rateGrid_Densp, const std::vector<double>& Ratesp);
+
 #if USE_CUDA
 CUDA_CALLABLE_MEMBER_DEVICE
 float get_rand(curandState *state,int indx);
@@ -49,6 +56,7 @@ double get_rand_double(std::mt19937 *state,int indx);
 
 #endif
 
+
 template <typename T=std::mt19937>
 struct ionize {
   Flags *flags;
@@ -63,11 +71,6 @@ struct ionize {
   gitr_precision *TempGridr;
   gitr_precision *TempGridz;
   gitr_precision *te;
-  int nTemperaturesIonize;
-  int nDensitiesIonize;
-  gitr_precision *gridDensity_Ionization;
-  gitr_precision *gridTemperature_Ionization;
-  gitr_precision *rateCoeff_Ionization;
   gitr_precision dt;
   gitr_precision tion;
   void (ionize::*func)(std::size_t);
@@ -79,9 +82,7 @@ struct ionize {
   ionize(Flags *_flags, Particles *_particlesPointer, gitr_precision _dt,T *_state,
          int _nR_Dens, int _nZ_Dens, gitr_precision *_DensGridr, gitr_precision *_DensGridz,
          gitr_precision *_ne, int _nR_Temp, int _nZ_Temp, gitr_precision *_TempGridr,
-         gitr_precision *_TempGridz, gitr_precision *_te, int _nTemperaturesIonize,
-         int _nDensitiesIonize, gitr_precision *_gridTemperature_Ionization,
-         gitr_precision *_gridDensity_Ionization, gitr_precision *_rateCoeff_Ionization,
+         gitr_precision *_TempGridz, gitr_precision *_te,
          gitr_precision *  _random_uniform_number, int cylsymm );
 
   CUDA_CALLABLE_MEMBER_DEVICE

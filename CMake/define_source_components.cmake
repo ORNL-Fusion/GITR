@@ -21,6 +21,7 @@ target_include_directories( GITR PUBLIC include )
 
 # CPU-only targets
 set( non_gpu_targets
+    materials
      efield_interp
      particle
      utils
@@ -32,9 +33,10 @@ set( non_gpu_targets
 
 # conditionally compile as GPU targets
 set( gpu_targets
-     surface_model
      interp2d
+     interpolator2
      interpRateCoeff
+     surface_model
      ionize
      boris
      hashGeom

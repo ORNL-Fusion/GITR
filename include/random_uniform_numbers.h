@@ -7,16 +7,13 @@
   #include "thrust/random.h"
   #include "curandInitialize.h"
   using rand_type = curandState;
-  #define __hardware_specifier__d  __device__;
-  #define __hardware_specifier__h  __host__;
+  #define __hardware_specifier__  __device__;
 
 #else
 
   #include <random>
   using rand_type = std::mt19937;
   #define __hardware_specifier__  __host__;
-  #define __hardware_specifier__d ;
-  #define __hardware_specifier__h ;
 
 #endif
 
@@ -31,15 +28,13 @@ class random_uniform_numbers
 {
   public:
 
-    __hardware_specifier__d
+    __host__ __device__
     random_uniform_numbers( long n_particles = 0 );
 
-    #if USE_CUDA
-    __hardware_specifier__d
+    __device__
     void device_rand_init( long n_particles );
-    #endif
 
-    __hardware_specifier__d
+    __hardware_specifier__
     float operator()( int particle_index );
 
   private:

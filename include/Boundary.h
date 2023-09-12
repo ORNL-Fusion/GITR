@@ -60,12 +60,12 @@ class Boundary
     gitr_precision c;
     gitr_precision d;
     gitr_precision plane_norm; //16
-      gitr_precision x3;
-      gitr_precision y3;
-      gitr_precision z3;
-      gitr_precision area;
-      gitr_precision slope_dzdx;
-      gitr_precision intercept_z;
+    gitr_precision x3;
+    gitr_precision y3;
+    gitr_precision z3;
+    gitr_precision area;
+    gitr_precision slope_dzdx;
+    gitr_precision intercept_z;
     gitr_precision periodic_bc_x0;    
     gitr_precision periodic_bc_x1;    
     gitr_precision Z;
@@ -73,9 +73,7 @@ class Boundary
     gitr_precision potential;
     gitr_precision ChildLangmuirDist;
     #ifdef __CUDACC__
-    //curandState streams[7];
     #else
-    //std::mt19937 streams[7];
     #endif
 	
     gitr_precision hitWall;
@@ -112,7 +110,6 @@ class Boundary
     norm = std::sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
     A[1] = 0.0;
     }
-        //std::cout << "surf par calc " << x2 << " " << x1 << " " << norm << std::endl;
         A[0] = (x2-x1)/norm;
         A[2] = (z2-z1)/norm;
 
@@ -161,10 +158,6 @@ class Boundary
     B[0] = Br;
     B[1] = Bt;
     }
-//B[0] = -a/plane_norm;
-//B[1] = -b/plane_norm;
-//B[2] = -c/plane_norm;
-//std::cout << "perp x and z comp " << B[0] << " " << B[2] << std::endl;
     }
     }
     CUDA_CALLABLE_MEMBER
@@ -189,23 +182,5 @@ class Boundary
             C[2] = tmp[2];
 
         }
-//        Boundary(float x1,float y1, float z1, float x2, float y2, float z2,float slope, float intercept, float Z, float amu)
-//		{
-//    
-//		this->x1 = x1;
-//		this->y1 = y1;
-//		this->z1 = z1;
-//        this->x2 = x2;
-//        this->y2 = y2;
-//        this->z2 = z2;        
-//#else
-//        this->slope_dzdx = slope;
-//        this->intercept_z = intercept;
-//#endif
-//		this->Z = Z;
-//		this->amu = amu;
-//		this->hitWall = 0.0;
-//        array1(amu,0.0);
-//        };
 };
 #endif

@@ -7,7 +7,7 @@
 #endif
 
 #include "interp2d.hpp"
-//#include <thrust/device_vector.h>
+#include <thrust/device_vector.h>
 #include <vector>
 #include <cmath>
 
@@ -27,4 +27,4 @@ gitr_precision interpRateCoeff2d ( int charge, gitr_precision x, gitr_precision 
        gitr_precision* tempGridzp, gitr_precision* Tempp,
        gitr_precision* densGridxp,gitr_precision* densGridzp,gitr_precision* Densp,int nT_Rates, int nD_Rates,
        gitr_precision* rateGrid_Temp,gitr_precision* rateGrid_Dens,gitr_precision* Rates,
-       int cylsymm, gitr_precision f_psi );
+       int cylsymm );

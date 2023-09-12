@@ -50,11 +50,11 @@ gitr_precision interpRateCoeff2d ( int charge, gitr_precision x, gitr_precision 
        gitr_precision* tempGridzp, gitr_precision* Tempp,
        gitr_precision* densGridxp,gitr_precision* densGridzp,gitr_precision* Densp,int nT_Rates, int nD_Rates,
        gitr_precision* rateGrid_Temp,gitr_precision* rateGrid_Dens,gitr_precision* Rates,
-       int cylsymm, gitr_precision f_psi )
+       int cylsymm )
 {
     
   gitr_precision tlocal = interp2dCombined( x,y,z,nx,nz,tempGridxp,tempGridzp,Tempp, cylsymm );
-  gitr_precision nlocal = f_psi*interp2dCombined(x,y,z,nx,nz,densGridxp,densGridzp,Densp, cylsymm );
+  gitr_precision nlocal = interp2dCombined(x,y,z,nx,nz,densGridxp,densGridzp,Densp, cylsymm );
   gitr_precision RClocal = rateCoeffInterp(charge,tlocal,nlocal,nT_Rates,nD_Rates,rateGrid_Temp, rateGrid_Dens, Rates);
   gitr_precision tion = 1.0/(RClocal*nlocal);
   if(tlocal == 0.0 || nlocal == 0.0) tion=1.0e12;

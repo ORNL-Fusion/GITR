@@ -56,6 +56,9 @@ public:
   sim::Array<int> tt;
   sim::Array<int> hasLeaked;
   sim::Array<gitr_precision> leakZ;
+  // add species type to particles can 0 for impurity, 1 for deuterium, ...
+  sim::Array<int> species;
+  
 #ifdef __CUDACC__
   sim::Array<curandState> stream_ionize;
 #else
@@ -73,8 +76,8 @@ public:
   sim::Array<gitr_precision> test0;
   sim::Array<gitr_precision> test1;
   sim::Array<gitr_precision> test2;
-  sim::Array<gitr_precision> angle;
-  sim::Array<gitr_precision> max_z;
+  sim::Array<gitr_precision> test3;
+  sim::Array<gitr_precision> test4;
   sim::Array<gitr_precision> distanceTraveled;
   sim::Array<gitr_precision> weight;
   sim::Array<gitr_precision> firstIonizationZ;
@@ -82,12 +85,12 @@ public:
   sim::Array<gitr_precision> dt;
   sim::Array<gitr_precision> time;
   sim::Array<bool> advance;
-  sim::Array<gitr_precision> f_psi;
+
 
   CUDA_CALLABLE_MEMBER
   void setParticle(int indx, gitr_precision x, gitr_precision y, gitr_precision z,
                    gitr_precision Ex, gitr_precision Ey, gitr_precision Ez,
-                   gitr_precision Z, gitr_precision amu, gitr_precision charge) 
+                   gitr_precision Z, gitr_precision amu, gitr_precision charge, int species)
   {
 
     // this->index[indx] = indx;
@@ -118,13 +121,15 @@ public:
       this->vy[indx] = 0.0;
     if (Ez == 0.0)
       this->vz[indx] = 0.0;
+    // species type
+    this->species[indx] = species;
   };
 
   CUDA_CALLABLE_MEMBER
   void setParticleV(int indx, gitr_precision x, gitr_precision y, gitr_precision z,
                     gitr_precision Vx, gitr_precision Vy, gitr_precision Vz,
                     gitr_precision Z, gitr_precision amu, gitr_precision charge,
-                    gitr_precision dt)
+                    gitr_precision dt, int species)
   {
     int indTmp = indx;
     this->index[indx] = indTmp;
@@ -144,6 +149,8 @@ public:
     this->vz[indx] = Vz;
     this->v[indx] = std::sqrt(Vx * Vx + Vy * Vy + Vz * Vz);
     this->dt[indx] = dt;
+    // species type
+    this->species[indx] = species;
   };
 
   CUDA_CALLABLE_MEMBER
@@ -168,8 +175,6 @@ public:
     gitr_precision vdT = this->vD[indx];
     int hlT = this->hasLeaked[indx];
     gitr_precision lzT = this->leakZ[indx];
-    gitr_precision max_zT = this->max_z[indx];
-    gitr_precision angleT = this->angle[indx];
     gitr_precision wT = this->weight[indx];
     gitr_precision hWT = this->hitWall[indx];
     int wIT = this->wallIndex[indx];
@@ -204,8 +209,6 @@ public:
     this->vD[indx] = this->vD[n];
     this->hasLeaked[indx] = this->hasLeaked[n];
     this->leakZ[indx] = this->leakZ[n];
-    this->max_z[indx] = this->max_z[n];
-    this->angle[indx] = this->angle[n];
     this->weight[indx] = this->weight[n];
     this->hitWall[indx] = this->hitWall[n];
     this->wallIndex[indx] = this->wallIndex[n];
@@ -238,8 +241,6 @@ public:
     this->vD[n] = vdT;
     this->hasLeaked[n] = hlT;
     this->leakZ[n] = lzT;
-    this->max_z[n] = max_zT;
-    this->angle[n] = angleT;
     this->weight[n] = wT;
     this->hitWall[n] = hWT;
     this->wallIndex[n] = wIT;
@@ -252,6 +253,10 @@ public:
     this->dt[n] = dt_T;
     this->time[n] = timeT;
     this->advance[n] = advanceT;
+
+    // species type
+    int sT = this->species[indx];
+
   };
   
   CUDA_CALLABLE_MEMBER
@@ -265,33 +270,13 @@ public:
     yprevious{nParticles,0.0},
     zprevious{nParticles,0.0},
     v{nParticles, 0.0},
-    vx{nParticles,std::sqrt(static_cast<gitr_precision>(2.0*getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.energy_eV")*
-          1.602e-19/getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27))*
-          std::cos(getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.theta"))*
-          std::sin(getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.phi"))},
-    vy{nParticles,std::sqrt(static_cast<gitr_precision>(2.0*getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.energy_eV")*
-          1.602e-19/getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27))*
-          std::sin(getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.theta"))*
-          std::sin(getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.phi"))},
-    vz{nParticles,std::sqrt(static_cast<gitr_precision>(2.0*getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.energy_eV")*
-          1.602e-19/getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.impurity_amu")/1.66e-27))*
-          std::cos(getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.phi"))},
+    vx{nParticles,0.0},
+    vy{nParticles,0.0},
+    vz{nParticles,0.0},
     Z{nParticles,0.0},
-    amu{nParticles,getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.impurity_amu")},
-    charge{nParticles,getVariable_cfg<gitr_precision>
-          (cfg,"impurityParticleSource.initialConditions.charge")},
+    species{nParticles,0},
+    amu{nParticles,0.0},
+    charge{nParticles,0.0},
     newVelocity{nParticles},
     nu_s{nParticles},
     vD{nParticles, 0.0},
@@ -310,16 +295,15 @@ public:
     test0{nParticles, 0.0},
     test1{nParticles, 0.0},
     test2{nParticles, 0.0},
-    max_z{nParticles, 0.0},
-    angle{nParticles, 0.0},
+    test3{nParticles, 0.0},
+    test4{nParticles, 0.0},
     distanceTraveled{nParticles,0.0},
     weight{nParticles, 1.0},
     firstIonizationZ{nParticles, 0.0},
     firstIonizationT{nParticles, 0.0},
     dt{nParticles,0.0},
     time{nParticles,0.0},
-    advance{nParticles,false},
-    f_psi{nParticles,1.0} {};
+    advance{nParticles,false} {};
 };
 
 #endif

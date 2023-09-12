@@ -1,5 +1,29 @@
+//------------------------------------------------------------------------------
+// GITR: boris.cpp
+//------------------------------------------------------------------------------
+//
+// Contributors:
+//     - GITR Community
+//
+// Last Modified:
+//     - August 2023 by Diaw
+//     - Add sheathModelType flag to control which sheath model is used
+//
+// Description:
+//     Updates particle position and velocity using the Boris pusher.
+//
+//
+// Note:
+//     This file is a component of the GITR codebase.
+//
+//------------------------------------------------------------------------------
+
+
+
+
 #include "boris.h"
 #include "constants.h"
+#include "sheathModels.h"
 
 /* Are these preprocessor defines necessary? */
 #ifdef __CUDACC__
@@ -87,7 +111,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
          int&  closestBoundaryIndex, int biased_surface, int use_3d_geom, 
-         int geom_hash_sheath, int cylsymm, gitr_precision& f_psi  ) 
+         int geom_hash_sheath, int cylsymm , int sheath_model_type ) 
     {
 
     gitr_precision pot = 0.0;
@@ -366,24 +390,16 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
          {
                  minDistance = distances[index];
                  vectorAssign(normals[index*3], normals[index*3+1],normals[index*3+2], directionUnitVector);
-                 //std::cout << "min dist " << minDistance << std::endl;
-                 //std::cout << "min normal " << normals[index*3] << " " 
-                 //   <<normals[index*3+1] << " " << normals[index*3+2] << std::endl;
-               //closestBoundaryIndex = i;
           closestBoundaryIndex = i;
           minIndex = i;
          }
   }
 
     if(isnan(directionUnitVector[0]) || isnan(directionUnitVector[1]) || isnan(directionUnitVector[2])){
-	    //printf("minDist %f \n", minDistance);
-	    //printf("directionV %f %f %f \n", directionUnitVector[0],directionUnitVector[1],directionUnitVector[2]);
 	    directionUnitVector[0] = 0.0;
 	    directionUnitVector[1] = 0.0;
 	    directionUnitVector[2] = 0.0;
     }
-      //vectorScalarMult(-1.0,directionUnitVector,directionUnitVector);
-      //std::cout << "min dist " << minDistance << std::endl;
     }
     else
     {
@@ -541,8 +557,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
         directionUnitVector[2] = (boundaryVector[minIndex].z2 - z);
     }
 
-    vectorMagnitude = std::sqrt(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
-                                + directionUnitVector[2]*directionUnitVector[2]);
+    vectorMagnitude = std::sqrt(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1] + directionUnitVector[2]*directionUnitVector[2]);
     directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
     directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
     directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
@@ -557,34 +572,28 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     angle = boundaryVector[minIndex].angle;    
     fd  = boundaryVector[minIndex].fd;
     pot = boundaryVector[minIndex].potential;
-        gitr_precision debyeLength = boundaryVector[minIndex].debyeLength;
-        gitr_precision larmorRadius = boundaryVector[minIndex].larmorRadius;
-        Emag = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength))+ (1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
-        gitr_precision part1 = pot*(fd/(2.0 * boundaryVector[minIndex].debyeLength)*exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)));
-        gitr_precision part2 = pot*(1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius);
-        f_psi = fd*(1.0-std::exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)))+ (1.0 - fd)*(1.0     -std::exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
+    gitr_precision debyeLength = boundaryVector[minIndex].debyeLength;
+    gitr_precision larmorRadius = boundaryVector[minIndex].larmorRadius;
+
+    // get the magnitude of the sheath electric field
+    Emag = sheathModel(sheath_model_type, minDistance, boundaryVector, minIndex);
+
+
     }
         /* Captain! This appears to be skipped? */
     if(minDistance == 0.0 || boundaryVector[minIndex].larmorRadius == 0.0)
     {
         Emag = 0.0;
-        f_psi = 0.0;
         directionUnitVector[0] = 0.0;
         directionUnitVector[1] = 0.0;
         directionUnitVector[2] = 0.0;
 
     }
         
-	Er = Emag*directionUnitVector[0];
-        Et = Emag*directionUnitVector[1];
-        E[2] = Emag*directionUnitVector[2];
-        //std::cout << "Emag " << Emag << std::endl;
-        //std::cout << "Min dist " << minDistance << std::endl;
-        //std::cout << "r " << x << "z " << z << std::endl;
-        //std::cout << "E components " << Er << " " << Et << " " << E[2] << std::endl;
-        //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
-    
-    //std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
+    Er = Emag*directionUnitVector[0];
+    Et = Emag*directionUnitVector[1];
+    E[2] = Emag*directionUnitVector[2];
+
     if( use_3d_geom > 0 )
     {
             E[0] = Er;
@@ -596,7 +605,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
      {
             //if cylindrical geometry
             gitr_precision theta = std::atan2(y,x0);
-  
             E[0] = std::cos(theta)*Er - std::sin(theta)*Et;
             E[1] = std::sin(theta)*Er + std::cos(theta)*Et;
     }
@@ -605,9 +613,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
             E[0] = Er;
             E[1] = Et;
     }
-    }
-            //std::cout << "Ex and Ey and Ez " << E[0] << " " << E[1] << " " << E[2] << std::endl;
-   
+    }   
       return minDistance;
 }
 
@@ -648,7 +654,8 @@ move_boris::move_boris(
   int geom_hash_sheath_,
   int use_3d_geom_,
   int cylsymm_,
-  gitr_precision _max_dt)
+  gitr_precision _max_dt,
+  int sheath_model_type_)
 
   : 
   particlesPointer(_particlesPointer),
@@ -688,7 +695,8 @@ move_boris::move_boris(
         biased_surface( biased_surface_ ),
         geom_hash_sheath( geom_hash_sheath_ ),
         use_3d_geom( use_3d_geom_ ),
-        cylsymm( cylsymm_ )
+        cylsymm( cylsymm_ ),
+        sheath_model_type( sheath_model_type_ )
         {}
 
 CUDA_CALLABLE_MEMBER    
@@ -729,7 +737,6 @@ void move_boris::operator()(std::size_t indx)
   gitr_precision half_dt = 0.5*dt;
   gitr_precision new_dt = 0.0;
   gitr_precision new_advance = false;
-  gitr_precision f_psi = 1.0;
   if( sheath_efield > 0 )
   {
   minDist = getE(position[0], position[1], position[2],
@@ -738,33 +745,12 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  biased_surface, use_3d_geom, geom_hash_sheath, cylsymm, f_psi  );
-      if (gitr_flags->USE_SHEATH_DENSITY)
-      {
-        particlesPointer->f_psi[indx] = f_psi;
-      }
-
+                  biased_surface, use_3d_geom, geom_hash_sheath, cylsymm, sheath_model_type  );
   }
 
   if( presheath_efield > 0 )
   {
-/*
-#if LC_INTERP==3
-              
-	        //gitr_precision PSE2[3] = {0.0, 0.0, 0.0};
-                 interp3dVector(PSE,position[0], position[1], position[2],nR_Efield,nY_Efield,nZ_Efield,
-                     EfieldGridRDevicePointer,EfieldGridYDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-                     EfieldZDevicePointer,EfieldTDevicePointer);
-//E[0]= E[0] + PSE[0];
-//E[1]= E[1] + PSE[1];
-//E[2]= E[2] + PSE[2];
-                 vectorAdd(E,PSE,E);
-              //gitr_precision a = interp3d(position[0], position[1], position[2],nR_Efield,nY_Efield,nZ_Efield,
-                //                EfieldGridRDevicePointer,EfieldGridYDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer);
-              //PSE[0] = 1.23;
 
-#else
-*/
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
                      EfieldZDevicePointer,EfieldTDevicePointer, cylsymm );
@@ -778,7 +764,7 @@ void move_boris::operator()(std::size_t indx)
   Bmag = vectorNorm(B);
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
 
-  gitr_precision radians_per_dt = gyrofrequency*dt;
+  // print B field and E field
   //q_prime = 9.572528104401468e7*particlesPointer->charge[indx] / particlesPointer->amu[indx] * dt * 0.5;
   /* Captain! original code above, new code below. q_prime = q * dt / ( 2 * m ) */
   q_prime = particlesPointer->charge[ indx ] * gitr_constants::electron_volt * dt * 0.5 /
@@ -821,7 +807,6 @@ void move_boris::operator()(std::size_t indx)
      v[2] = v_h[2] + qpE[2];
   //if(indx == 0){
   //printf("qprime qpexyz %.16e %.16e %.16e %.16e ",q_prime, qpE[0], qpE[1],qpE[2]);
-
   //////printf("vhxyz %.16e %.16e %.16e ",v_h[0], v_h[1], v_h[2]);
   //////printf("vmxyz %.16e %.16e %.16e ",v_minus[0], v_minus[1], v_minus[2]);
   ////printf("xyz %.16e %.16e %.16e ",position0[0], position0[1], position0[2]);
@@ -873,7 +858,7 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  biased_surface, use_3d_geom, geom_hash_sheath, cylsymm, f_psi  );
+                  biased_surface, use_3d_geom, geom_hash_sheath, cylsymm, sheath_model_type  );
   }
 
   if( presheath_efield > 0 )
@@ -981,11 +966,6 @@ void move_boris::operator()(std::size_t indx)
           particlesPointer->vx[indx] = v[0];
           particlesPointer->vy[indx] = v[1];
           particlesPointer->vz[indx] = v[2];    
-          particlesPointer->angle[indx] = particlesPointer->angle[indx] + radians_per_dt;
-          if(particlesPointer->z[indx] > particlesPointer->max_z[indx])
-          {
-            particlesPointer->max_z[indx] = particlesPointer->z[indx];
-          }
       }
   }
 
@@ -1032,7 +1012,7 @@ for ( int s=0; s<nSteps; s++ )
 #endif
     if( sheath_efield > 0 )
     {
-    minDist = getE(r[0],r[1],r[2],E,boundaryVector,nLines);
+    minDist = getE(r[0],r[1],r[2],E,boundaryVector,nLines, sheath_model_type);
     }
 
     if( presheath_efield > 0 )
@@ -1091,7 +1071,7 @@ for ( int s=0; s<nSteps; s++ )
 
 if( sheath_efield > 0 )
 {
-    minDist = getE(r2[0],r2[1],r2[2],E,boundaryVector,nLines);
+    minDist = getE(r2[0],r2[1],r2[2],E,boundaryVector,nLines, sheath_model_type);
 }
 if( presheath_efield > 0 )
 {
@@ -1149,7 +1129,7 @@ if( presheath_efield > 0 )
 
 if( sheath_efield > 0 )
 {
-    minDist = getE(r3[0],r3[1],r3[2],E,boundaryVector,nLines);
+    minDist = getE(r3[0],r3[1],r3[2],E,boundaryVector,nLines, sheath_model_type);
 }
 
 if( presheath_efield > 0 )
@@ -1206,7 +1186,7 @@ if( presheath_efield > 0 )
 
   if( sheath_efield > 0 )
   {
-	minDist = getE(r4[0],r4[1],r4[2],E,boundaryVector,nLines);
+	minDist = getE(r4[0],r4[1],r4[2],E,boundaryVector,nLines, sheath_model_type);
   }
   if( presheath_efield > 0 )
   {

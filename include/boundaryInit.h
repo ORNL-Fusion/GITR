@@ -96,7 +96,6 @@ struct boundary_init {
     }
     else
     {
-
         midpointx = 0.5*(b.x2 - b.x1)+ b.x1;
         midpointy = 0.0;
         midpointz = 0.5*(b.z2 - b.z1) + b.z1;
@@ -106,8 +105,7 @@ struct boundary_init {
         b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, cylsymm );
         b.te = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, cylsymm );
         gitr_precision B[3] = {0.0,0.0,0.0};
-interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
-                 bfieldGridz,bfieldR,bfieldZ,bfieldT, cylsymm );
+        interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr, bfieldGridz,bfieldR,bfieldZ,bfieldT, cylsymm );
         gitr_precision norm_B = vectorNorm(B);
         gitr_precision theta;
     if( use_3d_geom )
@@ -137,18 +135,18 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
     }
         b.angle = theta*180.0/3.14159265359;
         b.debyeLength = std::sqrt(8.854187e-12*b.te/(b.ne*std::pow(background_Z,2)*1.60217662e-19));
-	//std::cout << "debyeLength " << b.debyeLength << std::endl;
+
 	gitr_precision angle = b.angle;
   gitr_precision me = 1.0/2000.0;
-  std::cout << "me " << me << " " << background_amu << " " << b.ti << " " << b.te << std::endl; 
+
 	gitr_precision sheath_fac = std::abs(0.5*std::log((2*M_PI*me/background_amu)*(1+b.ti/b.te)));
 	gitr_precision norm = std::acos(std::pow(std::exp(1),-sheath_fac));
 	gitr_precision fd = 1.0+std::log(std::cos(angle/90.0*norm))/sheath_fac;
 	if(fd < 0.0) fd = 0.0;
-  if(b.te <= 0.0) fd = 0.0;
-	if(b.te <= 0.0) sheath_fac = 0.0;
+	if(b.te <= 0.0) fd = 0.0;
+        if(b.te <= 0.0) sheath_fac = 0.0;
 	b.fd = fd;
-  std::cout << "fd " << fd << " " << sheath_fac << std::endl; 
+
 	if(b.ne == 0.0) b.debyeLength = 1.0e12;
         b.larmorRadius = 1.44e-4*std::sqrt(background_amu*b.ti/2)/(background_Z*norm_B);
         b.flux = 0.25*b.density*std::sqrt(8.0*b.ti*1.602e-19/(3.1415*background_amu));
@@ -156,10 +154,6 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         if( biased_surface )
         {
         b.potential = potential;
-        //gitr_precision cs = std::sqrt(2*b.ti*1.602e-19/(1.66e-27*background_amu));
-        //gitr_precision jsat_ion = 1.602e-19*b.density*cs;
-        //b.ChildLangmuirDist = 2.0/3.0*std::pow(2*1.602e-19/(background_amu*1.66e-27),0.25)
-        //*std::pow(potential,0.75)/(2.0*std::sqrt(3.1415*jsat_ion))*1.055e-5;
         if(b.te > 0.0)
         {
           b.ChildLangmuirDist = b.debyeLength*std::pow(std::abs(b.potential)/b.te,0.75);
@@ -171,8 +165,8 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         else if( surface_potential <= 0 )
         {
         b.potential = sheath_fac*b.te;
-        std::cout << "Surface number " << b.surfaceNumber << " has te and potential " 
-                  << b.te << " " << b.potential << std::endl; 
+        // std::cout << "Surface number " << b.surfaceNumber << " has te and potential " 
+                //   << b.te << " " << b.potential << std::endl; 
         }
         //if(b.Z > 0.0)
         //{

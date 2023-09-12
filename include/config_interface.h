@@ -237,7 +237,9 @@ class use final : public config_module_base
     compatibility_check,
     surface_potential,
     cylsymm,
-    sort
+    sort,
+    sheath_model_type,
+    nspecies
   };
 
   use( class libconfig_string_query const &query,
