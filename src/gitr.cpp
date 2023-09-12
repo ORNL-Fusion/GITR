@@ -284,7 +284,7 @@ int main(int argc, char **argv, char **envp) {
 
   // Arrays used for reduction at end of sim
   sim::Array<gitr_precision> grossDeposition(nSurfaces , 0.0);
-  sim::Array<gitr_precision> grossErosion(nSurfaces , 0.0);
+  sim::Array<gitr_precision> grossErosion(nSurfaces * nspecies , 0.0);
   sim::Array<gitr_precision> sumWeightStrike(nSurfaces , 0.0);
   sim::Array<gitr_precision> energyDistribution(nSurfaces  * nEdist * nAdist, 0.0);
   sim::Array<gitr_precision> reflDistribution(nSurfaces  * nEdist * nAdist, 0.0);
@@ -2220,9 +2220,9 @@ if( presheath_interp == 1 )
     storeParticleData(base_filename, particleArray, nP);
 
     // 2. store surface data
-    if( surface_model > 0 || flux_ea > 0 )
-    {ParticleErosionToSurface(boundaries.data(), nLines, grossErosion.data(), nSurfaces, surfaces, nEdist, nAdist, nspecies);
-    }
+    // if( surface_model > 0 || flux_ea > 0 )
+    // {ParticleErosionToSurface(boundaries.data(), nLines, grossErosion.data(), nSurfaces, surfaces, nEdist, nAdist, nspecies);
+    // }
     //3. store particle history 
   if( particle_tracks > 0 ){
         writeParticleDataHistories(

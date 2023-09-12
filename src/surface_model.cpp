@@ -59,7 +59,6 @@ void reflection::processParticleHit(std::size_t indx) const {
     gitr_precision E0_for_flux_binning = 0.0;
     gitr_precision thetaImpact = 0.0;
     gitr_precision surfaceNormalVector[3] = {0.0};
-    int wallIndex = 0;
     gitr_precision Y0 = 0.0;
     gitr_precision R0 = 0.0;
     gitr_precision totalYR = 0.0;
@@ -67,23 +66,10 @@ void reflection::processParticleHit(std::size_t indx) const {
     gitr_precision eInterpVal = 0.0;
     gitr_precision aInterpVal = 0.0;
     gitr_precision weight = particles->weight[indx];
-    int AdistInd = 0;
-    int EdistInd = 0;
-    gitr_precision dEdist;
-    gitr_precision dAdist;
-    
-
-    if( flux_ea > 0 )
-    {
-      dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
-      dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
-    }
 
     particles->firstCollision[indx] = 1;
-
     // get surface data 
     std::pair<gitr_precision, gitr_precision> incidentParticleEnergyAngle = computeIncidentParticleEnergyAngle(particles, indx, use_3d_geom, cylsymm, surfaceNormalVector);
-
     E0_for_surface_model = incidentParticleEnergyAngle.first;
     thetaImpact = incidentParticleEnergyAngle.second;
     E0_for_flux_binning = E0_for_surface_model;
@@ -104,178 +90,62 @@ void reflection::processParticleHit(std::size_t indx) const {
       Y0 = 0.0;
       R0 = 0.0;
     }
-
     totalYR = Y0 + R0;
+    
+    // get random values for device
+    gitr_precision randomReflector = getRandomValueForDevice(indx);
+    gitr_precision randomSputter = getRandomValueForDevice(indx);
+    gitr_precision randomReflectAngle = getRandomValueForDevice(indx);
+    gitr_precision randomSputterAngle = getRandomValueForDevice(indx);
 
-#ifdef __CUDACC__
-    gitr_precision r7 = curand_uniform(&state[indx]);
-    gitr_precision r8 = curand_uniform(&state[indx]);
-    gitr_precision r9 = curand_uniform(&state[indx]);
-    gitr_precision r10 = curand_uniform(&state[indx]);
-#else
-    std::uniform_real_distribution<double> dist(0.0, 1.0);
-    gitr_precision r7 = dist(state[indx]);
-    gitr_precision r8 = dist(state[indx]);
-    gitr_precision r9 = dist(state[indx]);
-    gitr_precision r10 = dist(state[indx]);
-#endif
     //particle either reflects or deposits
     gitr_precision sputtProb = Y0/totalYR;
-    
     int didReflect = 0;
-            
-    if(totalYR > 0.0)
-    {
-      if(r7 > sputtProb) //reflects
-      {
+    
+    if ( reflectionEvent( randomReflector,  sputtProb,  totalYR)){
         didReflect = 1;
-        aInterpVal = interp3d(r8, thetaImpact, std::log10(E0_for_surface_model),
+        aInterpVal = interp3d(randomReflector, thetaImpact, std::log10(E0_for_surface_model),
                       nA_sputtRefDistOut, nA_sputtRefDistIn, nE_sputtRefDistIn,
                       angleDistGrid01.data(), A_sputtRefDistIn.data(),
                       E_sputtRefDistIn.data(), ADist_CDF_R_regrid.data());
 
-        eInterpVal = interp3d(r9, thetaImpact, std::log10(E0_for_surface_model),
+        eInterpVal = interp3d(randomReflectAngle, thetaImpact, std::log10(E0_for_surface_model),
                       nE_sputtRefDistOutRef, nA_sputtRefDistIn, nE_sputtRefDistIn,
                       energyDistGrid01Ref.data(), A_sputtRefDistIn.data(),
                       E_sputtRefDistIn.data(), EDist_CDF_R_regrid.data());
          newWeight = weight*(totalYR);
-        if( flux_ea > 0 )
+
+        //reflect with weight and new initial conditions
+        if (boundaryVector[wallHit].Z > 0.0 && newWeight > 0.0)
         {
-        EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
-        AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
-        if((EdistInd >= 0) && (EdistInd < nEdist) && 
-           (AdistInd >= 0) && (AdistInd < nAdist))
+          reflect(particles, indx, newWeight, eInterpVal, aInterpVal, boundaryVector, wallHit, use_3d_geom, cylsymm, randomSputterAngle, surfaceNormalVector);      
+        } 
+        else 
         {
-        #if USE_CUDA > 0
-              atomicAdd1(&surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd],newWeight);
-        #else      
-              surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
-                surfaces->reflDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
-        #endif
+          particles->hitWall[indx] = 2.0;
+        } 
+        if(eInterpVal <= 0.0)
+        {       
+          newWeight = 0.0;
+          particles->hitWall[indx] = 2.0;
         }
-        }
-        if(surface > 0)
-        {
-        #if USE_CUDA > 0
-                atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*(1.0-R0));
-                atomicAdd1(&surfaces->grossErosion[surfaceHit ],weight*Y0);
-        #else
-                surfaces->grossDeposition[surfaceHit ] += ( weight*(1.0-R0) );
-                surfaces->grossErosion[surfaceHit] += ( weight * Y0 );
-        #endif
-        }
-      }
-      else //sputters
-      {
-        aInterpVal = interp3d(r8,thetaImpact,std::log10(E0_for_surface_model),
+
+    }
+    if ( sputteringEvent( randomReflector,  sputtProb,  totalYR)){
+        aInterpVal = interp3d(randomReflector,thetaImpact,std::log10(E0_for_surface_model),
                 nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                 angleDistGrid01.data(),A_sputtRefDistIn.data(),
                 E_sputtRefDistIn.data(),AphiDist_CDF_Y_regrid.data());
-        eInterpVal = interp3d(r9,thetaImpact,std::log10(E0_for_surface_model),
+        eInterpVal = interp3d(randomReflectAngle,thetaImpact,std::log10(E0_for_surface_model),
                  nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
                  energyDistGrid01.data(),A_sputtRefDistIn.data(),E_sputtRefDistIn.data(),EDist_CDF_Y_regrid.data());
- 
         newWeight=weight*totalYR;
-             sputter( boundaryVector, wallHit, particles, indx, aInterpVal, r10, newWeight, nspecies, use_3d_geom, cylsymm, surfaceNormalVector);
-      if( flux_ea > 0 )
-      {
-        EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
-        AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
-        if((EdistInd >= 0) && (EdistInd < nEdist) && 
-           (AdistInd >= 0) && (AdistInd < nAdist))
-        {
-        #if USE_CUDA > 0
-              atomicAdd1(&surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd],newWeight);
-        #else      
-              surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
-              surfaces->sputtDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  newWeight;
-        #endif 
-        }
-      }
+        sputter( boundaryVector, wallHit, particles, indx, aInterpVal, randomSputterAngle, newWeight, nspecies, use_3d_geom, cylsymm, surfaceNormalVector);
+    
         if(sputtProb == 0.0) newWeight = 0.0;
-        if(surface > 0)
-        {
-        #if USE_CUDA > 0
-          atomicAdd1(&surfaces->grossDeposition[surfaceHit ],weight*(1.0-R0));
-          atomicAdd1(&surfaces->grossErosion[surfaceHit],weight*Y0);
-          atomicAdd1(&surfaces->aveSputtYld[surfaceHit],Y0);
-          if(weight > 0.0)
-          {
-              atomicAdd1(&surfaces->sputtYldCount[surfaceHit],1.0);
-          }
-        #else
-          surfaces->grossDeposition[surfaceHit ] = surfaces->grossDeposition[surfaceHit ]+weight*(1.0-R0);
-          surfaces->grossErosion[surfaceHit ] = surfaces->grossErosion[surfaceHit] + weight*Y0;
-          surfaces->aveSputtYld[surfaceHit ] = surfaces->aveSputtYld[surfaceHit] + Y0;
-          surfaces->sputtYldCount[surfaceHit] = surfaces->sputtYldCount[surfaceHit] + 1;
-        #endif
-        }
       }
-    }
-    else
-    {       
-      newWeight = 0.0;
-      particles->hitWall[indx] = 2.0;
-      if(surface > 0)
-      {
-        #if USE_CUDA > 0
-                atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight);
-        #else
-                surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
-        #endif
-	    }
-    }
-    if(eInterpVal <= 0.0)
-    {       
-      newWeight = 0.0;
-      particles->hitWall[indx] = 2.0;
-      if(surface > 0)
-      {
-      #if USE_CUDA > 0
-              atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight*R0);
-              atomicAdd1(&surfaces->grossDeposition[surfaceHit],-weight*Y0);
-      #else
-              surfaces->grossDeposition[surfaceHit ] = surfaces->grossDeposition[surfaceHit ]+weight;
-      #endif
-		  }
-    }
-    if(surface)
-    {
-    #if USE_CUDA > 0
-        atomicAdd1(&surfaces->sumWeightStrike[surfaceHit ],weight);
-        atomicAdd1(&surfaces->sumParticlesStrike[surfaceHit ],1.0);
-    #else
-        surfaces->sumWeightStrike[surfaceHit ] =surfaces->sumWeightStrike[surfaceHit ] +weight;
-        surfaces->sumParticlesStrike[surfaceHit ] = surfaces->sumParticlesStrike[surfaceHit ]+1;
-    #endif
-    if( flux_ea > 0 )
-    {
-        EdistInd = std::floor((E0_for_flux_binning-E0dist)/dEdist);
-        AdistInd = std::floor((thetaImpact-A0dist)/dAdist);
-      
-	      if((EdistInd >= 0) && (EdistInd < nEdist) && 
-        (AdistInd >= 0) && (AdistInd < nAdist))
-        {
-#if USE_CUDA > 0
-          atomicAdd1(&surfaces->energyDistribution[surfaceHit*nEdist*nAdist +   EdistInd*nAdist + AdistInd], weight);
-#else
-
-          surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] = 
-          surfaces->energyDistribution[surfaceHit*nEdist*nAdist + EdistInd*nAdist + AdistInd] +  weight;
-#endif
-        }
-    }
-      }
-      //reflect with weight and new initial conditions
-    if (boundaryVector[wallHit].Z > 0.0 && newWeight > 0.0)
-    {
-      reflect(particles, indx, newWeight, eInterpVal, aInterpVal, boundaryVector, wallHit, use_3d_geom, cylsymm, r10, surfaceNormalVector);      
-    } 
-    else 
-    {
-      particles->hitWall[indx] = 2.0;
-    } 
-  }  
+      // deposit particle check
+  }
 
 std::pair<std::string, std::string> reflection::getMaterials(int wallHit, std::size_t indx) const {
     std::string targetMaterial = materialData[boundaryVector[wallHit].Z].name;  
@@ -290,7 +160,7 @@ void reflection::printMaterials(const std::string& incidentMaterial, const std::
 
 void reflection::reflect(Particles* particles, int indx, gitr_precision newWeight, gitr_precision eInterpVal, gitr_precision aInterpVal, 
              Boundary* boundaryVector, int wallHit, bool use_3d_geom, bool cylsymm,
-             gitr_precision r10, gitr_precision* surfaceNormalVector) const
+             gitr_precision randomSputterAngle, gitr_precision* surfaceNormalVector) const
 {
     printf("Reflecting!");
     particles->weight[indx] = newWeight;
@@ -301,8 +171,8 @@ void reflection::reflect(Particles* particles, int indx, gitr_precision newWeigh
     particles->newVelocity[indx] = V0;
 
     gitr_precision vSampled[3];
-    vSampled[0] = V0 * std::sin(aInterpVal * M_PI / 180) * std::cos(2.0 * M_PI * r10);
-    vSampled[1] = V0 * std::sin(aInterpVal * M_PI / 180) * std::sin(2.0 * M_PI * r10);
+    vSampled[0] = V0 * std::sin(aInterpVal * M_PI / 180) * std::cos(2.0 * M_PI * randomSputterAngle);
+    vSampled[1] = V0 * std::sin(aInterpVal * M_PI / 180) * std::sin(2.0 * M_PI * randomSputterAngle);
     vSampled[2] = V0 * std::cos(aInterpVal * M_PI / 180);
 
     boundaryVector[wallHit].transformToSurface(vSampled, particles->y[indx], particles->x[indx], use_3d_geom, cylsymm);
@@ -325,7 +195,7 @@ void reflection::sputter(
     Particles* particles,
     int indx,
     gitr_precision aInterpVal,
-    gitr_precision r10,
+    gitr_precision randomSputterAngle,
     gitr_precision newWeight,
     int nspecies,
     bool use_3d_geom,
@@ -339,8 +209,8 @@ void reflection::sputter(
     gitr_precision Eb = materialData[boundaryVector[wallHit].Z].surfaceBindingEnergy; 
     gitr_precision vTh = std::sqrt(2.0 * Eb * 11600. / (particles->amu[indx] * 1.66e-27));
     gitr_precision vSampled[3];
-    vSampled[0] = vTh * std::sin(aInterpVal * M_PI / 180) * std::cos(2.0 * M_PI * r10);
-    vSampled[1] = vTh * std::sin(aInterpVal * M_PI/ 180) * std::sin(2.0 * M_PI * r10);
+    vSampled[0] = vTh * std::sin(aInterpVal * M_PI / 180) * std::cos(2.0 * M_PI * randomSputterAngle);
+    vSampled[1] = vTh * std::sin(aInterpVal * M_PI/ 180) * std::sin(2.0 * M_PI * randomSputterAngle);
     vSampled[2] = vTh * std::cos(aInterpVal * M_PI / 180);
     
     // set particle properties
@@ -407,3 +277,20 @@ std::pair<gitr_precision, gitr_precision> reflection::computeIncidentParticleEne
     return std::make_pair(E0_for_surface_model, thetaImpact);
 }
 
+
+gitr_precision reflection::getRandomValueForDevice(int indx) const{
+std::uniform_real_distribution<double> dist(0.0, 1.0);
+#ifdef __CUDACC__
+    return curand_uniform(&state[indx]);
+#else
+    return dist(state[indx]);
+#endif
+}
+
+bool reflection::reflectionEvent(gitr_precision randomReflector, gitr_precision sputtProb, gitr_precision totalYR) const {
+    return totalYR > 0.0 && randomReflector > sputtProb;
+}
+
+bool reflection::sputteringEvent(gitr_precision randomReflector, gitr_precision sputtProb, gitr_precision totalYR) const {
+    return totalYR > 0.0 && randomReflector < sputtProb;
+}
