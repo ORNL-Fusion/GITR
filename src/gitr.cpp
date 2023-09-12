@@ -181,10 +181,8 @@ int main(int argc, char **argv, char **envp) {
     getVariable(cfg, "geometry.fileString", geomFile);
     std::cout << "Open geometry file " << input_path + geomFile << std::endl;
     importLibConfig(cfg_geom, input_path + geomFile);
-
     std::cout << "Successfully staged input and geometry file " << std::endl;
 
-// check binary compatibility with input file
   }
   auto gitr_flags = new Flags(cfg);
     std::cout << "gitr flags " << gitr_flags->USE_IONIZATION << std::endl;
@@ -385,7 +383,6 @@ int main(int argc, char **argv, char **envp) {
      nZ_closeGeomTotal<< std::endl;
   }
   }
-
 
 std::vector<std::string> hashFile;
 if( geom_hash > 1 )
@@ -874,7 +871,6 @@ if( GENERATE_LC > 0 )
   for (int j = 0; j < nY_Lc; j++) {
     gridYLc[j] = y0_Lc + j * dy_Lc;
   }
-//#endif
     }
   gitr_precision dr_Lc = (r1_Lc - r0_Lc) / (nR_Lc - 1);
   for (int i = 0; i < nR_Lc; i++) {
@@ -890,13 +886,12 @@ if( GENERATE_LC > 0 )
               << std::endl;
     exit(0);
   }
-  // for(size_t i = 0; i < world_size; i++) {
   std::pair<size_t, size_t> pair{world_rank * nTracers / world_size,
                                  (world_rank + 1) * nTracers / world_size};
   std::cout << "Group " << (world_rank + 1) << ": [" << pair.first << ","
             << pair.second << ") - " << (pair.second - pair.first)
             << " elements." << std::endl;
-  //}
+
   std::cout << "Creating tracer particles" << std::endl;
   thrust::counting_iterator<std::size_t> lcBegin(pair.first);
   thrust::counting_iterator<std::size_t> lcEnd(pair.second - 1);
@@ -914,9 +909,7 @@ if( GENERATE_LC > 0 )
     }
     else
     {
-//#else
         addIndex = i + k * nR_Lc;
-//#endif
     }
         forwardTracerParticles->setParticle(addIndex, gridRLc[i], gridYLc[j],
                                             gridZLc[k], 0.0, 0.0, 0.0, 0, 0.0,
@@ -1088,20 +1081,19 @@ if( GENERATE_LC > 0 )
   //}
 }
 
-if( LC_INTERP > 1 )
-{
-  std::cout << "Importing pre-existing connection length file" << std::endl;
-  getVariable(cfg, connLengthCfg + "fileString", lcFile);
-  getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "gridRString",
-                 gridRLc);
-  getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "gridYString",
-                 gridYLc);
-  getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "gridZString",
-                 gridZLc);
-  getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "LcString", Lc);
-  getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "SString", s);
-}
-
+  if( LC_INTERP > 1 )
+  {
+    std::cout << "Importing pre-existing connection length file" << std::endl;
+    getVariable(cfg, connLengthCfg + "fileString", lcFile);
+    getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "gridRString",
+                  gridRLc);
+    getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "gridYString",
+                  gridYLc);
+    getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "gridZString",
+                  gridZLc);
+    getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "LcString", Lc);
+    getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "SString", s);
+  }
 
   // Background Plasma Temperature Initialization
   int nR_Temp = 1;
@@ -1110,24 +1102,22 @@ if( LC_INTERP > 1 )
   int n_Temp = 1;
   std::string tempCfg = "backgroundPlasmaProfiles.Temperature.";
   std::string tempFile;
-if(temp_interp > 0 )
-{
-
-    getVariable(cfg, tempCfg + "fileString", tempFile);
-    nR_Temp =
-        getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNrString");
-        if(temp_interp > 1 )
-        {
-    nZ_Temp =
-        getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNzString");
-        }
-        if( temp_interp > 2 )
-        {
-    nY_Temp =
-        getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNyString");
-        }
-}
-
+  if(temp_interp > 0 )
+  {
+      getVariable(cfg, tempCfg + "fileString", tempFile);
+      nR_Temp =
+          getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNrString");
+          if(temp_interp > 1 )
+          {
+      nZ_Temp =
+          getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNzString");
+          }
+          if( temp_interp > 2 )
+          {
+      nY_Temp =
+          getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNyString");
+          }
+  }
 
   sim::Array<gitr_precision> TempGridr(nR_Temp), TempGridz(nZ_Temp), TempGridy(nY_Temp);
   n_Temp = nR_Temp * nY_Temp * nZ_Temp;
@@ -1140,24 +1130,18 @@ if(temp_interp > 0 )
     }
     else
     {
-  getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridRString",
-                 TempGridr[0]);
+  getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridRString", TempGridr[0]);
   if( temp_interp > 1 )
   {
-  getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridZString",
-                 TempGridz[0]);
+  getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridZString", TempGridz[0]);
   }
   if( temp_interp > 2 )
   {
-  getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridYString",
-                 TempGridy[0]);
+  getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridYString", TempGridy[0]);
   }
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "IonTempString", ti[0]);
-  getVarFromFile(cfg, input_path + tempFile, tempCfg, "ElectronTempString",
-                 te[0]);
+  getVarFromFile(cfg, input_path + tempFile, tempCfg, "ElectronTempString",  te[0]);
     }
-
-
   gitr_precision testVec = 0.0;
   testVec = interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),
                              TempGridz.data(), ti.data(), cylsymm );
@@ -1186,7 +1170,6 @@ if(temp_interp > 0 )
         getDimFromFile(cfg, input_path + densFile, densCfg, "gridNyString");
         }
   }
-
   sim::Array<gitr_precision> DensGridr(nR_Dens), DensGridz(nZ_Dens), DensGridy(nY_Dens);
   n_Dens = nR_Dens * nY_Dens * nZ_Dens;
   sim::Array<gitr_precision> ni(n_Dens), ne(n_Dens);
@@ -1285,7 +1268,6 @@ if( density_interp == 0 )
     }
   }
 
-
   gitr_precision surroundingMinimumR = 0.0;
   gitr_precision surroundingMinimumY = 0.0;
   gitr_precision surroundingMinimumZ = 0.0;
@@ -1330,9 +1312,6 @@ if( flowv_interp == 1 )
 #endif
 
       for (int j = 0; j < nZ_Lc; j++) {
-        // std::cout << "debug here 1 " << i << " " << j << std::endl;
-        // std::cout << "debug here 2 " << flowVGridr[i] << " " << thisY << " "
-        //    << flowVGridz[j] << " " << nR_Temp << " "<<nZ_Temp << std::endl;
         teLocal = interp2dCombined(flowVGridr[i], thisY, flowVGridz[j], nR_Temp,
                                    nZ_Temp, &TempGridr.front(),
                                    &TempGridz.front(), &te.front(), cylsymm );
@@ -1352,7 +1331,6 @@ if( flowv_interp == 1 )
 
 #if LC_INTERP == 3
         index = i + k * nR_Lc + j * nR_Lc * nY_Lc;
-        // std::cout << "flowv calc index " << index << std::endl;
 #else
       index = i + j * nR_Lc;
 #endif
@@ -1591,7 +1569,6 @@ if( flowv_interp == 1 )
 
   if( presheath_efield > 0 )
   {
-
   std::cout << "Using presheath Efield " << std::endl;
   if( presheath_interp == 1 )
   {
@@ -1651,7 +1628,7 @@ if( flowv_interp == 1 )
                  "toroidalComponentString", PSEt[0]);
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "axialComponentString",
                  PSEz[0]);
-    }
+  }
 if( presheath_interp == 1 )
 {
 
@@ -1694,7 +1671,6 @@ if( presheath_interp == 1 )
 #if LC_INTERP == 3
         index1 = i + k * nR_PreSheathEfield +
                  j * nR_PreSheathEfield * nY_PreSheathEfield;
-        // std::cout << "flowv calc index " << index << std::endl;
 #else
       index1 = i + j * nR_PreSheathEfield;
 #endif
@@ -1786,64 +1762,6 @@ if( presheath_interp == 1 )
   sim::Array<gitr_precision> Efieldr(nR_Bfield * nZ_Bfield),
       Efieldz(nR_Bfield * nZ_Bfield), Efieldt(nR_Bfield * nZ_Bfield),
       minDist(nR_Bfield * nZ_Bfield);
-
-  /* Captain! Likely dead block below */
-  if( sheath_efield > 0 )
-  {
-    gitr_precision thisE0[3] = {0.0, 0.0, 0.0};
-    gitr_precision minDist0 = 0.0;
-    int minInd_bnd = 0;
-    for (int i = 0; i < 1000; i++) {
-        minDist0 =
-            getE(0.0, 0.0, 1.0E-6*i, thisE0, boundaries.data(),
-                nLines,
-                nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
-                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
-                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-                &closeGeom_sheath.front(), minInd_bnd, biased_surface,
-                use_3d_geom, geom_hash_sheath, cylsymm, sheath_model_type);
-    }
-
-    if( efield_interp == 2 )
-      {
-      int nR_dtsEfield, nZ_dtsEfield;
-
-      int d1 = read_profileNs(
-          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNrString"),
-          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridNzString"),
-          nR_dtsEfield, nZ_dtsEfield);
-
-      sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
-      sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
-
-      int d2 = read_profile1d(
-          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridRString"),
-          dtsEfieldGridr);
-
-      int d3 = read_profile1d(
-          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.gridZString"),
-          dtsEfieldGridz);
-
-      int d4 = read_profile2d(
-          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.fileString"),
-          cfg.lookup("backgroundPlasmaProfiles.dtsEfield.sheathDTS"), dtsE);
-      }
-  }
-  else
-  {
-  int nR_dtsEfield = 1;
-  int nZ_dtsEfield = 1;
-  sim::Array<gitr_precision> dtsEfieldGridr(nR_dtsEfield), dtsEfieldGridz(nZ_dtsEfield);
-  sim::Array<gitr_precision> dtsE(nR_dtsEfield * nZ_dtsEfield);
-  }
-
-  std::string outnameEfieldR = "EfieldR.m";
-  std::string outnameEfieldZ = "EfieldZ.m";
-  std::string outnameEfieldT = "EfieldT.m";
-  std::string outnameMinDist = "DistToSurface.m";
 
   gitr_precision netX0 = 0.0;
   gitr_precision netX1 = 0.0;
@@ -2041,48 +1959,19 @@ if( presheath_interp == 1 )
   sim::Array<gitr_precision> positionHistoryX(nHistories);
   sim::Array<gitr_precision> positionHistoryXgather(nHistories, 0.0);
   sim::Array<gitr_precision> positionHistoryY(nHistories);
-  sim::Array<gitr_precision> positionHistoryYgather(nHistories);
   sim::Array<gitr_precision> positionHistoryZ(nHistories);
-  sim::Array<gitr_precision> positionHistoryZgather(nHistories);
   sim::Array<gitr_precision> velocityHistory(nHistories);
   sim::Array<gitr_precision> velocityHistoryX(nHistories);
   sim::Array<gitr_precision> velocityHistoryY(nHistories);
   sim::Array<gitr_precision> velocityHistoryZ(nHistories);
-  sim::Array<gitr_precision> velocityHistorygather(nHistories);
-  sim::Array<gitr_precision> velocityHistoryXgather(nHistories);
-  sim::Array<gitr_precision> velocityHistoryYgather(nHistories);
-  sim::Array<gitr_precision> velocityHistoryZgather(nHistories);
   sim::Array<gitr_precision> chargeHistory(nHistories);
-  sim::Array<gitr_precision> chargeHistoryGather(nHistories);
     sim::Array<gitr_precision> ZHistory(nHistories);
-  sim::Array<gitr_precision> ZHistoryGather(nHistories);
   sim::Array<gitr_precision> weightHistory(nHistories);
-  sim::Array<gitr_precision> weightHistoryGather(nHistories);
-
-  if( particle_tracks > 0 )
-  {
-    for (int i = 0; i < world_size; i++) {
-      pDisplacement[i] = pStartIndx[i] * nHistoriesPerParticle;
-      pHistPerNode[i] = nPPerRank[i] * nHistoriesPerParticle;
-    }
-  const int *displ = &pDisplacement[0];
-  const int *phpn = &pHistPerNode[0];
-  std::cout << "History array length " << nHistories << std::endl;
-  }
-
-  gitr_precision *finalPosX = new gitr_precision[nP];
-  gitr_precision *finalPosY = new gitr_precision[nP];
-  gitr_precision *finalPosZ = new gitr_precision[nP];
-  gitr_precision *finalVx = new gitr_precision[nP];
-  gitr_precision *finalVy = new gitr_precision[nP];
-  gitr_precision *finalVz = new gitr_precision[nP];
-  gitr_precision *transitTime = new gitr_precision[nP];
-  gitr_precision *hitWall = new gitr_precision[nP];
 
   std::cout << "Beginning random number seeds" << std::endl;
   std::uniform_real_distribution<gitr_precision> dist(0, 1e6);
-  thrust::counting_iterator<std::size_t> particleBegin(pStartIndx[world_rank]);
-  thrust::counting_iterator<std::size_t> particleEnd(pStartIndx[world_rank] + nActiveParticlesOnRank[world_rank] );
+  thrust::counting_iterator<std::size_t> particleBegin(0);
+  thrust::counting_iterator<std::size_t> particleEnd( nP); 
   thrust::counting_iterator<std::size_t> particleOne(1);
   thrust::counting_iterator<std::size_t> particleZero(0);
   auto randInitStart_clock = gitr_time::now();
@@ -2224,40 +2113,15 @@ if( presheath_interp == 1 )
 
 
   auto start_clock = gitr_time::now();
-  std::chrono::duration<gitr_precision> fs1 = start_clock - gitr_start_clock;
-  printf("Initialize time for node %i          is %6.3f (secs) \n", world_rank,
-         fs1.count());
-  gitr_precision testFlowVec[3] = {0.0};
-  if( field_aligned_values > 0 )
-  {
-  interpFieldAlignedVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV,
-                           nZ_flowV, flowVGridr.data(), flowVGridz.data(),
-                           flowVr.data(), flowVz.data(), flowVt.data(),
-                           nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-                           bfieldGridz.data(), br.data(), bz.data(), by.data(), cylsymm );
-  }
-  else
-  {
-  interp2dVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV, nZ_flowV,
-                 flowVGridr.data(), flowVGridz.data(), flowVr.data(),
-                 flowVz.data(), flowVt.data(), cylsymm );
-  }
 
   gitr_precision leakZ = 0.0;
   if (world_rank == 0) {
-
     std::string diagnosticCfg = "diagnostics.";
-
     getVariable(cfg, diagnosticCfg + "leakZ", leakZ);
   }
-
   for (int i = 0; i < nP; i++)
     particleArray->leakZ[i] = leakZ;
-
-  std::cout << "Flow velocities " << testFlowVec[0] << " " << testFlowVec[1]
-            << " " << testFlowVec[2] << std::endl;
  
-
   std::cout << "Starting main loop" << std::endl;
   // Main time loop
 #if __CUDACC__
@@ -2357,7 +2221,7 @@ if( presheath_interp == 1 )
 
     // 2. store surface data
     if( surface_model > 0 || flux_ea > 0 )
-    {ParticleErosionToSurface(boundaries.data(), nLines, grossErosion.data(), nSurfaces, surfaces, nEdist, nAdist);
+    {ParticleErosionToSurface(boundaries.data(), nLines, grossErosion.data(), nSurfaces, surfaces, nEdist, nAdist, nspecies);
     }
     //3. store particle history 
   if( particle_tracks > 0 ){
