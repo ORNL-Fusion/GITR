@@ -60,8 +60,8 @@
 // AD
 #include <numeric> 
 #include "getParticleData.h"
-//#include "surfaceReact.h"
 #include "materials.h"
+#include "diagnostics.h"
 #ifdef __CUDACC__
 #include <curand.h>
 #include <curand_kernel.h>
@@ -90,8 +90,6 @@ using namespace netCDF;
 
 #include <vector>
 #include <netcdf>
-
-
 
 
 #if USE_DOUBLE
@@ -3474,77 +3472,65 @@ if( presheath_interp == 1 )
         grossErosion[surfIndex] = grossErosion[surfIndex] + 1.0;
       }
     }
+    // define the output file name
+    std::string base_filename = "positions.nc";
+    storeParticleData(base_filename, particleArray, nP);
     
-    ofstream outfile2;
-    outfile2.open("output/positions.m");
-    for (int i = 1; i < nP + 1; i++) {
-      outfile2 << "Pos( " << i << ",:) = [ ";
-      outfile2 << particleArray->x[i - 1] << " " << particleArray->y[i - 1]
-               << " " << particleArray->z[i - 1] << " ];" << std::endl;
-    }
-    outfile2.close();
+  //   ofstream outfile2;
+  //   outfile2.open("output/positions.m");
+  //   for (int i = 1; i < nP + 1; i++) {
+  //     outfile2 << "Pos( " << i << ",:) = [ ";
+  //     outfile2 << particleArray->x[i - 1] << " " << particleArray->y[i - 1]
+  //              << " " << particleArray->z[i - 1] << " ];" << std::endl;
+  //   }
+  //   outfile2.close();
 
-    // Write netCDF output for positions
-    netCDF::NcFile ncFile0("output/positions.nc", netCDF::NcFile::replace);
-    netCDF::NcDim nc_nP0 = ncFile0.addDim("nP", nP);
-    vector<netCDF::NcDim> dims0;
-    dims0.push_back(nc_nP0);
+  //   // Write netCDF output for positions
+  //   netCDF::NcFile ncFile0("output/positions.nc", netCDF::NcFile::replace);
+  //   netCDF::NcDim nc_nP0 = ncFile0.addDim("nP", nP);
+  //   vector<netCDF::NcDim> dims0;
+  //   dims0.push_back(nc_nP0);
 
-    netCDF::NcVar nc_x0 = ncFile0.addVar("x", netcdf_precision, dims0);
-    netCDF::NcVar nc_y0 = ncFile0.addVar("y", netcdf_precision, dims0);
-    netCDF::NcVar nc_z0 = ncFile0.addVar("z", netcdf_precision, dims0);
-    netCDF::NcVar nc_vx0 = ncFile0.addVar("vx", netcdf_precision, dims0);
-    netCDF::NcVar nc_vy0 = ncFile0.addVar("vy", netcdf_precision, dims0);
-    netCDF::NcVar nc_vz0 = ncFile0.addVar("vz", netcdf_precision, dims0);
-    netCDF::NcVar nc_trans0 = ncFile0.addVar("transitTime", netcdf_precision, dims0);
-    netCDF::NcVar nc_impact0 = ncFile0.addVar("hitWall", netcdf_precision, dims0);
-    netCDF::NcVar nc_surfHit0 = ncFile0.addVar("surfaceHit", netCDF::ncInt, dims0);
-    netCDF::NcVar nc_weight0 = ncFile0.addVar("weight", netcdf_precision, dims0);
-    netCDF::NcVar nc_charge0 = ncFile0.addVar("charge", netcdf_precision, dims0);
-    netCDF::NcVar nc_leak0 = ncFile0.addVar("hasLeaked", netCDF::ncInt, dims0);
-    netCDF::NcVar nc_dist0 = ncFile0.addVar("distTraveled", netcdf_precision, dims0);
-    netCDF::NcVar nc_time0 = ncFile0.addVar("time", netcdf_precision, dims0);
-    netCDF::NcVar nc_dt0 = ncFile0.addVar("dt", netcdf_precision, dims0);
-    // add mass and Z
-    netCDF::NcVar nc_mass0 = ncFile0.addVar("amu", netcdf_precision, dims0);
-    netCDF::NcVar nc_Z0 = ncFile0.addVar("Z", netcdf_precision, dims0);
-    // species type
-    netCDF::NcVar nc_species0 = ncFile0.addVar("species", netCDF::ncInt, dims0);
-#if USE_MPI > 0
-    nc_x0.putVar(&xGather[0]);
-    nc_y0.putVar(&yGather[0]);
-    nc_z0.putVar(&zGather[0]);
-    nc_vx0.putVar(&vxGather[0]);
-    nc_vy0.putVar(&vyGather[0]);
-    nc_vz0.putVar(&vzGather[0]);
-    nc_trans0.putVar(&particleArray->transitTime[0]);
-    nc_impact0.putVar(&hitWallGather[0]);
-    nc_surfHit0.putVar(&surfaceHitGather[0]);
-    nc_weight0.putVar(&weightGather[0]);
-    nc_charge0.putVar(&chargeGather[0]);
-    nc_leak0.putVar(&hasLeakedGather[0]);
-#else
-  std::cout << "not using mpi output" << std::endl;
-  nc_x0.putVar(&particleArray->xprevious[0]);
-  nc_y0.putVar(&particleArray->yprevious[0]);
-  nc_z0.putVar(&particleArray->zprevious[0]);
-  nc_vx0.putVar(&particleArray->vx[0]);
-  nc_vy0.putVar(&particleArray->vy[0]);
-  nc_vz0.putVar(&particleArray->vz[0]);
-  nc_trans0.putVar(&particleArray->transitTime[0]);
-  nc_impact0.putVar(&particleArray->hitWall[0]);
-  nc_surfHit0.putVar(&particleArray->surfaceHit[0]);
-  nc_weight0.putVar(&particleArray->weight[0]);
-  nc_charge0.putVar(&particleArray->charge[0]);
-  nc_leak0.putVar(&particleArray->hasLeaked[0]);
-  nc_dist0.putVar(&particleArray->distTraveled[0]);
-  nc_time0.putVar(&particleArray->time[0]);
-  nc_dt0.putVar(&particleArray->dt[0]);
-  nc_mass0.putVar(&particleArray->amu[0]);
-  nc_Z0.putVar(&particleArray->Z[0]);
-  nc_species0.putVar(&particleArray->species[0]);
-#endif
-    ncFile0.close();
+  //   netCDF::NcVar nc_x0 = ncFile0.addVar("x", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_y0 = ncFile0.addVar("y", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_z0 = ncFile0.addVar("z", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_vx0 = ncFile0.addVar("vx", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_vy0 = ncFile0.addVar("vy", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_vz0 = ncFile0.addVar("vz", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_trans0 = ncFile0.addVar("transitTime", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_impact0 = ncFile0.addVar("hitWall", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_surfHit0 = ncFile0.addVar("surfaceHit", netCDF::ncInt, dims0);
+  //   netCDF::NcVar nc_weight0 = ncFile0.addVar("weight", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_charge0 = ncFile0.addVar("charge", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_leak0 = ncFile0.addVar("hasLeaked", netCDF::ncInt, dims0);
+  //   netCDF::NcVar nc_dist0 = ncFile0.addVar("distTraveled", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_time0 = ncFile0.addVar("time", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_dt0 = ncFile0.addVar("dt", netcdf_precision, dims0);
+  //   // add mass and Z
+  //   netCDF::NcVar nc_mass0 = ncFile0.addVar("amu", netcdf_precision, dims0);
+  //   netCDF::NcVar nc_Z0 = ncFile0.addVar("Z", netcdf_precision, dims0);
+  //   // species type
+  //   netCDF::NcVar nc_species0 = ncFile0.addVar("species", netCDF::ncInt, dims0);
+  // std::cout << "not using mpi output" << std::endl;
+  // nc_x0.putVar(&particleArray->xprevious[0]);
+  // nc_y0.putVar(&particleArray->yprevious[0]);
+  // nc_z0.putVar(&particleArray->zprevious[0]);
+  // nc_vx0.putVar(&particleArray->vx[0]);
+  // nc_vy0.putVar(&particleArray->vy[0]);
+  // nc_vz0.putVar(&particleArray->vz[0]);
+  // nc_trans0.putVar(&particleArray->transitTime[0]);
+  // nc_impact0.putVar(&particleArray->hitWall[0]);
+  // nc_surfHit0.putVar(&particleArray->surfaceHit[0]);
+  // nc_weight0.putVar(&particleArray->weight[0]);
+  // nc_charge0.putVar(&particleArray->charge[0]);
+  // nc_leak0.putVar(&particleArray->hasLeaked[0]);
+  // nc_dist0.putVar(&particleArray->distTraveled[0]);
+  // nc_time0.putVar(&particleArray->time[0]);
+  // nc_dt0.putVar(&particleArray->dt[0]);
+  // nc_mass0.putVar(&particleArray->amu[0]);
+  // nc_Z0.putVar(&particleArray->Z[0]);
+  // nc_species0.putVar(&particleArray->species[0]);
+  //   ncFile0.close();
   if( surface_model > 0 || flux_ea > 0 )
   {
 //// FIXME -- dump surface file --> fix flattening arrays
