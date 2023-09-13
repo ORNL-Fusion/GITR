@@ -65,6 +65,26 @@ struct reflection {
 
 CUDA_CALLABLE_MEMBER_DEVICE
 void operator()(std::size_t indx) const;
-    
+
+void processParticleHit(std::size_t indx) const;
+void printMaterials(const std::string& incidentMaterial, const std::string& targetMaterial) const;
+std::pair<std::string, std::string> getMaterials(int wallHit, std::size_t indx) const;
+
+void reflect(Particles* particles, int indx, gitr_precision newWeight, gitr_precision eInterpVal, gitr_precision aInterpVal, 
+             Boundary* boundaryVector, int wallHit, bool use_3d_geom, bool cylsymm,
+             gitr_precision r10, gitr_precision* surfaceNormalVector) const;
+
+void sputter(Boundary* boundaryVector, int wallHit,Particles* particles,int indx,gitr_precision aInterpVal,
+    gitr_precision r10, gitr_precision newWeight,int nspecies,    bool use_3d_geom, bool cylsymm,
+    const gitr_precision* surfaceNormalVector) const;
+
+std::pair<gitr_precision, gitr_precision> computeIncidentParticleEnergyAngle(Particles* particles, int indx, int use_3d_geom, int cylsymm, gitr_precision* surfaceNormalVector) const;
+
+gitr_precision getRandomValueForDevice(int indx) const;
+bool sputteringEvent(gitr_precision randomReflector, gitr_precision sputtProb, gitr_precision totalYR) const;
+bool reflectionEvent(gitr_precision randomReflector, gitr_precision sputtProb, gitr_precision totalYR) const;
+
 };
+
+
 #endif

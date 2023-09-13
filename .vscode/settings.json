@@ -70,6 +70,7 @@
         "compare": "cpp",
         "concepts": "cpp",
         "numeric": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "filesystem": "cpp"
     }
 }

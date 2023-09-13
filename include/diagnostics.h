@@ -99,55 +99,68 @@ void storeParticleData(const std::string& base_filename, Particles *particleArra
 
 }
 
+
 void ParticleErosionToSurface(Boundary* boundaries, int nLines, gitr_precision* grossErosion, 
-    int nSurfaces, Surfaces* surfaces, int nEdist, int nAdist)
+    int nSurfaces, Surfaces* surfaces, int nEdist, int nAdist, int nSpecies)
 {
-// add initial particle erosion to surface counting
-
-        int nSpecies = 0;
-        std::vector<int> surfaceNumbers(nSurfaces, 0);
-        int srf = 0;
-        for (int i = 0; i < nLines; i++) {
+    // Create a vector for surface numbers
+    std::vector<int> surfaceNumbers(nSurfaces * nSpecies, 0);
+    int srf = 0;
+    for (int i = 0; i < nLines; i++) {
         if (boundaries[i].surface) {
-            surfaceNumbers[srf] = i;
-
-            surfaces->grossErosion[srf] = surfaces->grossErosion[srf] + grossErosion[srf];
-            srf = srf + 1;
+            for (int species = 0; species < nSpecies; species++) {
+                int idx = i * nSpecies + species; // Calculate index based on data layout
+                surfaceNumbers[srf] = i;
+                surfaces->grossErosion[idx] += grossErosion[idx];
+                srf++;
+            }
         }
-        }  
-        netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
-        netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
-        vector<netCDF::NcDim> dims1;
-        dims1.push_back(nc_nLines);
+    }  
 
-        vector<netCDF::NcDim> dimsSurfE;
-        dimsSurfE.push_back(nc_nLines);
+    try {
+        netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
+
+        // Define dimensions
+        netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
+        netCDF::NcDim nc_nSpecies = ncFile1.addDim("nSpecies", nSpecies);
+        std::vector<netCDF::NcDim> dims1 = {nc_nSpecies, nc_nLines};
+
+        // Create more dimensions for energy and angle distribution
         netCDF::NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);
         netCDF::NcDim nc_nAngles = ncFile1.addDim("nAngles", nAdist);
-        dimsSurfE.push_back(nc_nEnergies);
-        dimsSurfE.push_back(nc_nAngles);
-        netCDF::NcVar nc_grossDep = ncFile1.addVar("grossDeposition", netcdf_precision, nc_nLines);
-        netCDF::NcVar nc_grossEro = ncFile1.addVar("grossErosion", netcdf_precision, nc_nLines);
-        netCDF::NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", netcdf_precision, nc_nLines);
-        netCDF::NcVar nc_spylCounts = ncFile1.addVar("spylCounts", netCDF::ncInt, nc_nLines);
-        netCDF::NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", netCDF::ncInt, nc_nLines);
-        netCDF::NcVar nc_sumParticlesStrike = ncFile1.addVar("sumParticlesStrike", netCDF::ncInt, nc_nLines);
-        netCDF::NcVar nc_sumWeightStrike = ncFile1.addVar("sumWeightStrike", netcdf_precision, nc_nLines);
+        std::vector<netCDF::NcDim> dimsSurfE = {nc_nLines, nc_nEnergies, nc_nAngles};
+
+        // Define variables
+        netCDF::NcVar nc_grossDep = ncFile1.addVar("grossDeposition", netcdf_precision, dims1);
+        netCDF::NcVar nc_grossEro = ncFile1.addVar("grossErosion", netcdf_precision, dims1);
+        netCDF::NcVar nc_aveSpyl = ncFile1.addVar("aveSpyl", netcdf_precision, dims1);
+        netCDF::NcVar nc_spylCounts = ncFile1.addVar("spylCounts", netCDF::ncInt, dims1);
+        netCDF::NcVar nc_surfNum = ncFile1.addVar("surfaceNumber", netCDF::ncInt, dims1);
+        netCDF::NcVar nc_sumParticlesStrike = ncFile1.addVar("sumParticlesStrike", netCDF::ncInt, dims1);
+        netCDF::NcVar nc_sumWeightStrike = ncFile1.addVar("sumWeightStrike", netcdf_precision, dims1);
+        netCDF::NcVar nc_surfEDist = ncFile1.addVar("surfEDist", netcdf_precision, dimsSurfE);
+        netCDF::NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", netcdf_precision, dimsSurfE);
+        netCDF::NcVar nc_surfSputtDist = ncFile1.addVar("surfSputtDist", netcdf_precision, dimsSurfE);
+
+        // Write data to file
         nc_grossDep.putVar(&surfaces->grossDeposition[0]);
-        nc_surfNum.putVar(&surfaceNumbers[0]);
+        nc_surfNum.putVar(surfaceNumbers.data());
         nc_grossEro.putVar(&surfaces->grossErosion[0]);
         nc_aveSpyl.putVar(&surfaces->aveSputtYld[0]);
         nc_spylCounts.putVar(&surfaces->sputtYldCount[0]);
         nc_sumParticlesStrike.putVar(&surfaces->sumParticlesStrike[0]);
         nc_sumWeightStrike.putVar(&surfaces->sumWeightStrike[0]);
-        netCDF::NcVar nc_surfEDist = ncFile1.addVar("surfEDist", netcdf_precision, dimsSurfE);
-        netCDF::NcVar nc_surfReflDist = ncFile1.addVar("surfReflDist", netcdf_precision, dimsSurfE);
-        netCDF::NcVar nc_surfSputtDist = ncFile1.addVar("surfSputtDist", netcdf_precision, dimsSurfE);
         nc_surfEDist.putVar(&surfaces->energyDistribution[0]);
         nc_surfReflDist.putVar(&surfaces->reflDistribution[0]);
         nc_surfSputtDist.putVar(&surfaces->sputtDistribution[0]);
+
+        // Close the NetCDF file
         ncFile1.close();
     }
+    catch (netCDF::exceptions::NcException& e) {
+        std::cerr << "NetCDF Error: " << e.what() << std::endl;
+    }
+}
 
 
 
@@ -201,8 +214,6 @@ void writeParticleDataHistories(
         ncFile_hist.close();
     }
 
-
-
 void writeSpecData(
     int nBins, 
     int net_nX, 
@@ -248,11 +259,6 @@ void writeSpecData(
     nc_n.putVar(&net_Bins[0]);
     ncFile.close();
 }
-
-
-#include <netcdf>
-#include <vector>
-#include <iostream>
 
 void writeParticleSourceFile(
     int nP,

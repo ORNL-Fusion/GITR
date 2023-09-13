@@ -17,5 +17,7 @@ double constexpr  e = 1.60217662e-19;  // electron charge SI units
 
 double constexpr  m_e = 9.10938356e-31; // electron mass SI units
 
+double constexpr m_p =  1.660539066605e-27;
+
 
 }

@@ -603,7 +603,6 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
     {
      if( cylsymm > 0 )
      {
-            //if cylindrical geometry
             gitr_precision theta = std::atan2(y,x0);
             E[0] = std::cos(theta)*Er - std::sin(theta)*Et;
             E[1] = std::sin(theta)*Er + std::cos(theta)*Et;
@@ -756,7 +755,6 @@ void move_boris::operator()(std::size_t indx)
                      EfieldZDevicePointer,EfieldTDevicePointer, cylsymm );
                  
   vectorAdd(E,PSE,E);
-              //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
   }
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
@@ -764,11 +762,7 @@ void move_boris::operator()(std::size_t indx)
   Bmag = vectorNorm(B);
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
 
-  // print B field and E field
-  //q_prime = 9.572528104401468e7*particlesPointer->charge[indx] / particlesPointer->amu[indx] * dt * 0.5;
-  /* Captain! original code above, new code below. q_prime = q * dt / ( 2 * m ) */
-  q_prime = particlesPointer->charge[ indx ] * gitr_constants::electron_volt * dt * 0.5 /
-            ( particlesPointer->amu[ indx ] * gitr_constants::dalton );
+   q_prime = particlesPointer->charge[ indx ] * gitr_constants::electron_volt * dt * 0.5 / ( particlesPointer->amu[ indx ] * gitr_constants::dalton );
 
     coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
 
@@ -783,18 +777,12 @@ void move_boris::operator()(std::size_t indx)
      v_minus[0] = v[0] + qpE[0];
      v_minus[1] = v[1] + qpE[1];
      v_minus[2] = v[2] + qpE[2];
-    //this->electricForce[0] = 2.0*qpE[0];
-    //this->electricForce[1] = 2.0*qpE[1];
-    //this->electricForce[2] = 2.0*qpE[2];
-    
+
     //v_prime = v_minus + q_prime*(v_minus x B)
     vectorCrossProduct(v_minus,B,vmxB);
     vectorScalarMult(q_prime,vmxB,qp_vmxB);
     vectorAdd(v_minus,qp_vmxB,v_prime);       
-    //this->magneticForce[0] = qp_vmxB[0];
-    //this->magneticForce[1] = qp_vmxB[1];
-    //this->magneticForce[2] = qp_vmxB[2];
-     
+
      //v = v_minus + coeff*(v_prime x B)
      vectorCrossProduct(v_prime, B, vpxB);
      vectorScalarMult(coeff,vpxB,c_vpxB);
@@ -805,17 +793,6 @@ void move_boris::operator()(std::size_t indx)
      v[0] = v_h[0] + qpE[0];
      v[1] = v_h[1] + qpE[1];
      v[2] = v_h[2] + qpE[2];
-  //if(indx == 0){
-  //printf("qprime qpexyz %.16e %.16e %.16e %.16e ",q_prime, qpE[0], qpE[1],qpE[2]);
-  //////printf("vhxyz %.16e %.16e %.16e ",v_h[0], v_h[1], v_h[2]);
-  //////printf("vmxyz %.16e %.16e %.16e ",v_minus[0], v_minus[1], v_minus[2]);
-  ////printf("xyz %.16e %.16e %.16e ",position0[0], position0[1], position0[2]);
-  ////printf("vxyz %.16e %.16e %.16e ",v[0], v[1], v[2]);
-  ////printf("vmxyz %.16e %.16e %.16e ",v_minus[0], v_minus[1], v_minus[2]);
-  ////printf("vpxyz %.16e %.16e %.16e ",v_prime[0], v_prime[1], v_prime[2]);
-  ////printf("vpxBxyz %.16e %.16e %.16e ",vpxB[0], vpxB[1], vpxB[2]);
-  ////printf("c_vpxBxyz %.16e %.16e %.16e \n",c_vpxB[0], c_vpxB[1], c_vpxB[2]);
-  //}
 	       
   if(gitr_flags->USE_ADAPTIVE_DT)
   {
@@ -968,273 +945,6 @@ void move_boris::operator()(std::size_t indx)
           particlesPointer->vz[indx] = v[2];    
       }
   }
-
 #endif
 
-#if ODEINT == 1
-        gitr_precision m = particlesPointer->amu[indx]*1.6737236e-27;
-        gitr_precision q_m = particlesPointer->charge[indx]*1.60217662e-19/m;
-        gitr_precision r[3]= {0.0, 0.0, 0.0};
-        gitr_precision r2[3]= {0.0, 0.0, 0.0};
-        gitr_precision r3[3]= {0.0, 0.0, 0.0};
-        gitr_precision r4[3]= {0.0, 0.0, 0.0};
-        gitr_precision v2[3]= {0.0, 0.0, 0.0};
-        gitr_precision v3[3]= {0.0, 0.0, 0.0};
-        gitr_precision v4[3]= {0.0, 0.0, 0.0};
-        gitr_precision k1r[3]= {0.0, 0.0, 0.0};
-        gitr_precision k2r[3]= {0.0, 0.0, 0.0};
-        gitr_precision k3r[3]= {0.0, 0.0, 0.0};
-        gitr_precision k4r[3]= {0.0, 0.0, 0.0};
-        gitr_precision k1v[3]= {0.0, 0.0, 0.0};
-        gitr_precision k2v[3]= {0.0, 0.0, 0.0};
-        gitr_precision k3v[3]= {0.0, 0.0, 0.0};
-        gitr_precision k4v[3]= {0.0, 0.0, 0.0};
-        gitr_precision dtqm = dt*q_m;
-        gitr_precision vxB[3] = {0.0,0.0,0.0};
-        gitr_precision EplusvxB[3] = {0.0,0.0,0.0};
-        gitr_precision halfKr[3] = {0.0,0.0,0.0};
-        gitr_precision halfKv[3] = {0.0,0.0,0.0};
-        gitr_precision half = 0.5;
-                v[0] = particlesPointer->vx[indx];
-                v[1] = particlesPointer->vy[indx];
-	              v[2] = particlesPointer->vz[indx];
-
-                r[0] = particlesPointer->xprevious[indx];
-                r[1] = particlesPointer->yprevious[indx];
-	              r[2] = particlesPointer->zprevious[indx];
-#ifdef __CUDACC__
-#else
-#endif
-for ( int s=0; s<nSteps; s++ ) 
-    {
-#ifdef __CUDACC__
-#else
-#endif
-    if( sheath_efield > 0 )
-    {
-    minDist = getE(r[0],r[1],r[2],E,boundaryVector,nLines, sheath_model_type);
-    }
-
-    if( presheath_efield > 0 )
-    {
-    interparticlesPointer->dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
-          EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
-          EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter);
-                 
-    vectorAdd(E,particlesPointer->E,E);
-    }
-#ifdef __CUDACC__
-#else
-#endif
-    interp2dVector(&B[0],r[0],r[1],r[2],nR_Bfield,nZ_Bfield,
-               BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-               BfieldZDevicePointer,BfieldTDevicePointer);        
-#ifdef __CUDACC__
-#else
-#endif
-    //k1r = dt*v
-    vectorScalarMult(dt,v,k1r);
-    /*
-    k1r[0] = v[0]*dt;
-    k1r[1] = v[1]*dt;
-    k1r[2] = v[2]*dt;
-    */
-    //k1v = dt*q_m * (E + (v x B))
-    vectorCrossProduct(v,B,vxB);
-    vectorAdd(E,vxB,EplusvxB);
-    vectorScalarMult(dtqm,EplusvxB,k1v);
-    /*
-    k1v[0] = dt*q_m*(E[0] + (v[1]*B[2] - v[2]*B[1]));
-    k1v[1] = dt*q_m*(E[1] + (v[2]*B[0] - v[0]*B[2]));
-    k1v[2] = dt*q_m*(E[2] + (v[0]*B[1] - v[1]*B[0]));
-    */
-    //r2 = r + 0.5*k1r
-    vectorScalarMult(half,k1r,halfKr);
-    vectorAdd(r,k1r,r2);
-    /*
-    r2[0] = r[0] + k1r[0]*0.5;
-    r2[1] = r[1] + k1r[1]*0.5;
-    r2[2] = r[2] + k1r[2]*0.5;
-    */
-
-    //v2 = v + 0.5*k1v
-    vectorScalarMult(half,k1v,halfKv);
-    vectorAdd(v, halfKv,v2);
-        /*
-    v2[0] = v[0] + k1v[0]*0.5;
-    v2[1] = v[1] + k1v[1]*0.5;
-    v2[2] = v[2] + k1v[2]*0.5;
-    */
-#ifdef __CUDACC__
-#else
-#endif
-
-if( sheath_efield > 0 )
-{
-    minDist = getE(r2[0],r2[1],r2[2],E,boundaryVector,nLines, sheath_model_type);
-}
-if( presheath_efield > 0 )
-{
-    interparticlesPointer->dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
-               EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
-               EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter);
-    vectorAdd(E,particlesPointer->E,E);
-}
-#ifdef __CUDACC__
-#else
-#endif
-
-
-    interp2dVector(&B[0],r2[0],r2[1],r2[2],nR_Bfield,nZ_Bfield,
-             BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-             BfieldZDevicePointer,BfieldTDevicePointer);        
-#ifdef __CUDACC__
-#else
-#endif
-    //k2r = dt*v2
-    vectorScalarMult(dt,v2,k2r);
-    /*
-    k2r[0] = v2[0]*dt;
-    k2r[1] = v2[1]*dt;
-    k2r[2] = v2[2]*dt;
-    */
-    //k2v = dt*q_m*(E + (v x B))
-    vectorCrossProduct(v2,B,vxB);
-    vectorAdd(E,vxB,EplusvxB);
-    vectorScalarMult(dtqm,EplusvxB,k2v);
-    /*
-    k2v[0] = dt*q_m*(E[0] + (v2[1]*B[2] - v2[2]*B[1]));
-    k2v[1] = dt*q_m*(E[1] + (v2[2]*B[0] - v2[0]*B[2]));
-    k2v[2] = dt*q_m*(E[2] + (v2[0]*B[1] - v2[1]*B[0]));
-    */
-    //r3 = r + 0.5*k2r
-    vectorScalarMult(half,k2r,halfKr);
-    vectorAdd(r,k2r,r3);
-    /*
-    r3[0] = r[0] + k2r[0]*0.5;
-    r3[1] = r[1] + k2r[1]*0.5;
-    r3[2] = r[2] + k2r[2]*0.5;
-    */
-    //v3 = v + 0.5*k2v
-    vectorScalarMult(half,k2v,halfKv);
-    vectorAdd(v, halfKv,v3);
-    /*
-    v3[0] = v[0] + k2v[0]*0.5;
-    v3[1] = v[1] + k2v[1]*0.5;
-    v3[2] = v[2] + k2v[2]*0.5;
-    */
-#ifdef __CUDACC__
-#else
-#endif
-
-if( sheath_efield > 0 )
-{
-    minDist = getE(r3[0],r3[1],r3[2],E,boundaryVector,nLines, sheath_model_type);
-}
-
-if( presheath_efield > 0 )
-{
-    interparticlesPointer->dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
-               EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
-               EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter);
-    vectorAdd(E,particlesPointer->E,E);
-}
-
-#ifdef __CUDACC__
-#else
-#endif
-    interp2dVector(&B[0],r3[0],r3[1],r3[2],nR_Bfield,nZ_Bfield,
-                 BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                 BfieldZDevicePointer,BfieldTDevicePointer);        
-                
-#ifdef __CUDACC__
-#else
-#endif
-    //k3r = dt*v3
-    vectorScalarMult(dt,v3,k3r);
-    /*
-    k3r[0] = v3[0]*dt;
-    k3r[1] = v3[1]*dt;
-    k3r[2] = v3[2]*dt;
-    */
-    //k3v = dt*qm*(E + (v x B))
-    vectorCrossProduct(v3,B,vxB);
-    vectorAdd(E,vxB,EplusvxB);
-    vectorScalarMult(dtqm,EplusvxB,k3v);
-    /*
-    k3v[0] = dt*q_m*(E[0] + (v3[1]*B[2] - v3[2]*B[1]));
-    k3v[1] = dt*q_m*(E[1] + (v3[2]*B[0] - v3[0]*B[2]));
-    k3v[2] = dt*q_m*(E[2] + (v3[0]*B[1] - v3[1]*B[0]));
-    */
-    //r4 = r + k3r
-    vectorAdd(r, k3r,r4);
-    /*
-    r4[0] = r[0] + k3r[0];
-    r4[1] = r[1] + k3r[1];
-    r4[2] = r[2] + k3r[2];
-    */
-    //v4 = v + k3v
-    vectorAdd(v, k3v, v4);
-        /*
-    v4[0] = v[0] + k3v[0];
-    v4[1] = v[1] + k3v[1];
-    v4[2] = v[2] + k3v[2];
-    */
-#ifdef __CUDACC__
-#else
-#endif
-
-  if( sheath_efield > 0 )
-  {
-	minDist = getE(r4[0],r4[1],r4[2],E,boundaryVector,nLines, sheath_model_type);
-  }
-  if( presheath_efield > 0 )
-  {
-   interp2dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
-               EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
-               EfieldZDeviceparticlesPointer->inter,EfieldTDeviceparticlesPointer->inter);
-    vectorAdd(E,particlesPointer->E,E);
-  }
-#ifdef __CUDACC__
-#else
-#endif
-
-    interp2dVector(&B[0],r4[0],r4[1],r4[2],nR_Bfield,nZ_Bfield,
-                        BfieldGridRDevicePointer,BfieldGridZDevicePointer,
-                        BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer);        
-#ifdef __CUDACC__
-#else
-#endif
-
-    //k4r = dt*v4
-    vectorScalarMult(dt,v4,k4r);
-    /*
-   k4r[0] = v4[0]*dt;
-   k4r[1] = v4[1]*dt;
-   k4r[2] = v4[2]*dt;
-   */
-    //k4v = dt*q_m*(E + (v x B))
-    vectorCrossProduct(v4,B,vxB);
-    vectorAdd(E,vxB,EplusvxB);
-    vectorScalarMult(dtqm,EplusvxB,k4v);
-    /*
-   k4v[0] = dt*q_m*(E[0] + (v4[1]*B[2] - v4[2]*B[1]));
-   k4v[1] = dt*q_m*(E[1] + (v4[2]*B[0] - v4[0]*B[2]));
-   k4v[2] = dt*q_m*(E[2] + (v4[0]*B[1] - v4[1]*B[0]));
-   */
-   particlesPointer->x[indx] = r[0] + (k1r[0] + 2*k2r[0] + 2*k3r[0] + k4r[0])/6;
-   particlesPointer->y[indx] = r[1] + (k1r[1] + 2*k2r[1] + 2*k3r[1] + k4r[1])/6;
-   particlesPointer->z[indx] = r[2] + (k1r[2] + 2*k2r[2] + 2*k3r[2] + k4r[2])/6;
-   particlesPointer->vx[indx] = v[0] + (k1v[0] + 2*k2v[0] + 2*k3v[0] + k4v[0])/6;
-   particlesPointer->vy[indx] = v[1] + (k1v[1] + 2*k2v[1] + 2*k3v[1] + k4v[1])/6;
-   particlesPointer->vz[indx] = v[2] + (k1v[2] + 2*k2v[2] + 2*k3v[2] + k4v[2])/6;
-#ifdef __CUDACC__
-#else
-#endif
-//std::cout << "OparticlesPointer->rations Time: " << oparticlesPointer->rationsTime <<std::endl;
-//std::cout << "Efield InterparticlesPointer->lation Time: " << interparticlesPointer->Time <<std::endl;
-//std::cout << "Bfield InterparticlesPointer->lation Time: " << interparticlesPointer->Time <<std::endl;
-//std::cout << "Init Time: " << initTime <<std::endl;
-            }
-#endif
 } 
