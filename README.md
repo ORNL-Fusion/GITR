@@ -1,5 +1,5 @@
 <h1 align="center">
-<!--   <img src="https://your-website.com/path/to/gitr-logo.png" alt="GITR Logo" width="200"> -->
+  <img src="gitrLogo.jpeg" alt="GITR Logo" width="200">
   <br>
   GITR - Global Impurity Transport Code
 </h1>
