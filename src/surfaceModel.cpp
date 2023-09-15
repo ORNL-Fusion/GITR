@@ -3,7 +3,6 @@
 #include "interp2d.hpp"
 #include "materials.h"
 
-const double PI = 3.14159265359;
 
 // initialize constructor
 reflection::reflection(Particles* _particles, double _dt,
@@ -93,8 +92,7 @@ void reflection::processParticleHit(std::size_t indx) const {
     particleTrackVector[0] = vx;
     particleTrackVector[1] = vy;
     particleTrackVector[2] = vz;
-    // norm_part = std::sqrt(particleTrackVector[0] * particleTrackVector[0] + particleTrackVector[1] * particleTrackVector[1] + particleTrackVector[2] * particleTrackVector[2]);
-    // E0_for_surface_model = 0.5 * particles->amu[indx] * 1.6737236e-27 * (norm_part * norm_part) / 1.60217662e-19;
+
     E0_for_surface_model =  computeParticleEnergy(particleTrackVector,  indx); 
     E0_for_flux_binning = E0_for_surface_model;
     gitr_precision maxE_for_surface_model = std::pow(10.0,Elog_sputtRefCoeff[nE_sputtRefCoeff-1]);
@@ -365,7 +363,6 @@ void reflection::reflect(Particles* particles, int indx, gitr_precision newWeigh
     particles->zprevious[indx] = particles->z[indx] - static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * surfaceNormalVector[2] * surface_buffer;
 
 }
-
 
 void sputter(
     Boundary* boundaryVector,
