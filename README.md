@@ -72,7 +72,7 @@ We welcome contributions to GITR! Here's how you can contribute:
 
 ## Release Notes
 
-For the latest release notes, please refer to [GITR/docs/release_notes.md](docs/release_notes.md).
+For the latest release notes, please refer to [GITR/docs/release_notes.md](https://github.com/ORNL-Fusion/GITR/blob/multi_impurity_ions/release_notes.md).
 
 ## System Requirements
 
