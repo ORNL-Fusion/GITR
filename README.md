@@ -59,7 +59,7 @@ Use CTest to run tests from the user-created build directory. You can add tests 
 
 ## Reporting Issues
 
-Did you find a bug or have an issue? Please report it in the [GitHub Issues section](https://github.com/yourusername/gitr/issues).
+Did you find a bug or have an issue? Please report it in the [GitHub Issues section](https://github.com/ORNL-Fusion/GITR/issues).
 
 ## Contributing
 
