@@ -1,3 +1,29 @@
+//------------------------------------------------------------------------------
+// GITR: thermalForce.h
+//------------------------------------------------------------------------------
+//
+// Contributors:
+//     - GITR Community
+//
+// Last Modified:
+//     - August 2023 by Diaw
+//
+// Description:
+//     This header file defines thermal force
+//
+// Models Included:
+//     1. Stangeby Model:
+//        - Reference: 
+//            - P.C. Stangeby "The Plasma Boundary of Magnetic Fusion Devices", (see page 299-300)
+//             F_e =beta grad T_e where beta is function of reduced mass and Z
+//             F_i =alpha grad T_i  where alpha = 0.71 Z^2
+//
+// Note:
+//     This file is a component of the GITR codebase.
+//
+//------------------------------------------------------------------------------
+
+
 #ifndef _THERMAL_
 #define _THERMAL_
 
@@ -9,6 +35,7 @@
 
 #include "Particles.h"
 #include <cmath>
+#include "constants.h"
 
 #if USE_DOUBLE
 typedef double gitr_precision;
@@ -18,11 +45,11 @@ typedef float gitr_precision;
 
 struct thermalForce { 
     Flags* flags;
-    Particles *p;
+    Particles* p;
     const gitr_precision dt;
     gitr_precision background_amu;
-    int nR_gradT;
-    int nZ_gradT;
+    int nR_gradT, nZ_gradT, nR_Bfield, nZ_Bfield, cylsymm;
+    
     gitr_precision* gradTGridr;
     gitr_precision* gradTGridz;
     gitr_precision* gradTiR;
@@ -31,109 +58,93 @@ struct thermalForce {
     gitr_precision* gradTeR;
     gitr_precision* gradTeZ;
     gitr_precision* gradTeT;
-            int nR_Bfield;
-            int nZ_Bfield;
-            gitr_precision * BfieldGridRDevicePointer;
-            gitr_precision * BfieldGridZDevicePointer;
-            gitr_precision * BfieldRDevicePointer;
-            gitr_precision * BfieldZDevicePointer;
-            gitr_precision * BfieldTDevicePointer;
-	    gitr_precision dv_ITGx=0.0;
-	    gitr_precision dv_ITGy=0.0;
-	    gitr_precision dv_ITGz=0.0;
-	    gitr_precision dv_ETGx=0.0;
-	    gitr_precision dv_ETGy=0.0;
-	    gitr_precision dv_ETGz=0.0;
-      int cylsymm;
-            
-    thermalForce(Flags* _flags,Particles *_p,gitr_precision _dt, gitr_precision _background_amu,int _nR_gradT, int _nZ_gradT, gitr_precision* _gradTGridr, gitr_precision* _gradTGridz,
-            gitr_precision* _gradTiR, gitr_precision* _gradTiZ, gitr_precision* _gradTiT, gitr_precision* _gradTeR, gitr_precision* _gradTeZ,gitr_precision* _gradTeT,
-            int _nR_Bfield, int _nZ_Bfield,
-            gitr_precision * _BfieldGridRDevicePointer,
-            gitr_precision * _BfieldGridZDevicePointer,
-            gitr_precision * _BfieldRDevicePointer,
-            gitr_precision * _BfieldZDevicePointer,
-            gitr_precision * _BfieldTDevicePointer,
-            int cylsymm_ )
-        
-            : flags(_flags),p(_p), dt(_dt), background_amu(_background_amu),nR_gradT(_nR_gradT),nZ_gradT(_nZ_gradT),
-        gradTGridr(_gradTGridr), gradTGridz(_gradTGridz),
-        gradTiR(_gradTiR), gradTiZ(_gradTiZ),gradTiT(_gradTiT), gradTeR(_gradTeR), gradTeZ(_gradTeZ),gradTeT(_gradTeT), 
-             nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
-    BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer), cylsymm( cylsymm_ ) {}
+    gitr_precision* BfieldGridRDevicePointer;
+    gitr_precision* BfieldGridZDevicePointer;
+    gitr_precision* BfieldRDevicePointer;
+    gitr_precision* BfieldZDevicePointer;
+    gitr_precision* BfieldTDevicePointer;
+
+ thermalForce(
+        Flags* _flags,
+        Particles* _p,
+        gitr_precision _dt,
+        gitr_precision _background_amu,
+        int _nR_gradT,
+        int _nZ_gradT,
+        gitr_precision* _gradTGridr,
+        gitr_precision* _gradTGridz,
+        gitr_precision* _gradTiR,
+        gitr_precision* _gradTiZ,
+        gitr_precision* _gradTiT,
+        gitr_precision* _gradTeR,
+        gitr_precision* _gradTeZ,
+        gitr_precision* _gradTeT,
+        int _nR_Bfield,
+        int _nZ_Bfield,
+        gitr_precision* _BfieldGridRDevicePointer,
+        gitr_precision* _BfieldGridZDevicePointer,
+        gitr_precision* _BfieldRDevicePointer,
+        gitr_precision* _BfieldZDevicePointer,
+        gitr_precision* _BfieldTDevicePointer,
+        int _cylsymm
+    )
+    : flags(_flags),
+      p(_p),
+      dt(_dt),
+      background_amu(_background_amu),
+      nR_gradT(_nR_gradT),
+      nZ_gradT(_nZ_gradT),
+      gradTGridr(_gradTGridr),
+      gradTGridz(_gradTGridz),
+      gradTiR(_gradTiR),
+      gradTiZ(_gradTiZ),
+      gradTiT(_gradTiT),
+      gradTeR(_gradTeR),
+      gradTeZ(_gradTeZ),
+      gradTeT(_gradTeT),
+      nR_Bfield(_nR_Bfield),
+      nZ_Bfield(_nZ_Bfield),
+      BfieldGridRDevicePointer(_BfieldGridRDevicePointer),
+      BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
+      BfieldRDevicePointer(_BfieldRDevicePointer),
+      BfieldZDevicePointer(_BfieldZDevicePointer),
+      BfieldTDevicePointer(_BfieldTDevicePointer),
+      cylsymm(_cylsymm) 
+    {}
 
 CUDA_CALLABLE_MEMBER    
-void operator()(std::size_t indx)  { 
-    if ((p->hitWall[indx] == 0.0) && (p->charge[indx] > 0.0)) {
-      gitr_precision MI = 1.6737236e-27;
-      gitr_precision alpha;
-      gitr_precision beta;
-      gitr_precision mu;
-      gitr_precision gradTe[3] = {0.0, 0.0, 0.0};
-      gitr_precision gradTi[3] = {0.0, 0.0, 0.0};
-      gitr_precision B[3] = {0.0, 0.0, 0.0};
-      gitr_precision B_unit[3] = {0.0, 0.0, 0.0};
-      gitr_precision Bmag = 0.0;
-      gitr_precision gradTiPar = 0.0;
-      gitr_precision dv_ITG[3] = {};
-      gitr_precision dv_ETG[3] = {};
-      gitr_precision vNorm = 0.0;
-      gitr_precision vNorm2 = 0.0;
-      gitr_precision dt_step = dt;
-                if (flags->USE_ADAPTIVE_DT) {
-	          if(p->advance[indx])
-		  {
-	            dt_step = p->dt[indx];
-		  }
-		  else
-		  {
-	            dt_step = 0.0;
-		  }
-                }
+void operator()(std::size_t indx) { 
+    if (p->hitWall[indx] == 0.0 && p->charge[indx] > 0.0) {
+        gitr_precision alpha, beta, mu;
+        gitr_precision gradTe[3] = {0.0}, gradTi[3] = {0.0}, B[3] = {0.0}, B_unit[3] = {0.0};
+        gitr_precision Bmag, gradTiPar, dv_ITG[3] = {}, dv_ETG[3] = {}, dt_step = dt;
 
-      interp2dVector(&gradTi[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT, gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT, cylsymm );
-      interp2dVector(&gradTe[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT, cylsymm );
-      mu = p->amu[indx] / (background_amu + p->amu[indx]);
-      alpha = p->charge[indx] * p->charge[indx] * 0.71;
-      beta = 3 * (mu + 5 * std::sqrt(2.0) * p->charge[indx] * p->charge[indx] * (1.1 * std::pow(mu, (5 / 2)) - 0.35 * std::pow(mu, (3 / 2))) - 1) / (2.6 - 2 * mu + 5.4 * std::pow(mu, 2));
-       
-       interp2dVector(&B[0],p->xprevious[indx],p->yprevious[indx],p->zprevious[indx],nR_Bfield,nZ_Bfield,
-             BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );    
-        Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1]+ B[2]*B[2]);
-        /* Captain! These are not checked for zero! Check them for zero! */
-        B_unit[0] = B[0]/Bmag;
-        B_unit[1] = B[1]/Bmag;
-        B_unit[2] = B[2]/Bmag;
-
-	dv_ETG[0] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[0]))*B_unit[0];
-	dv_ETG[1] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[1]))*B_unit[1];
-	dv_ETG[2] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(alpha*(gradTe[2]))*B_unit[2];
-
-	dv_ETGx = dv_ETG[0];
-	dv_ETGy = dv_ETG[1];
-	dv_ETGz = dv_ETG[2];
-
-	dv_ITG[0] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[0]))*B_unit[0];
-	dv_ITG[1] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[1]))*B_unit[1];
-	dv_ITG[2] = 1.602e-19*dt_step/(p->amu[indx]*MI)*(beta*(gradTi[2]))*B_unit[2];
-
-	dv_ITGx = dv_ITG[0];
-	dv_ITGy = dv_ITG[1];
-	dv_ITGz = dv_ITG[2];
-
-    gitr_precision vx = p->vx[indx];
-    gitr_precision vy = p->vy[indx];
-    gitr_precision vz = p->vz[indx];
-        vNorm = std::sqrt(vx*vx + vy*vy + vz*vz);
-    p->vD[indx] = dv_ITG[2];    
-        gitr_precision k1 = dv_ITG[2] - dt_step*p->nu_s[indx]
-                    *(dv_ITG[2]);
-        p->vx[indx] = vx + dv_ITG[0];///velocityCollisionsNorm;   	
-		p->vy[indx] = vy + dv_ITG[1];///velocityCollisionsNorm;   	
-		p->vz[indx] = vz + dv_ITG[2];// - dt*p->nu_s[indx]
+        if (flags->USE_ADAPTIVE_DT) {
+            dt_step = p->advance[indx] ? p->dt[indx] : 0.0;
         }
-    	}
-     
-};
 
+        // Interpolation functions to get gradTe and gradTi
+        interp2dVector(gradTi, p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT, gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT, cylsymm);
+        interp2dVector(gradTe, p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT, cylsymm);
+        
+        // Calculate alpha and beta
+        mu = p->amu[indx] / (background_amu + p->amu[indx]);
+        alpha = p->charge[indx] * p->charge[indx] * 0.71;
+        beta = 3.0 * (mu + 5.0 * std::sqrt(2.0) * p->charge[indx] * p->charge[indx] * (1.1 * std::pow(mu, 2.5) - 0.35 * std::pow(mu, 1.5)) - 1) / (2.6 - 2 * mu + 5.4 * std::pow(mu, 2));
+
+        interp2dVector(B, p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_Bfield, nZ_Bfield, BfieldGridRDevicePointer, BfieldGridZDevicePointer, BfieldRDevicePointer, BfieldZDevicePointer, BfieldTDevicePointer, cylsymm);    
+        Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
+        
+        for(int i = 0; i < 3; i++) {
+            B_unit[i] = B[i] / Bmag;
+            dv_ETG[i] = gitr_constants::e * dt_step / (p->amu[indx] * gitr_constants::m_p) * (alpha * gradTe[i]) * B_unit[i];
+            dv_ITG[i] = gitr_constants::e * dt_step / (p->amu[indx] * gitr_constants::m_p) * (beta * gradTi[i]) * B_unit[i];
+        }
+   
+        p->vx[indx] += dv_ITG[0];
+        p->vy[indx] += dv_ITG[1];
+        p->vz[indx] += dv_ITG[2];
+    }
+}
+};
 #endif
