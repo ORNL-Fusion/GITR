@@ -16,7 +16,6 @@ import subprocess as sp
 import os
 import shutil
 from os.path import join
-from plotter import plot_particles, plot_surface
 
 #
 def read_config(filename):

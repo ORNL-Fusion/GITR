@@ -153,6 +153,7 @@ int main(int argc, char **argv, char **envp) {
   // get sheath model type
   int sheath_model_type = use.get< int >( use::sheath_model_type );
   int nspecies = use.get< int >( use::nspecies );
+  int recombination = use.get< int >( use::recombination );
 
 
   // Set default processes per node to 1
@@ -1987,6 +1988,7 @@ if( presheath_interp == 1 )
   sim::Array<rand_type> state1(nParticles);
 #endif
     if( ionization > 0 ||
+        recombination > 0 ||
         perp_diffusion > 0 ||
         coulomb_collisions > 0 ||
         surface_model > 0 )
@@ -2057,7 +2059,7 @@ if( presheath_interp == 1 )
 
   gitr_precision *uni;
 
-  if( ionization > 0 )
+  if( ionization > 0  || recombination > 0)
   {
 #if USE_CUDA > 0
   cudaMallocManaged(&uni, sizeof(gitr_precision));
@@ -2168,6 +2170,10 @@ if( presheath_interp == 1 )
       if( ionization > 0 )
       {
         thrust::for_each(thrust::device, particleBegin, particleEnd,ionize0);
+      }
+
+      if( recombination > 0 )
+      {
         thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
       }
 

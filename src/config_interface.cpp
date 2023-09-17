@@ -102,6 +102,7 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::use_openmp ] = "USE_OPENMP";
   lookup[ use::mpi ] = "USE_MPI";
   lookup[ use::ionization ] = "USE_IONIZATION";
+  lookup[ use::recombination ] = "USE_RECOMBINATION";
   lookup[ use::perp_diffusion ] = "USEPERPDIFFUSION";
   lookup[ use::coulomb_collisions ] = "USECOULOMBCOLLISIONS";
   //lookup[ use::friction ] = "USEFRICTION";

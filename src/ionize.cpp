@@ -139,7 +139,12 @@ void ionize< T >::operator()(std::size_t indx)
     gitr_precision nlocal = interp2dCombined(particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx], nR_Dens, nZ_Dens, DensGridr, DensGridz, ne);
     gitr_precision RClocal = rateCoeffInterp(particlesPointer->charge[indx], tlocal, nlocal, nTemperaturesIonize, nDensitiesIonize, gridTemperature_Ionization, gridDensity_Ionization, rateCoeff_Ionization);
 
+
     tion = 1.0 / (RClocal * nlocal);
+
+    // // // print out the ionization rate coefficient nlocal, tion, Z
+    // printf("ionization rate coefficient %f %g %g %g\n", particlesPointer->charge[indx], tlocal, nlocal, 1./tion);
+
     gitr_precision P = exp(-dt / tion);
     gitr_precision P1 = 1.0 - P;
     gitr_precision r1 = get_rand_double(state,indx);

@@ -201,6 +201,7 @@ class use final : public config_module_base
     use_openmp,
     mpi,
     ionization,
+    recombination,
     perp_diffusion,
     coulomb_collisions,
     friction,

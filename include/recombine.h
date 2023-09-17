@@ -110,21 +110,22 @@ struct recombine {
 
 
 
-        // Get local temperature and density
-        gitr_precision tlocal = interp2dCombined(particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],
-                                            nR_Temp, nZ_Temp, TempGridr, TempGridz, te);
-        gitr_precision nlocal = interp2dCombined(particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],
-        nR_Dens, nZ_Dens, DensGridr, DensGridz, ne);
+    // Get local temperature and density
+    gitr_precision tlocal = interp2dCombined(particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],
+                                      nR_Temp, nZ_Temp, TempGridr, TempGridz, te);
+    gitr_precision nlocal = interp2dCombined(particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],
+    nR_Dens, nZ_Dens, DensGridr, DensGridz, ne);
 
-        gitr_precision RClocal = rateCoeffInterp(particlesPointer->charge[indx], tlocal, nlocal, nTemperaturesRec, nDensitiesRec, gridTemperature_Recombination, gridDensity_Recombination, rateCoeff_Recombination);
+    gitr_precision RClocal = rateCoeffInterp(particlesPointer->charge[indx], tlocal, nlocal, nTemperaturesRec, nDensitiesRec, gridTemperature_Recombination, gridDensity_Recombination, rateCoeff_Recombination);
 
+    gitr_precision trec = 1/(RClocal*nlocal);      
 
-       gitr_precision trec = 1/(RClocal*nlocal);      
-      
+    // // print out the ionization rate coefficient nlocal, tion, Z
+    // printf("ionization rate coefficient %f %g %g %g\n", particlesPointer->charge[indx], tlocal, nlocal, 1./trec);
 
-      gitr_precision P = exp(-dt/trec);
-      P1 = 1.0-P;
-      r1 = get_rand_double(state,indx);
+    gitr_precision P = exp(-dt/trec);
+    P1 = 1.0-P;
+    r1 = get_rand_double(state,indx);
     }
 
     if (gitr_flags->USE_ADAPTIVE_DT)

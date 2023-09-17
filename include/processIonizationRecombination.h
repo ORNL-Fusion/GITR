@@ -20,6 +20,7 @@
 //------------------------------------------------------------------------------
 
 #include <netcdf>
+#include "materials.h"
 
 enum ElementaryProcess
 {
@@ -40,13 +41,18 @@ inline std::tuple<size_t, size_t, size_t, std::vector<double>, std::vector<doubl
     else if (process == RECOMBINATION)
     {
         filePrefix = "Recombination";
+        printf("Recombination  implemented yet\n");
     }
+    // utility functions
+    // std::string materialName =  materialData[particles->Z[indx]].name;
+    std::string materialName =  materialData[charge].name;
+
     std::string input_path = "input/adasData/";
-    std::string ratesFiles = "ADAS_Rates_" + std::to_string(charge) + ".nc";
+    std::string ratesFiles = "ADAS_Rates_" + materialName + ".nc";
+    printf("Reading ADAS data from %s\n", ratesFiles.c_str());
     
     // Open the netCDF file
     netCDF::NcFile data(input_path + ratesFiles, netCDF::NcFile::read);
-
 
     // Get the variable objects
     netCDF::NcVar gridTemperature_var = data.getVar("gridTemperature_" + filePrefix);

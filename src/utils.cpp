@@ -76,6 +76,7 @@ void checkFlags(libconfig::Config &cfg)
     const char *flags0[] = {//"flags.USE_CUDA",
                             //"flags.USE_MPI",
                             "flags.USE_IONIZATION",
+                            "flafs.USE_RECOMBINATION",
                             "flags.USERECOMBINATION","flags.USEPERPDIFFUSION",
                             "flags.USECOULOMBCOLLISIONS",
                             "flags.USETHERMALFORCE","flags.USESURFACEMODEL",
