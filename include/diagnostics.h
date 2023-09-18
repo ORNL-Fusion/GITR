@@ -175,6 +175,7 @@ void writeParticleDataHistories(
         const sim::Array<gitr_precision>& ZHistory,
         const sim::Array<gitr_precision>& weightHistory,
         const sim::Array<gitr_precision>& massHistory,
+        const sim::Array<gitr_precision>& surfaceHitHistory,
         int nHistoriesPerParticle, 
         int nP
     ) {
@@ -200,6 +201,7 @@ void writeParticleDataHistories(
         netCDF::NcVar nc_Z = ncFile_hist.addVar("Z", netcdf_precision, dims_hist);
         netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", netcdf_precision, dims_hist);
         netCDF::NcVar nc_mass = ncFile_hist.addVar("amu", netcdf_precision, dims_hist);
+        netCDF::NcVar nc_surfaceHit = ncFile_hist.addVar("surfaceHit", netCDF::ncInt, dims_hist);
 
         nc_x.putVar(&positionHistoryX.data()[0]);
         nc_y.putVar(&positionHistoryY.data()[0]);
@@ -213,6 +215,8 @@ void writeParticleDataHistories(
         nc_Z.putVar(&ZHistory.data()[0]);
         nc_weight.putVar(&weightHistory.data()[0]);
         nc_mass.putVar(&massHistory.data()[0]);
+
+        nc_surfaceHit.putVar(&surfaceHitHistory.data()[0]);
 
         ncFile_hist.close();
     }

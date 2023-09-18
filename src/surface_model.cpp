@@ -42,7 +42,7 @@ void reflection::processParticleHit(std::size_t indx) const {
     int surfaceHit = boundaryVector[wallHit].surfaceNumber;
     int surface = boundaryVector[wallHit].surface;
     auto [incidentMaterial, targetMaterial] = getMaterials(wallHit, indx);
-    // printMaterials(incidentMaterial, targetMaterial);
+    printMaterials(incidentMaterial, targetMaterial);
     auto surfaceDataResult = processSurfaceData(incidentMaterial, targetMaterial); 
     // move this to constructor later
     auto [nE_sputtRefCoeff, nA_sputtRefCoeff, E_sputtRefCoeff, A_sputtRefCoeff, Elog_sputtRefCoeff, energyDistGrid01, angleDistGrid01, spyl_surfaceModel, rfyl_surfaceModel,nE_sputtRefDistIn, nA_sputtRefDistIn,

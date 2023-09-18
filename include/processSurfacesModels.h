@@ -63,7 +63,7 @@ inline std::tuple<int, int, std::vector<double>, std::vector<double>, std::vecto
     std::string cfgFile = input_path + "gitrInput.cfg";
     surfaceModelFile = "surfaceReactions_" + incidentMaterial + "_on_" + targetMaterial + ".nc";
 
-
+    printf(" opening surfaceModelFile %s \n", surfaceModelFile.c_str());
     //cfg is the config file
     cfg.readFile(cfgFile.c_str());
 
