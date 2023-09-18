@@ -163,7 +163,10 @@ void reflection::reflect(Particles* particles, int indx, gitr_precision newWeigh
              Boundary* boundaryVector, int wallHit, bool use_3d_geom, bool cylsymm,
              gitr_precision randomSputterAngle, gitr_precision* surfaceNormalVector) const
 {
-    printf("Reflecting!");
+
+       // set particle properties
+    particles->Z[indx] =  boundaryVector[wallHit].Z;
+    particles->amu[indx] =  materialData[boundaryVector[wallHit].Z].mass;
     particles->weight[indx] = newWeight;
     particles->hitWall[indx] = 0.0;
     particles->charge[indx] = 0.0;
@@ -176,11 +179,9 @@ void reflection::reflect(Particles* particles, int indx, gitr_precision newWeigh
     vSampled[1] = V0 * std::sin(aInterpVal * M_PI / 180) * std::sin(2.0 * M_PI * randomSputterAngle);
     vSampled[2] = V0 * std::cos(aInterpVal * M_PI / 180);
 
-    boundaryVector[wallHit].transformToSurface(vSampled, particles->y[indx], particles->x[indx], use_3d_geom, cylsymm);
-
-    particles->vx[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * vSampled[0];
-    particles->vy[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * vSampled[1];
-    particles->vz[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * vSampled[2];
+    particles->vx[indx] =  vSampled[0];
+    particles->vy[indx] =  vSampled[1];
+    particles->vz[indx] =  vSampled[2];
 
     gitr_precision surface_buffer = 1.0e-4;
     particles->xprevious[indx] = particles->x[indx] - static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * surfaceNormalVector[0] * surface_buffer;
