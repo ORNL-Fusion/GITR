@@ -1940,6 +1940,7 @@ if( presheath_interp == 1 )
   }
   initializeParticleArray(particleData, particleArray, px, py, pz, pvx, pvy, pvz, pZ, pamu, pcharge, dt, speciesType);
   std::cout << "writing particles out file" << std::endl;
+
   writeParticleSourceFile(nP, pvx, pvy, pvz, px, py, pz, pcharge, pamu, pZ, speciesType);
   std::cout << "finished writing particles out file" << std::endl;
 
@@ -1966,8 +1967,9 @@ if( presheath_interp == 1 )
   sim::Array<gitr_precision> velocityHistoryY(nHistories);
   sim::Array<gitr_precision> velocityHistoryZ(nHistories);
   sim::Array<gitr_precision> chargeHistory(nHistories);
-    sim::Array<gitr_precision> ZHistory(nHistories);
+  sim::Array<gitr_precision> ZHistory(nHistories);
   sim::Array<gitr_precision> weightHistory(nHistories);
+  sim::Array<gitr_precision> massHistory(nHistories);
 
   std::cout << "Beginning random number seeds" << std::endl;
   std::uniform_real_distribution<gitr_precision> dist(0, 1e6);
@@ -2111,7 +2113,7 @@ if( presheath_interp == 1 )
                    &positionHistoryZ.front(), &velocityHistory.front(),
                    &velocityHistoryX.front(), &velocityHistoryY.front(),
                    &velocityHistoryZ.front(), &chargeHistory.front(), &ZHistory.front(),
-                   &weightHistory.front());
+                   &weightHistory.front(), &massHistory.front());
 
 
   auto start_clock = gitr_time::now();
@@ -2234,7 +2236,7 @@ if( presheath_interp == 1 )
         writeParticleDataHistories(
         positionHistoryX, positionHistoryY, positionHistoryZ,
         velocityHistoryX, velocityHistoryY, velocityHistoryZ,
-        chargeHistory, ZHistory, weightHistory,
+        chargeHistory, ZHistory, weightHistory, massHistory,
         nHistoriesPerParticle, nP
     );
   }

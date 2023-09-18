@@ -28,7 +28,6 @@ std::map<
          std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>,
           std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double> , gitr_precision, gitr_precision, gitr_precision, gitr_precision, gitr_precision, gitr_precision,
           int, int, gitr_precision, gitr_precision, gitr_precision, gitr_precision, int 
-        //    nEdist, nAdist, E0dist, Edist, A0dist, Adist
         > > cacheSurfaceData;
 
 inline std::tuple<int, int, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double> , std::vector<double>, std::vector<double>,  int, int,

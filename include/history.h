@@ -32,28 +32,27 @@ struct history {
     gitr_precision *histcharge;
     gitr_precision *hist_Z;
     gitr_precision *histweight;
+    // add mass
+    gitr_precision *histmass;
 
     history(Particles *_particlesPointer, int* _tt, int _nT,int _subSampleFac, int _nP, gitr_precision *_histX,gitr_precision *_histY,gitr_precision *_histZ,
           gitr_precision *_histv,gitr_precision *_histvx,gitr_precision *_histvy,gitr_precision *_histvz, gitr_precision * _histcharge,
-            gitr_precision * _hist_Z, gitr_precision * _histweight) :
+            gitr_precision * _hist_Z, gitr_precision * _histweight, gitr_precision * _histmass) :
         particlesPointer(_particlesPointer), tt(_tt),nT(_nT),subSampleFac(_subSampleFac), nP(_nP), 
         histX(_histX),histY(_histY),histZ(_histZ),histv(_histv),histvx(_histvx),histvy(_histvy),histvz(_histvz), histcharge(_histcharge),
-    hist_Z(_hist_Z), histweight(_histweight) {}
+    hist_Z(_hist_Z), histweight(_histweight), histmass(_histmass)  {}
 
     CUDA_CALLABLE_MEMBER_DEVICE    
 void operator()(std::size_t indx) const 
     {  
        int tt0=particlesPointer->tt[indx];
        particlesPointer->tt[indx] = particlesPointer->tt[indx]+1;
-       //std::cout << "tt subsamplefac indx, nT " << tt0 << " "<< subSampleFac << " " << indx << " " << nT << std::endl;
        if (tt0 % subSampleFac == 0)
        {
        int indexP = particlesPointer->index[indx];
         int histInd = indexP*(nT/subSampleFac+1) + tt0/subSampleFac;
-       //std::cout << "histInd " << histInd << std::endl;
         if(histInd <= (nP*(nT/subSampleFac+1)) && histInd >= 0 && indexP < nP)
         {
-	  //std::cout << "inside history " << indx << " " << histInd << " " << particlesPointer->zprevious[indx] << std::endl;
           histX[histInd] = particlesPointer->xprevious[indexP];
           histY[histInd] = particlesPointer->yprevious[indexP];
           histZ[histInd] = particlesPointer->zprevious[indexP];
@@ -64,19 +63,8 @@ void operator()(std::size_t indx) const
           histcharge[histInd] = particlesPointer->charge[indexP];
             hist_Z[histInd] = particlesPointer->Z[indexP];
           histweight[histInd] = particlesPointer->weight[indexP];
+          histmass[histInd] = particlesPointer->amu[indexP];
         }
-        //else
-        //{
-        //    if(particlesPointer->test[indx] == 0.0)
-        //    {
-        //        particlesPointer->test[indx] = 1.0;
-        //        particlesPointer->test0[indx] =     histInd;
-        //       particlesPointer->test1[indx] = indx;
-        //       particlesPointer->test2[indx]=nT;
-        //       particlesPointer->test3[indx]=subSampleFac;
-        //      particlesPointer->test4[indx] =tt;
-        //    }
-        //} 
        }
     }
 };
