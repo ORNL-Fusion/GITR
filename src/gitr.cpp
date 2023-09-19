@@ -1971,6 +1971,7 @@ if( presheath_interp == 1 )
   sim::Array<gitr_precision> weightHistory(nHistories);
   sim::Array<gitr_precision> massHistory(nHistories);
   sim::Array<gitr_precision> surfaceHitHistory(nHistories);
+  sim::Array<gitr_precision> hitwallHistory(nHistories);
 
   std::cout << "Beginning random number seeds" << std::endl;
   std::uniform_real_distribution<gitr_precision> dist(0, 1e6);
@@ -2114,7 +2115,7 @@ if( presheath_interp == 1 )
                    &positionHistoryZ.front(), &velocityHistory.front(),
                    &velocityHistoryX.front(), &velocityHistoryY.front(),
                    &velocityHistoryZ.front(), &chargeHistory.front(), &ZHistory.front(),
-                   &weightHistory.front(), &massHistory.front(), &surfaceHitHistory.front());
+                   &weightHistory.front(), &massHistory.front(), &surfaceHitHistory.front(), &hitwallHistory.front());
 
 
   auto start_clock = gitr_time::now();
@@ -2237,7 +2238,7 @@ if( presheath_interp == 1 )
         writeParticleDataHistories(
         positionHistoryX, positionHistoryY, positionHistoryZ,
         velocityHistoryX, velocityHistoryY, velocityHistoryZ,
-        chargeHistory, ZHistory, weightHistory, massHistory,surfaceHitHistory,
+        chargeHistory, ZHistory, weightHistory, massHistory,surfaceHitHistory,hitwallHistory,
         nHistoriesPerParticle, nP
     );
   }
