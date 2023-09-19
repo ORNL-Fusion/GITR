@@ -1,0 +1,157 @@
+#include "surfaceModel.h"
+
+    /* constructor */
+    reflection::reflection(Particles* _particles, double _dt,
+#if __CUDACC__
+                            curandState *_state,
+#else
+                            std::mt19937 *_state,
+#endif
+            int _nLines,Boundary * _boundaryVector,
+            Surfaces * _surfaces,
+    int _nE_sputtRefCoeff,
+    int _nA_sputtRefCoeff,
+    gitr_precision* _A_sputtRefCoeff,
+    gitr_precision* _Elog_sputtRefCoeff,
+    gitr_precision* _spyl_surfaceModel,
+    gitr_precision* _rfyl_surfaceModel,
+    int _nE_sputtRefDistOut,
+    int _nE_sputtRefDistOutRef,
+    int _nA_sputtRefDistOut,
+    int _nE_sputtRefDistIn,
+    int _nA_sputtRefDistIn,
+    gitr_precision* _E_sputtRefDistIn,
+    gitr_precision* _A_sputtRefDistIn,
+    gitr_precision* _E_sputtRefDistOut,
+    gitr_precision* _E_sputtRefDistOutRef,
+    gitr_precision* _A_sputtRefDistOut,
+    gitr_precision* _energyDistGrid01,
+    gitr_precision* _energyDistGrid01Ref,
+    gitr_precision* _angleDistGrid01,
+    gitr_precision* _EDist_CDF_Y_regrid,
+    gitr_precision* _ADist_CDF_Y_regrid, 
+    gitr_precision* _EDist_CDF_R_regrid,
+    gitr_precision* _ADist_CDF_R_regrid,
+    int _nEdist,
+    gitr_precision _E0dist,
+    gitr_precision _Edist,
+    int _nAdist,
+    gitr_precision _A0dist,
+    gitr_precision _Adist,
+    int flux_ea_,
+    int use_3d_geom_,
+    int cylsymm_ ) :
+                             particles(_particles),
+                             dt(_dt),
+                             nLines(_nLines),
+                             boundaryVector(_boundaryVector),
+                             surfaces(_surfaces),
+                             nE_sputtRefCoeff(_nE_sputtRefCoeff),
+                             nA_sputtRefCoeff(_nA_sputtRefCoeff),
+                             A_sputtRefCoeff(_A_sputtRefCoeff),
+                             Elog_sputtRefCoeff(_Elog_sputtRefCoeff),
+                             spyl_surfaceModel(_spyl_surfaceModel),
+                             rfyl_surfaceModel(_rfyl_surfaceModel),
+                             nE_sputtRefDistOut(_nE_sputtRefDistOut),
+                             nE_sputtRefDistOutRef(_nE_sputtRefDistOutRef),
+                             nA_sputtRefDistOut(_nA_sputtRefDistOut),
+                             nE_sputtRefDistIn(_nE_sputtRefDistIn),
+                             nA_sputtRefDistIn(_nA_sputtRefDistIn),
+                             E_sputtRefDistIn(_E_sputtRefDistIn),
+                             A_sputtRefDistIn(_A_sputtRefDistIn),
+                             E_sputtRefDistOut(_E_sputtRefDistOut),
+                             E_sputtRefDistOutRef(_E_sputtRefDistOutRef),
+                             A_sputtRefDistOut(_A_sputtRefDistOut),
+                             energyDistGrid01(_energyDistGrid01),
+                             energyDistGrid01Ref(_energyDistGrid01Ref),
+                             angleDistGrid01(_angleDistGrid01),
+                             EDist_CDF_Y_regrid(_EDist_CDF_Y_regrid),
+                             ADist_CDF_Y_regrid(_ADist_CDF_Y_regrid),
+                             EDist_CDF_R_regrid(_EDist_CDF_R_regrid),
+                             ADist_CDF_R_regrid(_ADist_CDF_R_regrid),
+                             nEdist(_nEdist),
+                             E0dist(_E0dist),
+                             Edist(_Edist),
+                             nAdist(_nAdist),
+                             A0dist(_A0dist),
+                             Adist(_Adist),
+                             state(_state),
+                             flux_ea( flux_ea_ ),
+                             use_3d_geom( use_3d_geom_ ),
+                             cylsymm( cylsymm_ )
+                             { }
+
+CUDA_CALLABLE_MEMBER_DEVICE
+void reflection::operator()(std::size_t indx) const {
+    
+  if (particles->hitWall[indx] == 1.0) 
+  {
+    
+    //particle either reflects or deposits
+    gitr_precision sputtProb = Y0/totalYR;
+    int didReflect = 0;
+            
+    if(totalYR > 0.0)
+    {
+      if(r7 > sputtProb) //reflects
+      {
+
+      }
+      else //sputters
+      {
+        aInterpVal = interp3d(r8,thetaImpact,std::log10(E0_for_surface_model),
+                nA_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+                angleDistGrid01,A_sputtRefDistIn,
+                E_sputtRefDistIn,ADist_CDF_Y_regrid);
+        eInterpVal = interp3d(r9,thetaImpact,std::log10(E0_for_surface_model),
+                 nE_sputtRefDistOut,nA_sputtRefDistIn,nE_sputtRefDistIn,
+                 energyDistGrid01,A_sputtRefDistIn,E_sputtRefDistIn,EDist_CDF_Y_regrid);
+		
+      }
+    }
+    else
+    {       
+      newWeight = 0.0;
+      particles->hitWall[indx] = 2.0;
+      if(surface > 0)
+      {
+        #if USE_CUDA > 0
+                atomicAdd1(&surfaces->grossDeposition[surfaceHit],weight);
+        #else
+                #pragma omp atomic
+                surfaces->grossDeposition[surfaceHit] = surfaces->grossDeposition[surfaceHit]+weight;
+        #endif
+	    }
+    }
+	    
+
+ 
+    if (boundaryVector[wallHit].Z > 0.0 && newWeight > 0.0)
+    {
+      particles->weight[indx] = newWeight;
+      particles->hitWall[indx] = 0.0;
+      particles->charge[indx] = 0.0;
+      gitr_precision V0 = std::sqrt(2 * eInterpVal * 1.602e-19 / (particles->amu[indx] * 1.66e-27));
+      particles->newVelocity[indx] = V0;
+      vSampled[0] = V0 * std::sin(aInterpVal * 3.1415 / 180) * std::cos(2.0 * 3.1415 * r10);
+      vSampled[1] = V0 * std::sin(aInterpVal * 3.1415 / 180) * std::sin(2.0 * 3.1415 * r10);
+      vSampled[2] = V0 * std::cos(aInterpVal * 3.1415 / 180);
+      boundaryVector[wallHit].transformToSurface(vSampled, particles->y[indx],
+                                                 particles->x[indx], use_3d_geom,
+                                                 cylsymm );
+      particles->vx[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[0];
+      particles->vy[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[1];
+      particles->vz[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[2];
+
+      gitr_precision surface_buffer = 1.0e-4;
+      particles->xprevious[indx] = particles->x[indx] - static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * surfaceNormalVector[0] * surface_buffer;
+      particles->yprevious[indx] = particles->y[indx] - static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * surfaceNormalVector[1] * surface_buffer;
+      particles->zprevious[indx] = particles->z[indx] - static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * surfaceNormalVector[2] * surface_buffer;
+      
+    } 
+    else 
+    {
+      particles->hitWall[indx] = 2.0;
+    } 
+  }  
+}

@@ -108,14 +108,12 @@ void ParticleErosionToSurface(Boundary* boundaries, int nLines, gitr_precision* 
     int srf = 0;
     for (int i = 0; i < nLines; i++) {
         if (boundaries[i].surface) {
-            for (int species = 0; species < nSpecies; species++) {
-                int idx = i * nSpecies + species; // Calculate index based on data layout
                 surfaceNumbers[srf] = i;
-                surfaces->grossErosion[idx] += grossErosion[idx];
                 srf++;
             }
-        }
+
     }  
+                // surfaces->grossErosion[idx] += grossErosion[idx];
 
     try {
         netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);

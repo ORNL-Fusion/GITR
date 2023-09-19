@@ -2230,9 +2230,9 @@ if( presheath_interp == 1 )
     storeParticleData(base_filename, particleArray, nP);
 
     // 2. store surface data
-    // if( surface_model > 0 || flux_ea > 0 )
-    // {ParticleErosionToSurface(boundaries.data(), nLines, grossErosion.data(), nSurfaces, surfaces, nEdist, nAdist, nspecies);
-    // }
+    if( surface_model > 0 || flux_ea > 0 )
+    {ParticleErosionToSurface(boundaries.data(), nLines, grossErosion.data(), nSurfaces, surfaces, nEdist, nAdist, nspecies);
+    }
     //3. store particle history 
   if( particle_tracks > 0 ){
         writeParticleDataHistories(
