@@ -105,6 +105,7 @@ void reflection::processParticleHit(std::size_t indx) const {
     
     if(totalYR > 0.0) {
        if (reflectionEvent( randomVals[0],  sputtProb,  totalYR)){
+          printf("Reflection\n");
             didReflect = 1;
             aInterpVal = interp3d(randomVals[0], thetaImpact, logE0Surface,
                           nA_sputtRefDistOut, nA_sputtRefDistIn, nE_sputtRefDistIn,
@@ -131,7 +132,8 @@ void reflection::processParticleHit(std::size_t indx) const {
                     energyDistGrid01.data(),A_sputtRefDistIn.data(),E_sputtRefDistIn.data(),EDist_CDF_Y_regrid.data());
             newWeight=weight*totalYR;
             if (boundaryVector[wallHit].Z > 0.0 && newWeight > 0.0) {
-                sputter( boundaryVector, wallHit, particles, indx, aInterpVal, randomVals[3], newWeight, nspecies, use_3d_geom, cylsymm, surfaceNormalVector);
+              printf("Sputtering\n");
+                sputter( boundaryVector, wallHit, particles, indx, eInterpVal, aInterpVal, randomVals[3], newWeight, nspecies, use_3d_geom, cylsymm, surfaceNormalVector);
                 if(sputtProb == 0.0) newWeight = 0.0;
             }
          const bool validBoundary = boundaryVector[wallHit].Z > 0.0;
@@ -161,12 +163,13 @@ void reflection::printMaterials(const std::string& incidentMaterial, const std::
 
 void reflection::reflect(Particles* particles, int indx, gitr_precision newWeight, gitr_precision eInterpVal, gitr_precision aInterpVal, 
              Boundary* boundaryVector, int wallHit, bool use_3d_geom, bool cylsymm,
-             gitr_precision randomSputterAngle, gitr_precision* surfaceNormalVector) const
+             gitr_precision randomReflectAngle, gitr_precision* surfaceNormalVector) const
 {
 
        // set particle properties
-    particles->Z[indx] =  boundaryVector[wallHit].Z;
-    particles->amu[indx] =  materialData[boundaryVector[wallHit].Z].mass;
+    // particles->Z[indx] =  boundaryVector[wallHit].Z;
+    // particles->amu[indx] =  materialData[boundaryVector[wallHit].Z].mass;
+
     particles->weight[indx] = newWeight;
     particles->hitWall[indx] = 0.0;
     particles->charge[indx] = 0.0;
@@ -175,19 +178,22 @@ void reflection::reflect(Particles* particles, int indx, gitr_precision newWeigh
     particles->newVelocity[indx] = V0;
 
     gitr_precision vSampled[3];
-    vSampled[0] = V0 * std::sin(aInterpVal * M_PI / 180) * std::cos(2.0 * M_PI * randomSputterAngle);
-    vSampled[1] = V0 * std::sin(aInterpVal * M_PI / 180) * std::sin(2.0 * M_PI * randomSputterAngle);
+    vSampled[0] = V0 * std::sin(aInterpVal * M_PI / 180) * std::cos(2.0 * M_PI * randomReflectAngle);
+    vSampled[1] = V0 * std::sin(aInterpVal * M_PI / 180) * std::sin(2.0 * M_PI * randomReflectAngle);
     vSampled[2] = V0 * std::cos(aInterpVal * M_PI / 180);
 
-    particles->vx[indx] =  vSampled[0];
-    particles->vy[indx] =  vSampled[1];
-    particles->vz[indx] =  vSampled[2];
+    // Transform velocity based on surface
+    boundaryVector[wallHit].transformToSurface(vSampled, particles->y[indx], 
+                                                particles->x[indx], use_3d_geom, 
+                                                cylsymm );
+    particles->vx[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * vSampled[0];
+    particles->vy[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * vSampled[1];
+    particles->vz[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * vSampled[2];
 
     gitr_precision surface_buffer = 1.0e-4;
     particles->xprevious[indx] = particles->x[indx] - static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * surfaceNormalVector[0] * surface_buffer;
     particles->yprevious[indx] = particles->y[indx] - static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * surfaceNormalVector[1] * surface_buffer;
     particles->zprevious[indx] = particles->z[indx] - static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * surfaceNormalVector[2] * surface_buffer;
-
 }
 
 
@@ -196,6 +202,7 @@ void reflection::sputter(
     int wallHit,
     Particles* particles,
     int indx,
+    gitr_precision eInterpVal,
     gitr_precision aInterpVal,
     gitr_precision randomSputterAngle,
     gitr_precision newWeight,
@@ -207,8 +214,7 @@ void reflection::sputter(
 {
     // Sputtering new particles 
     gitr_precision mass = materialData[boundaryVector[wallHit].Z].mass; 
-    gitr_precision Eb = materialData[boundaryVector[wallHit].Z].surfaceBindingEnergy; 
-    gitr_precision vTh = std::sqrt(2 * aInterpVal * gitr_constants::e / (mass *  gitr_constants::m_p));
+    gitr_precision vTh = std::sqrt(2 * eInterpVal * gitr_constants::e / (mass *  gitr_constants::m_p));
     gitr_precision vSampled[3];
     vSampled[0] = vTh * std::sin(aInterpVal * M_PI / 180) * std::cos(2.0 * M_PI * randomSputterAngle);
     vSampled[1] = vTh * std::sin(aInterpVal * M_PI/ 180) * std::sin(2.0 * M_PI * randomSputterAngle);
@@ -235,7 +241,6 @@ void reflection::sputter(
     particles->yprevious[indx] = particles->y[indx] - static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * surfaceNormalVector[1] * surface_buffer;
     particles->zprevious[indx] = particles->z[indx] - static_cast<gitr_precision>(boundaryVector[wallHit].inDir) * surfaceNormalVector[2] * surface_buffer;
 }
-
 
 std::pair<gitr_precision, gitr_precision> reflection::computeIncidentParticleEnergyAngle(Particles* particles, int indx, int use_3d_geom, int cylsymm, gitr_precision* surfaceNormalVector) const
 {

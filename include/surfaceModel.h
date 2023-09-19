@@ -72,10 +72,10 @@ std::pair<std::string, std::string> getMaterials(int wallHit, std::size_t indx) 
 
 void reflect(Particles* particles, int indx, gitr_precision newWeight, gitr_precision eInterpVal, gitr_precision aInterpVal, 
              Boundary* boundaryVector, int wallHit, bool use_3d_geom, bool cylsymm,
-             gitr_precision r10, gitr_precision* surfaceNormalVector) const;
+             gitr_precision randomReflectAngle, gitr_precision* surfaceNormalVector) const;
 
-void sputter(Boundary* boundaryVector, int wallHit,Particles* particles,int indx,gitr_precision aInterpVal,
-    gitr_precision r10, gitr_precision newWeight,int nspecies,    bool use_3d_geom, bool cylsymm,
+void sputter(Boundary* boundaryVector, int wallHit,Particles* particles,int indx,gitr_precision aInterpVal, gitr_precision eInterpVal,
+    gitr_precision randomReflectAngle, gitr_precision newWeight,int nspecies,    bool use_3d_geom, bool cylsymm,
     const gitr_precision* surfaceNormalVector) const;
 
 std::pair<gitr_precision, gitr_precision> computeIncidentParticleEnergyAngle(Particles* particles, int indx, int use_3d_geom, int cylsymm, gitr_precision* surfaceNormalVector) const;

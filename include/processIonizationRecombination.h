@@ -41,12 +41,10 @@ inline std::tuple<size_t, size_t, size_t, std::vector<double>, std::vector<doubl
     else if (process == RECOMBINATION)
     {
         filePrefix = "Recombination";
-        printf("Recombination  implemented yet\n");
     }
     // utility functions
     // std::string materialName =  materialData[particles->Z[indx]].name;
     std::string materialName =  materialData[charge].name;
-    
     std::string input_path = "input/adasData/";
     std::string ratesFiles = "ADAS_Rates_" + materialName + ".nc";
     printf("Reading ADAS data from %s\n", ratesFiles.c_str());
