@@ -104,24 +104,23 @@ void ParticleErosionToSurface(Boundary* boundaries, int nLines, gitr_precision* 
     int nSurfaces, Surfaces* surfaces, int nEdist, int nAdist, int nSpecies)
 {
     // Create a vector for surface numbers
-    std::vector<int> surfaceNumbers(nSurfaces * nSpecies, 0);
+    std::vector<int> surfaceNumbers(nSurfaces, 0);
     int srf = 0;
     for (int i = 0; i < nLines; i++) {
         if (boundaries[i].surface) {
                 surfaceNumbers[srf] = i;
+                surfaces->grossErosion[srf] = surfaces->grossErosion[srf] + grossErosion[srf];
+
                 srf++;
             }
 
     }  
-                // surfaces->grossErosion[idx] += grossErosion[idx];
-
     try {
         netCDF::NcFile ncFile1("output/surface.nc", netCDF::NcFile::replace);
 
         // Define dimensions
         netCDF::NcDim nc_nLines = ncFile1.addDim("nSurfaces", nSurfaces);
-        netCDF::NcDim nc_nSpecies = ncFile1.addDim("nSpecies", nSpecies);
-        std::vector<netCDF::NcDim> dims1 = {nc_nSpecies, nc_nLines};
+        std::vector<netCDF::NcDim> dims1 = {nc_nLines};
 
         // Create more dimensions for energy and angle distribution
         netCDF::NcDim nc_nEnergies = ncFile1.addDim("nEnergies", nEdist);

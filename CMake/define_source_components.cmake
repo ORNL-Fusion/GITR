@@ -22,12 +22,10 @@ target_include_directories( GITR PUBLIC include )
 # CPU-only targets
 set( non_gpu_targets
     materials
-     efield_interp
      particle
      utils
      flags
      config_interface
-     slow_math
      interpolator
      setup)
 
@@ -40,7 +38,6 @@ set( gpu_targets
      ionize
      boris
      hashGeom
-     fields
      spectroscopy
      geometry_check )
 

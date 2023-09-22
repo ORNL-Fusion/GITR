@@ -285,7 +285,7 @@ int main(int argc, char **argv, char **envp) {
 
   // Arrays used for reduction at end of sim
   sim::Array<gitr_precision> grossDeposition(nSurfaces , 0.0);
-  sim::Array<gitr_precision> grossErosion(nSurfaces * nspecies , 0.0);
+  sim::Array<gitr_precision> grossErosion(nSurfaces  , 0.0);
   sim::Array<gitr_precision> sumWeightStrike(nSurfaces , 0.0);
   sim::Array<gitr_precision> energyDistribution(nSurfaces  * nEdist * nAdist, 0.0);
   sim::Array<gitr_precision> reflDistribution(nSurfaces  * nEdist * nAdist, 0.0);
@@ -2055,8 +2055,8 @@ if( presheath_interp == 1 )
       use_3d_geom,
       cylsymm );
 
-  sortParticles sort0(particleArray, nP,dev_tt, 10000,
-                      nActiveParticlesOnRank.data());
+  sortParticles sort0(particleArray, nP,dev_tt, 10000, nActiveParticlesOnRank.data());
+
   spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy );
