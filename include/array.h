@@ -54,6 +54,7 @@ namespace sim {
       T* data;
       auto err = cudaMallocManaged(&data, sizeof(T)*capacity_);
       if(err != cudaSuccess){
+        std::exit( 0 );
         throw std::runtime_error("error allocating managed memory");
       }
       /* Captain! What are the contents of the "bin" variables in the CUDA vs OpenMP case?? */

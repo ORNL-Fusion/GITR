@@ -16,6 +16,7 @@
 #include "interp2d.hpp"
 #include "flags.hpp"
 #include <algorithm>
+#include "interpolator.h"
 
 #if USE_DOUBLE
 typedef double gitr_precision;
@@ -58,6 +59,32 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
 
 struct move_boris { 
 
+    /* Ahoy, Captain! new code for class based boris interpolation */
+    CUDA_CALLABLE_MEMBER    
+    gitr_precision interp2dCombined ( gitr_precision x,
+                                      gitr_precision y,
+                                      gitr_precision z,
+                                      int nx,
+                                      int nz,
+                                      gitr_precision* gridx,
+                                      gitr_precision* gridz,
+                                      gitr_precision* data,
+                                      int cylsymm );
+
+    CUDA_CALLABLE_MEMBER    
+    void interp2dVector( gitr_precision* field, 
+                         gitr_precision x,
+                         gitr_precision y,
+                         gitr_precision z,
+                         int nx,
+                         int nz,
+                         gitr_precision* gridx,
+                         gitr_precision* gridz,
+                         gitr_precision* datar,
+                         gitr_precision* dataz,
+                         gitr_precision* datat,
+                         int cylsymm );
+
     Particles *particlesPointer;
     //int& tt;
     Boundary *boundaryVector;
@@ -98,6 +125,17 @@ struct move_boris {
     int geom_hash_sheath;
     int use_3d_geom;
     int cylsymm;
+    /* Alright, Captain... you need a wrapper class that can create this for the ifield */
+    dummy< gitr_precision > dum;
+    /* what is a proof of concept experiment you could do? */
+    /* what is the next step after that? */
+    /*
+        double dims[ 2 ];
+        double lower_bounds[2];
+        double upper_bounds[2];
+    interpolated_field< gitr_precision > 
+    ifield;
+    */
 
     move_boris(Particles *_particlesPointer, gitr_precision _span, Boundary *_boundaryVector,int _nLines,
             int _nR_Bfield, int _nZ_Bfield,

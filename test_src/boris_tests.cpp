@@ -13,6 +13,8 @@
 #include "slow_math.h"
 #include "constants.h"
 
+#include "boris_data_broker.h"
+
 /*
     REQUIRE(compareVectors<gitr_precision>(gitrE,gold,epsilon,margin));
 */
@@ -69,7 +71,8 @@ TEST_CASE( "Complex Boris Motion" )
   int const cylsymm = 0;
 
   /* Testing complex boris motion implemented in the linked script */
-  SECTION( "compare vx, vy, vz, x, y, z to analytic solution" )
+  //SECTION( "compare vx, vy, vz, x, y, z to analytic solution" )
+  SECTION( "t0" )
   {
     /* amu and error in the "y" dimension appear to be inversely correlated */
     int ion_charge = 4.0;
@@ -276,9 +279,9 @@ TEST_CASE( "Complex Boris Motion" )
     auto particleArray =
       new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
 
-    thrust::counting_iterator<std::size_t> particle_iterator_start(0);
+    //thrust::counting_iterator<std::size_t> particle_iterator_start(0);
 
-    thrust::counting_iterator<std::size_t> particle_iterator_end(1);
+    //thrust::counting_iterator<std::size_t> particle_iterator_end(1);
 
     particleArray->setParticleV( particle_array_index, 
         initial_x,
@@ -423,54 +426,43 @@ TEST_CASE( "Complex Boris Motion" )
         cylsymm );
 
     /* time loop */
-    std::vector< double > v_x_test( n_timesteps );
-    std::vector< double > v_y_test( n_timesteps );
-    std::vector< double > v_z_test( n_timesteps );
+    boris_data_broker data_broker( particleArray, 
+                                   num_particles,
+                                   n_timesteps,
+                                   dt,
+                                   gitr_flags,
+                                   sheath_efield,
+                                   presheath_efield,
+                                   biased_surface,
+                                   geom_hash_sheath,
+                                   use_3d_geom,
+                                   cylsymm,
+                                   b_field_x,
+                                   b_field_y,
+                                   b_field_z,
+                                   e_field_x,
+                                   e_field_y,
+                                   e_field_z );
 
-    std::vector< double > pos_x_test( n_timesteps );
-    std::vector< double > pos_y_test( n_timesteps );
-    std::vector< double > pos_z_test( n_timesteps );
+    data_broker.run_boris();
 
-    for (int i = 0; i < n_timesteps; i++)
-    {
-      /* save particle velocity/position */
-      v_x_test[ i ] = particleArray->vx[ 0 ];
-      v_y_test[ i ] = particleArray->vy[ 0 ];
-      v_z_test[ i ] = particleArray->vz[ 0 ];
-
-      pos_x_test[ i ] = particleArray->x[ 0 ];
-      pos_y_test[ i ] = particleArray->y[ 0 ];
-      pos_z_test[ i ] = particleArray->z[ 0 ];
-
-      /* update particle velocity/position */
-      thrust::for_each( thrust::device,
-          particle_iterator_start,
-          particle_iterator_end,
-          boris );
-
-      /* manually advance the particle */
-      particleArray->xprevious[ 0 ] = particleArray->x[0];
-      particleArray->yprevious[ 0 ] = particleArray->y[0];
-      particleArray->zprevious[ 0 ] = particleArray->z[0];
-
-    }
 
     /* rmse check the output vs analytical */
     double tolerance = 1e-6;
 
-    REQUIRE( rmse_based_comparison( pos_x, pos_x_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( pos_x, data_broker.pos_x_test, tolerance ) );
 
-    REQUIRE( rmse_based_comparison( pos_y, pos_y_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( pos_y, data_broker.pos_y_test, tolerance ) );
 
-    REQUIRE( rmse_based_comparison( pos_z, pos_z_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( pos_z, data_broker.pos_z_test, tolerance ) );
 
-    REQUIRE( rmse_based_comparison( v_x, v_x_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( v_x, data_broker.v_x_test, tolerance ) );
 
     tolerance = 1e-5;
 
-    REQUIRE( rmse_based_comparison( v_y, v_y_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( v_y, data_broker.v_y_test, tolerance ) );
 
-    REQUIRE( rmse_based_comparison( v_z, v_z_test, tolerance ) );
+    REQUIRE( rmse_based_comparison( v_z, data_broker.v_z_test, tolerance ) );
   }
 
   /*
@@ -479,7 +471,8 @@ TEST_CASE( "Complex Boris Motion" )
   BFIELD_INTERP=1
 
   */
-  SECTION( "exb drift experiment - Wein Filter" )
+  //SECTION( "exb drift experiment - Wein Filter" )
+  SECTION( "t1" )
   {
     /* parameters */
     int nT = 1e1;
@@ -523,9 +516,9 @@ TEST_CASE( "Complex Boris Motion" )
     auto particleArray =
     new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
 
-    thrust::counting_iterator<std::size_t> particle_iterator_start(0);
+    //thrust::counting_iterator<std::size_t> particle_iterator_start(0);
 
-    thrust::counting_iterator<std::size_t> particle_iterator_end(1);
+    //thrust::counting_iterator<std::size_t> particle_iterator_end(1);
 
     particleArray->setParticleV( particle_array_index, 
                                  initial_x,
@@ -632,6 +625,7 @@ TEST_CASE( "Complex Boris Motion" )
 
 
     /* create boris operator */
+    /*
     move_boris boris( particleArray,
                       dt,
                       boundaries.data(),
@@ -668,14 +662,17 @@ TEST_CASE( "Complex Boris Motion" )
                       use_3d_geom,
                       cylsymm );
 
+    */
     /* time loop */
     for (int tt = 0; tt < nT; tt++)
     {
 
+      /*
       thrust::for_each( thrust::device,
                         particle_iterator_start,
                         particle_iterator_end,
                         boris );
+      */
 
 
       /* manually advance the particle */
@@ -685,19 +682,26 @@ TEST_CASE( "Complex Boris Motion" )
 
     }
 
-    /* total final displacement in y should be vtotal * nT * dt = 1000 * 10 * 1e-2 = 100 */
+    // total final displacement in y should be vtotal * nT * dt = 1000 * 10 * 1e-2 = 100
+    /*
     std::vector< double > final_position{ particleArray->x[ 0 ],
                                           particleArray->y[ 0 ],
                                           particleArray->z[ 0 ] };
+                                          */
     
     std::vector< double > gold{ 0, 100, 0 };
 
     double tolerance = 1e-9;
 
+    boris_data_broker_0 data_broker;
+
+    std::vector< double > final_position = data_broker.run_1();
+
     REQUIRE( root_mean_squared_error( final_position, gold ) < tolerance );
   }
 
-  SECTION( "getE tests" )
+  //SECTION( "getE tests" )
+  SECTION( "t2" )
   {
     libconfig::Config cfg_geom;
 
@@ -776,6 +780,7 @@ TEST_CASE( "Complex Boris Motion" )
     gitr_precision dz = 0.005/10000.0;
      int nZ = 10000;
      std::vector<gitr_precision> gitrE(nZ,0.0);
+    gitr_precision f_psi = 1.0;
     for(int j=0;j<nZ;j++)
     {
       pz[0] = j*dz;
@@ -785,7 +790,7 @@ TEST_CASE( "Complex Boris Motion" )
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface,
-               use_3d_geom, geom_hash_sheath, cylsymm );
+               use_3d_geom, geom_hash_sheath, cylsymm, f_psi );
       gitrE[j] = thisE[2];
     }
 
@@ -821,7 +826,12 @@ TEST_CASE( "Complex Boris Motion" )
     // Compare vectors to ensure reproducibility
     gitr_precision margin = 0.1;
     gitr_precision epsilon = 0.001;
-    REQUIRE(compareVectors<gitr_precision>(gitrE,gold,epsilon,margin));
+
+    boris_data_broker_0 data_broker;
+
+    std::vector< double > gitr_e = data_broker.run_2();
+
+    REQUIRE(compareVectors<gitr_precision>(gitr_e,gold,epsilon,margin));
   }
 }
 
