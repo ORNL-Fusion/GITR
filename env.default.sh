@@ -1,0 +1,27 @@
+export GITR_TOP_LEVEL=~/trash
+#export TQD_HOME=/home/tqd
+#export PATH=/home/tqd/Code/cmakebuild/bin:$PATH:$TQD_HOME/Code/pythonbuild/bin:$TQD_HOME/Code/openmpiBuild/bin:/home/tqd/Code/llvm-project/build/bin
+#export CMAKE_SOURCE_DIR=../
+#export  NETCDF=$TQD_HOME/Code/netcdfcbuild 
+export  NETCDFCXX4=$GITR_TOP_LEVEL/netcdfcxxbuild  
+#export  NETCDFDIR=$NETCDF/lib 
+#export  NETCDFCXX4DIR=$NETCDFCXX4/lib 
+#export  NETCDFINCLUDE=$NETCDF/include 
+export  NETCDFCXX4INCLUDE=$NETCDFCXX4/include 
+export  NETCDFCXX4LIB=$NETCDFCXX4/lib/libnetcdf_c++4.so
+#export  NETCDFLIB=$NETCDFDIR/libnetcdf.so 
+#export  NETCDFLIB_CPP=$NETCDFCXX4DIR/libnetcdf_c++4.so
+#export PATH=$PATH:/$NETCDF/bin
+#
+export LIBCONFIGDIR=$GITR_TOP_LEVEL/libconfigbuild
+export LIBCONFIGLIB=$LIBCONFIGDIR/lib/libconfig++.so
+#export LIBCONFIGPP_LIBRARIES=lconfig++
+#export LIBCONFIGPP_LIBRARY=lconfig++
+#export LIBCONFIGPP_STATIC_LIBRARY=
+export LIBCONFIG_INCLUDE_DIR=$LIBCONFIGDIR/include
+#export LIBCONFIGPP_INCLUDE_DIR=$LIBCONFIGDIR/include
+#export LIBCONFIG_LIBRARY=lconfig
+#export THRUST_INCLUDE_DIRS=$TQD_HOME/Code/thrust
+#export THRUST_INCLUDE_DIR=$TQD_HOME/Code/thrust
+export THRUST_DIR=$GITR_TOP_LEVEL/thrust
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NETCDF/lib:$NETCDFCXX4/lib:$TQD_HOME/Code/openmpiBuild/lib
