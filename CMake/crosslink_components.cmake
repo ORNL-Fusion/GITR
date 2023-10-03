@@ -17,7 +17,7 @@ target_link_libraries( utils
                        netcdf_cxx
                        netcdf_c )
 
-target_link_libraries( boris thrust )
+target_link_libraries( boris_data_broker boris flags )
 
 if( OpenMP_CXX_FOUND )
 
@@ -56,7 +56,7 @@ if( GITR_USE_CUDA )
   target_link_libraries( GITR 
                          CUDA::cudart )
 
-  foreach( target IN LISTS gpu_targets gpu_test_targets )
+  foreach( target IN LISTS gpu_targets gpu_test_targets gpu_broker_targets )
 
     target_link_libraries( ${target} thrust CUDA::cudart )
 
@@ -64,9 +64,33 @@ if( GITR_USE_CUDA )
 
 endif()
 
+target_link_libraries( boris_tests 
+                       boris_data_broker 
+                       flags 
+                       libconfig_cxx 
+                       libconfig_c 
+                       utils 
+                       boris 
+                       slow_math
+                       Catch2::Catch2WithMain )
+
 if( GITR_USE_MPI )
   target_link_libraries( GITR mpi )
   target_link_libraries( coulomb_tests mpi )
   target_link_libraries( atomic_tests mpi )
   target_link_libraries( field_tests mpi )
 endif()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
