@@ -44,6 +44,7 @@ set( gpu_targets
 set( gpu_broker_targets 
      boris_data_broker
      cross_field_diffusion_broker 
+     atomic_data_broker
      )
 
 if( NOT GITR_USE_CUDA )

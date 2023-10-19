@@ -1,12 +1,13 @@
 #include "catch2/catch_all.hpp"
-#include "ionize.h"
-#include "recombine.h"
-#include "utils.h"
-#include <thrust/execution_policy.h>
-#include "curandInitialize.h"
-#include "curandInitialize2.h"
-#include "Fields.h"
+#include "atomic_data_broker.h"
+#include <iostream>
 #include "test_data_filepath.hpp"
+#include "utils.h"
+
+#include "utils.h"
+#include "Fields.h"
+#include "flags.hpp"
+#include "Particles.h"
 
 #if USE_DOUBLE
 typedef double gitr_precision;
@@ -45,6 +46,7 @@ TEST_CASE("Atomic physics", "tests") {
 
   SECTION("ionize - test fixed random seeds")
   {
+    /*
     // Creat cfg object and set to autoconvert types
     libconfig::Config cfg;
     cfg.setAutoConvert(true);
@@ -220,11 +222,16 @@ TEST_CASE("Atomic physics", "tests") {
       values2[i] = r1;
       //std::cout << i << " " << r1 << std::endl;
     }
+    */
+
+    atomic_data_broker data_broker;
+
+    data_broker.run();
   
     // Compare vectors to ensure reproducibility
     gitr_precision margin = 0.00001;
     gitr_precision epsilon = 0.000001;
-    REQUIRE(compareVectors<gitr_precision>(values,values2,epsilon,margin));
+    REQUIRE(compareVectors<gitr_precision>(data_broker.values,data_broker.values2,epsilon,margin));
   }
 
   SECTION("ionize - test non-fixed random seeds")
@@ -241,6 +248,7 @@ TEST_CASE("Atomic physics", "tests") {
     
     int nParticles = 10;
     auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
+    /*
 #ifdef __CUDACC__
      typedef curandState rand_type;
 #else
@@ -270,6 +278,7 @@ TEST_CASE("Atomic physics", "tests") {
     curandInitialize2<rand_type> rand2(&state1.front(),&seed.front(), &sequence.front(),&offset.front());
 
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end, rand2);
+    */
     
     int nR_Dens = 1;
     int nZ_Dens = 1;
@@ -338,6 +347,7 @@ TEST_CASE("Atomic physics", "tests") {
           << "ERROR: Could not get ionization string info from input file "
           << std::endl;
     }
+    /*
     read_profileNs(ADAS_TEST_FILE, ionizeNcs, recombNcs,
                    nCS_Ionize, nCS_Recombine);
 
@@ -355,12 +365,14 @@ TEST_CASE("Atomic physics", "tests") {
         ADAS_TEST_FILE, nTemperaturesIonize, nDensitiesIonize,
         ionizeTempGrid, gridTemperature_Ionization, ionizeDensGrid,
         gridDensity_Ionization, ionizeRCvarChar, rateCoeff_Ionization);
+    */
     
     gitr_precision dt = 1.0e-5;
     //auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
 
     sim::Array<gitr_precision> dev_f(1,-1.0);
     
+    /*
     ionize<rand_type> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
@@ -371,7 +383,7 @@ TEST_CASE("Atomic physics", "tests") {
     std::vector<gitr_precision> values(nParticles,0.0);
     for (int i=0;i<nParticles;i++)
     {
-        thrust::for_each(thrust::device,particle_iterator0+i, particle_iterator0+i+1,ionize0);
+     //   thrust::for_each(thrust::device,particle_iterator0+i, particle_iterator0+i+1,ionize0);
         gitr_precision r1 = dev_f[0];
         values[i] = r1;
         //std::cout << i << " " << r1 << std::endl;
@@ -387,14 +399,15 @@ TEST_CASE("Atomic physics", "tests") {
       offset[i] = r4;
       seed[i] = r5;
     }
+    */
     
 
-    thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end, rand2);
+    //thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end, rand2);
   
     std::vector<gitr_precision> values2(nParticles,0.0);
     for (int i=0;i<nParticles;i++)
     {
-        thrust::for_each(thrust::device,particle_iterator0+i, particle_iterator0+i+1,ionize0);
+        //thrust::for_each(thrust::device,particle_iterator0+i, particle_iterator0+i+1,ionize0);
         gitr_precision r1 = dev_f[0];
         values2[i] = r1;
         //std::cout << i << " " << r1 << std::endl;
@@ -403,7 +416,15 @@ TEST_CASE("Atomic physics", "tests") {
     
     gitr_precision margin = 0.00001;
     gitr_precision epsilon = 0.000001;
-    REQUIRE(!compareVectors<gitr_precision>(values,values2,epsilon,margin));
+
+    /* Captain! new code */
+    atomic_data_broker data_broker;
+
+    data_broker.run_1();
+    /* end new code */
+
+    REQUIRE(!compareVectors<gitr_precision>(data_broker.values,data_broker.values2,
+                                            epsilon,margin));
   }
 
   SECTION("ionize - steady state")
@@ -422,6 +443,7 @@ TEST_CASE("Atomic physics", "tests") {
     
     auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
   
+    /*
     thrust::counting_iterator<std::size_t> particle_iterator0(0);
     thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
 
@@ -451,6 +473,7 @@ TEST_CASE("Atomic physics", "tests") {
     
     curandInitialize2<rand_type> rand2(&state1.front(),&seed.front(), &sequence.front(),&offset.front());
     thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,rand2);
+    */
     
     int nR_Dens = 1;
     int nZ_Dens = 1;
@@ -549,6 +572,7 @@ TEST_CASE("Atomic physics", "tests") {
     
     sim::Array<gitr_precision> dev_f(1,-1.0);
   
+    /*
     ionize<rand_type> ionize0(
       gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
@@ -562,6 +586,7 @@ TEST_CASE("Atomic physics", "tests") {
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
       gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags, cylsymm );
+    */
 
     typedef std::chrono::high_resolution_clock gitr_time;
     auto gitr_start_clock = gitr_time::now();
@@ -569,8 +594,8 @@ TEST_CASE("Atomic physics", "tests") {
     for(int i=0; i<nT; i++)
     {
       if(i%(nT/10) == 0) std::cout << 100.0f*i/nT << " % done" << std::endl;
-      thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,ionize0);
-      thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,recombine0);
+      //thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,ionize0);
+      //thrust::for_each(thrust::device,particle_iterator0, particle_iterator_end,recombine0);
     }
     
     auto finish_clock0nc = gitr_time::now();
@@ -605,7 +630,25 @@ TEST_CASE("Atomic physics", "tests") {
 
     gitr_precision margin = 500.0/nParticles;
     gitr_precision epsilon = 0.05;
-    REQUIRE(compareVectors<gitr_precision>(charge_counts,gold,epsilon,margin));
+
+    /* Captain! new code */
+    atomic_data_broker data_broker;
+
+    std::vector< gitr_precision > charge_count = data_broker.run_2();
+    /* end new code */
+
+    REQUIRE(compareVectors<gitr_precision>(charge_count,gold,epsilon,margin));
   
   }
 }
+
+
+
+
+
+
+
+
+
+
+
