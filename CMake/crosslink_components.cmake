@@ -17,7 +17,21 @@ target_link_libraries( utils
                        netcdf_cxx
                        netcdf_c )
 
-target_link_libraries( boris_data_broker boris flags )
+target_link_libraries( boris_data_broker 
+                       boris 
+                       flags 
+                       )
+
+target_link_libraries( cross_field_diffusion_broker
+                       utils 
+                       flags 
+                       libconfig_cxx
+                       libconfig_c
+                       spectroscopy 
+                       thrust 
+                       geometry_check 
+                       config_interface 
+                       )
 
 if( OpenMP_CXX_FOUND )
 
@@ -73,6 +87,20 @@ target_link_libraries( boris_tests
                        boris 
                        slow_math
                        Catch2::Catch2WithMain )
+
+target_link_libraries( cross_field_diffusion_tests
+                       cross_field_diffusion_broker
+                       utils
+                       flags
+                       libconfig_cxx
+                       libconfig_c
+                       boris
+                       spectroscopy
+                       thrust
+                       geometry_check
+                       config_interface
+                       Catch2::Catch2WithMain 
+                       )
 
 if( GITR_USE_MPI )
   target_link_libraries( GITR mpi )
