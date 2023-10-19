@@ -41,7 +41,10 @@ set( gpu_targets
      spectroscopy
      geometry_check )
 
-set( gpu_broker_targets boris_data_broker )
+set( gpu_broker_targets 
+     boris_data_broker
+     cross_field_diffusion_broker 
+     )
 
 if( NOT GITR_USE_CUDA )
 

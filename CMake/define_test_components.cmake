@@ -6,7 +6,10 @@ enable_testing()
 add_test(NAME sample_test COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/examples/sft_a/test.py WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/examples/sft_a )
 
 # gpu test targets first
-set( gpu_test_targets boris_tests )
+set( gpu_test_targets 
+     boris_tests 
+     cross_field_diffusion_tests
+     )
 
 # compile with nvcc
 if( GITR_USE_CUDA )
