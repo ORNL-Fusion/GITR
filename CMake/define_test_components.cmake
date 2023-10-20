@@ -10,6 +10,7 @@ set( gpu_test_targets
      boris_tests 
      cross_field_diffusion_tests
      atomic_tests
+     coulomb_tests
      )
 
 # compile with nvcc

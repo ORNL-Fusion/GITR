@@ -33,6 +33,17 @@ target_link_libraries( cross_field_diffusion_broker
                        config_interface 
                        )
 
+target_link_libraries( coulomb_data_broker
+                       libconfig_cxx
+                       libconfig_c
+                       thrust
+                       interp2d
+                       utils
+                       flags
+                       netcdf
+                       boris
+                       fields )
+
 target_link_libraries( atomic_data_broker ionize interp2d utils flags )
 
 if( OpenMP_CXX_FOUND )
@@ -113,6 +124,20 @@ target_link_libraries( atomic_tests
                        Catch2::Catch2WithMain
                        libconfig_cxx
                        libconfig_c
+                       )
+
+target_link_libraries( coulomb_tests 
+                       coulomb_data_broker
+                       libconfig_cxx
+                       libconfig_c
+                       thrust
+                       interp2d
+                       utils
+                       flags
+                       netcdf
+                       boris
+                       fields
+                       Catch2::Catch2WithMain
                        )
 
 if( GITR_USE_MPI )
