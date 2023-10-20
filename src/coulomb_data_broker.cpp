@@ -128,7 +128,7 @@ double coulomb_data_broker::run_3()
 
   auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
 
-  int coulomb_collisions = 0;
+  int coulomb_collisions = 3;
 
   coulombCollisions coulombCollisions0(
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
@@ -326,7 +326,7 @@ double coulomb_data_broker::run_2()
   int nT = getVariable_cfg<int> (cfg,"timeStep.nT");
   auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
 
-  int coulomb_collisions = 0;
+  int coulomb_collisions = 2;
 
   coulombCollisions coulombCollisions0(
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
