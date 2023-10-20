@@ -11,6 +11,7 @@ set( gpu_test_targets
      cross_field_diffusion_tests
      atomic_tests
      coulomb_tests
+     file_io_tests
      )
 
 # compile with nvcc
