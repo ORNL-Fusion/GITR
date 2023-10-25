@@ -59,7 +59,7 @@ foreach( component IN LISTS non_gpu_targets )
 
   add_library( ${component} src/${component}.cpp )
 
-  target_include_directories( ${component} PUBLIC include )
+  target_include_directories( ${component} PUBLIC include test_include )
 
 endforeach()
 

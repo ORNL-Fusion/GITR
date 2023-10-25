@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thrust/iterator/counting_iterator.h>
 #include "crossFieldDiffusion.h"
 #include "test_data_filepath.hpp"
 #include "Particles.h"

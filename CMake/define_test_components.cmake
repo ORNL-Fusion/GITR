@@ -33,11 +33,17 @@ if( GITR_USE_CUDA )
   endforeach()
 
 
-# compile with host compiler
+# compile gpu targets as cpu targets with host compiler
 else()
 
-  message( "testing gpu mode first" )
+  foreach( component IN LISTS gpu_test_targets )
+
+    add_executable( ${component} test_src/${component}.cpp )
+
+    add_test( NAME ${component} COMMAND ${component} )
+
+    target_include_directories( ${component} PUBLIC include test_include )
+
+  endforeach()
 
 endif()
-
-# compile cpu targets

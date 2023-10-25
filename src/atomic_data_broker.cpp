@@ -1,7 +1,9 @@
+#include <chrono>
 #include "ionize.h"
 #include "recombine.h"
 #include "utils.h"
 #include <thrust/execution_policy.h>
+#include <thrust/iterator/counting_iterator.h>
 #include "curandInitialize.h"
 #include "curandInitialize2.h"
 #include "Fields.h"
