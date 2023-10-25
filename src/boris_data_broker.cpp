@@ -1,6 +1,7 @@
 #include "boris_data_broker.h"
 #include <iostream>
 #include <thrust/execution_policy.h>
+#include <thrust/iterator/counting_iterator.h>
 #include "config_interface.h"
 #include "test_data_filepath.hpp"
 #include "utils.h"

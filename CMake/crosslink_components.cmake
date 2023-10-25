@@ -91,6 +91,19 @@ if( GITR_USE_CUDA )
 
 endif()
 
+if( GITR_USE_OPENMP )
+
+  target_link_libraries( GITR 
+                         OpenMP::OpenMP_CXX )
+
+  foreach( target IN LISTS gpu_targets gpu_test_targets gpu_broker_targets )
+
+    target_link_libraries( ${target} thrust OpenMP::OpenMP_CXX  )
+
+  endforeach()
+
+endif()
+
 target_link_libraries( boris_tests 
                        boris_data_broker 
                        flags 
@@ -156,17 +169,3 @@ if( GITR_USE_MPI )
   target_link_libraries( atomic_tests mpi )
   target_link_libraries( field_tests mpi )
 endif()
-
-
-
-
-
-
-
-
-
-
-
-
-
-

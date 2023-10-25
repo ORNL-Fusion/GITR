@@ -1,4 +1,6 @@
 #include "coulomb_data_broker.h"
+#include <thrust/iterator/counting_iterator.h>
+#include <chrono>
 
 #include "coulombCollisions.h"
 #include "curandInitialize.h"
