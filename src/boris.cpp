@@ -778,7 +778,8 @@ void move_boris::operator()(std::size_t indx)
   Bmag = vectorNorm(B);
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
 
-  gitr_precision radians_per_dt = gyrofrequency*dt;
+  gitr_precision radians_per_dt = 2.0 * std::atan(0.5*gyrofrequency*dt);
+	//gitr_precision radians_per_dt = gyrofrequency*dt;
   //q_prime = 9.572528104401468e7*particlesPointer->charge[indx] / particlesPointer->amu[indx] * dt * 0.5;
   /* Captain! original code above, new code below. q_prime = q * dt / ( 2 * m ) */
   q_prime = particlesPointer->charge[ indx ] * gitr_constants::electron_volt * dt * 0.5 /
@@ -787,6 +788,7 @@ void move_boris::operator()(std::size_t indx)
     coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
 
     vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v);
+	particlesPointer->angle[indx] = particlesPointer->angle[indx] + radians_per_dt;
 
         //vectorScalarMult(q_prime,E,qpE);
     qpE[0] = q_prime*E[0];
