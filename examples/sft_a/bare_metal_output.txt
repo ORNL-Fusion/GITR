@@ -1,0 +1,609 @@
+file_name read from stdin: input/gitrInput.cfg
+Program Name Is: ../../build/GITR
+No Extra Command Line Argument Passed Other Than Program NameOpen configuration file input/input/gitrInput.cfg
+Finished libconfig import  input/gitrInput.cfg
+geometry.fileString = gitrGeometry.cfg
+Open geometry file input/gitrGeometry.cfg
+Finished libconfig import  input/gitrGeometry.cfg
+Successfully staged input and geometry file 
+flags.USE_IONIZATION = 0
+flags.FIXED_SEEDS = 1
+flags.USE_ADAPTIVE_DT = 0
+WARNING: Failed importing flags.USE_SHEATH_DENSITY, defaulting value to 0
+gitr flags 0
+USE_SHEATH_DENSITY 0
+backgroundPlasmaProfiles.Z = 1
+backgroundPlasmaProfiles.amu = 2
+backgroundPlasmaProfiles.Bfield.r = 0
+backgroundPlasmaProfiles.Bfield.y = 0
+backgroundPlasmaProfiles.Bfield.z = 0.1
+Start of geometry import
+Got geom setting
+Just read nLines 4
+Number of Geometric Objects To Load: 4
+Boundary import routine 5
+Starting Boundary Init... nSurfaces 2
+surfaces.flux.nE = 200
+surfaces.flux.E0 = 0
+surfaces.flux.E = 100
+surfaces.flux.nA = 30
+surfaces.flux.A0 = 0
+surfaces.flux.A = 90
+allocating closGeomGrids 1 1 1 1
+allocating closGeomGrids finished
+backgroundPlasmaProfiles.Temperature.fileString = profiles.nc
+backgroundPlasmaProfiles.Temperature.gridNrString = nR
+backgroundPlasmaProfiles.Temperature.gridNzString = nZ
+backgroundPlasmaProfiles.Temperature.gridRString = gridR
+reading  input/profiles.nc
+backgroundPlasmaProfiles.Temperature.gridZString = gridZ
+reading  input/profiles.nc
+backgroundPlasmaProfiles.Temperature.IonTempString = ti
+reading  input/profiles.nc
+backgroundPlasmaProfiles.Temperature.ElectronTempString = te
+reading  input/profiles.nc
+Finished Temperature import 10
+backgroundPlasmaProfiles.Density.ni = 1e+19
+backgroundPlasmaProfiles.Density.ne = 1e+19
+Finished density import 1e+19 1e+19
+Starting flow import 
+backgroundPlasmaProfiles.FlowVelocity.fileString = profiles.nc
+backgroundPlasmaProfiles.FlowVelocity.gridNrString = nR
+backgroundPlasmaProfiles.FlowVelocity.gridNzString = nZ
+backgroundPlasmaProfiles.FlowVelocity.gridRString = gridR
+reading  input/profiles.nc
+backgroundPlasmaProfiles.FlowVelocity.gridZString = gridZ
+reading  input/profiles.nc
+backgroundPlasmaProfiles.FlowVelocity.flowVrString = vx
+reading  input/profiles.nc
+backgroundPlasmaProfiles.FlowVelocity.flowVtString = vy
+reading  input/profiles.nc
+backgroundPlasmaProfiles.FlowVelocity.flowVzString = vz
+reading  input/profiles.nc
+backgroundPlasmaProfiles.gradT.gradTeR = 0
+backgroundPlasmaProfiles.gradT.gradTeY = 0
+backgroundPlasmaProfiles.gradT.gradTeZ = 0
+backgroundPlasmaProfiles.gradT.gradTiR = 1.38
+backgroundPlasmaProfiles.gradT.gradTiY = 0
+backgroundPlasmaProfiles.gradT.gradTiZ = 1.38
+thermal gradient interpolation gradTi 1.38 0 1.38 
+me 0.0005 2 23.8 23.8
+fd 6.57674e-12 2.88151
+Surface number 0 has te and potential 23.8 68.58
+me 0.0005 2 37.6 37.6
+fd 1 2.88151
+Surface number 1 has te and potential 37.6 108.345
+me 0.0005 2 23.8 23.8
+fd 6.57674e-12 2.88151
+Surface number 0 has te and potential 23.8 68.58
+me 0.0005 2 10 10
+fd 1 2.88151
+Surface number 0 has te and potential 10 28.8151
+Completed Boundary Init 
+periodicy 0
+periodicx 0
+Using presheath Efield 
+backgroundPlasmaProfiles.Efield.Er = 0
+backgroundPlasmaProfiles.Efield.Et = 0
+backgroundPlasmaProfiles.Efield.Ez = 0
+Completed presheath Efield Init 
+Spectroscopy net imported
+spec bin Ns 6 20 120 100
+Using THRUST
+Number of time steps: 4000000 With dt = 1e-08
+Number of particles: 10000
+WARNING: maximum dt is not specified in input file, using default of 1.0e5 seconds
+countP 10000
+World rank 0 has 10000 starting at 0 ending at 10000
+impurityParticleSource.nP = 10000
+impurityParticleSource.initialConditions.energy_eV = 10
+impurityParticleSource.initialConditions.impurity_amu = 12
+impurityParticleSource.initialConditions.theta = 0
+impurityParticleSource.initialConditions.phi = 0
+impurityParticleSource.initialConditions.energy_eV = 10
+impurityParticleSource.initialConditions.impurity_amu = 12
+impurityParticleSource.initialConditions.theta = 0
+impurityParticleSource.initialConditions.phi = 0
+impurityParticleSource.initialConditions.energy_eV = 10
+impurityParticleSource.initialConditions.impurity_amu = 12
+impurityParticleSource.initialConditions.phi = 0
+impurityParticleSource.initialConditions.impurity_amu = 12
+impurityParticleSource.initialConditions.charge = 4
+Impurity amu Z charge: 12 0 4
+Impurity point source: 0 0 1e-07
+Impurity point source E: 10
+Impurity point source angles phi theta: 0 0
+Starting psourcefile import 
+particleSource.ncFileString = particleSource.nc
+About to try to open NcFile ncp0 
+finished NcFile ncp0 starting ncp
+getting dim nP
+got through NcVar 
+defined file vectors 
+closed ncp 
+particle file import done
+Tracks subsample factor imported 1
+Beginning random number seeds
+ about to do curandInit
+ finished curandInit
+Random Number Initialize time for node 0          is  0.000 (secs) 
+Initialize time for node 0          is  0.144 (secs) 
+diagnostics.leakZ = 1.2
+Flow velocities -0 -0 -750
+Starting main loop
+GPU memory usage: used = 1336.250000, free = 2577.937500 MB, total = 3914.187500 MB
+number of devices gotten 1
+Device Number: 0
+  Device name: Quadro T2000
+  Memory Clock Rate (KHz): 3501000
+  Memory Bus Width (bits): 128
+  Peak Memory Bandwidth (GB/s): 112.032000
+
+  Total number of threads: 1024
+here 1
+here 2
+ n good particles 10000 % done on time 2.5e-06
+ n good particles 10000 % done on time 5e-06
+ n good particles 10000 % done on time 7.5e-06
+ n good particles 10000 % done on time 1e-05
+ n good particles 10000 % done on time 1.25e-05
+ n good particles 10000 % done on time 1.5e-05
+ n good particles 10000 % done on time 1.75e-05
+ n good particles 10000 % done on time 2e-05
+ n good particles 10000 % done on time 2.25e-05
+ n good particles 10000 % done on time 2.5e-05
+ n good particles 10000 % done on time 5e-05
+ n good particles 10000 % done on time 7.5e-05
+ n good particles 9999 % done on time 0.0001
+ n good particles 9998 % done on time 0.000125
+ n good particles 9997 % done on time 0.00015
+ n good particles 9988 % done on time 0.000175
+ n good particles 9980 % done on time 0.0002
+ n good particles 9951 % done on time 0.000225
+ n good particles 9928 % done on time 0.00025
+ n good particles 9366 % done on time 0.0005
+ n good particles 8778 % done on time 0.00075
+ n good particles 8304 % done on time 0.001
+ n good particles 7904 % done on time 0.00125
+ n good particles 7578 % done on time 0.0015
+ n good particles 7298 % done on time 0.00175
+ n good particles 7041 % done on time 0.002
+ n good particles 6837 % done on time 0.00225
+ n good particles 6656 % done on time 0.0025
+ n good particles 5456 % done on time 0.005
+ n good particles 4863 % done on time 0.0075
+ n good particles 4533 % done on time 0.01
+ n good particles 4248 % done on time 0.0125
+ n good particles 4096 % done on time 0.015
+ n good particles 3972 % done on time 0.0175
+ n good particles 3879 % done on time 0.02
+ n good particles 3802 % done on time 0.0225
+ n good particles 3732 % done on time 0.025
+ n good particles 3666 % done on time 0.0275
+ n good particles 3619 % done on time 0.03
+ n good particles 3582 % done on time 0.0325
+ n good particles 3555 % done on time 0.035
+ n good particles 3526 % done on time 0.0375
+ n good particles 3509 % done on time 0.04
+ n good particles 3490 % done on time 0.0425
+ n good particles 3475 % done on time 0.045
+ n good particles 3455 % done on time 0.0475
+ n good particles 3444 % done on time 0.05
+ n good particles 3431 % done on time 0.0525
+ n good particles 3427 % done on time 0.055
+ n good particles 3418 % done on time 0.0575
+ n good particles 3411 % done on time 0.06
+ n good particles 3406 % done on time 0.0625
+ n good particles 3404 % done on time 0.065
+ n good particles 3399 % done on time 0.0675
+ n good particles 3397 % done on time 0.07
+ n good particles 3395 % done on time 0.0725
+ n good particles 3391 % done on time 0.075
+ n good particles 3389 % done on time 0.0775
+ n good particles 3386 % done on time 0.08
+ n good particles 3384 % done on time 0.0825
+ n good particles 3383 % done on time 0.085
+ n good particles 3378 % done on time 0.0875
+ n good particles 3372 % done on time 0.09
+ n good particles 3366 % done on time 0.0925
+ n good particles 3357 % done on time 0.095
+ n good particles 3341 % done on time 0.0975
+ n good particles 3329 % done on time 0.1
+ n good particles 3309 % done on time 0.1025
+ n good particles 3291 % done on time 0.105
+ n good particles 3259 % done on time 0.1075
+ n good particles 3235 % done on time 0.11
+ n good particles 3197 % done on time 0.1125
+ n good particles 3151 % done on time 0.115
+ n good particles 3097 % done on time 0.1175
+ n good particles 3043 % done on time 0.12
+ n good particles 2982 % done on time 0.1225
+ n good particles 2911 % done on time 0.125
+ n good particles 2844 % done on time 0.1275
+ n good particles 2769 % done on time 0.13
+ n good particles 2705 % done on time 0.1325
+ n good particles 2594 % done on time 0.135
+ n good particles 2501 % done on time 0.1375
+ n good particles 2412 % done on time 0.14
+ n good particles 2303 % done on time 0.1425
+ n good particles 2202 % done on time 0.145
+ n good particles 2076 % done on time 0.1475
+ n good particles 1968 % done on time 0.15
+ n good particles 1862 % done on time 0.1525
+ n good particles 1746 % done on time 0.155
+ n good particles 1651 % done on time 0.1575
+ n good particles 1540 % done on time 0.16
+ n good particles 1437 % done on time 0.1625
+ n good particles 1339 % done on time 0.165
+ n good particles 1242 % done on time 0.1675
+ n good particles 1153 % done on time 0.17
+ n good particles 1088 % done on time 0.1725
+ n good particles 1005 % done on time 0.175
+ n good particles 933 % done on time 0.1775
+ n good particles 841 % done on time 0.18
+ n good particles 763 % done on time 0.1825
+ n good particles 707 % done on time 0.185
+ n good particles 660 % done on time 0.1875
+ n good particles 612 % done on time 0.19
+ n good particles 561 % done on time 0.1925
+ n good particles 511 % done on time 0.195
+ n good particles 467 % done on time 0.1975
+ n good particles 430 % done on time 0.2
+ n good particles 394 % done on time 0.2025
+ n good particles 359 % done on time 0.205
+ n good particles 322 % done on time 0.2075
+ n good particles 288 % done on time 0.21
+ n good particles 258 % done on time 0.2125
+ n good particles 243 % done on time 0.215
+ n good particles 222 % done on time 0.2175
+ n good particles 201 % done on time 0.22
+ n good particles 179 % done on time 0.2225
+ n good particles 163 % done on time 0.225
+ n good particles 154 % done on time 0.2275
+ n good particles 139 % done on time 0.23
+ n good particles 127 % done on time 0.2325
+ n good particles 103 % done on time 0.235
+ n good particles 90 % done on time 0.2375
+ n good particles 74 % done on time 0.24
+ n good particles 64 % done on time 0.2425
+ n good particles 59 % done on time 0.245
+ n good particles 52 % done on time 0.2475
+ n good particles 48 % done on time 0.25
+ n good particles 39 % done on time 0.2525
+ n good particles 34 % done on time 0.255
+ n good particles 30 % done on time 0.2575
+ n good particles 24 % done on time 0.26
+ n good particles 24 % done on time 0.2625
+ n good particles 23 % done on time 0.265
+ n good particles 18 % done on time 0.2675
+ n good particles 17 % done on time 0.27
+ n good particles 14 % done on time 0.2725
+ n good particles 13 % done on time 0.275
+ n good particles 11 % done on time 0.2775
+ n good particles 11 % done on time 0.28
+ n good particles 9 % done on time 0.2825
+ n good particles 8 % done on time 0.285
+ n good particles 7 % done on time 0.2875
+ n good particles 7 % done on time 0.29
+ n good particles 7 % done on time 0.2925
+ n good particles 7 % done on time 0.295
+ n good particles 5 % done on time 0.2975
+ n good particles 4 % done on time 0.3
+ n good particles 3 % done on time 0.3025
+ n good particles 3 % done on time 0.305
+ n good particles 3 % done on time 0.3075
+ n good particles 2 % done on time 0.31
+ n good particles 1 % done on time 0.3125
+ n good particles 1 % done on time 0.315
+ n good particles 0 % done on time 0.3175
+ n good particles 0 % done on time 0.32
+ n good particles 0 % done on time 0.3225
+ n good particles 0 % done on time 0.325
+ n good particles 0 % done on time 0.3275
+ n good particles 0 % done on time 0.33
+ n good particles 0 % done on time 0.3325
+ n good particles 0 % done on time 0.335
+ n good particles 0 % done on time 0.3375
+ n good particles 0 % done on time 0.34
+ n good particles 0 % done on time 0.3425
+ n good particles 0 % done on time 0.345
+ n good particles 0 % done on time 0.3475
+ n good particles 0 % done on time 0.35
+ n good particles 0 % done on time 0.3525
+ n good particles 0 % done on time 0.355
+ n good particles 0 % done on time 0.3575
+ n good particles 0 % done on time 0.36
+ n good particles 0 % done on time 0.3625
+ n good particles 0 % done on time 0.365
+ n good particles 0 % done on time 0.3675
+ n good particles 0 % done on time 0.37
+ n good particles 0 % done on time 0.3725
+ n good particles 0 % done on time 0.375
+ n good particles 0 % done on time 0.3775
+ n good particles 0 % done on time 0.38
+ n good particles 0 % done on time 0.3825
+ n good particles 0 % done on time 0.385
+ n good particles 0 % done on time 0.3875
+ n good particles 0 % done on time 0.39
+ n good particles 0 % done on time 0.3925
+ n good particles 0 % done on time 0.395
+ n good particles 0 % done on time 0.3975
+ n good particles 0 % done on time 0.4
+ n good particles 0 % done on time 0.4025
+ n good particles 0 % done on time 0.405
+ n good particles 0 % done on time 0.4075
+ n good particles 0 % done on time 0.41
+ n good particles 0 % done on time 0.4125
+ n good particles 0 % done on time 0.415
+ n good particles 0 % done on time 0.4175
+ n good particles 0 % done on time 0.42
+ n good particles 0 % done on time 0.4225
+ n good particles 0 % done on time 0.425
+ n good particles 0 % done on time 0.4275
+ n good particles 0 % done on time 0.43
+ n good particles 0 % done on time 0.4325
+ n good particles 0 % done on time 0.435
+ n good particles 0 % done on time 0.4375
+ n good particles 0 % done on time 0.44
+ n good particles 0 % done on time 0.4425
+ n good particles 0 % done on time 0.445
+ n good particles 0 % done on time 0.4475
+ n good particles 0 % done on time 0.45
+ n good particles 0 % done on time 0.4525
+ n good particles 0 % done on time 0.455
+ n good particles 0 % done on time 0.4575
+ n good particles 0 % done on time 0.46
+ n good particles 0 % done on time 0.4625
+ n good particles 0 % done on time 0.465
+ n good particles 0 % done on time 0.4675
+ n good particles 0 % done on time 0.47
+ n good particles 0 % done on time 0.4725
+ n good particles 0 % done on time 0.475
+ n good particles 0 % done on time 0.4775
+ n good particles 0 % done on time 0.48
+ n good particles 0 % done on time 0.4825
+ n good particles 0 % done on time 0.485
+ n good particles 0 % done on time 0.4875
+ n good particles 0 % done on time 0.49
+ n good particles 0 % done on time 0.4925
+ n good particles 0 % done on time 0.495
+ n good particles 0 % done on time 0.4975
+ n good particles 0 % done on time 0.5
+ n good particles 0 % done on time 0.5025
+ n good particles 0 % done on time 0.505
+ n good particles 0 % done on time 0.5075
+ n good particles 0 % done on time 0.51
+ n good particles 0 % done on time 0.5125
+ n good particles 0 % done on time 0.515
+ n good particles 0 % done on time 0.5175
+ n good particles 0 % done on time 0.52
+ n good particles 0 % done on time 0.5225
+ n good particles 0 % done on time 0.525
+ n good particles 0 % done on time 0.5275
+ n good particles 0 % done on time 0.53
+ n good particles 0 % done on time 0.5325
+ n good particles 0 % done on time 0.535
+ n good particles 0 % done on time 0.5375
+ n good particles 0 % done on time 0.54
+ n good particles 0 % done on time 0.5425
+ n good particles 0 % done on time 0.545
+ n good particles 0 % done on time 0.5475
+ n good particles 0 % done on time 0.55
+ n good particles 0 % done on time 0.5525
+ n good particles 0 % done on time 0.555
+ n good particles 0 % done on time 0.5575
+ n good particles 0 % done on time 0.56
+ n good particles 0 % done on time 0.5625
+ n good particles 0 % done on time 0.565
+ n good particles 0 % done on time 0.5675
+ n good particles 0 % done on time 0.57
+ n good particles 0 % done on time 0.5725
+ n good particles 0 % done on time 0.575
+ n good particles 0 % done on time 0.5775
+ n good particles 0 % done on time 0.58
+ n good particles 0 % done on time 0.5825
+ n good particles 0 % done on time 0.585
+ n good particles 0 % done on time 0.5875
+ n good particles 0 % done on time 0.59
+ n good particles 0 % done on time 0.5925
+ n good particles 0 % done on time 0.595
+ n good particles 0 % done on time 0.5975
+ n good particles 0 % done on time 0.6
+ n good particles 0 % done on time 0.6025
+ n good particles 0 % done on time 0.605
+ n good particles 0 % done on time 0.6075
+ n good particles 0 % done on time 0.61
+ n good particles 0 % done on time 0.6125
+ n good particles 0 % done on time 0.615
+ n good particles 0 % done on time 0.6175
+ n good particles 0 % done on time 0.62
+ n good particles 0 % done on time 0.6225
+ n good particles 0 % done on time 0.625
+ n good particles 0 % done on time 0.6275
+ n good particles 0 % done on time 0.63
+ n good particles 0 % done on time 0.6325
+ n good particles 0 % done on time 0.635
+ n good particles 0 % done on time 0.6375
+ n good particles 0 % done on time 0.64
+ n good particles 0 % done on time 0.6425
+ n good particles 0 % done on time 0.645
+ n good particles 0 % done on time 0.6475
+ n good particles 0 % done on time 0.65
+ n good particles 0 % done on time 0.6525
+ n good particles 0 % done on time 0.655
+ n good particles 0 % done on time 0.6575
+ n good particles 0 % done on time 0.66
+ n good particles 0 % done on time 0.6625
+ n good particles 0 % done on time 0.665
+ n good particles 0 % done on time 0.6675
+ n good particles 0 % done on time 0.67
+ n good particles 0 % done on time 0.6725
+ n good particles 0 % done on time 0.675
+ n good particles 0 % done on time 0.6775
+ n good particles 0 % done on time 0.68
+ n good particles 0 % done on time 0.6825
+ n good particles 0 % done on time 0.685
+ n good particles 0 % done on time 0.6875
+ n good particles 0 % done on time 0.69
+ n good particles 0 % done on time 0.6925
+ n good particles 0 % done on time 0.695
+ n good particles 0 % done on time 0.6975
+ n good particles 0 % done on time 0.7
+ n good particles 0 % done on time 0.7025
+ n good particles 0 % done on time 0.705
+ n good particles 0 % done on time 0.7075
+ n good particles 0 % done on time 0.71
+ n good particles 0 % done on time 0.7125
+ n good particles 0 % done on time 0.715
+ n good particles 0 % done on time 0.7175
+ n good particles 0 % done on time 0.72
+ n good particles 0 % done on time 0.7225
+ n good particles 0 % done on time 0.725
+ n good particles 0 % done on time 0.7275
+ n good particles 0 % done on time 0.73
+ n good particles 0 % done on time 0.7325
+ n good particles 0 % done on time 0.735
+ n good particles 0 % done on time 0.7375
+ n good particles 0 % done on time 0.74
+ n good particles 0 % done on time 0.7425
+ n good particles 0 % done on time 0.745
+ n good particles 0 % done on time 0.7475
+ n good particles 0 % done on time 0.75
+ n good particles 0 % done on time 0.7525
+ n good particles 0 % done on time 0.755
+ n good particles 0 % done on time 0.7575
+ n good particles 0 % done on time 0.76
+ n good particles 0 % done on time 0.7625
+ n good particles 0 % done on time 0.765
+ n good particles 0 % done on time 0.7675
+ n good particles 0 % done on time 0.77
+ n good particles 0 % done on time 0.7725
+ n good particles 0 % done on time 0.775
+ n good particles 0 % done on time 0.7775
+ n good particles 0 % done on time 0.78
+ n good particles 0 % done on time 0.7825
+ n good particles 0 % done on time 0.785
+ n good particles 0 % done on time 0.7875
+ n good particles 0 % done on time 0.79
+ n good particles 0 % done on time 0.7925
+ n good particles 0 % done on time 0.795
+ n good particles 0 % done on time 0.7975
+ n good particles 0 % done on time 0.8
+ n good particles 0 % done on time 0.8025
+ n good particles 0 % done on time 0.805
+ n good particles 0 % done on time 0.8075
+ n good particles 0 % done on time 0.81
+ n good particles 0 % done on time 0.8125
+ n good particles 0 % done on time 0.815
+ n good particles 0 % done on time 0.8175
+ n good particles 0 % done on time 0.82
+ n good particles 0 % done on time 0.8225
+ n good particles 0 % done on time 0.825
+ n good particles 0 % done on time 0.8275
+ n good particles 0 % done on time 0.83
+ n good particles 0 % done on time 0.8325
+ n good particles 0 % done on time 0.835
+ n good particles 0 % done on time 0.8375
+ n good particles 0 % done on time 0.84
+ n good particles 0 % done on time 0.8425
+ n good particles 0 % done on time 0.845
+ n good particles 0 % done on time 0.8475
+ n good particles 0 % done on time 0.85
+ n good particles 0 % done on time 0.8525
+ n good particles 0 % done on time 0.855
+ n good particles 0 % done on time 0.8575
+ n good particles 0 % done on time 0.86
+ n good particles 0 % done on time 0.8625
+ n good particles 0 % done on time 0.865
+ n good particles 0 % done on time 0.8675
+ n good particles 0 % done on time 0.87
+ n good particles 0 % done on time 0.8725
+ n good particles 0 % done on time 0.875
+ n good particles 0 % done on time 0.8775
+ n good particles 0 % done on time 0.88
+ n good particles 0 % done on time 0.8825
+ n good particles 0 % done on time 0.885
+ n good particles 0 % done on time 0.8875
+ n good particles 0 % done on time 0.89
+ n good particles 0 % done on time 0.8925
+ n good particles 0 % done on time 0.895
+ n good particles 0 % done on time 0.8975
+ n good particles 0 % done on time 0.9
+ n good particles 0 % done on time 0.9025
+ n good particles 0 % done on time 0.905
+ n good particles 0 % done on time 0.9075
+ n good particles 0 % done on time 0.91
+ n good particles 0 % done on time 0.9125
+ n good particles 0 % done on time 0.915
+ n good particles 0 % done on time 0.9175
+ n good particles 0 % done on time 0.92
+ n good particles 0 % done on time 0.9225
+ n good particles 0 % done on time 0.925
+ n good particles 0 % done on time 0.9275
+ n good particles 0 % done on time 0.93
+ n good particles 0 % done on time 0.9325
+ n good particles 0 % done on time 0.935
+ n good particles 0 % done on time 0.9375
+ n good particles 0 % done on time 0.94
+ n good particles 0 % done on time 0.9425
+ n good particles 0 % done on time 0.945
+ n good particles 0 % done on time 0.9475
+ n good particles 0 % done on time 0.95
+ n good particles 0 % done on time 0.9525
+ n good particles 0 % done on time 0.955
+ n good particles 0 % done on time 0.9575
+ n good particles 0 % done on time 0.96
+ n good particles 0 % done on time 0.9625
+ n good particles 0 % done on time 0.965
+ n good particles 0 % done on time 0.9675
+ n good particles 0 % done on time 0.97
+ n good particles 0 % done on time 0.9725
+ n good particles 0 % done on time 0.975
+ n good particles 0 % done on time 0.9775
+ n good particles 0 % done on time 0.98
+ n good particles 0 % done on time 0.9825
+ n good particles 0 % done on time 0.985
+ n good particles 0 % done on time 0.9875
+ n good particles 0 % done on time 0.99
+ n good particles 0 % done on time 0.9925
+ n good particles 0 % done on time 0.995
+ n good particles 0 % done on time 0.9975
+Time taken          is 617.568 (secs) 
+Time taken per step is  0.000 (secs) 
+Time taken for mpi reduction          is  0.000 (secs) 
+not using mpi output
+Total runtime for GITR is 617.778 (secs) 
+SFT case A Python test
+Running GITR
+GITR time elapsed: -617.8832506429899
+Post-processing
+Traceback (most recent call last):
+  File "/home/5n4/workshop/GITR/examples/sft_a/test.py", line 42, in <module>
+    test()
+  File "/home/5n4/workshop/GITR/examples/sft_a/test.py", line 26, in test
+    outputs.process_out()
+  File "/home/5n4/workshop/GITR/examples/sft_a/process_output.py", line 35, in process_out
+    plt.savefig('density.png')
+  File "/home/5n4/miniconda3/envs/gitr/lib/python3.11/site-packages/matplotlib/pyplot.py", line 1023, in savefig
+    res = fig.savefig(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/5n4/miniconda3/envs/gitr/lib/python3.11/site-packages/matplotlib/figure.py", line 3343, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/home/5n4/miniconda3/envs/gitr/lib/python3.11/site-packages/matplotlib/backends/backend_qtagg.py", line 75, in print_figure
+    super().print_figure(*args, **kwargs)
+  File "/home/5n4/miniconda3/envs/gitr/lib/python3.11/site-packages/matplotlib/backend_bases.py", line 2366, in print_figure
+    result = print_method(
+             ^^^^^^^^^^^^^
+  File "/home/5n4/miniconda3/envs/gitr/lib/python3.11/site-packages/matplotlib/backend_bases.py", line 2232, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+                                                                 ^^^^^
+  File "/home/5n4/miniconda3/envs/gitr/lib/python3.11/site-packages/matplotlib/backends/backend_agg.py", line 509, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/home/5n4/miniconda3/envs/gitr/lib/python3.11/site-packages/matplotlib/backends/backend_agg.py", line 458, in _print_pil
+    mpl.image.imsave(
+  File "/home/5n4/miniconda3/envs/gitr/lib/python3.11/site-packages/matplotlib/image.py", line 1689, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/home/5n4/miniconda3/envs/gitr/lib/python3.11/site-packages/PIL/Image.py", line 2429, in save
+    fp = builtins.open(filename, "w+b")
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: 'density.png'

@@ -4,13 +4,23 @@ import subprocess
 import generate_inputs as inputs
 import process_output as outputs
 import numpy as np
+import timeit
 
 def test():
     print("SFT case A Python test")
     inputs.generate()
 
     print("Running GITR")
+    
+    start_time = timeit.default_timer()
+
     subprocess.run("../../build/GITR", shell=True, check=True)
+
+    stop_time = timeit.default_timer()
+
+    elapsed = start_time - stop_time
+
+    print( f'GITR time elapsed: {elapsed}' )
     
     print("Post-processing")
     outputs.process_out()
