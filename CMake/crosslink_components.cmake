@@ -40,7 +40,8 @@ target_link_libraries( coulomb_data_broker
                        interp2d
                        utils
                        flags
-                       netcdf
+                       netcdf_cxx
+                       netcdf_c
                        boris
                        fields )
 
@@ -147,7 +148,6 @@ target_link_libraries( coulomb_tests
                        interp2d
                        utils
                        flags
-                       netcdf
                        boris
                        fields
                        Catch2::Catch2WithMain
