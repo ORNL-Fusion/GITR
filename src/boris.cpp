@@ -788,7 +788,6 @@ void move_boris::operator()(std::size_t indx)
     coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
 
     vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v);
-	particlesPointer->angle[indx] = particlesPointer->angle[indx] + radians_per_dt;
 
         //vectorScalarMult(q_prime,E,qpE);
     qpE[0] = q_prime*E[0];
