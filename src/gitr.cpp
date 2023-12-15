@@ -3882,6 +3882,62 @@ if( efield_interp == 1 )
   }
   */
 
+  //////////////////////////////////////////////////
+  /////  PARTICLE DIAGNOSTICS ///////////
+  /////////////////////////////////////////////////
+  // This section will check the input file for the required fields for particle
+  // diagnostics, then read and set up the required vectors to collect the data
+  
+
+  // user-set variables
+  bool collect_times;
+  bool times_logarithmic;
+  gitr_precision bin_edge_0_time;
+  gitr_precision bin_edge_1_time;
+  gitr_precision bin_edge_dt;
+  int n_bins_time;
+
+  if (gitr_flags->USE_PARTICLE_DIAGNOSTICS)
+  {
+      std::cout << "Starting particle diagnostics initialization" << std::endl;
+    
+        // Set remainder of times parameters
+        if (cfg.lookupValue("particle_diagnostics.times_logarithmic",times_logarithmic)) {}
+        else { std::cout << "ERROR: could not get times_logarithmic from input file " << std::endl;}
+        
+        if (cfg.lookupValue("particle_diagnostics.bin_edge_0_time",bin_edge_0_time)) {}
+        else 
+        { 
+          bin_edge_0_time = std::log10(dt);
+          std::cout << "WARNING: could not get bin_edge_0_time from input file, defaults to "<< bin_edge_0_time << std::endl;}
+        
+        if (cfg.lookupValue("particle_diagnostics.bin_edge_1_time",bin_edge_1_time)) {}
+        else { std::cout << "ERROR: could not get bin_edge_1_time from input file " << std::endl;}
+        
+        if (cfg.lookupValue("particle_diagnostics.n_bins_time",n_bins_time)) {}
+        else { std::cout << "ERROR: could not get n_bins_time from input file " << std::endl;}
+  }
+  else
+  {
+      std::cout << "WARNING: No particle diagnostics information was found in input file"
+                << std::endl;
+  }
+  sim::Array<gitr_precision> bin_edges_time( n_bins_time + 1 , 0.0 );
+  sim::Array<gitr_precision> bins_particles_time( n_bins_time*nSurfaces , 0.0 );
+
+  if ( gitr_flags->USE_PARTICLE_DIAGNOSTICS )
+  {
+    //creating histogram vector for all surfaces and bins
+    bin_edge_dt = (bin_edge_1_time - bin_edge_0_time)/n_bins_time;
+
+    for (int i=0; i <= n_bins_time; i++)
+    {
+      bin_edges_time[i] = bin_edge_0_time + i*bin_edge_dt;
+      std::cout << i << " " << bin_edges_time[i] << std::endl;
+    }
+
+  }
+
   int subSampleFac = 1;
   if (world_rank == 0) {
     if (cfg.lookupValue("diagnostics.trackSubSampleFactor", subSampleFac)) {
