@@ -3923,7 +3923,6 @@ if( efield_interp == 1 )
                 << std::endl;
   }
   sim::Array<gitr_precision> bin_edges_time( n_bins_time + 1 , 0.0 );
-  sim::Array<gitr_precision> bins_particles_time( n_bins_time*nSurfaces , 0.0 );
 
   if ( gitr_flags->USE_PARTICLE_DIAGNOSTICS )
   {
@@ -3937,11 +3936,12 @@ if( efield_interp == 1 )
 
   }
   
-  sim::Array<gitr_precision> particle_time_histogram(nSurfaces*n_bins_time,0.0);
+  sim::Array<gitr_precision> histogram_particle_time(nSurfaces*n_bins_time,0.0);
+  
   particle_diagnostics particle_diagnostics0(
       gitr_flags,particleArray,&boundaries[0], times_logarithmic,
                 bin_edge_0_time, bin_edge_1_time, bin_edge_dt,
-                       n_bins_time, &particle_time_histogram.front());
+                       n_bins_time, &histogram_particle_time.front());
 
   int subSampleFac = 1;
   if (world_rank == 0) {
@@ -5069,7 +5069,6 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     //}
   if (gitr_flags->USE_PARTICLE_DIAGNOSTICS)
 {
-  //nSurfaces*n_bins_time
     netCDF::NcFile ncFile_particle_hist("output/particle_histograms.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_ph_nSurfs = ncFile_particle_hist.addDim("nSurfaces", nSurfaces);
     netCDF::NcDim nc_ph_n_bins_time = ncFile_particle_hist.addDim("n_bins_time", n_bins_time);
@@ -5078,12 +5077,11 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     dims_part_hist.push_back(nc_ph_nSurfs);
     dims_part_hist.push_back(nc_ph_n_bins_time);
 
-    //bin_edges_time
     netCDF::NcVar nc_ph_bin_edges_time = ncFile_particle_hist.addVar("bin_edges_time",netcdf_precision, nc_ph_n_edges_time);
     nc_ph_bin_edges_time.putVar(&bin_edges_time[0]);
 
-    netCDF::NcVar nc_ph_particle_time_histogram = ncFile_particle_hist.addVar("particle_time_histogram",netcdf_precision,dims_part_hist);
-    nc_ph_particle_time_histogram.putVar(&particle_time_histogram[0]);
+    netCDF::NcVar nc_ph_histogram_particle_time = ncFile_particle_hist.addVar("histogram_particle_time",netcdf_precision,dims_part_hist);
+    nc_ph_histogram_particle_time.putVar(&histogram_particle_time[0]);
     ncFile_particle_hist.close();
 }
   
