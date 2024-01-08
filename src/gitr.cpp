@@ -23,6 +23,7 @@
 #include "recombine.h"
 #include "spectroscopy.h"
 #include "surfaceModel.h"
+#include "particle_diagnostics.h"
 //#include "testRoutineCuda.h"
 #include "thermalForce.h"
 #include "utils.h"
@@ -3890,7 +3891,6 @@ if( efield_interp == 1 )
   
 
   // user-set variables
-  bool collect_times;
   bool times_logarithmic;
   gitr_precision bin_edge_0_time;
   gitr_precision bin_edge_1_time;
@@ -3933,10 +3933,15 @@ if( efield_interp == 1 )
     for (int i=0; i <= n_bins_time; i++)
     {
       bin_edges_time[i] = bin_edge_0_time + i*bin_edge_dt;
-      std::cout << i << " " << bin_edges_time[i] << std::endl;
     }
 
   }
+  
+  sim::Array<gitr_precision> particle_time_histogram(nSurfaces*n_bins_time,0.0);
+  particle_diagnostics particle_diagnostics0(
+      gitr_flags,particleArray,&boundaries[0], times_logarithmic,
+                bin_edge_0_time, bin_edge_1_time, bin_edge_dt,
+                       n_bins_time, &particle_time_histogram.front());
 
   int subSampleFac = 1;
   if (world_rank == 0) {
@@ -4519,6 +4524,11 @@ std::cout << "here 2" << std::endl;
                        thermalForce0);
       }
 
+      
+      if (gitr_flags->USE_PARTICLE_DIAGNOSTICS)
+      {
+      thrust::for_each(thrust::device, particleBegin, particleEnd, particle_diagnostics0);
+      }
   if( surface_model > 0 )
   {
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
@@ -5057,6 +5067,26 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // std::cout << "weights "  << " " << weights1[i] << " " <<
     // weightThreshold[0] << std::endl;
     //}
+  if (gitr_flags->USE_PARTICLE_DIAGNOSTICS)
+{
+  //nSurfaces*n_bins_time
+    netCDF::NcFile ncFile_particle_hist("output/particle_histograms.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_ph_nSurfs = ncFile_particle_hist.addDim("nSurfaces", nSurfaces);
+    netCDF::NcDim nc_ph_n_bins_time = ncFile_particle_hist.addDim("n_bins_time", n_bins_time);
+    netCDF::NcDim nc_ph_n_edges_time = ncFile_particle_hist.addDim("n_edges_time", n_bins_time+1);
+    vector<netCDF::NcDim> dims_part_hist;
+    dims_part_hist.push_back(nc_ph_nSurfs);
+    dims_part_hist.push_back(nc_ph_n_bins_time);
+
+    //bin_edges_time
+    netCDF::NcVar nc_ph_bin_edges_time = ncFile_particle_hist.addVar("bin_edges_time",netcdf_precision, nc_ph_n_edges_time);
+    nc_ph_bin_edges_time.putVar(&bin_edges_time[0]);
+
+    netCDF::NcVar nc_ph_particle_time_histogram = ncFile_particle_hist.addVar("particle_time_histogram",netcdf_precision,dims_part_hist);
+    nc_ph_particle_time_histogram.putVar(&particle_time_histogram[0]);
+    ncFile_particle_hist.close();
+}
+  
   if( surface_model > 0 || flux_ea > 0 )
   {
 #if USE_MPI > 0
