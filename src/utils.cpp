@@ -577,6 +577,17 @@ int importGeometry(libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries
     else
     {
 
+      std::vector<std::string> fields_required{"x1", "z1","x2","z2","slope","intercept","inDir","length","surface","Z"};
+      for (int j = 0; j < fields_required.size(); j++)
+      {
+
+        if (geom.exists(fields_required[j])) {}
+        else 
+        { 
+          std::cout << "ERROR: could not get field from geometry file "<< fields_required[j] << std::endl;
+          exit(0);
+        }
+      }
     //int nMaterials = geom["nMaterials"];
     //std::cout << "nmat " << nMaterials << std::endl;
     for(int i=0 ; i<nLines ; i++)
