@@ -9,6 +9,7 @@
 #include <cmath>
 
 
+/* Captain! Turn all this into a variadic template instead */
 template< typename T >
 class tensor
 {
@@ -27,7 +28,7 @@ class tensor
   CUDA_CALLABLE_MEMBER
   long long unsigned int const *get_dims();
 
-  /* magic number - bad */
+  /* magic number - bad. Make this a template parameter in the future */
   static int constexpr n_dims_arbitrary_max = 8;
 
   const int n_dims;

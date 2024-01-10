@@ -1,4 +1,5 @@
 #include "Boundary.h"
+#include "background_plasma.h"
 //#include "Fields.h"
 #include "Particles.h"
 #include "Surfaces.h"
@@ -92,8 +93,8 @@ int main(int argc, char **argv, char **envp) {
 
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
-  class libconfig_string_query query( file_name );
-  class use use( query );
+  class libconfig_string_query query_metadata( file_name );
+  class use use( query_metadata );
 
   int surface_model = use.get< int >( use::surface_model );
   int flux_ea = use.get<int>(use::flux_ea);
@@ -262,10 +263,8 @@ int main(int argc, char **argv, char **envp) {
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   std::string bfieldFile;
   if (world_rank == 0) {
-    //std::cout << "Ahoy, Captain!" << std::endl;
     importVectorFieldNs(cfg, input_path, bfield_interp, bfieldCfg, nR_Bfield,
                         nY_Bfield, nZ_Bfield, bfieldFile);
-    //std::cout << "Ahoy, Captain!" << std::endl;
   }
 #if USE_MPI > 0
   MPI_Bcast(&nR_Bfield, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -1607,6 +1606,9 @@ if( LC_INTERP > 1 )
   getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "SString", s);
 }
 
+  /* Captain! begin */
+  /* Captain! Create background plasma object here - once this works, commit the result */
+  class background_plasma background_plasma( query_metadata );
   // Background Plasma Temperature Initialization
   int nR_Temp = 1;
   int nY_Temp = 1;
@@ -1643,6 +1645,7 @@ if(temp_interp > 0 )
 
   sim::Array<gitr_precision> TempGridr(nR_Temp), TempGridz(nZ_Temp), TempGridy(nY_Temp);
   n_Temp = nR_Temp * nY_Temp * nZ_Temp;
+  /* Captain! These arrays are the tensors that you should create */
   sim::Array<gitr_precision> ti(n_Temp), te(n_Temp);
 
 #if USE_MPI > 0
@@ -1686,6 +1689,8 @@ if(temp_interp > 0 )
   testVec = interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),
                              TempGridz.data(), ti.data(), cylsymm );
   std::cout << "Finished Temperature import " << testVec << std::endl;
+
+  /* Captain! end */
 
   // Background Plasma Density Initialization
   int nR_Dens = 1;
@@ -2559,7 +2564,7 @@ if( efield_interp == 1 )
       minDist(nR_Bfield * nZ_Bfield);
 
   gitr_precision f_psi = 1.0;
-  /* Captain! Likely dead block below */
+  /* Likely dead block below */
   if( sheath_efield > 0 )
   {
   gitr_precision thisE0[3] = {0.0, 0.0, 0.0};
@@ -2576,7 +2581,7 @@ if( efield_interp == 1 )
                use_3d_geom, geom_hash_sheath, cylsymm, f_psi );
       //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
   }
-  /* Captain! Decayed block, leave for reference */
+  /* Decayed block, leave for reference */
   /*
 
 #if EFIELD_INTERP == 1
@@ -3328,7 +3333,7 @@ if( efield_interp == 1 )
   sim::Array<int> particleSourceIndices(nSourceElements, 0),
       particleSourceBoundaryIndices(nSourceBoundaries, 0);
 
-      /* Captain! Decayed code block, leave for reference */
+      /* Decayed code block, leave for reference */
       /*
       if( PARTICLE_SOURCE_SPACE == 1 )
       {
@@ -3624,7 +3629,7 @@ if( efield_interp == 1 )
   gitr_precision eVec[3] = {0.0};
   for (int i = 0; i < nP; i++) {
   //std::cout<< "setting particle " << i << std::endl;
-  /* Captain! Decayed block below */
+  /* Decayed block below */
       /*
     if( PARTICLE_SOURCE_SPACE > 0 )
     {
@@ -3690,7 +3695,7 @@ if( efield_interp == 1 )
     }
     }
       */
-      /* Captain! Another decayed block */
+      /* Another decayed block */
       /*
 #if PARTICLE_SOURCE_ENERGY > 0
     randE = dist01E(sE);
@@ -3730,7 +3735,7 @@ if( efield_interp == 1 )
          boundaries[currentSegment].plane_norm;
               }
 
-    /* Captain! Decayed code block below */
+    /* Decayed code block below */
     /*
     randA = dist01A(sA);
     gitr_precision sputtA =
@@ -4455,7 +4460,6 @@ std::cout << "here 2" << std::endl;
 
   if( surface_model > 0 )
   {
-    //std::cout << "Ahoy, Captain!" << std::endl;
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
   }
     }

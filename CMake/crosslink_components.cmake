@@ -17,6 +17,10 @@ target_link_libraries( utils
                        netcdf_cxx
                        netcdf_c )
 
+target_link_libraries( config_interface 
+                       netcdf_cxx 
+                       netcdf_c )
+
 target_link_libraries( boris_data_broker 
                        boris 
                        flags 
