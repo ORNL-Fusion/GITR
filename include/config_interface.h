@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <string>
 #include <memory>
@@ -7,8 +8,38 @@
 #include <cassert>
 #include <typeinfo>
 
-#include "config_interface_exceptions.h"
+#include "netcdf.h"
+#include "ncFile.h"
+#include "ncVar.h"
+#include "ncDim.h"
 #include "libconfig.h++"
+
+class netcdf_string_query
+{
+  public:
+
+  netcdf_string_query( std::string netcdf_file_init = "" );
+
+  ~netcdf_string_query();
+
+  template< typename T >
+  void operator()( std::string const &query_key, T &query_value ) const;
+
+  std::string netcdf_file_name = "empty";
+
+  netCDF::NcFile nc;
+};
+
+template< typename T >
+void netcdf_string_query::operator()( std::string const &query_key, T &query_value ) const
+{
+  netCDF::NcDim nc_nx(nc.getDim(query_key));
+
+  int n_x = nc_nx.getSize();
+
+  query_value = n_x;
+}
+
 
 /* This class wraps the libconfig object and inserts
    a key-string mapping in between. This creates an
@@ -42,7 +73,7 @@ void libconfig_string_query::operator()( std::string const query_key,
 
   if( cfg.exists( query_key.c_str() ) == false )
   {
-    throw invalid_key( query_key );
+    throw 0;
   }
 
   auto const &setting = cfg.getRoot().lookup( query_key );
@@ -76,7 +107,9 @@ void libconfig_string_query::operator()( std::string const query_key, T &query_v
 {
   if( cfg.exists( query_key.c_str() ) == false )
   {
-    throw invalid_key( query_key );
+    //throw invalid_key( query_key );
+    std::cout << "libconfig could not find" << query_key << std::endl;
+    throw 0;
   }
 
   auto const &setting = cfg.getRoot().lookup( query_key );
@@ -94,7 +127,9 @@ void libconfig_string_query::operator()( std::string const query_key, T &query_v
 
     if( success == false ) 
     {
-      throw lookup_failed( query_key );
+      //throw lookup_failed( query_key );
+      std::cout << "libconfig " << query_key << " lookup failed!" << std::endl;
+      throw 0;
     }
   }
 }

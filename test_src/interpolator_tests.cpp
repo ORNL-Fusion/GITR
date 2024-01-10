@@ -400,7 +400,7 @@ TEST_CASE( "multi-dimensional interpolation" )
 
           double check = std::abs( gold - test_value_0 ) / test_value_0;
 
-          REQUIRE( std::abs( check )  < 1e-14 );
+          REQUIRE( std::abs( check ) < 1e-14 );
         }
       }
     }
