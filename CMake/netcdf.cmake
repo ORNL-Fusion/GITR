@@ -1,9 +1,12 @@
 # find files
 
-# Captain! Find file:
 find_file( netcdf_cxx_shared_lib 
               NAMES libnetcdf-cxx4.so libnetcdf_c++4.so
               HINTS ${NETCDF_CXX_SHARED_LIB_DIR} )
+  
+message( "Captain! netcdf_c_shared_lib: ${netcdf_c_shared_lib}" )
+
+message( "Captain! netcdf_c_shared_lib dir: ${NETCDF_C_SHARED_LIB_DIR}" )
 
 find_file( netcdf_c_shared_lib 
               NAMES libnetcdf.so 
@@ -17,7 +20,6 @@ find_path( netcdf_cxx_headers
            NAMES netcdf
            HINTS ${NETCDF_CXX_HEADERS_DIR} )
 
-message( "netcdf_c_shared_lib: ${netcdf_c_shared_lib}" )
 add_library( netcdf_cxx SHARED IMPORTED )
 add_library( netcdf_c SHARED IMPORTED )
 
