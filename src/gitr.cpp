@@ -4397,6 +4397,9 @@ std::cout << "here 2" << std::endl;
        density and the result. Loop over timesteps, each operator loops over a section of
        the particles... find 0 */
     for (tt; tt < nT; tt++) {
+
+       if( tt % 100 == 0 ) std::cout << tt << "/" << nT << std::endl;
+
        if( sort_particles > 0 )
        {
        dev_tt[0] = tt;
