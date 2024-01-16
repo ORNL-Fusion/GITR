@@ -2276,6 +2276,7 @@ if( flowv_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
+  /* Captain! ti/te used in boundary_init */
   // Applying background values at material boundaries
   std::for_each(boundaries.begin(), boundaries.end() - 1,
                 boundary_init(background_Z, background_amu, nR_Dens, nZ_Dens,
@@ -4093,6 +4094,7 @@ if( efield_interp == 1 )
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
       &bz.front(), &by.front(), perp_diffusion, cylsymm );
 
+  /* Captain! ti/te used in coulombCollisions */
   coulombCollisions coulombCollisions0(
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
       &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),

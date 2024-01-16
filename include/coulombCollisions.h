@@ -29,6 +29,72 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 
+/* drop-in replacement for interp2dCombined() */
+CUDA_CALLABLE_MEMBER
+gitr_precision intorp( 
+  gitr_precision x, 
+  gitr_precision y, gitr_precision z,
+  int nx,
+  int nz,
+  gitr_precision* gridx,
+  gitr_precision* gridz,
+  gitr_precision* data,
+  int cylsymm )
+{
+    gitr_precision fxz = 0.0;
+    gitr_precision fx_z1 = 0.0;
+    gitr_precision fx_z2 = 0.0; 
+    if(nx*nz == 1)
+    {
+        fxz = data[0];
+    }
+    else{
+    gitr_precision dim1;
+     if( cylsymm )
+     {
+    dim1 = std::sqrt(x*x + y*y);
+    }
+    else
+    {
+    dim1 = x;
+    }
+    gitr_precision d_dim1 = gridx[1] - gridx[0];
+    gitr_precision dz = gridz[1] - gridz[0];
+    int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
+    int j = std::floor((z - gridz[0])/dz);
+    
+    //gitr_precision interp_value = data[i + j*nx];
+    if (i < 0) i=0;
+    if (j < 0) j=0;
+    if (i >=nx-1 && j>=nz-1)
+    {
+        fxz = data[nx-1+(nz-1)*nx];
+    }
+    else if (i >=nx-1)
+    {
+        fx_z1 = data[nx-1+j*nx];
+        fx_z2 = data[nx-1+(j+1)*nx];
+        fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+    }
+    else if (j >=nz-1)
+    {
+        fx_z1 = data[i+(nz-1)*nx];
+        fx_z2 = data[i+(nz-1)*nx];
+        fxz = ((gridx[i+1]-dim1)*fx_z1+(dim1 - gridx[i])*fx_z2)/d_dim1;
+        
+    }
+    else
+    {
+      fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
+      fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
+      fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+    }
+    }
+
+    return fxz;
+}
+
+
 CUDA_CALLABLE_MEMBER
 void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_deflection, gitr_precision& nu_parallel,gitr_precision& nu_energy, gitr_precision x, gitr_precision y,gitr_precision z, gitr_precision vx, gitr_precision vy, gitr_precision vz,gitr_precision charge, gitr_precision amu,
     int nR_flowV,
@@ -61,9 +127,10 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   gitr_precision MI = 1.6737236e-27;	
   gitr_precision ME = 9.10938356e-31;
         
-  gitr_precision te_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, 
+  /* Captain! interps to replace are here! */
+  gitr_precision te_eV = intorp(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, 
                                           cylsymm );
-  gitr_precision ti_eV = interp2dCombined(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, 
+  gitr_precision ti_eV = intorp(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, 
                          cylsymm );
 
   T_background = ti_eV;
@@ -255,6 +322,7 @@ void getSlowDownDirections2 (gitr_precision parallel_direction[], gitr_precision
 }
 
 struct coulombCollisions { 
+
     Particles *particlesPointer;
     gitr_precision dt;
     int nR_flowV;
