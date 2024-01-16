@@ -25,10 +25,30 @@ class netcdf_string_query
   template< typename T >
   void operator()( std::string const &query_key, T &query_value ) const;
 
+  template< typename T >
+  void operator()( std::string const &query_key, T* query_value ) const;
+
   std::string netcdf_file_name = "empty";
 
   netCDF::NcFile nc;
 };
+
+template< typename T >
+void netcdf_string_query::operator()( std::string const &query_key, T* query_value ) const
+{
+  std::cout << "Ahoy, Captain! Correct overload called for " << query_key << std::endl;
+
+  netCDF::NcVar ncvar;
+
+  ncvar = nc.getVar( query_key );
+
+  if( ncvar.isNull() )
+  {
+    std::cout << "error: could not find " << query_key << std::endl;
+  }
+
+  else ncvar.getVar( query_value );
+}
 
 template< typename T >
 void netcdf_string_query::operator()( std::string const &query_key, T &query_value ) const

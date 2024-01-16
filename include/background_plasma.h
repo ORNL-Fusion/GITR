@@ -26,11 +26,12 @@ class temperature_grid_type
 
     std::string ion_temp_data_meta_key = "IonTempString";
     std::string electron_temp_data_meta_key = "ElectronTempString";
+    std::string ion_temp_data_key;
+    std::string electron_temp_data_key;
 
     // create netcdf file reader object:
     std::string raw_input_file_path;
 
-    std::cout << "Ahoy, Captain! Inside temperature_grid_type" << std::endl;
     query_metadata( full_module_path + raw_input_file_key, raw_input_file_path );
 
     // step 0: meta_key --> key
@@ -38,6 +39,9 @@ class temperature_grid_type
     std::string z_grid_size_key;
     query_metadata( full_module_path + r_grid_size_meta_key, r_grid_size_key );
     query_metadata( full_module_path + z_grid_size_meta_key, z_grid_size_key );
+
+    query_metadata( full_module_path + ion_temp_data_meta_key, ion_temp_data_key );
+    query_metadata( full_module_path + electron_temp_data_meta_key, electron_temp_data_key );
 
     // query query_raw_input using the keys and values above
     netcdf_string_query const query_raw_input( "input/" + raw_input_file_path );
@@ -50,11 +54,17 @@ class temperature_grid_type
     // check grid sizes here:
     if( r_grid_size == -1 ) std::cout << "error: r_grid_size is -1";
     if( z_grid_size == -1 ) std::cout << "error: z_grid_size is -1";
-    // calculate and allocate the proper amount of data for ti and te and interpolate
-    // correctly
+
+    ti.resize( r_grid_size * z_grid_size );
+    te.resize( r_grid_size * z_grid_size );
+
+    query_raw_input( ion_temp_data_key, ti.data() );
+    query_raw_input( electron_temp_data_key, te.data() );
   }
 
   // members:
+  sim::Array< double > ti;
+  sim::Array< double > te;
 
   // include these as sim::array initially and then pass to tensor class
   // ti data
