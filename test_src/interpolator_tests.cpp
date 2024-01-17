@@ -147,8 +147,9 @@ TEST_CASE( "multi-dimensional interpolation" )
      hypercube */
   SECTION( "t0" )
   {
-    /* number of lattice divisions in each dimension */
-    std::vector< long long unsigned int > d_len{ 6, 4, 10 };
+    /* number of lattice divisions in each dimension is n_points - 1 */
+    //std::vector< long long unsigned int > d_len{ 6, 4, 10 };
+    std::vector< long long unsigned int > d_len{ 7, 5, 11 };
 
     /* difference between initial and final value in each dimension */
     std::vector< double > max_values{ 12, 8, 20 };
@@ -243,7 +244,8 @@ TEST_CASE( "multi-dimensional interpolation" )
     /* in an s-dimensional space... */
     for( int s = initial_dim; s < final_dim; s++ )
     {
-      std::vector< long long unsigned int > const d_len_s( s, d_len );
+      // add +1 to d_len because n_points defining your bin boundaries means n_points - 1 bins
+      std::vector< long long unsigned int > const d_len_s( s, d_len + 1 );
 
       std::vector< double > const max_value_s( s, max_value );
       std::vector< double > const min_value_s( s, 0 );
@@ -291,7 +293,7 @@ TEST_CASE( "multi-dimensional interpolation" )
 
           double check = std::abs( gold - test_value ) / test_value;
 
-          std::cout << "gold: " << gold << " test_value: " << test_value << std::endl;
+          //std::cout << "gold: " << gold << " test_value: " << test_value << std::endl;
 
           REQUIRE( std::abs( check ) < 1e-15 );
         }
@@ -338,7 +340,7 @@ TEST_CASE( "multi-dimensional interpolation" )
     /* in an s-dimensional space... */
     for( int s = initial_dim; s < final_dim; s++ )
     {
-      std::vector< long long unsigned int > const d_len_s( s, d_len );
+      std::vector< long long unsigned int > const d_len_s( s, d_len + 1 );
 
       std::vector< double > const max_value_s( s, max_value );
       std::vector< double > const min_value_s( s, 0 );
@@ -366,7 +368,7 @@ TEST_CASE( "multi-dimensional interpolation" )
 
           */
           /* embed the hypercube into the middle of the latice somewhere */
-          std::vector< long long unsigned int > hypercube_lattice_coordinates = d_len_s;
+          std::vector< long long unsigned int > hypercube_lattice_coordinates( s, d_len );
 
           for( int j = 0; j < d_len_s.size(); j++ )
           {
@@ -385,7 +387,7 @@ TEST_CASE( "multi-dimensional interpolation" )
           /* new code */
           std::vector< double > enclosed( s, irrelevant_value );
 
-          enclosed[ d ] = max_value_s[ d ] / static_cast< double >( d_len_s[ d ] )
+          enclosed[ d ] = max_value_s[ d ] / static_cast< double >( d_len_s[ d ] - 1 )
               * ( static_cast< double >( hypercube_lattice_coordinates[ d ] ) + fraction );
           /* end new code */
 

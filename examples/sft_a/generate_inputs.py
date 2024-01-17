@@ -104,9 +104,12 @@ def generate():
     Ti =np.zeros(nZ);
     Ti = TD0+dT_ds*z;
     Ti2D = np.matlib.repmat(Ti,nR,1);
+
     
     vz2D = np.transpose(vz2D)
     Ti2D = np.transpose(Ti2D)
+
+    # Captain! Ti2D is nZ rows and nR columns
     
     # Write 2D plasma profiles to netcdf
     rootgrp = netCDF4.Dataset("input/profiles.nc", "w", format="NETCDF4")

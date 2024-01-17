@@ -202,9 +202,7 @@ gitr_precision* datat, int cylsymm ) {
    int n_dims_init = 2;
    double coordinates[ 2 ] = { x, z };
 
-   /* Captain! test this area with an embedded class, see if it segfaults */
-   //dum.eat( dataz );
-   /* segfault below, test above */
+   /* Captain! These coordinates appear to be backwards... */
    interpolated_field< double > 
    ifield( dataz, dims, max_range_init, min_range_init, n_dims_init );
    /* break! 1 */
