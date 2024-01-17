@@ -70,7 +70,6 @@ T tensor< T >::get( long long unsigned int *coordinates )
 {
   int offset = 0;
 
-  /* skip the final element of coordinates  */
   for( int i = 0; i < n_dims; i++ )
   {
     offset += coordinates[ i ] * offset_factors[ i ];
@@ -115,6 +114,7 @@ class dummy
   double const *data;
 };
 
+/* everything is in zyx row-major order here */
 template< typename T >
 class interpolated_field : public tensor< T >
 {
@@ -137,11 +137,12 @@ class interpolated_field : public tensor< T >
         for( int i = 0; i < this->n_dims; i++ ) min_range[ i ] = min_range_init[ i ];
 
         for( int i = 0; i < this->n_dims; i++ ) 
-          spacing[ i ] = ( max_range[ i ] - min_range[ i ] ) / ( T(dims[ i ]) );
+          spacing[ i ] = ( max_range[ i ] - min_range[ i ] ) / ( T(dims[ i ]) - 1 );
 
       }
 
 
+    /* zyx access */
     CUDA_CALLABLE_MEMBER
     T operator()( T const *coordinates );
 
@@ -303,8 +304,11 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
 
   for( int i = 0; i < this->n_dims; i++ )
   {
+    int single_dim_coordinate = 
+    std::floor( ( coordinates[ i ] - min_range[ i ] ) / spacing[ i ] );
+
     corner_vertex_index += 
-    ( std::floor( ( coordinates[ i ] - min_range[ i ] ) / spacing[ i ] ) * this->offset_factors[ i ] );
+    (  single_dim_coordinate * this->offset_factors[ i ] );
   }
 
   /* find the indices of the other vertices in the hypercube by offsetting from the
@@ -350,6 +354,7 @@ T interpolated_field< T >::operator()( T const *coordinates )
 
   T hypercube[ 1 << this->n_dims_arbitrary_max ];
 
+  /* break 1 */
   fetch_hypercube( coordinates, hypercube );
 
   T interpolated_value = interpolate_hypercube( hypercube, coordinates );

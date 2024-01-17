@@ -15,6 +15,7 @@
 #include "boris.h"
 #include "array.h"
 #include "flags.hpp"
+#include <iomanip>
 
 #ifdef __CUDACC__
 #include <thrust/random.h>
@@ -88,8 +89,28 @@ gitr_precision intorp(
       fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
       fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
       fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+      /* break 0 */
     }
     }
+  /* Captain! new code begin */
+  long long unsigned int dims[ 2 ] = { nz, nx };
+  double min_range_init[ 2 ] = { gridz[ 0 ], gridx[ 0 ] };
+  double max_range_init[ 2 ] = { gridz[ dims[ 0 ] - 1 ], gridx[ dims[ 1 ] - 1 ] };
+  int n_dims_init = 2;
+
+  interpolated_field< double >
+  ifield( data, dims, max_range_init, min_range_init, n_dims_init );
+
+  double coordinates[ 2 ] = { z, x };
+
+  double value = ifield( coordinates );
+
+  double diff = value - fxz;
+  std::cout << std::setprecision(10) 
+            << "value: " << value << " fxz: " << fxz << " diff: " << diff << std::endl;
+
+  /* new code end */
+
 
     return fxz;
 }
@@ -127,7 +148,6 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   gitr_precision MI = 1.6737236e-27;	
   gitr_precision ME = 9.10938356e-31;
         
-  /* Captain! interps to replace are here! */
   gitr_precision te_eV = intorp(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, 
                                           cylsymm );
   gitr_precision ti_eV = intorp(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, 

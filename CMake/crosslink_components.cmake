@@ -9,6 +9,7 @@ target_link_libraries( interp2d thrust )
 
 target_link_libraries( flags libconfig_cxx libconfig_c thrust )
 
+
 target_link_libraries( utils 
                        libconfig_cxx
                        libconfig_c
@@ -166,6 +167,8 @@ target_link_libraries( file_io_tests
                        geometry_check
                        Catch2::Catch2WithMain
                        )
+
+target_link_libraries( interpolator_tests Catch2::Catch2WithMain )
 
 if( GITR_USE_MPI )
   target_link_libraries( GITR mpi )
