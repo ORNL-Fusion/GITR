@@ -1,5 +1,8 @@
 #include "boris.h"
 #include "constants.h"
+#include <iostream>
+#include <iomanip>
+
 
 /* Are these preprocessor defines necessary? */
 #ifdef __CUDACC__
@@ -13,7 +16,7 @@
 CUDA_CALLABLE_MEMBER
 gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
     gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data, int cylsymm ) {
-    
+
     gitr_precision fxz = 0.0;
     gitr_precision fx_z1 = 0.0;
     gitr_precision fx_z2 = 0.0; 
@@ -33,13 +36,10 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
     }
     gitr_precision d_dim1 = gridx[1] - gridx[0];
     gitr_precision dz = gridz[1] - gridz[0];
-
-
-
     int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
     int j = std::floor((z - gridz[0])/dz);
     
-    /* edge cases */
+    //gitr_precision interp_value = data[i + j*nx];
     if (i < 0) i=0;
     if (j < 0) j=0;
     if (i >=nx-1 && j>=nz-1)
@@ -61,133 +61,16 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
     }
     else
     {
-      int constexpr arbitrary_max = 10;
-      int offset_factors[ arbitrary_max ];
-      int dims[ arbitrary_max ];
-      dims[0] = nx;
-      dims[1] = nz;
-      int constexpr n_dims = 2;
-      double coordinates[ 2 ] = { dim1, z };
-
-      /* domain boundary values */
-      double global_lower_bounds[ 2 ] = { gridx[0], gridz[0] };
-      double global_upper_bounds[ 2 ] = { gridx[ dims[0] - 1 ], gridz[ dims[ 1 ] - 1 ] };
-
-      double spacing[ 2 ] = { gridx[1] - gridx[0], 
-                              gridz[1] - gridz[0] };
-
-      int ii = std::floor((coordinates[ 0 ] - global_lower_bounds[0])/spacing[ 0 ]);
-      int jj = std::floor((coordinates[ 1 ] - global_lower_bounds[1])/spacing[ 1 ]);
-
-      double lower_bounds[ 2 ] = { gridx[ ii ], gridz[ jj ] };
-      double upper_bounds[ 2 ] = { gridx[ ii + 1 ], gridz[ jj + 1 ] };
-
-      double z_low = ( upper_bounds[ 1 ] - coordinates[ 1 ] );
-      double z_high = ( coordinates[ 1 ] - lower_bounds[ 1 ] );
-
-      double x_low = ( upper_bounds[ 0 ] - coordinates[ 0 ] );
-      double x_high = ( coordinates[ 0 ]  - lower_bounds[ 0 ] );
-
-      double fractions[ 4 ]; // = { x_low, x_high, z_low, z_high };
-
-      /* populate fractions now - there is a low and a high for each one */
-      for( int i = 0; i < n_dims; i++ )
-      {
-        fractions[ i * 2 ] = upper_bounds[ i ] - coordinates[ i ];
-        fractions[ i * 2 + 1 ] = coordinates[ i ] - lower_bounds[ i ];
-      }
-
-      int x_index = 0;
-      int z_index = 1;
-
-      /* calculate this in a loop now */
-      offset_factors[0] = 1;
-
-      for( int k = 1; k < n_dims; k++ )
-      {
-        offset_factors[ k ] = dims[ k - 1 ] * offset_factors[ k - 1 ];
-      }
-
-      int corner_vertex_index = 0;//ii + jj * nx;
-
-      for( int i = 0; i < n_dims; i++ )
-      {
-        int index = std::floor((coordinates[ i ] - global_lower_bounds[i])/spacing[ i ]);
-        index *= offset_factors[ i ];
-        corner_vertex_index += index;
-      }
-
-      /* first fetch hypercube here - this appears to be working */
-      int hypercube_indices[ 1 << 2 ];
-      for( int i = 0; i < ( 1 << n_dims ); i++ )
-      {
-        int flat_index = corner_vertex_index;
-
-        for( int j = 0; j < n_dims; j++ )
-        {
-          /* "i" contains n_dims bits: zyx order */
-          flat_index += ( ( ( i >> j ) & 0x1 ) * offset_factors[ j ] );
-        }
-
-        hypercube_indices[ i ] = flat_index;
-      }
-
-      double hypercube[ 1 << 2 ];
-      for( int i = 0; i < ( 1 << n_dims ); i++ )
-      {
-        hypercube[ i ] = data[ hypercube_indices[ i ] ];
-      }
-
-      /* Captain! Something is wrong with this... */
-      /* next, interpolate the hypercube in a loop: */
-      /* break! 2 */
-      for( int i = 0; i < n_dims; i++ )
-      {
-        int reach = 1 << i;
-
-        int step = reach << 1;
-
-        for( int j = 0; j < 1 << n_dims; j += step )
-        {
-          /* Captain! The dot product will be here! */
-          hypercube[ j ] = 
-          ( fractions[ i * 2 ] * hypercube[ j ] + 
-          fractions[ i * 2 + 1 ] * hypercube[ j + reach ] ) /
-          spacing[ i ];
-        }
-      }
-
-      return hypercube[ 0 ];
-
-
-      /*
-      fx_z1 = ( fractions[0] * hypercube[ 0 ] + 
-                fractions[1] * hypercube[ 1 ] ) / 
-                spacing[ 0 ];
-
-      fx_z2 = ( fractions[0] * hypercube[ 2 ] + 
-                fractions[1] * hypercube[ 3 ] ) / spacing[ 0 ]; 
-
-      fxz = ( fractions[2] * fx_z1 + fractions[3] * fx_z2 ) / spacing[ 1 ];
-      */
-
-      /*
-      fx_z1 = ( fractions[0] * data[ corner_vertex_index ] + 
-                fractions[1] * data[ corner_vertex_index + 1 ] ) / 
-                spacing[ 0 ];
-
-      fx_z2 = ( fractions[0] * data[ corner_vertex_index + nx ] + 
-                fractions[1] * data[ corner_vertex_index + nx + 1 ])/spacing[ 0 ]; 
-
-      fxz = ( fractions[2] * fx_z1 + fractions[3] * fx_z2 )/spacing[ 1 ];
-      */
+      // break 1
+      fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
+      fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
+      fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
     }
     }
 
     return fxz;
 }
 
-/* Captain! New strategy! Try to change this one instead 0.0 from inside out... */
 CUDA_CALLABLE_MEMBER
 void move_boris::interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,
 int nx, int nz,
@@ -196,18 +79,41 @@ gitr_precision* datat, int cylsymm ) {
 
    gitr_precision Ar = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, cylsymm );
    gitr_precision At = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, cylsymm );
-   long long unsigned int dims[ 2 ] = { nx, nz };
-   double min_range_init[ 2 ] = { gridx[0], gridz[0] };
-   double max_range_init[ 2 ] = { gridx[ dims[0] - 1 ], gridz[ dims[ 1 ] - 1 ] };
-   int n_dims_init = 2;
-   double coordinates[ 2 ] = { x, z };
 
-   /* Captain! These coordinates appear to be backwards... */
+   /* Captain! new code begin */
+   long long unsigned int dims[ 2 ] = { nz, nx };
+   double min_range_init[ 2 ] = { gridz[0], gridx[0] };
+   double max_range_init[ 2 ] = { gridz[ dims[0] - 1 ], gridx[ dims[ 1 ] - 1 ] };
+   int n_dims_init = 2;
+
    interpolated_field< double > 
    ifield( dataz, dims, max_range_init, min_range_init, n_dims_init );
-   /* break! 1 */
-   field[2] = ifield( coordinates );
-   //field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
+
+   double dim1;
+   if( cylsymm )
+   {
+     dim1 = std::sqrt(x*x + y*y);
+   }
+   else
+   {
+     dim1 = x;
+   }
+
+   //double coordinates[ 2 ] = { z, x };
+   //original above
+   double coordinates[ 2 ] = { z, dim1 };
+
+   //field[2] = ifield( coordinates );
+   // potentially transform coordinates here using an object?
+   // break 0
+   double right = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
+   double wrong = ifield( coordinates );
+   double diff = right - wrong;
+   std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << "percent diff: " << diff / right * 100 << std::endl;
+   /* new code end */
+
+   field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
+
      if( cylsymm )
      {
             gitr_precision theta = std::atan2(y,x);   
@@ -777,7 +683,7 @@ gitr_precision getE ( gitr_precision x0, gitr_precision y, gitr_precision z, git
         gitr_precision part2 = pot*(1.0 - fd)/(boundaryVector[minIndex].larmorRadius)*exp(-minDistance/boundaryVector[minIndex].larmorRadius);
         f_psi = fd*(1.0-std::exp(-minDistance/(2.0 * boundaryVector[minIndex].debyeLength)))+ (1.0 - fd)*(1.0     -std::exp(-minDistance/boundaryVector[minIndex].larmorRadius) );
     }
-        /* Captain! This appears to be skipped? */
+        /* This appears to be skipped? */
     if(minDistance == 0.0 || boundaryVector[minIndex].larmorRadius == 0.0)
     {
         Emag = 0.0;
@@ -904,7 +810,6 @@ move_boris::move_boris(
         cylsymm( cylsymm_ ),
         dum( EfieldZDevicePointer, 2 )
         {}
-        /* Captain! move the parens down - construct later after test */
         /*
         dims{ nR_Efield, nZ_Efield },
         lower_bounds{ EfieldGridRDevicePointer[ 0 ], EfieldGridZDevicePointer[ 0 ] },
@@ -1002,7 +907,7 @@ void move_boris::operator()(std::size_t indx)
 
   gitr_precision radians_per_dt = gyrofrequency*dt;
   //q_prime = 9.572528104401468e7*particlesPointer->charge[indx] / particlesPointer->amu[indx] * dt * 0.5;
-  /* Captain! original code above, new code below. q_prime = q * dt / ( 2 * m ) */
+  /* original code above, new code below. q_prime = q * dt / ( 2 * m ) */
   q_prime = particlesPointer->charge[ indx ] * gitr_constants::electron_volt * dt * 0.5 /
             ( particlesPointer->amu[ indx ] * gitr_constants::dalton );
 
