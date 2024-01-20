@@ -186,7 +186,6 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
   /* the "upper" and "lower" fractions for each dimension */
   double normalized_fractions[ this->n_dims_arbitrary_max * 2 ];
 
-  /* break! 4 */
   /* linear iteration over the dimensions in parallel with coordinates. This imples that the
      coordinates here are in zyx order. */
   for( int i = 0; i < this->n_dims; i++ )
@@ -296,8 +295,8 @@ returns: n-dimensional hypercube in a flattened array of 2^n vertices
 template< typename T >
 void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercube )
 {
+  // break 2
   /* find the index of the first vertex in the hypercube */
-  /* break! 3 */
   int corner_vertex_index = 0;
 
   long unsigned int *of = this->offset_factors;
@@ -354,7 +353,6 @@ T interpolated_field< T >::operator()( T const *coordinates )
 
   T hypercube[ 1 << this->n_dims_arbitrary_max ];
 
-  /* break 1 */
   fetch_hypercube( coordinates, hypercube );
 
   T interpolated_value = interpolate_hypercube( hypercube, coordinates );
