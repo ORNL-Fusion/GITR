@@ -109,7 +109,7 @@ gitr_precision* datat, int cylsymm ) {
    double right = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
    double wrong = ifield( coordinates );
    double diff = right - wrong;
-   std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << "percent diff: " << diff / right * 100 << std::endl;
+   //std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << "percent diff: " << diff / right * 100 << std::endl;
    /* new code end */
 
    field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );

@@ -106,8 +106,8 @@ gitr_precision intorp(
   double value = ifield( coordinates );
 
   double diff = value - fxz;
-  std::cout << std::setprecision(10) 
-            << "value: " << value << " fxz: " << fxz << " diff: " << diff << std::endl;
+  //std::cout << std::setprecision(10) 
+  //          << "value: " << value << " fxz: " << fxz << " diff: " << diff << std::endl;
 
   /* new code end */
 
