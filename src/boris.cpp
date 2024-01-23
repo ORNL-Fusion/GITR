@@ -107,8 +107,8 @@ gitr_precision* datat, int cylsymm ) {
    // potentially transform coordinates here using an object?
    // break 0
    double right = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
-   double wrong = ifield( coordinates );
-   double diff = right - wrong;
+   //double wrong = ifield( coordinates );
+   //double diff = right - wrong;
    //std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << "percent diff: " << diff / right * 100 << std::endl;
    /* new code end */
 
