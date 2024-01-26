@@ -50,7 +50,9 @@ This is a straigtforward option for compiling GITR.
 
 4. If you are using a NERSC device or other shared high-performance computing resource:
 > module load cmake
+> 
 > module load cray-hdf5
+> 
 > module load cray-netcdf
 
 5. `bash build.sh <path_to_GITR_directory> <path_to_GITR_build_directory>`
