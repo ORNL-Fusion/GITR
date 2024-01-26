@@ -38,6 +38,29 @@ fields and profiles of the background.
 └── test_src        ---> C++ unit test source files
 ```
 
+## Bare Metal Build (no containers)
+
+This is a straigtforward option for compiling GITR.
+
+1. Install libconfig
+
+2. Install netcdf
+
+3. Edit `build.sh` to ensure that it points to the appropriate lib and include **directories** of libconfig and netcdf
+
+4. If you are using a NERSC device or other shared high-performance computing resource:
+> module load cmake
+> module load cray-hdf5
+> module load cray-netcdf
+
+5. `bash build.sh <path_to_GITR_directory> <path_to_GITR_build_directory>`
+
+6. Check `build/cmake_output.txt` to ensure that "Build files have been written"
+
+7. Check `build/build_output.txt` to ensure that you have "Built target GITR"
+
+8. Now GITR is built. You can run GITR by executing it from the directory above your input folder. 
+
 ## Environment
 
 The GITR software relies on several other software installations to operate. These *dependencies* fall under *system dependencies* and *3rd-party dependencies*. GITR's advanced build system downloads and builds all 3rd-party dependencies automatically, but this is not the case with system dependencies. These must all be installed by the user prior to attempting to build GITR. Numerous approaches are available to the user for installing/updating/managing system dependencies. An approach using the **spack** utility is briefly described below, loosely following https://spack-tutorial.readthedocs.io/en/latest/.
