@@ -401,7 +401,7 @@ void reflection::operator()(std::size_t indx) const {
     else 
     {
       particles->hitWall[indx] = 2.0;
-      particles->weight[indx] = newWeight;
+      //particles->weight[indx] = newWeight;
     } 
   }  
 }
