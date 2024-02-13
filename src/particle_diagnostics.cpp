@@ -10,13 +10,20 @@ particle_diagnostics::particle_diagnostics(Flags *_flags,
           gitr_precision _bin_edge_1_time,
           gitr_precision _bin_edge_dt,
           int _n_bins_time,
-          gitr_precision *_particle_time_histogram )
+          gitr_precision *_particle_time_histogram
+          gitr_precision _bin_edge_0_angle,
+          gitr_precision _bin_edge_1_angle,
+          gitr_precision _bin_edge_dtheta,
+          int _n_bins_angle,
+          gitr_precision *_particle_angle_histogram)
       
         :
 
         flags(_flags), particlesPointer(_particlesPointer), boundaryVector(_boundaryVector),  times_logarithmic(_times_logarithmic),
                        bin_edge_0_time(_bin_edge_0_time), bin_edge_1_time(_bin_edge_1_time), bin_edge_dt(_bin_edge_dt),
-                       n_bins_time(_n_bins_time), particle_time_histogram(_particle_time_histogram)
+                       n_bins_time(_n_bins_time), particle_time_histogram(_particle_time_histogram), bin_edge_0_angle(_bin_edge_0_angle), 
+                       bin_edge_1_angle(_bin_edge_1_angle), bin_edge_dtheta(_bin_edge_dtheta), n_bins_angle(_n_bins_angle), 
+                       particle_angle_histogram(_particle_angle_histogram)
 { }
 
 CUDA_CALLABLE_MEMBER_DEVICE
@@ -42,9 +49,6 @@ void particle_diagnostics::operator()(std::size_t indx)
                #pragma omp atomic
                particle_time_histogram[ind_2d] = particle_time_histogram[ind_2d] + particlesPointer->weight[indx];
              #endif
-
     }
-  }
-
 }
 
