@@ -3896,6 +3896,10 @@ if( efield_interp == 1 )
   gitr_precision bin_edge_1_time;
   gitr_precision bin_edge_dt;
   int n_bins_time;
+  gitr_precision bin_edge_0_angle;
+  gitr_precision bin_edge_1_angle;
+  gitr_precision bin_edge_dtheta;
+  int n_bins_angle;
 
   if (gitr_flags->USE_PARTICLE_DIAGNOSTICS)
   {
@@ -3916,6 +3920,19 @@ if( efield_interp == 1 )
         
         if (cfg.lookupValue("particle_diagnostics.n_bins_time",n_bins_time)) {}
         else { std::cout << "ERROR: could not get n_bins_time from input file " << std::endl;}
+
+	// Set remainder of angle parameters
+	if (cfg.lookupValue("particle_diagnostics.bin_edge_0_angle",bin_edge_0_angle)) {}
+	else
+	{
+	  bin_edge_0_angle = std::numbers::pi / 2;
+	  std::cout << "WARNING: could not get bin_edge_0_angle from input file, defaults to "<< bin_edge_0_angle << std::endl;}
+
+	if (cfg.lookupValue("particle_diagnostics.bin_edge_1_angle",bin_edge_1_angle)) {}
+        else { std::cout << "ERROR: could not get bin_edge_1_angle from input file " << std::endl;}
+        
+        if (cfg.lookupValue("particle_diagnostics.n_bins_angle",n_bins_angle)) {}
+        else { std::cout << "ERROR: could not get n_bins_angle from input file " << std::endl;}
   }
   else
   {
@@ -3923,25 +3940,34 @@ if( efield_interp == 1 )
                 << std::endl;
   }
   sim::Array<gitr_precision> bin_edges_time( n_bins_time + 1 , 0.0 );
+  sim::Array<gitr_precision> bin_edges_angle( n_bins_angle + 1 , 0.0 );
 
   if ( gitr_flags->USE_PARTICLE_DIAGNOSTICS )
   {
     //creating histogram vector for all surfaces and bins
     bin_edge_dt = (bin_edge_1_time - bin_edge_0_time)/n_bins_time;
+    bin_edge_dtheta = (bin_edge_1_angle - bin_edge_0_angle)/n_bins_angle;
 
     for (int i=0; i <= n_bins_time; i++)
     {
       bin_edges_time[i] = bin_edge_0_time + i*bin_edge_dt;
     }
 
+    for (int i=0; i <= n_bins_angle; i++)
+    {
+      bin_edges_angle[i] = bin_edge_0_angle + i*bin_edge_dtheta
+    }
+
   }
   
   sim::Array<gitr_precision> histogram_particle_time(nSurfaces*n_bins_time,0.0);
+  sim::Array<gitr_precision> histogram_particle_angle(nSurfaces*n_bins_angle,0.0);
   
   particle_diagnostics particle_diagnostics0(
       gitr_flags,particleArray,&boundaries[0], times_logarithmic,
-                bin_edge_0_time, bin_edge_1_time, bin_edge_dt,
-                       n_bins_time, &histogram_particle_time.front());
+                bin_edge_0_time, bin_edge_1_time, bin_edge_dt, n_bins_time, 
+		       bin_edge_0_angle, bin_edge_1_angle, bin_edge_dtheta, n_bins_angle, 
+                		&histogram_particle_time.front(), &histogram_particle_angle.front());
 
   int subSampleFac = 1;
   if (world_rank == 0) {
