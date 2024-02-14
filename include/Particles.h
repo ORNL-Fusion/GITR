@@ -66,6 +66,7 @@ public:
   sim::Array<int> surfaceHit;
   sim::Array<int> firstCollision;
   sim::Array<gitr_precision> transitTime;
+  sim::Array<gitr_precision> transitAngle;
   sim::Array<gitr_precision> distTraveled;
   sim::Array<int> wallIndex;
   sim::Array<gitr_precision> perpDistanceToSurface;
@@ -176,6 +177,7 @@ public:
     int wHT = this->surfaceHit[indx];
     int fcT = this->firstCollision[indx];
     gitr_precision ttT = this->transitTime[indx];
+    gitr_precision ttA = this->transitAngle[indx];
     gitr_precision dtT = this->distTraveled[indx];
     gitr_precision firstIonizationZT = this->firstIonizationZ[indx];
     gitr_precision firstIonizationTT = this->firstIonizationT[indx];
@@ -212,6 +214,7 @@ public:
     this->surfaceHit[indx] = this->surfaceHit[n];
     this->firstCollision[indx] = this->firstCollision[n];
     this->transitTime[indx] = this->transitTime[n];
+    this->transitAngle[indx] = this->transitAngle[n];
     this->distTraveled[indx] = this->distTraveled[n];
     this->firstIonizationZ[indx] = this->firstIonizationZ[n];
     this->firstIonizationT[indx] = this->firstIonizationT[n];
@@ -246,6 +249,7 @@ public:
     this->surfaceHit[n] = wHT;
     this->firstCollision[n] = fcT;
     this->transitTime[n] = ttT;
+    this->transitAngle[n] = ttA;
     this->distTraveled[n] = dtT;
     this->firstIonizationZ[n] = firstIonizationZT;
     this->firstIonizationT[n] = firstIonizationTT;
@@ -303,6 +307,7 @@ public:
     surfaceHit{nParticles, -1},
     firstCollision{nParticles, 1},
     transitTime{nParticles, 0.0},
+    transitAngle{nParticles, 0.0},
     distTraveled{nParticles, 0.0},
     wallIndex{nParticles,0},
     perpDistanceToSurface{nParticles,0.0},
