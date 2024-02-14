@@ -3955,7 +3955,7 @@ if( efield_interp == 1 )
 
     for (int i=0; i <= n_bins_angle; i++)
     {
-      bin_edges_angle[i] = bin_edge_0_angle + i*bin_edge_dtheta
+      bin_edges_angle[i] = bin_edge_0_angle + i*bin_edge_dtheta;
     }
 
   }
@@ -3964,10 +3964,10 @@ if( efield_interp == 1 )
   sim::Array<gitr_precision> histogram_particle_angle(nSurfaces*n_bins_angle,0.0);
   
   particle_diagnostics particle_diagnostics0(
-      gitr_flags,particleArray,&boundaries[0], times_logarithmic,
+      gitr_flags, particleArray, &boundaries[0], times_logarithmic,
                 bin_edge_0_time, bin_edge_1_time, bin_edge_dt, n_bins_time, 
-		       bin_edge_0_angle, bin_edge_1_angle, bin_edge_dtheta, n_bins_angle, 
-                		&histogram_particle_time.front(), &histogram_particle_angle.front());
+			&histogram_particle_time.front(), bin_edge_0_angle, bin_edge_1_angle, 
+				bin_edge_dtheta, n_bins_angle, &histogram_particle_angle.front());
 
   int subSampleFac = 1;
   if (world_rank == 0) {
