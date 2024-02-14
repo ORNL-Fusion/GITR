@@ -5102,20 +5102,21 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcDim nc_ph_n_bins_angle = ncFile_particle_hist.addDim("n_bins_angle", n_bins_angle);
     netCDF::NcDim nc_ph_n_edges_angle = ncFile_particle_hist.addDim("n_edges_angle", n_bins_angle+1);
     vector<netCDF::NcDim> dims_part_hist;
-    dims_part_hist.push_back(nc_ph_nSurfs);
-    dims_part_hist.push_back(nc_ph_n_bins_time);
-    dims_part_hist.push_back(nc_ph_n_bins_angle);
+    dims_part_hist_time.push_back(nc_ph_nSurfs);
+    dims_part_hist_time.push_back(nc_ph_n_bins_time);
+    dims_part_hist_angle.push_back(nc_ph_nSurfs);
+    dims_part_hist_angle.push_back(nc_ph_n_bins_angle);
 
     netCDF::NcVar nc_ph_bin_edges_time = ncFile_particle_hist.addVar("bin_edges_time",netcdf_precision, nc_ph_n_edges_time);
     nc_ph_bin_edges_time.putVar(&bin_edges_time[0]);
 
-    netCDF::NcVar nc_ph_histogram_particle_time = ncFile_particle_hist.addVar("histogram_particle_time",netcdf_precision,dims_part_hist);
+    netCDF::NcVar nc_ph_histogram_particle_time = ncFile_particle_hist.addVar("histogram_particle_time",netcdf_precision,dims_part_hist_time);
     nc_ph_histogram_particle_time.putVar(&histogram_particle_time[0]);
 
     netCDF::NcVar nc_ph_bin_edges_angle = ncFile_particle_hist.addVar("bin_edges_angle",netcdf_precision, nc_ph_n_edges_angle);
     nc_ph_bin_edges_angle.putVar(&bin_edges_angle[0]);
 
-    netCDF::NcVar nc_ph_histogram_particle_angle = ncFile_particle_hist.addVar("histogram_particle_angle",netcdf_precision,dims_part_hist);
+    netCDF::NcVar nc_ph_histogram_particle_angle = ncFile_particle_hist.addVar("histogram_particle_angle",netcdf_precision,dims_part_hist_angle);
     nc_ph_histogram_particle_angle.putVar(&histogram_particle_angle[0]);
     ncFile_particle_hist.close();
 }
