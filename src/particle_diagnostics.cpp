@@ -61,10 +61,10 @@ void particle_diagnostics::operator()(std::size_t indx)
     if (ind_angle >=0 && ind_angle < n_bins_angle)
     {
              #if USE_CUDA > 0
-               atomicAdd1(&particle_time_histogram[ind_2d_angle],particlesPointer->weight[indx]);
+               atomicAdd1(&particle_angle_histogram[ind_2d_angle],particlesPointer->weight[indx]);
              #else      
                #pragma omp atomic
-               particle_time_histogram[ind_2d_angle] = particle_time_histogram[ind_2d_angle] + particlesPointer->weight[indx];
+               particle_angle_histogram[ind_2d_angle] = particle_angle_histogram[ind_2d_angle] + particlesPointer->weight[indx];
              #endif
     }
   }
