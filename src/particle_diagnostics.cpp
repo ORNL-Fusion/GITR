@@ -10,7 +10,7 @@ particle_diagnostics::particle_diagnostics(Flags *_flags,
           gitr_precision _bin_edge_1_time,
           gitr_precision _bin_edge_dt,
           int _n_bins_time,
-          gitr_precision *_particle_time_histogram
+          gitr_precision *_particle_time_histogram, 
           gitr_precision _bin_edge_0_angle,
           gitr_precision _bin_edge_1_angle,
           gitr_precision _bin_edge_dtheta,
@@ -54,7 +54,7 @@ void particle_diagnostics::operator()(std::size_t indx)
     gitr_precision p_angle = particlesPointer->angle[indx] - particlesPointer->transitAngle[indx];
     particlesPointer->transitAngle[indx] = particlesPointer->angle[indx];
 
-    int ind_angle = std::floor((std::p_angle - bin_edge_0_angle)/bin_edge_dtheta);
+    int ind_angle = std::floor((p_angle - bin_edge_0_angle)/bin_edge_dtheta);
 
     int ind_2d_angle = surfaceHit*n_bins_angle + ind_angle;
 
