@@ -1088,7 +1088,7 @@ void move_boris::operator()(std::size_t indx)
           particlesPointer->vx[indx] = v[0];
           particlesPointer->vy[indx] = v[1];
           particlesPointer->vz[indx] = v[2];
-	  particlesPointer->perpDistanceToSurface[indx] = std::abs(perp_dist);
+	  particlesPointer->perpDistanceToSurface[indx] = minDist;
           particlesPointer->time[indx] = particlesPointer->time[indx]+dt;    
           particlesPointer->dt[indx] = new_dt;    
           particlesPointer->advance[indx] = new_advance;    
@@ -1110,7 +1110,7 @@ void move_boris::operator()(std::size_t indx)
           particlesPointer->vx[indx] = v[0];
           particlesPointer->vy[indx] = v[1];
           particlesPointer->vz[indx] = v[2];
-	  particlesPointer->perpDistanceToSurface[indx] = std::abs(perp_dist);
+	  particlesPointer->perpDistanceToSurface[indx] = minDist;
           particlesPointer->angle[indx] = particlesPointer->angle[indx] + radians_per_dt;
 	  particlesPointer->time[indx] = particlesPointer->time[indx]+dt;
           if(particlesPointer->z[indx] > particlesPointer->max_z[indx])
