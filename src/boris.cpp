@@ -838,6 +838,7 @@ void move_boris::operator()(std::size_t indx)
   gitr_precision q_prime = 0.0;
   gitr_precision coeff = 0.0;
   gitr_precision minDist = 0.0;
+  gitr_precision perp_dist = 0.0;
   int closestBoundaryIndex;
 
 #if ODEINT ==	0 
@@ -849,7 +850,6 @@ void move_boris::operator()(std::size_t indx)
   vectorAssign(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],position);
   vectorAssign(particlesPointer->xprevious[indx], particlesPointer->yprevious[indx], particlesPointer->zprevious[indx],position0);
   vectorAssign(particlesPointer->vx[indx], particlesPointer->vy[indx], particlesPointer->vz[indx],v0);
-  vectorAssign(particlesPointer->perpDistanceToSurface[indx]);
             
   gitr_precision dt = particlesPointer->dt[indx];
   gitr_precision vMag_dt = 0.0;
