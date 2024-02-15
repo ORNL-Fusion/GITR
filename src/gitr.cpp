@@ -4007,6 +4007,8 @@ if( efield_interp == 1 )
   sim::Array<gitr_precision> chargeHistoryGather(nHistories);
   sim::Array<gitr_precision> weightHistory(nHistories);
   sim::Array<gitr_precision> weightHistoryGather(nHistories);
+  sim::Array<gitr_precision> perpDistanceToSurfaceHistory(nHistories);
+  sim::Array<gitr_precision> perpDistanceToSurfaceGather(nHistories);
 
   if( particle_tracks > 0 )
   {
