@@ -5315,6 +5315,8 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_vz.putVar(&velocityHistoryZ[0]);
 
     nc_charge.putVar(&chargeHistory[0]);
+    nc_weight.putVar(&weightHistory[0]);
+    nc_perpDistanceToSurface.putVar(&perpDistanceToSurfaceHistory[0]);
 #endif
     ncFile_hist.close();
   }
