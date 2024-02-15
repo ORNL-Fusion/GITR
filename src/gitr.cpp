@@ -4218,7 +4218,7 @@ if( efield_interp == 1 )
                    &positionHistoryZ.front(), &velocityHistory.front(),
                    &velocityHistoryX.front(), &velocityHistoryY.front(),
                    &velocityHistoryZ.front(), &chargeHistory.front(),
-                   &weightHistory.front());
+                   &weightHistory.front(), &perpDistHistory.front());
 
   if( force_eval > 0 )
   {
@@ -4695,6 +4695,9 @@ for(int i=0; i<nP ; i++)
   MPI_Gather(&particleArray->charge[world_rank * nP / world_size],
              nP / world_size, MPI_FLOAT, &chargeGather[0], nP / world_size,
              MPI_FLOAT, 0, MPI_COMM_WORLD);
+  MPI_Gather(&particleArray->perpDist[world_rank * nP / world_size],
+             nP / world_size, MPI_FLOAT, &perpDistGather[0], nP / world_size,
+             MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Gather(&particleArray->hasLeaked[world_rank * nP / world_size],
              nP / world_size, MPI_INT, &hasLeakedGather[0], nP / world_size,
              MPI_INT, 0, MPI_COMM_WORLD);
@@ -4783,6 +4786,10 @@ for(int i=0; i<nP ; i++)
   MPI_Gatherv(&weightHistory[pStartIndx[world_rank] * nHistoriesPerParticle],
               nPPerRank[world_rank] * nHistoriesPerParticle, MPI_FLOAT,
               &weightHistoryGather[0], phpn, displ, MPI_FLOAT, 0,
+              MPI_COMM_WORLD);
+  MPI_Gatherv(&perpDistHistory[pStartIndx[world_rank] * nHistoriesPerParticle],
+              nPPerRank[world_rank] * nHistoriesPerParticle, MPI_FLOAT,
+              &perpDistHistoryGather[0], phpn, displ, MPI_FLOAT, 0,
               MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -4994,6 +5001,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_surfHit0 = ncFile0.addVar("surfaceHit", netCDF::ncInt, dims0);
     netCDF::NcVar nc_weight0 = ncFile0.addVar("weight", netcdf_precision, dims0);
     netCDF::NcVar nc_charge0 = ncFile0.addVar("charge", netcdf_precision, dims0);
+    netCDF::NcVar nc_perpDist0 = ncFile0.addVar("perpDist", netcdf_precision, dims0);
     netCDF::NcVar nc_leak0 = ncFile0.addVar("hasLeaked", netCDF::ncInt, dims0);
     netCDF::NcVar nc_dist0 = ncFile0.addVar("distTraveled", netcdf_precision, dims0);
     netCDF::NcVar nc_time0 = ncFile0.addVar("time", netcdf_precision, dims0);
@@ -5013,6 +5021,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_surfHit0.putVar(&surfaceHitGather[0]);
     nc_weight0.putVar(&weightGather[0]);
     nc_charge0.putVar(&chargeGather[0]);
+    nc_perpDist0.putVar(&perpDistGather[0]);
     nc_leak0.putVar(&hasLeakedGather[0]);
 #else
   std::cout << "not using mpi output" << std::endl;
@@ -5027,6 +5036,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
   nc_surfHit0.putVar(&particleArray->surfaceHit[0]);
   nc_weight0.putVar(&particleArray->weight[0]);
   nc_charge0.putVar(&particleArray->charge[0]);
+  nc_perpDist0.putVar(&particleArray->perpDist[0]);
   nc_leak0.putVar(&particleArray->hasLeaked[0]);
   nc_dist0.putVar(&particleArray->distTraveled[0]);
   nc_time0.putVar(&particleArray->time[0]);
@@ -5270,6 +5280,8 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 
     netCDF::NcVar nc_charge = ncFile_hist.addVar("charge", netCDF::ncDouble, dims_hist);
     netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_perpDist = ncFile_hist.addVar("perpDist", netCDF::ncDouble, dims_hist);
+	
 #if USE_MPI > 0
     // if(world_rank ==0)
     //{
@@ -5290,6 +5302,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 
     nc_charge.putVar(&chargeHistoryGather[0]);
     nc_weight.putVar(&weightHistoryGather[0]);
+    nc_perpDist.putVar(&perpDistHistoryGather[0]);
 #else
     nc_x.putVar(&positionHistoryX[0]);
     nc_y.putVar(&positionHistoryY[0]);
