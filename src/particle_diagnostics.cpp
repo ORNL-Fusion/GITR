@@ -41,6 +41,9 @@ void particle_diagnostics::operator()(std::size_t indx)
 
     int ind_2d_time = surfaceHit*n_bins_time + ind_time;
 
+    if (ind_time < 0) ind_time = 0;
+    if (ind_time >= n_bins_time) ind_time = n_bins_time - 1;
+            
     if (ind_time >=0 && ind_time < n_bins_time)
     {
              #if USE_CUDA > 0
@@ -58,6 +61,9 @@ void particle_diagnostics::operator()(std::size_t indx)
 
     int ind_2d_angle = surfaceHit*n_bins_angle + ind_angle;
 
+    if (ind_angle < 0) ind_angle = 0;
+    if (ind_angle >= n_bins_angle) ind_angle = n_bins_angle - 1;
+            
     if (ind_angle >=0 && ind_angle < n_bins_angle)
     {
              #if USE_CUDA > 0
