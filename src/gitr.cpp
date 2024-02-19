@@ -6,6 +6,7 @@
 #include "array.h"
 #include "boris.h"
 #include "boundaryInit.h"
+#include "constants.h"
 #include "coulombCollisions.h"
 #include "crossFieldDiffusion.h"
 #include "curandInitialize.h"
@@ -3925,7 +3926,7 @@ if( efield_interp == 1 )
 	if (cfg.lookupValue("particle_diagnostics.bin_edge_0_angle",bin_edge_0_angle)) {}
 	else
 	{
-	  bin_edge_0_angle = std::numbers::pi / 2;
+	  bin_edge_0_angle = gitr_constants::pi / 2;
 	  std::cout << "WARNING: could not get bin_edge_0_angle from input file, defaults to "<< bin_edge_0_angle << std::endl;}
 
 	if (cfg.lookupValue("particle_diagnostics.bin_edge_1_angle",bin_edge_1_angle)) {}
