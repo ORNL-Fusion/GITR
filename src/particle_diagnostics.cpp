@@ -38,13 +38,10 @@ void particle_diagnostics::operator()(std::size_t indx)
     gitr_precision p_time = particlesPointer->time[indx] - particlesPointer->transitTime[indx];
     particlesPointer->transitTime[indx] = particlesPointer->time[indx];
 
-    if (angle_logarithmic==1)  
+    int ind_time = std::floor((std::log10(p_time) - bin_edge_0_time)/bin_edge_dt);
+    if (times_logarithmic != 1)  
     {   
-          int ind_time = std::floor((std::log10(p_time) - bin_edge_0_time)/bin_edge_dt);
-    }     
-    else 
-    {        
-          int ind_time = std::floor((p_time - bin_edge_0_time)/bin_edge_dt);
+      ind_time = std::floor((p_time - bin_edge_0_time)/bin_edge_dt);
     }
             
     int ind_2d_time = surfaceHit*n_bins_time + ind_time;
@@ -65,13 +62,10 @@ void particle_diagnostics::operator()(std::size_t indx)
     gitr_precision p_angle = particlesPointer->angle[indx] - particlesPointer->transitAngle[indx];
     particlesPointer->transitAngle[indx] = particlesPointer->angle[indx];
 
-    if (angle_logarithmic==1)
+    int ind_angle = std::floor((p_angle - bin_edge_0_angle)/bin_edge_dtheta);
+    if (angle_logarithmic == 1)
     {
-          int ind_angle = std::floor((std::log10(p_angle) - bin_edge_0_angle)/bin_edge_dtheta);
-    }
-    else 
-    {
-          int ind_angle = std::floor((p_angle - bin_edge_0_angle)/bin_edge_dtheta);
+      ind_angle = std::floor((std::log10(p_angle) - bin_edge_0_angle)/bin_edge_dtheta);
     }
               
     int ind_2d_angle = surfaceHit*n_bins_angle + ind_angle;
