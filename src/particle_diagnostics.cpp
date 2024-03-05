@@ -38,7 +38,8 @@ void particle_diagnostics::operator()(std::size_t indx)
     gitr_precision p_time = particlesPointer->time[indx] - particlesPointer->transitTime[indx];
     particlesPointer->transitTime[indx] = particlesPointer->time[indx];
 
-    int ind_time = std::floor((std::log10(p_time) - bin_edge_0_time)/bin_edge_dt);
+    if (angle_logarithmic==1)  int ind_time = std::floor((std::log10(p_time) - bin_edge_0_time)/bin_edge_dt);
+    else int ind_time = std::floor((p_time - bin_edge_0_time)/bin_edge_dt);
 
     int ind_2d_time = surfaceHit*n_bins_time + ind_time;
 
