@@ -38,7 +38,7 @@ struct particle_diagnostics {
   gitr_precision bin_edge_dt;
   int n_bins_time;
   gitr_precision *particle_time_histogram;
-  bool angle_logarithmic
+  bool angle_logarithmic;
   gitr_precision bin_edge_0_angle;
   gitr_precision bin_edge_1_angle;
   gitr_precision bin_edge_dtheta;
