@@ -3897,6 +3897,7 @@ if( efield_interp == 1 )
   gitr_precision bin_edge_1_time;
   gitr_precision bin_edge_dt;
   int n_bins_time;
+  bool angle_logarithmic;
   gitr_precision bin_edge_0_angle;
   gitr_precision bin_edge_1_angle;
   gitr_precision bin_edge_dtheta;
@@ -3908,7 +3909,10 @@ if( efield_interp == 1 )
     
         // Set remainder of times parameters
         if (cfg.lookupValue("particle_diagnostics.times_logarithmic",times_logarithmic)) {}
-        else { std::cout << "ERROR: could not get times_logarithmic from input file " << std::endl;}
+        else
+	{ 
+          times_logarithmic = 1;
+          std::cout << "WARNING: could not get times_logarithmic from input file, defaults to "<< times_logarithmic << std::endl;}
         
         if (cfg.lookupValue("particle_diagnostics.bin_edge_0_time",bin_edge_0_time)) {}
         else 
@@ -3923,6 +3927,12 @@ if( efield_interp == 1 )
         else { std::cout << "ERROR: could not get n_bins_time from input file " << std::endl;}
 
 	// Set remainder of angle parameters
+	if (cfg.lookupValue("particle_diagnostics.angle_logarithmic",angle_logarithmic)) {}
+        else
+	{ 
+          angle_logarithmic = 0;
+          std::cout << "WARNING: could not get angle_logarithmic from input file, defaults to "<< angle_logarithmic << std::endl;}
+        
 	if (cfg.lookupValue("particle_diagnostics.bin_edge_0_angle",bin_edge_0_angle)) {}
 	else
 	{
@@ -3965,10 +3975,10 @@ if( efield_interp == 1 )
   sim::Array<gitr_precision> histogram_particle_angle(nSurfaces*n_bins_angle,0.0);
   
   particle_diagnostics particle_diagnostics0(
-      gitr_flags, particleArray, &boundaries[0], times_logarithmic,
-                bin_edge_0_time, bin_edge_1_time, bin_edge_dt, n_bins_time, 
-			&histogram_particle_time.front(), bin_edge_0_angle, bin_edge_1_angle, 
-				bin_edge_dtheta, n_bins_angle, &histogram_particle_angle.front());
+      gitr_flags, particleArray, &boundaries[0], times_logarithmic, bin_edge_0_time, 
+                bin_edge_1_time, bin_edge_dt, n_bins_time, &histogram_particle_time.front(), 
+			angle_logarithmic, bin_edge_0_angle, bin_edge_1_angle, bin_edge_dtheta, 
+				n_bins_angle, &histogram_particle_angle.front());
 
   int subSampleFac = 1;
   if (world_rank == 0) {
