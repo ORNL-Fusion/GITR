@@ -1,3 +1,3 @@
 docker build \
---file GITR/containers/Dockerfile_nvidia \
+--file containers/Dockerfile_nvidia \
 --tag gitr .
