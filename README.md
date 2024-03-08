@@ -65,9 +65,24 @@ This is a straightforward option for compiling GITR. This build is recommended f
 > path_to_GITR_build_directory/GITR
 
 
-## Podman Build (remote container, with CUDA)
+## Noninteractive Podman Build (remote container, with CUDA)
 
-This is a straightforward option for compiling GITR. This build is recommended for using GITR on a remote device, such as a NERSC computer. 
+This is a straightforward option for compiling GITR for noninteractive use. This build is recommended for using GITR on a remote device, such as a NERSC computer. 
+
+1. Check that your remote device has podman by running `podman -v`. If your device does not have podman, we recommend using the Bare Metal Build below.
+
+2. Run `podman pull stonecoldhughes/gitr:latest` to download a binary container image to provide an environment containing all pre-configured GITR dependencies. GITR will later build and run inside this container.
+
+3. Navigate to your run directory. This should be the directory above your input folder.
+
+4. If you are not using slurm, execute GITR from your run directory with `path/to/GITR/containers/run_nvidia_noninteractive.sh`
+
+5. If you are using slurm, execute a bash script from your run directory that contains `srun path/to/GITR/containers/run_nvidia_noninteractive.sh`
+
+
+## Interactive Podman Build (remote container, with CUDA)
+
+This is a straightforward option for compiling GITR for interactive use, which often comes with a stricter time limit, but greater flexibility. This build is recommended for using GITR on a remote device, such as a NERSC computer. 
 
 1. Check that your remote device has podman by running `podman -v`. If your device does not have podman, we recommend using the Bare Metal Build below.
 
@@ -75,7 +90,7 @@ This is a straightforward option for compiling GITR. This build is recommended f
 
 3. Open the GITR container from the GITR source directory with `bash containers/run_podman.sh`
 
-4. Run the following commands to build and make GITR from inside the container. These commands must be repeated each time you initiate the container.
+4. Run the following commands to build and make GITR from inside the interactive container. These commands must be repeated each time you initiate the container.
 > rm -rf build
 > 
 > mkdir build
