@@ -77,7 +77,7 @@ This is a straightforward option for compiling GITR for noninteractive use. This
 
 4. If you are not using slurm, execute GITR from your run directory with `path/to/GITR/containers/run_nvidia_noninteractive.sh`
 
-5. If you are using slurm, execute a bash script from your run directory that contains `srun path/to/GITR/containers/run_nvidia_noninteractive.sh`
+5. If you are using slurm, execute a bash script from your run directory that contains `srun bash path/to/GITR/containers/run_podman_noninteractive.sh`
 
 
 ## Interactive Podman Build (remote container, with CUDA)
