@@ -1222,7 +1222,6 @@ else if( geom_hash_sheath > 1 )
   std::string lcFile;
     NcFile ncFileLC("output/LcS.nc", NcFile::replace);
     NcDim nc_nTracers = ncFileLC.addDim("nTracers", nTracers);
-
 if (world_rank == 0) {
 if( GENERATE_LC > 0 )
 {
@@ -1592,6 +1591,7 @@ if( GENERATE_LC > 0 )
   //}
 }
 
+    std::cout << "here 1 \n";
 if( LC_INTERP > 1 )
 {
   std::cout << "Importing pre-existing connection length file" << std::endl;
@@ -1606,9 +1606,10 @@ if( LC_INTERP > 1 )
   getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "SString", s);
 }
 
+    std::cout << "here 1-2 \n";
   /* Captain! begin */
   /* Captain! Create background plasma object here - once this works, commit the result */
-  class background_plasma background_plasma( query_metadata );
+  //class background_plasma background_plasma( query_metadata );
   // Background Plasma Temperature Initialization
   int nR_Temp = 1;
   int nY_Temp = 1;
@@ -1643,6 +1644,7 @@ if(temp_interp > 0 )
 #endif
 }
 
+    std::cout << "here 1 \n";
   sim::Array<gitr_precision> TempGridr(nR_Temp), TempGridz(nZ_Temp), TempGridy(nY_Temp);
   n_Temp = nR_Temp * nY_Temp * nZ_Temp;
   /* Captain! These arrays are the tensors that you should create */
@@ -4400,7 +4402,7 @@ std::cout << "here 2" << std::endl;
        the particles... find 0 */
     for (tt; tt < nT; tt++) {
 
-       if( tt % 100 == 0 ) std::cout << tt << "/" << nT << std::endl;
+       //if( tt % 100 == 0 ) std::cout << tt << "/" << nT << std::endl;
 
        if( sort_particles > 0 )
        {
