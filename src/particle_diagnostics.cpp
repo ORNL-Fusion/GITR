@@ -48,7 +48,7 @@ void particle_diagnostics::operator()(std::size_t indx)
 
     if (ind_time < 0) ind_time = 0;
     if (ind_time >= n_bins_time) ind_time = n_bins_time - 1;
-    printf("BEFORE TIME HISTOGRAM BINNING");
+    printf("BEFORE TIME HISTOGRAM BINNING: %i \n", ind_time);
             
     if (ind_time >=0 && ind_time < n_bins_time)
     {
@@ -74,7 +74,7 @@ void particle_diagnostics::operator()(std::size_t indx)
     if (ind_angle < 0) ind_angle = 0;
     if (ind_angle >= n_bins_angle) ind_angle = n_bins_angle - 1;
 
-    printf("BEFORE ANGLE HISTOGRAM BINNING");
+    printf("BEFORE ANGLE HISTOGRAM BINNING %i \n", ind_angle);
     if (ind_angle >=0 && ind_angle < n_bins_angle)
     {
              #if USE_CUDA > 0
