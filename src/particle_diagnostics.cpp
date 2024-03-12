@@ -16,7 +16,8 @@ particle_diagnostics::particle_diagnostics(Flags *_flags,
           gitr_precision _bin_edge_1_angle,
           gitr_precision _bin_edge_dtheta,
           int _n_bins_angle,
-          gitr_precision *_particle_angle_histogram)
+          gitr_precision *_particle_angle_histogram
+          int nSurfaces)
       
         :
 
@@ -24,7 +25,7 @@ particle_diagnostics::particle_diagnostics(Flags *_flags,
                        bin_edge_0_time(_bin_edge_0_time), bin_edge_1_time(_bin_edge_1_time), bin_edge_dt(_bin_edge_dt),
                        n_bins_time(_n_bins_time), particle_time_histogram(_particle_time_histogram), angle_logarithmic(_angle_logarithmic), 
                        bin_edge_0_angle(_bin_edge_0_angle), bin_edge_1_angle(_bin_edge_1_angle), bin_edge_dtheta(_bin_edge_dtheta), 
-                       n_bins_angle(_n_bins_angle), particle_angle_histogram(_particle_angle_histogram)
+                       n_bins_angle(_n_bins_angle), particle_angle_histogram(_particle_angle_histogram), nSurfaces(_nSurfaces)
 { }
 
 CUDA_CALLABLE_MEMBER_DEVICE
@@ -51,7 +52,7 @@ void particle_diagnostics::operator()(std::size_t indx)
             
     printf("BEFORE TIME HISTOGRAM BINNING: %i \n", ind_2d_time);
             
-    if (ind_2d_time >=0 && ind_2d_time < &particle_time_histogram.size())
+    if (ind_2d_time >=0 && ind_2d_time < nSurfaces*n_bins_time)
     {
              #if USE_CUDA > 0
                atomicAdd1(&particle_time_histogram[ind_2d_time],particlesPointer->weight[indx]);
@@ -76,7 +77,7 @@ void particle_diagnostics::operator()(std::size_t indx)
     int ind_2d_angle = surfaceHit*n_bins_angle + ind_angle;
 
     printf("BEFORE ANGLE HISTOGRAM BINNING %i \n", ind_2d_angle);
-    if (ind_2d_angle >=0 && ind_2d_angle < &particle_angle_histogram.size())
+    if (ind_2d_angle >=0 && ind_2d_angle < nSurfaces*n_bins_angle)
     {
              #if USE_CUDA > 0
                atomicAdd1(&particle_angle_histogram[ind_2d_angle],particlesPointer->weight[indx]);
