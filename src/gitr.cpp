@@ -3978,7 +3978,7 @@ if( efield_interp == 1 )
       gitr_flags, particleArray, &boundaries[0], times_logarithmic, bin_edge_0_time, 
                 bin_edge_1_time, bin_edge_dt, n_bins_time, &histogram_particle_time.front(), 
 			angle_logarithmic, bin_edge_0_angle, bin_edge_1_angle, bin_edge_dtheta, 
-				n_bins_angle, &histogram_particle_angle.front());
+				n_bins_angle, &histogram_particle_angle.front(), nSurfaces);
 
   int subSampleFac = 1;
   if (world_rank == 0) {
