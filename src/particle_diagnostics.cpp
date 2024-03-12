@@ -17,7 +17,7 @@ particle_diagnostics::particle_diagnostics(Flags *_flags,
           gitr_precision _bin_edge_dtheta,
           int _n_bins_angle,
           gitr_precision *_particle_angle_histogram,
-          int nSurfaces)
+          int _nSurfaces)
       
         :
 
