@@ -838,6 +838,7 @@ void move_boris::operator()(std::size_t indx)
   gitr_precision q_prime = 0.0;
   gitr_precision coeff = 0.0;
   gitr_precision minDist = 0.0;
+  gitr_precision perp_dist = 0.0;
   int closestBoundaryIndex;
 
 #if ODEINT ==	0 
@@ -1086,7 +1087,8 @@ void move_boris::operator()(std::size_t indx)
           particlesPointer->z[indx] = position[2];
           particlesPointer->vx[indx] = v[0];
           particlesPointer->vy[indx] = v[1];
-          particlesPointer->vz[indx] = v[2];    
+          particlesPointer->vz[indx] = v[2];
+	  particlesPointer->perpDistanceToSurface[indx] = minDist;
           particlesPointer->time[indx] = particlesPointer->time[indx]+dt;    
           particlesPointer->dt[indx] = new_dt;    
           particlesPointer->advance[indx] = new_advance;    
@@ -1107,8 +1109,10 @@ void move_boris::operator()(std::size_t indx)
           particlesPointer->z[indx] = position[2] + v[2] * dt;
           particlesPointer->vx[indx] = v[0];
           particlesPointer->vy[indx] = v[1];
-          particlesPointer->vz[indx] = v[2];    
+          particlesPointer->vz[indx] = v[2];
+	  particlesPointer->perpDistanceToSurface[indx] = minDist;
           particlesPointer->angle[indx] = particlesPointer->angle[indx] + radians_per_dt;
+	  particlesPointer->time[indx] = particlesPointer->time[indx]+dt;
           if(particlesPointer->z[indx] > particlesPointer->max_z[indx])
           {
             particlesPointer->max_z[indx] = particlesPointer->z[indx];
@@ -1144,11 +1148,11 @@ void move_boris::operator()(std::size_t indx)
         gitr_precision half = 0.5;
                 v[0] = particlesPointer->vx[indx];
                 v[1] = particlesPointer->vy[indx];
-	              v[2] = particlesPointer->vz[indx];
+	        v[2] = particlesPointer->vz[indx];
 
                 r[0] = particlesPointer->xprevious[indx];
                 r[1] = particlesPointer->yprevious[indx];
-	              r[2] = particlesPointer->zprevious[indx];
+	        r[2] = particlesPointer->zprevious[indx];
 #ifdef __CUDACC__
 #else
 #endif

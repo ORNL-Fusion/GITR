@@ -6,6 +6,7 @@
 #include "array.h"
 #include "boris.h"
 #include "boundaryInit.h"
+#include "constants.h"
 #include "coulombCollisions.h"
 #include "crossFieldDiffusion.h"
 #include "curandInitialize.h"
@@ -23,6 +24,7 @@
 #include "recombine.h"
 #include "spectroscopy.h"
 #include "surfaceModel.h"
+#include "particle_diagnostics.h"
 //#include "testRoutineCuda.h"
 #include "thermalForce.h"
 #include "utils.h"
@@ -3882,6 +3884,102 @@ if( efield_interp == 1 )
   }
   */
 
+  //////////////////////////////////////////////////
+  /////  PARTICLE DIAGNOSTICS ///////////
+  /////////////////////////////////////////////////
+  // This section will check the input file for the required fields for particle
+  // diagnostics, then read and set up the required vectors to collect the data
+  
+
+  // user-set variables
+  bool times_logarithmic;
+  gitr_precision bin_edge_0_time;
+  gitr_precision bin_edge_1_time;
+  gitr_precision bin_edge_dt;
+  int n_bins_time;
+  bool angle_logarithmic;
+  gitr_precision bin_edge_0_angle;
+  gitr_precision bin_edge_1_angle;
+  gitr_precision bin_edge_dtheta;
+  int n_bins_angle;
+
+  if (gitr_flags->USE_PARTICLE_DIAGNOSTICS)
+  {
+      std::cout << "Starting particle diagnostics initialization" << std::endl;
+    
+        // Set remainder of times parameters
+        if (cfg.lookupValue("particle_diagnostics.times_logarithmic",times_logarithmic)) {}
+        else
+	{ 
+          times_logarithmic = 1;
+          std::cout << "WARNING: could not get times_logarithmic from input file, defaults to "<< times_logarithmic << std::endl;}
+        
+        if (cfg.lookupValue("particle_diagnostics.bin_edge_0_time",bin_edge_0_time)) {}
+        else 
+        { 
+          bin_edge_0_time = std::log10(dt);
+          std::cout << "WARNING: could not get bin_edge_0_time from input file, defaults to "<< bin_edge_0_time << std::endl;}
+        
+        if (cfg.lookupValue("particle_diagnostics.bin_edge_1_time",bin_edge_1_time)) {}
+        else { std::cout << "ERROR: could not get bin_edge_1_time from input file " << std::endl;}
+        
+        if (cfg.lookupValue("particle_diagnostics.n_bins_time",n_bins_time)) {}
+        else { std::cout << "ERROR: could not get n_bins_time from input file " << std::endl;}
+
+	// Set remainder of angle parameters
+	if (cfg.lookupValue("particle_diagnostics.angle_logarithmic",angle_logarithmic)) {}
+        else
+	{ 
+          angle_logarithmic = 0;
+          std::cout << "WARNING: could not get angle_logarithmic from input file, defaults to "<< angle_logarithmic << std::endl;}
+        
+	if (cfg.lookupValue("particle_diagnostics.bin_edge_0_angle",bin_edge_0_angle)) {}
+	else
+	{
+	  bin_edge_0_angle = gitr_constants::pi / 2;
+	  std::cout << "WARNING: could not get bin_edge_0_angle from input file, defaults to "<< bin_edge_0_angle << std::endl;}
+
+	if (cfg.lookupValue("particle_diagnostics.bin_edge_1_angle",bin_edge_1_angle)) {}
+        else { std::cout << "ERROR: could not get bin_edge_1_angle from input file " << std::endl;}
+        
+        if (cfg.lookupValue("particle_diagnostics.n_bins_angle",n_bins_angle)) {}
+        else { std::cout << "ERROR: could not get n_bins_angle from input file " << std::endl;}
+  }
+  else
+  {
+      std::cout << "WARNING: No particle diagnostics information was found in input file"
+                << std::endl;
+  }
+  sim::Array<gitr_precision> bin_edges_time( n_bins_time + 1 , 0.0 );
+  sim::Array<gitr_precision> bin_edges_angle( n_bins_angle + 1 , 0.0 );
+
+  if ( gitr_flags->USE_PARTICLE_DIAGNOSTICS )
+  {
+    //creating histogram vector for all surfaces and bins
+    bin_edge_dt = (bin_edge_1_time - bin_edge_0_time)/n_bins_time;
+    bin_edge_dtheta = (bin_edge_1_angle - bin_edge_0_angle)/n_bins_angle;
+
+    for (int i=0; i <= n_bins_time; i++)
+    {
+      bin_edges_time[i] = bin_edge_0_time + i*bin_edge_dt;
+    }
+
+    for (int i=0; i <= n_bins_angle; i++)
+    {
+      bin_edges_angle[i] = bin_edge_0_angle + i*bin_edge_dtheta;
+    }
+
+  }
+  
+  sim::Array<gitr_precision> histogram_particle_time(nSurfaces*n_bins_time,0.0);
+  sim::Array<gitr_precision> histogram_particle_angle(nSurfaces*n_bins_angle,0.0);
+  
+  particle_diagnostics particle_diagnostics0(
+      gitr_flags, particleArray, &boundaries[0], times_logarithmic, bin_edge_0_time, 
+                bin_edge_1_time, bin_edge_dt, n_bins_time, &histogram_particle_time.front(), 
+			angle_logarithmic, bin_edge_0_angle, bin_edge_1_angle, bin_edge_dtheta, 
+				n_bins_angle, &histogram_particle_angle.front(), nSurfaces);
+
   int subSampleFac = 1;
   if (world_rank == 0) {
     if (cfg.lookupValue("diagnostics.trackSubSampleFactor", subSampleFac)) {
@@ -3920,6 +4018,8 @@ if( efield_interp == 1 )
   sim::Array<gitr_precision> chargeHistoryGather(nHistories);
   sim::Array<gitr_precision> weightHistory(nHistories);
   sim::Array<gitr_precision> weightHistoryGather(nHistories);
+  sim::Array<gitr_precision> perpDistanceToSurfaceHistory(nHistories);
+  sim::Array<gitr_precision> perpDistanceToSurfaceGather(nHistories);
 
   if( particle_tracks > 0 )
   {
@@ -4131,7 +4231,7 @@ if( efield_interp == 1 )
                    &positionHistoryZ.front(), &velocityHistory.front(),
                    &velocityHistoryX.front(), &velocityHistoryY.front(),
                    &velocityHistoryZ.front(), &chargeHistory.front(),
-                   &weightHistory.front());
+                   &weightHistory.front(), &perpDistanceToSurfaceHistory.front());
 
   if( force_eval > 0 )
   {
@@ -4463,6 +4563,11 @@ std::cout << "here 2" << std::endl;
                        thermalForce0);
       }
 
+      
+      if (gitr_flags->USE_PARTICLE_DIAGNOSTICS)
+      {
+      thrust::for_each(thrust::device, particleBegin, particleEnd, particle_diagnostics0);
+      }
   if( surface_model > 0 )
   {
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
@@ -4603,6 +4708,9 @@ for(int i=0; i<nP ; i++)
   MPI_Gather(&particleArray->charge[world_rank * nP / world_size],
              nP / world_size, MPI_FLOAT, &chargeGather[0], nP / world_size,
              MPI_FLOAT, 0, MPI_COMM_WORLD);
+  MPI_Gather(&particleArray->perpDistanceToSurface[world_rank * nP / world_size],
+             nP / world_size, MPI_FLOAT, &perpDistanceToSurfaceGather[0], nP / world_size,
+             MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Gather(&particleArray->hasLeaked[world_rank * nP / world_size],
              nP / world_size, MPI_INT, &hasLeakedGather[0], nP / world_size,
              MPI_INT, 0, MPI_COMM_WORLD);
@@ -4691,6 +4799,10 @@ for(int i=0; i<nP ; i++)
   MPI_Gatherv(&weightHistory[pStartIndx[world_rank] * nHistoriesPerParticle],
               nPPerRank[world_rank] * nHistoriesPerParticle, MPI_FLOAT,
               &weightHistoryGather[0], phpn, displ, MPI_FLOAT, 0,
+              MPI_COMM_WORLD);
+  MPI_Gatherv(&perpDistanceToSurfaceHistory[pStartIndx[world_rank] * nHistoriesPerParticle],
+              nPPerRank[world_rank] * nHistoriesPerParticle, MPI_FLOAT,
+              &perpDistanceToSurfaceHistoryGather[0], phpn, displ, MPI_FLOAT, 0,
               MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -4902,6 +5014,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_surfHit0 = ncFile0.addVar("surfaceHit", netCDF::ncInt, dims0);
     netCDF::NcVar nc_weight0 = ncFile0.addVar("weight", netcdf_precision, dims0);
     netCDF::NcVar nc_charge0 = ncFile0.addVar("charge", netcdf_precision, dims0);
+    netCDF::NcVar nc_perpDistanceToSurface0 = ncFile0.addVar("perpDistanceToSurface", netcdf_precision, dims0);
     netCDF::NcVar nc_leak0 = ncFile0.addVar("hasLeaked", netCDF::ncInt, dims0);
     netCDF::NcVar nc_dist0 = ncFile0.addVar("distTraveled", netcdf_precision, dims0);
     netCDF::NcVar nc_time0 = ncFile0.addVar("time", netcdf_precision, dims0);
@@ -4921,6 +5034,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_surfHit0.putVar(&surfaceHitGather[0]);
     nc_weight0.putVar(&weightGather[0]);
     nc_charge0.putVar(&chargeGather[0]);
+    nc_perpDistanceToSurface0.putVar(&perpDistanceToSurfaceGather[0]);
     nc_leak0.putVar(&hasLeakedGather[0]);
 #else
   std::cout << "not using mpi output" << std::endl;
@@ -4935,6 +5049,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
   nc_surfHit0.putVar(&particleArray->surfaceHit[0]);
   nc_weight0.putVar(&particleArray->weight[0]);
   nc_charge0.putVar(&particleArray->charge[0]);
+  nc_perpDistanceToSurface0.putVar(&particleArray->perpDistanceToSurface[0]);
   nc_leak0.putVar(&particleArray->hasLeaked[0]);
   nc_dist0.putVar(&particleArray->distTraveled[0]);
   nc_time0.putVar(&particleArray->time[0]);
@@ -5001,6 +5116,35 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // std::cout << "weights "  << " " << weights1[i] << " " <<
     // weightThreshold[0] << std::endl;
     //}
+  if (gitr_flags->USE_PARTICLE_DIAGNOSTICS)
+{
+    netCDF::NcFile ncFile_particle_hist("output/particle_histograms.nc", netCDF::NcFile::replace);
+    netCDF::NcDim nc_ph_nSurfs = ncFile_particle_hist.addDim("nSurfaces", nSurfaces);
+    netCDF::NcDim nc_ph_n_bins_time = ncFile_particle_hist.addDim("n_bins_time", n_bins_time);
+    netCDF::NcDim nc_ph_n_edges_time = ncFile_particle_hist.addDim("n_edges_time", n_bins_time+1);
+    netCDF::NcDim nc_ph_n_bins_angle = ncFile_particle_hist.addDim("n_bins_angle", n_bins_angle);
+    netCDF::NcDim nc_ph_n_edges_angle = ncFile_particle_hist.addDim("n_edges_angle", n_bins_angle+1);
+    vector<netCDF::NcDim> dims_part_hist_time;
+    vector<netCDF::NcDim> dims_part_hist_angle;
+    dims_part_hist_time.push_back(nc_ph_nSurfs);
+    dims_part_hist_time.push_back(nc_ph_n_bins_time);
+    dims_part_hist_angle.push_back(nc_ph_nSurfs);
+    dims_part_hist_angle.push_back(nc_ph_n_bins_angle);
+
+    netCDF::NcVar nc_ph_bin_edges_time = ncFile_particle_hist.addVar("bin_edges_time",netcdf_precision, nc_ph_n_edges_time);
+    nc_ph_bin_edges_time.putVar(&bin_edges_time[0]);
+
+    netCDF::NcVar nc_ph_histogram_particle_time = ncFile_particle_hist.addVar("histogram_particle_time",netcdf_precision,dims_part_hist_time);
+    nc_ph_histogram_particle_time.putVar(&histogram_particle_time[0]);
+
+    netCDF::NcVar nc_ph_bin_edges_angle = ncFile_particle_hist.addVar("bin_edges_angle",netcdf_precision, nc_ph_n_edges_angle);
+    nc_ph_bin_edges_angle.putVar(&bin_edges_angle[0]);
+
+    netCDF::NcVar nc_ph_histogram_particle_angle = ncFile_particle_hist.addVar("histogram_particle_angle",netcdf_precision,dims_part_hist_angle);
+    nc_ph_histogram_particle_angle.putVar(&histogram_particle_angle[0]);
+    ncFile_particle_hist.close();
+}
+  
   if( surface_model > 0 || flux_ea > 0 )
   {
 #if USE_MPI > 0
@@ -5149,6 +5293,8 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 
     netCDF::NcVar nc_charge = ncFile_hist.addVar("charge", netCDF::ncDouble, dims_hist);
     netCDF::NcVar nc_weight = ncFile_hist.addVar("weight", netCDF::ncDouble, dims_hist);
+    netCDF::NcVar nc_perpDistanceToSurface = ncFile_hist.addVar("perpDistanceToSurface", netCDF::ncDouble, dims_hist);
+	
 #if USE_MPI > 0
     // if(world_rank ==0)
     //{
@@ -5169,6 +5315,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 
     nc_charge.putVar(&chargeHistoryGather[0]);
     nc_weight.putVar(&weightHistoryGather[0]);
+    nc_perpDistanceToSurface.putVar(&perpDistanceToSurfaceHistoryGather[0]);
 #else
     nc_x.putVar(&positionHistoryX[0]);
     nc_y.putVar(&positionHistoryY[0]);
@@ -5179,6 +5326,8 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     nc_vz.putVar(&velocityHistoryZ[0]);
 
     nc_charge.putVar(&chargeHistory[0]);
+    nc_weight.putVar(&weightHistory[0]);
+    nc_perpDistanceToSurface.putVar(&perpDistanceToSurfaceHistory[0]);
 #endif
     ncFile_hist.close();
   }

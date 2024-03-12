@@ -76,6 +76,7 @@ target_link_libraries( GITR
                        spectroscopy
                        libconfig_cxx
                        libconfig_c
+                       particle_diagnostics
                        utils
                        boris
                        surface_model
