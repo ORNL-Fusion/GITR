@@ -43,14 +43,15 @@ void particle_diagnostics::operator()(std::size_t indx)
     {   
       ind_time = std::floor((p_time - bin_edge_0_time)/bin_edge_dt);
     }
-            
-    int ind_2d_time = surfaceHit*n_bins_time + ind_time;
 
     if (ind_time < 0) ind_time = 0;
     if (ind_time >= n_bins_time) ind_time = n_bins_time - 1;
-    printf("BEFORE TIME HISTOGRAM BINNING: %i \n", ind_time);
+
+    int ind_2d_time = surfaceHit*n_bins_time + ind_time;
             
-    if (ind_time >=0 && ind_time < n_bins_time)
+    printf("BEFORE TIME HISTOGRAM BINNING: %i \n", ind_2d_time);
+            
+    if (ind_2d_time >=0 && ind_2d_time < particle_time_histogram.size())
     {
              #if USE_CUDA > 0
                atomicAdd1(&particle_time_histogram[ind_2d_time],particlesPointer->weight[indx]);
@@ -68,14 +69,14 @@ void particle_diagnostics::operator()(std::size_t indx)
     {
       ind_angle = std::floor((std::log10(p_angle) - bin_edge_0_angle)/bin_edge_dtheta);
     }
-              
-    int ind_2d_angle = surfaceHit*n_bins_angle + ind_angle;
 
     if (ind_angle < 0) ind_angle = 0;
     if (ind_angle >= n_bins_angle) ind_angle = n_bins_angle - 1;
+            
+    int ind_2d_angle = surfaceHit*n_bins_angle + ind_angle;
 
-    printf("BEFORE ANGLE HISTOGRAM BINNING %i \n", ind_angle);
-    if (ind_angle >=0 && ind_angle < n_bins_angle)
+    printf("BEFORE ANGLE HISTOGRAM BINNING %i \n", ind_2d_angle);
+    if (ind_2d_angle >=0 && ind_2d_angle < particle_angle_histogram.size())
     {
              #if USE_CUDA > 0
                atomicAdd1(&particle_angle_histogram[ind_2d_angle],particlesPointer->weight[indx]);
