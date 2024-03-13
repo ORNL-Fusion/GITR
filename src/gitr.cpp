@@ -1608,7 +1608,7 @@ if( LC_INTERP > 1 )
 
   /* Captain! begin */
   /* Captain! Create background plasma object here - once this works, commit the result */
-  class background_plasma background_plasma( query_metadata );
+  // class background_plasma background_plasma( query_metadata );
   // Background Plasma Temperature Initialization
   int nR_Temp = 1;
   int nY_Temp = 1;
