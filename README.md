@@ -102,6 +102,12 @@ This is a straightforward option for compiling GITR.
 4. If you are using a NERSC device or other shared high-performance computing resource:
 > module load cmake
 > 
+> module unload cray-hdf5-parallel
+>
+> module swap PrgEnv-gnu PrgEnv-nvidia
+>
+> module load nvidia/23.9
+> 
 > module load cray-hdf5
 > 
 > module load cray-netcdf
