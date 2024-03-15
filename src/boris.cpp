@@ -107,9 +107,43 @@ gitr_precision* datat, int cylsymm ) {
    // potentially transform coordinates here using an object?
    // break 0
    double right = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
-   //double wrong = ifield( coordinates );
-   //double diff = right - wrong;
-   //std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << "percent diff: " << diff / right * 100 << std::endl;
+   double wrong = ifield( coordinates );
+   double diff = ( right - wrong ) / right;
+   //std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << "normalized diff: " << diff << std::endl;
+
+   for( int i = -1; i < nz + 1; i++ )
+   {
+     for( int j = -1; j < nx + 1; j++ )
+     {
+       double z_coordinate = gridz[ 0 ] + i * ifield.spacing[ 0 ] + 0.5;
+       double x_coordinate = gridx[ 0 ] + j * ifield.spacing[ 1 ] + 0.5;
+
+       if( cylsymm )
+       {
+         dim1 = std::sqrt(x_coordinate*x_coordinate + y*y);
+       }
+       else
+       {
+         dim1 = x_coordinate;
+       }
+
+       coordinates[ 0 ] = z_coordinate;
+       coordinates[ 1 ] = dim1;
+
+       right = this->interp2dCombined(x_coordinate,y,z_coordinate,nx,nz,gridx,gridz, dataz, cylsymm );
+       wrong = ifield( coordinates );
+
+       //std::cout << "Ahoy!" << std::endl;
+       diff = std::abs( ( right - wrong ) / right );
+       if( diff > 1e15 )
+       std::cout << "( z, x ): " << i << " " << j << " " << z_coordinate << " " << x_coordinate
+                 << " wrong " << wrong << " right: " << right << " diff: " << diff << std::endl;
+     }
+     //std::cout << std::endl;
+   }
+   //std::cout << std::endl;
+
+   //exit( 1 );
    /* new code end */
 
    field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );

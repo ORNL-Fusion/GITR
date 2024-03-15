@@ -103,11 +103,14 @@ gitr_precision intorp(
 
   double coordinates[ 2 ] = { z, x };
 
-  //double value = ifield( coordinates );
+  double value = ifield( coordinates );
 
-  //double diff = value - fxz;
-  //std::cout << std::setprecision(10) 
-  //          << "value: " << value << " fxz: " << fxz << " diff: " << diff << std::endl;
+  double diff = std::abs( ( value - fxz ) / fxz );
+  //if( diff > 1e15 )
+  std::cout << std::setprecision(10) 
+            << "value: " << value << " fxz: " << fxz << " diff: " << diff << std::endl;
+
+  // sweep the entire search space, determine where the 
 
   /* new code end */
 
