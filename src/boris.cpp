@@ -109,8 +109,9 @@ gitr_precision* datat, int cylsymm ) {
    double right = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
    double wrong = ifield( coordinates );
    double diff = ( right - wrong ) / right;
-   //std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << "normalized diff: " << diff << std::endl;
+   std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << " normalized diff: " << diff << std::endl;
 
+   /*
    for( int i = -1; i < nz + 1; i++ )
    {
      for( int j = -1; j < nx + 1; j++ )
@@ -133,7 +134,6 @@ gitr_precision* datat, int cylsymm ) {
        right = this->interp2dCombined(x_coordinate,y,z_coordinate,nx,nz,gridx,gridz, dataz, cylsymm );
        wrong = ifield( coordinates );
 
-       //std::cout << "Ahoy!" << std::endl;
        diff = std::abs( ( right - wrong ) / right );
        if( diff > 1e15 )
        std::cout << "( z, x ): " << i << " " << j << " " << z_coordinate << " " << x_coordinate
@@ -141,6 +141,7 @@ gitr_precision* datat, int cylsymm ) {
      }
      //std::cout << std::endl;
    }
+   */
    //std::cout << std::endl;
 
    //exit( 1 );

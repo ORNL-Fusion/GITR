@@ -49,7 +49,7 @@ from stage_5 as stage_6
 run apt install -y python3-venv
 
 # copy over the requirements file and 
-copy requirements.txt .
+copy containers/requirements.txt .
 
 # next you need to pip install: matplotlib, numpy, netCDF4, something else
 
