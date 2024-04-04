@@ -33,6 +33,9 @@ void particle_diagnostics::operator()(std::size_t indx)
 {
   if (particlesPointer->hitWall[indx] == 1.0) 
   {
+    std::cout << "DEBUG TEST:\n" << std::endl;
+    std::cout << particlesPointer->weight[indx] << std::endl;
+            
     int wallHit = particlesPointer->surfaceHit[indx];
     int surfaceHit = boundaryVector[wallHit].surfaceNumber;
 
