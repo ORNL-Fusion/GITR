@@ -85,6 +85,7 @@ void particle_diagnostics::operator()(std::size_t indx)
                particle_angle_histogram[ind_2d_angle] = particle_angle_histogram[ind_2d_angle] + particlesPointer->weight[indx];
              #endif
     }
+    particlesPointer->weight[indx] = 0;
   }
 }
 
