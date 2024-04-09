@@ -228,14 +228,6 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
                 << normalized_fractions[index*2+1] / spacing[ index ] << " )" << std::endl
                 << std::endl;
 
-      /*
-      std::cout << std::setprecision( 10 )
-                << "summing hypercube vertices " << j << " and " << j + reach << std::endl
-                << hypercube[ j ] << " " << hypercube[ j + reach ] << std::endl
-                << "pairing with fractions " << index*2 << " and " << index*2+1 << std::endl
-                << normalized_fractions[index*2] << " " << normalized_fractions[index*2+1] 
-                << std::endl;
-                */
 
       hypercube[ j ] = 
       ( normalized_fractions[ index * 2 ] * hypercube[ j ] + 

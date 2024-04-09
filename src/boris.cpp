@@ -156,6 +156,11 @@ gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, 
               << "( " << data[i+(j+1)*nx]  << ", " << (gridx[i+1]-dim1) / d_dim1 << " )"
               << std::endl
               << "( " << data[i+1+(j+1)*nx] << ", " << (dim1 - gridx[i]) / d_dim1  << " )"
+              << std::endl
+              << "( " << fx_z1 << ", " << (gridz[ j + 1 ] - z) / dz << " )"
+              << std::endl
+              << "( " << fx_z2 << ", " << ( z - gridz[ j ] ) / dz << " )"
+              << std::endl
               << std::endl;
 
     std::cout << "comparison: " << std::endl;
