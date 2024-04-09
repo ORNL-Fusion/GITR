@@ -132,17 +132,19 @@ gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, 
     double coordinates[ 2 ] = { z, dim1 };
 
     long long unsigned int dims[ 2 ] = { nz, nx };
-    double min_range_init[ 2 ] = { gridz[0], gridx[0] };
-    double max_range_init[ 2 ] = { gridz[ dims[0] - 1 ], gridx[ dims[ 1 ] - 1 ] };
+    double min_range[ 2 ] = { gridz[0], gridx[0] };
+    double max_range[ 2 ] = { gridz[ dims[0] - 1 ], gridx[ dims[ 1 ] - 1 ] };
     int n_dims_init = 2;
 
     // attn: first argument "data" was originally "dataz" below
     interpolated_field< double > 
-      ifield( data, dims, max_range_init, min_range_init, n_dims_init );
+      ifield( data, dims, max_range, min_range, n_dims_init );
 
     double wrong = ifield( coordinates );
     double right = fxz;
     double diff = ( right - wrong ) / right;
+
+    // original implementation changed to use new interpolator's numbers:
 
     std::cout << "original implementation:" << std::endl;
 
