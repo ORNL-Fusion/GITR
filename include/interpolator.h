@@ -7,6 +7,7 @@
 #endif
 #include <cassert>
 #include <cmath>
+#include <iostream>
 
 
 template< typename T >
@@ -204,32 +205,6 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
     - ( coordinates[ i ] - min_range[ i ] ) );// / spacing[ i ];
   }
 
-  /* sum the value of each vertex weighted properly... */
-  double sum = 0;
-
-  /* linear iteration over the hypercube bits in xyz bit mapping and counting from 
-     0 to 2^n - 1 */
-
-  /* each xyz cell index represented by the xyz interpretation of the bits in the index itself,
-     are iterated upon and consumed linearly in zyx order in parallel to what must be the order
-     of the normalized fractions. This implies that normalized_fractions has the same inherent
-     ordering in dimensionality as the strides in offset_factors.  */
-  /*
-  for( int i = 0; i < ( 1 << this->n_dims ); i++ )
-  {
-    double weight = 1;
-
-    for( int j = 0; j < this->n_dims; j++ )
-    {
-      weight *= normalized_fractions[ j * 2 + ( ( i >> j ) & 0x1 ) ];
-    }
-
-    sum += weight * hypercube[ i ];
-  }
-
-  return sum;
-  */
-  //std::cout << "Ahoy!" << std::endl;
   for( int i = 0; i < this->n_dims; i++ )
   {
     int reach = 1 << i;
@@ -252,8 +227,6 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
       ( normalized_fractions[ i * 2 ] * hypercube[ j ] + 
       normalized_fractions[ i * 2 + 1 ] * hypercube[ j + reach ] )
       / spacing[ i ];
-
-      //std::cout << "result: " << hypercube[ j ] << std::endl;
     }
   }
 
@@ -307,6 +280,8 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
     (  single_dim_coordinate * this->offset_factors[ i ] );
   }
 
+  std::cout << "corner_vertex_index: " << corner_vertex_index << std::endl;
+
   /* find the indices of the other vertices in the hypercube by offsetting from the
      first vertex */
   for( int i = 0; i < ( 1 << this->n_dims ); i++ )
@@ -324,7 +299,7 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
 
       /* thus, the order of the hypercube cell coordinates follows 0 ---> 2^n in binary
          where bits represent xyz order: note that the fastest changing dimension in this
-         enumeration is the leading dimension! 
+         enumeration is the leading dimension! Captain! You must flip this!
 
          That seems a bit bad for memory access...
          what if we had overlapping memory regions to mitigate these factors? That would be

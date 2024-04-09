@@ -84,16 +84,17 @@ gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, 
 
         return fxz;
     }
+
+    if( cylsymm )
+    {
+      dim1 = std::sqrt(x*x + y*y);
+    }
+
     else
     {
-     if( cylsymm )
-     {
-    dim1 = std::sqrt(x*x + y*y);
+      dim1 = x;
     }
-    else
-    {
-    dim1 = x;
-    }
+
     gitr_precision d_dim1 = gridx[1] - gridx[0];
     gitr_precision dz = gridz[1] - gridz[0];
     int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
@@ -126,7 +127,6 @@ gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, 
       fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
       fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
     }
-    }
 
     /* Captain! New code begin */
     double coordinates[ 2 ] = { z, dim1 };
@@ -144,7 +144,17 @@ gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, 
     double right = fxz;
     double diff = ( right - wrong ) / right;
 
-    std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << " normalized diff: " << diff << std::endl;
+    std::cout << std::setprecision( 10 ) 
+              << "wrong: " << wrong 
+              << " right: " << right 
+              << " normalized diff: " << diff 
+              << std::endl
+              << " dz: " << dz 
+              << " d0: " << ifield.spacing[ 0 ] 
+              << " d_dim1: " << d_dim1
+              << " d1: " << ifield.spacing[ 1 ]
+              << " i + j * nx: " << i + j * nx
+              << std::endl;
 
     /* new code end */
 
