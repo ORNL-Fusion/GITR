@@ -163,6 +163,22 @@ gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, 
               << std::endl
               << std::endl;
 
+    /* need gridx[ i, i+1, 0, dims[ 1 ] - 1 ], gridz[ "same" ], dim1, z, d_dim1, dz, nx, nz */
+    std::cout << "gridx[ i ] " << gridx[ i ] << std::endl;
+    std::cout << "gridx[ i+1 ] " << gridx[ i + 1 ] << std::endl;
+    std::cout << "gridx[ 0 ] " << gridx[ 0 ] << std::endl;
+    std::cout << "gridx[ end ] " << gridx[ dims[1] - 1 ] << std::endl;
+    std::cout << "gridz[ i ] " << gridz[ i ] << std::endl;
+    std::cout << "gridz[ i+1 ] " << gridz[ i +  1 ] << std::endl;
+    std::cout << "gridz[ 0 ] " << gridz[ 0 ] << std::endl;
+    std::cout << "gridz[ end ] " << gridz[ dims[ 0 ] - 1 ] << std::endl;
+    std::cout << "dim1 " << dim1 << std::endl;
+    std::cout << "d_dim1 " << d_dim1 << std::endl;
+    std::cout << "z " << z << std::endl;
+    std::cout << "dz " << dz << std::endl;
+    std::cout << "nx " << nx << std::endl;
+    std::cout << "nz " << nz << std::endl;
+
     std::cout << "comparison: " << std::endl;
     std::cout << std::setprecision( 10 ) 
               << "wrong: " << wrong 

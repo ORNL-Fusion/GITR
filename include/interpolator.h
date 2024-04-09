@@ -202,7 +202,7 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
     //normalized_fractions[ i * 2 ] = 1 - normalized_fractions[ i * 2 + 1 ];
 
     normalized_fractions[ i * 2 ] =
-    ( ( ( std::floor( ( coordinates[ i ] - min_range[ i ]) / spacing[ i ] ) + 1 ) * spacing[ i ] )
+    ( ( ( std::floor( ( coordinates[ i ] - min_range[ i ] ) / spacing[ i ] ) + 1 ) * spacing[ i ] )
     - ( coordinates[ i ] - min_range[ i ] ) );// / spacing[ i ];
   }
 
