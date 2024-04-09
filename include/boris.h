@@ -61,6 +61,16 @@ struct move_boris {
 
     /* Ahoy, Captain! new code for class based boris interpolation */
     CUDA_CALLABLE_MEMBER    
+    gitr_precision interp2dCompare ( gitr_precision x,
+                                      gitr_precision y,
+                                      gitr_precision z,
+                                      int nx,
+                                      int nz,
+                                      gitr_precision* gridx,
+                                      gitr_precision* gridz,
+                                      gitr_precision* data,
+                                      int cylsymm );
+    CUDA_CALLABLE_MEMBER    
     gitr_precision interp2dCombined ( gitr_precision x,
                                       gitr_precision y,
                                       gitr_precision z,

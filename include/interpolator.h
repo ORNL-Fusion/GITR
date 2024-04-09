@@ -9,7 +9,6 @@
 #include <cmath>
 
 
-/* Captain! Turn all this into a variadic template instead */
 template< typename T >
 class tensor
 {
@@ -65,6 +64,7 @@ tensor< T >::tensor( T const *data, long long unsigned int const *dims_init, int
 }
 
 /* leading dimension comes first, zyx access */
+/* untested */
 template< typename T >
 T tensor< T >::get( long long unsigned int *coordinates )
 {
@@ -78,7 +78,7 @@ T tensor< T >::get( long long unsigned int *coordinates )
   return data[ offset ];
 }
 
-/* untested tested */
+/* untested */
 /* leading dimension comes first, zyx access */
 template< typename T >
 void tensor< T >::set( T val, long long unsigned int *coordinates )
@@ -93,7 +93,6 @@ void tensor< T >::set( T val, long long unsigned int *coordinates )
   data[ offset ] = val;
 }
 
-/* Captain! turn this dummy into a marshalling class for the interpolated field */
 template< typename T >
 class dummy
 {
@@ -114,7 +113,11 @@ class dummy
   double const *data;
 };
 
-/* everything is in zyx row-major order here */
+/* Captain! Everything above is base class related stuff */
+/* convention: large stride ---> small stride = z y x */
+/* dims: zyx order, n data points in each dimension including endpoints */
+/* offset_factors: zyx strides, rename to stride instead of offset_factors */
+/* data: row-major data, strided according to offset_factors */
 template< typename T >
 class interpolated_field : public tensor< T >
 {
@@ -122,30 +125,30 @@ class interpolated_field : public tensor< T >
 
     CUDA_CALLABLE_MEMBER
     interpolated_field( T const *data,
-                        long long unsigned int const *dims,
-                        T const *max_range_init,
-                        T const *min_range_init,
-                        int n_dims_init )
+                        long long unsigned int const *dims,//zyx order, data_size  = prod( dims )
+                        T const *max_range_init, // zyx order, size N
+                        T const *min_range_init, // zyx order, size N
+                        int n_dims_init ) // template parameter int N
       :
       tensor< T >( data, dims, n_dims_init )
-      { 
-        data_size = 1;
+    { 
+      data_size = 1;
 
-        /* should this be n_bins + 1? */
-        for( int i = 0; i < this->n_dims; i++ ) data_size *= dims[ i ];
-        for( int i = 0; i < this->n_dims; i++ ) max_range[ i ] = max_range_init[ i ];
-        for( int i = 0; i < this->n_dims; i++ ) min_range[ i ] = min_range_init[ i ];
+      /* should this be n_bins + 1? */
+      for( int i = 0; i < this->n_dims; i++ ) data_size *= dims[ i ];
+      for( int i = 0; i < this->n_dims; i++ ) max_range[ i ] = max_range_init[ i ];
+      for( int i = 0; i < this->n_dims; i++ ) min_range[ i ] = min_range_init[ i ];
 
-        for( int i = 0; i < this->n_dims; i++ ) 
-          spacing[ i ] = ( max_range[ i ] - min_range[ i ] ) / ( T(dims[ i ]) - 1 );
+      for( int i = 0; i < this->n_dims; i++ ) 
+        spacing[ i ] = ( max_range[ i ] - min_range[ i ] ) / ( T(dims[ i ]) - 1 );
+    }
 
-      }
 
-
-    /* zyx access */
+    /* coordinates should be provided as zyx, large stride ---> small stride */
     CUDA_CALLABLE_MEMBER
     T operator()( T const *coordinates );
 
+    /* operator above calls the next 2 functions: coordinates is N, hypercube is 2^N */
     CUDA_CALLABLE_MEMBER
     void fetch_hypercube( T const *coordinates, T *hypercube );
 
@@ -168,17 +171,13 @@ hypercube: n-dimensional hypercube in a flattened array of 2^n vertices
 
 coordinates: domain coordinates for which it is desired to interpolate a function value
 
-d_len:
+dims:
 
-  for all "i" in d_len, d_len[ i ] specifies the number of equally spaced samples
+  for all "i" in dims, dims[ i ] specifies the number of equally spaced samples
   spanning domain dimension "i"
 
-max_range:
-
-  for all "i" in max_range, max_range[ i ] specifies the linear extent divided equally
-  by d_len[ i ] bins
-
 */
+
 template< typename T >
 T interpolated_field< T >::interpolate_hypercube( T *hypercube,
                                                   T const *coordinates )
@@ -196,7 +195,7 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
     - ( std::floor( ( coordinates[ i ] - min_range[ i ]) / spacing[ i ] ) * spacing[ i ] ) )
     ;// / spacing[ i ];
 
-    /* Captain! I think the 1 minus is the thing that is the problem!!! */
+    /* I think the 1 minus is the thing that is the problem!!! */
     /* low fraction, matches with a 0 bit */
     //normalized_fractions[ i * 2 ] = 1 - normalized_fractions[ i * 2 + 1 ];
 
@@ -207,8 +206,6 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
 
   /* sum the value of each vertex weighted properly... */
   double sum = 0;
-
-  /* Captain!!! move one level up now */
 
   /* linear iteration over the hypercube bits in xyz bit mapping and counting from 
      0 to 2^n - 1 */
@@ -318,7 +315,6 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
 
     for( int j = 0; j < this->n_dims; j++ )
     {
-      /* Captain!!! How do your fractions relate to the order of the offset_factors? */
 
       /* let's examine... */
 

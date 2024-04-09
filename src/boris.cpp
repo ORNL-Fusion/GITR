@@ -71,6 +71,86 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
     return fxz;
 }
 
+gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
+    gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data, int cylsymm ) {
+
+    gitr_precision fxz = 0.0;
+    gitr_precision fx_z1 = 0.0;
+    gitr_precision fx_z2 = 0.0; 
+    double dim1;
+    if(nx*nz == 1)
+    {
+        fxz = data[0];
+
+        return fxz;
+    }
+    else
+    {
+     if( cylsymm )
+     {
+    dim1 = std::sqrt(x*x + y*y);
+    }
+    else
+    {
+    dim1 = x;
+    }
+    gitr_precision d_dim1 = gridx[1] - gridx[0];
+    gitr_precision dz = gridz[1] - gridz[0];
+    int i = std::floor((dim1 - gridx[0])/d_dim1);//addition of 0.5 finds nearest gridpoint
+    int j = std::floor((z - gridz[0])/dz);
+    
+    //gitr_precision interp_value = data[i + j*nx];
+    if (i < 0) i=0;
+    if (j < 0) j=0;
+    if (i >=nx-1 && j>=nz-1)
+    {
+        fxz = data[nx-1+(nz-1)*nx];
+    }
+    else if (i >=nx-1)
+    {
+        fx_z1 = data[nx-1+j*nx];
+        fx_z2 = data[nx-1+(j+1)*nx];
+        fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+    }
+    else if (j >=nz-1)
+    {
+        fx_z1 = data[i+(nz-1)*nx];
+        fx_z2 = data[i+(nz-1)*nx];
+        fxz = ((gridx[i+1]-dim1)*fx_z1+(dim1 - gridx[i])*fx_z2)/d_dim1;
+        
+    }
+    else
+    {
+      // break 1
+      fx_z1 = ((gridx[i+1]-dim1)*data[i+j*nx] + (dim1 - gridx[i])*data[i+1+j*nx])/d_dim1;
+      fx_z2 = ((gridx[i+1]-dim1)*data[i+(j+1)*nx] + (dim1 - gridx[i])*data[i+1+(j+1)*nx])/d_dim1; 
+      fxz = ((gridz[j+1]-z)*fx_z1+(z - gridz[j])*fx_z2)/dz;
+    }
+    }
+
+    /* Captain! New code begin */
+    double coordinates[ 2 ] = { z, dim1 };
+
+    long long unsigned int dims[ 2 ] = { nz, nx };
+    double min_range_init[ 2 ] = { gridz[0], gridx[0] };
+    double max_range_init[ 2 ] = { gridz[ dims[0] - 1 ], gridx[ dims[ 1 ] - 1 ] };
+    int n_dims_init = 2;
+
+    // attn: first argument "data" was originally "dataz" below
+    interpolated_field< double > 
+      ifield( data, dims, max_range_init, min_range_init, n_dims_init );
+
+    double wrong = ifield( coordinates );
+    double right = fxz;
+    double diff = ( right - wrong ) / right;
+
+    std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << " normalized diff: " << diff << std::endl;
+
+    /* new code end */
+
+    return fxz;
+}
+
 CUDA_CALLABLE_MEMBER
 void move_boris::interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,
 int nx, int nz,
@@ -80,74 +160,7 @@ gitr_precision* datat, int cylsymm ) {
    gitr_precision Ar = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, cylsymm );
    gitr_precision At = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, cylsymm );
 
-   /* Captain! new code begin */
-   long long unsigned int dims[ 2 ] = { nz, nx };
-   double min_range_init[ 2 ] = { gridz[0], gridx[0] };
-   double max_range_init[ 2 ] = { gridz[ dims[0] - 1 ], gridx[ dims[ 1 ] - 1 ] };
-   int n_dims_init = 2;
-
-   interpolated_field< double > 
-   ifield( dataz, dims, max_range_init, min_range_init, n_dims_init );
-
-   double dim1;
-   if( cylsymm )
-   {
-     dim1 = std::sqrt(x*x + y*y);
-   }
-   else
-   {
-     dim1 = x;
-   }
-
-   //double coordinates[ 2 ] = { z, x };
-   //original above
-   double coordinates[ 2 ] = { z, dim1 };
-
-   //field[2] = ifield( coordinates );
-   // potentially transform coordinates here using an object?
-   // break 0
-   double right = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
-   double wrong = ifield( coordinates );
-   double diff = ( right - wrong ) / right;
-   std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << " normalized diff: " << diff << std::endl;
-
-   /*
-   for( int i = -1; i < nz + 1; i++ )
-   {
-     for( int j = -1; j < nx + 1; j++ )
-     {
-       double z_coordinate = gridz[ 0 ] + i * ifield.spacing[ 0 ] + 0.5;
-       double x_coordinate = gridx[ 0 ] + j * ifield.spacing[ 1 ] + 0.5;
-
-       if( cylsymm )
-       {
-         dim1 = std::sqrt(x_coordinate*x_coordinate + y*y);
-       }
-       else
-       {
-         dim1 = x_coordinate;
-       }
-
-       coordinates[ 0 ] = z_coordinate;
-       coordinates[ 1 ] = dim1;
-
-       right = this->interp2dCombined(x_coordinate,y,z_coordinate,nx,nz,gridx,gridz, dataz, cylsymm );
-       wrong = ifield( coordinates );
-
-       diff = std::abs( ( right - wrong ) / right );
-       if( diff > 1e15 )
-       std::cout << "( z, x ): " << i << " " << j << " " << z_coordinate << " " << x_coordinate
-                 << " wrong " << wrong << " right: " << right << " diff: " << diff << std::endl;
-     }
-     //std::cout << std::endl;
-   }
-   */
-   //std::cout << std::endl;
-
-   //exit( 1 );
-   /* new code end */
-
-   field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
+   field[2] = this->interp2dCompare(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
 
      if( cylsymm )
      {
