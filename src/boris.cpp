@@ -144,16 +144,23 @@ gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, 
     double right = fxz;
     double diff = ( right - wrong ) / right;
 
+    std::cout << "original implementation:" << std::endl;
+
+    std::cout << std::setprecision( 10 ) 
+              << "( " << data[i+j*nx]  << ", " << (gridx[i+1]-dim1) / d_dim1 << " )"
+              << std::endl
+              << "( " << data[i+1+j*nx] << ", " << (dim1 - gridx[i]) / d_dim1  << " )"
+              << std::endl
+              << "( " << data[i+(j+1)*nx]  << ", " << (gridx[i+1]-dim1) / d_dim1 << " )"
+              << std::endl
+              << "( " << data[i+1+(j+1)*nx] << ", " << (dim1 - gridx[i]) / d_dim1  << " )"
+              << std::endl;
+
+    std::cout << "comparison: " << std::endl;
     std::cout << std::setprecision( 10 ) 
               << "wrong: " << wrong 
               << " right: " << right 
               << " normalized diff: " << diff 
-              << std::endl
-              << " dz: " << dz 
-              << " d0: " << ifield.spacing[ 0 ] 
-              << " d_dim1: " << d_dim1
-              << " d1: " << ifield.spacing[ 1 ]
-              << " i + j * nx: " << i + j * nx
               << std::endl;
 
     /* new code end */

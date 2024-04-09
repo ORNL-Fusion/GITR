@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 
 
 template< typename T >
@@ -207,26 +208,39 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
 
   for( int i = 0; i < this->n_dims; i++ )
   {
-    int reach = 1 << i;
+    //int reach = 1 << i;
+    //int step = reach << 1;
+    // replaced above with below:
+    int reach = 1 << ( this->n_dims - i - 1 );
 
-    int step = reach << 1;
+    std::cout << "interpolator reducing dim " << i << std::endl;
 
-    //std::cout << "reducing dim " << i << std::endl;
-
-    for( int j = 0; j < 1 << this->n_dims; j += step )
+    //for( int j = 0; j < 1 << this->n_dims; j += step )
+    for( int j = 0; j < reach; j++ )
     {
+      int index = this->n_dims - i - 1;
+
+      std::cout << std::setprecision( 10 )
+                << "unit cell indices: ( " << j << ", " << j + reach << " )" << std::endl
+                << "( " << hypercube[ j ] << ", " 
+                << normalized_fractions[index*2] / spacing[ index ] << " )" << std::endl
+                << "( " << hypercube[ j + reach ] << ", " 
+                << normalized_fractions[index*2+1] / spacing[ index ] << " )" << std::endl
+                << std::endl;
+
       /*
-      std::cout << "summing hypercube vertices " << j << " and " << j + reach << std::endl;
-      std::cout << hypercube[ j ] << " " << hypercube[ j + reach ] << std::endl;
-      std::cout << "pairing with fractions " << i*2 << " and " << i*2+1 << std::endl;
-      std::cout << normalized_fractions[i*2] << " " << normalized_fractions[i*2+1] 
+      std::cout << std::setprecision( 10 )
+                << "summing hypercube vertices " << j << " and " << j + reach << std::endl
+                << hypercube[ j ] << " " << hypercube[ j + reach ] << std::endl
+                << "pairing with fractions " << index*2 << " and " << index*2+1 << std::endl
+                << normalized_fractions[index*2] << " " << normalized_fractions[index*2+1] 
                 << std::endl;
                 */
 
       hypercube[ j ] = 
-      ( normalized_fractions[ i * 2 ] * hypercube[ j ] + 
-      normalized_fractions[ i * 2 + 1 ] * hypercube[ j + reach ] )
-      / spacing[ i ];
+      ( normalized_fractions[ index * 2 ] * hypercube[ j ] + 
+      normalized_fractions[ index * 2 + 1 ] * hypercube[ j + reach ] )
+      / spacing[ index ];
     }
   }
 
@@ -279,8 +293,6 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
     corner_vertex_index += 
     (  single_dim_coordinate * this->offset_factors[ i ] );
   }
-
-  std::cout << "corner_vertex_index: " << corner_vertex_index << std::endl;
 
   /* find the indices of the other vertices in the hypercube by offsetting from the
      first vertex */
