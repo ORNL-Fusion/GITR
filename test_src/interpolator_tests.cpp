@@ -1,5 +1,6 @@
 #include "catch2/catch_all.hpp"
 #include "interpolator.h"
+#include "interp2d.hpp"
 
 /*
 
@@ -408,9 +409,50 @@ TEST_CASE( "multi-dimensional interpolation" )
     }
   }
 
-  /* edge case testing */
+  /* test against multidimensional analytical function */
   SECTION( "t3" )
   {
+    /* parameters */
+
+    // n_dimensions, points in each, and min/max in each. Can make this symmetrical
+
+    // gridx, gridy, etc with Tim's interpolator, dx and dz etc
+
+    // the function (fixed parameter)
+
+    // number of random points in each cell to interpolate
+
+    // checks all errors are below threshold
+
+    // test against tim's interpolator and run on many timesteps
+
+    /* 
+       define a real range for the function - how big of a sample will you need?
+
+       this is ( start, stop ) for each 
+
+       define how many points you wish to sample in each dimension
+
+       define the function:
+
+       f = A * sin( std::sqrt( x^2 + ... + y^2 ) )
+
+       using the range, n_points in each dimension, and the function,
+       create a data field representing the function in row major order
+       this will be an example of the function's evaluation.
+
+       iterate each cell in the domain, and use random number generator to pick a
+       random coordinate or multiple in each cell. Interpolate with your function and test
+       performance and accuracy
+
+       parameterize this into a function on what parameters? Hm, well, seems like
+
+       how can performance be accurately measured here?
+
+
+
+
+    */
   }
 }
 
