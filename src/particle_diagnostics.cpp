@@ -31,9 +31,9 @@ particle_diagnostics::particle_diagnostics(Flags *_flags,
 CUDA_CALLABLE_MEMBER_DEVICE
 void particle_diagnostics::operator()(std::size_t indx)
 {
-  if (particlesPointer->hitWall[indx] == 1.0) 
+  if (particlesPointer->hitWall[indx] == 1.0 && particlesPointer->weight[indx]!=0)  
   {
-    printf("DEBUG TEST: %i \n", particlesPointer->weight[indx]);
+    //printf("DEBUG WEIGHT: %f \n", particlesPointer->weight[indx]);
             
     int wallHit = particlesPointer->surfaceHit[indx];
     int surfaceHit = boundaryVector[wallHit].surfaceNumber;
@@ -63,13 +63,17 @@ void particle_diagnostics::operator()(std::size_t indx)
     }
   
     gitr_precision p_angle = particlesPointer->angle[indx] - particlesPointer->transitAngle[indx];
+    //printf("DEBUG P_ANGLE: pangle %e || angle %e tangle %e || charge %e \n", p_angle, particlesPointer->angle[indx], particlesPointer->transitAngle[indx], particlesPointer->charge[indx]);
+
     particlesPointer->transitAngle[indx] = particlesPointer->angle[indx];
 
     int ind_angle = std::floor((p_angle - bin_edge_0_angle)/bin_edge_dtheta);
     if (angle_logarithmic == 1)
     {
+      //printf("Is this thing on?\n");
       ind_angle = std::floor((std::log10(p_angle) - bin_edge_0_angle)/bin_edge_dtheta);
     }
+    //printf("P_ANGLE: %e || IND_ANGLE: %d \n", p_angle, ind_angle);
 
     if (ind_angle < 0) ind_angle = 0;
     if (ind_angle >= n_bins_angle) ind_angle = n_bins_angle - 1;
@@ -78,6 +82,7 @@ void particle_diagnostics::operator()(std::size_t indx)
 
     if (ind_2d_angle >=0 && ind_2d_angle < nSurfaces*n_bins_angle)
     {
+	     //printf("IND_2D_ANGLE: %d || WEIGHT: %e \n",ind_2d_angle, particlesPointer->weight[indx]);
              #if USE_CUDA > 0
                atomicAdd1(&particle_angle_histogram[ind_2d_angle],particlesPointer->weight[indx]);
              #else      
