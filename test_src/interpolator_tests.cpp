@@ -192,7 +192,7 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     class interpolated_field< double >
     field( lattice.data(), d_len.data(), max_values.data(), min_values.data(), dimensions );
-    /* Captain! Create the hypercube. What will own the pointers? Once this is done, you
+    /* Create the hypercube. What will own the pointers? Once this is done, you
        have all the pieces I think. Then you just need to prepare GITR for compiling and
        write out a python file that can convert between the two file types. Then make
        sure that you have working containers */
@@ -280,8 +280,6 @@ TEST_CASE( "multi-dimensional interpolation" )
 
           test_point[ d ] = test_domain_value;
 
-          /* Captain! The problem appears to be that you are using hypercube.data()
-             and aren't copying it or something... */
           std::vector< double > hypercube_workspace = hypercube;
 
           /* note: you are using the hypercube as the entire data lattice just to test
@@ -302,7 +300,6 @@ TEST_CASE( "multi-dimensional interpolation" )
     }
   }
 
-  /* Captain! Fix this, migrate functionality, add helper classes, be done! */
   SECTION( "t2" )
   {
     /* value for the "upper fraction" described in interpolator.h documentation */
@@ -412,6 +409,66 @@ TEST_CASE( "multi-dimensional interpolation" )
   /* test against multidimensional analytical function */
   SECTION( "t3" )
   {
+    // start and end of domain
+    double domain_start = -10;
+    double domain_end = 10;
+    int n_grid_points = 1001;
+
+    // defined by leftmost boundary value
+    int n_cells = n_grid_points - 1;
+
+    // the above are uniform over n_dims dimensions - start with 3
+    int n_dims = 3;
+
+    // how many test coordinates per cell should be interpolated?
+    // make this an array of cell offsets or something
+    // we will need n_dims scalars picked from the interval:
+    // [ 0, ( start - end ) / ( grid_points - 1 ) ]
+    // and add these to the other areas?
+    // needs to be an array instead
+    int n_rand_cell_coordinates;
+
+    // make this the maximum size of the whole lattice
+    int lattice_size = 1;
+    for( int i = 0; i < n_dims; i++ )
+    {
+      lattice_size *= n_grid_points;
+    }
+
+    // allocate grids for Tim's interpolator
+
+    // allocate the lattice
+
+    // define lambda function to populate it
+
+    // iterate and populate the lattice
+
+    // iterate over each cell and calculate multiple random coordinates inside of it
+
+    // put the lattice in an interpolated field class
+
+    // iterate over each cell and interpolate the random coordinate set as well as
+    // evaluate the same coordinates using the original lambda function. Calculate the 
+    // relative difference
+
+    // add Tim's interpolator to the iteration too
+
+    // how would you performance test this? just time the loops I guess?
+    // make a performance version of this test for that...
+
+    // then run sft_a with interpolated fields on the temperature grid
+    // then run sft_a with interpolated time-dependent dummy field, put in dev
+    // present all this to Tim tomorrow
+
+    /* now you have the lattice_size: allocate it, iterate it, populate it with the proper
+       values calculated from that function */
+
+    /* Captain! data disappears when ptr goes out of scope */
+    std::unique_ptr< double[] > lattice_ptr( new double[ size ] );
+    double *lattice_data = lattice_ptr.get();
+
+    std::cout << "lattice[ size - 1 ] " << lattice[ size - 1 ] << std::endl;
+
     /* parameters */
 
     // n_dimensions, points in each, and min/max in each. Can make this symmetrical
@@ -448,9 +505,6 @@ TEST_CASE( "multi-dimensional interpolation" )
        parameterize this into a function on what parameters? Hm, well, seems like
 
        how can performance be accurately measured here?
-
-
-
 
     */
   }

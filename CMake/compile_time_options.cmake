@@ -1,5 +1,6 @@
 # specify C++ standard
 set( CMAKE_CXX_STANDARD 20 )
+set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
 # options are "Debug" and "Release" and "RelWithDebInfo"
 set( CMAKE_BUILD_TYPE "Debug" )

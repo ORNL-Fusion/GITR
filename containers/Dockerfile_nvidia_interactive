@@ -61,3 +61,5 @@ run python3 -m  pip install -r requirements.txt
 
 # as a final step volume map the host directory
 volume /host
+
+run apt install -y gdb

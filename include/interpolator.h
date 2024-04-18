@@ -115,7 +115,6 @@ class dummy
   double const *data;
 };
 
-/* Captain! Everything above is base class related stuff */
 /* convention: large stride ---> small stride = z y x */
 /* dims: zyx order, n data points in each dimension including endpoints */
 /* offset_factors: zyx strides, rename to stride instead of offset_factors */
@@ -136,11 +135,11 @@ class interpolated_field : public tensor< T >
     { 
       data_size = 1;
 
-      /* should this be n_bins + 1? */
       for( int i = 0; i < this->n_dims; i++ ) data_size *= dims[ i ];
       for( int i = 0; i < this->n_dims; i++ ) max_range[ i ] = max_range_init[ i ];
       for( int i = 0; i < this->n_dims; i++ ) min_range[ i ] = min_range_init[ i ];
 
+      /* Captain! Should spacing be abs? */
       for( int i = 0; i < this->n_dims; i++ ) 
         spacing[ i ] = ( max_range[ i ] - min_range[ i ] ) / ( T(dims[ i ]) - 1 );
     }
@@ -303,7 +302,7 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
 
       /* thus, the order of the hypercube cell coordinates follows 0 ---> 2^n in binary
          where bits represent xyz order: note that the fastest changing dimension in this
-         enumeration is the leading dimension! Captain! You must flip this!
+         enumeration is the leading dimension! You must flip this!
 
          That seems a bit bad for memory access...
          what if we had overlapping memory regions to mitigate these factors? That would be
