@@ -139,7 +139,6 @@ class interpolated_field : public tensor< T >
       for( int i = 0; i < this->n_dims; i++ ) max_range[ i ] = max_range_init[ i ];
       for( int i = 0; i < this->n_dims; i++ ) min_range[ i ] = min_range_init[ i ];
 
-      /* Captain! Should spacing be abs? */
       for( int i = 0; i < this->n_dims; i++ ) 
         spacing[ i ] = ( max_range[ i ] - min_range[ i ] ) / ( T(dims[ i ]) - 1 );
     }
