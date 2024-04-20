@@ -464,6 +464,19 @@ TEST_CASE( "multi-dimensional interpolation" )
     // iterate lattice grid space with a round robin object
     round_robin_nd< n_dims, n_grid_points > lattice_indexer;
 
+    // create analytical function for testing
+    auto analytical_function =
+    []( std::array< double, n_dims > &real_space ) -> double
+    {
+      double d = 0;
+
+      for( int j = 0; j < real_space.size(); j++ ) d += real_space[ j ] * real_space[ j ];
+
+      d = 10 * std::cos( std::sqrt( d ) );
+
+      return d;
+    };
+
     // set data loop
     for( int i = 0; i < lattice_size; i++ )
     {
@@ -477,15 +490,22 @@ TEST_CASE( "multi-dimensional interpolation" )
       std::cout << " " << lattice_gridpoint[ j ]; std::cout << std::endl;
 
       std::cout << "real-space" << std::endl;
+      */
+      std::array< double, n_dims > real_space;
+
       for( int j = 0; j < lattice_gridpoint.size(); j++ )
-      std::cout << " " << lattice_gridpoint[ j ]*spacing+domain_start; std::cout << std::endl;
+      real_space[ j ] = lattice_gridpoint[ j ]*spacing+domain_start;
+
+      /*
+      for( int j = 0; j < lattice_gridpoint.size(); j++ )
+      std::cout << " " << real_space[ j ]; std::cout << std::endl;
       */
 
       /* calculate function value at real-space coordinate */
-      double analytical_function = i;
+      double analytical_value = analytical_function( real_space );
 
       /* store at lattice coordinate "i" */
-      lattice.set( analytical_function, lattice_gridpoint.data() );
+      lattice.set( analytical_value, lattice_gridpoint.data() );
     }
 
     // get and interpolate data loop
@@ -496,9 +516,15 @@ TEST_CASE( "multi-dimensional interpolation" )
 
       auto lattice_gridpoint = lattice_indexer.get_indices();
 
-      double analytical_function = lattice.get( lattice_gridpoint.data() );
+      std::array< double, n_dims > real_space;
 
-      REQUIRE( analytical_function == i );
+      for( int j = 0; j < lattice_gridpoint.size(); j++ )
+      real_space[ j ] = lattice_gridpoint[ j ]*spacing+domain_start;
+
+      double stored_analytical_value = lattice.get( lattice_gridpoint.data() );
+      double calculated_analytical_value = analytical_function( real_space );
+
+      REQUIRE( calculated_analytical_value == stored_analytical_value );
     }
     // get data in a loop and check that it is in the correct order
     // add function evaluation to this loop and the set loop above
