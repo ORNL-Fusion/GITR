@@ -214,13 +214,14 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
     // replaced above with below:
     int reach = 1 << ( this->n_dims - i - 1 );
 
-    std::cout << "interpolator reducing dim " << i << std::endl;
+    //std::cout << "interpolator reducing dim " << i << std::endl;
 
     //for( int j = 0; j < 1 << this->n_dims; j += step )
     for( int j = 0; j < reach; j++ )
     {
       int index = this->n_dims - i - 1;
 
+      /*
       std::cout << std::setprecision( 10 )
                 << "unit cell indices: ( " << j << ", " << j + reach << " )" << std::endl
                 << "( " << hypercube[ j ] << ", " 
@@ -228,6 +229,7 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
                 << "( " << hypercube[ j + reach ] << ", " 
                 << normalized_fractions[index*2+1] / spacing[ index ] << " )" << std::endl
                 << std::endl;
+                */
 
 
       hypercube[ j ] = 

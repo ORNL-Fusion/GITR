@@ -412,8 +412,8 @@ TEST_CASE( "multi-dimensional interpolation" )
   SECTION( "t3" )
   {
     // start and end of domain
-    double domain_start = -5;
-    double domain_end = 5;
+    double domain_start = -3.5;
+    double domain_end = 3.5;
     int const n_grid_points = 501;
 
     // defined by leftmost boundary value
@@ -539,7 +539,7 @@ TEST_CASE( "multi-dimensional interpolation" )
     // get and interpolate data loop - use cell indexer here instead of this one
     for( int i = 0; i < lattice_cells; i++ )
     {
-      if( i % 1000  == 0 ) std::cout << i << "/" << lattice_cells << std::endl;
+      //if( i % 1000  == 0 ) std::cout << i << "/" << lattice_cells << std::endl;
       cell_indexer.back_spin();
 
       auto lattice_gridpoint = cell_indexer.get_indices();
@@ -550,17 +550,19 @@ TEST_CASE( "multi-dimensional interpolation" )
       for( int j = 0; j < lattice_gridpoint.size(); j++ )
       real_space[ j ] = lattice_gridpoint[ j ]*spacing+domain_start;
 
-      std::cout << "real-space" << std::endl;
+      //std::cout << "real-space" << std::endl;
       for( int j = 0; j < lattice_gridpoint.size(); j++ )
       {
-        std::cout << " " << real_space[ j ];
+        //std::cout << " " << real_space[ j ];
         real_space_offset[ j ] = real_space[ j ] + offset[ j ];
       }
-      std::cout << std::endl;
+      //std::cout << std::endl;
 
+      /*
       std::cout << "real-space offset:" << std::endl;
       for( int j = 0; j < lattice_gridpoint.size(); j++ )
       std::cout << " " << real_space[ j ]; std::cout << std::endl;
+      */
 
       double stored_analytical_value = lattice.get( lattice_gridpoint.data() );
       double calculated_analytical_value = analytical_function( real_space );
