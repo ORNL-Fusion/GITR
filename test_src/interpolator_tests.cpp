@@ -2,6 +2,7 @@
 #include "interpolator.h"
 #include "interp2d.hpp"
 #include "operation.hpp"
+#include <iomanip>
 
 /*
 
@@ -411,15 +412,19 @@ TEST_CASE( "multi-dimensional interpolation" )
   SECTION( "t3" )
   {
     // start and end of domain
-    double domain_start = -10;
-    double domain_end = 10;
-    int const n_grid_points = 201;
+    double domain_start = -5;
+    double domain_end = 5;
+    int const n_grid_points = 501;
 
     // defined by leftmost boundary value
     int n_cells = n_grid_points - 1;
 
     // the above are uniform over n_dims dimensions - start with 3
     int const n_dims = 3;
+
+    std::array< double, n_dims > min_range_init = { domain_start, domain_start, domain_start };
+
+    std::array< double, n_dims > max_range_init = { domain_end, domain_end, domain_end};
 
     // how many test coordinates per cell should be interpolated?
     // make this an array of cell offsets or something
@@ -430,6 +435,10 @@ TEST_CASE( "multi-dimensional interpolation" )
     int n_rand_cell_coordinates;
 
     double spacing = ( domain_end - domain_start ) / ( n_grid_points - 1 );
+
+    std::array< double, n_dims > offset = { 0.5 * spacing, 
+                                            0.5 * spacing,
+                                            0.5 * spacing };
 
     // allocate grids for Tim's interpolator - the data is strided along dims
     std::unique_ptr< double[] > grid_ptr( new double[ n_dims * n_grid_points ] );
@@ -451,6 +460,12 @@ TEST_CASE( "multi-dimensional interpolation" )
       lattice_size *= n_grid_points;
     }
 
+    int lattice_cells = 1;
+    for( int i = 0; i < n_dims; i++ )
+    {
+      lattice_cells *= ( n_grid_points - 1 );
+    }
+
     std::vector< int > dims( n_dims, n_grid_points );
 
     // allocate lattice
@@ -459,10 +474,17 @@ TEST_CASE( "multi-dimensional interpolation" )
     double *lattice_data = lattice_ptr.get();
 
     // put lattice_data into a tensor object
-    tensor< double > lattice( lattice_data, dims.data(), n_dims );
+    interpolated_field< double > 
+    lattice( lattice_data, 
+             dims.data(), 
+             max_range_init.data(), 
+             min_range_init.data(), 
+             n_dims );
 
     // iterate lattice grid space with a round robin object
     round_robin_nd< n_dims, n_grid_points > lattice_indexer;
+
+    round_robin_nd< n_dims, n_grid_points - 1 > cell_indexer;
 
     // create analytical function for testing
     auto analytical_function =
@@ -483,6 +505,8 @@ TEST_CASE( "multi-dimensional interpolation" )
       /* grid-space */
       lattice_indexer.back_spin();
       auto lattice_gridpoint = lattice_indexer.get_indices();
+
+      //if( i % 1000  == 0 ) std::cout << i << "/" << lattice_size << std::endl;
 
       /*
       std::cout << "grid-space" << std::endl;
@@ -506,62 +530,50 @@ TEST_CASE( "multi-dimensional interpolation" )
 
       /* store at lattice coordinate "i" */
       lattice.set( analytical_value, lattice_gridpoint.data() );
+
+      double stored_analytical_value = lattice.get( lattice_gridpoint.data() );
+
+      REQUIRE( analytical_value == stored_analytical_value );
     }
 
-    // get and interpolate data loop
-    for( int i = 0; i < lattice_size; i++ )
+    // get and interpolate data loop - use cell indexer here instead of this one
+    for( int i = 0; i < lattice_cells; i++ )
     {
-      if( i % 1000  == 0 ) std::cout << i << "/" << lattice_size << std::endl;
-      lattice_indexer.back_spin();
+      if( i % 1000  == 0 ) std::cout << i << "/" << lattice_cells << std::endl;
+      cell_indexer.back_spin();
 
-      auto lattice_gridpoint = lattice_indexer.get_indices();
+      auto lattice_gridpoint = cell_indexer.get_indices();
 
       std::array< double, n_dims > real_space;
+      std::array< double, n_dims > real_space_offset;
 
       for( int j = 0; j < lattice_gridpoint.size(); j++ )
       real_space[ j ] = lattice_gridpoint[ j ]*spacing+domain_start;
+
+      std::cout << "real-space" << std::endl;
+      for( int j = 0; j < lattice_gridpoint.size(); j++ )
+      {
+        std::cout << " " << real_space[ j ];
+        real_space_offset[ j ] = real_space[ j ] + offset[ j ];
+      }
+      std::cout << std::endl;
+
+      std::cout << "real-space offset:" << std::endl;
+      for( int j = 0; j < lattice_gridpoint.size(); j++ )
+      std::cout << " " << real_space[ j ]; std::cout << std::endl;
 
       double stored_analytical_value = lattice.get( lattice_gridpoint.data() );
       double calculated_analytical_value = analytical_function( real_space );
 
       REQUIRE( calculated_analytical_value == stored_analytical_value );
+
+      double interpolated_value = lattice( real_space_offset.data() );
+      double analytical_offset_value = analytical_function( real_space_offset );
+
+      std::cout << "difference: " << std::setprecision( 10 )
+                << ( interpolated_value - analytical_offset_value ) / analytical_offset_value
+                << std::endl;
     }
-    // get data in a loop and check that it is in the correct order
-    // add function evaluation to this loop and the set loop above
-
-    /* iterate lattice again to make sure it is correct, then try to interpolate it */
-    /* and compare with the known correct analytical function... */
-    /* work order here is accuracy, compare to Tim's, 
-       then sweep across more dimensions */
-
-    // iterate over all valid grid points with round robin object from sample repo
-    // convert to domain by multiplying by spacing, 
-    // populate lattice with gridspace
-    // coordinates can be generated by adding [0, 1] randoms to gridspace coordinates
-    // might need to backspin the wheel, but do a test to check just printing it all out
-
-    // how to iterate valid grid points...
-
-    // define lambda function to populate lattice
-
-    // iterate over each cell and calculate multiple random coordinates inside of it
-
-    // put the lattice in an interpolated field class
-
-    // iterate over each cell and interpolate the random coordinate set as well as
-    // evaluate the same coordinates using the original lambda function. Calculate the 
-    // relative difference
-
-    // add Tim's interpolator to the iteration too
-
-    // how would you performance test this? just time the loops I guess?
-    // make a performance version of this test for that...
-
-    // then run sft_a with interpolated fields on the temperature grid
-    // then run sft_a with interpolated time-dependent dummy field, put in dev
-    // present all this to Tim tomorrow
-    /* Captain! data disappears when ptr goes out of scope */
-
   }
 }
 
