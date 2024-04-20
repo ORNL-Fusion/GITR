@@ -10,44 +10,47 @@
 #include <iostream>
 #include <iomanip>
 
+/* Captain! split memory and operations into two member classes of an umbrella class, 
+   that is the next experiment */
+
 
 template< typename T >
 class tensor
 {
   public:
 
-  //tensor( T const *data, std::vector< long long unsigned int > const dims );
+  //tensor( T const *data, std::vector< int > const dims );
   CUDA_CALLABLE_MEMBER
-  tensor( T const *data, long long unsigned int const *dims, int n_dims );
+  tensor( T *data, int const *dims, int n_dims );
 
   CUDA_CALLABLE_MEMBER
-  T get( long long unsigned int *coordinates );
+  T get( int *coordinates );
 
   CUDA_CALLABLE_MEMBER
-  void set( T val, long long unsigned int *coordinates );
+  void set( T val, int *coordinates );
 
   CUDA_CALLABLE_MEMBER
-  long long unsigned int const *get_dims();
+  int const *get_dims();
 
   /* magic number - bad. Make this a template parameter in the future */
   static int constexpr n_dims_arbitrary_max = 8;
 
   const int n_dims;
 
-  T const *data;
+  T *data;
 
-  long long unsigned int dims[ n_dims_arbitrary_max ];
+  int dims[ n_dims_arbitrary_max ];
 
-  long unsigned int offset_factors[ n_dims_arbitrary_max ];
+  int offset_factors[ n_dims_arbitrary_max ];
 };
 
 template< typename T >
-long long unsigned int const *
+int const *
 tensor< T >::get_dims() { return dims; }
 
 /* leading dimension comes first: zyx order */
 template< typename T >
-tensor< T >::tensor( T const *data, long long unsigned int const *dims_init, int n_dims )
+tensor< T >::tensor( T *data, int const *dims_init, int n_dims )
   :
   data( data ),
   n_dims( n_dims )
@@ -68,7 +71,7 @@ tensor< T >::tensor( T const *data, long long unsigned int const *dims_init, int
 /* leading dimension comes first, zyx access */
 /* untested */
 template< typename T >
-T tensor< T >::get( long long unsigned int *coordinates )
+T tensor< T >::get( int *coordinates )
 {
   int offset = 0;
 
@@ -83,7 +86,7 @@ T tensor< T >::get( long long unsigned int *coordinates )
 /* untested */
 /* leading dimension comes first, zyx access */
 template< typename T >
-void tensor< T >::set( T val, long long unsigned int *coordinates )
+void tensor< T >::set( T val, int *coordinates )
 {
   int offset = 0;
 
@@ -125,8 +128,8 @@ class interpolated_field : public tensor< T >
   public:
 
     CUDA_CALLABLE_MEMBER
-    interpolated_field( T const *data,
-                        long long unsigned int const *dims,//zyx order, data_size  = prod( dims )
+    interpolated_field( T *data,
+                        int const *dims,//zyx order, data_size  = prod( dims )
                         T const *max_range_init, // zyx order, size N
                         T const *min_range_init, // zyx order, size N
                         int n_dims_init ) // template parameter int N
@@ -273,7 +276,7 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
   /* find the index of the first vertex in the hypercube */
   int corner_vertex_index = 0;
 
-  long unsigned int *of = this->offset_factors;
+  int *of = this->offset_factors;
 
   for( int i = 0; i < this->n_dims; i++ )
   {

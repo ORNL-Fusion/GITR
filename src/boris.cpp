@@ -131,7 +131,7 @@ gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, 
     /* Captain! New code begin */
     double coordinates[ 2 ] = { z, dim1 };
 
-    long long unsigned int dims[ 2 ] = { nz, nx };
+    int dims[ 2 ] = { nz, nx };
     double min_range[ 2 ] = { gridz[0], gridx[0] };
     double max_range[ 2 ] = { gridz[ dims[0] - 1 ], gridx[ dims[ 1 ] - 1 ] };
     int n_dims_init = 2;

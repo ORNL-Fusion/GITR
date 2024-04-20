@@ -93,7 +93,7 @@ gitr_precision intorp(
     }
     }
   /* Captain! new code begin */
-  long long unsigned int dims[ 2 ] = { nz, nx };
+  int dims[ 2 ] = { nz, nx };
   double min_range_init[ 2 ] = { gridz[ 0 ], gridx[ 0 ] };
   double max_range_init[ 2 ] = { gridz[ dims[ 0 ] - 1 ], gridx[ dims[ 1 ] - 1 ] };
   int n_dims_init = 2;

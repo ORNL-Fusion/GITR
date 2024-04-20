@@ -1,6 +1,7 @@
 #include "catch2/catch_all.hpp"
 #include "interpolator.h"
 #include "interp2d.hpp"
+#include "operation.hpp"
 
 /*
 
@@ -88,8 +89,8 @@ Intent:
     Hide a specific hypercube in a dataset to test that you can correctly retrieve it
 
 */
-std::vector< double > embed_hypercube( std::vector< long long unsigned int > const &d_len,
-                                        std::vector< long long unsigned int > 
+std::vector< double > embed_hypercube( std::vector< int > const &d_len,
+                                        std::vector< int > 
                                         const &hypercube_lattice_coordinates,
                                         std::vector< double > const &hypercube )
 {
@@ -149,15 +150,15 @@ TEST_CASE( "multi-dimensional interpolation" )
   SECTION( "t0" )
   {
     /* number of lattice divisions in each dimension is n_points - 1 */
-    //std::vector< long long unsigned int > d_len{ 6, 4, 10 };
-    std::vector< long long unsigned int > d_len{ 7, 5, 11 };
+    //std::vector< int > d_len{ 6, 4, 10 };
+    std::vector< int > d_len{ 7, 5, 11 };
 
     /* difference between initial and final value in each dimension */
     std::vector< double > max_values{ 12, 8, 20 };
     std::vector< double > min_values{ 0, 0, 0 };
 
     /* lattice coordinates where a hypercube will be hidden to test retrieval */
-    std::vector< long long unsigned int > hypercube_lattice_coordinates{ 3, 2, 5 };
+    std::vector< int > hypercube_lattice_coordinates{ 3, 2, 5 };
 
     int dimensions = d_len.size();
 
@@ -186,7 +187,7 @@ TEST_CASE( "multi-dimensional interpolation" )
                                   low,
                                   high );
 
-    std::vector< double > const lattice = embed_hypercube( d_len,
+    std::vector< double > lattice = embed_hypercube( d_len,
                                     hypercube_lattice_coordinates,
                                     hypercube_in );
 
@@ -246,7 +247,7 @@ TEST_CASE( "multi-dimensional interpolation" )
     for( int s = initial_dim; s < final_dim; s++ )
     {
       // add +1 to d_len because n_points defining your bin boundaries means n_points - 1 bins
-      std::vector< long long unsigned int > const d_len_s( s, d_len + 1 );
+      std::vector< int > const d_len_s( s, d_len + 1 );
 
       std::vector< double > const max_value_s( s, max_value );
       std::vector< double > const min_value_s( s, 0 );
@@ -338,7 +339,7 @@ TEST_CASE( "multi-dimensional interpolation" )
     /* in an s-dimensional space... */
     for( int s = initial_dim; s < final_dim; s++ )
     {
-      std::vector< long long unsigned int > const d_len_s( s, d_len + 1 );
+      std::vector< int > const d_len_s( s, d_len + 1 );
 
       std::vector< double > const max_value_s( s, max_value );
       std::vector< double > const min_value_s( s, 0 );
@@ -366,7 +367,7 @@ TEST_CASE( "multi-dimensional interpolation" )
 
           */
           /* embed the hypercube into the middle of the latice somewhere */
-          std::vector< long long unsigned int > hypercube_lattice_coordinates( s, d_len );
+          std::vector< int > hypercube_lattice_coordinates( s, d_len );
 
           for( int j = 0; j < d_len_s.size(); j++ )
           {
@@ -412,13 +413,13 @@ TEST_CASE( "multi-dimensional interpolation" )
     // start and end of domain
     double domain_start = -10;
     double domain_end = 10;
-    int n_grid_points = 1001;
+    int const n_grid_points = 201;
 
     // defined by leftmost boundary value
     int n_cells = n_grid_points - 1;
 
     // the above are uniform over n_dims dimensions - start with 3
-    int n_dims = 3;
+    int const n_dims = 3;
 
     // how many test coordinates per cell should be interpolated?
     // make this an array of cell offsets or something
@@ -429,7 +430,6 @@ TEST_CASE( "multi-dimensional interpolation" )
     int n_rand_cell_coordinates;
 
     double spacing = ( domain_end - domain_start ) / ( n_grid_points - 1 );
-
 
     // allocate grids for Tim's interpolator - the data is strided along dims
     std::unique_ptr< double[] > grid_ptr( new double[ n_dims * n_grid_points ] );
@@ -445,10 +445,13 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     // calculate data lattice size
     int lattice_size = 1;
+
     for( int i = 0; i < n_dims; i++ )
     {
       lattice_size *= n_grid_points;
     }
+
+    std::vector< int > dims( n_dims, n_grid_points );
 
     // allocate lattice
     std::unique_ptr< double[] > lattice_ptr( new double[ lattice_size ] );
@@ -456,11 +459,60 @@ TEST_CASE( "multi-dimensional interpolation" )
     double *lattice_data = lattice_ptr.get();
 
     // put lattice_data into a tensor object
+    tensor< double > lattice( lattice_data, dims.data(), n_dims );
+
+    // iterate lattice grid space with a round robin object
+    round_robin_nd< n_dims, n_grid_points > lattice_indexer;
+
+    // set data loop
+    for( int i = 0; i < lattice_size; i++ )
+    {
+      /* grid-space */
+      lattice_indexer.back_spin();
+      auto lattice_gridpoint = lattice_indexer.get_indices();
+
+      /*
+      std::cout << "grid-space" << std::endl;
+      for( int j = 0; j < lattice_gridpoint.size(); j++ )
+      std::cout << " " << lattice_gridpoint[ j ]; std::cout << std::endl;
+
+      std::cout << "real-space" << std::endl;
+      for( int j = 0; j < lattice_gridpoint.size(); j++ )
+      std::cout << " " << lattice_gridpoint[ j ]*spacing+domain_start; std::cout << std::endl;
+      */
+
+      /* calculate function value at real-space coordinate */
+      double analytical_function = i;
+
+      /* store at lattice coordinate "i" */
+      lattice.set( analytical_function, lattice_gridpoint.data() );
+    }
+
+    // get and interpolate data loop
+    for( int i = 0; i < lattice_size; i++ )
+    {
+      if( i % 1000  == 0 ) std::cout << i << "/" << lattice_size << std::endl;
+      lattice_indexer.back_spin();
+
+      auto lattice_gridpoint = lattice_indexer.get_indices();
+
+      double analytical_function = lattice.get( lattice_gridpoint.data() );
+
+      REQUIRE( analytical_function == i );
+    }
+    // get data in a loop and check that it is in the correct order
+    // add function evaluation to this loop and the set loop above
+
+    /* iterate lattice again to make sure it is correct, then try to interpolate it */
+    /* and compare with the known correct analytical function... */
+    /* work order here is accuracy, compare to Tim's, 
+       then sweep across more dimensions */
 
     // iterate over all valid grid points with round robin object from sample repo
-    // convert to domain by multiplying by spacing, populate lattice with gridspace
+    // convert to domain by multiplying by spacing, 
+    // populate lattice with gridspace
     // coordinates can be generated by adding [0, 1] randoms to gridspace coordinates
-    // might need to backspin the wheel, but do a test to check
+    // might need to backspin the wheel, but do a test to check just printing it all out
 
     // how to iterate valid grid points...
 
