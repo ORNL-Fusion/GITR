@@ -168,7 +168,7 @@ target_link_libraries( file_io_tests
                        Catch2::Catch2WithMain
                        )
 
-target_link_libraries( interpolator_tests Catch2::Catch2WithMain )
+target_link_libraries( interpolator_tests Catch2::Catch2WithMain interp2d )
 
 if( GITR_USE_MPI )
   target_link_libraries( GITR mpi )

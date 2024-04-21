@@ -452,6 +452,8 @@ TEST_CASE( "multi-dimensional interpolation" )
       }
     }
 
+    double *grid_raw = grid_ptr.get();
+
     // calculate data lattice size
     int lattice_size = 1;
 
@@ -537,6 +539,8 @@ TEST_CASE( "multi-dimensional interpolation" )
     }
 
     // get and interpolate data loop - use cell indexer here instead of this one
+    int legacy_correct = 0;
+    int new_correct = 0;
     for( int i = 0; i < lattice_cells; i++ )
     {
       //if( i % 1000  == 0 ) std::cout << i << "/" << lattice_cells << std::endl;
@@ -572,8 +576,42 @@ TEST_CASE( "multi-dimensional interpolation" )
       double interpolated_value = lattice( real_space_offset.data() );
       double analytical_offset_value = analytical_function( real_space_offset );
 
+      /* Captain! Interpolate using Tim's interpolator next */
+      double legacy_interpolation =
+      interp3d(  
+      real_space_offset[ 2 ],
+      real_space_offset[ 1 ],
+      real_space_offset[ 0 ],
+      n_grid_points,
+      n_grid_points,
+      n_grid_points,
+      grid_raw,
+      grid_raw + n_grid_points,
+      grid_raw + ( n_grid_points * 2 ),
+      lattice_data );
+
+      double difference = 
+      std::abs( ( interpolated_value - analytical_offset_value ) / analytical_offset_value );
+
+      double legacy_difference =
+      std::abs( ( legacy_interpolation - analytical_offset_value ) / analytical_offset_value );
+
       std::cout << "difference: " << std::setprecision( 10 )
-                << ( interpolated_value - analytical_offset_value ) / analytical_offset_value
+                << difference
+                << std::endl;
+
+      std::cout << "legacy difference: " << std::setprecision( 10 )
+                << legacy_difference
+                << std::endl;
+
+      if( legacy_difference >= difference ) ++new_correct;
+
+      else ++legacy_correct;
+
+      std::cout << "legacy: " << legacy_correct << " new: " << new_correct << std::endl;
+
+      std::cout << std::setprecision( 10 ) << "discrepancy: "
+                << ( interpolated_value - legacy_interpolation ) / analytical_offset_value
                 << std::endl;
     }
   }
