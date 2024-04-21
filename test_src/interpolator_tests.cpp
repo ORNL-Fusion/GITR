@@ -3,6 +3,7 @@
 #include "interp2d.hpp"
 #include "operation.hpp"
 #include <iomanip>
+#include <chrono>
 
 /*
 
@@ -538,9 +539,9 @@ TEST_CASE( "multi-dimensional interpolation" )
       REQUIRE( analytical_value == stored_analytical_value );
     }
 
-    // get and interpolate data loop - use cell indexer here instead of this one
     int legacy_correct = 0;
     int new_correct = 0;
+    /* interpolation loop to check accuracy - seems accurate so far */
     for( int i = 0; i < lattice_cells; i++ )
     {
       //if( i % 1000  == 0 ) std::cout << i << "/" << lattice_cells << std::endl;
@@ -614,6 +615,155 @@ TEST_CASE( "multi-dimensional interpolation" )
                 << ( interpolated_value - legacy_interpolation ) / analytical_offset_value
                 << std::endl;
     }
+  }
+
+  SECTION( "t4" )
+  {
+    // start and end of domain
+    double domain_start = -3.5;
+    double domain_end = 3.5;
+    int const n_grid_points = 401;
+
+    // defined by leftmost boundary value
+    int n_cells = n_grid_points - 1;
+
+    // the above are uniform over n_dims dimensions - start with 3
+    int const n_dims = 3;
+
+    std::array< double, n_dims > min_range_init = { domain_start, domain_start, domain_start };
+
+    std::array< double, n_dims > max_range_init = { domain_end, domain_end, domain_end};
+
+    double spacing = ( domain_end - domain_start ) / ( n_grid_points - 1 );
+
+    std::array< double, n_dims > offset = { 0.5 * spacing, 
+                                            0.5 * spacing,
+                                            0.5 * spacing };
+
+    // allocate grids for Tim's interpolator - the data is strided along dims
+    std::unique_ptr< double[] > grid_ptr( new double[ n_dims * n_grid_points ] );
+
+    // populate the grids
+    for( int i = 0; i < n_dims; i++ )
+    {
+      for( int j = 0; j < n_grid_points; j++ )
+      {
+        grid_ptr[ i * n_grid_points + j ] = spacing * j + domain_start;
+      }
+    }
+
+    double *grid_raw = grid_ptr.get();
+
+    // calculate data lattice size
+    int lattice_size = 1;
+
+    for( int i = 0; i < n_dims; i++ )
+    {
+      lattice_size *= n_grid_points;
+    }
+
+    int lattice_cells = 1;
+    for( int i = 0; i < n_dims; i++ )
+    {
+      lattice_cells *= ( n_grid_points - 1 );
+    }
+
+    std::vector< int > dims( n_dims, n_grid_points );
+
+    // allocate lattice
+    std::unique_ptr< double[] > lattice_ptr( new double[ lattice_size ] );
+
+    double *lattice_data = lattice_ptr.get();
+
+    // put lattice_data into a tensor object
+    interpolated_field< double > 
+    lattice( lattice_data, 
+             dims.data(), 
+             max_range_init.data(), 
+             min_range_init.data(), 
+             n_dims );
+
+    // iterate lattice grid space with a round robin object
+    round_robin_nd< n_dims, n_grid_points > lattice_indexer;
+
+    round_robin_nd< n_dims, n_grid_points - 1 > cell_indexer;
+
+    // create analytical function for testing
+    auto analytical_function =
+    []( std::array< double, n_dims > &real_space ) -> double
+    {
+      double d = 0;
+
+      for( int j = 0; j < real_space.size(); j++ ) d += real_space[ j ] * real_space[ j ];
+
+      d = 10 * std::cos( std::sqrt( d ) );
+
+      return d;
+    };
+
+    /* performance checking loop, copy of above with other stuff pulled out  */
+    auto const start = std::chrono::high_resolution_clock::now();
+    for( int i = 0; i < lattice_cells; i++ )
+    {
+      cell_indexer.back_spin();
+
+      auto lattice_gridpoint = cell_indexer.get_indices();
+
+      std::array< double, n_dims > real_space;
+      std::array< double, n_dims > real_space_offset;
+
+      for( int j = 0; j < lattice_gridpoint.size(); j++ )
+      real_space[ j ] = lattice_gridpoint[ j ]*spacing+domain_start;
+
+      for( int j = 0; j < lattice_gridpoint.size(); j++ )
+      {
+        real_space_offset[ j ] = real_space[ j ] + offset[ j ];
+      }
+
+      double interpolated_value = lattice( real_space_offset.data() );
+    }
+    auto const stop = std::chrono::high_resolution_clock::now();
+
+    double const duration_total = ( stop - start ).count();
+
+    /* performance checking loop, copy of above with other stuff pulled out  */
+    auto const start_1 = std::chrono::high_resolution_clock::now();
+    for( int i = 0; i < lattice_cells; i++ )
+    {
+      cell_indexer.back_spin();
+
+      auto lattice_gridpoint = cell_indexer.get_indices();
+
+      std::array< double, n_dims > real_space;
+      std::array< double, n_dims > real_space_offset;
+
+      for( int j = 0; j < lattice_gridpoint.size(); j++ )
+      real_space[ j ] = lattice_gridpoint[ j ]*spacing+domain_start;
+
+      for( int j = 0; j < lattice_gridpoint.size(); j++ )
+      {
+        real_space_offset[ j ] = real_space[ j ] + offset[ j ];
+      }
+
+      double legacy_interpolation =
+      interp3d(  
+      real_space_offset[ 2 ],
+      real_space_offset[ 1 ],
+      real_space_offset[ 0 ],
+      n_grid_points,
+      n_grid_points,
+      n_grid_points,
+      grid_raw,
+      grid_raw + n_grid_points,
+      grid_raw + ( n_grid_points * 2 ),
+      lattice_data );
+    }
+
+    auto const stop_1 = std::chrono::high_resolution_clock::now();
+
+    double const duration_total_1 = ( stop_1 - start_1 ).count();
+
+    std::cout << "legacy: " << duration_total_1 << " new: " << duration_total << std::endl;
   }
 }
 
