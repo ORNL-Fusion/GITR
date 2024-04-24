@@ -617,6 +617,7 @@ TEST_CASE( "multi-dimensional interpolation" )
     }
   }
 
+  /* performance compare legacy 3d interp and new one */
   SECTION( "t4" )
   {
     // start and end of domain
@@ -724,7 +725,8 @@ TEST_CASE( "multi-dimensional interpolation" )
     }
     auto const stop = std::chrono::high_resolution_clock::now();
 
-    double const duration_total = ( stop - start ).count();
+    double const duration_total =
+    std::chrono::duration< double, std::chrono::nanoseconds::period >( stop - start ).count() / lattice_cells;
 
     /* performance checking loop, copy of above with other stuff pulled out  */
     auto const start_1 = std::chrono::high_resolution_clock::now();
@@ -761,7 +763,8 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     auto const stop_1 = std::chrono::high_resolution_clock::now();
 
-    double const duration_total_1 = ( stop_1 - start_1 ).count();
+    double const duration_total_1 = 
+    std::chrono::duration< double, std::chrono::nanoseconds::period >( stop_1 - start_1 ).count() / lattice_cells;
 
     std::cout << "legacy: " << duration_total_1 << " new: " << duration_total << std::endl;
   }
