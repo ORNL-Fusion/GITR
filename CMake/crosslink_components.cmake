@@ -159,15 +159,15 @@ target_link_libraries( coulomb_tests
                        Catch2::Catch2WithMain
                        )
 
-target_link_libraries( file_io_tests
-                       libconfig_cxx
-                       libconfig_c
-                       flags
-                       utils
-                       boris
-                       geometry_check
-                       Catch2::Catch2WithMain
-                       )
+#target_link_libraries( file_io_tests
+#                       libconfig_cxx
+#                       libconfig_c
+#                       flags
+#                       utils
+#                       boris
+#                       geometry_check
+#                       Catch2::Catch2WithMain
+#                       )
 
 target_link_libraries( interpolator_tests Catch2::Catch2WithMain )
 
