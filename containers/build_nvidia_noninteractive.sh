@@ -1,3 +1,3 @@
 docker build \
---file GITR/containers/Dockerfile_nvidia_noninteractive \
+--file containers/Dockerfile_nvidia_noninteractive \
 --tag gitr_noninteractive .
