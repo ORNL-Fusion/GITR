@@ -188,7 +188,7 @@ T interpolated_field< T >::interpolate_hypercube( T *hypercube,
   /* the "upper" and "lower" fractions for each dimension */
   double normalized_fractions[ this->n_dims_arbitrary_max * 2 ];
 
-  /* linear iteration over the dimensions in parallel with coordinates. This imples that the
+  /* linear iteration over the dimensions in parallel with coordinates. This implies that the
      coordinates here are in zyx order. */
   for( int i = 0; i < this->n_dims; i++ )
   {

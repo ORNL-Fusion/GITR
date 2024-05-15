@@ -415,36 +415,33 @@ TEST_CASE( "multi-dimensional interpolation" )
     // start and end of domain
     double domain_start = -3.5;
     double domain_end = 3.5;
+
+    // param
     int const n_grid_points = 501;
 
-    // defined by leftmost boundary value
-    int n_cells = n_grid_points - 1;
-
-    // the above are uniform over n_dims dimensions - start with 3
+    // param
     int const n_dims = 3;
 
     std::array< double, n_dims > min_range_init = { domain_start, domain_start, domain_start };
 
     std::array< double, n_dims > max_range_init = { domain_end, domain_end, domain_end};
 
-    // how many test coordinates per cell should be interpolated?
-    // make this an array of cell offsets or something
-    // we will need n_dims scalars picked from the interval:
-    // [ 0, 1 ] * spacing
-    // use random number generator between 0,1 and then scale by the spacing above
-    // needs to be an array instead
-    int n_rand_cell_coordinates;
+    int n_cells = n_grid_points - 1;
 
-    double spacing = ( domain_end - domain_start ) / ( n_grid_points - 1 );
+    double spacing = ( domain_end - domain_start ) / n_cells;
 
     std::array< double, n_dims > offset = { 0.5 * spacing, 
                                             0.5 * spacing,
                                             0.5 * spacing };
 
+    /* Captain! */
+
+    // begin function
+
     // allocate grids for Tim's interpolator - the data is strided along dims
     std::unique_ptr< double[] > grid_ptr( new double[ n_dims * n_grid_points ] );
 
-    // populate the grids
+    // populate square grids
     for( int i = 0; i < n_dims; i++ )
     {
       for( int j = 0; j < n_grid_points; j++ )
@@ -455,6 +452,8 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     double *grid_raw = grid_ptr.get();
 
+    // end function
+
     // calculate data lattice size
     int lattice_size = 1;
 
@@ -463,18 +462,17 @@ TEST_CASE( "multi-dimensional interpolation" )
       lattice_size *= n_grid_points;
     }
 
-    int lattice_cells = 1;
-    for( int i = 0; i < n_dims; i++ )
-    {
-      lattice_cells *= ( n_grid_points - 1 );
-    }
-
+    // Captain! convert this to a unique_ptr array
     std::vector< int > dims( n_dims, n_grid_points );
 
     // allocate lattice
     std::unique_ptr< double[] > lattice_ptr( new double[ lattice_size ] );
 
     double *lattice_data = lattice_ptr.get();
+
+    /* Captain! create function: */
+
+    // function begin
 
     // put lattice_data into a tensor object
     interpolated_field< double > 
@@ -538,10 +536,22 @@ TEST_CASE( "multi-dimensional interpolation" )
 
       REQUIRE( analytical_value == stored_analytical_value );
     }
+    /* function end */
 
     int legacy_correct = 0;
     int new_correct = 0;
+
     /* interpolation loop to check accuracy - seems accurate so far */
+
+    int lattice_cells = 1;
+
+    for( int i = 0; i < n_dims; i++ )
+    {
+      lattice_cells *= ( n_grid_points - 1 );
+    }
+
+    /* iterating over lattice_cells guarantees that you don't index outside the bounds of the
+       regular grid */
     for( int i = 0; i < lattice_cells; i++ )
     {
       //if( i % 1000  == 0 ) std::cout << i << "/" << lattice_cells << std::endl;
@@ -549,12 +559,20 @@ TEST_CASE( "multi-dimensional interpolation" )
 
       auto lattice_gridpoint = cell_indexer.get_indices();
 
+      /* function begin */
       std::array< double, n_dims > real_space;
-      std::array< double, n_dims > real_space_offset;
-
       for( int j = 0; j < lattice_gridpoint.size(); j++ )
       real_space[ j ] = lattice_gridpoint[ j ]*spacing+domain_start;
 
+      double stored_analytical_value = lattice.get( lattice_gridpoint.data() );
+      double calculated_analytical_value = analytical_function( real_space );
+
+      /* double check equality - this is also done above */
+      REQUIRE( calculated_analytical_value == stored_analytical_value );
+      /* function end */
+
+      /* function begin */
+      std::array< double, n_dims > real_space_offset;
       //std::cout << "real-space" << std::endl;
       for( int j = 0; j < lattice_gridpoint.size(); j++ )
       {
@@ -563,21 +581,29 @@ TEST_CASE( "multi-dimensional interpolation" )
       }
       //std::cout << std::endl;
 
+      /* function end */
+
       /*
       std::cout << "real-space offset:" << std::endl;
       for( int j = 0; j < lattice_gridpoint.size(); j++ )
       std::cout << " " << real_space[ j ]; std::cout << std::endl;
       */
 
-      double stored_analytical_value = lattice.get( lattice_gridpoint.data() );
-      double calculated_analytical_value = analytical_function( real_space );
 
-      REQUIRE( calculated_analytical_value == stored_analytical_value );
-
+      // function begin
       double interpolated_value = lattice( real_space_offset.data() );
       double analytical_offset_value = analytical_function( real_space_offset );
 
-      /* Captain! Interpolate using Tim's interpolator next */
+      double difference = 
+      std::abs( ( interpolated_value - analytical_offset_value ) / analytical_offset_value );
+
+      std::cout << "difference: " << std::setprecision( 10 )
+                << difference
+                << std::endl;
+      // function end
+
+      // function begin
+      /* interpolate using Tim's interpolator next */
       double legacy_interpolation =
       interp3d(  
       real_space_offset[ 2 ],
@@ -591,19 +617,16 @@ TEST_CASE( "multi-dimensional interpolation" )
       grid_raw + ( n_grid_points * 2 ),
       lattice_data );
 
-      double difference = 
-      std::abs( ( interpolated_value - analytical_offset_value ) / analytical_offset_value );
 
       double legacy_difference =
       std::abs( ( legacy_interpolation - analytical_offset_value ) / analytical_offset_value );
 
-      std::cout << "difference: " << std::setprecision( 10 )
-                << difference
-                << std::endl;
-
       std::cout << "legacy difference: " << std::setprecision( 10 )
                 << legacy_difference
                 << std::endl;
+      // function end
+
+      // accumulate all the legacy differences as well as rms measures for each
 
       if( legacy_difference >= difference ) ++new_correct;
 
