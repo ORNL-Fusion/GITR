@@ -1,22 +1,283 @@
-#ifndef _INTERPOLATE_
-#define _INTERPOLATE_
-
+/* Captain! This will be turned into 2d, 3d, and 4d versions, maybe 5d later one day */
 #ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER __host__ __device__
 #define CUDA_CALLABLE_MEMBER_DEVICE __device__
-#define CUDA_CALLABLE_MEMBER_HOST __host__
 #else
+#define CUDA_CALLABLE_MEMBER
 #define CUDA_CALLABLE_MEMBER_DEVICE
-#define CUDA_CALLABLE_MEMBER_HOST
 #endif
+#include <cassert>
+#include <cmath>
+#include <iostream>
+#include <iomanip>
 
-#ifdef __GNUC__ 
-#include <stdlib.h>
-#endif
+template< typename T >
+class tensor
+{
+  public:
 
-struct interpolate { 
-  float value;
-  
-  interpolate(float v) : value{v} {};
+  //tensor( T const *data, std::vector< int > const dims );
+  CUDA_CALLABLE_MEMBER
+  tensor( T *data, int const *dims, int n_dims );
+
+  CUDA_CALLABLE_MEMBER
+  T get( int *coordinates );
+
+  CUDA_CALLABLE_MEMBER
+  void set( T val, int *coordinates );
+
+  CUDA_CALLABLE_MEMBER
+  int const *get_dims();
+
+  /* magic number - bad. Make this a template parameter in the future */
+  static int constexpr n_dims_arbitrary_max = 8;
+
+  const int n_dims;
+
+  T *data;
+
+  int dims[ n_dims_arbitrary_max ];
+
+  int offset_factors[ n_dims_arbitrary_max ];
 };
 
-#endif
+template< typename T >
+int const *
+tensor< T >::get_dims() { return dims; }
+
+/* leading dimension comes first: zyx order */
+template< typename T >
+tensor< T >::tensor( T *data, int const *dims_init, int n_dims )
+  :
+  data( data ),
+  n_dims( n_dims )
+{ 
+    assert( n_dims <= n_dims_arbitrary_max );
+
+    for( int i = 0; i < n_dims; i++ ) dims[ i ] = dims_init[ i ];
+
+    offset_factors[ n_dims - 1 ] = 1;
+
+    for( int i = n_dims - 1; i > 0; i-- )
+    {
+      offset_factors[ i - 1 ] = offset_factors[ i ] * dims[ i ];
+    }
+}
+
+/* leading dimension comes first, zyx access */
+/* untested */
+template< typename T >
+T tensor< T >::get( int *coordinates )
+{
+  int offset = 0;
+
+  for( int i = 0; i < n_dims; i++ )
+  {
+    offset += coordinates[ i ] * offset_factors[ i ];
+  }
+
+  return data[ offset ];
+}
+
+/* untested */
+/* leading dimension comes first, zyx access */
+template< typename T >
+void tensor< T >::set( T val, int *coordinates )
+{
+  int offset = 0;
+
+  for( int i = 0; i < n_dims; i++ )
+  {
+    offset += coordinates[ i ] * offset_factors[ i ];
+  }
+
+  data[ offset ] = val;
+}
+
+template< typename T >
+class dummy
+{
+  public:
+
+  // step 1, the constructor needs to take the same arguments as the interpolated field
+  CUDA_CALLABLE_MEMBER
+  dummy( T const *data_, int n_dims_init )
+    :
+    data( data_ )
+  {}
+
+  // switch out the data pointer
+  CUDA_CALLABLE_MEMBER
+  void eat( double* data_  )
+  { data = data_; }
+
+  double const *data;
+};
+
+/* convention: large stride ---> small stride = z y x */
+/* dims: zyx order, n data points in each dimension including endpoints */
+/* offset_factors: zyx strides, rename to stride instead of offset_factors */
+/* data: row-major data, strided according to offset_factors */
+template< typename T >
+class interpolated_field : public tensor< T >
+{
+  public:
+
+    CUDA_CALLABLE_MEMBER
+    interpolated_field( T *data,
+                        int const *dims,//zyx order, data_size  = prod( dims )
+                        T const *max_range_init, // zyx order, size N
+                        T const *min_range_init, // zyx order, size N
+                        int n_dims_init ) // template parameter int N
+      :
+      tensor< T >( data, dims, n_dims_init )
+    { 
+      data_size = 1;
+
+      for( int i = 0; i < this->n_dims; i++ ) data_size *= dims[ i ];
+      for( int i = 0; i < this->n_dims; i++ ) max_range[ i ] = max_range_init[ i ];
+      for( int i = 0; i < this->n_dims; i++ ) min_range[ i ] = min_range_init[ i ];
+
+      for( int i = 0; i < this->n_dims; i++ ) 
+        spacing[ i ] = ( max_range[ i ] - min_range[ i ] ) / ( T(dims[ i ]) - 1 );
+    }
+
+
+    /* coordinates should be provided as zyx, large stride ---> small stride */
+    CUDA_CALLABLE_MEMBER
+    T operator()( T const *coordinates );
+
+    /* operator above calls the next 2 functions: coordinates is N, hypercube is 2^N */
+    CUDA_CALLABLE_MEMBER
+    void fetch_hypercube( T const *coordinates, T *hypercube );
+
+    CUDA_CALLABLE_MEMBER
+    T interpolate_hypercube( T *hypercube,
+                             T const *coordinates );
+
+    T max_range[ tensor< T >::n_dims_arbitrary_max ];
+
+    T min_range[ tensor< T >::n_dims_arbitrary_max ];
+
+    T spacing[ tensor< T >::n_dims_arbitrary_max ];
+
+    int data_size;
+};
+
+/*
+
+hypercube: n-dimensional hypercube in a flattened array of 2^n vertices
+
+coordinates: domain coordinates for which it is desired to interpolate a function value
+
+dims:
+
+  for all "i" in dims, dims[ i ] specifies the number of equally spaced samples
+  spanning domain dimension "i"
+
+*/
+
+template< typename T >
+T interpolated_field< T >::interpolate_hypercube( T *hypercube,
+                                                  T const *coordinates )
+{
+  /* the "upper" and "lower" fractions for each dimension */
+  double normalized_fractions[ this->n_dims_arbitrary_max * 2 ];
+
+  /* linear iteration over the dimensions in parallel with coordinates. This implies that the
+     coordinates here are in zyx order. */
+  /* Captain! unroll this loop, then deparameterize the arrays accordingly */
+  for( int i = 0; i < this->n_dims; i++ )
+  {
+    /* high fraction, matches with a 1 bit */
+    normalized_fractions[ i * 2 + 1 ] =
+    ( coordinates[ i ] - min_range[ i ] 
+    - ( std::floor( ( coordinates[ i ] - min_range[ i ]) / spacing[ i ] ) * spacing[ i ] ) )
+    ;
+
+    /* low fraction, matches with a 0 bit */
+    //normalized_fractions[ i * 2 ] = 1 - normalized_fractions[ i * 2 + 1 ];
+
+    normalized_fractions[ i * 2 ] =
+    ( ( ( std::floor( ( coordinates[ i ] - min_range[ i ] ) / spacing[ i ] ) + 1 ) * spacing[ i ] )
+    - ( coordinates[ i ] - min_range[ i ] ) );// / spacing[ i ];
+  }
+
+  /* Captain! unroll this loop, then deparameterize the arrays accordingly */
+  for( int i = 0; i < this->n_dims; i++ )
+  {
+    int reach = 1 << ( this->n_dims - i - 1 );
+
+    /* Captain! unroll this loop, then deparameterize the arrays accordingly */
+    for( int j = 0; j < reach; j++ )
+    {
+      int index = this->n_dims - i - 1;
+
+      hypercube[ j ] = 
+      ( normalized_fractions[ index * 2 ] * hypercube[ j ] + 
+      normalized_fractions[ index * 2 + 1 ] * hypercube[ j + reach ] )
+      / spacing[ index ];
+    }
+  }
+
+  return hypercube[ 0 ];
+}
+
+template< typename T >
+void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercube )
+{
+  int corner_vertex_index = 0;
+
+  int *of = this->offset_factors;
+
+  /* Captain! unroll this loop, then deparameterize the arrays accordingly */
+  for( int i = 0; i < this->n_dims; i++ )
+  {
+    int single_dim_coordinate = 
+    std::floor( ( coordinates[ i ] - min_range[ i ] ) / spacing[ i ] );
+
+    corner_vertex_index += 
+    (  single_dim_coordinate * this->offset_factors[ i ] );
+  }
+
+  /*
+
+  should unroll to:
+
+  single_dim_coordinate_0 = ...
+  single_dim_coordinate_1 = ...
+  single_dim_coordinate_2 = ...
+
+  */
+
+  /* Captain! unroll this loop, then deparameterize the arrays accordingly */
+  for( int i = 0; i < ( 1 << this->n_dims ); i++ )
+  {
+    int flat_index = corner_vertex_index;
+
+    /* Captain! unroll this loop, then deparameterize the arrays accordingly */
+    for( int j = 0; j < this->n_dims; j++ )
+    {
+
+      flat_index += ( ( ( i >> j ) & 0x1 ) * this->offset_factors[ j ] );
+    }
+
+    if( flat_index >= data_size ) assert( flat_index < data_size );
+
+    hypercube[ i ] = this->data[ flat_index ];
+  }
+}
+
+template< typename T >
+T interpolated_field< T >::operator()( T const *coordinates )
+{
+  if( data_size == 1 ) return this->data[ 0 ];
+
+  T hypercube[ 1 << this->n_dims_arbitrary_max ];
+
+  fetch_hypercube( coordinates, hypercube );
+
+  T interpolated_value = interpolate_hypercube( hypercube, coordinates );
+
+  return interpolated_value;
+}

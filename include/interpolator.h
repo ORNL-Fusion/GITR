@@ -289,8 +289,6 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
     (  single_dim_coordinate * this->offset_factors[ i ] );
   }
 
-  /* find the indices of the other vertices in the hypercube by offsetting from the
-     first vertex */
   for( int i = 0; i < ( 1 << this->n_dims ); i++ )
   {
     int flat_index = corner_vertex_index;
@@ -323,7 +321,6 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
   }
 }
 
-/* These do not make sense to be passed by value */
 template< typename T >
 T interpolated_field< T >::operator()( T const *coordinates )
 {

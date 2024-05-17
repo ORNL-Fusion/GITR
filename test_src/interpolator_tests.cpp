@@ -1,5 +1,6 @@
 #include "catch2/catch_all.hpp"
 #include "interpolator.h"
+//#include "interpolate_3d.h"
 #include "interp2d.hpp"
 #include "operation.hpp"
 #include <iomanip>
@@ -412,16 +413,29 @@ TEST_CASE( "multi-dimensional interpolation" )
   /* test against multidimensional analytical function */
   SECTION( "t3" )
   {
-    // start and end of domain
+    // gold standard for comparison
+    auto analytical_function =
+    []( std::array< double, n_dims > &real_space ) -> double
+    {
+      double d = 0;
+
+      for( int j = 0; j < real_space.size(); j++ ) d += real_space[ j ] * real_space[ j ];
+
+      d = 10 * std::cos( std::sqrt( d ) );
+
+      return d;
+    };
+
+    // params
     double domain_start = -3.5;
     double domain_end = 3.5;
-
-    // param
     int const n_grid_points = 501;
-
-    // param
     int const n_dims = 3;
 
+    // Captain! convert this to a unique_ptr array
+    std::vector< int > dims( n_dims, n_grid_points );
+
+    // calculated params - put in an object
     std::array< double, n_dims > min_range_init = { domain_start, domain_start, domain_start };
 
     std::array< double, n_dims > max_range_init = { domain_end, domain_end, domain_end};
@@ -434,9 +448,16 @@ TEST_CASE( "multi-dimensional interpolation" )
                                             0.5 * spacing,
                                             0.5 * spacing };
 
+    int lattice_size = 1;
+
+    for( int i = 0; i < n_dims; i++ )
+    {
+      lattice_size *= n_grid_points;
+    }
+
     /* Captain! */
 
-    // begin function
+    // begin function: generate_domain_grid
 
     // allocate grids for Tim's interpolator - the data is strided along dims
     std::unique_ptr< double[] > grid_ptr( new double[ n_dims * n_grid_points ] );
@@ -452,29 +473,19 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     double *grid_raw = grid_ptr.get();
 
-    // end function
+    // end function: generate_domain_grid
 
-    // calculate data lattice size
-    int lattice_size = 1;
+    // function begin: generate_lattice
+    int lattice_cells = 1;
 
     for( int i = 0; i < n_dims; i++ )
     {
-      lattice_size *= n_grid_points;
+      lattice_cells *= ( n_grid_points - 1 );
     }
 
-    // Captain! convert this to a unique_ptr array
-    std::vector< int > dims( n_dims, n_grid_points );
-
-    // allocate lattice
     std::unique_ptr< double[] > lattice_ptr( new double[ lattice_size ] );
 
     double *lattice_data = lattice_ptr.get();
-
-    /* Captain! create function: */
-
-    // function begin
-
-    // put lattice_data into a tensor object
     interpolated_field< double > 
     lattice( lattice_data, 
              dims.data(), 
@@ -482,25 +493,8 @@ TEST_CASE( "multi-dimensional interpolation" )
              min_range_init.data(), 
              n_dims );
 
-    // iterate lattice grid space with a round robin object
-    round_robin_nd< n_dims, n_grid_points > lattice_indexer;
-
-    round_robin_nd< n_dims, n_grid_points - 1 > cell_indexer;
-
-    // create analytical function for testing
-    auto analytical_function =
-    []( std::array< double, n_dims > &real_space ) -> double
-    {
-      double d = 0;
-
-      for( int j = 0; j < real_space.size(); j++ ) d += real_space[ j ] * real_space[ j ];
-
-      d = 10 * std::cos( std::sqrt( d ) );
-
-      return d;
-    };
-
     // set data loop
+    round_robin_nd< n_dims, n_grid_points > lattice_indexer;
     for( int i = 0; i < lattice_size; i++ )
     {
       /* grid-space */
@@ -536,20 +530,17 @@ TEST_CASE( "multi-dimensional interpolation" )
 
       REQUIRE( analytical_value == stored_analytical_value );
     }
-    /* function end */
+
+    /* function end: generate_lattice */
+
+    /* checking begins */
+    // put lattice_data into a tensor object
 
     int legacy_correct = 0;
+
     int new_correct = 0;
 
-    /* interpolation loop to check accuracy - seems accurate so far */
-
-    int lattice_cells = 1;
-
-    for( int i = 0; i < n_dims; i++ )
-    {
-      lattice_cells *= ( n_grid_points - 1 );
-    }
-
+    round_robin_nd< n_dims, n_grid_points - 1 > cell_indexer;
     /* iterating over lattice_cells guarantees that you don't index outside the bounds of the
        regular grid */
     for( int i = 0; i < lattice_cells; i++ )
@@ -564,11 +555,9 @@ TEST_CASE( "multi-dimensional interpolation" )
       for( int j = 0; j < lattice_gridpoint.size(); j++ )
       real_space[ j ] = lattice_gridpoint[ j ]*spacing+domain_start;
 
-      double stored_analytical_value = lattice.get( lattice_gridpoint.data() );
-      double calculated_analytical_value = analytical_function( real_space );
+      //double stored_analytical_value = lattice.get( lattice_gridpoint.data() );
+      //double calculated_analytical_value = analytical_function( real_space );
 
-      /* double check equality - this is also done above */
-      REQUIRE( calculated_analytical_value == stored_analytical_value );
       /* function end */
 
       /* function begin */
