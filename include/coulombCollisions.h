@@ -107,8 +107,10 @@ gitr_precision intorp(
 
   double diff = std::abs( ( value - fxz ) / fxz );
   //if( diff > 1e15 )
+  /*
   std::cout << std::setprecision(10) 
             << "value: " << value << " fxz: " << fxz << " diff: " << diff << std::endl;
+            */
 
   // sweep the entire search space, determine where the 
 

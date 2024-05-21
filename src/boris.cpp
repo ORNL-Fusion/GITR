@@ -146,6 +146,7 @@ gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, 
 
     // original implementation changed to use new interpolator's numbers:
 
+    /*
     std::cout << "original implementation:" << std::endl;
 
     std::cout << std::setprecision( 10 ) 
@@ -162,8 +163,10 @@ gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, 
               << "( " << fx_z2 << ", " << ( z - gridz[ j ] ) / dz << " )"
               << std::endl
               << std::endl;
+              */
 
     /* need gridx[ i, i+1, 0, dims[ 1 ] - 1 ], gridz[ "same" ], dim1, z, d_dim1, dz, nx, nz */
+    /*
     std::cout << "gridx[ i ] " << gridx[ i ] << std::endl;
     std::cout << "gridx[ i+1 ] " << gridx[ i + 1 ] << std::endl;
     std::cout << "gridx[ 0 ] " << gridx[ 0 ] << std::endl;
@@ -185,6 +188,7 @@ gitr_precision move_boris::interp2dCompare( gitr_precision x, gitr_precision y, 
               << " right: " << right 
               << " normalized diff: " << diff 
               << std::endl;
+              */
 
     /* new code end */
 
