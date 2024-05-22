@@ -554,7 +554,16 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     round_robin_nd< n_dims, n_grid_points - 1 > cell_indexer;
 
+    // create output stack
+    // columns: cell_index x y z f_analytical f_old f_new
+    // cell_index is the "time column"
+    // only stack when one variable is fixed, for easier graphing
+    std::filesystem::path output_file_name = "interpolator_comparison_3d.csv";
+    csv_row_stacker< 6 > data_stack_3d( output_file_name );
+    // create data verification variables, require pass
+
     /* interpolate a point in each lattice cell of the domain */
+    double total_difference = 0;
     for( int i = 0; i < lattice_cells; i++ )
     {
 
@@ -597,6 +606,8 @@ TEST_CASE( "multi-dimensional interpolation" )
       double difference = 
       std::abs( ( interpolated_value - analytical_offset_value ) / analytical_offset_value );
 
+      total_difference += difference;
+
       double legacy_difference =
       std::abs( ( legacy_interpolation - analytical_offset_value ) / analytical_offset_value );
 
@@ -605,10 +616,25 @@ TEST_CASE( "multi-dimensional interpolation" )
       else ++legacy_correct;
 
       /* output results */
-      /* only csv stack if z == 0 for 3d interpolation case */
+      /* take a projection */
+      if( real_space[ 1 ] == 0 )
+      {
+        // columns: cell_index_i x y z f_analytical f_old f_new
+        std::array< double, 6 > 
+        d{ real_space_offset[ 2 ], real_space_offset[ 1 ], real_space_offset[ 0 ],
+           analytical_offset_value, legacy_interpolation, interpolated_value };
+
+        std::span< double, 6 > data_span( d );
+
+        data_stack_3d.stack( i, data_span );
+      }
+
+      /* print test code - check them */
       if( i % 1000000  == 0 )
       {
-        std::cout << i << "/" << lattice_cells << " = " << i / lattice_cells * 100 << std::endl;
+        // integer division will not work...
+        std::cout << i << "/" << lattice_cells << " = " 
+                  << (double)i / (double)lattice_cells * 100 << std::endl;
 
         std::cout << "new method difference: " << std::setprecision( 10 )
           << difference
@@ -625,6 +651,12 @@ TEST_CASE( "multi-dimensional interpolation" )
           << std::endl;
       }
     }
+
+    double mean_difference = total_difference / lattice_cells;
+
+    std::cout << "normalized mean difference: " << mean_difference << std::endl;
+
+    REQUIRE( mean_difference < 0.0003 );
   }
 
   /* performance compare legacy 3d interp and new one */

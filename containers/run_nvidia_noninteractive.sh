@@ -4,4 +4,4 @@ docker run --rm \
 --runtime=nvidia \
 --gpus all \
 -v $(pwd):/host \
-gitr_noninteractive
+stonecoldhughes/gitr:noninteractive
