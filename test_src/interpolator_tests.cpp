@@ -414,9 +414,11 @@ TEST_CASE( "multi-dimensional interpolation" )
   /* test against multidimensional analytical function */
   SECTION( "t3" )
   {
-    // params
+    // params - generate
     double domain_start = -3.5;
     double domain_end = 3.5;
+
+    // the next two are the only base level varying params
     int const n_grid_points = 501;
     int const n_dims = 3;
 
@@ -439,7 +441,7 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     //// old code below
 
-    // Captain! convert this to a unique_ptr array
+    // convert this to a unique_ptr array
     std::vector< int > dims( n_dims, n_grid_points );
 
     // calculated params - put in an object
@@ -461,8 +463,6 @@ TEST_CASE( "multi-dimensional interpolation" )
     {
       lattice_size *= n_grid_points;
     }
-
-    /* Captain! */
 
     // begin function: generate_domain_grid - this is only for Tim's implementations
 
@@ -510,6 +510,12 @@ TEST_CASE( "multi-dimensional interpolation" )
     {
       /* grid-space */
       lattice_indexer.back_spin();
+      /* Captain! add a require here, to convert the state dependent backspin
+         to a calculation instead, make an operator specifically to pull this off */
+         /* then this can be an interpolator data broker type thing */
+         /* div for all indices and then a mod for the final one */
+      /* you will need an interpolator-broker function */
+      /* also needs to define the operator() for the thrust broker to run */
       auto lattice_gridpoint = lattice_indexer.get_indices();
 
       //if( i % 1000  == 0 ) std::cout << i << "/" << lattice_size << std::endl;
@@ -561,6 +567,8 @@ TEST_CASE( "multi-dimensional interpolation" )
     std::filesystem::path output_file_name = "interpolator_comparison_3d.csv";
     csv_row_stacker< 6 > data_stack_3d( output_file_name );
     // create data verification variables, require pass
+
+    // parameterize, make it work in CUDA mode too
 
     /* interpolate a point in each lattice cell of the domain */
     double total_difference = 0;
