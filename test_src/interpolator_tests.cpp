@@ -434,20 +434,29 @@ TEST_CASE( "multi-dimensional interpolation" )
       return d;
     };
 
-    // generate_ifield
-    // generate original method
-    // generate_test_results
-    // ostack results for comparison
+    // outer loop sweeps over params
+    // construct objects based on params
+    // inner loop sweeps over all cells
+    // interpolators are run
+    // all data needs to be 
+
 
     //// old code below
 
-    // convert this to a unique_ptr array
-    std::vector< int > dims( n_dims, n_grid_points );
+    //std::vector< int > dims( n_dims, n_grid_points );
+
+    std::unique_ptr< int[] > dims( new int[ n_dims ] );
+
+    for( int i = 0; i < n_dims; i++ ) dims[ i ] = n_grid_points;
 
     // calculated params - put in an object
-    std::array< double, n_dims > min_range_init = { domain_start, domain_start, domain_start };
+    //std::array< double, n_dims > min_range_init = { domain_start, domain_start, domain_start };
 
-    std::array< double, n_dims > max_range_init = { domain_end, domain_end, domain_end};
+    std::unique_ptr< double[] > min_range_init( new double[ n_dims ] );
+
+    for( int i = 0; i < n_dims; i++ ) min_range_init[ i ] = domain_start;
+
+    std::array< double, n_dims > max_range_init = { domain_end, domain_end, domain_end };
 
     int n_cells = n_grid_points - 1;
 
@@ -498,9 +507,9 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     interpolated_field< double > 
     lattice( lattice_data, 
-             dims.data(), 
+             dims.get(), 
              max_range_init.data(), 
-             min_range_init.data(), 
+             min_range_init.get(), 
              n_dims );
 
     // populate lattice with data
