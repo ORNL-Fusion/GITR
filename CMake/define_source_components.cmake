@@ -31,6 +31,7 @@ set( non_gpu_targets
 
 # conditionally compile as GPU targets
 set( gpu_targets
+     particle_diagnostics
      surface_model
      interp2d
      interpRateCoeff

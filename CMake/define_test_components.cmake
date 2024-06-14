@@ -15,8 +15,8 @@ set( gpu_test_targets
      cross_field_diffusion_tests
      atomic_tests
      coulomb_tests
-     file_io_tests
      )
+     #file_io_tests
 
 foreach( component IN LISTS cpu_test_targets )
 

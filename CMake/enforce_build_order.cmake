@@ -12,6 +12,7 @@ if( dependencies )
 
 endif()
 
+add_dependencies( boris particle_diagnostics )
 # ensure that all source targets are built before GITR
 add_dependencies( GITR ${non_gpu_targets} ${gpu_targets} )
 
