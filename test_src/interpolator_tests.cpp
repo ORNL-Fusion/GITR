@@ -456,7 +456,9 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     for( int i = 0; i < n_dims; i++ ) min_range_init[ i ] = domain_start;
 
-    std::array< double, n_dims > max_range_init = { domain_end, domain_end, domain_end };
+    std::unique_ptr< double[] > max_range_init( new double[ n_dims ] );
+
+    for( int i = 0; i < n_dims; i++ ) max_range_init[ i ] = domain_end;
 
     int n_cells = n_grid_points - 1;
 
@@ -508,7 +510,7 @@ TEST_CASE( "multi-dimensional interpolation" )
     interpolated_field< double > 
     lattice( lattice_data, 
              dims.get(), 
-             max_range_init.data(), 
+             max_range_init.get(), 
              min_range_init.get(), 
              n_dims );
 
@@ -526,6 +528,7 @@ TEST_CASE( "multi-dimensional interpolation" )
       /* you will need an interpolator-broker function */
       /* also needs to define the operator() for the thrust broker to run */
       auto lattice_gridpoint = lattice_indexer.get_indices();
+
 
       //if( i % 1000  == 0 ) std::cout << i << "/" << lattice_size << std::endl;
 
