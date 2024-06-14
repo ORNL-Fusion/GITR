@@ -33,7 +33,6 @@ void particle_diagnostics::operator()(std::size_t indx)
 {
   if (particlesPointer->hitWall[indx] == 1.0 && particlesPointer->weight[indx]!=0)  
   {
-    //printf("DEBUG WEIGHT: %f \n", particlesPointer->weight[indx]);
             
     int wallHit = particlesPointer->surfaceHit[indx];
     int surfaceHit = boundaryVector[wallHit].surfaceNumber;
@@ -47,7 +46,6 @@ void particle_diagnostics::operator()(std::size_t indx)
       ind_time = std::floor((p_time - bin_edge_0_time)/bin_edge_dt);
     }
 
-    if (ind_time < 0) ind_time = 0;
     if (ind_time >= n_bins_time) ind_time = n_bins_time - 1;
 
     int ind_2d_time = surfaceHit*n_bins_time + ind_time;
@@ -74,9 +72,6 @@ void particle_diagnostics::operator()(std::size_t indx)
     }
     //if (p_angle < 0.001) printf("P_ANGLE: %e || IND_ANGLE: %d \n", p_angle, ind_angle);
 
-    if (ind_angle < 0) ind_angle = 0;
-    if (ind_angle >= n_bins_angle) ind_angle = n_bins_angle - 1;
-            
     int ind_2d_angle = surfaceHit*n_bins_angle + ind_angle;
 
     if (ind_2d_angle >=0 && ind_2d_angle < nSurfaces*n_bins_angle)
