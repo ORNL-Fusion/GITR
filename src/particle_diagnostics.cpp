@@ -61,7 +61,7 @@ void particle_diagnostics::operator()(std::size_t indx)
     }
   
     gitr_precision p_angle = particlesPointer->angle[indx] - particlesPointer->transitAngle[indx];
-    if (p_angle < 0.001) printf("DEBUG P_ANGLE: pangle %e || angle %e tangle %e || charge %e \n", p_angle, particlesPointer->angle[indx], particlesPointer->transitAngle[indx], particlesPointer->charge[indx]);
+    //if (p_angle < 0.001) printf("DEBUG P_ANGLE: pangle %e || angle %e tangle %e || charge %e \n", p_angle, particlesPointer->angle[indx], particlesPointer->transitAngle[indx], particlesPointer->charge[indx]);
 
     particlesPointer->transitAngle[indx] = particlesPointer->angle[indx];
 
