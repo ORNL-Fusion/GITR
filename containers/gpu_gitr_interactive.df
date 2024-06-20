@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-from nvidia/cuda:11.8.0-devel-ubuntu20.04 as stage_1
+from nvidia/cuda:12.4.1-devel-ubuntu22.04 as stage_1
 
 run echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
@@ -30,18 +30,7 @@ run DEBIAN_FRONTEND=noninteractive apt install -y gpg wget
 
 from stage_4 as stage_5
 
-# do all the package adding keys etc
-run wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
-
-run echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ focal main' | tee /etc/apt/sources.list.d/kitware.list >/dev/null
-
 run apt update
-
-run rm /usr/share/keyrings/kitware-archive-keyring.gpg
-
-run apt install kitware-archive-keyring
-
-run DEBIAN_FRONTEND=noninteractive apt install -y cmake
 
 from stage_5 as stage_6
 
@@ -60,6 +49,27 @@ ENV PATH="/venv/bin:$PATH"
 run python3 -m  pip install -r requirements.txt
 
 # as a final step volume map the host directory
+
+#run apt install -y gdb
+
+run wget https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.29.3.tar.gz
+run tar -xvzf cmake-3.29.3.tar.gz
+workdir /cmake-3.29.3
+run ./bootstrap
+run make -j 2
+run make install
+
+
 volume /host
 
-run apt install -y gdb
+workdir /host
+
+
+
+
+
+
+
+
+
+

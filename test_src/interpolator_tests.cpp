@@ -437,21 +437,13 @@ TEST_CASE( "multi-dimensional interpolation" )
     // outer loop sweeps over params
     // construct objects based on params
     // inner loop sweeps over all cells
-    // interpolators are run
-    // all data needs to be 
 
-
-    //// old code below
-
-    //std::vector< int > dims( n_dims, n_grid_points );
-
+    // dims is n_grid_points in each dimension
     std::unique_ptr< int[] > dims( new int[ n_dims ] );
 
     for( int i = 0; i < n_dims; i++ ) dims[ i ] = n_grid_points;
 
-    // calculated params - put in an object
-    //std::array< double, n_dims > min_range_init = { domain_start, domain_start, domain_start };
-
+    // max and min range for each dimension
     std::unique_ptr< double[] > min_range_init( new double[ n_dims ] );
 
     for( int i = 0; i < n_dims; i++ ) min_range_init[ i ] = domain_start;
@@ -460,20 +452,15 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     for( int i = 0; i < n_dims; i++ ) max_range_init[ i ] = domain_end;
 
+    // number of cells and spacing between cell boundaries
     int n_cells = n_grid_points - 1;
 
     double spacing = ( domain_end - domain_start ) / n_cells;
 
+    // offset + cell_corner_point = cell_midpoint
     std::array< double, n_dims > offset = { 0.5 * spacing, 
                                             0.5 * spacing,
                                             0.5 * spacing };
-
-    int lattice_size = 1;
-
-    for( int i = 0; i < n_dims; i++ )
-    {
-      lattice_size *= n_grid_points;
-    }
 
     // begin function: generate_domain_grid - this is only for Tim's implementations
 
@@ -495,6 +482,14 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     // function begin: generate_lattice --> generate_ifield()
 
+    // calculate needed size
+    int lattice_size = 1;
+
+    for( int i = 0; i < n_dims; i++ )
+    {
+      lattice_size *= n_grid_points;
+    }
+
     // allocate lattice
     int lattice_cells = 1;
 
@@ -514,6 +509,10 @@ TEST_CASE( "multi-dimensional interpolation" )
              min_range_init.get(), 
              n_dims );
 
+    // end function generate_lattice()
+
+    // begin function populate_lattice()
+
     // populate lattice with data
     round_robin_nd< n_dims, n_grid_points > lattice_indexer;
 
@@ -521,13 +520,13 @@ TEST_CASE( "multi-dimensional interpolation" )
     {
       /* grid-space */
       lattice_indexer.back_spin();
-      /* Captain! add a require here, to convert the state dependent backspin
-         to a calculation instead, make an operator specifically to pull this off */
-         /* then this can be an interpolator data broker type thing */
-         /* div for all indices and then a mod for the final one */
-      /* you will need an interpolator-broker function */
-      /* also needs to define the operator() for the thrust broker to run */
       auto lattice_gridpoint = lattice_indexer.get_indices();
+
+      /* Captain! calculate indices and check outcome */
+      // iterate over the coordinates
+      for( int j = 0; j < n_dims; j++ )
+      {
+      }
 
 
       //if( i % 1000  == 0 ) std::cout << i << "/" << lattice_size << std::endl;
@@ -560,7 +559,7 @@ TEST_CASE( "multi-dimensional interpolation" )
       REQUIRE( analytical_value == stored_analytical_value );
     }
 
-    /* function end: generate_lattice */
+    /* function end: populate_lattice */
 
     // function begin: generate_test_results()
 
@@ -572,21 +571,16 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     round_robin_nd< n_dims, n_grid_points - 1 > cell_indexer;
 
-    // create output stack
     // columns: cell_index x y z f_analytical f_old f_new
     // cell_index is the "time column"
     // only stack when one variable is fixed, for easier graphing
     std::filesystem::path output_file_name = "interpolator_comparison_3d.csv";
     csv_row_stacker< 6 > data_stack_3d( output_file_name );
-    // create data verification variables, require pass
-
-    // parameterize, make it work in CUDA mode too
 
     /* interpolate a point in each lattice cell of the domain */
     double total_difference = 0;
     for( int i = 0; i < lattice_cells; i++ )
     {
-
       /* convert linear cell index into n-dimensional cell coordinate */
       cell_indexer.back_spin();
 

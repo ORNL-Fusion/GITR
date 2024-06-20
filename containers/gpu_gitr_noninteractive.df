@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 from nvidia/cuda:12.4.1-devel-ubuntu22.04 as stage_1
 
 run echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
@@ -52,7 +54,7 @@ run python3 -m  pip install -r requirements.txt
 
 run wget https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.29.3.tar.gz
 run tar -xvzf cmake-3.29.3.tar.gz
-workdir cmake-3.29.3
+workdir /cmake-3.29.3
 run ./bootstrap
 run make -j 2
 run make install
@@ -60,10 +62,19 @@ run make install
 
 volume /host
 
+run apt install -y git
+workdir /
+run mkdir GITR
+copy . GITR
+run mkdir build
+run cmake -S GITR -B build -G Ninja
+
+run cmake --build build -- -j 0
+
 workdir /host
 
 
-
+entrypoint [ "/build/GITR" ]
 
 
 

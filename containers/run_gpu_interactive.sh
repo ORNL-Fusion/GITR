@@ -1,5 +1,5 @@
 docker run -i -t --rm \
---name cuda_12_container \
+--name gitr_interactive \
 --runtime=nvidia \
 --gpus all \
 -v $(pwd):/host \
@@ -7,4 +7,4 @@ docker run -i -t --rm \
 --volume="/etc/group:/etc/group:ro" \
 --volume="/etc/passwd:/etc/passwd:ro" \
 --volume="/etc/shadow:/etc/shadow:ro" \
-cuda_12_interactive
+stonecoldhughes/gitr:gpu_gitr_interactive

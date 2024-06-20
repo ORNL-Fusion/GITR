@@ -34,6 +34,7 @@ set( gpu_targets
      surface_model
      interp2d
      interpRateCoeff
+     interp_utils
      ionize
      boris
      hashGeom

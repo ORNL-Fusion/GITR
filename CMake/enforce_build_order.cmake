@@ -16,3 +16,5 @@ endif()
 add_dependencies( GITR ${non_gpu_targets} ${gpu_targets} )
 
 add_dependencies( boris_data_broker boris flags )
+
+add_dependencies( interpolator_tests interp_utils )
