@@ -75,7 +75,9 @@ This is a straightforward option for compiling GITR. This build is recommended f
 
 3. Open the GITR container from the GITR source directory with `bash containers/run_podman.sh`
 
-4. Run the following commands to build and make GITR from inside the container. These commands must be repeated each time you initiate the container.
+4. You should be inside a podman container now, so `cd host` to navigate to the GITR source directory
+
+5. Run the following commands to build and make GITR from inside the container. These commands must be repeated each time you initiate the container.
 > rm -rf build
 > 
 > mkdir build
