@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <chrono>
 #include <io.h>
+#include "interp_utils.h"
 
 /*
 
@@ -414,16 +415,8 @@ TEST_CASE( "multi-dimensional interpolation" )
   /* test against multidimensional analytical function */
   SECTION( "t3" )
   {
-    // params - generate
-    double domain_start = -3.5;
-    double domain_end = 3.5;
-
-    // the next two are the only base level varying params
-    int const n_grid_points = 501;
-    int const n_dims = 3;
-
     auto analytical_function =
-    []( std::array< double, n_dims > &real_space ) -> double
+    []( std::array< double, 3 > &real_space ) -> double
     {
       double d = 0;
 
@@ -434,168 +427,25 @@ TEST_CASE( "multi-dimensional interpolation" )
       return d;
     };
 
-    // outer loop sweeps over params
-    // construct objects based on params
-    // inner loop sweeps over all cells
+    // params - generate
+    double domain_start = -3.5;
+    double domain_end = 3.5;
 
-    // dims is n_grid_points in each dimension
-    std::unique_ptr< int[] > dims( new int[ n_dims ] );
+    // the next two are the only base level varying params
+    int const n_grid_points = 501;
+    int const n_dims = 3;
 
-    for( int i = 0; i < n_dims; i++ ) dims[ i ] = n_grid_points;
+    domain d( domain_start, domain_end, n_grid_points, n_dims );
 
-    // max and min range for each dimension
-    std::unique_ptr< double[] > min_range_init( new double[ n_dims ] );
+    legacy_domain legacy_d( d );
 
-    for( int i = 0; i < n_dims; i++ ) min_range_init[ i ] = domain_start;
+    populated_lattice lattice( d, analytical_function );
 
-    std::unique_ptr< double[] > max_range_init( new double[ n_dims ] );
-
-    for( int i = 0; i < n_dims; i++ ) max_range_init[ i ] = domain_end;
-
-    // number of cells and spacing between cell boundaries
-    int n_cells = n_grid_points - 1;
-
-    double spacing = ( domain_end - domain_start ) / n_cells;
-
-    // offset + cell_corner_point = cell_midpoint
-    std::array< double, n_dims > offset = { 0.5 * spacing, 
-                                            0.5 * spacing,
-                                            0.5 * spacing };
-
-    // begin function: generate_domain_grid - this is only for Tim's implementations
-
-    // allocate grids for Tim's interpolator - the data is strided along dims
-    std::unique_ptr< double[] > grid_ptr( new double[ n_dims * n_grid_points ] );
-
-    // populate square grids
-    for( int i = 0; i < n_dims; i++ )
-    {
-      for( int j = 0; j < n_grid_points; j++ )
-      {
-        grid_ptr[ i * n_grid_points + j ] = spacing * j + domain_start;
-      }
-    }
-
-    double *grid_raw = grid_ptr.get();
-
-    // end function: generate_domain_grid
-
-    // function begin: generate_lattice --> generate_ifield()
-
-    // calculate needed size
-    int lattice_size = 1;
-
-    for( int i = 0; i < n_dims; i++ )
-    {
-      lattice_size *= n_grid_points;
-    }
-
-    // allocate lattice
-    int lattice_cells = 1;
-
-    for( int i = 0; i < n_dims; i++ )
-    {
-      lattice_cells *= ( n_grid_points - 1 );
-    }
-
-    std::unique_ptr< double[] > lattice_ptr( new double[ lattice_size ] );
-
-    double *lattice_data = lattice_ptr.get();
-
-    interpolated_field< double > 
-    lattice( lattice_data, 
-             dims.get(), 
-             max_range_init.get(), 
-             min_range_init.get(), 
-             n_dims );
-
-    // end function generate_lattice()
-
-    // begin function populate_lattice()
-
-    // populate lattice with data
-    round_robin_nd< n_dims, n_grid_points > lattice_indexer;
-
-    for( int i = 0; i < lattice_size; i++ )
-    {
-      /* grid-space */
-      lattice_indexer.back_spin();
-      auto lattice_gridpoint = lattice_indexer.get_indices();
-
-      // iterate over the coordinates
-      // z y x order
-      int r = i;
-      std::array< int, 3 > indices{ 0, 0, 0 };
-      for( int j = 0; j < n_dims; j++ )
-      {
-        int m = 1;
-        for( int k = 0; k < n_dims - j - 1; k++ )
-        {
-          m *= n_grid_points;
-        }
-
-        int a = r / m;
-
-        //std::cout << "m: " << m << " a: " << a << " r: " << r;
-        r -= ( a * m );
-        //std::cout << " r after: " << r << std::endl;
-
-        indices[ j ] = a;
-      }
-
-      /*
-      std::cout << "lattice_gridpoint: " << lattice_gridpoint[ 0 ]
-        << " " << lattice_gridpoint[ 1 ]
-        << " " << lattice_gridpoint[ 2 ] << std::endl;
-      std::cout << "indices: " << indices[ 0 ]
-        << " " << indices[ 1 ]
-        << " " << indices[ 2 ] << std::endl;
-        */
-
-      /* Captain! replace the red robin counter object... */
-      REQUIRE( indices == lattice_gridpoint );
-
-      //if( i % 1000  == 0 ) std::cout << i << "/" << lattice_size << std::endl;
-
-      /*
-      std::cout << "grid-space" << std::endl;
-      for( int j = 0; j < lattice_gridpoint.size(); j++ )
-      std::cout << " " << lattice_gridpoint[ j ]; std::cout << std::endl;
-
-      std::cout << "real-space" << std::endl;
-      */
-      std::array< double, n_dims > real_space;
-
-      for( int j = 0; j < lattice_gridpoint.size(); j++ )
-      real_space[ j ] = lattice_gridpoint[ j ]*spacing+domain_start;
-
-      /*
-      for( int j = 0; j < lattice_gridpoint.size(); j++ )
-      std::cout << " " << real_space[ j ]; std::cout << std::endl;
-      */
-
-      /* calculate function value at real-space coordinate */
-      double analytical_value = analytical_function( real_space );
-
-      /* store at lattice coordinate "i" */
-      lattice.set( analytical_value, lattice_gridpoint.data() );
-
-      double stored_analytical_value = lattice.get( lattice_gridpoint.data() );
-
-      REQUIRE( analytical_value == stored_analytical_value );
-    }
-
-    /* function end: populate_lattice */
-
-    // function begin: generate_test_results()
-
-    /* checking begins */
+    /* Captain! */
 
     int legacy_correct = 0;
 
     int new_correct = 0;
-
-    round_robin_nd< n_dims, n_grid_points - 1 > cell_indexer;
 
     // columns: cell_index x y z f_analytical f_old f_new
     // cell_index is the "time column"
@@ -605,42 +455,28 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     /* interpolate a point in each lattice cell of the domain */
     double total_difference = 0;
-    for( int i = 0; i < lattice_cells; i++ )
+    for( int i = 0; i < d.lattice_cells; i++ )
     {
-      /* convert linear cell index into n-dimensional cell coordinate */
-      cell_indexer.back_spin();
+      // generate a point in the cell
+      std::array< double, n_dims > real_space_offset = d.generate_point( i );
 
-      auto lattice_gridpoint = cell_indexer.get_indices();
-
-      /* convert cell coordinate into xyz realspace coordinate for bottom corner of cell */
-      std::array< double, n_dims > real_space;
-      for( int j = 0; j < lattice_gridpoint.size(); j++ )
-      real_space[ j ] = lattice_gridpoint[ j ]*spacing+domain_start;
-
-      /* convert realspace coordinate into the center of the cell instead of the corner */
-      std::array< double, n_dims > real_space_offset;
-      for( int j = 0; j < lattice_gridpoint.size(); j++ )
-      {
-        real_space_offset[ j ] = real_space[ j ] + offset[ j ];
-      }
-
-      /* generate results */
+      /* generate three results */
       double analytical_offset_value = analytical_function( real_space_offset );
 
-      double interpolated_value = lattice( real_space_offset.data() );
+      double interpolated_value = lattice.ifield( real_space_offset.data() );
 
       double legacy_interpolation =
       interp3d(  
       real_space_offset[ 2 ],
       real_space_offset[ 1 ],
       real_space_offset[ 0 ],
-      n_grid_points,
-      n_grid_points,
-      n_grid_points,
-      grid_raw,
-      grid_raw + n_grid_points,
-      grid_raw + ( n_grid_points * 2 ),
-      lattice_data );
+      d.n_grid_points,
+      d.n_grid_points,
+      d.n_grid_points,
+      legacy_d.grid_raw,
+      legacy_d.grid_raw + d.n_grid_points,
+      legacy_d.grid_raw + ( d.n_grid_points * 2 ),
+      lattice.lattice_ptr.get() );
 
       /* process results */
       double difference = 
@@ -651,13 +487,9 @@ TEST_CASE( "multi-dimensional interpolation" )
       double legacy_difference =
       std::abs( ( legacy_interpolation - analytical_offset_value ) / analytical_offset_value );
 
-      if( legacy_difference >= difference ) ++new_correct;
-
-      else ++legacy_correct;
-
       /* output results */
       /* take a projection */
-      if( real_space[ 1 ] == 0 )
+      if( real_space_offset[ 1 ] == d.offset[ 1 ] )
       {
         // columns: cell_index_i x y z f_analytical f_old f_new
         std::array< double, 6 > 
@@ -673,8 +505,8 @@ TEST_CASE( "multi-dimensional interpolation" )
       if( i % 1000000  == 0 )
       {
         // integer division will not work...
-        std::cout << i << "/" << lattice_cells << " = " 
-                  << (double)i / (double)lattice_cells * 100 << std::endl;
+        std::cout << i << "/" << d.lattice_cells << " = " 
+                  << (double)i / (double)d.lattice_cells * 100 << std::endl;
 
         std::cout << "new method difference: " << std::setprecision( 10 )
           << difference
@@ -684,15 +516,13 @@ TEST_CASE( "multi-dimensional interpolation" )
           << legacy_difference
           << std::endl;
 
-        std::cout << "legacy: " << legacy_correct << " new: " << new_correct << std::endl;
-
         std::cout << std::setprecision( 10 ) << "discrepancy: "
           << ( interpolated_value - legacy_interpolation ) / analytical_offset_value
           << std::endl;
       }
     }
 
-    double mean_difference = total_difference / lattice_cells;
+    double mean_difference = total_difference / d.lattice_cells;
 
     std::cout << "normalized mean difference: " << mean_difference << std::endl;
 
