@@ -522,12 +522,38 @@ TEST_CASE( "multi-dimensional interpolation" )
       lattice_indexer.back_spin();
       auto lattice_gridpoint = lattice_indexer.get_indices();
 
-      /* Captain! calculate indices and check outcome */
       // iterate over the coordinates
+      // z y x order
+      int r = i;
+      std::array< int, 3 > indices{ 0, 0, 0 };
       for( int j = 0; j < n_dims; j++ )
       {
+        int m = 1;
+        for( int k = 0; k < n_dims - j - 1; k++ )
+        {
+          m *= n_grid_points;
+        }
+
+        int a = r / m;
+
+        //std::cout << "m: " << m << " a: " << a << " r: " << r;
+        r -= ( a * m );
+        //std::cout << " r after: " << r << std::endl;
+
+        indices[ j ] = a;
       }
 
+      /*
+      std::cout << "lattice_gridpoint: " << lattice_gridpoint[ 0 ]
+        << " " << lattice_gridpoint[ 1 ]
+        << " " << lattice_gridpoint[ 2 ] << std::endl;
+      std::cout << "indices: " << indices[ 0 ]
+        << " " << indices[ 1 ]
+        << " " << indices[ 2 ] << std::endl;
+        */
+
+      /* Captain! replace the red robin counter object... */
+      REQUIRE( indices == lattice_gridpoint );
 
       //if( i % 1000  == 0 ) std::cout << i << "/" << lattice_size << std::endl;
 
