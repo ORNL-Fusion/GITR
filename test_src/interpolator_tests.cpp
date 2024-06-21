@@ -430,78 +430,103 @@ TEST_CASE( "multi-dimensional interpolation" )
     // params - generate
     double domain_start = -3.5;
     double domain_end = 3.5;
-
-    // the next two are the only base level varying params
-    int const n_grid_points = 501;
     int const n_dims = 3;
 
-    domain d( domain_start, domain_end, n_grid_points, n_dims );
+    std::vector< int > n_grid_points_bank;
+    std::vector< double > mean_diff;
+    std::vector< double > legacy_mean_diff;
 
-    legacy_domain legacy_d( d );
-
-    populated_lattice lattice( d, analytical_function );
-
-    std::filesystem::path output_file = "compare_interp_3d.csv";
-    output_builder output( output_file, d );
-
-    /* interpolate a point in each lattice cell of the domain */
-    double total_difference = 0;
-    double total_legacy_difference = 0;
-    for( int i = 0; i < d.lattice_cells; i++ )
+    for( int k = 1; k < 15; k++ )
     {
-      // generate a point in the cell
-      std::array< double, n_dims > real_space_offset = d.generate_point( i );
-
-      /* generate three results */
-      double analytical_offset_value = analytical_function( real_space_offset );
-
-      double interpolated_value = lattice.ifield( real_space_offset.data() );
-
-      double legacy_interpolation =
-      interp3d(  
-      real_space_offset[ 2 ],
-      real_space_offset[ 1 ],
-      real_space_offset[ 0 ],
-      d.n_grid_points,
-      d.n_grid_points,
-      d.n_grid_points,
-      legacy_d.grid_raw,
-      legacy_d.grid_raw + d.n_grid_points,
-      legacy_d.grid_raw + ( d.n_grid_points * 2 ),
-      lattice.lattice_ptr.get() );
-
-      /* process results */
-      double difference = 
-      std::abs( ( interpolated_value - analytical_offset_value ) / analytical_offset_value );
-
-      total_difference += difference;
-
-      double legacy_difference =
-      std::abs( ( legacy_interpolation - analytical_offset_value ) / analytical_offset_value );
-
-      total_legacy_difference += legacy_difference;
-
-      /* Captain! stacks data, prints output, calculates differences and puts in a csv file
-         for later graphing - don't forget to do a parameter sweep! */
-      output.process_timestep( real_space_offset, 
-                               analytical_offset_value, 
-                               legacy_interpolation,
-                               interpolated_value,
-                               i );
+      n_grid_points_bank.push_back( k * 50 + 1 );
     }
 
-    /* Captain! compare total difference and legacy difference here for this run */
+    for( int k = 0; k < n_grid_points_bank.size(); k++ )
+    {
+      int n_grid_points = n_grid_points_bank[ k ];
 
-    double mean_difference = total_difference / d.lattice_cells;
-    double mean_legacy_difference = total_legacy_difference / d.lattice_cells;
+      domain d( domain_start, domain_end, n_grid_points, n_dims );
 
-    std::cout << "normalized mean difference: " << mean_difference << std::endl;
-    std::cout << "normalized legacy mean difference: " << mean_legacy_difference << std::endl;
-    std::cout << "get_mean_difference(): " << output.get_mean_difference() << std::endl;
-    std::cout << "get_mean_legacy_difference(): " << output.get_mean_legacy_difference() 
-              << std::endl;
+      legacy_domain legacy_d( d );
 
-    REQUIRE( mean_difference < 0.0003 );
+      populated_lattice lattice( d, analytical_function );
+
+      std::filesystem::path output_file = "compare_interp_3d.csv";
+      output_builder output( output_file, d );
+
+      /* interpolate a point in each lattice cell of the domain */
+      double total_difference = 0;
+      double total_legacy_difference = 0;
+      for( int i = 0; i < d.lattice_cells; i++ )
+      {
+        // generate a point in the cell
+        std::array< double, n_dims > real_space_offset = d.generate_point( i );
+
+        /* generate three results */
+        double analytical_offset_value = analytical_function( real_space_offset );
+
+        double interpolated_value = lattice.ifield( real_space_offset.data() );
+
+        double legacy_interpolation =
+          interp3d(  
+              real_space_offset[ 2 ],
+              real_space_offset[ 1 ],
+              real_space_offset[ 0 ],
+              d.n_grid_points,
+              d.n_grid_points,
+              d.n_grid_points,
+              legacy_d.grid_raw,
+              legacy_d.grid_raw + d.n_grid_points,
+              legacy_d.grid_raw + ( d.n_grid_points * 2 ),
+              lattice.lattice_ptr.get() );
+
+        /* process results */
+        double difference = 
+          std::abs( ( interpolated_value - analytical_offset_value ) / analytical_offset_value );
+
+        total_difference += difference;
+
+        double legacy_difference =
+          std::abs( ( legacy_interpolation - analytical_offset_value ) / analytical_offset_value );
+
+        total_legacy_difference += legacy_difference;
+
+        /* Captain! stacks data, prints output, calculates differences and puts in a csv file
+           for later graphing - don't forget to do a parameter sweep! */
+        output.process_timestep( real_space_offset, 
+            analytical_offset_value, 
+            legacy_interpolation,
+            interpolated_value,
+            i );
+      }
+
+      /* Captain! compare total difference and legacy difference here for this run */
+
+      double mean_difference = total_difference / d.lattice_cells;
+      double mean_legacy_difference = total_legacy_difference / d.lattice_cells;
+
+      std::cout << "normalized mean difference: " << mean_difference << std::endl;
+      std::cout << "normalized legacy mean difference: " << mean_legacy_difference << std::endl;
+      std::cout << "get_mean_difference(): " << output.get_mean_difference() << std::endl;
+      std::cout << "get_mean_legacy_difference(): " << output.get_mean_legacy_difference() 
+        << std::endl;
+
+      mean_diff.push_back( output.get_mean_difference() );
+      legacy_mean_diff.push_back( output.get_mean_legacy_difference() );
+
+      REQUIRE( mean_difference == output.get_mean_difference() );
+    }
+
+    for( int i = 0; i < mean_diff.size(); i++ )
+    {
+      std::cout << "mean_diff: "  << std::setprecision( 10 )
+                << mean_diff[ i ] 
+                << " legacy_mean_diff: " 
+                << legacy_mean_diff[ i ] << std::endl;
+    }
+
+    REQUIRE( false );
+
   }
 
   /* performance compare legacy 3d interp and new one */
