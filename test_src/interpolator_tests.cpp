@@ -435,6 +435,8 @@ TEST_CASE( "multi-dimensional interpolation" )
     std::vector< int > n_grid_points_bank;
     std::vector< double > mean_diff;
     std::vector< double > legacy_mean_diff;
+    // columns: n_grid_points[ k ] mean_diff legacy_mean_diff 
+    csv_row_stacker< 2 > convergence{ "convergence_3d.csv" }; 
 
     for( int k = 1; k < 15; k++ )
     {
@@ -491,8 +493,6 @@ TEST_CASE( "multi-dimensional interpolation" )
 
         total_legacy_difference += legacy_difference;
 
-        /* Captain! stacks data, prints output, calculates differences and puts in a csv file
-           for later graphing - don't forget to do a parameter sweep! */
         output.process_timestep( real_space_offset, 
             analytical_offset_value, 
             legacy_interpolation,
@@ -500,21 +500,15 @@ TEST_CASE( "multi-dimensional interpolation" )
             i );
       }
 
-      /* Captain! compare total difference and legacy difference here for this run */
-
-      double mean_difference = total_difference / d.lattice_cells;
-      double mean_legacy_difference = total_legacy_difference / d.lattice_cells;
-
-      std::cout << "normalized mean difference: " << mean_difference << std::endl;
-      std::cout << "normalized legacy mean difference: " << mean_legacy_difference << std::endl;
-      std::cout << "get_mean_difference(): " << output.get_mean_difference() << std::endl;
-      std::cout << "get_mean_legacy_difference(): " << output.get_mean_legacy_difference() 
-        << std::endl;
-
+      // Captain! Remove!
       mean_diff.push_back( output.get_mean_difference() );
       legacy_mean_diff.push_back( output.get_mean_legacy_difference() );
 
-      REQUIRE( mean_difference == output.get_mean_difference() );
+      std::array< double, 2 >
+      points{ output.get_mean_difference(), output.get_mean_legacy_difference() };
+
+      std::span< double, 2 > data_span( points );
+      convergence.stack( n_grid_points, data_span );
     }
 
     for( int i = 0; i < mean_diff.size(); i++ )
@@ -525,6 +519,7 @@ TEST_CASE( "multi-dimensional interpolation" )
                 << legacy_mean_diff[ i ] << std::endl;
     }
 
+    /* Captain! Require the final problem to check tolerance */
     REQUIRE( false );
 
   }
