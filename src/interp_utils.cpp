@@ -145,7 +145,77 @@ populated_lattice::populated_lattice( domain const &d,
     }
 }
 
+output_builder::output_builder( std::filesystem::path &output_file_name, domain &d_in )
+  :
+  data_stack_3d( output_file_name ),
+  d( d_in )
+{
+}
 
+double output_builder::get_mean_difference()
+{
+  return total_difference / d.lattice_cells;
+}
+
+double output_builder::get_mean_legacy_difference()
+{
+  return total_legacy_difference / d.lattice_cells;
+}
+
+void output_builder::process_timestep( std::array< double, 3 > &real_space_offset,
+                       double analytical_offset_value, 
+                       double legacy_interpolation,
+                       double interpolated_value,
+                       int timestep )
+{
+  // stack the timestep info into output_file_name, verify it is identical
+  // print output to screen
+  // calculate total and legacy difference
+  // sweep the gridpoints to get multiple values for this...
+
+  /* output results */
+  /* take a projection */
+  if( real_space_offset[ 1 ] == d.offset[ 1 ] )
+  {
+    // columns: cell_index_i x y z f_analytical f_old f_new
+    std::array< double, 6 > 
+      d{ real_space_offset[ 2 ], real_space_offset[ 1 ], real_space_offset[ 0 ],
+        analytical_offset_value, legacy_interpolation, interpolated_value };
+
+    std::span< double, 6 > data_span( d );
+
+    data_stack_3d.stack( timestep, data_span );
+  }
+
+  double difference = 
+    std::abs( ( interpolated_value - analytical_offset_value ) / analytical_offset_value );
+
+  total_difference += difference;
+
+  double legacy_difference =
+    std::abs( ( legacy_interpolation - analytical_offset_value ) / analytical_offset_value );
+
+  total_legacy_difference += legacy_difference;
+
+  /* print test code - check them */
+  if( timestep % 1000000  == 0 )
+  {
+    std::cout << timestep << "/" << d.lattice_cells << " = " 
+      << (double)timestep / (double)d.lattice_cells * 100 << std::endl;
+
+    std::cout << "new method difference: " << std::setprecision( 10 )
+      << difference
+      << std::endl;
+
+    std::cout << "legacy method difference: " << std::setprecision( 10 )
+      << legacy_difference
+      << std::endl;
+
+    std::cout << std::setprecision( 10 ) << "discrepancy: "
+      << ( interpolated_value - legacy_interpolation ) / analytical_offset_value
+      << std::endl;
+  }
+}
 
 
 

@@ -1,4 +1,5 @@
 #include <functional>
+#include "io.h"
 
 class domain
 {
@@ -47,3 +48,40 @@ class populated_lattice
 
   interpolated_field< double > ifield;
 };
+
+class output_builder
+{
+  public:
+
+  output_builder( std::filesystem::path &output_file_name, domain &d_in );
+
+  void process_timestep( std::array< double, 3 > &real_space_offset,
+                         double analytical_offset_value, 
+                         double legacy_interpolation,
+                         double interpolated_value,
+                         int timestep );
+
+  double get_mean_difference();
+  double get_mean_legacy_difference();
+
+  csv_row_stacker< 6 > data_stack_3d;
+  domain &d;
+
+  double total_difference{ 0 };
+  double total_legacy_difference{ 0 };
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

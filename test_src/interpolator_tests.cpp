@@ -5,7 +5,7 @@
 #include "operation.hpp"
 #include <iomanip>
 #include <chrono>
-#include <io.h>
+#include "io.h"
 #include "interp_utils.h"
 
 /*
@@ -441,20 +441,12 @@ TEST_CASE( "multi-dimensional interpolation" )
 
     populated_lattice lattice( d, analytical_function );
 
-    /* Captain! */
-
-    int legacy_correct = 0;
-
-    int new_correct = 0;
-
-    // columns: cell_index x y z f_analytical f_old f_new
-    // cell_index is the "time column"
-    // only stack when one variable is fixed, for easier graphing
-    std::filesystem::path output_file_name = "interpolator_comparison_3d.csv";
-    csv_row_stacker< 6 > data_stack_3d( output_file_name );
+    std::filesystem::path output_file = "compare_interp_3d.csv";
+    output_builder output( output_file, d );
 
     /* interpolate a point in each lattice cell of the domain */
     double total_difference = 0;
+    double total_legacy_difference = 0;
     for( int i = 0; i < d.lattice_cells; i++ )
     {
       // generate a point in the cell
@@ -487,44 +479,27 @@ TEST_CASE( "multi-dimensional interpolation" )
       double legacy_difference =
       std::abs( ( legacy_interpolation - analytical_offset_value ) / analytical_offset_value );
 
-      /* output results */
-      /* take a projection */
-      if( real_space_offset[ 1 ] == d.offset[ 1 ] )
-      {
-        // columns: cell_index_i x y z f_analytical f_old f_new
-        std::array< double, 6 > 
-        d{ real_space_offset[ 2 ], real_space_offset[ 1 ], real_space_offset[ 0 ],
-           analytical_offset_value, legacy_interpolation, interpolated_value };
+      total_legacy_difference += legacy_difference;
 
-        std::span< double, 6 > data_span( d );
-
-        data_stack_3d.stack( i, data_span );
-      }
-
-      /* print test code - check them */
-      if( i % 1000000  == 0 )
-      {
-        // integer division will not work...
-        std::cout << i << "/" << d.lattice_cells << " = " 
-                  << (double)i / (double)d.lattice_cells * 100 << std::endl;
-
-        std::cout << "new method difference: " << std::setprecision( 10 )
-          << difference
-          << std::endl;
-
-        std::cout << "legacy method difference: " << std::setprecision( 10 )
-          << legacy_difference
-          << std::endl;
-
-        std::cout << std::setprecision( 10 ) << "discrepancy: "
-          << ( interpolated_value - legacy_interpolation ) / analytical_offset_value
-          << std::endl;
-      }
+      /* Captain! stacks data, prints output, calculates differences and puts in a csv file
+         for later graphing - don't forget to do a parameter sweep! */
+      output.process_timestep( real_space_offset, 
+                               analytical_offset_value, 
+                               legacy_interpolation,
+                               interpolated_value,
+                               i );
     }
 
+    /* Captain! compare total difference and legacy difference here for this run */
+
     double mean_difference = total_difference / d.lattice_cells;
+    double mean_legacy_difference = total_legacy_difference / d.lattice_cells;
 
     std::cout << "normalized mean difference: " << mean_difference << std::endl;
+    std::cout << "normalized legacy mean difference: " << mean_legacy_difference << std::endl;
+    std::cout << "get_mean_difference(): " << output.get_mean_difference() << std::endl;
+    std::cout << "get_mean_legacy_difference(): " << output.get_mean_legacy_difference() 
+              << std::endl;
 
     REQUIRE( mean_difference < 0.0003 );
   }
