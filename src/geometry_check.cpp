@@ -1,5 +1,9 @@
 #include "geometryCheck.h"
 
+#if USE_CUDA >0
+#include "atomic_add_1.h"
+#endif
+
 CUDA_CALLABLE_HOST_DEVICE
 gitr_precision
 findT( gitr_precision x0, 

@@ -1,23 +1,5 @@
 #include "spectroscopy.h"
 
-#if USE_CUDA >0
-__device__ double atomicAdd1(gitr_precision* address, gitr_precision val)
-{
-    unsigned long long int* address_as_ull =
-                        (unsigned long long int*)address;
-    unsigned long long int old = *address_as_ull, assumed;
-      do {
-             assumed = old;
-             old = atomicCAS(address_as_ull, assumed,
-                            __double_as_longlong(val + 
-                                __longlong_as_double(assumed)));
-                 // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
-         } while (assumed != old);
-                 
-         return __longlong_as_double(old);
-}
-#endif
-
 spec_bin::spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
            gitr_precision* _bins, gitr_precision _dt, int cylsymm_, int spectroscopy_,
            gitr_precision* _bins_vx, gitr_precision* _bins_vy, gitr_precision* _bins_vz,

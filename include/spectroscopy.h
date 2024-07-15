@@ -21,8 +21,9 @@ typedef double gitr_precision;
 #else
 typedef float gitr_precision;
 #endif
+
 #if USE_CUDA >0
-__device__ double atomicAdd1(gitr_precision* address, gitr_precision val);
+#include "atomic_add_1.h"
 #endif
 
 struct spec_bin { 

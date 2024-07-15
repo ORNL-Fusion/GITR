@@ -40,6 +40,7 @@ set( gpu_targets
      hashGeom
      fields
      spectroscopy
+     atomic_add_1
      geometry_check )
 
 set( gpu_broker_targets 

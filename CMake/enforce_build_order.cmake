@@ -17,3 +17,10 @@ add_dependencies( boris particle_diagnostics )
 add_dependencies( GITR ${non_gpu_targets} ${gpu_targets} )
 
 add_dependencies( boris_data_broker boris flags )
+
+if( GITR_USE_CUDA )
+
+  add_dependencies( geometry_check atomic_add_1 )
+  add_dependencies( spectroscopy atomic_add_1 )
+
+endif()

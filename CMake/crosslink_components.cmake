@@ -96,6 +96,9 @@ if( GITR_USE_CUDA )
 
   endforeach()
 
+  target_link_libraries( geometry_check atomic_add_1 )
+  target_link_libraries( spectroscopy atomic_add_1 )
+
 endif()
 
 if( GITR_USE_OPENMP )
