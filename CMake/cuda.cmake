@@ -29,4 +29,4 @@ endif()
 
 include_directories( ${CUDAToolkit_INCLUDE_DIRS} )
 
-set( CMAKE_CUDA_ARCHITECTURES 70 )
+set( CMAKE_CUDA_ARCHITECTURES native )

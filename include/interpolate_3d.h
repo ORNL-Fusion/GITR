@@ -15,13 +15,13 @@
 
 
 template< typename T >
-class tensor
+class tensor_3d
 {
   public:
 
-  //tensor( T const *data, std::vector< int > const dims );
+  //tensor_3d( T const *data, std::vector< int > const dims );
   CUDA_CALLABLE_MEMBER
-  tensor( T *data, int const *dims, int n_dims );
+  tensor_3d( T *data, int const *dims, int n_dims );
 
   CUDA_CALLABLE_MEMBER
   T get( int *coordinates );
@@ -46,11 +46,11 @@ class tensor
 
 template< typename T >
 int const *
-tensor< T >::get_dims() { return dims; }
+tensor_3d< T >::get_dims() { return dims; }
 
 /* leading dimension comes first: zyx order */
 template< typename T >
-tensor< T >::tensor( T *data, int const *dims_init, int n_dims )
+tensor_3d< T >::tensor_3d( T *data, int const *dims_init, int n_dims )
   :
   data( data ),
   n_dims( n_dims )
@@ -71,7 +71,7 @@ tensor< T >::tensor( T *data, int const *dims_init, int n_dims )
 /* leading dimension comes first, zyx access */
 /* untested */
 template< typename T >
-T tensor< T >::get( int *coordinates )
+T tensor_3d< T >::get( int *coordinates )
 {
   int offset = 0;
 
@@ -86,7 +86,7 @@ T tensor< T >::get( int *coordinates )
 /* untested */
 /* leading dimension comes first, zyx access */
 template< typename T >
-void tensor< T >::set( T val, int *coordinates )
+void tensor_3d< T >::set( T val, int *coordinates )
 {
   int offset = 0;
 
@@ -123,18 +123,18 @@ class dummy
 /* offset_factors: zyx strides, rename to stride instead of offset_factors */
 /* data: row-major data, strided according to offset_factors */
 template< typename T >
-class interpolated_field : public tensor< T >
+class interpolated_field_3d : public tensor_3d< T >
 {
   public:
 
     CUDA_CALLABLE_MEMBER
-    interpolated_field( T *data,
+    interpolated_field_3d( T *data,
                         int const *dims,//zyx order, data_size  = prod( dims )
                         T const *max_range_init, // zyx order, size N
                         T const *min_range_init, // zyx order, size N
                         int n_dims_init ) // template parameter int N
       :
-      tensor< T >( data, dims, n_dims_init )
+      tensor_3d< T >( data, dims, n_dims_init )
     { 
       data_size = 1;
 
@@ -159,11 +159,11 @@ class interpolated_field : public tensor< T >
     T interpolate_hypercube( T *hypercube,
                              T const *coordinates );
 
-    T max_range[ tensor< T >::n_dims_arbitrary_max ];
+    T max_range[ tensor_3d< T >::n_dims_arbitrary_max ];
 
-    T min_range[ tensor< T >::n_dims_arbitrary_max ];
+    T min_range[ tensor_3d< T >::n_dims_arbitrary_max ];
 
-    T spacing[ tensor< T >::n_dims_arbitrary_max ];
+    T spacing[ tensor_3d< T >::n_dims_arbitrary_max ];
 
     int data_size;
 };
@@ -182,7 +182,7 @@ dims:
 */
 
 template< typename T >
-T interpolated_field< T >::interpolate_hypercube( T *hypercube,
+T interpolated_field_3d< T >::interpolate_hypercube( T *hypercube,
                                                   T const *coordinates )
 {
   /* the "upper" and "lower" fractions for each dimension */
@@ -272,7 +272,7 @@ returns: n-dimensional hypercube in a flattened array of 2^n vertices
 
 */
 template< typename T >
-void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercube )
+void interpolated_field_3d< T >::fetch_hypercube( T const *coordinates, T *hypercube )
 {
   /* find the index of the first vertex in the hypercube */
   int corner_vertex_index = 0;
@@ -287,6 +287,7 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
     corner_vertex_index += 
     (  single_dim_coordinate * this->offset_factors[ i ] );
   }
+  /* Captain! */
 
   for( int i = 0; i < ( 1 << this->n_dims ); i++ )
   {
@@ -321,7 +322,7 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
 }
 
 template< typename T >
-T interpolated_field< T >::operator()( T const *coordinates )
+T interpolated_field_3d< T >::operator()( T const *coordinates )
 {
   if( data_size == 1 ) return this->data[ 0 ];
 
