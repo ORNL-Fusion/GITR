@@ -1,0 +1,84 @@
+# syntax=docker/dockerfile:1
+
+from nvidia/cuda:12.4.1-devel-ubuntu22.04 as stage_1
+
+run echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
+run apt-get install -y -q
+
+run apt update
+
+from stage_1 as stage_2
+
+run apt update
+run apt install -y git
+run apt install -y libhdf5-dev
+run apt install -y libnetcdf-dev
+run apt install -y libnetcdf-c++4-dev
+
+from stage_2 as stage_3
+
+run apt install ninja-build
+run apt install -y vim
+run apt install -y libconfig-dev
+run apt install -y libconfig++-dev
+
+from stage_3 as stage_4
+
+# the only thing left to install is CLI11 and CMake
+run DEBIAN_FRONTEND=noninteractive apt install -y gpg wget
+
+from stage_4 as stage_5
+
+run apt update
+
+from stage_5 as stage_6
+
+# acquire python and venv
+run apt install -y python3-venv
+
+# copy over the requirements file and 
+copy containers/requirements.txt .
+
+# next you need to pip install: matplotlib, numpy, netCDF4, something else
+
+run python3 -m venv /venv
+
+ENV PATH="/venv/bin:$PATH"
+
+run python3 -m  pip install -r requirements.txt
+
+# as a final step volume map the host directory
+
+#run apt install -y gdb
+
+run wget https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.29.3.tar.gz
+run tar -xvzf cmake-3.29.3.tar.gz
+workdir /cmake-3.29.3
+run ./bootstrap
+run make -j 2
+run make install
+
+
+volume /host
+
+run apt install -y git
+workdir /
+run mkdir GITR
+copy . GITR
+run mkdir build
+run cmake -S GITR -B build -G Ninja
+
+run cmake --build build -- -j 0
+
+workdir /host
+
+
+entrypoint [ "/build/GITR" ]
+
+
+
+
+
+
+

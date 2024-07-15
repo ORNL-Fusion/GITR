@@ -1,0 +1,13 @@
+from alpine:latest
+
+run apk add --update alpine-sdk
+run apk add --update cmake
+run apk add --update hdf5-dev
+run apk add --update netcdf-dev
+run apk add --update netcdf-cxx4-dev
+run apk add --update catch2-3 --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing
+run apk add --update libconfig-dev
+run apk add --update gdb
+run apk add --update ninja
+
+volume /host

@@ -1,0 +1,27 @@
+from alpine:latest
+
+run apk add --update alpine-sdk
+run apk add --update cmake
+run apk add --update hdf5-dev
+run apk add --update netcdf-dev
+run apk add --update netcdf-cxx4-dev
+run apk add --update catch2-3 --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing
+run apk add --update libconfig-dev
+run apk add --update gdb
+run apk add --update ninja
+
+volume /host
+
+run apt install -y git
+workdir /
+run mkdir GITR
+copy . GITR
+run mkdir build
+run cmake -S GITR -B build -G Ninja
+
+run cmake --build build -- -j 0
+
+workdir /host
+
+
+entrypoint [ "/build/GITR" ]
