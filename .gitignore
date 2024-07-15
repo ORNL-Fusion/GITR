@@ -4,3 +4,4 @@ external
 .*.swp
 test_include/test_data_filepath.hpp
 **/output
+build.sh
