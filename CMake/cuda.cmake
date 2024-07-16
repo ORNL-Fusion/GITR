@@ -29,4 +29,8 @@ endif()
 
 include_directories( ${CUDAToolkit_INCLUDE_DIRS} )
 
+if( CMAKE_MINOR_VERSION VERSION_LESS 25 )
+set( CMAKE_CUDA_ARCHITECTURES 80 75 70 )
+else()
 set( CMAKE_CUDA_ARCHITECTURES native )
+endif()

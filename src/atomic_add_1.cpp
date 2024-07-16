@@ -1,5 +1,6 @@
 #include "atomic_add_1.h"
 
+#if USE_CUDA >0
 __device__ double atomicAdd1(double* address, double val)
 {
     unsigned long long int* address_as_ull =
@@ -15,3 +16,4 @@ __device__ double atomicAdd1(double* address, double val)
                  
          return __longlong_as_double(old);
 }
+#endif
