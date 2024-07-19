@@ -80,67 +80,47 @@ netCDF::NcType netcdf_precision = netCDF::ncFloat;
 
 int main(int argc, char **argv, char **envp) {
 
-  /* Placeholder code for runtime CLI */
-
-  //CLI::App app{ "!" };
-
   std::string file_name = "input/gitrInput.cfg";
-
-  //app.add_option( "-c", file_name, "config filepath" )->required();
-  //app.add_option( "-c", file_name, "config filepath" );
-
-  //CLI11_PARSE( app, argc, argv );
 
   std::cout << "file_name read from stdin: " << file_name << std::endl;
 
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
   class libconfig_string_query query_metadata( file_name );
-  class use use( query_metadata );
 
-  int surface_model = use.get< int >( static_cast<int>( use::surface_model ) );
+  class flags f( query_metadata );
 
-  int flux_ea = use.get<int>(use::flux_ea);
-  int spectroscopy = use.get< int >( use::spectroscopy );
-  // hardcoded to 0 for now, taken out of config_interface
-  //int biased_surface = use.get< int >( use::biased_surface );
-  int biased_surface = BIASED_SURFACE;
-  int use_3d_geom = use.get< int >( use::use_3d_geom );
-  int cylsymm = use.get< int >( use::cylsymm );
-  int bfield_interp = use.get< int >( use::bfield_interp );
-  int gradt_interp = use.get< int >( use::gradt_interp );
-  int force_eval = use.get< int >( use::force_eval );
-  int sort_particles = use.get< int >( use::sort );
-  int use_adaptive_dt = use.get< int >( use::adaptive_dt );
-  int geom_hash = use.get<int>( use::geom_hash);
-  int particle_source_file = use.get< int >( use::particle_source_file );
-  int particle_source_space = 0;//use.get< int >( use::particle_source_space );
-  int particle_source_energy = 0; //use.get< int >( use::particle_source_energy );
-  int particle_source_angle = 0; //use.get< int >( use::particle_source_angle );
-
-  //int particle_source_space = use.get< int >( use::particle_source_space );
-  //int particle_source_energy = use.get< int >( use::particle_source_energy );
-  //int particle_source_angle = use.get< int >( use::particle_source_angle );
-  int particle_tracks = use.get< int >( use::particle_tracks );
-  //int presheath_interp = use.get< int >( use::presheath_interp );
-  int efield_interp = use.get< int >( use::efield_interp );
-  int surface_potential = use.get< int >( use::surface_potential );
-  int flowv_interp = use.get<int>( use::flowv_interp );
-  int density_interp = use.get<int>( use::density_interp );
-  int temp_interp = use.get<int>(use::temp_interp);
-  int geom_hash_sheath = use.get<int>( use::geom_hash_sheath );
-  int thermal_force = use.get< int >( use::thermal_force );
-  int sheath_efield = use.get< int >( use::sheath_efield );
-  // hardcoded to 1 for now
-  //int presheath_efield = use.get< int >( use::presheath_efield );
-  int presheath_efield = 1;
-  int ionization = use.get< int >( use::ionization );
-  int coulomb_collisions = use.get< int >( use::coulomb_collisions );
-  int perp_diffusion = use.get< int >( use::perp_diffusion );
-  // hardcoded to 1 for now
-  //int field_aligned_values = use.get< int >( use::field_aligned_values );
   int field_aligned_values = FIELD_ALIGNED_VALUES;
-  bool fixed_seeds = bool( use.get< int >( use::fixed_seeds ) );
+  int biased_surface = BIASED_SURFACE;
+  int ionization = f.ionization;
+  int perp_diffusion = f.perp_diffusion;
+  int coulomb_collisions = f.coulomb_collisions;
+  int thermal_force = f.thermal_force;
+  int surface_model = f.surface_model;
+  int sheath_efield = f.sheath_efield;
+  int bfield_interp = f.bfield_interp;
+  int efield_interp = f.efield_interp;
+  int flowv_interp = f.flowv_interp;
+  int density_interp = f.density_interp;
+  int temp_interp = f.temp_interp;
+  int gradt_interp = f.gradt_interp;
+  int particle_source_file = f.particle_source_file;
+  int particle_source_space = 0;
+  int particle_source_energy = 0;
+  int particle_source_angle = 0;
+  int particle_tracks = f.particle_tracks;
+  int spectroscopy = f.spectroscopy;
+  int use_3d_geom = f.use_3d_geom;
+  int flux_ea = f.flux_ea;
+  int presheath_efield = 1;
+  int cylsymm = f.cylsymm;
+  int force_eval = f.force_eval;
+  int sort_particles = f.sort;
+  int use_adaptive_dt = f.adaptive_dt;
+  int geom_hash = f.geom_hash;
+  int surface_potential = f.surface_potential;
+  int geom_hash_sheath = f.geom_hash_sheath;
+  bool fixed_seeds = bool(f.fixed_seeds);
 
   // Set default processes per node to 1
   int ppn = 1;

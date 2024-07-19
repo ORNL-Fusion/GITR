@@ -306,3 +306,127 @@ class gitr_config_interface final : public config_module_base
 
   gitr_config_interface();
 };
+
+/* Captain! Remove all old stuff above, new stuff below */
+class flags 
+{
+  public:
+
+  std::string const module_name = "flags";
+
+  int ionization = -1;
+  int perp_diffusion = -1;
+  int coulomb_collisions = -1;
+  int thermal_force = -1;
+  int surface_model = -1; 
+  int sheath_efield = -1;
+  int bfield_interp = -1;
+  int efield_interp = -1;
+  int density_interp = -1;
+  int temp_interp = -1;
+  int flowv_interp = -1;
+  int gradt_interp = -1;
+  int flux_ea = -1;
+  int particle_source_file  = -1;
+  int spectroscopy = -1;
+  int use_3d_geom  = -1;
+  int particle_tracks = -1;
+  int fixed_seeds = -1;
+  int geom_hash= -1;
+  int geom_hash_sheath= -1;
+  int cylsymm = -1;
+  int force_eval = -1;
+  int sort = -1;
+  int adaptive_dt = -1;
+  int surface_potential = -1;
+  
+  flags( libconfig_string_query const &query_metadata )
+  {
+    std::string ionization_str = "USE_IONIZATION";
+    query_metadata( module_name + "." + ionization_str, ionization );
+
+    std::string perp_diffusion_str = "USEPERPDIFFUSION";
+    query_metadata( module_name + "." + perp_diffusion_str, perp_diffusion );
+
+    std::string coulomb_collisions_str = "USECOULOMBCOLLISIONS";
+    query_metadata( module_name + "." + coulomb_collisions_str, coulomb_collisions );
+
+    std::string thermal_force_str = "USETHERMALFORCE";
+    query_metadata( module_name + "." + thermal_force_str, thermal_force );
+
+    std::string surface_model_str = "USESURFACEMODEL";
+    query_metadata( module_name + "." + surface_model_str, surface_model );
+
+    std::string sheath_efield_str = "USESHEATHEFIELD";
+    query_metadata( module_name + "." + sheath_efield_str, sheath_efield );
+
+    std::string bfield_interp_str = "BFIELD_INTERP";
+    query_metadata( module_name + "." + bfield_interp_str, bfield_interp );
+
+    std::string efield_interp_str =  "EFIELD_INTERP";
+    query_metadata( module_name + "." + efield_interp_str,  efield_interp );
+
+    std::string density_interp_str = "DENSITY_INTERP";
+    query_metadata( module_name + "." + density_interp_str ,  density_interp );
+
+    std::string temp_interp_str = "TEMP_INTERP";
+    query_metadata( module_name + "." + temp_interp_str ,  temp_interp );
+
+    std::string flowv_interp_str = "FLOWV_INTERP";
+    query_metadata( module_name + "." + flowv_interp_str ,  flowv_interp );
+
+    std::string gradt_interp_str = "GRADT_INTERP";
+    query_metadata( module_name + "." + gradt_interp_str ,  gradt_interp );
+
+    std::string particle_tracks_str = "PARTICLE_TRACKS";
+    query_metadata( module_name + "." + particle_tracks_str , particle_tracks );
+
+    std::string particle_source_file_str  = "PARTICLE_SOURCE_FILE";
+    query_metadata( module_name + "." + particle_source_file_str  , particle_source_file  );
+
+    std::string spectroscopy_str  = "SPECTROSCOPY";
+    query_metadata( module_name + "." + spectroscopy_str  , spectroscopy );
+
+    std::string use_3d_geom_str  = "USE3DTETGEOM";
+    query_metadata( module_name + "." + use_3d_geom_str  , use_3d_geom  );
+
+    std::string flux_ea_str = "FLUX_EA";
+    query_metadata( module_name + "." + flux_ea_str , flux_ea  );
+
+    std::string fixed_seeds_str = "FIXED_SEEDS";
+    query_metadata( module_name + "." + fixed_seeds_str , fixed_seeds );
+
+    std::string geom_hash_str = "GEOM_HASH";
+    query_metadata( module_name + "." + geom_hash_str , geom_hash );
+
+    std::string geom_hash_sheath_str = "GEOM_HASH_SHEATH";
+    query_metadata( module_name + "." + geom_hash_sheath_str , geom_hash_sheath );
+
+    std::string cylsymm_str = "USECYLSYMM";
+    query_metadata( module_name + "." + cylsymm_str , cylsymm );
+    
+    std::string force_eval_str  = "FORCE_EVAL";
+    query_metadata( module_name + "." + force_eval_str  , force_eval  );
+
+    std::string sort_str  = "USE_SORT";
+    query_metadata( module_name + "." + sort_str  , sort  );
+
+    std::string adaptive_dt_str = "USE_ADAPTIVE_DT";
+    query_metadata( module_name + "." + adaptive_dt_str , adaptive_dt );
+
+    std::string surface_potential_str = "USE_SURFACE_POTENTIAL";
+    query_metadata( module_name + "." + surface_potential_str, surface_potential );
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
