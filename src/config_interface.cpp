@@ -176,6 +176,11 @@ T config_module_base::get( int key )
 {
   auto access = lookup.find( key );
 
+  for( const auto &item : lookup )
+  {
+    std::cout << "key: " << item.first << " val: " << item.second << std::endl;
+  }
+
   if( access == lookup.end() )
   {
     //throw unregistered_config_mapping( key );

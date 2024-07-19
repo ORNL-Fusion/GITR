@@ -99,6 +99,8 @@ int main(int argc, char **argv, char **envp) {
   class use use( query_metadata );
 
   int surface_model = use.get< int >( use::surface_model );
+  std::exit( 0 );
+
   int flux_ea = use.get<int>(use::flux_ea);
   int spectroscopy = use.get< int >( use::spectroscopy );
   // hardcoded to 0 for now, taken out of config_interface
