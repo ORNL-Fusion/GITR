@@ -49,7 +49,7 @@
 #else
 //#include <experimental/filesystem>
 #endif
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 
 #if USE_MPI
 #include <mpi.h>
@@ -99,7 +99,6 @@ int main(int argc, char **argv, char **envp) {
   class use use( query_metadata );
 
   int surface_model = use.get< int >( static_cast<int>( use::surface_model ) );
-  std::exit( 0 );
 
   int flux_ea = use.get<int>(use::flux_ea);
   int spectroscopy = use.get< int >( use::spectroscopy );
@@ -649,6 +648,7 @@ if( geom_hash > 1 )
   std::cout << "allocating closGeomGrids finished" << std::endl;
 
   //Section to create output folder if needed
+  /*
   std::string dirName = "output";
     std::error_code err1;
         if (!std::filesystem::exists(dirName))
@@ -661,6 +661,7 @@ if( geom_hash > 1 )
         printf("CreateDirectoryRecuresive: FAILED to create [%s], err:%s\n", dirName.c_str(), err1.message().c_str());
     }
         }
+        */
 
 if( geom_hash == 1 )
 {

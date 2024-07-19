@@ -166,13 +166,6 @@ use::use( class libconfig_string_query const &query,
   lookup[ use::sort ] = "USE_SORT";
   lookup[ use::adaptive_dt ] = "USE_ADAPTIVE_DT";
   lookup[ use::surface_potential ] = "USE_SURFACE_POTENTIAL";
-
-  for( const auto &item : lookup )
-  {
-    std::cout << "key: " << item.first << " val: " << item.second << std::endl;
-  }
-
-  std::cout << "between" << std::endl;
 }
 
 config_module_base::config_module_base( class libconfig_string_query const &query,
@@ -187,11 +180,6 @@ template< typename T >
 T config_module_base::get( int key )
 {
   auto access = lookup.find( key );
-
-  for( const auto &item : lookup )
-  {
-    std::cout << "key: " << item.first << " val: " << item.second << std::endl;
-  }
 
   if( access == lookup.end() )
   {
