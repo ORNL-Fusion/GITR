@@ -262,7 +262,7 @@ class use final : public config_module_base
     angle_scattering,
     heating,
     thermal_force,
-    surface_model,
+    surface_model=10,
     sheath_efield,
     biased_surface,
     presheath_efield,
