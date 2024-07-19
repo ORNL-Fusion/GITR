@@ -129,7 +129,7 @@ use::use( class libconfig_string_query const &query,
   //lookup[ use::angle_scattering ] = "USEANGLESCATTERING";
   //lookup[ use::heating ] = "USEHEATING";
   lookup[ use::thermal_force ] = "USETHERMALFORCE";
-  lookup[ use::surface_model ] = "USESURFACEMODEL";
+  lookup[ static_cast<int>(use::surface_model) ] = "USESURFACEMODEL";
   lookup[ use::sheath_efield ] = "USESHEATHEFIELD";
   // hardcoded to 0 for now
   //lookup[ use::biased_surface ] = "BIASED_SURFACE";
