@@ -98,7 +98,7 @@ int main(int argc, char **argv, char **envp) {
   class libconfig_string_query query_metadata( file_name );
   class use use( query_metadata );
 
-  int surface_model = use.get< int >( use::surface_model );
+  int surface_model = use.get< int >( static_cast<int>( use::surface_model ) );
   std::exit( 0 );
 
   int flux_ea = use.get<int>(use::flux_ea);
