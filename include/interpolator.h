@@ -10,16 +10,18 @@
 #include <iostream>
 #include <iomanip>
 
-/* Captain! split memory and operations into two member classes of an umbrella class, 
-   that is the next experiment */
-
+/* Captain! */
+// pass in vectors for everything
+// if cuda mode, cudamalloc. else unique_ptr is used for memory backing
+// optimized versions can simply be switched on dimensions
+// test code refactoring: 
 
 template< typename T >
 class tensor
 {
   public:
 
-  //tensor( T const *data, std::vector< int > const dims );
+  // will be constructed on the host
   CUDA_CALLABLE_MEMBER
   tensor( T *data, int const *dims, int n_dims );
 
@@ -32,13 +34,14 @@ class tensor
   CUDA_CALLABLE_MEMBER
   int const *get_dims();
 
-  /* magic number - bad. Make this a template parameter in the future */
+  // make this a template parameter
   static int constexpr n_dims_arbitrary_max = 8;
 
   const int n_dims;
 
   T *data;
 
+  // these need to be on the device
   int dims[ n_dims_arbitrary_max ];
 
   int offset_factors[ n_dims_arbitrary_max ];

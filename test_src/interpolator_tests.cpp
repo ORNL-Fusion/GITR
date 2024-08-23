@@ -430,6 +430,8 @@ TEST_CASE( "multi-dimensional interpolation" )
     // params - generate
     double domain_start = -3.5;
     double domain_end = 3.5;
+
+    // Captain! Top level loop should be over this 1 to 4 or something
     int const n_dims = 3;
 
     std::vector< int > n_grid_points_bank;
