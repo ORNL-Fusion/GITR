@@ -130,11 +130,11 @@ GITR/containers/gpu_gitr_interactive.df for example.
 *Note: content below being migrated into sections above*
 
 
-## Building GITR
+## Build Examples:
 
 
 
-## Docker Build (local container, no CUDA)
+### Docker Build (local container, no CUDA)
 
 This is a straightforward option for compiling GITR. This build is recommended for using GITR on a local device. 
 
@@ -188,7 +188,7 @@ This is a straightforward option for compiling GITR. This build is recommended f
 6. Now GITR is built. You can run GITR by executing it from the directory above your input folder while still inside your container. We recommend copying your problem's input directory into `GITR/scratch/input` when using a Docker container. 
 
 
-## Bare Metal Build (no containers)
+## Bare Metal Build on NERSC (no containers)
 
 This is a straightforward option for compiling GITR.
 
@@ -221,100 +221,6 @@ This is a straightforward option for compiling GITR.
 
 > path_to_GITR_build_directory/GITR
 
-## Environment
-
-The GITR software relies on several other software installations to operate. These *dependencies* fall under *system dependencies* and *3rd-party dependencies*. GITR's advanced build system downloads and builds all 3rd-party dependencies automatically, but this is not the case with system dependencies. These must all be installed by the user prior to attempting to build GITR. Numerous approaches are available to the user for installing/updating/managing system dependencies. An approach using the **spack** utility is briefly described below, loosely following https://spack-tutorial.readthedocs.io/en/latest/.
-
-### Ubuntu 20.04
-
-0. Ensure that basic system dependencies like a working compiler are installed and discoverable on your system. If it is a blank system, you will need to install these with the native Ubuntu package manager *apt*:
-
-> apt install build-essential
-
-At this time, HDF5 must also be installed as a system dependency with the native system package manager. It cannot be installed with spack.
-
-> apt install hdf5-hl
-
-1. Download spack: 
-
-> git clone https://github.com/spack/spack.git
-
-2. Instantiate spack in your environment. This can optionally be placed in your .bashrc file if you want it done automatically upon every login:
-
-> source ~/spack/share/spack/setup-env.sh
-
-3. Direct spack to find a compiler to use:
-
-> spack compilers
-
-This command should produce non-empty output. The discovered compilers will be listed.
-
-4. We may now begin using spack to install the rest of the system dependencies. Beginning with the newest version of gcc:
-
-List packages matching *gcc*:
-> spack list gcc
-
-List versions of package:
-
-> spack versions gcc
-
-Install one (preferably the latest):
-
-> spack install gcc @11.2.0
-
-> spack load gcc@11.2.0
-
-> spack compiler find
-
-You are building a literal compiler. Expect this to take a
-
-> Very.
-
-> Long.
-
-> Time...
-
-5. Next, we will use the compiler we just built to build the rest of the dependencies:
-
-> spack list cmake
-
-> spack versions cmake
-
-> spack install cmake @3.22.1 %gcc@11.2.0
-
-6. **Optional**: for CUDA support, similarly install CUDA:
-
-> spack list cuda
-
-> spack versions cuda
-
-> spack install cuda @11.5.1 %gcc@11.2.0
-
-7. **Optional** for blazingly fast source compilation, similarly install Ninja build system:
-
-> spack list ninja
-
-> spack versions ninja
-
-> spack install ninja @1.10.2 %gcc@11.2.0
-
-8. Now that these softwares are made available to spack, they must be loaded into the current environment so that they are discoverable in the current environment. List packages and load them:
-
-> spack find -x
-
-> spack find -x --loaded
-
-> spack load gcc
-
-> spack load cuda
-
-> spack load cmake
-
-> spack load ninja
-
-> spack find -x --loaded
-
-This final command should print out all the loaded environments.
 
 ### Mac OSx
 
@@ -330,9 +236,9 @@ This final command should print out all the loaded environments.
 6. You may need to install m4 as well:
 > brew install m4
 
-## Installation
- 
-### Hardware Configuration:
+## Build Process
+
+### Build step 1 (configure the build)
  
 Configure build system with CMake. Physics operators can be activated via **-D**-style build-time
  options provided to CMake.
@@ -343,7 +249,7 @@ The list of options can be viewed in:
 
 > CMake/user_options.cmake
 
-### Build
+### Build step 2 (run the build)
 
 Once the project is configured, compile:
 
@@ -357,7 +263,7 @@ If using Ninja:
 
 > ninja -j 0
 
-### Run
+### Run the GITR executable
 
 GITR expects to be run in a directory containing subdirectories **input** and **output**.
 The **input** directory must contain a file called *gitrInput.cfg*.
@@ -447,19 +353,3 @@ A list of the required options and a brief description of each is provided:
 
 The default configuration options in GITR are compatible with the input deck in:
 [GITR_CPC_example](https://github.com/ORNL-Fusion/GITR-CPC-Example).
-
-
-## System Dependencies:
-
-- cmake version 3.13 or newer required
- 
-- gcc
- 
-- Ninja
-
-- HDF5
- 
-- **CUDA**
-  - Enabled by default, disable with -DGITR_USE_CUDA=0
-  - Requires existing installation. Set:
-    - -DCMAKE_CUDA_COMPILER=/path/to/nvcc
