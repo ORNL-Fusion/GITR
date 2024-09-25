@@ -54,28 +54,83 @@ Two types of containers exist:
 
 ## Building Containers
 
-### container_0 instructions
+If it is not possible to pull container images from Dockerhub, they can be built locally with Docker.
 
-### container_1 instructions
+### Interactive GPU
+
+1. bash containers/build_gpu_interactive.sh
+
+### Interactive CPU
+
+1. bash containers/build_alpine_interactive.sh
+
+### Non-interactive GPU
+
+bash containers/build_gpu_noninteractive.sh
 
 ## Pulling Pre-built containers
 
-### container_0 instructions
-### container_1 instructions
+If possible, avoid building the container images in favor of pulling pre-built images.
+
+1. Navigate to https://hub.docker.com/r/stonecoldhughes/gitr
+2. Navigate to the "tags" page.
+3. Copy the "Docker Pull" command and run in the terminal: this will pull the image locally. Run the same as above.
 
 ## Running Containers:
 
-### interactive container instructions
-### noninteractive container instructions
+### Interactive GPU
 
-## Running GITR in containers:
+bash containers/run_gpu_interactive.sh
 
-### interactive container instructions
-### noninteractive container instructions
+This will drop the user into the container environment. The directory /host in the container is the same directory
+as the directory where bash/run_gpu_interactive.sh is invoked above. In this example, /host in the container is GITR on the host.
+
+
+### Interactive CPU
+
+bash containers/run_alpine_interactive.sh
+
+This will drop the user into the container environment. The directory /host in the container is the same directory
+as the directory where bash/run_alpine_interactive is invoked above. In this example, /host in the container is GITR on the host.
+
+### Non-interactive GPU
+
+bash containers/run_gpu_noninteractive.sh
+
+note: this should be run in the same location that the "GITR" executable would be run.
+The directory must include the input/output directories and the gitrInput.cfg file
 
 ## Bare Metal Installation Instructions
 
+A convenience script "build.sh" is included to help build on bare metal. Each -D style CMake option in this file indicates
+a filepath to either a library file or a header file. These options must be
+modified to point to the correct files and directories on the host system. These file locations vary significantly from one system to the next.
+
+bash build.sh /path/to/GITR/CMakeLists.txt /path/to/build_directory
+
+The paths in this script point to third party libraries and header files GITR compiles with. All of them need to be manually installed:
+
+libconfig
+netcdf-c
+netcdf-cxx
+catch2
+cuda
+openmp
+thrust
+hdf5
+
+Please reference any of the Dockerfiles in GITR/containers to see examples of these libraries installed on Linux. The Dockerfiles
+in this directory have a *.df file extension.
+
+GITR/containers/gpu_gitr_interactive.df for example.
+
+
+
+
 *Note: content below being migrated into sections above*
+
+
+## Building GITR
 
 
 
