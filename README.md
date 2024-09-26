@@ -132,9 +132,7 @@ GITR/containers/gpu_gitr_interactive.df for example.
 
 ## Build Examples:
 
-
-
-### Docker Build (local container, no CUDA)
+### Docker Desktop Build (local container, no CUDA)
 
 This is a straightforward option for compiling GITR. This build is recommended for using GITR on a local device. 
 
@@ -168,11 +166,11 @@ This is a straightforward option for compiling GITR. This build is recommended f
 
 1. Check that your remote device has podman by running `podman -v`. If your device does not have podman, we recommend using the Bare Metal Build below.
 
-2. Run `podman pull stonecoldhughes/gitr:env_test` to download a binary container image to provide an environment containing all pre-configured GITR dependencies. GITR will later build and run inside this container. 
+2. Run `podman pull stonecoldhughes/gitr:gpu_gitr_interactive` to download a binary container image to provide an environment containing all pre-configured GITR dependencies. GITR will later build and run inside this container. 
 
 3. Open the GITR container from the GITR source directory with `bash containers/run_podman.sh`
 
-4. You should be inside a podman container now, so `cd host` to navigate to the GITR source directory
+4. You should be inside a podman container now, so `cd /host` to navigate to the GITR source directory
 
 5. Run the following commands to build and make GITR from inside the container. These commands must be repeated each time you initiate the container.
 > rm -rf build
@@ -222,7 +220,7 @@ This is a straightforward option for compiling GITR.
 > path_to_GITR_build_directory/GITR
 
 
-### Mac OSx
+### Mac OSx, No CUDA
 
 1. If you do not have the Homebrew package manager, get it here at: https://brew.sh/ 
 2. For `brew` to work, you may need to run the following:
@@ -263,7 +261,7 @@ If using Ninja:
 
 > ninja -j 0
 
-### Run the GITR executable
+### Running the GITR executable
 
 GITR expects to be run in a directory containing subdirectories **input** and **output**.
 The **input** directory must contain a file called *gitrInput.cfg*.
