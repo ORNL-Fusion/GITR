@@ -52,6 +52,14 @@ Two types of containers exist:
 2. Noninteractive run-only containers - GITR binaries are pre-compiled within a non-interactive container image. It is not possible to modify or rebuild GITR in this image.
    This is for users who wish to run GITR on problems, but have no need to modify GITR.
 
+## Pulling Pre-built containers
+
+If possible, avoid building the container images in favor of pulling pre-built images.
+
+1. Navigate to https://hub.docker.com/r/stonecoldhughes/gitr
+2. Navigate to the "tags" page.
+3. Copy the "Docker Pull" command and run in the terminal: this will pull the image locally.
+
 ## Building Containers
 
 If it is not possible to pull container images from Dockerhub, they can be built locally with Docker.
@@ -67,14 +75,6 @@ If it is not possible to pull container images from Dockerhub, they can be built
 ### Non-interactive GPU
 
 bash containers/build_gpu_noninteractive.sh
-
-## Pulling Pre-built containers
-
-If possible, avoid building the container images in favor of pulling pre-built images.
-
-1. Navigate to https://hub.docker.com/r/stonecoldhughes/gitr
-2. Navigate to the "tags" page.
-3. Copy the "Docker Pull" command and run in the terminal: this will pull the image locally. Run the same as above.
 
 ## Running Containers:
 
