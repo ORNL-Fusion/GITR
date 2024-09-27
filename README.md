@@ -64,17 +64,11 @@ If possible, avoid building the container images in favor of pulling pre-built i
 
 If it is not possible to pull container images from Dockerhub, they can be built locally with Docker.
 
-### Interactive GPU
+Interactive GPU: `bash containers/build_gpu_interactive.sh`
 
-1. bash containers/build_gpu_interactive.sh
+Interactive CPU: `bash containers/build_alpine_interactive.sh`
 
-### Interactive CPU
-
-1. bash containers/build_alpine_interactive.sh
-
-### Non-interactive GPU
-
-bash containers/build_gpu_noninteractive.sh
+Non-interactive GPU: `bash containers/build_gpu_noninteractive.sh`
 
 ## Running Containers:
 
