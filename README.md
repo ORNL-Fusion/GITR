@@ -52,6 +52,10 @@ Two types of containers exist:
 2. Noninteractive run-only containers - GITR binaries are pre-compiled within a non-interactive container image. It is not possible to modify or rebuild GITR in this image.
    This is for users who wish to run GITR on problems, but have no need to modify GITR.
 
+## Setting Compile Time Options
+
+
+
 ## Pulling Pre-built containers
 
 If possible, avoid building the container images in favor of pulling pre-built images.
