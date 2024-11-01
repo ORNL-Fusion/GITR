@@ -127,16 +127,16 @@ void libconfig_string_query::operator()( std::string const query_key, T &query_v
 {
   if( cfg.exists( query_key.c_str() ) == false )
   {
-    //throw invalid_key( query_key );
-    std::cout << "libconfig could not find" << query_key << std::endl;
-    throw 0;
+    std::cout << "libconfig could not find " << query_key << ": " 
+              << "leaving value at default: " << query_value
+              << std::endl;
+    return;
   }
 
   auto const &setting = cfg.getRoot().lookup( query_key );
 
   if( setting.isArray() )
   {
-    /* Captain! */
     //throw not_a_scalar( query_key );
     throw 0;
   }

@@ -41,6 +41,7 @@
 #include <stdlib.h>
 #include <vector>
 #include "flags.hpp"
+#include <filesystem>
 
 #ifdef __CUDACC__
 #include <curand.h>
@@ -223,6 +224,17 @@ int main(int argc, char **argv, char **envp) {
 //      std::cout << " Successfully Created " << std::endl;
 //    }
 //  }
+  std::filesystem::path output_path = "output";
+
+  if (std::filesystem::create_directories(output_path)) 
+  {
+    std::cout << "Directories created successfully.\n";
+  } 
+
+  else 
+  {
+    std::cout << "Directories already exist.\n";
+  }
 
   // Background species info
   gitr_precision background_Z = 0.0, background_amu = 0.0;
@@ -1591,9 +1603,6 @@ if( LC_INTERP > 1 )
   getVarFromFile(cfg, input_path + lcFile, connLengthCfg, "SString", s);
 }
 
-  /* Captain! begin */
-  /* Captain! Create background plasma object here - once this works, commit the result */
-  class background_plasma background_plasma( query_metadata );
   // Background Plasma Temperature Initialization
   int nR_Temp = 1;
   int nY_Temp = 1;
@@ -1605,6 +1614,7 @@ if(temp_interp > 0 )
 {
 #if USE_MPI > 0
   if (world_rank == 0) {
+  class background_plasma background_plasma( query_metadata );
 #endif
     getVariable(cfg, tempCfg + "fileString", tempFile);
     nR_Temp =

@@ -43,8 +43,10 @@ class temperature_grid_type
     query_metadata( full_module_path + ion_temp_data_meta_key, ion_temp_data_key );
     query_metadata( full_module_path + electron_temp_data_meta_key, electron_temp_data_key );
 
+  std::cout << "Ahoy, Captain!!!" << std::endl;
     // query query_raw_input using the keys and values above
     netcdf_string_query const query_raw_input( "input/" + raw_input_file_path );
+  std::cout << "Ahoy, Captain!!!" << std::endl;
 
     int r_grid_size = -1;
     int z_grid_size = -1;
