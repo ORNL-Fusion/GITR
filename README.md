@@ -259,10 +259,11 @@ If using Ninja:
 
 > ninja -j 0
 
-### Running the GITR executable
+# Running the GITR executable
 
 GITR expects to be run in a directory containing subdirectories **input** and **output**.
-The **input** directory must contain a file called *gitrInput.cfg*.
+The **input** directory must contain a file called *gitrInput.cfg*. You must explicitly create
+the **output** directory - GITR will not do this.
 
 Navigate to this directory and run:
 
