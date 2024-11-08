@@ -66,6 +66,7 @@
 #include <thrust/sort.h>
 #include <thrust/transform.h>
 #include "config_interface.h"
+#include <sys/stat.h>
 //#include "CLI/CLI.hpp"
 
 using namespace netCDF;
@@ -84,6 +85,33 @@ int main(int argc, char **argv, char **envp) {
   std::string file_name = "input/gitrInput.cfg";
 
   std::cout << "file_name read from stdin: " << file_name << std::endl;
+
+  struct stat st = {0};
+  if (stat("input", &st) == -1)
+  {
+    std::cout << "input directory not found - please create it!" << std::endl;
+
+    return 1;
+  }
+
+  // Check if the directory "output" exists
+  if (stat("output", &st) == -1) 
+  {
+    // Get the user's default file mode creation mask
+    mode_t old_umask = umask(0);
+    umask(old_umask);  // Reset the umask to its previous value
+
+    // Create the directory with default permissions, adjusted by umask
+    if (mkdir("output", 0777 & ~old_umask) == -1) 
+    {
+      perror("Error creating \"output\" directory");
+      return 1;
+    }
+    printf("Directory 'output' created successfully with user default permissions.\n");
+  } else {
+    printf("Directory 'output' already exists.\n");
+  }
+  // Captain! end
 
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
@@ -224,17 +252,7 @@ int main(int argc, char **argv, char **envp) {
 //      std::cout << " Successfully Created " << std::endl;
 //    }
 //  }
-  std::filesystem::path output_path = "output";
 
-  if (std::filesystem::create_directories(output_path)) 
-  {
-    std::cout << "Directories created successfully.\n";
-  } 
-
-  else 
-  {
-    std::cout << "Directories already exist.\n";
-  }
 
   // Background species info
   gitr_precision background_Z = 0.0, background_amu = 0.0;
