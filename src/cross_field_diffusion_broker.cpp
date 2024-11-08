@@ -54,7 +54,7 @@ double cross_field_diffusion_broker::run_1()
 
   int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
 
-  auto particleArray = new Particles( nP, 1, cfg_geom, gitr_flags );
+  auto particleArray = new Particles( nP, 1, cfg_geom);
   for(int i=0;i<nP;i++)
   {
     particleArray->setParticleV(i,0.2,0.0,0.0, 10, 10, 10, 4, 5, 1.0,dt);
@@ -299,7 +299,7 @@ double cross_field_diffusion_broker::run()
 
   //REQUIRE( nSurfaces == 2 );
 
-  auto particleArray = new Particles( nP, 1, cfg_geom, gitr_flags );
+  auto particleArray = new Particles( nP, 1, cfg_geom);
   std::cout << "p " << particleArray->charge[0] << " x " << particleArray->xprevious[0]<<std::endl;
 
   /* dummy variables for hashing */

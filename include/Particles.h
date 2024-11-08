@@ -259,7 +259,7 @@ public:
   };
   
   CUDA_CALLABLE_MEMBER
-  Particles(std::size_t nP,std::size_t nStreams,libconfig::Config &cfg, Flags *gitr_flags) :
+  Particles(std::size_t nP,std::size_t nStreams,libconfig::Config &cfg) :
     nParticles{getVariable_cfg<unsigned int> (cfg,"impurityParticleSource.nP")},
     index{nParticles, 0},
     x{nP,0.0},

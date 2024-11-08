@@ -1333,8 +1333,8 @@ if( GENERATE_LC > 0 )
   std::cout << "Creating tracer particles" << std::endl;
   thrust::counting_iterator<std::size_t> lcBegin(pair.first);
   thrust::counting_iterator<std::size_t> lcEnd(pair.second - 1);
-  auto forwardTracerParticles = new Particles(nTracers, 1, cfg, gitr_flags );
-  auto backwardTracerParticles = new Particles(nTracers, 1, cfg, gitr_flags );
+  auto forwardTracerParticles = new Particles(nTracers, 1, cfg);
+  auto backwardTracerParticles = new Particles(nTracers, 1, cfg);
   int addIndex = 0;
   std::cout << "Initializing tracer particles" << std::endl;
 
@@ -3215,7 +3215,7 @@ if( efield_interp == 1 )
   std::cout << "World rank " << world_rank << " has " << nPPerRank[world_rank]
             << " starting at " << pStartIndx[world_rank] 
             << " ending at " << pStartIndx[world_rank]+nPPerRank[world_rank] << std::endl;
-  auto particleArray = new Particles(nParticles,1,cfg,gitr_flags);
+  auto particleArray = new Particles(nParticles,1,cfg);
 
   gitr_precision x, y, z, E, vtotal, vx, vy, vz, Ex, Ey, Ez, amu, Z, charge, phi, theta,
       Ex_prime, Ez_prime, theta_transform;
@@ -3986,7 +3986,7 @@ if( efield_interp == 1 )
   sim::Array<gitr_precision> histogram_particle_angle(nSurfaces*n_bins_angle,0.0);
   
   particle_diagnostics particle_diagnostics0(
-      gitr_flags, particleArray, &boundaries[0], times_logarithmic, bin_edge_0_time, 
+      particleArray, &boundaries[0], times_logarithmic, bin_edge_0_time, 
                 bin_edge_1_time, bin_edge_dt, n_bins_time, &histogram_particle_time.front(), 
 			angle_logarithmic, bin_edge_0_angle, bin_edge_1_angle, bin_edge_dtheta, 
 				n_bins_angle, &histogram_particle_angle.front(), nSurfaces);

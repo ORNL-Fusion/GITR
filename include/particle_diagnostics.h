@@ -29,7 +29,6 @@ typedef float gitr_precision;
 
 
 struct particle_diagnostics {
-  Flags *flags;
   Particles *particlesPointer;
   Boundary *boundaryVector;
   bool times_logarithmic;
@@ -46,7 +45,7 @@ struct particle_diagnostics {
   gitr_precision *particle_angle_histogram;
   int nSurfaces;
   
-  particle_diagnostics(Flags *_flags, Particles *_particlesPointer, Boundary *_boundaryVector, bool _time_logarithmic,
+  particle_diagnostics(Particles *_particlesPointer, Boundary *_boundaryVector, bool _time_logarithmic,
                        gitr_precision _bin_edge_0_time, gitr_precision _bin_edge_1_time, gitr_precision _bin_edge_dt,
                        int _n_bins_time, gitr_precision *_particle_time_histogram, bool _angle_logarithmic, 
                        gitr_precision _bin_edge_0_angle, gitr_precision _bin_edge_1_angle, gitr_precision _bin_edge_dtheta, 

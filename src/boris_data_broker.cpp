@@ -172,7 +172,7 @@ std::vector< double > boris_data_broker_0::run_1()
 
   // create a particle
   auto particleArray =
-    new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
+    new Particles( num_particles, deprecated_constructor_argument, cfg_geom );
 
   thrust::counting_iterator<std::size_t> particle_iterator_start(0);
 

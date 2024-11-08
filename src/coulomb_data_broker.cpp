@@ -36,7 +36,7 @@ double coulomb_data_broker::run_3()
 
   int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
   int seed01 = getVariable_cfg<int> (cfg,"operators.ionization.seed");
-  auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
+  auto particleArray = new Particles(nParticles,nParticles,cfg);
 
   for(int i=0; i<nParticles; i++) particleArray->vz[i] = 4580.0;
 
@@ -269,7 +269,7 @@ double coulomb_data_broker::run_2()
 
   int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
 
-  auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
+  auto particleArray = new Particles(nParticles,nParticles,cfg);
 
   thrust::counting_iterator<std::size_t> particle_iterator0(0);
   thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);

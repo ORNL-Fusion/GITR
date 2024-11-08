@@ -277,7 +277,7 @@ TEST_CASE( "Complex Boris Motion" )
 
     /* create a particle */
     auto particleArray =
-      new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
+      new Particles( num_particles, deprecated_constructor_argument, cfg_geom );
 
     //thrust::counting_iterator<std::size_t> particle_iterator_start(0);
 
@@ -514,7 +514,7 @@ TEST_CASE( "Complex Boris Motion" )
 
     /* create a particle */
     auto particleArray =
-    new Particles( num_particles, deprecated_constructor_argument, cfg_geom, gitr_flags );
+    new Particles( num_particles, deprecated_constructor_argument, cfg_geom );
 
     //thrust::counting_iterator<std::size_t> particle_iterator_start(0);
 

@@ -29,7 +29,7 @@ std::vector< double > atomic_data_broker::run_2()
 
   int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
 
-  auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
+  auto particleArray = new Particles(nParticles,nParticles,cfg);
 
   thrust::counting_iterator<std::size_t> particle_iterator0(0);
   thrust::counting_iterator<std::size_t> particle_iterator_end(nParticles);
@@ -216,7 +216,7 @@ void atomic_data_broker::run_1()
 
   auto gitr_flags = new Flags(cfg);
 
-  auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
+  auto particleArray = new Particles(nParticles,nParticles,cfg);
 #ifdef __CUDACC__
   typedef curandState rand_type;
 #else
@@ -395,7 +395,7 @@ void atomic_data_broker::run()
 
   auto gitr_flags = new Flags(cfg);
 
-  auto particleArray = new Particles(nParticles,nParticles,cfg,gitr_flags);
+  auto particleArray = new Particles(nParticles,nParticles,cfg);
 
 #ifdef __CUDACC__
   typedef curandState rand_type;

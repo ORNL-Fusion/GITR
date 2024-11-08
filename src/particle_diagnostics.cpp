@@ -2,7 +2,7 @@
 #include "spectroscopy.h"
 
 
-particle_diagnostics::particle_diagnostics(Flags *_flags,
+particle_diagnostics::particle_diagnostics(
           Particles *_particlesPointer,
           Boundary *_boundaryVector,
           bool _times_logarithmic,
@@ -21,7 +21,7 @@ particle_diagnostics::particle_diagnostics(Flags *_flags,
       
         :
 
-        flags(_flags), particlesPointer(_particlesPointer), boundaryVector(_boundaryVector),  times_logarithmic(_times_logarithmic),
+        particlesPointer(_particlesPointer), boundaryVector(_boundaryVector),  times_logarithmic(_times_logarithmic),
                        bin_edge_0_time(_bin_edge_0_time), bin_edge_1_time(_bin_edge_1_time), bin_edge_dt(_bin_edge_dt),
                        n_bins_time(_n_bins_time), particle_time_histogram(_particle_time_histogram), angle_logarithmic(_angle_logarithmic), 
                        bin_edge_0_angle(_bin_edge_0_angle), bin_edge_1_angle(_bin_edge_1_angle), bin_edge_dtheta(_bin_edge_dtheta), 
