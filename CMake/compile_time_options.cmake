@@ -2,12 +2,12 @@
 set( CMAKE_CXX_STANDARD 20 )
 
 # options are "Debug" and "Release" and "RelWithDebInfo"
-set( CMAKE_BUILD_TYPE "Debug" )
+set( CMAKE_BUILD_TYPE "Release" )
 
 # preprocessor definitions in source code are defined below:
 set( description "(no description added yet)" )
-set( GITR_USE_CUDA 1 CACHE STRING "${description}" FORCE )
-set( GITR_USE_OPENMP 0 CACHE STRING "${description}" FORCE )
+set( GITR_USE_CUDA 0 CACHE STRING "${description}" FORCE )
+set( GITR_USE_OPENMP 1 CACHE STRING "${description}" FORCE )
 set( GITR_USE_MPI 0 CACHE STRING "${description}" FORCE )
 set( GITR_USE_DOUBLE 1 CACHE STRING "${description}" FORCE )
 
