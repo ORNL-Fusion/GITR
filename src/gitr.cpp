@@ -41,7 +41,6 @@
 #include <stdlib.h>
 #include <vector>
 #include "flags.hpp"
-#include <filesystem>
 
 #ifdef __CUDACC__
 #include <curand.h>
