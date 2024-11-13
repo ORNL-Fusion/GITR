@@ -275,8 +275,6 @@ double cross_field_diffusion_broker::run()
 
   class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
 
-  auto use = std::make_shared< class use >( query );
-
   auto gitr_flags = new Flags( cfg_geom );
 
   int nLines = 0;
