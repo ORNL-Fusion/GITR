@@ -388,42 +388,6 @@ TEST_CASE( "Complex Boris Motion" )
     PSEt[ 0 ] = e_field_y;
 
 
-    /* create boris operator */
-    move_boris boris( particleArray,
-        dt,
-        boundaries.data(),
-        nLines,
-        nR_Bfield,
-        nZ_Bfield,
-        bfieldGridr.data(),
-        bfieldGridz.data(),
-        br.data(),
-        bz.data(),
-        by.data(),
-        nR_PreSheathEfield,
-        nY_PreSheathEfield,
-        nZ_PreSheathEfield,
-        &preSheathEGridr.front(),
-        &preSheathEGridy.front(),
-        &preSheathEGridz.front(),
-        &PSEr.front(),
-        &PSEz.front(),
-        &PSEt.front(),
-        nR_closeGeom_sheath,
-        nY_closeGeom_sheath,
-        nZ_closeGeom_sheath,
-        n_closeGeomElements_sheath,
-        closeGeomGridr_sheath.data(),
-        &closeGeomGridy_sheath.front(),
-        &closeGeomGridz_sheath.front(),
-        &closeGeom_sheath.front(),
-        gitr_flags,
-        sheath_efield,
-        presheath_efield,
-        biased_surface,
-        geom_hash_sheath,
-        use_3d_geom,
-        cylsymm );
 
     /* time loop */
     boris_data_broker data_broker( particleArray, 
