@@ -185,9 +185,13 @@ class flags
   int sort = -1;
   int adaptive_dt = -1;
   int surface_potential = -1;
+  int particle_diagnostics = -1;
   
   flags( libconfig_string_query const &query_metadata )
   {
+    std::string particle_diagnostics_str = "USE_PARTICLE_DIAGNOSTICS";
+    query_metadata( module_name + "." + particle_diagnostics_str, particle_diagnostics );
+
     std::string ionization_str = "USE_IONIZATION";
     query_metadata( module_name + "." + ionization_str, ionization );
 
