@@ -10,13 +10,7 @@
 #include <iostream>
 #include <iomanip>
 
-/* Captain! */
-// pass in vectors for everything
-// if cuda mode, cudamalloc. else unique_ptr is used for memory backing
-// optimized versions can simply be switched on dimensions
-// test code refactoring: 
-
-template< typename T >
+template< typename T, int N >
 class tensor
 {
   public:
@@ -41,19 +35,19 @@ class tensor
 
   T *data;
 
-  // these need to be on the device
+  // these need to be on the device?
   int dims[ n_dims_arbitrary_max ];
 
   int offset_factors[ n_dims_arbitrary_max ];
 };
 
-template< typename T >
+template< typename T, int N >
 int const *
-tensor< T >::get_dims() { return dims; }
+tensor< T, N >::get_dims() { return dims; }
 
 /* leading dimension comes first: zyx order */
-template< typename T >
-tensor< T >::tensor( T *data, int const *dims_init, int n_dims )
+template< typename T, int N >
+tensor< T, N >::tensor( T *data, int const *dims_init, int n_dims )
   :
   data( data ),
   n_dims( n_dims )
@@ -73,8 +67,8 @@ tensor< T >::tensor( T *data, int const *dims_init, int n_dims )
 
 /* leading dimension comes first, zyx access */
 /* untested */
-template< typename T >
-T tensor< T >::get( int *coordinates )
+template< typename T, int N >
+T tensor< T, N >::get( int *coordinates )
 {
   int offset = 0;
 
@@ -88,8 +82,8 @@ T tensor< T >::get( int *coordinates )
 
 /* untested */
 /* leading dimension comes first, zyx access */
-template< typename T >
-void tensor< T >::set( T val, int *coordinates )
+template< typename T, int N >
+void tensor< T, N >::set( T val, int *coordinates )
 {
   int offset = 0;
 
@@ -125,8 +119,8 @@ class dummy
 /* dims: zyx order, n data points in each dimension including endpoints */
 /* offset_factors: zyx strides, rename to stride instead of offset_factors */
 /* data: row-major data, strided according to offset_factors */
-template< typename T >
-class interpolated_field : public tensor< T >
+template< typename T, int N >
+class interpolated_field : public tensor< T, N >
 {
   public:
 
@@ -137,7 +131,7 @@ class interpolated_field : public tensor< T >
                         T const *min_range_init, // zyx order, size N
                         int n_dims_init ) // template parameter int N
       :
-      tensor< T >( data, dims, n_dims_init )
+      tensor< T, N >( data, dims, n_dims_init )
     { 
       data_size = 1;
 
@@ -162,11 +156,11 @@ class interpolated_field : public tensor< T >
     T interpolate_hypercube( T *hypercube,
                              T const *coordinates );
 
-    T max_range[ tensor< T >::n_dims_arbitrary_max ];
+    T max_range[ tensor< T, N >::n_dims_arbitrary_max ];
 
-    T min_range[ tensor< T >::n_dims_arbitrary_max ];
+    T min_range[ tensor< T, N >::n_dims_arbitrary_max ];
 
-    T spacing[ tensor< T >::n_dims_arbitrary_max ];
+    T spacing[ tensor< T, N >::n_dims_arbitrary_max ];
 
     int data_size;
 };
@@ -184,8 +178,8 @@ dims:
 
 */
 
-template< typename T >
-T interpolated_field< T >::interpolate_hypercube( T *hypercube,
+template< typename T, int N >
+T interpolated_field< T, N >::interpolate_hypercube( T *hypercube,
                                                   T const *coordinates )
 {
   /* the "upper" and "lower" fractions for each dimension */
@@ -274,8 +268,8 @@ max_range:
 returns: n-dimensional hypercube in a flattened array of 2^n vertices
 
 */
-template< typename T >
-void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercube )
+template< typename T, int N >
+void interpolated_field< T, N >::fetch_hypercube( T const *coordinates, T *hypercube )
 {
   /* find the index of the first vertex in the hypercube */
   int corner_vertex_index = 0;
@@ -323,8 +317,8 @@ void interpolated_field< T >::fetch_hypercube( T const *coordinates, T *hypercub
   }
 }
 
-template< typename T >
-T interpolated_field< T >::operator()( T const *coordinates )
+template< typename T, int N >
+T interpolated_field< T, N >::operator()( T const *coordinates )
 {
   if( data_size == 1 ) return this->data[ 0 ];
 
@@ -336,3 +330,27 @@ T interpolated_field< T >::operator()( T const *coordinates )
 
   return interpolated_value;
 }
+
+// Captain! template specializations for 3d are below!
+// you need to add a template parameter for the dimensionality to the class above,
+// verify that it is still working, then add the 3d case
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

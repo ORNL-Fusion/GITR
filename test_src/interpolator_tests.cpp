@@ -196,7 +196,7 @@ TEST_CASE( "multi-dimensional interpolation" )
                                     hypercube_lattice_coordinates,
                                     hypercube_in );
 
-    class interpolated_field< double >
+    class interpolated_field< double, 3 >
     field( lattice.data(), d_len.data(), max_values.data(), min_values.data(), dimensions );
     /* Create the hypercube. What will own the pointers? Once this is done, you
        have all the pieces I think. Then you just need to prepare GITR for compiling and
@@ -204,6 +204,8 @@ TEST_CASE( "multi-dimensional interpolation" )
        sure that you have working containers */
     std::vector< double > hypercube_out( 1 << dimensions );
 
+    /* Captain! Put the dimensionality here instead, in the function instead of the top
+       level. Then, the function can multiplex to the proper specialty? */
     field.fetch_hypercube( enclosed.data(), hypercube_out.data() );
 
     REQUIRE( hypercube_in == hypercube_out );
@@ -431,7 +433,6 @@ TEST_CASE( "multi-dimensional interpolation" )
     double domain_start = -3.5;
     double domain_end = 3.5;
 
-    // Captain! Top level loop should be over this 1 to 4 or something
     int const n_dims = 3;
 
     std::vector< int > n_grid_points_bank;
@@ -502,7 +503,6 @@ TEST_CASE( "multi-dimensional interpolation" )
             i );
       }
 
-      // Captain! Remove!
       mean_diff.push_back( output.get_mean_difference() );
       legacy_mean_diff.push_back( output.get_mean_legacy_difference() );
 
@@ -521,7 +521,6 @@ TEST_CASE( "multi-dimensional interpolation" )
                 << legacy_mean_diff[ i ] << std::endl;
     }
 
-    /* Captain! Require the final problem to check tolerance */
     REQUIRE( false );
 
   }

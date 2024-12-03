@@ -46,7 +46,7 @@ class populated_lattice
 
   std::unique_ptr< double[] > lattice_ptr;
 
-  interpolated_field< double > ifield;
+  interpolated_field< double, 3 > ifield;
 };
 
 class output_builder
