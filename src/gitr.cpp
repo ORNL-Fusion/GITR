@@ -79,7 +79,8 @@ typedef float gitr_precision;
 netCDF::NcType netcdf_precision = netCDF::ncFloat;
 #endif
 
-int main(int argc, char **argv, char **envp) {
+int main(int argc, char **argv, char **envp) 
+{
 
   std::string file_name = "input/gitrInput.cfg";
 
@@ -110,7 +111,6 @@ int main(int argc, char **argv, char **envp) {
   } else {
     printf("Directory 'output' already exists.\n");
   }
-  // Captain! end
 
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
