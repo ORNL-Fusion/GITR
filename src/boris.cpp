@@ -80,7 +80,7 @@ gitr_precision* datat, int cylsymm ) {
    gitr_precision Ar = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, cylsymm );
    gitr_precision At = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, cylsymm );
 
-   /* Captain! new code begin */
+   /* Captain! new code begin - this needs to be gotten rid of... */
    long long unsigned int dims[ 2 ] = { nz, nx };
    double min_range_init[ 2 ] = { gridz[0], gridx[0] };
    double max_range_init[ 2 ] = { gridz[ dims[0] - 1 ], gridx[ dims[ 1 ] - 1 ] };
