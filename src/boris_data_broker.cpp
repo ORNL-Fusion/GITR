@@ -311,13 +311,7 @@ std::vector< double > boris_data_broker_0::run_1()
       &closeGeomGridy_sheath.front(),
       &closeGeomGridz_sheath.front(),
       &closeGeom_sheath.front(),
-      f,
-      sheath_efield,
-      presheath_efield,
-      biased_surface,
-      geom_hash_sheath,
-      use_3d_geom,
-      cylsymm );
+      f );
 
   // time loop
   for (int tt = 0; tt < nT; tt++)
@@ -379,12 +373,6 @@ boris_data_broker::boris_data_broker( Particles *particleArray,
     int n_timesteps,
     double dt,
     class flags &f_init,
-    int sheath_efield,
-    int presheath_efield,
-    int biased_surface,
-    int geom_hash_sheath,
-    int use_3d_geom,
-    int cylsymm,
     double b_field_x,
     double b_field_y,
     double b_field_z,
@@ -457,13 +445,7 @@ n_timesteps( n_timesteps ),
       &closeGeomGridy_sheath.front(),
       &closeGeomGridz_sheath.front(),
       &closeGeom_sheath.front(),
-      f,
-      sheath_efield,
-      presheath_efield,
-      biased_surface,
-      geom_hash_sheath,
-      use_3d_geom,
-      cylsymm )
+      f )
 {
   /* uniform bfield */
   br[ 0 ] = b_field_x;
