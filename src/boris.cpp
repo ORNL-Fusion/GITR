@@ -869,13 +869,8 @@ void move_boris::operator()(std::size_t indx)
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
                   biased_surface, use_3d_geom, geom_hash_sheath, cylsymm, f_psi  );
-      /* Captain! */
-      if (gitr_flags->USE_SHEATH_DENSITY != f.sheath_density )
-      {
-        std::exit( 5 );
-      }
 
-      if (gitr_flags->USE_SHEATH_DENSITY)
+      if( f.sheath_density )
       {
         particlesPointer->f_psi[indx] = f_psi;
       }
@@ -968,13 +963,7 @@ void move_boris::operator()(std::size_t indx)
   ////printf("c_vpxBxyz %.16e %.16e %.16e \n",c_vpxB[0], c_vpxB[1], c_vpxB[2]);
   //}
 	       
-    // Captain!
-    if (gitr_flags->USE_ADAPTIVE_DT != f.adaptive_dt )
-    {
-      std::exit( 6 );
-    }
-    
-  if(gitr_flags->USE_ADAPTIVE_DT)
+  if(f.adaptive_dt)
   {
     vectorAssign(v[0],v[1],v[2],v_dt);
     vMag_dt = vectorNorm(v_dt);
