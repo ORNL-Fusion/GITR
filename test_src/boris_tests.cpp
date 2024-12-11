@@ -301,6 +301,7 @@ TEST_CASE( "Complex Boris Motion" )
                                    n_timesteps,
                                    dt,
                                    gitr_flags,
+                                   f,
                                    sheath_efield,
                                    presheath_efield,
                                    biased_surface,

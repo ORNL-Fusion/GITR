@@ -17,6 +17,7 @@
 #include "flags.hpp"
 #include <algorithm>
 #include "interpolator.h"
+#include "config_interface.h"
 
 #if USE_DOUBLE
 typedef double gitr_precision;
@@ -113,6 +114,7 @@ struct move_boris {
     gitr_precision* closeGeomGridz_sheath;
     int* closeGeom_sheath; 
     Flags* gitr_flags;
+    flags f;
     gitr_precision max_dt;
 
     const gitr_precision span;
@@ -156,6 +158,7 @@ struct move_boris {
             gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, 
             int *_closeGeom, 
             Flags* _gitr_flags, 
+            flags &f_init,
             int sheath_efield_, int presheath_efield_,
             int biased_surface_,
             int geom_hash_sheath_,

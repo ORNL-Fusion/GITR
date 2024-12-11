@@ -2,7 +2,6 @@
 #include <iostream>
 #include <thrust/execution_policy.h>
 #include <thrust/iterator/counting_iterator.h>
-#include "config_interface.h"
 #include "test_data_filepath.hpp"
 #include "utils.h"
 #include "flags.hpp"
@@ -119,7 +118,6 @@ std::vector< double > boris_data_broker_0::run_2()
 
   std::cout << "Efield " << thisE[0] << " " << thisE[1] << " " << thisE[2] << std::endl; 
 
-  /* Captain! This is horrible - must be copied */
   return gitrE;
 }
 
@@ -169,6 +167,10 @@ std::vector< double > boris_data_broker_0::run_1()
   importLibConfig(cfg_geom, BORIS_TEST_FILE);
 
   auto gitr_flags = new Flags( cfg_geom );
+
+  // Captain! replace above with below:
+  class libconfig_string_query query_metadata( BORIS_TEST_FILE );
+  class flags f( query_metadata );
 
   // create a particle
   auto particleArray =
@@ -312,6 +314,7 @@ std::vector< double > boris_data_broker_0::run_1()
       &closeGeomGridz_sheath.front(),
       &closeGeom_sheath.front(),
       gitr_flags,
+      f,
       sheath_efield,
       presheath_efield,
       biased_surface,
@@ -344,7 +347,6 @@ std::vector< double > boris_data_broker_0::run_1()
   return final_position;
 }
 
-/* Captain!!! Begin here */
 void boris_data_broker::run_boris()
 {
   thrust::counting_iterator<std::size_t> particle_iterator_start(0);
@@ -380,6 +382,7 @@ boris_data_broker::boris_data_broker( Particles *particleArray,
     int n_timesteps,
     double dt,
     Flags *flags,
+    class flags &f_init,
     int sheath_efield,
     int presheath_efield,
     int biased_surface,
@@ -403,6 +406,7 @@ n_timesteps( n_timesteps ),
   pos_z_test( n_timesteps ),
   dt( dt ),
   flags( flags ),
+  f( f_init ),
   particleArray( particleArray ),
   num_particles( num_particles ),
   nR_closeGeom(nHashes, 0),
@@ -430,7 +434,7 @@ n_timesteps( n_timesteps ),
   br(n_Bfield),
   by(n_Bfield),
   bz(n_Bfield),
-  boris( particleArray,
+  boris( particleArray, // Captain! boris is initialized here!
       dt,
       boundaries.data(),
       nLines,
@@ -459,6 +463,7 @@ n_timesteps( n_timesteps ),
       &closeGeomGridz_sheath.front(),
       &closeGeom_sheath.front(),
       flags,
+      f,
       sheath_efield,
       presheath_efield,
       biased_surface,
@@ -478,7 +483,6 @@ n_timesteps( n_timesteps ),
   PSEz[ 0 ] = e_field_z;
   PSEt[ 0 ] = e_field_y;
 
-  /* Captain! This should be deleted */
   preSheathEGridr[ 0 ] = 0;
   preSheathEGridr[ 1 ] = -1;
   preSheathEGridy[ 0 ] = 0;
