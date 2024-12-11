@@ -123,6 +123,7 @@ std::vector< double > boris_data_broker_0::run_2()
 
 std::vector< double > boris_data_broker_0::run_1()
 {
+  // Captain! make sure these are consistent with the input file!
   int const sheath_efield = 0;
   int const presheath_efield = 1;
   int const biased_surface = 0;
@@ -164,10 +165,9 @@ std::vector< double > boris_data_broker_0::run_1()
 
   cfg_geom.setAutoConvert(true);
 
-  importLibConfig(cfg_geom, BORIS_TEST_FILE);
+  importLibConfig(cfg_geom, BORIS_TEST_FILE_2);
 
-  // Captain! replace above with below:
-  class libconfig_string_query query_metadata( BORIS_TEST_FILE );
+  class libconfig_string_query query_metadata( BORIS_TEST_FILE_2 );
   class flags f( query_metadata );
 
   // create a particle

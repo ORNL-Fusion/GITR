@@ -271,10 +271,10 @@ TEST_CASE( "Complex Boris Motion" )
 
     cfg_geom.setAutoConvert(true);
 
-    importLibConfig(cfg_geom, BORIS_TEST_FILE);
+    importLibConfig(cfg_geom, BORIS_TEST_FILE_0);
 
     // Captain! replace above with below:
-    class libconfig_string_query query_metadata( BORIS_TEST_FILE );
+    class libconfig_string_query query_metadata( BORIS_TEST_FILE_0 );
     class flags f( query_metadata );
 
     /* create a particle */

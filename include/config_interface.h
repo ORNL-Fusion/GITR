@@ -187,6 +187,7 @@ class flags
   int surface_potential = -1;
   int particle_diagnostics = 0;
   int sheath_density = 0;
+  int presheath_efield = 1;
   
   flags( libconfig_string_query const &query_metadata )
   {

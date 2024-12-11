@@ -36,8 +36,11 @@ set( CROSS_FIELD_GEOM_FILE ${destination_path} )
 generate_testing_file( "test_data/cross_field_geometry2.cfg" )
 set( CROSS_FIELD_GEOM_FILE_1 ${destination_path} )
 
-generate_testing_file( "test_data/boris_config.cfg" )
-set( BORIS_TEST_FILE ${destination_path} )
+generate_testing_file( "test_data/boris_config_2.cfg" )
+set( BORIS_TEST_FILE_2 ${destination_path} )
+
+generate_testing_file( "test_data/boris_config_0.cfg" )
+set( BORIS_TEST_FILE_0 ${destination_path} )
 
 generate_testing_file( "test_data/file.cfg" )
 set( DATA_TYPES_TEST_FILE ${destination_path} )

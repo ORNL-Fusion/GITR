@@ -802,12 +802,12 @@ move_boris::move_boris(
         nLines(_nLines),
         magneticForce{0.0, 0.0, 0.0},
         electricForce{0.0, 0.0, 0.0},
-        sheath_efield( sheath_efield_ ),
-        presheath_efield( presheath_efield_ ),
-        biased_surface( biased_surface_ ),
-        geom_hash_sheath( geom_hash_sheath_ ),
-        use_3d_geom( use_3d_geom_ ),
-        cylsymm( cylsymm_ ),
+        sheath_efield( f.sheath_efield ),
+        presheath_efield( f.presheath_efield ),
+        biased_surface( BIASED_SURFACE ),
+        geom_hash_sheath( f.geom_hash_sheath ),
+        use_3d_geom( f.use_3d_geom ),
+        cylsymm( f.cylsymm ),
         dum( EfieldZDevicePointer, 2 )
         {}
         /*
