@@ -4148,7 +4148,7 @@ if( efield_interp == 1 )
       nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
       n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-      &closeGeom_sheath.front(),gitr_flags, f, sheath_efield, presheath_efield, biased_surface,
+      &closeGeom_sheath.front(),f, sheath_efield, presheath_efield, biased_surface,
       geom_hash_sheath,
       use_3d_geom,
       cylsymm,

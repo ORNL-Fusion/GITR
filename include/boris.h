@@ -157,7 +157,6 @@ struct move_boris {
             int _n_closeGeomElements, gitr_precision *_closeGeomGridr,
             gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, 
             int *_closeGeom, 
-            Flags* _gitr_flags, 
             flags &f_init,
             int sheath_efield_, int presheath_efield_,
             int biased_surface_,
