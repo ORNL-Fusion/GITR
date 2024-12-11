@@ -158,11 +158,6 @@ struct move_boris {
             gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, 
             int *_closeGeom, 
             flags &f_init,
-            int sheath_efield_, int presheath_efield_,
-            int biased_surface_,
-            int geom_hash_sheath_,
-            int use_3d_geom_,
-            int cylsymm_,
             gitr_precision _max_dt = 1.0e5);
 
     CUDA_CALLABLE_MEMBER    
