@@ -273,8 +273,6 @@ TEST_CASE( "Complex Boris Motion" )
 
     importLibConfig(cfg_geom, BORIS_TEST_FILE);
 
-    auto gitr_flags = new Flags( cfg_geom );
-
     // Captain! replace above with below:
     class libconfig_string_query query_metadata( BORIS_TEST_FILE );
     class flags f( query_metadata );
@@ -300,7 +298,6 @@ TEST_CASE( "Complex Boris Motion" )
                                    num_particles,
                                    n_timesteps,
                                    dt,
-                                   gitr_flags,
                                    f,
                                    sheath_efield,
                                    presheath_efield,

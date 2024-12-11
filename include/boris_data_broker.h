@@ -27,7 +27,6 @@ class boris_data_broker
                      int num_particles,
                      int n_timesteps,
                      double dt,
-                     Flags *flags,
                      class flags &f_init,
                      int sheath_efield,
                      int presheath_efield,
@@ -62,7 +61,6 @@ class boris_data_broker
 
   double dt;
 
-  Flags *flags;
   class flags &f;
 
   /* Captain! Are these allocated on device? */

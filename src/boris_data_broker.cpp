@@ -166,8 +166,6 @@ std::vector< double > boris_data_broker_0::run_1()
 
   importLibConfig(cfg_geom, BORIS_TEST_FILE);
 
-  auto gitr_flags = new Flags( cfg_geom );
-
   // Captain! replace above with below:
   class libconfig_string_query query_metadata( BORIS_TEST_FILE );
   class flags f( query_metadata );
@@ -313,7 +311,6 @@ std::vector< double > boris_data_broker_0::run_1()
       &closeGeomGridy_sheath.front(),
       &closeGeomGridz_sheath.front(),
       &closeGeom_sheath.front(),
-      gitr_flags,
       f,
       sheath_efield,
       presheath_efield,
@@ -381,7 +378,6 @@ boris_data_broker::boris_data_broker( Particles *particleArray,
     int num_particles,
     int n_timesteps,
     double dt,
-    Flags *flags,
     class flags &f_init,
     int sheath_efield,
     int presheath_efield,
@@ -405,7 +401,6 @@ n_timesteps( n_timesteps ),
   pos_y_test( n_timesteps ),
   pos_z_test( n_timesteps ),
   dt( dt ),
-  flags( flags ),
   f( f_init ),
   particleArray( particleArray ),
   num_particles( num_particles ),
@@ -462,7 +457,6 @@ n_timesteps( n_timesteps ),
       &closeGeomGridy_sheath.front(),
       &closeGeomGridz_sheath.front(),
       &closeGeom_sheath.front(),
-      flags,
       f,
       sheath_efield,
       presheath_efield,
