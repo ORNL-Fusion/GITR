@@ -275,6 +275,10 @@ TEST_CASE( "Complex Boris Motion" )
 
     auto gitr_flags = new Flags( cfg_geom );
 
+    // Captain! replace above with below:
+    class libconfig_string_query query_metadata( BORIS_TEST_FILE );
+    class flags f( query_metadata );
+
     /* create a particle */
     auto particleArray =
       new Particles( num_particles, deprecated_constructor_argument, cfg_geom );

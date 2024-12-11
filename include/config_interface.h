@@ -185,10 +185,14 @@ class flags
   int sort = -1;
   int adaptive_dt = -1;
   int surface_potential = -1;
-  int particle_diagnostics = -1;
+  int particle_diagnostics = 0;
+  int sheath_density = 0;
   
   flags( libconfig_string_query const &query_metadata )
   {
+    std::string sheath_density_str = "USE_SHEATH_DENSITY";
+    query_metadata( module_name + "." + sheath_density_str, sheath_density );
+
     std::string particle_diagnostics_str = "USE_PARTICLE_DIAGNOSTICS";
     query_metadata( module_name + "." + particle_diagnostics_str, particle_diagnostics );
 

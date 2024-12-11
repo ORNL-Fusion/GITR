@@ -25,6 +25,7 @@ target_link_libraries( config_interface
 target_link_libraries( boris_data_broker 
                        boris 
                        flags 
+                       config_interface
                        )
 
 target_link_libraries( cross_field_diffusion_broker
