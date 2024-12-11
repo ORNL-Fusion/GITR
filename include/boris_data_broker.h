@@ -3,6 +3,7 @@
 #include "Particles.h"
 #include "flags.hpp"
 #include <vector>
+#include "config_interface.h"
 
 class boris_data_broker_0
 {
@@ -27,6 +28,7 @@ class boris_data_broker
                      int n_timesteps,
                      double dt,
                      Flags *flags,
+                     class flags &f_init,
                      int sheath_efield,
                      int presheath_efield,
                      int biased_surface,
@@ -61,6 +63,7 @@ class boris_data_broker
   double dt;
 
   Flags *flags;
+  class flags &f;
 
   /* Captain! Are these allocated on device? */
   /* hashing dummies */
