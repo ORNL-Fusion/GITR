@@ -252,6 +252,10 @@ double cross_field_diffusion_broker::run_1()
 
 double cross_field_diffusion_broker::run()
 {
+
+  class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
+  class flags f_in( query_metadata );
+
   int const flux_ea = 1;
   int const surface_model = 1;
   int const bfield_interp = 0;
@@ -272,8 +276,6 @@ double cross_field_diffusion_broker::run()
   cfg_geom.setAutoConvert(true);
 
   importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE);
-
-  class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
 
   auto gitr_flags = new Flags( cfg_geom );
 
