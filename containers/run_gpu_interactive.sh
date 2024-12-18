@@ -1,6 +1,8 @@
 docker run -i -t --rm \
 --name gitr_interactive \
 --runtime=nvidia \
+--cap-add=SYS_PTRACE \
+--security-opt seccomp=unconfined \
 --gpus all \
 -v $(pwd):/host \
 --user $(id -u):$(id -g) \
