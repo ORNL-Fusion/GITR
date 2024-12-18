@@ -50,8 +50,6 @@ run python3 -m  pip install -r requirements.txt
 
 # as a final step volume map the host directory
 
-#run apt install -y gdb
-
 run wget https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.29.3.tar.gz
 run tar -xvzf cmake-3.29.3.tar.gz
 workdir /cmake-3.29.3
@@ -64,7 +62,7 @@ volume /host
 
 workdir /host
 
-
+run apt-get update && apt-get install -y gdb/jammy-updates
 
 
 
