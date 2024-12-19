@@ -254,8 +254,18 @@ double cross_field_diffusion_broker::run()
 {
 
   class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
-  class flags f_in( query_metadata );
+  class flags f_in( query );
+  int const flux_ea = f_in.flux_ea;
+  int const surface_model = f_in.surface_model;
+  int const bfield_interp = f_in.bfield_interp;
+  int const use_3d_geom = f_in.use_3d_geom;
+  int const geom_hash = f_in.geom_hash;
+  int const spectroscopy = f_in.spectroscopy;
+  int const surface_potential = f_in.surface_potential;
+  int const perp_diffusion = f_in.perp_diffusion;
+  int const cylsymm = f_in.cylsymm;
 
+  /*
   int const flux_ea = 1;
   int const surface_model = 1;
   int const bfield_interp = 0;
@@ -265,6 +275,7 @@ double cross_field_diffusion_broker::run()
   int const surface_potential = 0;
   int const perp_diffusion = 1;
   int const cylsymm = 0;
+  */
 
   /* timesteps */
   int nT = 500000;
@@ -353,7 +364,6 @@ double cross_field_diffusion_broker::run()
     std::cout << "Spectroscopy net imported" << std::endl;
   }
 
-  /* Captain! New block of cuda stuff */
   sim::Array<gitr_precision> gridX_bins(net_nX), gridY_bins(1), gridZ_bins(net_nZ);
 
   sim::Array<gitr_precision> gridX_midpoints(net_nX-1);
@@ -384,7 +394,6 @@ double cross_field_diffusion_broker::run()
 
   }
 
-  /* Ahoy, Captain! New variables! */
   /* dividing doubles and using the result as a size is bad practice but this is how
      it is done in gitr.cpp so I am just continuing the convention */
   sim::Array<gitr_precision> net_Bins_vx( net_Bins_size/(nBins + 1), 0.0 );
