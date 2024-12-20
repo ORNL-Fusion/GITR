@@ -17,6 +17,19 @@ cross_field_diffusion_broker::cross_field_diffusion_broker()
 
 double cross_field_diffusion_broker::run_1()
 {
+  class libconfig_string_query query( CROSS_FIELD_GEOM_FILE_1 );
+  class flags f_in( query );
+
+  int const flux_ea = f_in.flux_ea;
+  int const surface_model = f_in.surface_model;
+  int const bfield_interp = f_in.bfield_interp;
+  int const use_3d_geom = f_in.use_3d_geom;
+  int const geom_hash = f_in.geom_hash;
+  int const spectroscopy = f_in.spectroscopy;
+  int const surface_potential = f_in.surface_potential;
+  int const perp_diffusion = f_in.perp_diffusion;
+
+  /*
   int const flux_ea = 1;
   int const surface_model = 1;
   int const bfield_interp = 0;
@@ -25,6 +38,8 @@ double cross_field_diffusion_broker::run_1()
   int const spectroscopy = 2;
   int const surface_potential = 0;
   int const perp_diffusion = 2;
+  */
+
   // timesteps
   int nT = 200000;
   int const cylsymm = 1;
@@ -131,7 +146,6 @@ double cross_field_diffusion_broker::run_1()
     gridZ_bins[i] = netZ0 + i * 1.0 / (net_nZ - 1) * (netZ1 - netZ0);
   }
 
-  /* Ahoy, Captain! New variables! */
   /* dividing doubles and using the result as a size is bad practice but this is how
      it is done in gitr.cpp so I am just continuing the convention */
   sim::Array<gitr_precision> net_Bins_vx( net_Bins_size/(nBins + 1), 0.0 );
@@ -176,7 +190,7 @@ double cross_field_diffusion_broker::run_1()
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
 
-  crossFieldDiffusion crossFieldDiffusion0( gitr_flags,
+  crossFieldDiffusion crossFieldDiffusion0( f_in,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
       &bz.front(), &by.front(), perp_diffusion, cylsymm );
@@ -255,6 +269,7 @@ double cross_field_diffusion_broker::run()
 
   class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
   class flags f_in( query );
+
   int const flux_ea = f_in.flux_ea;
   int const surface_model = f_in.surface_model;
   int const bfield_interp = f_in.bfield_interp;
@@ -303,7 +318,6 @@ double cross_field_diffusion_broker::run()
 
   int nP = impurity[ "nP" ];
 
-  /* Captain! This is the first variable to be converted */
   sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
   int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
@@ -420,13 +434,10 @@ double cross_field_diffusion_broker::run()
   thrust::for_each(thrust::device, particle_iterator0, particle_iterator_end,
       curandInitialize<rand_type>(&state1.front(), true));
 
-  /* Captain! end block of cuda stuff */
-
   gitr_precision perpDiffusionCoeff = 0.0;
   cfg_geom.lookupValue("backgroundPlasmaProfiles.Diffusion.Dperp",
       perpDiffusionCoeff);
 
-  /* Captain! begin cuda stuff */
   int nR_Bfield = 1, nZ_Bfield = 1, n_Bfield = 1;
 
   sim::Array<gitr_precision> br(n_Bfield), by(n_Bfield), bz(n_Bfield);
@@ -441,12 +452,10 @@ double cross_field_diffusion_broker::run()
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
 
-  crossFieldDiffusion crossFieldDiffusion0( gitr_flags,
+  crossFieldDiffusion crossFieldDiffusion0( f_in,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
       &bz.front(), &by.front(), perp_diffusion, cylsymm );
-
-  /* Captain! end cuda stuff */
 
   // half-side length
   double s = 0.2;
@@ -457,7 +466,6 @@ double cross_field_diffusion_broker::run()
     gold[x_bin] = 0.5/perpDiffusionCoeff*(s-gridX_midpoints[x_bin]);
   }
 
-  /* Captain! This entire loop below needs to be moved to cuda area */
   for (int tt = 0; tt < nT; tt++)
   {
     if(tt%(nT/10) == 0) std::cout << 100.0f*tt/nT << " % done" << std::endl;
@@ -480,7 +488,6 @@ double cross_field_diffusion_broker::run()
         geometry_check0 );
   }
 
-  /* Captain! This statistical measure needs to be moved to a separate function */
   /* examine histogram */
   /* output x */
   /* analytical equation we expect */
