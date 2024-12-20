@@ -3,7 +3,7 @@
 target_link_libraries( efield_interp libconfig_cxx libconfig_c )
 
 # link source targets
-target_link_libraries( ionize interpRateCoeff )
+target_link_libraries( ionize interpRateCoeff config_interface )
 
 target_link_libraries( interp2d thrust )
 
@@ -51,7 +51,7 @@ target_link_libraries( coulomb_data_broker
                        boris
                        fields )
 
-target_link_libraries( atomic_data_broker ionize interp2d utils flags )
+target_link_libraries( atomic_data_broker ionize interp2d utils flags config_interface )
 
 if( OpenMP_CXX_FOUND )
 

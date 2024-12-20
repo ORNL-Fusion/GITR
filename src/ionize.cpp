@@ -48,7 +48,7 @@ double get_rand_double(std::mt19937 *state,int indx)
 }
 
 template< typename T >
-ionize< T >::ionize(Flags *_flags,
+ionize< T >::ionize(Flags *_flags, class flags &f_init,
           Particles *_particlesPointer,
           gitr_precision _dt,
           T *_state,
@@ -71,7 +71,7 @@ ionize< T >::ionize(Flags *_flags,
           int cylsymm_ )
       :
 
-        flags(_flags), particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
+        flags(_flags), f_config(f_init), particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
         nZ_Dens(_nZ_Dens), DensGridr(_DensGridr), DensGridz(_DensGridz),
         ne(_ne), nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr),
         TempGridz(_TempGridz), te(_te),
