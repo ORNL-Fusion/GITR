@@ -132,7 +132,7 @@ struct crossFieldDiffusion {
         int _nR_Bfield, int _nZ_Bfield,
         gitr_precision * _BfieldGridRDevicePointer,gitr_precision * _BfieldGridZDevicePointer,
         gitr_precision * _BfieldRDevicePointer,gitr_precision * _BfieldZDevicePointer,
-        gitr_precision * _BfieldTDevicePointer, int perp_diffusion_, int cylsymm_ )
+        gitr_precision * _BfieldTDevicePointer )
       : f_config(f_init), particlesPointer(_particlesPointer),
         dt(_dt),
         diffusionCoefficient(_diffusionCoefficient),
@@ -144,8 +144,8 @@ struct crossFieldDiffusion {
         BfieldZDevicePointer(_BfieldZDevicePointer),
         BfieldTDevicePointer(_BfieldTDevicePointer),
         state(_state),
-        perp_diffusion( perp_diffusion_ ),
-        cylsymm( cylsymm_ )
+        perp_diffusion( f_config.perp_diffusion ),
+        cylsymm( f_config.cylsymm )
         { }
 
 /* Monte Carlo solution to diffusion equation - we need this tested */
@@ -167,9 +167,6 @@ void operator()(std::size_t indx) const {
       gitr_precision norm;
       gitr_precision step;
       gitr_precision dt_step = dt;
-
-      // Captain! Test code for flag
-      if( f_config.adaptive_dt == -1 ) return;
 
       //if ( flags->USE_ADAPTIVE_DT ) 
       if ( f_config.adaptive_dt == 1 ) 

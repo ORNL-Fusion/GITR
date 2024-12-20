@@ -193,7 +193,7 @@ double cross_field_diffusion_broker::run_1()
   crossFieldDiffusion crossFieldDiffusion0( f_in,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front(), perp_diffusion, cylsymm );
+      &bz.front(), &by.front() );
 
   // half-side length
   double s = 0.2;
@@ -455,7 +455,7 @@ double cross_field_diffusion_broker::run()
   crossFieldDiffusion crossFieldDiffusion0( f_in,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front(), perp_diffusion, cylsymm );
+      &bz.front(), &by.front() );
 
   // half-side length
   double s = 0.2;
