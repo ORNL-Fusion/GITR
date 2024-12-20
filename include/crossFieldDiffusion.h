@@ -94,7 +94,7 @@ void legacy_code_block_0( Particles *particlesPointer,
 /* How do particles move perpendicular to the B field */
 struct crossFieldDiffusion {
     /* control flow */
-    Flags* flags;
+    flags f_config;
     /* particles we are operating on - changing their positions */
     Particles *particlesPointer;
     /* prior to time adaptivity dt was a constant, now it can adapt */
@@ -122,7 +122,7 @@ struct crossFieldDiffusion {
 
         int cylsymm;
 
-    crossFieldDiffusion(Flags* _flags, Particles *_particlesPointer, gitr_precision _dt,
+    crossFieldDiffusion(flags &f_init, Particles *_particlesPointer, gitr_precision _dt,
 #if __CUDACC__
         curandState *_state,
 #else
@@ -133,7 +133,7 @@ struct crossFieldDiffusion {
         gitr_precision * _BfieldGridRDevicePointer,gitr_precision * _BfieldGridZDevicePointer,
         gitr_precision * _BfieldRDevicePointer,gitr_precision * _BfieldZDevicePointer,
         gitr_precision * _BfieldTDevicePointer, int perp_diffusion_, int cylsymm_ )
-      : flags(_flags), particlesPointer(_particlesPointer),
+      : f_config(f_init), particlesPointer(_particlesPointer),
         dt(_dt),
         diffusionCoefficient(_diffusionCoefficient),
         nR_Bfield(_nR_Bfield),
@@ -168,7 +168,11 @@ void operator()(std::size_t indx) const {
       gitr_precision step;
       gitr_precision dt_step = dt;
 
-      if ( flags->USE_ADAPTIVE_DT ) 
+      // Captain! Test code for flag
+      if( f_config.adaptive_dt == -1 ) return;
+
+      //if ( flags->USE_ADAPTIVE_DT ) 
+      if ( f_config.adaptive_dt == 1 ) 
       {
         if(particlesPointer->advance[indx])
         {
@@ -215,7 +219,6 @@ void operator()(std::size_t indx) const {
       /* magnitude of spacial step for 1 particle? */
       /* m^2 / sec units for diffusionCoefficient */
       step = std::sqrt(4*diffusionCoefficient*dt_step);
-      /* Captain! Is an "else" even needed here? It doesn't appear to be so */
       if( perp_diffusion <= 1 )
       {
         legacy_code_block_0( particlesPointer, indx, B_unit, step, r3 );
@@ -313,12 +316,11 @@ void operator()(std::size_t indx) const {
     if(std::abs(denom) < 1.0e-8)
     {
 //#endif
-    /* Captain! Turn this into a function. Move stuff from the block into the comment then
+    /* Turn this into a function. Move stuff from the block into the comment then
        move it all and butcher the control flow. Define and call the lambda function here */
     //f( perpVector, particlesPointer, indx, B_unit, step )
     legacy_code_block_0( particlesPointer, indx, B_unit, step, r3 );
 
-  /* Captain! */
     }
 else
 {
