@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #endif
 
+#include <config_interface.h>
+
 #include "interpRateCoeff.hpp"
 #if USE_DOUBLE
 typedef double gitr_precision;
@@ -51,6 +53,7 @@ double get_rand_double(std::mt19937 *state,int indx);
 
 template <typename T=std::mt19937>
 struct ionize {
+  class flags f_config;
   Flags *flags;
   Particles *particlesPointer;
   int nR_Dens;
@@ -76,7 +79,7 @@ struct ionize {
   gitr_precision  * random_uniform_number;
   int cylsymm;
   
-  ionize(Flags *_flags, Particles *_particlesPointer, gitr_precision _dt,T *_state,
+  ionize(Flags *_flags, class flags &f_init, Particles *_particlesPointer, gitr_precision _dt,T *_state,
          int _nR_Dens, int _nZ_Dens, gitr_precision *_DensGridr, gitr_precision *_DensGridz,
          gitr_precision *_ne, int _nR_Temp, int _nZ_Temp, gitr_precision *_TempGridr,
          gitr_precision *_TempGridz, gitr_precision *_te, int _nTemperaturesIonize,

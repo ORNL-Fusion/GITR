@@ -10,12 +10,17 @@
 #include "test_data_filepath.hpp"
 #include "atomic_data_broker.h"
 
+#include "config_interface.h"
+
 atomic_data_broker::atomic_data_broker()
 {
 }
 
 std::vector< double > atomic_data_broker::run_2()
 {
+  libconfig_string_query query_metadata( FIELD_UNIT_TEST_FILE_0 );
+  flags f( query_metadata );
+
   int const cylsymm = 0;
   libconfig::Config cfg;
   cfg.setAutoConvert(true);
@@ -159,7 +164,7 @@ std::vector< double > atomic_data_broker::run_2()
   sim::Array<gitr_precision> dev_f(1,-1.0);
 
   ionize<rand_type> ionize0(
-      gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
+      gitr_flags,f,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
@@ -201,6 +206,9 @@ std::vector< double > atomic_data_broker::run_2()
 
 void atomic_data_broker::run_1()
 {
+  libconfig_string_query query_metadata( FIELD_UNIT_TEST_FILE_0 );
+  flags f( query_metadata );
+
   int const cylsymm = 0;
   int nParticles = 10;
   values.resize(nParticles,0.0);
@@ -338,7 +346,7 @@ void atomic_data_broker::run_1()
   sim::Array<gitr_precision> dev_f(1,-1.0);
 
   ionize<rand_type> ionize0(
-      gitr_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
+      gitr_flags,f,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
@@ -378,6 +386,9 @@ void atomic_data_broker::run_1()
 
 void atomic_data_broker::run()
 {
+  libconfig_string_query query_metadata( FIELD_UNIT_TEST_FILE_0 );
+  flags f( query_metadata );
+
   int const cylsymm = 0;
   int nParticles = 10;
   values.resize(nParticles,0.0);
@@ -509,7 +520,7 @@ void atomic_data_broker::run()
 
   // Ionize functor instance
   ionize<rand_type> ionize0(
-      gitr_flags,
+      gitr_flags, f,
       particleArray,
       dt,
       &state1.front(),
