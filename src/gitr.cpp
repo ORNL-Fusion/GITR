@@ -4198,7 +4198,7 @@ if( efield_interp == 1 )
   crossFieldDiffusion crossFieldDiffusion0( f,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
-      &bz.front(), &by.front(), perp_diffusion, cylsymm );
+      &bz.front(), &by.front() );
 
   /* Captain! ti/te used in coulombCollisions */
   coulombCollisions coulombCollisions0(
