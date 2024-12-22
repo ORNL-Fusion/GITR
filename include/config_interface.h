@@ -192,8 +192,8 @@ class flags
   int sheath_density = 0;
   int presheath_efield = 1;
   
-  // Captain! Turn all this into a generate_flags() function and replace the old options
-  CUDA_CALLABLE_MEMBER
+  // seems like CUDA_CALLABLE_MEMBER is not needed
+  //CUDA_CALLABLE_MEMBER
   flags( libconfig_string_query const &query_metadata )
   {
     std::string const module_name = "flags";
