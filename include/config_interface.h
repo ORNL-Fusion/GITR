@@ -14,6 +14,12 @@
 #include "ncDim.h"
 #include "libconfig.h++"
 
+#ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER __host__ __device__
+#else
+#define CUDA_CALLABLE_MEMBER
+#endif
+
 class netcdf_string_query
 {
   public:
@@ -36,7 +42,7 @@ class netcdf_string_query
 template< typename T >
 void netcdf_string_query::operator()( std::string const &query_key, T* query_value ) const
 {
-  std::cout << "Ahoy, Captain! Correct overload called for " << query_key << std::endl;
+  std::cout << "Ahoy, ! Correct overload called for " << query_key << std::endl;
 
   netCDF::NcVar ncvar;
 
@@ -116,7 +122,6 @@ void libconfig_string_query::operator()( std::string const query_key,
 
   else
   {
-    /* Captain! */
     throw 0;
     //throw not_an_array( query_key );
   }
@@ -158,8 +163,6 @@ class flags
 {
   public:
 
-  std::string const module_name = "flags";
-
   int ionization = -1;
   int perp_diffusion = -1;
   int coulomb_collisions = -1;
@@ -189,8 +192,12 @@ class flags
   int sheath_density = 0;
   int presheath_efield = 1;
   
+  // Captain! Turn all this into a generate_flags() function and replace the old options
+  CUDA_CALLABLE_MEMBER
   flags( libconfig_string_query const &query_metadata )
   {
+    std::string const module_name = "flags";
+
     std::string sheath_density_str = "USE_SHEATH_DENSITY";
     query_metadata( module_name + "." + sheath_density_str, sheath_density );
 
