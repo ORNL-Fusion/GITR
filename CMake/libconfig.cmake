@@ -1,11 +1,13 @@
 # find files
 
+#message( STATUS "libconfig_cxx_lib: libconfig++.${suffix}" )
+
 find_file( libconfig_cxx_lib
-           NAMES libconfig++.so 
+           NAMES libconfig++${suffix}
            HINTS ${LIBCONFIG_CXX_LIB_DIR} )
 
 find_file( libconfig_c_lib 
-           NAMES libconfig.so
+           NAMES libconfig${suffix}
            HINTS ${LIBCONFIG_C_LIB_DIR} )
 
 find_path( libconfig_c_headers 
