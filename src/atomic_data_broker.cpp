@@ -164,7 +164,7 @@ std::vector< double > atomic_data_broker::run_2()
   sim::Array<gitr_precision> dev_f(1,-1.0);
 
   ionize<rand_type> ionize0(
-      gitr_flags,f,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
+      f,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
@@ -346,7 +346,7 @@ void atomic_data_broker::run_1()
   sim::Array<gitr_precision> dev_f(1,-1.0);
 
   ionize<rand_type> ionize0(
-      gitr_flags,f,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
+      f,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
@@ -520,7 +520,7 @@ void atomic_data_broker::run()
 
   // Ionize functor instance
   ionize<rand_type> ionize0(
-      gitr_flags, f,
+      f,
       particleArray,
       dt,
       &state1.front(),
