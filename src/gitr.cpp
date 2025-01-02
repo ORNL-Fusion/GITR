@@ -4201,7 +4201,7 @@ if( efield_interp == 1 )
       &bz.front(), &by.front() );
 
   /* Captain! ti/te used in coulombCollisions */
-  coulombCollisions coulombCollisions0(
+  coulombCollisions coulombCollisions0( f,
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
       &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),
       &flowVr.front(), &flowVz.front(), &flowVt.front(), nR_Dens, nZ_Dens,

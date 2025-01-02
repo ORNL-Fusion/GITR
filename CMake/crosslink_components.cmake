@@ -49,6 +49,7 @@ target_link_libraries( coulomb_data_broker
                        netcdf_cxx
                        netcdf_c
                        boris
+                       config_interface
                        fields )
 
 target_link_libraries( atomic_data_broker ionize interp2d utils flags config_interface )
