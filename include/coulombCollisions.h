@@ -139,7 +139,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
     gitr_precision* BfieldGridR ,gitr_precision* BfieldGridZ ,
     gitr_precision* BfieldR ,gitr_precision* BfieldZ ,
     gitr_precision* BfieldT,gitr_precision &T_background,
-    int flowv_interp, int cylsymm, int field_aligned_values, bool use_sheath_density, gitr_precision f_psi )
+    int flowv_interp, int cylsymm, bool use_sheath_density, gitr_precision f_psi )
 {
   //int feenableexcept(FE_INVALID | FE_OVERFLOW); //enables trapping of the floating-point exceptions
   gitr_precision Q = 1.60217662e-19;
@@ -201,21 +201,9 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   }
   else if( flowv_interp < 3 )
   {
-  if( field_aligned_values > 0 )
-  {
-  interpFieldAlignedVector(&flowVelocity[0],x,y,z,
-                           nR_flowV,nZ_flowV,
-                           flowVGridr,flowVGridz,flowVr,
-                           flowVz,flowVt,nR_Bfield,nZ_Bfield,
-                           BfieldGridR,BfieldGridZ,BfieldR,
-                           BfieldZ,BfieldT, cylsymm );
-  }
-  else
-  {
   interp2dVector(&flowVelocity[0],x,y,z,
            nR_flowV,nZ_flowV,
            flowVGridr,flowVGridz,flowVr,flowVz,flowVt, cylsymm );
-  }
   }
   relativeVelocity[0] = vx - flowVelocity[0];
   relativeVelocity[1] = vy - flowVelocity[1];
@@ -387,7 +375,6 @@ struct coulombCollisions {
 
     int cylsymm;
 
-    int field_aligned_values;
     int coulomb_collisions;
 
     coulombCollisions(class flags &f_init, Particles *_particlesPointer,gitr_precision _dt, 
@@ -407,7 +394,7 @@ struct coulombCollisions {
                         gitr_precision * _BfieldGridR ,gitr_precision * _BfieldGridZ ,
                         gitr_precision * _BfieldR ,gitr_precision * _BfieldZ ,
                  gitr_precision * _BfieldT, Flags* _gitr_flags, int flowv_interp_,
-                 int cylsymm_, int field_aligned_values_ , int _coulomb_collisions)
+                 int cylsymm_, int _coulomb_collisions)
       : 
         f( f_init ),
         particlesPointer(_particlesPointer),
@@ -446,7 +433,6 @@ struct coulombCollisions {
         state(_state),
         flowv_interp( flowv_interp_ ),
         cylsymm( cylsymm_ ),
-        field_aligned_values( field_aligned_values_ ),
         coulomb_collisions(_coulomb_collisions)
 
         { }
@@ -671,22 +657,9 @@ void operator()(std::size_t indx) {
     }
     else if( flowv_interp < 3 )
     {
-    if( field_aligned_values > 0 )
-    {
-    interpFieldAlignedVector(&flowVelocity[0],
-                                 particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
-                                 nR_flowV,nZ_flowV,
-                                 flowVGridr,flowVGridz,flowVr,
-                                 flowVz,flowVt,nR_Bfield,nZ_Bfield,
-                                 BfieldGridR,BfieldGridZ,BfieldR,
-                                 BfieldZ,BfieldT, cylsymm );
-    }
-    else
-    {
     interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
                         flowVGridr,flowVGridz,flowVr,flowVz,flowVt, cylsymm );
-    }
     }
 
     relativeVelocity[0] = vx - flowVelocity[0];
@@ -729,7 +702,7 @@ void operator()(std::size_t indx) {
                              BfieldR,
                              BfieldZ,
                              BfieldT, T_background, flowv_interp, cylsymm,
-                             field_aligned_values,f.sheath_density,particlesPointer->f_psi[indx]  );
+                             f.sheath_density,particlesPointer->f_psi[indx]  );
 
     getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );
@@ -888,7 +861,7 @@ void operator()(std::size_t indx) {
                              BfieldR,
                              BfieldZ,
                              BfieldT, T_background, flowv_interp, cylsymm,
-                             field_aligned_values,f.sheath_density,particlesPointer->f_psi[indx]  );
+                             f.sheath_density,particlesPointer->f_psi[indx]  );
 
 
 //gamma1 = normrnd(0,1,nP,1);
