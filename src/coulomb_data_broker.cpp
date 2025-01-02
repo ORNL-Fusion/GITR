@@ -29,7 +29,6 @@ double coulomb_data_broker::run_3()
 
   int const flowv_interp = 0;
   int const cylsymm = 0;
-  int const field_aligned_values = 0;
 
   libconfig::Config cfg;
   cfg.setAutoConvert(true);
@@ -145,7 +144,7 @@ double coulomb_data_broker::run_3()
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
       &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags,
-      flowv_interp, cylsymm, field_aligned_values, coulomb_collisions );
+      flowv_interp, cylsymm, f.coulomb_collisions );
 
 
 typedef std::chrono::high_resolution_clock gitr_time;
@@ -177,7 +176,6 @@ for(int i=0; i<nT; i++)
       field_aligned_values );
   */
 
-    /* Ahoy, Captain! */
     double f_psi = 1.0;
     bool use_sheath_density = true;
     getSlowDownFrequencies(nu_friction, nu_deflection, nu_parallel, nu_energy,
@@ -198,7 +196,6 @@ for(int i=0; i<nT; i++)
                              BfieldR.data(),
                              BfieldZ.data(),
                              BfieldT.data(), T_background, flowv_interp, cylsymm,
-                             field_aligned_values,
                              use_sheath_density,
                              f_psi );
 
@@ -266,7 +263,6 @@ double coulomb_data_broker::run_2()
 
   int const flowv_interp = 0;
   int const cylsymm = 0;
-  int const field_aligned_values = 0;
   libconfig::Config cfg;
   cfg.setAutoConvert(true);
   std::string file = "../test/coulomb.cfg";
@@ -346,7 +342,7 @@ double coulomb_data_broker::run_2()
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
       &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags,
-      flowv_interp, cylsymm, field_aligned_values, coulomb_collisions );
+      flowv_interp, cylsymm, coulomb_collisions );
 
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
@@ -399,7 +395,6 @@ std::vector< double > coulomb_data_broker::run_1()
 
   int const flowv_interp = 0;
   int const cylsymm = 0;
-  int const field_aligned_values = 0;
   gitr_precision nu_friction = 0.0;
   gitr_precision nu_deflection = 0.0;
   gitr_precision nu_parallel = 0.0;
@@ -466,7 +461,6 @@ std::vector< double > coulomb_data_broker::run_1()
                              BfieldR.data(),
                              BfieldZ.data(),
                              BfieldT.data(), T_background, flowv_interp, cylsymm,
-                             field_aligned_values,
                              use_sheath_density,
                              f_psi );
 
@@ -492,7 +486,6 @@ std::vector< double > coulomb_data_broker::run()
 
   int const flowv_interp = 0;
   int const cylsymm = 0;
-  int const field_aligned_values = 0;
   gitr_precision nu_friction = 0.0;
   gitr_precision nu_deflection = 0.0;
   gitr_precision nu_parallel = 0.0;
@@ -567,7 +560,6 @@ std::vector< double > coulomb_data_broker::run()
                              BfieldR.data(),
                              BfieldZ.data(),
                              BfieldT.data(), T_background, flowv_interp, cylsymm,
-                             field_aligned_values,
                              use_sheath_density,
                              f_psi );
 

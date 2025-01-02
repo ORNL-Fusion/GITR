@@ -4209,7 +4209,7 @@ if( efield_interp == 1 )
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
       &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(),gitr_flags, flowv_interp,
-      cylsymm, field_aligned_values, coulomb_collisions );
+      cylsymm, coulomb_collisions );
 
   thermalForce thermalForce0(gitr_flags,
       particleArray, dt, background_amu, nR_gradT, nZ_gradT, gradTGridr.data(),
@@ -4391,20 +4391,10 @@ if( efield_interp == 1 )
   printf("Initialize time for node %i          is %6.3f (secs) \n", world_rank,
          fs1.count());
   gitr_precision testFlowVec[3] = {0.0};
-  if( field_aligned_values > 0 )
-  {
-  interpFieldAlignedVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV,
-                           nZ_flowV, flowVGridr.data(), flowVGridz.data(),
-                           flowVr.data(), flowVz.data(), flowVt.data(),
-                           nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-                           bfieldGridz.data(), br.data(), bz.data(), by.data(), cylsymm );
-  }
-  else
-  {
+
   interp2dVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV, nZ_flowV,
                  flowVGridr.data(), flowVGridz.data(), flowVr.data(),
                  flowVz.data(), flowVt.data(), cylsymm );
-  }
 
   gitr_precision leakZ = 0.0;
   if (world_rank == 0) {
