@@ -10,6 +10,7 @@
 #include <thrust/execution_policy.h>
 #include <fstream>
 #include "test_data_filepath.hpp"
+#include "config_interface.h"
 
 #if USE_DOUBLE
 typedef double gitr_precision;
@@ -23,9 +24,13 @@ coulomb_data_broker::coulomb_data_broker()
 
 double coulomb_data_broker::run_3()
 {
+  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE );
+  class flags f( query_metadata );
+
   int const flowv_interp = 0;
   int const cylsymm = 0;
   int const field_aligned_values = 0;
+
   libconfig::Config cfg;
   cfg.setAutoConvert(true);
   std::string file = "../test/coulomb.cfg";
@@ -132,7 +137,7 @@ double coulomb_data_broker::run_3()
 
   int coulomb_collisions = 3;
 
-  coulombCollisions coulombCollisions0(
+  coulombCollisions coulombCollisions0( f,
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
       &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),
       &flowVr.front(), &flowVz.front(), &flowVt.front(), nR_Dens, nZ_Dens,
@@ -256,6 +261,9 @@ printf("ave_vx %e \n", ave_vx);
 
 double coulomb_data_broker::run_2()
 {
+  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE );
+  class flags f( query_metadata );
+
   int const flowv_interp = 0;
   int const cylsymm = 0;
   int const field_aligned_values = 0;
@@ -330,7 +338,7 @@ double coulomb_data_broker::run_2()
 
   int coulomb_collisions = 2;
 
-  coulombCollisions coulombCollisions0(
+  coulombCollisions coulombCollisions0( f,
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
       &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),
       &flowVr.front(), &flowVz.front(), &flowVt.front(), nR_Dens, nZ_Dens,
@@ -386,6 +394,9 @@ double coulomb_data_broker::run_2()
 
 std::vector< double > coulomb_data_broker::run_1()
 {
+  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE );
+  class flags f( query_metadata );
+
   int const flowv_interp = 0;
   int const cylsymm = 0;
   int const field_aligned_values = 0;
@@ -476,6 +487,9 @@ std::vector< double > coulomb_data_broker::run_1()
 
 std::vector< double > coulomb_data_broker::run()
 {
+  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE );
+  class flags f( query_metadata );
+
   int const flowv_interp = 0;
   int const cylsymm = 0;
   int const field_aligned_values = 0;

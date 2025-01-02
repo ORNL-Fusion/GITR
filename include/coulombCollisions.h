@@ -98,8 +98,8 @@ gitr_precision intorp(
   double max_range_init[ 2 ] = { gridz[ dims[ 0 ] - 1 ], gridx[ dims[ 1 ] - 1 ] };
   int n_dims_init = 2;
 
-  interpolated_field< double >
-  ifield( data, dims, max_range_init, min_range_init, n_dims_init );
+  //interpolated_field< double >
+  //ifield( data, dims, max_range_init, min_range_init, n_dims_init );
 
   double coordinates[ 2 ] = { z, x };
 
@@ -343,6 +343,7 @@ void getSlowDownDirections2 (gitr_precision parallel_direction[], gitr_precision
 
 struct coulombCollisions { 
 
+    class flags f;
     Particles *particlesPointer;
     gitr_precision dt;
     int nR_flowV;
@@ -389,7 +390,7 @@ struct coulombCollisions {
     int field_aligned_values;
     int coulomb_collisions;
 
-    coulombCollisions(Particles *_particlesPointer,gitr_precision _dt, 
+    coulombCollisions(class flags &f_init, Particles *_particlesPointer,gitr_precision _dt, 
 #if __CUDACC__
                             curandState *_state,
 #else
@@ -407,7 +408,9 @@ struct coulombCollisions {
                         gitr_precision * _BfieldR ,gitr_precision * _BfieldZ ,
                  gitr_precision * _BfieldT, Flags* _gitr_flags, int flowv_interp_,
                  int cylsymm_, int field_aligned_values_ , int _coulomb_collisions)
-      : particlesPointer(_particlesPointer),
+      : 
+        f( f_init ),
+        particlesPointer(_particlesPointer),
         dt(_dt),
         nR_flowV(_nR_flowV),
         nY_flowV(_nY_flowV),
@@ -497,7 +500,8 @@ void operator()(std::size_t indx) {
   //bool use_bca = false;
   if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
   {
-    if(gitr_flags->USE_ADAPTIVE_DT)
+    //if(gitr_flags->USE_ADAPTIVE_DT)
+    if(f.adaptive_dt)
     {
       dt = particlesPointer->dt[indx];	   
     }
@@ -529,7 +533,8 @@ void operator()(std::size_t indx) {
     // Interpolate ion density
     gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni,cylsymm);
   
-    if( gitr_flags->USE_SHEATH_DENSITY )
+    //if( gitr_flags->USE_SHEATH_DENSITY )
+    if( f.sheath_density )
     {
      density = density*particlesPointer->f_psi[indx];
     }
@@ -613,7 +618,8 @@ void operator()(std::size_t indx) {
              d_uz = -u_perp*std::sin(chi)*std::cos(psi) - uz*(1.0-std::cos(chi));
     }
     
-    if(gitr_flags->USE_ADAPTIVE_DT)
+    //if(gitr_flags->USE_ADAPTIVE_DT)
+    if(f.adaptive_dt)
       {
         if (particlesPointer->advance[indx])
         {
@@ -723,7 +729,7 @@ void operator()(std::size_t indx) {
                              BfieldR,
                              BfieldZ,
                              BfieldT, T_background, flowv_interp, cylsymm,
-                             field_aligned_values,gitr_flags->USE_SHEATH_DENSITY,particlesPointer->f_psi[indx]  );
+                             field_aligned_values,f.sheath_density,particlesPointer->f_psi[indx]  );
 
     getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );
@@ -752,7 +758,8 @@ void operator()(std::size_t indx) {
     gitr_precision vy_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[1] + std::abs(n2)*(coeff_perp1 * perp_direction1[1] + coeff_perp2 * perp_direction2[1])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[1];
     gitr_precision vz_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[2] + std::abs(n2)*(coeff_perp1 * perp_direction1[2] + coeff_perp2 * perp_direction2[2])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[2];
       
-    if(gitr_flags->USE_ADAPTIVE_DT)
+    //if(gitr_flags->USE_ADAPTIVE_DT)
+    if(f.adaptive_dt)
       {
         if (particlesPointer->advance[indx])
         {
@@ -881,7 +888,7 @@ void operator()(std::size_t indx) {
                              BfieldR,
                              BfieldZ,
                              BfieldT, T_background, flowv_interp, cylsymm,
-                             field_aligned_values,gitr_flags->USE_ADAPTIVE_DT,particlesPointer->f_psi[indx]  );
+                             field_aligned_values,f.sheath_density,particlesPointer->f_psi[indx]  );
 
 
 //gamma1 = normrnd(0,1,nP,1);
@@ -906,7 +913,8 @@ gitr_precision dvx = w1x*term1 + w1x*term2 + w2x*term3 + w3x*term4;
 gitr_precision dvy = w1y*term1 + w1y*term2 + w2y*term3 + w3y*term4;
 gitr_precision dvz = w1z*term1 + w1z*term2 + w2z*term3 + w3z*term4;
 
-    if(gitr_flags->USE_ADAPTIVE_DT)
+    //if(gitr_flags->USE_ADAPTIVE_DT)
+    if(f.adaptive_dt)
       {
         if (particlesPointer->advance[indx])
         {
