@@ -153,7 +153,7 @@ double cross_field_diffusion_broker::run_1()
   sim::Array<gitr_precision> net_Bins_vz( net_Bins_size/(nBins + 1), 0.0 );
   sim::Array<gitr_precision> net_Bins_E( net_Bins_size/(nBins + 1), 0.0 );
   /* new variables end */
-  spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
+  spec_bin spec_bin0(gitr_flags, f_in, particleArray, nBins, net_nX, net_nY, net_nZ,
       &gridX_bins.front(), &gridY_bins.front(),
       &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy,
       &net_Bins_vx.front(),&net_Bins_vy.front(),&net_Bins_vz.front(), &net_Bins_E.front() );
@@ -416,7 +416,7 @@ double cross_field_diffusion_broker::run()
   sim::Array<gitr_precision> net_Bins_E( net_Bins_size/(nBins + 1), 0.0 );
   /* new variables end */
 
-  spec_bin spec_bin0(gitr_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
+  spec_bin spec_bin0(gitr_flags, f_in, particleArray, nBins, net_nX, net_nY, net_nZ,
       &gridX_bins.front(), &gridY_bins.front(),
       &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy,
       &net_Bins_vx.front(),&net_Bins_vy.front(),&net_Bins_vz.front(), &net_Bins_E.front() );
