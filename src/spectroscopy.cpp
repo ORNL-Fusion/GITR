@@ -1,10 +1,10 @@
 #include "spectroscopy.h"
 
-spec_bin::spec_bin(Flags* _flags, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
+spec_bin::spec_bin(Flags* _flags, class flags &f_init, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
            gitr_precision* _bins, gitr_precision _dt, int cylsymm_, int spectroscopy_,
            gitr_precision* _bins_vx, gitr_precision* _bins_vy, gitr_precision* _bins_vz,
            gitr_precision* _bins_E ) : 
-        flags(_flags), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
+        flags(_flags), f(f_init), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
         dt(_dt), cylsymm( cylsymm_ ), spectroscopy( spectroscopy_ ),
         bins_vx(_bins_vx), bins_vy(_bins_vy), bins_vz(_bins_vz), bins_E(_bins_E) {}
 
@@ -41,7 +41,8 @@ void spec_bin::operator()(std::size_t indx) const {
     bool add=false;
 
     // Determine particle dt and relative contribution
-    if (flags->USE_ADAPTIVE_DT)
+    //if (flags->USE_ADAPTIVE_DT)
+    if (f.adaptive_dt)
     {
       if(particlesPointer->advance[indx])
       {
