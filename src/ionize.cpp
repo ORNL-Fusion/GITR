@@ -48,7 +48,7 @@ double get_rand_double(std::mt19937 *state,int indx)
 }
 
 template< typename T >
-ionize< T >::ionize(Flags *_flags, class flags &f_init,
+ionize< T >::ionize(class flags &f_init,
           Particles *_particlesPointer,
           gitr_precision _dt,
           T *_state,
@@ -71,7 +71,7 @@ ionize< T >::ionize(Flags *_flags, class flags &f_init,
           int cylsymm_ )
       :
 
-        flags(_flags), f_config(f_init), particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
+        f_config(f_init), particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
         nZ_Dens(_nZ_Dens), DensGridr(_DensGridr), DensGridz(_DensGridz),
         ne(_ne), nR_Temp(_nR_Temp), nZ_Temp(_nZ_Temp), TempGridr(_TempGridr),
         TempGridz(_TempGridz), te(_te),
@@ -92,7 +92,8 @@ void ionize< T >::operator()(std::size_t indx)
   //if (flags->USE_IONIZATION)
   if (f_config.ionization)
   {
-    if (flags->USE_ADAPTIVE_DT)
+    //if (flags->USE_ADAPTIVE_DT)
+    if (f_config.adaptive_dt)
     {
       dt = particlesPointer->dt[indx];
     }
@@ -109,7 +110,8 @@ void ionize< T >::operator()(std::size_t indx)
     gitr_precision r1 = get_rand_double(state,indx);
     random_uniform_number[0] = r1;
     
-    if (flags->USE_ADAPTIVE_DT) 
+    //if (flags->USE_ADAPTIVE_DT) 
+    if (f_config.adaptive_dt)
     {
       if (particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx])
       {
