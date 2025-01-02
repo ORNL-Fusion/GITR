@@ -29,8 +29,11 @@ typedef double gitr_precision;
 typedef float gitr_precision;
 #endif
 
+#include "config_interface.h"
+
 template <typename T=std::mt19937>
 struct recombine {
+  class flags f;
   Particles *particlesPointer;
   int nR_Dens;
   int nZ_Dens;
@@ -53,13 +56,14 @@ struct recombine {
   T *state;
   int cylsymm;
 
-  recombine(Particles *_particlesPointer, gitr_precision _dt,
+  recombine(class flags &f_init, Particles *_particlesPointer, gitr_precision _dt,
       T *_state,
      int _nR_Dens,int _nZ_Dens,gitr_precision* _DensGridr,
      gitr_precision* _DensGridz,gitr_precision* _ne,int _nR_Temp, int _nZ_Temp,
      gitr_precision* _TempGridr, gitr_precision* _TempGridz,gitr_precision* _te,int _nTemperaturesRecomb,
      int _nDensitiesRecomb,gitr_precision* _gridTemperature_Recombination,gitr_precision* _gridDensity_Recombination,
      gitr_precision* _rateCoeff_Recombination, Flags* _gitr_flags, int cylsymm_ ) : 
+     f( f_init ),
      particlesPointer(_particlesPointer),
 
      nR_Dens(_nR_Dens),
@@ -89,7 +93,8 @@ struct recombine {
     gitr_precision P1 = 0.0;
     gitr_precision r1 = 1.0;
       
-    if (gitr_flags->USE_ADAPTIVE_DT)
+    //if (gitr_flags->USE_ADAPTIVE_DT)
+    if (f.adaptive_dt)
     {
       dt = particlesPointer->dt[indx];
     }
@@ -102,7 +107,8 @@ struct recombine {
       r1 = get_rand_double(state,indx);
     }
 
-    if (gitr_flags->USE_ADAPTIVE_DT)
+    //if (gitr_flags->USE_ADAPTIVE_DT)
+    if (f.adaptive_dt)
     {
       if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx])
       {
