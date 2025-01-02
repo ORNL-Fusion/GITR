@@ -28,7 +28,6 @@ typedef float gitr_precision;
 #endif
 
 struct spec_bin { 
-    Flags *flags;
     class flags f;
     Particles *particlesPointer;
     const int nBins;
@@ -47,7 +46,7 @@ struct spec_bin {
     gitr_precision *bins_vz;
     gitr_precision *bins_E;
 
-    spec_bin(Flags* _flags, class flags &f_init, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
+    spec_bin(class flags &f_init, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
            gitr_precision* _bins, gitr_precision _dt, int cylsymm_, int spectroscopy_,
            gitr_precision* _bins_vx,gitr_precision* _bins_vy,gitr_precision* _bins_vz, gitr_precision* _bins_E );
 

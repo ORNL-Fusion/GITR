@@ -4164,7 +4164,7 @@ if( efield_interp == 1 )
 
   sortParticles sort0(particleArray, nP,dev_tt, 10000,
                       nActiveParticlesOnRank.data(),surface_model,nT);
-  spec_bin spec_bin0(gitr_flags,f,particleArray, nBins, net_nX, net_nY, net_nZ,
+  spec_bin spec_bin0(f,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy,
                      &net_Bins_vx.front(),&net_Bins_vy.front(),&net_Bins_vz.front(), &net_Bins_E.front() );
