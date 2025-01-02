@@ -175,7 +175,7 @@ std::vector< double > atomic_data_broker::run_2()
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
-      gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags, cylsymm );
+      gridDensity_Recombination.data(), rateCoeff_Recombination.data(), cylsymm );
 
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();

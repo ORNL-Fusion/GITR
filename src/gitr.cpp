@@ -4193,7 +4193,7 @@ if( efield_interp == 1 )
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
-      gridDensity_Recombination.data(), rateCoeff_Recombination.data(),gitr_flags, cylsymm );
+      gridDensity_Recombination.data(), rateCoeff_Recombination.data(), cylsymm );
 
   crossFieldDiffusion crossFieldDiffusion0( f,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
