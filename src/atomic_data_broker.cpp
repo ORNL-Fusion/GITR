@@ -170,7 +170,7 @@ std::vector< double > atomic_data_broker::run_2()
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
       &rateCoeff_Ionization.front(),&dev_f.front(), cylsymm );
 
-  recombine<rand_type> recombine0(
+  recombine<rand_type> recombine0( f,
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
