@@ -17,7 +17,6 @@ std::vector< double > boris_data_broker_0::run_2()
 {
   int const sheath_efield = 0;
   int const presheath_efield = 1;
-  int const biased_surface = 0;
   int const surface_potential = 0;
   int const geom_hash_sheath = 0;
   int const use_3d_geom = 0;
@@ -77,7 +76,7 @@ std::vector< double > boris_data_broker_0::run_2()
         bfieldGridr.data(), bfieldGridz.data(), br.data(),
         bz.data(), by.data(), nR_Temp, nZ_Temp,
         TempGridr.data(), TempGridz.data(), ti.data(),
-        te.data(), biasPotential, biased_surface, surface_potential,
+        te.data(), biasPotential, surface_potential,
         use_3d_geom, cylsymm ));
 
   int nHashes = 1;
@@ -105,12 +104,26 @@ std::vector< double > boris_data_broker_0::run_2()
   {
     pz[0] = j*dz;
     minDistance =
-      getE(px[0], py[0], pz[0], thisE, boundaries.data(), nLines,
-          nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
-          n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
-          &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-          &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface,
-          use_3d_geom, geom_hash_sheath, cylsymm, f_psi );
+      getE(px[0], 
+           py[0], 
+           pz[0], 
+           thisE, 
+           boundaries.data(), 
+           nLines,
+           nR_closeGeom_sheath,
+           nY_closeGeom_sheath,
+           nZ_closeGeom_sheath,
+          n_closeGeomElements_sheath,
+          &closeGeomGridr_sheath.front(),
+          &closeGeomGridy_sheath.front(),
+          &closeGeomGridz_sheath.front(),
+          &closeGeom_sheath.front(),
+          closestBoundaryIndex,
+          use_3d_geom,
+          geom_hash_sheath,
+          cylsymm,
+          f_psi );
+
     gitrE[j] = thisE[2];
   }
 
@@ -126,7 +139,6 @@ std::vector< double > boris_data_broker_0::run_1()
   // Captain! make sure these are consistent with the input file!
   int const sheath_efield = 0;
   int const presheath_efield = 1;
-  int const biased_surface = 0;
   int const surface_potential = 0;
   int const geom_hash_sheath = 0;
   int const use_3d_geom = 0;

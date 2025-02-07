@@ -117,7 +117,6 @@ int main(int argc, char **argv, char **envp)
 
   class flags f( query_metadata );
 
-  int biased_surface = BIASED_SURFACE;
   int ionization = f.ionization;
   int perp_diffusion = f.perp_diffusion;
   int coulomb_collisions = f.coulomb_collisions;
@@ -369,16 +368,6 @@ int main(int argc, char **argv, char **envp)
 #endif
 
   gitr_precision biasPotential = 0.0;
-  if(biased_surface)
-  {
-  if (world_rank == 0) {
-    getVariable(cfg, "backgroundPlasmaProfiles.biasPotential", biasPotential);
-  }
-#if USE_MPI > 0
-  MPI_Bcast(&biasPotential, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-#endif
-  }
 
   // create Surface data structures
   int nEdist = 1;
@@ -2581,13 +2570,25 @@ if( efield_interp == 1 )
   int minInd_bnd = 0;
   for (int i = 0; i < 1000; i++) {
       minDist0 =
-          getE(0.0, 0.0, 1.0E-6*i, thisE0, boundaries.data(),
+          getE(0.0,
+               0.0,
+               1.0E-6*i,
+               thisE0,
+               boundaries.data(),
                nLines,
-               nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
-               n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
-               &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-               &closeGeom_sheath.front(), minInd_bnd, biased_surface,
-               use_3d_geom, geom_hash_sheath, cylsymm, f_psi );
+               nR_closeGeom_sheath,
+               nY_closeGeom_sheath,
+               nZ_closeGeom_sheath,
+               n_closeGeomElements_sheath,
+               &closeGeomGridr_sheath.front(),
+               &closeGeomGridy_sheath.front(), 
+               &closeGeomGridz_sheath.front(),
+               &closeGeom_sheath.front(),
+               minInd_bnd,
+               use_3d_geom,
+               geom_hash_sheath,
+               cylsymm,
+               f_psi );
       //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
   }
   /* Decayed block, leave for reference */
@@ -4944,7 +4945,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
                nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-               &closeGeom_sheath.front(), closestBoundaryIndex, biased_surface,
+               &closeGeom_sheath.front(), closestBoundaryIndex,
                use_3d_geom, geom_hash_sheath, cylsymm, f_psi );
       
       if (boundaries[closestBoundaryIndex].Z > 0.0) {
