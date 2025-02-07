@@ -64,7 +64,6 @@ TEST_CASE( "Complex Boris Motion" )
 {
   int const sheath_efield = 0;
   int const presheath_efield = 1;
-  int const biased_surface = 0;
   int const surface_potential = 0;
   int const geom_hash_sheath = 0;
   int const use_3d_geom = 0;

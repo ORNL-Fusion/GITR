@@ -123,7 +123,6 @@ struct move_boris {
     gitr_precision electricForce[3];
     int sheath_efield;
     int presheath_efield;
-    int biased_surface;
     int geom_hash_sheath;
     int use_3d_geom;
     int cylsymm;
