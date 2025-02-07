@@ -40,7 +40,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#include "flags.hpp"
 
 #ifdef __CUDACC__
 #include <curand.h>
@@ -4208,7 +4207,7 @@ if( efield_interp == 1 )
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-      &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(),gitr_flags, flowv_interp,
+      &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(), flowv_interp,
       cylsymm, coulomb_collisions );
 
   thermalForce thermalForce0(f,
