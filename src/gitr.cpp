@@ -118,9 +118,6 @@ int main(int argc, char **argv, char **envp)
   class flags f( query_metadata );
 
   int surface_model = f.surface_model;
-  int particle_source_space = 0;
-  int particle_source_energy = 0;
-  int particle_source_angle = 0;
   int particle_tracks = f.particle_tracks;
   int spectroscopy = f.spectroscopy;
   int use_3d_geom = f.use_3d_geom;
@@ -3250,8 +3247,6 @@ if( f.efield_interp == 1 )
 #endif
 // Material Surfaces - flux weighted source
 
-  if( particle_source_energy == 0 )
-  {
   if (world_rank == 0) {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.energy_eV",
                         E)) {
@@ -3267,54 +3262,6 @@ if( f.efield_interp == 1 )
   MPI_Bcast(&E, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-  }
-  else if( particle_source_energy > 0 )
-  {
-    if( particle_source_energy == 1 )
-    {
-  // Create Thompson Distribution
-  gitr_precision surfaceBindingEnergy =
-      cfg.lookup("impurityParticleSource.source_material_SurfaceBindingEnergy");
-  gitr_precision surfaceAlpha =
-      cfg.lookup("impurityParticleSource.source_materialAlpha");
-  std::cout << "surface binding energy " << surfaceBindingEnergy << std::endl;
-  int nThompDistPoints = 200;
-  gitr_precision max_Energy = 100.0;
-  sim::Array<gitr_precision> ThompsonDist(nThompDistPoints),
-      CumulativeDFThompson(nThompDistPoints);
-  for (int i = 0; i < nThompDistPoints; i++) {
-    if (surfaceAlpha > 0.0) {
-      ThompsonDist[i] =
-          surfaceAlpha * (surfaceAlpha - 1.0) *
-          (i * max_Energy / nThompDistPoints) *
-          std::pow(surfaceBindingEnergy, surfaceAlpha - 1.0) /
-          std::pow((i * max_Energy / nThompDistPoints) + surfaceBindingEnergy,
-              (surfaceAlpha + 1.0));
-    } else {
-      ThompsonDist[i] =
-          (i * max_Energy / nThompDistPoints) /
-          std::pow((i * max_Energy / nThompDistPoints) + surfaceBindingEnergy, 3);
-    }
-    if (i == 0) {
-      CumulativeDFThompson[i] = ThompsonDist[i];
-    } else {
-      CumulativeDFThompson[i] = CumulativeDFThompson[i - 1] + ThompsonDist[i];
-    }
-  }
-  for (int i = 0; i < nThompDistPoints; i++) {
-    CumulativeDFThompson[i] =
-        CumulativeDFThompson[i] / CumulativeDFThompson[nThompDistPoints - 1];
-    // std::cout << "energy and CDF" << i*max_Energy/nThompDistPoints << " " <<
-    // CumulativeDFThompson[i] << std::endl;
-  }
-    }
-  //boost::random::mt19937 sE;
-  //boost::random::uniform_01<> dist01E;
-  gitr_precision randE = 0.0;
-  int lowIndE = 0;
-  }
-  if( particle_source_angle == 0 )
-  {
   if (world_rank == 0) {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.phi", phi) &&
         cfg.lookupValue("impurityParticleSource.initialConditions.theta",
@@ -3343,29 +3290,6 @@ if( f.efield_interp == 1 )
     vx = 0.0;
     vy = 0.0;
     vz = vtotal;
-  }
-  }
-  else if( particle_source_angle > 0 )
-  {
-
-  std::cout << "Read particle source " << std::endl;
-
-  // cfg_particles.readFile((input_path+"particleSource.cfg").c_str());
-  // Setting& particleSource = cfg_particles.lookup("particleSource");
-  // int nSegmentsAngle = particleSource["nSegmentsAngle"];
-  // float angleSample;
-  // sim::Array<float> sourceAngleSegments(nSegmentsAngle);
-  // sim::Array<float> angleCDF(nSegmentsAngle);
-  // for (int i=0; i<(nSegmentsAngle); i++)
-  //{
-  //    sourceAngleSegments[i] = particleSource["angles"][i];
-  //    angleCDF[i] = particleSource["angleCDF"][i];
-  //}
-  std::random_device randDevice_particleA;
-  std::mt19937 sA(randDevice_particleA());
-  std::uniform_real_distribution<gitr_precision> dist01A(0.0, 1.0);
-  gitr_precision randA = 0.0;
-  int lowIndA = 0;
   }
   std::cout << "Starting psourcefile import " << std::endl;
   vector<gitr_precision> xpfile(nP), ypfile(nP), zpfile(nP), vxpfile(nP), vypfile(nP),
@@ -3546,6 +3470,7 @@ if( f.efield_interp == 1 )
 #endif
 #endif
               */
+              /*
               if( particle_source_angle == 1 )
               {
     Ex = -E * boundaries[currentSegment].a /
@@ -3555,6 +3480,7 @@ if( f.efield_interp == 1 )
     Ez = -E * boundaries[currentSegment].c /
          boundaries[currentSegment].plane_norm;
               }
+              */
 
     /* Decayed code block below */
     /*
@@ -3635,15 +3561,6 @@ if( f.efield_interp == 1 )
     }
     particleArray->setParticleV(i, x, y, z, vx, vy, vz, Z, amu, charge,dt);
 
-    if( f.particle_source_space > 0 )
-    {
-    pSurfNormX[i] =
-        -boundaries[currentSegment].a / boundaries[currentSegment].plane_norm;
-    pSurfNormY[i] =
-        -boundaries[currentSegment].b / boundaries[currentSegment].plane_norm;
-    pSurfNormZ[i] =
-        -boundaries[currentSegment].c / boundaries[currentSegment].plane_norm;
-    }
     px[i] = x;
     py[i] = y;
     pz[i] = z;
