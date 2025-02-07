@@ -118,19 +118,13 @@ int main(int argc, char **argv, char **envp)
   class flags f( query_metadata );
 
   int surface_model = f.surface_model;
-  int particle_tracks = f.particle_tracks;
   int spectroscopy = f.spectroscopy;
   int use_3d_geom = f.use_3d_geom;
   int flux_ea = f.flux_ea;
-  int presheath_efield = 1;
   int cylsymm = f.cylsymm;
-  int force_eval = f.force_eval;
-  int sort_particles = f.sort;
-  int use_adaptive_dt = f.adaptive_dt;
   int geom_hash = f.geom_hash;
   int surface_potential = f.surface_potential;
   int geom_hash_sheath = f.geom_hash_sheath;
-  bool fixed_seeds = bool(f.fixed_seeds);
 
   // Set default processes per node to 1
   int ppn = 1;
@@ -2311,9 +2305,6 @@ if( f.flowv_interp == 1 )
   sim::Array< gitr_precision > preSheathEGridy( nY_PreSheathEfield );
   sim::Array< gitr_precision > preSheathEGridz( nZ_PreSheathEfield );
 
-  if( presheath_efield > 0 )
-  {
-
   std::cout << "Using presheath Efield " << std::endl;
   if( f.efield_interp == 1 )
   {
@@ -2519,15 +2510,6 @@ if( f.efield_interp == 1 )
   nc_PSEt.putVar(&PSEt[0]);
   nc_PSEz.putVar(&PSEz[0]);
 }
-  }
-  else
-  {
-  nPSEs = nR_PreSheathEfield * nY_PreSheathEfield * nZ_PreSheathEfield;
-  sim::Array<gitr_precision> preSheathEGridr(nR_PreSheathEfield),
-      preSheathEGridy(nY_PreSheathEfield), preSheathEGridz(nZ_PreSheathEfield);
-  sim::Array<gitr_precision> PSEr(nPSEs), PSEz(nPSEs), PSEt(nPSEs);
-
-  }
 
   std::string outnamePSEfieldR = "PSEfieldR.m";
   std::string outnamePSEfieldZ = "PSEfieldZ.m";
@@ -3735,7 +3717,7 @@ if( f.efield_interp == 1 )
   int nHistoriesPerParticle = (nT / subSampleFac) + 1;
   int nHistories = nHistoriesPerParticle * nP;
 	
-  if(particle_tracks == 0) nHistories = 1;
+  if(f.particle_tracks == 0) nHistories = 1;
 	
   sim::Array<gitr_precision> positionHistoryX(nHistories);
   sim::Array<gitr_precision> positionHistoryXgather(nHistories, 0.0);
@@ -3758,7 +3740,7 @@ if( f.efield_interp == 1 )
   sim::Array<gitr_precision> perpDistanceToSurfaceHistory(nHistories);
   sim::Array<gitr_precision> perpDistanceToSurfaceGather(nHistories);
 
-  if( particle_tracks > 0 )
+  if( f.particle_tracks > 0 )
   {
 
   for (int i = 0; i < world_size; i++) {
@@ -3827,7 +3809,7 @@ if( f.efield_interp == 1 )
                    // world_rank*nP/world_size,particleBegin +
                    // (world_rank+1)*nP/world_size-10,
                    // curandInitialize(&state1[0],randDeviceInit,0));
-                   curandInitialize<>( &state1.front(), fixed_seeds ));
+                   curandInitialize<>( &state1.front(), bool(f.fixed_seeds) ));
   std::cout << " finished curandInit" << std::endl;
 #else
   std::random_device randDeviceInit;
@@ -3836,7 +3818,7 @@ if( f.efield_interp == 1 )
   //                     curandInitialize(&state1[0],randDeviceInit,0));
   // std::mt19937 s0(randDeviceInit);
   thrust::for_each( thrust::device, particleBegin, particleEnd,
-                    curandInitialize<>( &state1.front(), fixed_seeds ) );
+                    curandInitialize<>( &state1.front(), bool(f.fixed_seeds) ) );
   /*
   for (int i = world_rank * nP / world_size;
        i < (world_rank + 1) * nP / world_size; i++) {
@@ -3966,7 +3948,7 @@ if( f.efield_interp == 1 )
                    &velocityHistoryZ.front(), &chargeHistory.front(),
                    &weightHistory.front(), &perpDistanceToSurfaceHistory.front());
 
-  if( force_eval > 0 )
+  if( f.force_eval > 0 )
   {
   if (world_rank == 0) {
     int nR_force, nZ_force;
@@ -4225,7 +4207,7 @@ std::cout << "here 2" << std::endl;
 
        if( tt % 100 == 0 ) std::cout << tt << "/" << nT << std::endl;
 
-       if( sort_particles > 0 )
+       if( f.sort > 0 )
        {
        dev_tt[0] = tt;
       //std::cout << " tt " << tt << std::endl;
@@ -4236,7 +4218,7 @@ std::cout << "here 2" << std::endl;
 #endif
        }
 
-      if( particle_tracks > 0 )
+      if( f.particle_tracks > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd, history0);
       }
@@ -4297,7 +4279,7 @@ std::cout << "here 2" << std::endl;
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
   }
     }
-    if( particle_tracks > 0 )
+    if( f.particle_tracks > 0 )
     {
     tt = nT;
     // dev_tt[0] = tt;
@@ -4452,7 +4434,7 @@ for(int i=0; i<nP ; i++)
              MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 
-  if( particle_tracks > 0 )
+  if( f.particle_tracks > 0 )
   {
 
   std::vector<gitr_precision> exampleArray(4, 0.0);
@@ -4995,7 +4977,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     ncFile1.close();
   }
 #endif
-  if( particle_tracks > 0 )
+  if( f.particle_tracks > 0 )
   {
 
     // Write netCDF output for histories
