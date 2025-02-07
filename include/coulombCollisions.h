@@ -374,8 +374,6 @@ struct coulombCollisions {
 
     int cylsymm;
 
-    int coulomb_collisions;
-
     coulombCollisions(class flags &f_init, Particles *_particlesPointer,gitr_precision _dt, 
 #if __CUDACC__
                             curandState *_state,
@@ -393,7 +391,7 @@ struct coulombCollisions {
                         gitr_precision * _BfieldGridR ,gitr_precision * _BfieldGridZ ,
                         gitr_precision * _BfieldR ,gitr_precision * _BfieldZ ,
                  gitr_precision * _BfieldT, int flowv_interp_,
-                 int cylsymm_, int _coulomb_collisions)
+                 int cylsymm_)
       : 
         f( f_init ),
         particlesPointer(_particlesPointer),
@@ -430,9 +428,7 @@ struct coulombCollisions {
         dv{0.0, 0.0, 0.0},
         state(_state),
         flowv_interp( flowv_interp_ ),
-        cylsymm( cylsymm_ ),
-        coulomb_collisions(_coulomb_collisions)
-
+        cylsymm( cylsymm_ )
         { }
 
 CUDA_CALLABLE_MEMBER_DEVICE    
@@ -490,7 +486,7 @@ void operator()(std::size_t indx) {
       dt = particlesPointer->dt[indx];	   
     }
 
-  if ( coulomb_collisions == 2)
+  if ( f.coulomb_collisions == 2)
   {
     // Physical constants (should be replaced with system/better precision values)
     double ME = 9.10938356e-31;
@@ -623,7 +619,7 @@ void operator()(std::size_t indx) {
     }
     
   }
-  else if (coulomb_collisions == 1)
+  else if (f.coulomb_collisions == 1)
   {
      
     gitr_precision pi = 3.14159265;   
@@ -750,7 +746,7 @@ void operator()(std::size_t indx) {
       this->dv[1] = velocityCollisions[1];
       this->dv[2] = velocityCollisions[2];
     }
-    else if (coulomb_collisions == 3)
+    else if (f.coulomb_collisions == 3)
     {
     // Physical constants (should be replaced with system/better precision values)
     double ME = 9.10938356e-31;
