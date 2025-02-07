@@ -117,10 +117,6 @@ int main(int argc, char **argv, char **envp)
 
   class flags f( query_metadata );
 
-  int ionization = f.ionization;
-  int perp_diffusion = f.perp_diffusion;
-  // Captain! above are done
-  int coulomb_collisions = f.coulomb_collisions;
   int thermal_force = f.thermal_force;
   int surface_model = f.surface_model;
   int sheath_efield = f.sheath_efield;
@@ -2157,7 +2153,7 @@ if( flowv_interp == 1 )
   sim::Array<gitr_precision> gridTemperature_Recombination(nTemperaturesRecombine),
       gridDensity_Recombination(nDensitiesRecombine);
 
-  if( ionization > 0 )
+  if( f.ionization > 0 )
   {
   if (world_rank == 0) {
 
@@ -4084,9 +4080,9 @@ if( efield_interp == 1 )
 #else
   sim::Array<rand_type> state1(nParticles);
 #endif
-    if( ionization > 0 ||
-        perp_diffusion > 0 ||
-        coulomb_collisions > 0 ||
+    if( f.ionization > 0 ||
+        f.perp_diffusion > 0 ||
+        f.coulomb_collisions > 0 ||
         surface_model > 0 )
     {
 #if USE_CUDA
@@ -4171,7 +4167,7 @@ if( efield_interp == 1 )
 
   gitr_precision *uni;
 
-  if( ionization > 0 )
+  if( f.ionization > 0 )
   {
 #if USE_CUDA > 0
   cudaMallocManaged(&uni, sizeof(gitr_precision));
@@ -4290,13 +4286,13 @@ if( efield_interp == 1 )
                                    0.0, Z, amu, charge + 1.0);
         move_boris0(0);
 
-        if( ionization > 0 )
+        if( f.ionization > 0 )
         {
           thrust::for_each(thrust::device,particleBegin,particleBegin,ionize0);
 	        thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
         }
 
-        if( coulomb_collisions > 0 )
+        if( f.coulomb_collisions > 0 )
         {
         thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
         }
@@ -4312,13 +4308,13 @@ if( efield_interp == 1 )
         dvBz[j * nR_force + i] = move_boris0.magneticForce[2];
         dvBt[j * nR_force + i] = move_boris0.magneticForce[1];
 
-        if( ionization > 0 )
+        if( f.ionization > 0 )
         {
           tIon[j * nR_force + i] = ionize0.tion;
           tRecomb[j * nR_force + i] = recombine0.tion;
         }
 
-        if( coulomb_collisions > 0 )
+        if( f.coulomb_collisions > 0 )
         {
         dvCollr[j * nR_force + i] = coulombCollisions0.dv[0];
         dvCollz[j * nR_force + i] = coulombCollisions0.dv[2];
@@ -4533,13 +4529,13 @@ std::cout << "here 2" << std::endl;
       thrust::for_each(thrust::device, particleBegin, particleEnd, spec_bin0);
       }
 
-      if( ionization > 0 )
+      if( f.ionization > 0 )
       {
         thrust::for_each(thrust::device, particleBegin, particleEnd,ionize0);
         thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
       }
 
-      if( perp_diffusion > 0 )
+      if( f.perp_diffusion > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        crossFieldDiffusion0);
@@ -4547,7 +4543,7 @@ std::cout << "here 2" << std::endl;
                        geometry_check0);
       }
 
-      if( coulomb_collisions > 0 )
+      if( f.coulomb_collisions > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        coulombCollisions0);
