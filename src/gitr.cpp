@@ -117,9 +117,7 @@ int main(int argc, char **argv, char **envp)
 
   class flags f( query_metadata );
 
-  int thermal_force = f.thermal_force;
   int surface_model = f.surface_model;
-  int sheath_efield = f.sheath_efield;
   int bfield_interp = f.bfield_interp;
   int efield_interp = f.efield_interp;
   int flowv_interp = f.flowv_interp;
@@ -1378,7 +1376,7 @@ if( GENERATE_LC > 0 )
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
-                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea, surface_model,
+                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea, f.surface_model,
                        geom_hash,
                        use_3d_geom,
                        cylsymm ) );
@@ -1390,7 +1388,7 @@ if( GENERATE_LC > 0 )
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
-                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea, surface_model,
+                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea, f.surface_model,
                        geom_hash,
                        use_3d_geom,
                        cylsymm ) );
@@ -2560,7 +2558,7 @@ if( efield_interp == 1 )
 
   gitr_precision f_psi = 1.0;
   /* Likely dead block below */
-  if( sheath_efield > 0 )
+  if( f.sheath_efield > 0 )
   {
   gitr_precision thisE0[3] = {0.0, 0.0, 0.0};
   gitr_precision minDist0 = 0.0;
@@ -2780,7 +2778,7 @@ if( efield_interp == 1 )
   int nDistE_surfaceModel = 1, nDistA_surfaceModel = 1;
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
-  if( surface_model > 0 )
+  if( f.surface_model > 0 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -2855,7 +2853,7 @@ if( efield_interp == 1 )
       AthetaDist_CDF_R_regrid(nDistA_surfaceModel),
       EDist_CDF_R_regrid(nDistE_surfaceModelRef);
 
-  if( surface_model > 0 )
+  if( f.surface_model > 0 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -4083,7 +4081,7 @@ if( efield_interp == 1 )
     if( f.ionization > 0 ||
         f.perp_diffusion > 0 ||
         f.coulomb_collisions > 0 ||
-        surface_model > 0 )
+        f.surface_model > 0 )
     {
 #if USE_CUDA
 
@@ -4153,13 +4151,13 @@ if( efield_interp == 1 )
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model,
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, f.surface_model,
       geom_hash,
       use_3d_geom,
       cylsymm );
 
   sortParticles sort0(particleArray, nP,dev_tt, 10000,
-                      nActiveParticlesOnRank.data(),surface_model,nT);
+                      nActiveParticlesOnRank.data(),f.surface_model,nT);
   spec_bin spec_bin0(f,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy,
@@ -4297,7 +4295,7 @@ if( efield_interp == 1 )
         thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
         }
 
-        if( thermal_force > 0 )
+        if( f.thermal_force > 0 )
         {
         thrust::for_each(thrust::device,particleBegin,particleBegin,thermalForce0);
         }
@@ -4320,7 +4318,7 @@ if( efield_interp == 1 )
         dvCollz[j * nR_force + i] = coulombCollisions0.dv[2];
         dvCollt[j * nR_force + i] = coulombCollisions0.dv[1];
         }
-        if( thermal_force > 0 )
+        if( f.thermal_force > 0 )
         {
         dvITGr[j * nR_force + i] = thermalForce0.dv_ITGx;
         dvITGz[j * nR_force + i] = thermalForce0.dv_ITGz;
@@ -4549,7 +4547,7 @@ std::cout << "here 2" << std::endl;
                        coulombCollisions0);
       }
 
-      if( thermal_force > 0 )
+      if( f.thermal_force > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        thermalForce0);
@@ -4561,7 +4559,7 @@ std::cout << "here 2" << std::endl;
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd, particle_diagnostics0);
       }
-  if( surface_model > 0 )
+  if( f.surface_model > 0 )
   {
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
   }
@@ -4808,7 +4806,7 @@ for(int i=0; i<nP ; i++)
   MPI_Barrier(MPI_COMM_WORLD);
   }
   
-  if( surface_model > 0 || flux_ea > 0 )
+  if( f.surface_model > 0 || flux_ea > 0 )
   {
   // MPI_Barrier(MPI_COMM_WORLD);
   std::cout << "Starting surface reduce " << std::endl;
@@ -5139,7 +5137,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     ncFile_particle_hist.close();
 }
   
-  if( surface_model > 0 || flux_ea > 0 )
+  if( f.surface_model > 0 || flux_ea > 0 )
   {
 #if USE_MPI > 0
     std::vector<int> surfaceNumbers(nSurfaces, 0);
