@@ -118,7 +118,6 @@ int main(int argc, char **argv, char **envp)
   class flags f( query_metadata );
 
   int surface_model = f.surface_model;
-  int particle_source_file = f.particle_source_file;
   int particle_source_space = 0;
   int particle_source_energy = 0;
   int particle_source_angle = 0;
@@ -3228,8 +3227,6 @@ if( f.efield_interp == 1 )
 
   int nSourceSurfaces = 0;
   int currentSegment = 0;
-  if( particle_source_space == 0 )
-  {
   if (world_rank == 0) {
     if (cfg.lookupValue("impurityParticleSource.initialConditions.x_start",
                         x) &&
@@ -3251,182 +3248,7 @@ if( f.efield_interp == 1 )
   MPI_Bcast(&z, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
-  }
 // Material Surfaces - flux weighted source
-  else if( particle_source_space > 0 )
-  {
-  libconfig::Config cfg_particles;
-  std::string particleSourceFile;
-  getVariable(cfg, "particleSource.fileString", particleSourceFile);
-  std::cout << "Open particle source file " << input_path + particleSourceFile
-            << std::endl;
-  importLibConfig(cfg_particles, input_path + particleSourceFile);
-  std::cout << "Successfully staged input and particle source file "
-            << std::endl;
-
-  libconfig::Setting &particleSourceSetting = cfg_particles.lookup("particleSource");
-  std::cout << "Successfully set particleSource setting " << std::endl;
-  int nSourceBoundaries = 0, nSourceElements = 0;
-  gitr_precision sourceMaterialZ = 0.0, accumulatedLengthArea = 0.0,
-        sourceSampleResolution = 0.0;
-  if (cfg_particles.lookupValue("particleSource.materialZ", sourceMaterialZ)) {
-    std::cout << "Particle Source Material Z: " << sourceMaterialZ << std::endl;
-  } else {
-    std::cout << "ERROR: Could not get particle source material Z" << std::endl;
-  }
-  if (sourceMaterialZ > 0.0) { // count source boundaries
-    for (int i = 0; i < nLines; i++) {
-      if (boundaries[i].Z == sourceMaterialZ) {
-        nSourceBoundaries++;
-    if( use_3d_geom )
-    {
-        accumulatedLengthArea = accumulatedLengthArea + boundaries[i].area;
-    }
-    else
-    {
-        accumulatedLengthArea = accumulatedLengthArea + boundaries[i].length;
-    }
-      }
-    }
-  } else {
-    if (cfg_particles.lookupValue("particleSource.nSourceBoundaries",
-                                  nSourceBoundaries)) {
-      std::cout << "Particle Source nSourceBoundaries: " << nSourceBoundaries
-                << std::endl;
-    } else {
-      std::cout << "ERROR: Could not get particle source nSourceBoundaries"
-                << std::endl;
-    }
-    for (int i = 0; i < nSourceBoundaries; i++) {
-    if( use_3d_geom )
-    {
-      accumulatedLengthArea =
-          accumulatedLengthArea +
-          boundaries[int(particleSourceSetting["surfaceIndices"][i])].area;
-    }
-    else
-    {
-      accumulatedLengthArea =
-          accumulatedLengthArea +
-          boundaries[int(particleSourceSetting["surfaceIndices"][i])].length;
-    }
-    }
-  }
-  if (cfg_particles.lookupValue("particleSource.sourceSampleResolution",
-                                sourceSampleResolution)) {
-    std::cout << "Particle Source sample resolution: " << sourceSampleResolution
-              << std::endl;
-  } else {
-    std::cout << "ERROR: Could not get particle source sample resolution"
-              << std::endl;
-  }
-  nSourceElements = ceil(accumulatedLengthArea / sourceSampleResolution);
-  std::cout << "nSourceBoundaries accumulatedLength nSourceElements "
-            << nSourceBoundaries << " " << accumulatedLengthArea << " "
-            << nSourceElements << std::endl;
-  sim::Array<gitr_precision> particleSourceSpaceCDF(nSourceElements, 0.0),
-      particleSourceX(nSourceElements, 0.0),
-      particleSourceY(nSourceElements, 0.0),
-      particleSourceZ(nSourceElements, 0.0),
-      particleSourceSpaceGrid(nSourceElements, 0.0);
-  sim::Array<int> particleSourceIndices(nSourceElements, 0),
-      particleSourceBoundaryIndices(nSourceBoundaries, 0);
-
-      /* Decayed code block, leave for reference */
-      /*
-      if( PARTICLE_SOURCE_SPACE == 1 )
-      {
-  for (int i = 0; i < nSourceBoundaries; i++) {
-    particleSourceBoundaryIndices[i] =
-        particleSourceSetting["surfaceIndices"][i];
-  }
-  int currentSegmentIndex = 0, currentBoundaryIndex = 0;
-  gitr_precision currentAccumulatedLengthArea = 0.0, lengthAlongBoundary = 0.0,
-        bDotSurfaceNorm = 0.0;
-  gitr_precision parVec[3] = {0.0};
-  gitr_precision perpVec[3] = {0.0};
-  currentBoundaryIndex = particleSourceBoundaryIndices[currentSegmentIndex];
-  currentAccumulatedLengthArea =
-      currentAccumulatedLengthArea + boundaries[currentBoundaryIndex].length;
-  for (int i = 0; i < nSourceElements; i++) {
-    if (i * sourceSampleResolution > currentAccumulatedLengthArea) {
-      currentSegmentIndex++;
-      currentBoundaryIndex = particleSourceBoundaryIndices[currentSegmentIndex];
-      currentAccumulatedLengthArea = currentAccumulatedLengthArea +
-                                     boundaries[currentBoundaryIndex].length;
-    }
-    particleSourceIndices[i] = currentBoundaryIndex;
-    particleSourceBoundaryIndices[currentSegmentIndex] =
-        particleSourceSetting["surfaceIndices"][currentSegmentIndex];
-    boundaries[currentBoundaryIndex].getSurfaceParallel(parVec);
-    lengthAlongBoundary =
-        i * sourceSampleResolution - (currentAccumulatedLengthArea -
-                                      boundaries[currentBoundaryIndex].length);
-    particleSourceX[i] =
-        boundaries[currentBoundaryIndex].x1 + parVec[0] * lengthAlongBoundary;
-    particleSourceZ[i] =
-        boundaries[currentBoundaryIndex].z1 + parVec[2] * lengthAlongBoundary;
-    gitr_precision localN = interp2dCombined(particleSourceX[i], 0.0, particleSourceZ[i],
-                                    nR_Dens, nZ_Dens, DensGridr.data(),
-                                    DensGridz.data(), ni.data());
-    gitr_precision localT = interp2dCombined(particleSourceX[i], 0.0, particleSourceZ[i],
-                                    nR_Temp, nZ_Temp, TempGridr.data(),
-                                    TempGridz.data(), ti.data());
-    gitr_precision localCs = std::sqrt(2 * localT * 1.602e-19 / (1.66e-27 * background_amu));
-    gitr_precision localBnorm[3] = {0.0};
-    interp2dVector(&localBnorm[0], particleSourceX[i], 0.0, particleSourceZ[i],
-                   nR_Bfield, nZ_Bfield, bfieldGridr.data(), bfieldGridz.data(),
-                   br.data(), bz.data(), by.data());
-    vectorNormalize(localBnorm, localBnorm);
-    boundaries[currentBoundaryIndex].getSurfaceNormal(perpVec);
-    bDotSurfaceNorm = std::abs(vectorDotProduct(localBnorm, perpVec));
-    gitr_precision localY = interp2dCombined(
-        std::log10(3.0 * localT), 0.0, std::acos(bDotSurfaceNorm) * 180 / 3.14159,
-        nE_surfaceModel, nA_surfaceModel, Elog_surfaceModel.data(),
-        A_surfaceModel.data(), spyl_surfaceModel.data());
-    localY = interp2dCombined(
-        std::acos(bDotSurfaceNorm) * 180 / 3.14159, 0.0, std::log10(3.0 * localT),
-        nA_surfaceModel, nE_surfaceModel, A_surfaceModel.data(),
-        Elog_surfaceModel.data(), spyl_surfaceModel.data());
-    std::cout << "LocalPotential localAngle localY " << 3.0 * localT << " "
-              << std::acos(bDotSurfaceNorm) * 180 / 3.1415 << " " << localY
-              << std::endl;
-    gitr_precision localFlux = localCs * localN * bDotSurfaceNorm; // dotB*surf
-    std::cout << "segment boundary pos x z n t cs flux " << i << " "
-              << currentBoundaryIndex << " " << particleSourceX[i] << " "
-              << particleSourceZ[i] << " " << localN << " " << localT << " "
-              << localCs << " " << localFlux << std::endl;
-    std::cout << "bfield perpvec bDotSurf " << localBnorm[0] << " "
-              << localBnorm[1] << " " << localBnorm[2] << " " << perpVec[0]
-              << " " << perpVec[1] << " " << perpVec[2] << " "
-              << bDotSurfaceNorm << " " << std::acos(bDotSurfaceNorm) * 180 / 3.1415
-              << " " << localY << std::endl;
-    if (i == 0) {
-      particleSourceSpaceCDF[i] = localFlux * localY;
-    } else {
-      particleSourceSpaceCDF[i] =
-          particleSourceSpaceCDF[i - 1] + localFlux * localY;
-    }
-    std::cout << "particleSourceSpaceCDF " << i << " "
-              << particleSourceSpaceCDF[i] << std::endl;
-  }
-  for (int i = 0; i < nSourceElements; i++) {
-    particleSourceSpaceCDF[i] =
-        particleSourceSpaceCDF[i] / particleSourceSpaceCDF[nSourceElements - 1];
-    std::cout << "particleSourceSpaceCDF " << i << " "
-              << particleSourceIndices[i] << " " << particleSourceX[i] << " "
-              << particleSourceZ[i] << particleSourceSpaceCDF[i] << std::endl;
-  }
-  std::random_device randDevice;
-  //boost::random::mt19937 s0;
-  s0.seed(123456);
-  //boost::random::uniform_01<> dist01;
-  gitr_precision rand0 = 0.0;
-  int lowInd = 0;
-  int currentSegment = 0;
-      }
-      */
-  }
 
   if( particle_source_energy == 0 )
   {
@@ -3813,7 +3635,7 @@ if( f.efield_interp == 1 )
     }
     particleArray->setParticleV(i, x, y, z, vx, vy, vz, Z, amu, charge,dt);
 
-    if( particle_source_space > 0 )
+    if( f.particle_source_space > 0 )
     {
     pSurfNormX[i] =
         -boundaries[currentSegment].a / boundaries[currentSegment].plane_norm;
