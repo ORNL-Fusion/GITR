@@ -44,7 +44,6 @@ struct boundary_init {
     gitr_precision* bfieldZ;
     gitr_precision* bfieldT;
     gitr_precision potential;
-    int biased_surface;
     int surface_potential;
     int use_3d_geom;
     int cylsymm;
@@ -53,7 +52,7 @@ struct boundary_init {
           gitr_precision* _densityGridx, gitr_precision* _densityGridz,gitr_precision* _density,gitr_precision* _ne,int _nxB,
           int _nzB, gitr_precision* _bfieldGridr, gitr_precision* _bfieldGridz,gitr_precision* _bfieldR,
           gitr_precision* _bfieldZ,gitr_precision* _bfieldT,int _nR_Temp, int _nZ_Temp,
-          gitr_precision* _TempGridr, gitr_precision* _TempGridz, gitr_precision* _ti, gitr_precision* _te, gitr_precision _potential, int biased_surface_, int surface_potential_,
+          gitr_precision* _TempGridr, gitr_precision* _TempGridz, gitr_precision* _ti, gitr_precision* _te, gitr_precision _potential, int surface_potential_,
           int use_3d_geom_, int cylsymm_ )
 
      : background_Z(_background_Z),
@@ -78,7 +77,6 @@ struct boundary_init {
         bfieldZ(_bfieldZ),
         bfieldT(_bfieldT),
         potential(_potential),
-        biased_surface( biased_surface_ ),
         surface_potential( surface_potential_ ),
         use_3d_geom( use_3d_geom_ ),
         cylsymm( cylsymm_ )
@@ -153,22 +151,7 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         b.larmorRadius = 1.44e-4*std::sqrt(background_amu*b.ti/2)/(background_Z*norm_B);
         b.flux = 0.25*b.density*std::sqrt(8.0*b.ti*1.602e-19/(3.1415*background_amu));
         b.impacts = 0.0;
-        if( biased_surface )
-        {
-        b.potential = potential;
-        //gitr_precision cs = std::sqrt(2*b.ti*1.602e-19/(1.66e-27*background_amu));
-        //gitr_precision jsat_ion = 1.602e-19*b.density*cs;
-        //b.ChildLangmuirDist = 2.0/3.0*std::pow(2*1.602e-19/(background_amu*1.66e-27),0.25)
-        //*std::pow(potential,0.75)/(2.0*std::sqrt(3.1415*jsat_ion))*1.055e-5;
-        if(b.te > 0.0)
-        {
-          b.ChildLangmuirDist = b.debyeLength*std::pow(std::abs(b.potential)/b.te,0.75);
-        }
-        else
-        { b.ChildLangmuirDist = 1e12;
-        }
-        }
-        else if( surface_potential <= 0 )
+        if( surface_potential <= 0 )
         {
         b.potential = sheath_fac*b.te;
         std::cout << "Surface number " << b.surfaceNumber << " has te and potential " 

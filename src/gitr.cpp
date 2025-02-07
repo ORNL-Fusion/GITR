@@ -117,7 +117,6 @@ int main(int argc, char **argv, char **envp)
 
   class flags f( query_metadata );
 
-  int field_aligned_values = FIELD_ALIGNED_VALUES;
   int biased_surface = BIASED_SURFACE;
   int ionization = f.ionization;
   int perp_diffusion = f.perp_diffusion;
@@ -2294,7 +2293,7 @@ if( flowv_interp == 1 )
                               bfieldGridr.data(), bfieldGridz.data(), br.data(),
                               bz.data(), by.data(), nR_Temp, nZ_Temp,
                               TempGridr.data(), TempGridz.data(), ti.data(),
-                              te.data(), biasPotential, biased_surface, surface_potential,
+                              te.data(), biasPotential, surface_potential,
                               use_3d_geom, cylsymm ));
 
   std::cout << "Completed Boundary Init " << std::endl;
