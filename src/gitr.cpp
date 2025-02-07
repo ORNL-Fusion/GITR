@@ -4211,7 +4211,7 @@ if( efield_interp == 1 )
       &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(),gitr_flags, flowv_interp,
       cylsymm, coulomb_collisions );
 
-  thermalForce thermalForce0(gitr_flags,
+  thermalForce thermalForce0(f,
       particleArray, dt, background_amu, nR_gradT, nZ_gradT, gradTGridr.data(),
       gradTGridz.data(), gradTiR.data(), gradTiZ.data(), gradTiY.data(),
       gradTeR.data(), gradTeZ.data(), gradTeY.data(), nR_Bfield, nZ_Bfield,

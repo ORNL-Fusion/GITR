@@ -17,7 +17,7 @@ typedef float gitr_precision;
 #endif
 
 struct thermalForce { 
-    Flags* flags;
+    class flags f; 
     Particles *p;
     const gitr_precision dt;
     gitr_precision background_amu;
@@ -46,7 +46,7 @@ struct thermalForce {
 	    gitr_precision dv_ETGz=0.0;
       int cylsymm;
             
-    thermalForce(Flags* _flags,Particles *_p,gitr_precision _dt, gitr_precision _background_amu,int _nR_gradT, int _nZ_gradT, gitr_precision* _gradTGridr, gitr_precision* _gradTGridz,
+    thermalForce(class flags &f_init,Particles *_p,gitr_precision _dt, gitr_precision _background_amu,int _nR_gradT, int _nZ_gradT, gitr_precision* _gradTGridr, gitr_precision* _gradTGridz,
             gitr_precision* _gradTiR, gitr_precision* _gradTiZ, gitr_precision* _gradTiT, gitr_precision* _gradTeR, gitr_precision* _gradTeZ,gitr_precision* _gradTeT,
             int _nR_Bfield, int _nZ_Bfield,
             gitr_precision * _BfieldGridRDevicePointer,
@@ -56,7 +56,7 @@ struct thermalForce {
             gitr_precision * _BfieldTDevicePointer,
             int cylsymm_ )
         
-            : flags(_flags),p(_p), dt(_dt), background_amu(_background_amu),nR_gradT(_nR_gradT),nZ_gradT(_nZ_gradT),
+            : f( f_init ),p(_p), dt(_dt), background_amu(_background_amu),nR_gradT(_nR_gradT),nZ_gradT(_nZ_gradT),
         gradTGridr(_gradTGridr), gradTGridz(_gradTGridz),
         gradTiR(_gradTiR), gradTiZ(_gradTiZ),gradTiT(_gradTiT), gradTeR(_gradTeR), gradTeZ(_gradTeZ),gradTeT(_gradTeT), 
              nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
@@ -80,7 +80,8 @@ void operator()(std::size_t indx)  {
       gitr_precision vNorm = 0.0;
       gitr_precision vNorm2 = 0.0;
       gitr_precision dt_step = dt;
-                if (flags->USE_ADAPTIVE_DT) {
+                //if (flags->USE_ADAPTIVE_DT) {
+                if (f.adaptive_dt) {
 	          if(p->advance[indx])
 		  {
 	            dt_step = p->dt[indx];
