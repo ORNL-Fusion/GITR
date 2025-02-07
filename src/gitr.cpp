@@ -118,12 +118,6 @@ int main(int argc, char **argv, char **envp)
   class flags f( query_metadata );
 
   int surface_model = f.surface_model;
-  int bfield_interp = f.bfield_interp;
-  int efield_interp = f.efield_interp;
-  int flowv_interp = f.flowv_interp;
-  int density_interp = f.density_interp;
-  int temp_interp = f.temp_interp;
-  int gradt_interp = f.gradt_interp;
   int particle_source_file = f.particle_source_file;
   int particle_source_space = 0;
   int particle_source_energy = 0;
@@ -265,7 +259,7 @@ int main(int argc, char **argv, char **envp)
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   std::string bfieldFile;
   if (world_rank == 0) {
-    importVectorFieldNs(cfg, input_path, bfield_interp, bfieldCfg, nR_Bfield,
+    importVectorFieldNs(cfg, input_path, f.bfield_interp, bfieldCfg, nR_Bfield,
                         nY_Bfield, nZ_Bfield, bfieldFile);
   }
 #if USE_MPI > 0
@@ -281,7 +275,7 @@ int main(int argc, char **argv, char **envp)
   sim::Array<gitr_precision> br(n_Bfield), by(n_Bfield), bz(n_Bfield);
 
   if (world_rank == 0) {
-    importVectorField(cfg, input_path, bfield_interp, bfieldCfg, nR_Bfield,
+    importVectorField(cfg, input_path, f.bfield_interp, bfieldCfg, nR_Bfield,
                       nY_Bfield, nZ_Bfield, bfieldGridr.front(),
                       bfieldGridy.front(), bfieldGridz.front(), br.front(),
                       by.front(), bz.front(), bfieldFile);
@@ -1607,7 +1601,7 @@ if( LC_INTERP > 1 )
   int n_Temp = 1;
   std::string tempCfg = "backgroundPlasmaProfiles.Temperature.";
   std::string tempFile;
-if(temp_interp > 0 )
+if(f.temp_interp > 0 )
 {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -1616,12 +1610,12 @@ if(temp_interp > 0 )
     getVariable(cfg, tempCfg + "fileString", tempFile);
     nR_Temp =
         getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNrString");
-        if(temp_interp > 1 )
+        if(f.temp_interp > 1 )
         {
     nZ_Temp =
         getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNzString");
         }
-        if( temp_interp > 2 )
+        if( f.temp_interp > 2 )
         {
     nY_Temp =
         getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNyString");
@@ -1643,7 +1637,7 @@ if(temp_interp > 0 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-    if( temp_interp == 0 )
+    if( f.temp_interp == 0 )
     {
     getVariable(cfg, tempCfg + "ti", ti[0]);
     getVariable(cfg, tempCfg + "te", te[0]);
@@ -1652,12 +1646,12 @@ if(temp_interp > 0 )
     {
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridRString",
                  TempGridr[0]);
-  if( temp_interp > 1 )
+  if( f.temp_interp > 1 )
   {
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridZString",
                  TempGridz[0]);
   }
-  if( temp_interp > 2 )
+  if( f.temp_interp > 2 )
   {
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridYString",
                  TempGridy[0]);
@@ -1691,7 +1685,7 @@ if(temp_interp > 0 )
   int n_Dens = 1;
   std::string densCfg = "backgroundPlasmaProfiles.Density.";
   std::string densFile;
-  if( density_interp > 0 )
+  if( f.density_interp > 0 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -1699,12 +1693,12 @@ if(temp_interp > 0 )
     getVariable(cfg, densCfg + "fileString", densFile);
     nR_Dens =
         getDimFromFile(cfg, input_path + densFile, densCfg, "gridNrString");
-        if( density_interp > 1 )
+        if( f.density_interp > 1 )
         {
     nZ_Dens =
         getDimFromFile(cfg, input_path + densFile, densCfg, "gridNzString");
         }
-        if(density_interp > 2 )
+        if(f.density_interp > 2 )
         {
     nY_Dens =
         getDimFromFile(cfg, input_path + densFile, densCfg, "gridNyString");
@@ -1725,19 +1719,19 @@ if(temp_interp > 0 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-if( density_interp == 0 )
+if( f.density_interp == 0 )
 {
     getVariable(cfg, densCfg + "ni", ni[0]);
     getVariable(cfg, densCfg + "ne", ne[0]);
     } else {
   getVarFromFile(cfg, input_path + densFile, densCfg, "gridRString",
                  DensGridr[0]);
-  if( density_interp > 1 )
+  if( f.density_interp > 1 )
   {
   getVarFromFile(cfg, input_path + densFile, densCfg, "gridZString",
                  DensGridz[0]);
   }
-  if( density_interp > 2 )
+  if( f.density_interp > 2 )
   {
   getVarFromFile(cfg, input_path + densFile, densCfg, "gridYString",
                  DensGridy[0]);
@@ -1787,14 +1781,14 @@ if( density_interp == 0 )
   int nZ_flowV = 1;
   int n_flowV = 1;
   std::string flowVCfg = "backgroundPlasmaProfiles.FlowVelocity.";
-  if( flowv_interp == 1 )
+  if( f.flowv_interp == 1 )
   {
   nR_flowV = nR_Lc;
   nY_flowV = nY_Lc;
   nZ_flowV = nZ_Lc;
   }
   std::string flowVFile;
-  if( flowv_interp > 1 )
+  if( f.flowv_interp > 1 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -1804,7 +1798,7 @@ if( density_interp == 0 )
         getDimFromFile(cfg, input_path + flowVFile, flowVCfg, "gridNrString");
     nZ_flowV =
         getDimFromFile(cfg, input_path + flowVFile, flowVCfg, "gridNzString");
-    if( flowv_interp > 2 )
+    if( f.flowv_interp > 2 )
     {
     nY_flowV =
         getDimFromFile(cfg, input_path + flowVFile, flowVCfg, "gridNyString");
@@ -1825,7 +1819,7 @@ if( density_interp == 0 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-  if( flowv_interp == 0 )
+  if( f.flowv_interp == 0 )
   {
     getVariable(cfg, flowVCfg + "flowVr", flowVr[0]);
     getVariable(cfg, flowVCfg + "flowVy", flowVt[0]);
@@ -1833,7 +1827,7 @@ if( density_interp == 0 )
   }
   else
   {
-    if( flowv_interp > 1 )
+    if( f.flowv_interp > 1 )
     {
   getVarFromFile(cfg, input_path + flowVFile, flowVCfg, "gridRString",
                  flowVGridr[0]);
@@ -1846,7 +1840,7 @@ if( density_interp == 0 )
   getVarFromFile(cfg, input_path + flowVFile, flowVCfg, "flowVzString",
                  flowVz[0]);
     }
-    if( flowv_interp > 2 )
+    if( f.flowv_interp > 2 )
     {
   getVarFromFile(cfg, input_path + flowVFile, flowVCfg, "gridYString",
                  flowVGridy[0]);
@@ -1869,7 +1863,7 @@ if( density_interp == 0 )
   int iterIndex = 0;
   int nFlowVs;
 
-if( flowv_interp == 1 )
+if( f.flowv_interp == 1 )
 {
   for (int i = 0; i < nR_flowV; i++) {
     std::cout << " !!! gridRLc " << gridRLc[i] << std::endl;
@@ -2037,20 +2031,20 @@ if( flowv_interp == 1 )
   std::string gradTCfg = "backgroundPlasmaProfiles.gradT.";
   std::string gradTFile;
   if (world_rank == 0) {
-    if( gradt_interp > 0 )
+    if( f.gradt_interp > 0 )
     {
     getVariable(cfg, gradTCfg + "fileString", gradTFile);
     nR_gradT =
         getDimFromFile(cfg, input_path + gradTFile, gradTCfg, "gridNrString");
     }
 
-    if( gradt_interp > 1 )
+    if( f.gradt_interp > 1 )
     {
     nZ_gradT =
         getDimFromFile(cfg, input_path + gradTFile, gradTCfg, "gridNzString");
     }
 
-    if( gradt_interp > 2 )
+    if( f.gradt_interp > 2 )
     {
     nY_gradT =
         getDimFromFile(cfg, input_path + gradTFile, gradTCfg, "gridNyString");
@@ -2070,7 +2064,7 @@ if( flowv_interp == 1 )
 
   if (world_rank == 0) {
 
-    if( gradt_interp == 0 )
+    if( f.gradt_interp == 0 )
     {
     getVariable(cfg, gradTCfg + "gradTeR", gradTeR[0]);
     getVariable(cfg, gradTCfg + "gradTeY", gradTeY[0]);
@@ -2083,13 +2077,13 @@ if( flowv_interp == 1 )
     {
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gridRString",
                    gradTGridr[0]);
-    if( gradt_interp > 1 )
+    if( f.gradt_interp > 1 )
     {
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gridZString",
                    gradTGridz[0]);
     }
 
-    if( gradt_interp > 2 )
+    if( f.gradt_interp > 2 )
     {
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gridYString",
                    gradTGridy[0]);
@@ -2325,7 +2319,7 @@ if( flowv_interp == 1 )
   {
 
   std::cout << "Using presheath Efield " << std::endl;
-  if( efield_interp == 1 )
+  if( f.efield_interp == 1 )
   {
   nR_PreSheathEfield = nR_Lc;
   nY_PreSheathEfield = nY_Lc;
@@ -2334,7 +2328,7 @@ if( flowv_interp == 1 )
 
   std::string efieldFile;
 
-  if( efield_interp > 1 )
+  if( f.efield_interp > 1 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -2345,7 +2339,7 @@ if( flowv_interp == 1 )
     nZ_PreSheathEfield =
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNzString");
 
-    if( efield_interp > 2 )
+    if( f.efield_interp > 2 )
     {
     nY_PreSheathEfield =
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNyString");
@@ -2373,19 +2367,19 @@ if( flowv_interp == 1 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-    if( efield_interp == 0 )
+    if( f.efield_interp == 0 )
     {
     getVariable(cfg, PSECfg + "Er", PSEr[0]);
     getVariable(cfg, PSECfg + "Et", PSEt[0]);
     getVariable(cfg, PSECfg + "Ez", PSEz[0]);
     }
-    else if( efield_interp > 1 )
+    else if( f.efield_interp > 1 )
     {
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridRString",
                  preSheathEGridr[0]);
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridZString",
                  preSheathEGridz[0]);
-  if( efield_interp > 2 )
+  if( f.efield_interp > 2 )
   {
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridYString",
                  preSheathEGridy[0]);
@@ -2413,7 +2407,7 @@ if( flowv_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-if( efield_interp == 1 )
+if( f.efield_interp == 1 )
 {
 
   for (int i = 0; i < nR_PreSheathEfield; i++) {
@@ -3554,7 +3548,7 @@ if( efield_interp == 1 )
   std::cout << "Starting psourcefile import " << std::endl;
   vector<gitr_precision> xpfile(nP), ypfile(nP), zpfile(nP), vxpfile(nP), vypfile(nP),
       vzpfile(nP);
-      if( particle_source_file > 0 )
+      if( f.particle_source_file > 0 )
       {
   libconfig::Config cfg_particles;
   std::string ncParticleSourceFile;
@@ -3808,7 +3802,7 @@ if( efield_interp == 1 )
     // particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
     */
 
-   if( particle_source_file > 0 ) 
+   if( f.particle_source_file > 0 ) 
    {
     x = xpfile[i];
     y = ypfile[i];
@@ -4202,7 +4196,7 @@ if( efield_interp == 1 )
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-      &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(), flowv_interp,
+      &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(), f.flowv_interp,
       cylsymm );
 
   thermalForce thermalForce0(f,
