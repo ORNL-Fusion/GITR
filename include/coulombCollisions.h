@@ -363,7 +363,6 @@ struct coulombCollisions {
     gitr_precision * BfieldR;
     gitr_precision * BfieldZ;
     gitr_precision * BfieldT;
-    Flags* gitr_flags;
     gitr_precision dv[3];
 #if __CUDACC__
             curandState *state;
@@ -393,7 +392,7 @@ struct coulombCollisions {
                         int _nR_Bfield, int _nZ_Bfield,
                         gitr_precision * _BfieldGridR ,gitr_precision * _BfieldGridZ ,
                         gitr_precision * _BfieldR ,gitr_precision * _BfieldZ ,
-                 gitr_precision * _BfieldT, Flags* _gitr_flags, int flowv_interp_,
+                 gitr_precision * _BfieldT, int flowv_interp_,
                  int cylsymm_, int _coulomb_collisions)
       : 
         f( f_init ),
@@ -428,7 +427,6 @@ struct coulombCollisions {
         BfieldR(_BfieldR),
         BfieldZ(_BfieldZ),
         BfieldT(_BfieldT),
-	gitr_flags(_gitr_flags),
         dv{0.0, 0.0, 0.0},
         state(_state),
         flowv_interp( flowv_interp_ ),

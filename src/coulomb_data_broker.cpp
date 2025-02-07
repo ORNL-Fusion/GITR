@@ -36,8 +36,6 @@ double coulomb_data_broker::run_3()
   importLibConfig(cfg, COULOMB_UNIT_TEST_FILE );
   std::string input_path = "../test/";
 
-  auto gitr_flags = new Flags(cfg);
-
   int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
   int seed01 = getVariable_cfg<int> (cfg,"operators.ionization.seed");
   auto particleArray = new Particles(nParticles,nParticles,cfg);
@@ -143,7 +141,7 @@ double coulomb_data_broker::run_3()
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
-      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags,
+      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),
       flowv_interp, cylsymm, f.coulomb_collisions );
 
 
@@ -269,8 +267,6 @@ double coulomb_data_broker::run_2()
   importLibConfig(cfg, COULOMB_UNIT_TEST_FILE );
   std::string input_path = "../test/";
 
-  auto gitr_flags = new Flags(cfg);
-
   int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
 
   auto particleArray = new Particles(nParticles,nParticles,cfg);
@@ -341,7 +337,7 @@ double coulomb_data_broker::run_2()
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
-      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),gitr_flags,
+      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),
       flowv_interp, cylsymm, coulomb_collisions );
 
   typedef std::chrono::high_resolution_clock gitr_time;
