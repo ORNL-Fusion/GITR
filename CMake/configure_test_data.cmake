@@ -21,8 +21,11 @@ set( SURFACE_MODEL_TEST_FILE ${destination_path} )
 generate_testing_file( "test_data/test_config.cfg" )
 set( CONFIG_INTERFACE_UNIT_TEST_FILE ${destination_path} )
 
-generate_testing_file( "test_data/test_coulomb.cfg" )
-set( COULOMB_UNIT_TEST_FILE ${destination_path} )
+generate_testing_file( "test_data/test_coulomb_0.cfg" )
+set( COULOMB_UNIT_TEST_FILE_0 ${destination_path} )
+
+generate_testing_file( "test_data/test_coulomb_1.cfg" )
+set( COULOMB_UNIT_TEST_FILE_1 ${destination_path} )
 
 generate_testing_file( "test_data/ionize.cfg" )
 set( FIELD_UNIT_TEST_FILE_0 ${destination_path} )

@@ -24,7 +24,7 @@ coulomb_data_broker::coulomb_data_broker()
 
 double coulomb_data_broker::run_3()
 {
-  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE );
+  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE_0 );
   class flags f( query_metadata );
 
   int const flowv_interp = 0;
@@ -33,7 +33,7 @@ double coulomb_data_broker::run_3()
   libconfig::Config cfg;
   cfg.setAutoConvert(true);
   std::string file = "../test/coulomb.cfg";
-  importLibConfig(cfg, COULOMB_UNIT_TEST_FILE );
+  importLibConfig(cfg, COULOMB_UNIT_TEST_FILE_0 );
   std::string input_path = "../test/";
 
   int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
@@ -132,8 +132,6 @@ double coulomb_data_broker::run_3()
 
   auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
 
-  int coulomb_collisions = 3;
-
   coulombCollisions coulombCollisions0( f,
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
       &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),
@@ -142,7 +140,7 @@ double coulomb_data_broker::run_3()
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
       &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),
-      flowv_interp, cylsymm, f.coulomb_collisions );
+      f.flowv_interp, f.cylsymm );
 
 
 typedef std::chrono::high_resolution_clock gitr_time;
@@ -256,7 +254,7 @@ printf("ave_vx %e \n", ave_vx);
 
 double coulomb_data_broker::run_2()
 {
-  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE );
+  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE_1 );
   class flags f( query_metadata );
 
   int const flowv_interp = 0;
@@ -264,7 +262,7 @@ double coulomb_data_broker::run_2()
   libconfig::Config cfg;
   cfg.setAutoConvert(true);
   std::string file = "../test/coulomb.cfg";
-  importLibConfig(cfg, COULOMB_UNIT_TEST_FILE );
+  importLibConfig(cfg, COULOMB_UNIT_TEST_FILE_1 );
   std::string input_path = "../test/";
 
   int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
@@ -328,8 +326,6 @@ double coulomb_data_broker::run_2()
   int nT = getVariable_cfg<int> (cfg,"timeStep.nT");
   auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
 
-  int coulomb_collisions = 2;
-
   coulombCollisions coulombCollisions0( f,
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
       &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),
@@ -338,7 +334,7 @@ double coulomb_data_broker::run_2()
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
       &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),
-      flowv_interp, cylsymm, coulomb_collisions );
+      f.flowv_interp, f.cylsymm);
 
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
@@ -386,7 +382,7 @@ double coulomb_data_broker::run_2()
 
 std::vector< double > coulomb_data_broker::run_1()
 {
-  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE );
+  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE_0 );
   class flags f( query_metadata );
 
   int const flowv_interp = 0;
@@ -477,7 +473,7 @@ std::vector< double > coulomb_data_broker::run_1()
 
 std::vector< double > coulomb_data_broker::run()
 {
-  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE );
+  class libconfig_string_query query_metadata( COULOMB_UNIT_TEST_FILE_0 );
   class flags f( query_metadata );
 
   int const flowv_interp = 0;

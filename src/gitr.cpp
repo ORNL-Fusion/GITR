@@ -119,6 +119,7 @@ int main(int argc, char **argv, char **envp)
 
   int ionization = f.ionization;
   int perp_diffusion = f.perp_diffusion;
+  // Captain! above are done
   int coulomb_collisions = f.coulomb_collisions;
   int thermal_force = f.thermal_force;
   int surface_model = f.surface_model;
@@ -4208,7 +4209,7 @@ if( efield_interp == 1 )
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
       &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(), flowv_interp,
-      cylsymm, coulomb_collisions );
+      cylsymm );
 
   thermalForce thermalForce0(f,
       particleArray, dt, background_amu, nR_gradT, nZ_gradT, gradTGridr.data(),
