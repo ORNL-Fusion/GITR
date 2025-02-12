@@ -37,6 +37,7 @@ findT( gitr_precision x0,
 
   //template<int HOST=1>
 struct geometry_check {
+  class flags f;
   Particles *particlesPointer;
   const int nLines;
   Boundary *boundaryVector;
@@ -64,7 +65,7 @@ struct geometry_check {
   int use_3d_geom;
   int cylsymm;
 
-  geometry_check(Particles *_particlesPointer, int _nLines,
+  geometry_check(class flags &f_init, Particles *_particlesPointer, int _nLines,
                  Boundary *_boundaryVector, Surfaces *_surfaces, gitr_precision _dt,
                  int _nHashes, int *_nR_closeGeom, int *_nY_closeGeom,
                  int *_nZ_closeGeom, int *_n_closeGeomElements,

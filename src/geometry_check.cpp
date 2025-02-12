@@ -47,6 +47,7 @@ findT( gitr_precision x0,
 
 geometry_check::geometry_check(
 
+  class flags &f_init,
   Particles *_particlesPointer,
   int _nLines,
   Boundary *_boundaryVector,
@@ -74,6 +75,7 @@ geometry_check::geometry_check(
   int cylsymm_ )
   :
 
+    f( f_init ),
     particlesPointer(_particlesPointer), nLines(_nLines),
     boundaryVector(_boundaryVector), surfaces(_surfaces), dt(_dt),
     nHashes(_nHashes), nR_closeGeom(_nR_closeGeom),
