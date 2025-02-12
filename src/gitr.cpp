@@ -1355,7 +1355,7 @@ if( GENERATE_LC > 0 )
 
     thrust::for_each(
         thrust::device, lcBegin, lcEnd,
-        geometry_check(forwardTracerParticles, nLines, &boundaries[0],
+        geometry_check(f, forwardTracerParticles, nLines, &boundaries[0],
                        dummy_surfaces, dr, ii, nR_closeGeom.data(),
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
@@ -1367,7 +1367,7 @@ if( GENERATE_LC > 0 )
 
     thrust::for_each(
         thrust::device, lcBegin, lcEnd,
-        geometry_check(backwardTracerParticles, nLines, &boundaries[0],
+        geometry_check(f, backwardTracerParticles, nLines, &boundaries[0],
                        dummy_surfaces, dr, ii, nR_closeGeom.data(),
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
@@ -3861,7 +3861,7 @@ if( f.efield_interp == 1 )
 
   //void (*bor)(std::size_t) = &move_boris::operator2;
   //auto bor1 = *bor;
-  geometry_check geometry_check0(
+  geometry_check geometry_check0( f,
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),

@@ -87,6 +87,9 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   }
   SECTION("geom test")
   {
+  class libconfig_string_query query( FIELD_UNIT_TEST_FILE_0 );
+  class flags f_in( query );
+
   libconfig::Config cfg,cfg_geom;
   
     importLibConfig(cfg_geom, GEOM_TEST_FILE );
@@ -130,7 +133,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       closeGeomGridy(1), closeGeomGridz(1);
   sim::Array<int> closeGeom(1, 0);
   gitr_precision dt = 1.0e9;
-  geometry_check geometry_check0(
+  geometry_check geometry_check0( f_in,
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
@@ -143,6 +146,9 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   
   SECTION("geom test - flat line")
   {
+  class libconfig_string_query query( FIELD_UNIT_TEST_FILE_0 );
+  class flags f_in( query );
+
   libconfig::Config cfg, cfg_geom;
   
     importLibConfig(cfg_geom, FLAT_LINE_TEST_FILE );
@@ -186,7 +192,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       closeGeomGridy(1), closeGeomGridz(1);
   sim::Array<int> closeGeom(1, 0);
   gitr_precision dt = 1.0e9;
-  geometry_check geometry_check0(
+  geometry_check geometry_check0( f_in,
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
@@ -232,7 +238,9 @@ TEST_CASE("Factorials are computed", "[factorial]") {
   
   SECTION("geom test - positive slope")
   {
-  libconfig::Config cfg,cfg_geom;
+    class libconfig_string_query query( FIELD_UNIT_TEST_FILE_0 );
+    class flags f_in( query );
+    libconfig::Config cfg,cfg_geom;
   
     importLibConfig(cfg_geom, POSITIVE_SLOPE_TEST_FILE );
     importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
@@ -275,7 +283,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
       closeGeomGridy(1), closeGeomGridz(1);
   sim::Array<int> closeGeom(1, 0);
   gitr_precision dt = 1.0e9;
-  geometry_check geometry_check0(
+  geometry_check geometry_check0( f_in,
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),

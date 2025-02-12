@@ -97,7 +97,7 @@ double cross_field_diffusion_broker::run_1()
   sim::Array<int> closeGeom(1, 0);
 
   geometry_check geometry_check0(
-      particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
+      f_in, particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
@@ -350,7 +350,7 @@ double cross_field_diffusion_broker::run()
   /* end dummy variables */
 
   geometry_check geometry_check0(
-      particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
+      f_in, particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
