@@ -309,14 +309,14 @@ int main(int argc, char **argv, char **envp)
 
   sim::Array<Boundary> boundaries(nLines + 1, Boundary());
   if (world_rank == 0) {
-    nSurfaces = importGeometry(cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
+    nSurfaces = importGeometry(f, cfg_geom, boundaries, cylsymm, surface_potential );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
   }
 #if USE_MPI > 0
   MPI_Bcast(&nSurfaces, 1, MPI_INT, 0, MPI_COMM_WORLD);
   int nBoundaryMembers;
-  if(use_3d_geom)
+  if(f.use_3d_geom)
   {
     nBoundaryMembers = 41;
   }
@@ -470,11 +470,11 @@ int main(int argc, char **argv, char **envp)
   if( geom_hash == 1 )
   {
   if (world_rank == 0) {
-    importHashNs(cfg, input_path, nHashes, "geometry_hash", nR_closeGeom.data(),
+    importHashNs(f, cfg, input_path, nHashes, "geometry_hash", nR_closeGeom.data(),
                  nY_closeGeom.data(), nZ_closeGeom.data(),
                  n_closeGeomElements.data(), nR_closeGeomTotal,
                  nY_closeGeomTotal, nZ_closeGeomTotal, nHashPoints.data(),
-                 nHashPointsTotal, nGeomHash, use_3d_geom );
+                 nHashPointsTotal, nGeomHash);
     std::cout << "made it here" << std::endl;
     libconfig::Setting& geomHash = cfg.lookup("geometry_hash");
      if(nHashes > 1)
@@ -503,7 +503,7 @@ int main(int argc, char **argv, char **envp)
       nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
       nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
     }
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
      if(nHashes > 1)
     {
@@ -579,7 +579,7 @@ if( geom_hash > 1 )
       nGeomHash = nGeomHash +
                   nR_closeGeom[i] * nZ_closeGeom[i] * n_closeGeomElements[i];
 
-      if( use_3d_geom > 0 )
+      if( f.use_3d_geom > 0 )
       {
         nY_closeGeom[i] = getDimFromFile(cfg, input_path + hashFile[i],
                                          geomHashCfg, "gridNyString");
@@ -647,7 +647,7 @@ if( geom_hash == 1 )
         hashX1[i] = geomHash["hashX1"][i];
         hashZ0[i] = geomHash["hashZ0"][i];
         hashZ1[i] = geomHash["hashZ1"][i];
-        if( use_3d_geom > 0 )
+        if( f.use_3d_geom > 0 )
         {
           hashY0[i] = geomHash["hashY0"][i];
           hashY1[i] = geomHash["hashY1"][i];
@@ -658,7 +658,7 @@ if( geom_hash == 1 )
       getVariable(cfg, geomHashCfg + "hashX1", hashX1[0]);
       getVariable(cfg, geomHashCfg + "hashZ0", hashZ0[0]);
       getVariable(cfg, geomHashCfg + "hashZ1", hashZ1[0]);
-      if( use_3d_geom > 0 )
+      if( f.use_3d_geom > 0 )
       {
       getVariable(cfg, geomHashCfg + "hashY0", hashY0[0]);
       getVariable(cfg, geomHashCfg + "hashY1", hashY1[0]);
@@ -818,7 +818,7 @@ if( geom_hash == 1 )
           }
         };
 
-        if(use_3d_geom)
+        if(f.use_3d_geom)
         {
           for (int j = 0; j < nY_closeGeom[ii]; j++)
           {
@@ -873,7 +873,7 @@ if( geom_hash == 1 )
       std::cout << "opened file" << std::endl;
       netCDF::NcDim hashNR = ncFile_hash.addDim("nR", nR_closeGeom[i]);
       netCDF::NcDim hashNY;
-      if( use_3d_geom > 0 )
+      if( f.use_3d_geom > 0 )
       {
         hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
       }
@@ -882,7 +882,7 @@ if( geom_hash == 1 )
       vector<netCDF::NcDim> geomHashDim;
       geomHashDim.push_back(hashNR);
       std::cout << "created dims" << std::endl;
-      if( use_3d_geom > 0 )
+      if( f.use_3d_geom > 0 )
       {
         geomHashDim.push_back(hashNY);
       }
@@ -891,7 +891,7 @@ if( geom_hash == 1 )
       netCDF::NcVar hash_gridR = ncFile_hash.addVar("gridR", netcdf_precision, hashNR);
       std::cout << "created dims2" << std::endl;
       netCDF::NcVar hash_gridY;
-      if( use_3d_geom > 0 )
+      if( f.use_3d_geom > 0 )
       {
         hash_gridY = ncFile_hash.addVar("gridY", netcdf_precision, hashNY);
       }
@@ -902,7 +902,7 @@ if( geom_hash == 1 )
       if (i > 0)
         ncIndex = nR_closeGeom[i - 1];
       hash_gridR.putVar(&closeGeomGridr[ncIndex]);
-      if( use_3d_geom > 0 )
+      if( f.use_3d_geom > 0 )
       {
         if (i > 0)
           ncIndex = nY_closeGeom[i - 1];
@@ -936,7 +936,7 @@ else if( geom_hash > 1 )
       getVarFromFile(cfg, input_path + hashFile[i], geomHashCfg, "gridZString",
                      closeGeomGridz[dataIndex]);
       std::cout << "created vars3" << std::endl;
-      if( use_3d_geom > 0 )
+      if( f.use_3d_geom > 0 )
       {
         if (i > 0)
           dataIndex = nY_closeGeom[0];
@@ -978,7 +978,7 @@ if( geom_hash_sheath == 1 )
                 n_closeGeomElements_sheath);
     nGeomHash_sheath =
         nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
       getVariable(cfg, geomHashSheathCfg + "nY_closeGeom", nY_closeGeom_sheath);
       nGeomHash_sheath = nY_closeGeom_sheath * nGeomHash_sheath;
@@ -1008,7 +1008,7 @@ if( geom_hash_sheath > 1 )
                        "nearestNelementsString");
     nGeomHash_sheath =
         nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
       nY_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
                                            geomHashSheathCfg, "gridNyString");
@@ -1038,7 +1038,7 @@ if( geom_hash_sheath > 1 )
     getVariable(cfg, geomHashSheathCfg + "hashX1", hashX1_s);
     getVariable(cfg, geomHashSheathCfg + "hashZ0", hashZ0_s);
     getVariable(cfg, geomHashSheathCfg + "hashZ1", hashZ1_s);
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
     getVariable(cfg, geomHashSheathCfg + "hashY0", hashY0_s);
     getVariable(cfg, geomHashSheathCfg + "hashY1", hashY1_s);
@@ -1166,7 +1166,7 @@ else if( geom_hash_sheath > 1 )
                    "gridRString", closeGeomGridr_sheath[0]);
     getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
                    "gridZString", closeGeomGridz_sheath[0]);
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
     getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
                    "gridYString", closeGeomGridy_sheath[0]);
@@ -1243,7 +1243,7 @@ else
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-if( use_3d_geom > 0 )
+if( f.use_3d_geom > 0 )
 {
   nTracers = nR_Lc * nY_Lc * nZ_Lc;
 }
@@ -1262,7 +1262,7 @@ if( GENERATE_LC > 0 )
   // if( !boost::filesystem::exists( lcFile ) )
   // {
   //   std::cout << "No pre-existing connection length file found" << std::endl;
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
   gitr_precision dy_Lc = (y1_Lc - y0_Lc) / (nY_Lc - 1);
   for (int j = 0; j < nY_Lc; j++) {
@@ -1302,7 +1302,7 @@ if( GENERATE_LC > 0 )
   for (int i = 0; i < nR_Lc; i++) {
     for (int j = 0; j < nY_Lc; j++) {
       for (int k = 0; k < nZ_Lc; k++) {
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
         addIndex = i + j * nR_Lc + k * nR_Lc * nY_Lc;
     }
@@ -1445,7 +1445,7 @@ if( GENERATE_LC > 0 )
         for (int k = 0; k < nZ_Lc; k++) {
           // std::cout << "hitwall of tracers " <<
           // forwardTracerParticles->hitWall[addIndex] << std::endl;
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
           addIndex = i + j * nR_Lc + k * nR_Lc * nY_Lc;
     }
@@ -1513,7 +1513,7 @@ if( GENERATE_LC > 0 )
     dims_lc.push_back(nc_nRLc);
 
     NcDim nc_nYLc;
-    if( use_3d_geom )
+    if( f.use_3d_geom )
     {
     nc_nYLc = ncFileLC.addDim("nY", nY_Lc);
     dims_lc.push_back(nc_nYLc);
@@ -1533,7 +1533,7 @@ if( GENERATE_LC > 0 )
     NcVar nc_nI = ncFileLC.addVar("noIntersection", netcdf_precision, dims_lc);
     NcVar nc_gridRLc = ncFileLC.addVar("gridR", netcdf_precision, nc_nRLc);
     NcVar nc_gridYLc;
-    if( use_3d_geom )
+    if( f.use_3d_geom )
     {
     nc_gridYLc = ncFileLC.addVar("gridY", netcdf_precision, nc_nYLc);
     }
@@ -1549,7 +1549,7 @@ if( GENERATE_LC > 0 )
     //nc_btz.putVar(&backwardTracerZ[0]);
     //nc_nI.putVar(&noIntersectionNodes[0]);
     //nc_gridRLc.putVar(&gridRLc[0]);
-    if( use_3d_geom )
+    if( f.use_3d_geom )
     {
     nc_gridYLc.putVar(&gridYLc[0]);
 //#endif
@@ -4574,7 +4574,7 @@ for(int i=0; i<nP ; i++)
       if (particleArray->hitWall[i] > 0.0)
         totalHitWall++;
     }
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
     gitr_precision meanTransitTime0 = 0.0;
     /*

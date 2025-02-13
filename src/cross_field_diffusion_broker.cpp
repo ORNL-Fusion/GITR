@@ -65,7 +65,7 @@ double cross_field_diffusion_broker::run_1()
 
   sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-  int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
+  int nSurfaces = importGeometry( f_in, cfg_geom, boundaries, cylsymm, surface_potential );
 
   auto particleArray = new Particles( nP, 1, cfg_geom);
   for(int i=0;i<nP;i++)
@@ -316,7 +316,7 @@ double cross_field_diffusion_broker::run()
 
   sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-  int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, surface_potential );
+  int nSurfaces = importGeometry( f_in, cfg_geom, boundaries, cylsymm, surface_potential );
 
   //REQUIRE( nSurfaces == 2 );
 

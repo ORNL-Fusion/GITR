@@ -15,6 +15,9 @@
 
 std::vector< double > boris_data_broker_0::run_2()
 {
+  class libconfig_string_query query( GET_E_TEST_FILE );
+  class flags f( query );
+
   int const sheath_efield = 0;
   int const presheath_efield = 1;
   int const surface_potential = 0;
@@ -30,7 +33,7 @@ std::vector< double > boris_data_broker_0::run_2()
   int nLines = 1;
   sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-  int nSurfaces = importGeometry( cfg_geom, boundaries, use_3d_geom, cylsymm, 
+  int nSurfaces = importGeometry( f, cfg_geom, boundaries, cylsymm, 
       surface_potential );
 
   int nR_Dens = 1;
