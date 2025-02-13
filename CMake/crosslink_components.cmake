@@ -15,6 +15,7 @@ target_link_libraries( utils
                        libconfig_c
                        thrust
                        interp2d
+                       config_interface
                        netcdf_cxx
                        netcdf_c )
 
