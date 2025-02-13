@@ -107,7 +107,7 @@ std::vector< double > boris_data_broker_0::run_2()
   {
     pz[0] = j*dz;
     minDistance =
-      getE(px[0], 
+      getE(f, px[0], 
            py[0], 
            pz[0], 
            thisE, 
@@ -122,7 +122,6 @@ std::vector< double > boris_data_broker_0::run_2()
           &closeGeomGridz_sheath.front(),
           &closeGeom_sheath.front(),
           closestBoundaryIndex,
-          use_3d_geom,
           geom_hash_sheath,
           cylsymm,
           f_psi );

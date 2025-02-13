@@ -202,7 +202,8 @@ void vectorCrossProduct(gitr_precision A[], gitr_precision B[], gitr_precision C
 }
 
 CUDA_CALLABLE_MEMBER
-gitr_precision getE ( gitr_precision x0,
+gitr_precision getE ( class flags f,
+                      gitr_precision x0,
                       gitr_precision y,
                       gitr_precision z,
                       gitr_precision E[],
@@ -217,7 +218,6 @@ gitr_precision getE ( gitr_precision x0,
                       gitr_precision *closeGeomGridz,
                       int *closeGeom, 
                       int&  closestBoundaryIndex,
-                      int use_3d_geom, 
                       int geom_hash_sheath,
                       int cylsymm,
                       gitr_precision& f_psi  ) 
@@ -233,7 +233,7 @@ gitr_precision getE ( gitr_precision x0,
     gitr_precision Er = 0.0;
     gitr_precision Et = 0.0;
 
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
     gitr_precision p0[3] = {x0,y,z};
       gitr_precision a = 0.0;
@@ -710,7 +710,7 @@ gitr_precision getE ( gitr_precision x0,
         //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     
     //std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
             E[0] = Er;
             E[1] = Et;
@@ -859,13 +859,13 @@ void move_boris::operator()(std::size_t indx)
   gitr_precision f_psi = 1.0;
   if( sheath_efield > 0 )
   {
-  minDist = getE(position[0], position[1], position[2],
+  minDist = getE(f, position[0], position[1], position[2],
 		  E,boundaryVector,nLines,nR_closeGeom_sheath,
                   nY_closeGeom_sheath,nZ_closeGeom_sheath,
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  use_3d_geom, geom_hash_sheath, cylsymm, f_psi  );
+                  geom_hash_sheath, cylsymm, f_psi  );
 
       if( f.sheath_density )
       {
@@ -995,13 +995,13 @@ void move_boris::operator()(std::size_t indx)
      // second step of half_dt
   if( sheath_efield > 0 )
   {
-  minDist = getE(position[0], position[1], position[2],
+  minDist = getE(f, position[0], position[1], position[2],
 		  E,boundaryVector,nLines,nR_closeGeom_sheath,
                   nY_closeGeom_sheath,nZ_closeGeom_sheath,
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  use_3d_geom, geom_hash_sheath, cylsymm, f_psi  );
+                  geom_hash_sheath, cylsymm, f_psi  );
   }
 
   if( presheath_efield > 0 )
