@@ -1,7 +1,7 @@
 #include "surfaceModel.h"
 
     /* constructor */
-    reflection::reflection(Particles* _particles, double _dt,
+    reflection::reflection( class flags &f_init, Particles* _particles, double _dt,
 #if __CUDACC__
                             curandState *_state,
 #else
@@ -39,8 +39,8 @@
     gitr_precision _A0dist,
     gitr_precision _Adist,
     int flux_ea_,
-    int use_3d_geom_,
     int cylsymm_ ) :
+                             f( f_init ),
                              particles(_particles),
                              dt(_dt),
                              nLines(_nLines),
@@ -77,7 +77,6 @@
                              Adist(_Adist),
                              state(_state),
                              flux_ea( flux_ea_ ),
-                             use_3d_geom( use_3d_geom_ ),
                              cylsymm( cylsymm_ )
                              { }
 
@@ -143,7 +142,7 @@ void reflection::operator()(std::size_t indx) const {
       
     wallIndex = particles->wallIndex[indx];
     
-    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx], use_3d_geom, cylsymm );
+    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx], f.use_3d_geom, cylsymm );
     
     particleTrackVector[0] = particleTrackVector[0] / norm_part;
     particleTrackVector[1] = particleTrackVector[1] / norm_part;
@@ -386,7 +385,7 @@ void reflection::operator()(std::size_t indx) const {
       vSampled[1] = V0 * std::sin(aInterpVal * 3.1415 / 180) * std::sin(2.0 * 3.1415 * r10);
       vSampled[2] = V0 * std::cos(aInterpVal * 3.1415 / 180);
       boundaryVector[wallHit].transformToSurface(vSampled, particles->y[indx],
-                                                 particles->x[indx], use_3d_geom,
+                                                 particles->x[indx], f.use_3d_geom,
                                                  cylsymm );
       particles->vx[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[0];
       particles->vy[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[1];

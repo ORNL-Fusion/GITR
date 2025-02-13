@@ -117,7 +117,6 @@ int main(int argc, char **argv, char **envp)
 
   class flags f( query_metadata );
 
-  int use_3d_geom = f.use_3d_geom;
   int flux_ea = f.flux_ea;
   int cylsymm = f.cylsymm;
   int geom_hash = f.geom_hash;
@@ -353,7 +352,7 @@ int main(int argc, char **argv, char **envp)
   int nAdist = 1;
   gitr_precision A0dist = 0.0;
   gitr_precision Adist = 0.0;
-  if(flux_ea)
+  if(f.flux_ea)
   {
   if (world_rank == 0) {
     getVariable(cfg, "surfaces.flux.nE", nEdist);
@@ -3922,7 +3921,7 @@ if( f.efield_interp == 1 )
       bfieldGridr.data(), &bfieldGridz.front(), &br.front(), &bz.front(),
       &by.front(), cylsymm );
 
-  reflection reflection0(
+  reflection reflection0( f,
       particleArray, dt, &state1.front(), nLines, &boundaries[0], surfaces,
       nE_sputtRefCoeff, nA_sputtRefCoeff, A_sputtRefCoeff.data(),
       Elog_sputtRefCoeff.data(), spyl_surfaceModel.data(),
@@ -3934,7 +3933,7 @@ if( f.efield_interp == 1 )
       energyDistGrid01Ref.data(), angleDistGrid01.data(),
       EDist_CDF_Y_regrid.data(), AphiDist_CDF_Y_regrid.data(),
       EDist_CDF_R_regrid.data(), AphiDist_CDF_R_regrid.data(), nEdist, E0dist,
-      Edist, nAdist, A0dist, Adist, flux_ea, use_3d_geom, cylsymm );
+      Edist, nAdist, A0dist, Adist, flux_ea, cylsymm );
 
   history history0(particleArray, dev_tt, nT, subSampleFac, nP,
                    &positionHistoryX.front(), &positionHistoryY.front(),

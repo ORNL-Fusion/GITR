@@ -33,6 +33,7 @@ typedef float gitr_precision;
 #endif
 
 struct reflection {
+    class flags f;
     Particles * particles;
     const double dt;
     int nLines;
@@ -76,7 +77,7 @@ struct reflection {
     int use_3d_geom;
     int cylsymm;
 
-    reflection(Particles* _particles, double _dt,
+    reflection(class flags &f_init, Particles* _particles, double _dt,
 #if __CUDACC__
                             curandState *_state,
 #else
@@ -114,7 +115,6 @@ struct reflection {
     gitr_precision _A0dist,
     gitr_precision _Adist,
     int flux_ea_,
-    int use_3d_geom_,
     int cylsymm_ );
 
 CUDA_CALLABLE_MEMBER_DEVICE
