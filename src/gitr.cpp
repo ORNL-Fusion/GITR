@@ -2533,7 +2533,7 @@ if( f.efield_interp == 1 )
   int minInd_bnd = 0;
   for (int i = 0; i < 1000; i++) {
       minDist0 =
-          getE(0.0,
+          getE(f, 0.0,
                0.0,
                1.0E-6*i,
                thisE0,
@@ -2548,7 +2548,6 @@ if( f.efield_interp == 1 )
                &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(),
                minInd_bnd,
-               use_3d_geom,
                geom_hash_sheath,
                cylsymm,
                f_psi );
@@ -4647,12 +4646,12 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     gitr_precision thisE[3] = {0.0};
     for (int j = 0; j < nP; j++) {
       minDistance =
-          getE(px[j], py[j], pz[j], thisE, boundaries.data(), nLines,
+          getE(f, px[j], py[j], pz[j], thisE, boundaries.data(), nLines,
                nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), closestBoundaryIndex,
-               use_3d_geom, geom_hash_sheath, cylsymm, f_psi );
+               geom_hash_sheath, cylsymm, f_psi );
       
       if (boundaries[closestBoundaryIndex].Z > 0.0) {
         surfIndex = boundaries[closestBoundaryIndex].surfaceNumber;
