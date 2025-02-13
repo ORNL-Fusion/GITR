@@ -70,7 +70,6 @@ geometry_check::geometry_check(
   gitr_precision _Adist,
   int flux_ea_,
   int geom_hash_,
-  int use_3d_geom_,
   int cylsymm_ )
   :
 
@@ -84,7 +83,7 @@ geometry_check::geometry_check(
     closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
     E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
     Adist(_Adist), flux_ea( flux_ea_ ),
-    geom_hash( geom_hash_ ), use_3d_geom( use_3d_geom_ ), cylsymm( cylsymm_ )
+    geom_hash( geom_hash_ ), cylsymm( cylsymm_ )
     {}
 
 CUDA_CALLABLE_HOST_DEVICE
@@ -223,7 +222,7 @@ void geometry_check::operator()(std::size_t indx) const {
       }
     }
     }
-    if( use_3d_geom > 0 )
+    if( f.use_3d_geom > 0 )
     {
 
     gitr_precision a = 0.0;
@@ -1019,7 +1018,7 @@ else top_limit = nLines;
       int wallHitP = particlesPointer->surfaceHit[indx];
       boundaryVector[particlesPointer->surfaceHit[indx]].getSurfaceNormal(
           surfaceNormalVector, particlesPointer->y[indx],
-          particlesPointer->x[indx], use_3d_geom, cylsymm );
+          particlesPointer->x[indx], f.use_3d_geom, cylsymm );
       particleTrackVector[0] = particleTrackVector[0] / norm_part;
       particleTrackVector[1] = particleTrackVector[1] / norm_part;
       particleTrackVector[2] = particleTrackVector[2] / norm_part;

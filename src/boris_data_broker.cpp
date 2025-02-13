@@ -73,14 +73,14 @@ std::vector< double > boris_data_broker_0::run_2()
 
 
   std::for_each(boundaries.begin(), boundaries.end() - 1,
-      boundary_init(background_Z, background_amu, nR_Dens, nZ_Dens,
+      boundary_init(f, background_Z, background_amu, nR_Dens, nZ_Dens,
         DensGridr.data(), DensGridz.data(), ni.data(),
         ne.data(), nR_Bfield, nZ_Bfield,
         bfieldGridr.data(), bfieldGridz.data(), br.data(),
         bz.data(), by.data(), nR_Temp, nZ_Temp,
         TempGridr.data(), TempGridz.data(), ti.data(),
         te.data(), biasPotential, surface_potential,
-        use_3d_geom, cylsymm ));
+        cylsymm ));
 
   int nHashes = 1;
   int nR_closeGeom_sheath = 1;
