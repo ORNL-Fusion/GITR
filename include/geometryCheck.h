@@ -61,7 +61,6 @@ struct geometry_check {
   gitr_precision Adist;
   int flux_ea;
   int geom_hash;
-  int use_3d_geom;
   int cylsymm;
 
   geometry_check(class flags &f_init, Particles *_particlesPointer, int _nLines,
@@ -74,7 +73,6 @@ struct geometry_check {
                  gitr_precision _Adist,
                  int flux_ea_,
                  int geom_hash_,
-                 int use_3d_geom_,
                  int cylsymm_ );
 
 

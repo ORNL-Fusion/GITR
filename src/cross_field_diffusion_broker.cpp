@@ -101,7 +101,6 @@ double cross_field_diffusion_broker::run_1()
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
       nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea,
       geom_hash,
-      use_3d_geom,
       cylsymm );
 
 
@@ -352,7 +351,6 @@ double cross_field_diffusion_broker::run()
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
       nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea,
       geom_hash,
-      use_3d_geom,
       cylsymm );
 
 

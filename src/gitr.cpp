@@ -769,7 +769,7 @@ if( geom_hash == 1 )
   hashGeom geo1(nLines, nHashes, boundaries.data(), closeGeomGridr.data(),
                 closeGeomGridy.data(), closeGeomGridz.data(),
                 n_closeGeomElements.data(), closeGeom.data(),
-                nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(), use_3d_geom );
+                nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(), f.use_3d_geom );
   std::cout << "nHashPoints start stop " << world_rank * nHashMeshPointsPerProcess << " "
         << world_rank * nHashMeshPointsPerProcess + hashMeshIncrements[world_rank] - 1<< std::endl;
   thrust::for_each(thrust::device,
@@ -1089,7 +1089,7 @@ if( geom_hash_sheath > 1 )
       nLines, boundaries.data(), closeGeomGridr_sheath.data(),
       closeGeomGridy_sheath.data(), closeGeomGridz_sheath.data(),
       n_closeGeomElements_sheath, closeGeom_sheath.data(), nR_closeGeom_sheath,
-      nY_closeGeom_sheath, nZ_closeGeom_sheath, use_3d_geom );
+      nY_closeGeom_sheath, nZ_closeGeom_sheath, f.use_3d_geom );
   thrust::for_each(thrust::device,
                    lines0_s + world_rank * nHashMeshPointsPerProcess_s,
                    lines0_s + world_rank * nHashMeshPointsPerProcess_s +
@@ -1360,7 +1360,6 @@ if( GENERATE_LC > 0 )
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
                        &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea,
                        geom_hash,
-                       use_3d_geom,
                        cylsymm ) );
 
     thrust::for_each(
@@ -1372,7 +1371,6 @@ if( GENERATE_LC > 0 )
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
                        &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea,
                        geom_hash,
-                       use_3d_geom,
                        cylsymm ) );
   }
   auto finish_clock_trace = Time_trace::now();
@@ -2253,14 +2251,14 @@ if( f.flowv_interp == 1 )
   /* Captain! ti/te used in boundary_init */
   // Applying background values at material boundaries
   std::for_each(boundaries.begin(), boundaries.end() - 1,
-                boundary_init(background_Z, background_amu, nR_Dens, nZ_Dens,
+                boundary_init(f, background_Z, background_amu, nR_Dens, nZ_Dens,
                               DensGridr.data(), DensGridz.data(), ni.data(),
                               ne.data(), nR_Bfield, nZ_Bfield,
                               bfieldGridr.data(), bfieldGridz.data(), br.data(),
                               bz.data(), by.data(), nR_Temp, nZ_Temp,
                               TempGridr.data(), TempGridz.data(), ti.data(),
                               te.data(), biasPotential, surface_potential,
-                              use_3d_geom, cylsymm ));
+                              cylsymm ));
 
   std::cout << "Completed Boundary Init " << std::endl;
   std::cout << "periodicy "<<boundaries[nLines].periodic << std::endl;
@@ -3866,7 +3864,6 @@ if( f.efield_interp == 1 )
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
       nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea,
       geom_hash,
-      use_3d_geom,
       cylsymm );
 
   sortParticles sort0(f, particleArray, nP,dev_tt, 10000,

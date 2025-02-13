@@ -22,6 +22,7 @@ typedef float gitr_precision;
 #endif
 
 struct boundary_init {
+    class flags f;
     gitr_precision background_Z;
     gitr_precision background_amu;
     int nR_Temp;
@@ -45,17 +46,16 @@ struct boundary_init {
     gitr_precision* bfieldT;
     gitr_precision potential;
     int surface_potential;
-    int use_3d_geom;
     int cylsymm;
     
-    boundary_init(gitr_precision _background_Z, gitr_precision _background_amu,int _nx, int _nz,
+    boundary_init(class flags &f_init, gitr_precision _background_Z, gitr_precision _background_amu,int _nx, int _nz,
           gitr_precision* _densityGridx, gitr_precision* _densityGridz,gitr_precision* _density,gitr_precision* _ne,int _nxB,
           int _nzB, gitr_precision* _bfieldGridr, gitr_precision* _bfieldGridz,gitr_precision* _bfieldR,
           gitr_precision* _bfieldZ,gitr_precision* _bfieldT,int _nR_Temp, int _nZ_Temp,
           gitr_precision* _TempGridr, gitr_precision* _TempGridz, gitr_precision* _ti, gitr_precision* _te, gitr_precision _potential, int surface_potential_,
-          int use_3d_geom_, int cylsymm_ )
+          int cylsymm_ )
 
-     : background_Z(_background_Z),
+     :  f( f_init ), background_Z(_background_Z),
         background_amu(_background_amu),
         nR_Temp(_nR_Temp),
         nZ_Temp(_nZ_Temp),
@@ -78,7 +78,6 @@ struct boundary_init {
         bfieldT(_bfieldT),
         potential(_potential),
         surface_potential( surface_potential_ ),
-        use_3d_geom( use_3d_geom_ ),
         cylsymm( cylsymm_ )
         {}
 
@@ -86,7 +85,7 @@ struct boundary_init {
         gitr_precision midpointx;
         gitr_precision midpointy;
         gitr_precision midpointz;
-    if( use_3d_geom )
+    if( f.use_3d_geom )
     {
         midpointx = b.x1 + 0.666666667*(b.x2 + 0.5*(b.x3-b.x2)-b.x1);
         midpointy = b.y1 + 0.666666667*(b.y2 + 0.5*(b.y3-b.y2)-b.y1);
@@ -108,10 +107,10 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
                  bfieldGridz,bfieldR,bfieldZ,bfieldT, cylsymm );
         gitr_precision norm_B = vectorNorm(B);
         gitr_precision theta;
-    if( use_3d_geom )
+    if( f.use_3d_geom )
     {
         gitr_precision surfNorm[3] = {0.0,0.0,0.0};
-        b.getSurfaceNormal(surfNorm,0.0,0.0, use_3d_geom, cylsymm );
+        b.getSurfaceNormal(surfNorm,0.0,0.0, f.use_3d_geom, cylsymm );
         theta = std::acos(vectorDotProduct(B,surfNorm)/(vectorNorm(B)*vectorNorm(surfNorm)));
         if (theta > 3.14159265359*0.5)
         {
