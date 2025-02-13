@@ -117,7 +117,6 @@ int main(int argc, char **argv, char **envp)
 
   class flags f( query_metadata );
 
-  int surface_model = f.surface_model;
   int spectroscopy = f.spectroscopy;
   int use_3d_geom = f.use_3d_geom;
   int flux_ea = f.flux_ea;
@@ -1360,7 +1359,7 @@ if( GENERATE_LC > 0 )
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
-                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea, f.surface_model,
+                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea,
                        geom_hash,
                        use_3d_geom,
                        cylsymm ) );
@@ -1372,7 +1371,7 @@ if( GENERATE_LC > 0 )
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
-                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea, f.surface_model,
+                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea,
                        geom_hash,
                        use_3d_geom,
                        cylsymm ) );
@@ -3866,13 +3865,14 @@ if( f.efield_interp == 1 )
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, f.surface_model,
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea,
       geom_hash,
       use_3d_geom,
       cylsymm );
 
-  sortParticles sort0(particleArray, nP,dev_tt, 10000,
-                      nActiveParticlesOnRank.data(),f.surface_model,nT);
+  sortParticles sort0(f, particleArray, nP,dev_tt, 10000,
+                      nActiveParticlesOnRank.data(),nT);
+
   spec_bin spec_bin0(f,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy,

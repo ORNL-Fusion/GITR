@@ -21,7 +21,6 @@ double cross_field_diffusion_broker::run_1()
   class flags f_in( query );
 
   int const flux_ea = f_in.flux_ea;
-  int const surface_model = f_in.surface_model;
   int const bfield_interp = f_in.bfield_interp;
   int const use_3d_geom = f_in.use_3d_geom;
   int const geom_hash = f_in.geom_hash;
@@ -101,7 +100,7 @@ double cross_field_diffusion_broker::run_1()
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model,
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea,
       geom_hash,
       use_3d_geom,
       cylsymm );
@@ -271,7 +270,6 @@ double cross_field_diffusion_broker::run()
   class flags f_in( query );
 
   int const flux_ea = f_in.flux_ea;
-  int const surface_model = f_in.surface_model;
   int const bfield_interp = f_in.bfield_interp;
   int const use_3d_geom = f_in.use_3d_geom;
   int const geom_hash = f_in.geom_hash;
@@ -354,7 +352,7 @@ double cross_field_diffusion_broker::run()
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea, surface_model,
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea,
       geom_hash,
       use_3d_geom,
       cylsymm );
