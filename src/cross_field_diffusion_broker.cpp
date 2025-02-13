@@ -24,7 +24,6 @@ double cross_field_diffusion_broker::run_1()
   int const bfield_interp = f_in.bfield_interp;
   int const use_3d_geom = f_in.use_3d_geom;
   int const geom_hash = f_in.geom_hash;
-  int const spectroscopy = f_in.spectroscopy;
   int const surface_potential = f_in.surface_potential;
   int const perp_diffusion = f_in.perp_diffusion;
 
@@ -154,7 +153,7 @@ double cross_field_diffusion_broker::run_1()
   /* new variables end */
   spec_bin spec_bin0(f_in, particleArray, nBins, net_nX, net_nY, net_nZ,
       &gridX_bins.front(), &gridY_bins.front(),
-      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy,
+      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm,
       &net_Bins_vx.front(),&net_Bins_vy.front(),&net_Bins_vz.front(), &net_Bins_E.front() );
 
 
@@ -273,7 +272,6 @@ double cross_field_diffusion_broker::run()
   int const bfield_interp = f_in.bfield_interp;
   int const use_3d_geom = f_in.use_3d_geom;
   int const geom_hash = f_in.geom_hash;
-  int const spectroscopy = f_in.spectroscopy;
   int const surface_potential = f_in.surface_potential;
   int const perp_diffusion = f_in.perp_diffusion;
   int const cylsymm = f_in.cylsymm;
@@ -416,7 +414,7 @@ double cross_field_diffusion_broker::run()
 
   spec_bin spec_bin0(f_in, particleArray, nBins, net_nX, net_nY, net_nZ,
       &gridX_bins.front(), &gridY_bins.front(),
-      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm, spectroscopy,
+      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm,
       &net_Bins_vx.front(),&net_Bins_vy.front(),&net_Bins_vz.front(), &net_Bins_E.front() );
 
 #if USE_CUDA > 0

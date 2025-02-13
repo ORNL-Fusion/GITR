@@ -1,11 +1,11 @@
 #include "spectroscopy.h"
 
 spec_bin::spec_bin(class flags &f_init, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
-           gitr_precision* _bins, gitr_precision _dt, int cylsymm_, int spectroscopy_,
+           gitr_precision* _bins, gitr_precision _dt, int cylsymm_,
            gitr_precision* _bins_vx, gitr_precision* _bins_vy, gitr_precision* _bins_vz,
            gitr_precision* _bins_E ) : 
         f(f_init), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
-        dt(_dt), cylsymm( cylsymm_ ), spectroscopy( spectroscopy_ ),
+        dt(_dt), cylsymm( cylsymm_ ),
         bins_vx(_bins_vx), bins_vy(_bins_vy), bins_vz(_bins_vz), bins_E(_bins_E) {}
 
 CUDA_CALLABLE_MEMBER_DEVICE    
@@ -56,7 +56,7 @@ void spec_bin::operator()(std::size_t indx) const {
     }
 
     // Determine dimension 1 variable
-    if( spectroscopy > 2 )
+    if( f.spectroscopy > 2 )
     {
       dim1 = x;
     }
@@ -85,13 +85,13 @@ void spec_bin::operator()(std::size_t indx) const {
         indx_Y = 0;
         nnYY=1;
 
-        if(spectroscopy < 3) add = true;
+        if(f.spectroscopy < 3) add = true;
         
         if (indx_X < 0 || indx_X >= nX) indx_X = 0;
 
         if (indx_Z < 0 || indx_Z >= nZ) indx_Z = 0;
 
-        if( spectroscopy > 2 )
+        if( f.spectroscopy > 2 )
         {
         
           if((y > gridY[0]) && (y < gridY[nY-1]))
@@ -114,7 +114,7 @@ void spec_bin::operator()(std::size_t indx) const {
     gitr_precision vr = vx;
     gitr_precision vt = vy;
 
-    if( spectroscopy == 2 && cylsymm > 0)
+    if( f.spectroscopy == 2 && cylsymm > 0)
     {
           gitr_precision theta_position = std::atan2(y,x);
           gitr_precision theta_velocity = std::atan2(vy,vx);
