@@ -68,7 +68,6 @@ geometry_check::geometry_check(
   int _nAdist,
   gitr_precision _A0dist,
   gitr_precision _Adist,
-  int flux_ea_,
   int geom_hash_,
   int cylsymm_ )
   :
@@ -82,7 +81,7 @@ geometry_check::geometry_check(
     closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy),
     closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
     E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
-    Adist(_Adist), flux_ea( flux_ea_ ),
+    Adist(_Adist),
     geom_hash( geom_hash_ ), cylsymm( cylsymm_ )
     {}
 
@@ -999,7 +998,7 @@ else top_limit = nLines;
     }
     if (particlesPointer->hitWall[indx] == 1.0) {
 
-      if( flux_ea > 0 && f.surface_model == 0 )
+      if( f.flux_ea > 0 && f.surface_model == 0 )
       {
       gitr_precision E0 = 0.0;
       gitr_precision thetaImpact = 0.0;
@@ -1090,7 +1089,7 @@ else top_limit = nLines;
         }
       }
       }
-      else if( flux_ea == 0 && f.surface_model == 0 )
+      else if( f.flux_ea == 0 && f.surface_model == 0 )
       {
         particlesPointer->weight[indx] = 0.0;
       }
