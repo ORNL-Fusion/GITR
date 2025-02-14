@@ -3908,8 +3908,7 @@ if( f.efield_interp == 1 )
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-      &bfieldGridz.front(), &br.front(), &bz.front(), &by.front(), f.flowv_interp,
-      cylsymm );
+      &bfieldGridz.front(), &br.front(), &bz.front(), &by.front() );
 
   thermalForce thermalForce0(f,
       particleArray, dt, background_amu, nR_gradT, nZ_gradT, gradTGridr.data(),
