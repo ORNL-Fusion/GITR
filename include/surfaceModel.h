@@ -73,7 +73,6 @@ struct reflection {
 #else
         std::mt19937 *state;
 #endif
-    int cylsymm;
 
     reflection(class flags &f_init, Particles* _particles, double _dt,
 #if __CUDACC__
@@ -111,8 +110,7 @@ struct reflection {
     gitr_precision _Edist,
     int _nAdist,
     gitr_precision _A0dist,
-    gitr_precision _Adist,
-    int cylsymm_ );
+    gitr_precision _Adist );
 
 CUDA_CALLABLE_MEMBER_DEVICE
 void operator()(std::size_t indx) const;

@@ -37,8 +37,7 @@
     gitr_precision _Edist,
     int _nAdist,
     gitr_precision _A0dist,
-    gitr_precision _Adist,
-    int cylsymm_ ) :
+    gitr_precision _Adist ) :
                              f( f_init ),
                              particles(_particles),
                              dt(_dt),
@@ -74,8 +73,7 @@
                              nAdist(_nAdist),
                              A0dist(_A0dist),
                              Adist(_Adist),
-                             state(_state),
-                             cylsymm( cylsymm_ )
+                             state(_state)
                              { }
 
 CUDA_CALLABLE_MEMBER_DEVICE
@@ -140,7 +138,7 @@ void reflection::operator()(std::size_t indx) const {
       
     wallIndex = particles->wallIndex[indx];
     
-    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx], f.use_3d_geom, cylsymm );
+    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx], f.use_3d_geom, f.cylsymm );
     
     particleTrackVector[0] = particleTrackVector[0] / norm_part;
     particleTrackVector[1] = particleTrackVector[1] / norm_part;
@@ -384,7 +382,7 @@ void reflection::operator()(std::size_t indx) const {
       vSampled[2] = V0 * std::cos(aInterpVal * 3.1415 / 180);
       boundaryVector[wallHit].transformToSurface(vSampled, particles->y[indx],
                                                  particles->x[indx], f.use_3d_geom,
-                                                 cylsymm );
+                                                 f.cylsymm );
       particles->vx[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[0];
       particles->vy[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[1];
       particles->vz[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[2];
