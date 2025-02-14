@@ -3916,7 +3916,7 @@ if( f.efield_interp == 1 )
       gradTGridz.data(), gradTiR.data(), gradTiZ.data(), gradTiY.data(),
       gradTeR.data(), gradTeZ.data(), gradTeY.data(), nR_Bfield, nZ_Bfield,
       bfieldGridr.data(), &bfieldGridz.front(), &br.front(), &bz.front(),
-      &by.front(), cylsymm );
+      &by.front() );
 
   reflection reflection0( f,
       particleArray, dt, &state1.front(), nLines, &boundaries[0], surfaces,
