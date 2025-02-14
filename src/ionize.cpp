@@ -67,8 +67,7 @@ ionize< T >::ionize(class flags &f_init,
           gitr_precision *_gridTemperature_Ionization,
           gitr_precision *_gridDensity_Ionization,
           gitr_precision *_rateCoeff_Ionization,
-          gitr_precision *_random_uniform_number,
-          int cylsymm_ )
+          gitr_precision *_random_uniform_number )
       :
 
         f_config(f_init), particlesPointer(_particlesPointer), nR_Dens(_nR_Dens),
@@ -81,8 +80,7 @@ ionize< T >::ionize(class flags &f_init,
         gridTemperature_Ionization(_gridTemperature_Ionization),
         rateCoeff_Ionization(_rateCoeff_Ionization),
         dt(_dt),
-        state(_state),random_uniform_number{_random_uniform_number},
-        cylsymm( cylsymm_ )
+        state(_state),random_uniform_number{_random_uniform_number}
 { }
 
 template< typename T >
@@ -103,7 +101,8 @@ void ionize< T >::operator()(std::size_t indx)
           particlesPointer->y[indx], particlesPointer->z[indx], nR_Temp,
           nZ_Temp, TempGridr, TempGridz, te, DensGridr, DensGridz, ne,
           nTemperaturesIonize, nDensitiesIonize, gridTemperature_Ionization,
-          gridDensity_Ionization, rateCoeff_Ionization, cylsymm,particlesPointer->f_psi[indx] );
+          gridDensity_Ionization, rateCoeff_Ionization, f_config.cylsymm,
+          particlesPointer->f_psi[indx] );
     
     gitr_precision P = exp(-dt / tion);
     gitr_precision P1 = 1.0 - P;

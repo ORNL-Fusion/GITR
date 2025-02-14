@@ -21,7 +21,6 @@ std::vector< double > atomic_data_broker::run_2()
   libconfig_string_query query_metadata( FIELD_UNIT_TEST_FILE_0 );
   flags f( query_metadata );
 
-  int const cylsymm = 0;
   libconfig::Config cfg;
   cfg.setAutoConvert(true);
 
@@ -168,14 +167,14 @@ std::vector< double > atomic_data_broker::run_2()
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(),&dev_f.front(), cylsymm );
+      &rateCoeff_Ionization.front(),&dev_f.front() );
 
   recombine<rand_type> recombine0( f,
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
-      gridDensity_Recombination.data(), rateCoeff_Recombination.data(), cylsymm );
+      gridDensity_Recombination.data(), rateCoeff_Recombination.data() );
 
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
@@ -209,7 +208,6 @@ void atomic_data_broker::run_1()
   libconfig_string_query query_metadata( FIELD_UNIT_TEST_FILE_0 );
   flags f( query_metadata );
 
-  int const cylsymm = 0;
   int nParticles = 10;
   values.resize(nParticles,0.0);
   values2.resize(nParticles,0.0);
@@ -350,7 +348,7 @@ void atomic_data_broker::run_1()
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(), &dev_f.front(), cylsymm );
+      &rateCoeff_Ionization.front(), &dev_f.front() );
 
   for (int i=0;i<nParticles;i++)
   {
@@ -389,7 +387,6 @@ void atomic_data_broker::run()
   libconfig_string_query query_metadata( FIELD_UNIT_TEST_FILE_0 );
   flags f( query_metadata );
 
-  int const cylsymm = 0;
   int nParticles = 10;
   values.resize(nParticles,0.0);
   values2.resize(nParticles,0.0);
@@ -539,7 +536,7 @@ void atomic_data_broker::run()
       &gridTemperature_Ionization.front(),
       &gridDensity_Ionization.front(),
       &rateCoeff_Ionization.front(),
-      &dev_f.front(), cylsymm );
+      &dev_f.front() );
 
   // Get random number for each particle and store it in values
   for (int i=0;i<nParticles;i++)

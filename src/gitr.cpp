@@ -117,7 +117,6 @@ int main(int argc, char **argv, char **envp)
 
   class flags f( query_metadata );
 
-  int cylsymm = f.cylsymm;
   int surface_potential = f.surface_potential;
   int geom_hash = f.geom_hash;
   int geom_hash_sheath = f.geom_hash_sheath;
@@ -3887,14 +3886,14 @@ if( f.efield_interp == 1 )
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
-      &rateCoeff_Ionization.front(),uni, cylsymm );
+      &rateCoeff_Ionization.front(),uni );
 
   recombine<rand_type> recombine0( f,
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
-      gridDensity_Recombination.data(), rateCoeff_Recombination.data(), cylsymm );
+      gridDensity_Recombination.data(), rateCoeff_Recombination.data() );
 
   crossFieldDiffusion crossFieldDiffusion0( f,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
@@ -3976,13 +3975,13 @@ if( f.efield_interp == 1 )
       for (int j = 0; j < nZ_force; j++) {
         interp2dVector(&Btest[0], forceR[i], 0.0, forceZ[j], nR_Bfield,
                        nZ_Bfield, bfieldGridr.data(), bfieldGridz.data(),
-                       br.data(), bz.data(), by.data(), cylsymm );
+                       br.data(), bz.data(), by.data(), f.cylsymm );
         Btotal = vectorNorm(Btest);
         // std::cout << "node " << world_rank << "Bfield at  "<< forceR[i] << "
         // " << forceZ[j]<< " " << Btest[0] << " " << Btest[1] <<
         gitr_precision testTi =
             interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),
-                             TempGridz.data(), ti.data(), cylsymm );
+                             TempGridz.data(), ti.data(), f.cylsymm );
         //std::cout << "Finished Temperature import " << testVec << std::endl;
         //" " << Btest[2] << " " << Btotal << std::endl;
         particleArray->setParticle(0, forceR[i], 0.0, forceZ[j], testTi, 0.0,
@@ -4093,7 +4092,7 @@ if( f.efield_interp == 1 )
 
   interp2dVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV, nZ_flowV,
                  flowVGridr.data(), flowVGridz.data(), flowVr.data(),
-                 flowVz.data(), flowVt.data(), cylsymm );
+                 flowVz.data(), flowVt.data(), f.cylsymm );
 
   gitr_precision leakZ = 0.0;
   if (world_rank == 0) {
