@@ -1,11 +1,11 @@
 #include "spectroscopy.h"
 
 spec_bin::spec_bin(class flags &f_init, Particles *_particlesPointer, int _nBins,int _nX,int _nY, int _nZ, gitr_precision *_gridX,gitr_precision *_gridY,gitr_precision *_gridZ,
-           gitr_precision* _bins, gitr_precision _dt, int cylsymm_,
+           gitr_precision* _bins, gitr_precision _dt,
            gitr_precision* _bins_vx, gitr_precision* _bins_vy, gitr_precision* _bins_vz,
            gitr_precision* _bins_E ) : 
         f(f_init), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
-        dt(_dt), cylsymm( cylsymm_ ),
+        dt(_dt), 
         bins_vx(_bins_vx), bins_vy(_bins_vy), bins_vz(_bins_vz), bins_E(_bins_E) {}
 
 CUDA_CALLABLE_MEMBER_DEVICE    
@@ -62,7 +62,7 @@ void spec_bin::operator()(std::size_t indx) const {
     }
     else
     {
-      if( cylsymm > 0 )
+      if( f.cylsymm > 0 )
       {
         dim1 = std::sqrt(x*x + y*y);
       }
@@ -114,7 +114,7 @@ void spec_bin::operator()(std::size_t indx) const {
     gitr_precision vr = vx;
     gitr_precision vt = vy;
 
-    if( f.spectroscopy == 2 && cylsymm > 0)
+    if( f.spectroscopy == 2 && f.cylsymm > 0)
     {
           gitr_precision theta_position = std::atan2(y,x);
           gitr_precision theta_velocity = std::atan2(vy,vx);

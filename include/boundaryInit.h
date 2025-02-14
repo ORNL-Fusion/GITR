@@ -45,15 +45,12 @@ struct boundary_init {
     gitr_precision* bfieldZ;
     gitr_precision* bfieldT;
     gitr_precision potential;
-    int surface_potential;
-    int cylsymm;
     
     boundary_init(class flags &f_init, gitr_precision _background_Z, gitr_precision _background_amu,int _nx, int _nz,
           gitr_precision* _densityGridx, gitr_precision* _densityGridz,gitr_precision* _density,gitr_precision* _ne,int _nxB,
           int _nzB, gitr_precision* _bfieldGridr, gitr_precision* _bfieldGridz,gitr_precision* _bfieldR,
           gitr_precision* _bfieldZ,gitr_precision* _bfieldT,int _nR_Temp, int _nZ_Temp,
-          gitr_precision* _TempGridr, gitr_precision* _TempGridz, gitr_precision* _ti, gitr_precision* _te, gitr_precision _potential, int surface_potential_,
-          int cylsymm_ )
+          gitr_precision* _TempGridr, gitr_precision* _TempGridz, gitr_precision* _ti, gitr_precision* _te, gitr_precision _potential )
 
      :  f( f_init ), background_Z(_background_Z),
         background_amu(_background_amu),
@@ -76,9 +73,7 @@ struct boundary_init {
         bfieldR(_bfieldR),
         bfieldZ(_bfieldZ),
         bfieldT(_bfieldT),
-        potential(_potential),
-        surface_potential( surface_potential_ ),
-        cylsymm( cylsymm_ )
+        potential(_potential)
         {}
 
     void operator()(Boundary &b) const {
@@ -98,19 +93,19 @@ struct boundary_init {
         midpointy = 0.0;
         midpointz = 0.5*(b.z2 - b.z1) + b.z1;
     }
-        b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density, cylsymm );
-        b.ne = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,ne, cylsymm );
-        b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, cylsymm );
-        b.te = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, cylsymm );
+        b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density, f.cylsymm );
+        b.ne = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,ne, f.cylsymm );
+        b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, f.cylsymm );
+        b.te = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, f.cylsymm );
         gitr_precision B[3] = {0.0,0.0,0.0};
 interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
-                 bfieldGridz,bfieldR,bfieldZ,bfieldT, cylsymm );
+                 bfieldGridz,bfieldR,bfieldZ,bfieldT, f.cylsymm );
         gitr_precision norm_B = vectorNorm(B);
         gitr_precision theta;
     if( f.use_3d_geom )
     {
         gitr_precision surfNorm[3] = {0.0,0.0,0.0};
-        b.getSurfaceNormal(surfNorm,0.0,0.0, f.use_3d_geom, cylsymm );
+        b.getSurfaceNormal(surfNorm,0.0,0.0, f.use_3d_geom, f.cylsymm );
         theta = std::acos(vectorDotProduct(B,surfNorm)/(vectorNorm(B)*vectorNorm(surfNorm)));
         if (theta > 3.14159265359*0.5)
         {
@@ -150,7 +145,7 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         b.larmorRadius = 1.44e-4*std::sqrt(background_amu*b.ti/2)/(background_Z*norm_B);
         b.flux = 0.25*b.density*std::sqrt(8.0*b.ti*1.602e-19/(3.1415*background_amu));
         b.impacts = 0.0;
-        if( surface_potential <= 0 )
+        if( f.surface_potential <= 0 )
         {
         b.potential = sheath_fac*b.te;
         std::cout << "Surface number " << b.surfaceNumber << " has te and potential " 

@@ -55,7 +55,6 @@ gitr_precision getE ( class flags f, gitr_precision x0, gitr_precision y, gitr_p
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
          int&  closestBoundaryIndex,
          int geom_hash_sheath,
-         int cylsymm,
          gitr_precision& f_psi ); 
 
 struct move_boris { 
@@ -124,9 +123,6 @@ struct move_boris {
     int sheath_efield;
     int presheath_efield;
     int geom_hash_sheath;
-    int use_3d_geom;
-    int cylsymm;
-    /* Alright, Captain... you need a wrapper class that can create this for the ifield */
     dummy< gitr_precision > dum;
     /* what is a proof of concept experiment you could do? */
     /* what is the next step after that? */

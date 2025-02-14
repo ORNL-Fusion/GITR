@@ -68,8 +68,7 @@ geometry_check::geometry_check(
   int _nAdist,
   gitr_precision _A0dist,
   gitr_precision _Adist,
-  int geom_hash_,
-  int cylsymm_ )
+  int geom_hash_ )
   :
 
     f( f_init ),
@@ -82,7 +81,7 @@ geometry_check::geometry_check(
     closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
     E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
     Adist(_Adist),
-    geom_hash( geom_hash_ ), cylsymm( cylsymm_ )
+    geom_hash( geom_hash_ )
     {}
 
 CUDA_CALLABLE_HOST_DEVICE
@@ -113,7 +112,7 @@ void geometry_check::operator()(std::size_t indx) const {
     int EdistInd = 0;
     gitr_precision vxy[3] = {0.0};
     gitr_precision vtheta[3] = {0.0};
-     if( cylsymm )
+     if( f.cylsymm )
      {
     if (boundaryVector[nLines].periodic) // if periodic
     {
@@ -567,7 +566,7 @@ else{
     gitr_precision rNew = 0;
     gitr_precision xNew = 0;
     gitr_precision yNew = 0;
-     if( cylsymm > 0 )
+     if( f.cylsymm > 0 )
      {
     pdim1 = std::sqrt(particlesPointer->x[indx] * particlesPointer->x[indx] +
                        particlesPointer->y[indx] * particlesPointer->y[indx]);
@@ -627,7 +626,7 @@ if( geom_hash > 0 )
 {
     gitr_precision r_position;
 
-     if( cylsymm > 0 )
+     if( f.cylsymm > 0 )
      {
     r_position = std::sqrt(particlesPointer->xprevious[indx] *
                                  particlesPointer->xprevious[indx] +
@@ -821,7 +820,7 @@ else top_limit = nLines;
         // particlesPointer->test0[indx] = -100.0;
         if (particle_slope >= tol * 0.75) 
         {
-     if( cylsymm > 0 )
+     if( f.cylsymm > 0 )
      {
           gitr_precision x0 = particlesPointer->xprevious[indx];
           gitr_precision x1 = particlesPointer->x[indx];
@@ -860,7 +859,7 @@ else top_limit = nLines;
         } 
         else 
         {
-     if( cylsymm > 0 )
+     if( f.cylsymm > 0 )
      {
           gitr_precision x0 = particlesPointer->xprevious[indx];
           gitr_precision x1 = particlesPointer->x[indx];
@@ -910,7 +909,7 @@ else top_limit = nLines;
           // std::endl;
           }
         }
-     if( cylsymm > 0 )
+     if( f.cylsymm > 0 )
      {
         particlesPointer->xprevious[indx] = xNew;
         particlesPointer->x[indx] = particlesPointer->xprevious[indx];
@@ -944,7 +943,7 @@ else top_limit = nLines;
         particlesPointer->wallIndex[indx] = intersectionIndices[minDistInd];
         particlesPointer->surfaceHit[indx] = intersectionIndices[minDistInd];
         particlesPointer->hitWall[indx] = 1.0;
-     if( cylsymm )
+     if( f.cylsymm )
      {
         thetaNew = theta0 + (intersectionx[minDistInd] - pdim1previous) /
                                 (pdim1 - pdim1previous) * (theta1 - theta0);
@@ -1017,7 +1016,7 @@ else top_limit = nLines;
       int wallHitP = particlesPointer->surfaceHit[indx];
       boundaryVector[particlesPointer->surfaceHit[indx]].getSurfaceNormal(
           surfaceNormalVector, particlesPointer->y[indx],
-          particlesPointer->x[indx], f.use_3d_geom, cylsymm );
+          particlesPointer->x[indx], f.use_3d_geom, f.cylsymm );
       particleTrackVector[0] = particleTrackVector[0] / norm_part;
       particleTrackVector[1] = particleTrackVector[1] / norm_part;
       particleTrackVector[2] = particleTrackVector[2] / norm_part;
