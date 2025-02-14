@@ -65,7 +65,7 @@ double cross_field_diffusion_broker::run_1()
 
   sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-  int nSurfaces = importGeometry( f_in, cfg_geom, boundaries, cylsymm, surface_potential );
+  int nSurfaces = importGeometry( f_in, cfg_geom, boundaries );
 
   auto particleArray = new Particles( nP, 1, cfg_geom);
   for(int i=0;i<nP;i++)
@@ -100,8 +100,7 @@ double cross_field_diffusion_broker::run_1()
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
       nEdist, E0dist, Edist, nAdist, A0dist, Adist,
-      geom_hash,
-      cylsymm );
+      geom_hash );
 
 
   // data collection variables
@@ -152,7 +151,7 @@ double cross_field_diffusion_broker::run_1()
   /* new variables end */
   spec_bin spec_bin0(f_in, particleArray, nBins, net_nX, net_nY, net_nZ,
       &gridX_bins.front(), &gridY_bins.front(),
-      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm,
+      &gridZ_bins.front(), &net_Bins.front(), dt,
       &net_Bins_vx.front(),&net_Bins_vy.front(),&net_Bins_vz.front(), &net_Bins_E.front() );
 
 
@@ -315,7 +314,7 @@ double cross_field_diffusion_broker::run()
 
   sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-  int nSurfaces = importGeometry( f_in, cfg_geom, boundaries, cylsymm, surface_potential );
+  int nSurfaces = importGeometry( f_in, cfg_geom, boundaries );
 
   //REQUIRE( nSurfaces == 2 );
 
@@ -350,8 +349,7 @@ double cross_field_diffusion_broker::run()
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
       nEdist, E0dist, Edist, nAdist, A0dist, Adist,
-      geom_hash,
-      cylsymm );
+      geom_hash );
 
 
   /* data collection variables */
@@ -412,7 +410,7 @@ double cross_field_diffusion_broker::run()
 
   spec_bin spec_bin0(f_in, particleArray, nBins, net_nX, net_nY, net_nZ,
       &gridX_bins.front(), &gridY_bins.front(),
-      &gridZ_bins.front(), &net_Bins.front(), dt, cylsymm,
+      &gridZ_bins.front(), &net_Bins.front(), dt,
       &net_Bins_vx.front(),&net_Bins_vy.front(),&net_Bins_vz.front(), &net_Bins_E.front() );
 
 #if USE_CUDA > 0

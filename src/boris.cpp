@@ -219,7 +219,6 @@ gitr_precision getE ( class flags f,
                       int *closeGeom, 
                       int&  closestBoundaryIndex,
                       int geom_hash_sheath,
-                      int cylsymm,
                       gitr_precision& f_psi  ) 
     {
 
@@ -533,7 +532,7 @@ gitr_precision getE ( class flags f,
     gitr_precision distanceToParticle = 0.0;
     int pointLine=0;
     gitr_precision x;
-     if( cylsymm > 0 )
+     if( f.cylsymm > 0 )
      {
     x = std::sqrt(x0*x0 + y*y);
     }
@@ -717,7 +716,7 @@ gitr_precision getE ( class flags f,
     }
     else
     {
-     if( cylsymm > 0 )
+     if( f.cylsymm > 0 )
      {
             //if cylindrical geometry
             gitr_precision theta = std::atan2(y,x0);
@@ -805,8 +804,6 @@ move_boris::move_boris(
         sheath_efield( f.sheath_efield ),
         presheath_efield( f.presheath_efield ),
         geom_hash_sheath( f.geom_hash_sheath ),
-        use_3d_geom( f.use_3d_geom ),
-        cylsymm( f.cylsymm ),
         dum( EfieldZDevicePointer, 2 )
         {}
         /*
@@ -865,7 +862,7 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  geom_hash_sheath, cylsymm, f_psi  );
+                  geom_hash_sheath, f_psi  );
 
       if( f.sheath_density )
       {
@@ -895,14 +892,14 @@ void move_boris::operator()(std::size_t indx)
 */
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-                     EfieldZDevicePointer,EfieldTDevicePointer, cylsymm );
+                     EfieldZDevicePointer,EfieldTDevicePointer, f.cylsymm );
                  
   vectorAdd(E,PSE,E);
               //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
   }
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                    BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );        
+                    BfieldZDevicePointer,BfieldTDevicePointer, f.cylsymm );        
   Bmag = vectorNorm(B);
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
 
@@ -1001,20 +998,20 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  geom_hash_sheath, cylsymm, f_psi  );
+                  geom_hash_sheath, f_psi  );
   }
 
   if( presheath_efield > 0 )
   {
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-                     EfieldZDevicePointer,EfieldTDevicePointer, cylsymm );
+                     EfieldZDevicePointer,EfieldTDevicePointer, f.cylsymm );
                  
   vectorAdd(E,PSE,E);
   }
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                    BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );        
+                    BfieldZDevicePointer,BfieldTDevicePointer, f.cylsymm );        
   Bmag = vectorNorm(B);
     q_prime = particlesPointer->charge[indx]*1.60217662e-19/(particlesPointer->amu[indx]*1.6737236e-27)*half_dt*0.5;
     coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));

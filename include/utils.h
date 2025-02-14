@@ -142,8 +142,7 @@ int importLibConfig(libconfig::Config &cfg,std::string filepath);
 int importVectorFieldNs(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int &nR, int &nY,int &nZ,std::string &fileToRead);
 int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDim,std::string fieldCfgString,int nR, int nY,int nZ,gitr_precision &gridR,gitr_precision &gridY,gitr_precision &gridZ,gitr_precision &r, gitr_precision &y,gitr_precision &z,std::string &fileToRead);
 
-int importGeometry(class flags f, libconfig::Config &cfg,sim::Array<Boundary> &boundaries,
-                    int cylsymm, int surface_potential );
+int importGeometry(class flags f, libconfig::Config &cfg,sim::Array<Boundary> &boundaries );
 
 int read_ar2Input( std::string fileName, gitr_precision *Bfield[]);
 

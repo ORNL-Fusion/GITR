@@ -60,7 +60,6 @@ struct geometry_check {
   gitr_precision A0dist;
   gitr_precision Adist;
   int geom_hash;
-  int cylsymm;
 
   geometry_check(class flags &f_init, Particles *_particlesPointer, int _nLines,
                  Boundary *_boundaryVector, Surfaces *_surfaces, gitr_precision _dt,
@@ -70,8 +69,7 @@ struct geometry_check {
                  gitr_precision *_closeGeomGridz, int *_closeGeom, int _nEdist,
                  gitr_precision _E0dist, gitr_precision _Edist, int _nAdist, gitr_precision _A0dist,
                  gitr_precision _Adist,
-                 int geom_hash_,
-                 int cylsymm_ );
+                 int geom_hash_ );
 
 
   CUDA_CALLABLE_HOST_DEVICE

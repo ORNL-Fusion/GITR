@@ -33,8 +33,7 @@ std::vector< double > boris_data_broker_0::run_2()
   int nLines = 1;
   sim::Array<Boundary> boundaries( nLines + 1, Boundary() );
 
-  int nSurfaces = importGeometry( f, cfg_geom, boundaries, cylsymm, 
-      surface_potential );
+  int nSurfaces = importGeometry( f, cfg_geom, boundaries );
 
   int nR_Dens = 1;
   int nZ_Dens = 1;
@@ -79,8 +78,7 @@ std::vector< double > boris_data_broker_0::run_2()
         bfieldGridr.data(), bfieldGridz.data(), br.data(),
         bz.data(), by.data(), nR_Temp, nZ_Temp,
         TempGridr.data(), TempGridz.data(), ti.data(),
-        te.data(), biasPotential, surface_potential,
-        cylsymm ));
+        te.data(), biasPotential ));
 
   int nHashes = 1;
   int nR_closeGeom_sheath = 1;
@@ -123,7 +121,6 @@ std::vector< double > boris_data_broker_0::run_2()
           &closeGeom_sheath.front(),
           closestBoundaryIndex,
           geom_hash_sheath,
-          cylsymm,
           f_psi );
 
     gitrE[j] = thisE[2];

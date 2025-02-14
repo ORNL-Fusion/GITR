@@ -508,8 +508,7 @@ int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDi
   }
   return 0;
 }
-int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries,
-                   int cylsymm, int surface_potential )
+int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries )
 {
     Setting& geom = cfg_geom.lookup("geom");
     std::cout << "Boundary import routine " << int(boundaries.size()) << std::endl;
@@ -546,7 +545,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
        boundaries[i].area = geom["area"][i];
        boundaries[i].surface = geom["surface"][i];
        boundaries[i].inDir = geom["inDir"][i];
-  if( surface_potential > 0 )
+  if( f.surface_potential > 0 )
   {
     boundaries[i].potential = geom["potential"][i];
   }
@@ -565,7 +564,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
        boundaries[nLines].y1 = geom["theta0"];
        boundaries[nLines].y2 = geom["theta1"];
        boundaries[nLines].periodic = geom["periodic"];
-     if( cylsymm )
+     if( f.cylsymm )
      {
           std::cout << "Reading cylindrically symmetric boundary characteristics " << std::endl;
        boundaries[nLines].y1 = geom["theta0"];
@@ -605,7 +604,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
        boundaries[i].intercept_z = geom["intercept"][i];
        boundaries[i].length = geom["length"][i];
        //std::cout << "got Z slope length " << std::endl;
-       if( surface_potential > 0 )
+       if( f.surface_potential > 0 )
        {
        boundaries[i].potential = geom["potential"][i];
        }
