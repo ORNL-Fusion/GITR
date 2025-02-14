@@ -99,8 +99,7 @@ double cross_field_diffusion_broker::run_1()
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist,
-      geom_hash );
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist );
 
 
   // data collection variables
@@ -348,8 +347,7 @@ double cross_field_diffusion_broker::run()
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist,
-      geom_hash );
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist );
 
 
   /* data collection variables */
