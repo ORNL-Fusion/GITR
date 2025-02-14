@@ -120,7 +120,6 @@ std::vector< double > boris_data_broker_0::run_2()
           &closeGeomGridz_sheath.front(),
           &closeGeom_sheath.front(),
           closestBoundaryIndex,
-          geom_hash_sheath,
           f_psi );
 
     gitrE[j] = thisE[2];

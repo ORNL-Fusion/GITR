@@ -117,8 +117,6 @@ int main(int argc, char **argv, char **envp)
 
   class flags f( query_metadata );
 
-  int geom_hash_sheath = f.geom_hash_sheath;
-
   // Set default processes per node to 1
   int ppn = 1;
 
@@ -2544,7 +2542,6 @@ if( f.efield_interp == 1 )
                &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(),
                minInd_bnd,
-               geom_hash_sheath,
                f_psi );
       //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
   }
@@ -4642,7 +4639,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), closestBoundaryIndex,
-               geom_hash_sheath, f_psi );
+               f_psi );
       
       if (boundaries[closestBoundaryIndex].Z > 0.0) {
         surfIndex = boundaries[closestBoundaryIndex].surfaceNumber;

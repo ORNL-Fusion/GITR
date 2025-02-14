@@ -54,7 +54,6 @@ gitr_precision getE ( class flags f, gitr_precision x0, gitr_precision y, gitr_p
        int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
          int&  closestBoundaryIndex,
-         int geom_hash_sheath,
          gitr_precision& f_psi ); 
 
 struct move_boris { 

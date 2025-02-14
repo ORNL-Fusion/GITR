@@ -218,7 +218,6 @@ gitr_precision getE ( class flags f,
                       gitr_precision *closeGeomGridz,
                       int *closeGeom, 
                       int&  closestBoundaryIndex,
-                      int geom_hash_sheath,
                       gitr_precision& f_psi  ) 
     {
 
@@ -310,7 +309,7 @@ gitr_precision getE ( class flags f,
   int yInd;
   int zInd;
 
-  if( geom_hash_sheath > 0 )
+  if( f.geom_hash_sheath > 0 )
   {
     dr = closeGeomGridr[1] - closeGeomGridr[0];
     dy = closeGeomGridy[1] - closeGeomGridy[0];
@@ -334,7 +333,7 @@ gitr_precision getE ( class flags f,
   {
     int i = -1;
 
-    if( geom_hash_sheath > 0 )
+    if( f.geom_hash_sheath > 0 )
     {
        i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements 
                    + yInd*nR_closeGeom*n_closeGeomElements
@@ -548,7 +547,7 @@ gitr_precision getE ( class flags f,
     int rInd;
     int zInd;
 
-  if( geom_hash_sheath > 0 )
+  if( f.geom_hash_sheath > 0 )
   {
   dr = closeGeomGridr[1] - closeGeomGridr[0];
 
@@ -575,7 +574,7 @@ gitr_precision getE ( class flags f,
     {
       int j = -1;
 
-      if( geom_hash_sheath > 0 )
+      if( f.geom_hash_sheath > 0 )
        j = closeGeom[zInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + k];
 
       else j = k;
@@ -801,9 +800,6 @@ move_boris::move_boris(
         nLines(_nLines),
         magneticForce{0.0, 0.0, 0.0},
         electricForce{0.0, 0.0, 0.0},
-        sheath_efield( f.sheath_efield ),
-        presheath_efield( f.presheath_efield ),
-        geom_hash_sheath( f.geom_hash_sheath ),
         dum( EfieldZDevicePointer, 2 )
         {}
         /*
@@ -854,7 +850,7 @@ void move_boris::operator()(std::size_t indx)
   gitr_precision new_dt = 0.0;
   gitr_precision new_advance = false;
   gitr_precision f_psi = 1.0;
-  if( sheath_efield > 0 )
+  if( f.sheath_efield > 0 )
   {
   minDist = getE(f, position[0], position[1], position[2],
 		  E,boundaryVector,nLines,nR_closeGeom_sheath,
@@ -862,7 +858,7 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  geom_hash_sheath, f_psi  );
+                  f_psi  );
 
       if( f.sheath_density )
       {
@@ -871,7 +867,7 @@ void move_boris::operator()(std::size_t indx)
 
   }
 
-  if( presheath_efield > 0 )
+  if( f.presheath_efield > 0 )
   {
 /*
 #if LC_INTERP==3
@@ -990,7 +986,7 @@ void move_boris::operator()(std::size_t indx)
      position[2] = position[2] + v[2] * half_dt;
     
      // second step of half_dt
-  if( sheath_efield > 0 )
+  if( f.sheath_efield > 0 )
   {
   minDist = getE(f, position[0], position[1], position[2],
 		  E,boundaryVector,nLines,nR_closeGeom_sheath,
@@ -998,10 +994,10 @@ void move_boris::operator()(std::size_t indx)
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
                   closeGeomGridz_sheath,closeGeom_sheath, closestBoundaryIndex,
-                  geom_hash_sheath, f_psi  );
+                  f_psi  );
   }
 
-  if( presheath_efield > 0 )
+  if( f.presheath_efield > 0 )
   {
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
@@ -1158,12 +1154,12 @@ for ( int s=0; s<nSteps; s++ )
 #ifdef __CUDACC__
 #else
 #endif
-    if( sheath_efield > 0 )
+    if( f.sheath_efield > 0 )
     {
     minDist = getE(r[0],r[1],r[2],E,boundaryVector,nLines);
     }
 
-    if( presheath_efield > 0 )
+    if( f.presheath_efield > 0 )
     {
     interparticlesPointer->dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
           EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
@@ -1217,11 +1213,11 @@ for ( int s=0; s<nSteps; s++ )
 #else
 #endif
 
-if( sheath_efield > 0 )
+if( f.sheath_efield > 0 )
 {
     minDist = getE(r2[0],r2[1],r2[2],E,boundaryVector,nLines);
 }
-if( presheath_efield > 0 )
+if( f.presheath_efield > 0 )
 {
     interparticlesPointer->dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
                EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
@@ -1275,12 +1271,12 @@ if( presheath_efield > 0 )
 #else
 #endif
 
-if( sheath_efield > 0 )
+if( f.sheath_efield > 0 )
 {
     minDist = getE(r3[0],r3[1],r3[2],E,boundaryVector,nLines);
 }
 
-if( presheath_efield > 0 )
+if( f.presheath_efield > 0 )
 {
     interparticlesPointer->dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
                EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
@@ -1332,11 +1328,11 @@ if( presheath_efield > 0 )
 #else
 #endif
 
-  if( sheath_efield > 0 )
+  if( f.sheath_efield > 0 )
   {
 	minDist = getE(r4[0],r4[1],r4[2],E,boundaryVector,nLines);
   }
-  if( presheath_efield > 0 )
+  if( f.presheath_efield > 0 )
   {
    interp2dVector(&particlesPointer->E[0],particlesPointer->xparticlesPointer->evious,particlesPointer->yparticlesPointer->evious,particlesPointer->zparticlesPointer->evious,nR_Efield,nZ_Efield,
                EfieldGridRDeviceparticlesPointer->inter,EfieldGridZDeviceparticlesPointer->inter,EfieldRDeviceparticlesPointer->inter,
