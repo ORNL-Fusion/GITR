@@ -117,8 +117,6 @@ int main(int argc, char **argv, char **envp)
 
   class flags f( query_metadata );
 
-  int surface_potential = f.surface_potential;
-  int geom_hash = f.geom_hash;
   int geom_hash_sheath = f.geom_hash_sheath;
 
   // Set default processes per node to 1
@@ -443,7 +441,7 @@ int main(int argc, char **argv, char **envp)
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
 
-  if( geom_hash == 1 )
+  if( f.geom_hash == 1 )
   {
   //nR_closeGeomTotal = 0;
   //nY_closeGeomTotal = 0;
@@ -464,7 +462,7 @@ int main(int argc, char **argv, char **envp)
   sim::Array<int> nHashPoints(nHashes, 0);
   sim::Array<int> n_closeGeomElements(nHashes, 0);
 
-  if( geom_hash == 1 )
+  if( f.geom_hash == 1 )
   {
   if (world_rank == 0) {
     importHashNs(f, cfg, input_path, nHashes, "geometry_hash", nR_closeGeom.data(),
@@ -549,7 +547,7 @@ int main(int argc, char **argv, char **envp)
   }
 
 std::vector<std::string> hashFile;
-if( geom_hash > 1 )
+if( f.geom_hash > 1 )
 {
   if (world_rank == 0) {
     getVariable(cfg, geomHashCfg + "nHashes", nHashes);
@@ -631,7 +629,7 @@ if( geom_hash > 1 )
         }
         */
 
-if( geom_hash == 1 )
+if( f.geom_hash == 1 )
 {
   sim::Array<gitr_precision> hashX0(nHashes, 0.0), hashX1(nHashes, 0.0),
       hashY0(nHashes, 0.0), hashY1(nHashes, 0.0), hashZ0(nHashes, 0.0),
@@ -919,7 +917,7 @@ if( geom_hash == 1 )
       std::cout << "created vars2" << std::endl;
 }
 
-else if( geom_hash > 1 )
+else if( f.geom_hash > 1 )
 {
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
@@ -966,7 +964,7 @@ else if( geom_hash > 1 )
   int n_closeGeomElements_sheath = 1;
   int nGeomHash_sheath = 1;
   std::string geomHashSheathCfg = "geometry_sheath.";
-if( geom_hash_sheath == 1 )
+if( f.geom_hash_sheath == 1 )
 {
   if (world_rank == 0) {
     getVariable(cfg, geomHashSheathCfg + "nR_closeGeom", nR_closeGeom_sheath);
@@ -992,7 +990,7 @@ if( geom_hash_sheath == 1 )
 }
 
 std::string hashFile_sheath;
-if( geom_hash_sheath > 1 )
+if( f.geom_hash_sheath > 1 )
 {
   if (world_rank == 0) {
     getVariable(cfg, geomHashSheathCfg + "fileString", hashFile_sheath);
@@ -1027,7 +1025,7 @@ if( geom_hash_sheath > 1 )
       closeGeomGridz_sheath(nZ_closeGeom_sheath);
   sim::Array<int> closeGeom_sheath(nGeomHash_sheath);
 
-  if( geom_hash_sheath == 1 )
+  if( f.geom_hash_sheath == 1 )
   {
   gitr_precision hashX0_s, hashX1_s, hashY0_s, hashY1_s, hashZ0_s, hashZ1_s;
   if (world_rank == 0) {
@@ -1154,7 +1152,7 @@ if( geom_hash_sheath > 1 )
   cudaDeviceSynchronize();
 #endif
 }
-else if( geom_hash_sheath > 1 )
+else if( f.geom_hash_sheath > 1 )
 {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -3858,8 +3856,7 @@ if( f.efield_interp == 1 )
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist,
-      geom_hash );
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist );
 
   sortParticles sort0(f, particleArray, nP,dev_tt, 10000,
                       nActiveParticlesOnRank.data(),nT);

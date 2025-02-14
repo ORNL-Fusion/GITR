@@ -67,8 +67,7 @@ geometry_check::geometry_check(
   gitr_precision _Edist,
   int _nAdist,
   gitr_precision _A0dist,
-  gitr_precision _Adist,
-  int geom_hash_ )
+  gitr_precision _Adist )
   :
 
     f( f_init ),
@@ -80,8 +79,7 @@ geometry_check::geometry_check(
     closeGeomGridr(_closeGeomGridr), closeGeomGridy(_closeGeomGridy),
     closeGeomGridz(_closeGeomGridz), closeGeom(_closeGeom), nEdist(_nEdist),
     E0dist(_E0dist), Edist(_Edist), nAdist(_nAdist), A0dist(_A0dist),
-    Adist(_Adist),
-    geom_hash( geom_hash_ )
+    Adist(_Adist)
     {}
 
 CUDA_CALLABLE_HOST_DEVICE
@@ -284,7 +282,7 @@ void geometry_check::operator()(std::size_t indx) const {
     int yInd;
     int nHash = 0;
 
-    if( geom_hash > 0 )
+    if( f.geom_hash > 0 )
     {
     int rHashInd = 0;
     int yHashInd = 0;
@@ -381,7 +379,7 @@ void geometry_check::operator()(std::size_t indx) const {
     {
       int i = -1;
 
-      if( geom_hash > 0 )
+      if( f.geom_hash > 0 )
       {
 
       i = closeGeom[buffIndx +
@@ -622,7 +620,7 @@ int closeIndx = 0;
 int rInd;
 int zInd;
 
-if( geom_hash > 0 )
+if( f.geom_hash > 0 )
 {
     gitr_precision r_position;
 
@@ -659,7 +657,7 @@ else top_limit = nLines;
 
       int i = -1;
 
-      if( geom_hash > 0 )
+      if( f.geom_hash > 0 )
       {
 
       closeIndx = zInd * nR_closeGeom[0] * n_closeGeomElements[0] +
