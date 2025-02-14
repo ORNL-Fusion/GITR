@@ -3930,7 +3930,7 @@ if( f.efield_interp == 1 )
       energyDistGrid01Ref.data(), angleDistGrid01.data(),
       EDist_CDF_Y_regrid.data(), AphiDist_CDF_Y_regrid.data(),
       EDist_CDF_R_regrid.data(), AphiDist_CDF_R_regrid.data(), nEdist, E0dist,
-      Edist, nAdist, A0dist, Adist, cylsymm );
+      Edist, nAdist, A0dist, Adist );
 
   history history0(particleArray, dev_tt, nT, subSampleFac, nP,
                    &positionHistoryX.front(), &positionHistoryY.front(),
