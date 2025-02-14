@@ -38,7 +38,6 @@
     int _nAdist,
     gitr_precision _A0dist,
     gitr_precision _Adist,
-    int flux_ea_,
     int cylsymm_ ) :
                              f( f_init ),
                              particles(_particles),
@@ -76,7 +75,6 @@
                              A0dist(_A0dist),
                              Adist(_Adist),
                              state(_state),
-                             flux_ea( flux_ea_ ),
                              cylsymm( cylsymm_ )
                              { }
 
@@ -119,7 +117,7 @@ void reflection::operator()(std::size_t indx) const {
     gitr_precision dEdist;
     gitr_precision dAdist;
 
-    if( flux_ea > 0 )
+    if( f.flux_ea > 0 )
     {
       dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
       dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
@@ -217,7 +215,7 @@ void reflection::operator()(std::size_t indx) const {
 
         newWeight = weight*(totalYR);
 
-        if( flux_ea > 0 )
+        if( f.flux_ea > 0 )
         {
           EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
           AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
@@ -260,7 +258,7 @@ void reflection::operator()(std::size_t indx) const {
 		    
         newWeight=weight*totalYR;
       
-        if( flux_ea > 0 )
+        if( f.flux_ea > 0 )
         {
           EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
           AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
@@ -352,7 +350,7 @@ void reflection::operator()(std::size_t indx) const {
       surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
     #endif
     
-      if( flux_ea > 0 )
+      if( f.flux_ea > 0 )
       {
         EdistInd = std::floor((E0_for_flux_binning-E0dist)/dEdist);
         AdistInd = std::floor((thetaImpact-A0dist)/dAdist);

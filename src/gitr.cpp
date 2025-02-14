@@ -117,7 +117,6 @@ int main(int argc, char **argv, char **envp)
 
   class flags f( query_metadata );
 
-  int flux_ea = f.flux_ea;
   int cylsymm = f.cylsymm;
   int geom_hash = f.geom_hash;
   int surface_potential = f.surface_potential;
@@ -1357,7 +1356,7 @@ if( GENERATE_LC > 0 )
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
-                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea,
+                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0,
                        geom_hash,
                        cylsymm ) );
 
@@ -1368,7 +1367,7 @@ if( GENERATE_LC > 0 )
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
-                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0, flux_ea,
+                       &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0,
                        geom_hash,
                        cylsymm ) );
   }
@@ -3860,7 +3859,7 @@ if( f.efield_interp == 1 )
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
-      nEdist, E0dist, Edist, nAdist, A0dist, Adist, flux_ea,
+      nEdist, E0dist, Edist, nAdist, A0dist, Adist,
       geom_hash,
       cylsymm );
 
@@ -3933,7 +3932,7 @@ if( f.efield_interp == 1 )
       energyDistGrid01Ref.data(), angleDistGrid01.data(),
       EDist_CDF_Y_regrid.data(), AphiDist_CDF_Y_regrid.data(),
       EDist_CDF_R_regrid.data(), AphiDist_CDF_R_regrid.data(), nEdist, E0dist,
-      Edist, nAdist, A0dist, Adist, flux_ea, cylsymm );
+      Edist, nAdist, A0dist, Adist, cylsymm );
 
   history history0(particleArray, dev_tt, nT, subSampleFac, nP,
                    &positionHistoryX.front(), &positionHistoryY.front(),
@@ -4515,7 +4514,7 @@ for(int i=0; i<nP ; i++)
   MPI_Barrier(MPI_COMM_WORLD);
   }
   
-  if( f.surface_model > 0 || flux_ea > 0 )
+  if( f.surface_model > 0 || f.flux_ea > 0 )
   {
   // MPI_Barrier(MPI_COMM_WORLD);
   std::cout << "Starting surface reduce " << std::endl;
@@ -4846,7 +4845,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     ncFile_particle_hist.close();
 }
   
-  if( f.surface_model > 0 || flux_ea > 0 )
+  if( f.surface_model > 0 || f.flux_ea > 0 )
   {
 #if USE_MPI > 0
     std::vector<int> surfaceNumbers(nSurfaces, 0);

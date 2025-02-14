@@ -73,8 +73,6 @@ struct reflection {
 #else
         std::mt19937 *state;
 #endif
-    int flux_ea;
-    int use_3d_geom;
     int cylsymm;
 
     reflection(class flags &f_init, Particles* _particles, double _dt,
@@ -114,7 +112,6 @@ struct reflection {
     int _nAdist,
     gitr_precision _A0dist,
     gitr_precision _Adist,
-    int flux_ea_,
     int cylsymm_ );
 
 CUDA_CALLABLE_MEMBER_DEVICE
