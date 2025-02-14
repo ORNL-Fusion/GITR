@@ -370,9 +370,7 @@ struct coulombCollisions {
             std::mt19937 *state;
 #endif
 
-    int flowv_interp;
 
-    int cylsymm;
 
     coulombCollisions(class flags &f_init, Particles *_particlesPointer,gitr_precision _dt, 
 #if __CUDACC__
@@ -390,8 +388,7 @@ struct coulombCollisions {
                         int _nR_Bfield, int _nZ_Bfield,
                         gitr_precision * _BfieldGridR ,gitr_precision * _BfieldGridZ ,
                         gitr_precision * _BfieldR ,gitr_precision * _BfieldZ ,
-                 gitr_precision * _BfieldT, int flowv_interp_,
-                 int cylsymm_)
+                 gitr_precision * _BfieldT )
       : 
         f( f_init ),
         particlesPointer(_particlesPointer),
@@ -426,9 +423,7 @@ struct coulombCollisions {
         BfieldZ(_BfieldZ),
         BfieldT(_BfieldT),
         dv{0.0, 0.0, 0.0},
-        state(_state),
-        flowv_interp( flowv_interp_ ),
-        cylsymm( cylsymm_ )
+        state(_state)
         { }
 
 CUDA_CALLABLE_MEMBER_DEVICE    
@@ -508,10 +503,10 @@ void operator()(std::size_t indx) {
     gitr_precision flowVelocity[3]= {0.0};
     
     // Interpolate ion temperature
-    gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti,cylsymm);
+    gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti,f.cylsymm);
     
     // Interpolate ion density
-    gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni,cylsymm);
+    gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni,f.cylsymm);
   
     //if( gitr_flags->USE_SHEATH_DENSITY )
     if( f.sheath_density )
@@ -545,7 +540,7 @@ void operator()(std::size_t indx) {
     // Interpolate flow velocity - for this problem, it is set to zero
     interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
-                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, cylsymm );
+                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, f.cylsymm );
              
     // Shift background ion velocities by bulk flow velocities
     ux_gas = ux_gas + flowVelocity[0];
@@ -644,16 +639,16 @@ void operator()(std::size_t indx) {
     gitr_precision vy = particlesPointer->vy[indx];
     gitr_precision vz = particlesPointer->vz[indx];
 
-    if( flowv_interp == 3 )
+    if( f.flowv_interp == 3 )
     {
     interp3dVector (&flowVelocity[0], particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_flowV,nY_flowV,nZ_flowV,
                 flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
     }
-    else if( flowv_interp < 3 )
+    else if( f.flowv_interp < 3 )
     {
     interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
-                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, cylsymm );
+                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, f.cylsymm );
     }
 
     relativeVelocity[0] = vx - flowVelocity[0];
@@ -695,17 +690,17 @@ void operator()(std::size_t indx) {
                              BfieldGridZ,
                              BfieldR,
                              BfieldZ,
-                             BfieldT, T_background, flowv_interp, cylsymm,
+                             BfieldT, T_background, f.flowv_interp, f.cylsymm,
                              f.sheath_density,particlesPointer->f_psi[indx]  );
 
     getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );
       
     gitr_precision ti_eV = interp2dCombined( x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti,
-                                             cylsymm );
+                                             f.cylsymm );
 
     gitr_precision density = interp2dCombined( x, y, z, nR_Dens, nZ_Dens, DensGridr, 
-                                               DensGridz, ni, cylsymm );
+                                               DensGridz, ni, f.cylsymm );
     
     //printf("speed %f temp %f density %4.3e charge %2.2f nu_slowing_down %4.3e \n",velocityRelativeNorm,ti_eV,density,particlesPointer->charge[indx], nu_friction);
     //printf("nu_deflection %4.3e nu_parallel %4.3e nu_energy %4.3e \n",nu_deflection, nu_parallel, nu_energy);
@@ -787,7 +782,7 @@ void operator()(std::size_t indx) {
     
     interp2dVector(v_flow,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
-                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, cylsymm );
+                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, f.cylsymm );
     
     gitr_precision wx = vx - v_flow[0];
     gitr_precision wy = vy - v_flow[1];
@@ -854,7 +849,7 @@ void operator()(std::size_t indx) {
                              BfieldGridZ,
                              BfieldR,
                              BfieldZ,
-                             BfieldT, T_background, flowv_interp, cylsymm,
+                             BfieldT, T_background, f.flowv_interp, f.cylsymm,
                              f.sheath_density,particlesPointer->f_psi[indx]  );
 
 

@@ -139,8 +139,7 @@ double coulomb_data_broker::run_3()
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
-      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),
-      f.flowv_interp, f.cylsymm );
+      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front() );
 
 
 typedef std::chrono::high_resolution_clock gitr_time;
@@ -333,8 +332,7 @@ double coulomb_data_broker::run_2()
       &DensGridr.front(), &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp,
       &TempGridr.front(), &TempGridz.front(), ti.data(), &te.front(),
       background_Z, background_amu, nR_Bfield, nZ_Bfield, BfieldGridR.data(),
-      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front(),
-      f.flowv_interp, f.cylsymm);
+      &BfieldGridZ.front(), &BfieldR.front(), &BfieldZ.front(), &BfieldT.front() );
 
   typedef std::chrono::high_resolution_clock gitr_time;
   auto gitr_start_clock = gitr_time::now();
