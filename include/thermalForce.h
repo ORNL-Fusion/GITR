@@ -44,7 +44,6 @@ struct thermalForce {
 	    gitr_precision dv_ETGx=0.0;
 	    gitr_precision dv_ETGy=0.0;
 	    gitr_precision dv_ETGz=0.0;
-      int cylsymm;
             
     thermalForce(class flags &f_init,Particles *_p,gitr_precision _dt, gitr_precision _background_amu,int _nR_gradT, int _nZ_gradT, gitr_precision* _gradTGridr, gitr_precision* _gradTGridz,
             gitr_precision* _gradTiR, gitr_precision* _gradTiZ, gitr_precision* _gradTiT, gitr_precision* _gradTeR, gitr_precision* _gradTeZ,gitr_precision* _gradTeT,
@@ -53,14 +52,13 @@ struct thermalForce {
             gitr_precision * _BfieldGridZDevicePointer,
             gitr_precision * _BfieldRDevicePointer,
             gitr_precision * _BfieldZDevicePointer,
-            gitr_precision * _BfieldTDevicePointer,
-            int cylsymm_ )
+            gitr_precision * _BfieldTDevicePointer )
         
             : f( f_init ),p(_p), dt(_dt), background_amu(_background_amu),nR_gradT(_nR_gradT),nZ_gradT(_nZ_gradT),
         gradTGridr(_gradTGridr), gradTGridz(_gradTGridz),
         gradTiR(_gradTiR), gradTiZ(_gradTiZ),gradTiT(_gradTiT), gradTeR(_gradTeR), gradTeZ(_gradTeZ),gradTeT(_gradTeT), 
              nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
-    BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer), cylsymm( cylsymm_ ) {}
+    BfieldRDevicePointer(_BfieldRDevicePointer), BfieldZDevicePointer(_BfieldZDevicePointer), BfieldTDevicePointer(_BfieldTDevicePointer) {}
 
 CUDA_CALLABLE_MEMBER    
 void operator()(std::size_t indx)  { 
@@ -93,17 +91,17 @@ void operator()(std::size_t indx)  {
                 }
       // std:cout << " grad Ti interp " << std::endl;
       interp2dVector(&gradTi[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,
-                     gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT, cylsymm );
+                     gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT, f.cylsymm );
       //std::cout << "Position r z" << sqrt(p->xprevious*p->xprevious + p->yprevious*p->yprevious) << " " << p->zprevious << std::endl;
       //std::cout << "grad Ti " << std::copysign(1.0,gradTi[0])*sqrt(gradTi[0]*gradTi[0] + gradTi[1]*gradTi[1]) << " " << gradTi[2] << std::endl;
       interp2dVector(&gradTe[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,
-                     gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT, cylsymm );
+                     gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT, f.cylsymm );
       mu = p->amu[indx] / (background_amu + p->amu[indx]);
       alpha = p->charge[indx] * p->charge[indx] * 0.71;
       beta = 3 * (mu + 5 * std::sqrt(2.0) * p->charge[indx] * p->charge[indx] * (1.1 * std::pow(mu, (5 / 2)) - 0.35 * std::pow(mu, (3 / 2))) - 1) / (2.6 - 2 * mu + 5.4 * std::pow(mu, 2));
        
        interp2dVector(&B[0],p->xprevious[indx],p->yprevious[indx],p->zprevious[indx],nR_Bfield,nZ_Bfield,
-             BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer, cylsymm );    
+             BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer, f.cylsymm );    
         Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1]+ B[2]*B[2]);
         /* Captain! These are not checked for zero! Check them for zero! */
         B_unit[0] = B[0]/Bmag;
