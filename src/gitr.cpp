@@ -185,7 +185,6 @@ int main(int argc, char **argv, char **envp)
   }
   //auto gitr_flags = new Flags(cfg);
 
-  std::cout << "code has made it to this point 0!" << std::endl;
     //auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     //FIXME: work on new field struct
     //auto field1 = new Field();
@@ -257,13 +256,13 @@ int main(int argc, char **argv, char **envp)
   n_Bfield = nR_Bfield * nY_Bfield * nZ_Bfield;
   sim::Array<gitr_precision> br(n_Bfield), by(n_Bfield), bz(n_Bfield);
 
+  std::cout << "Ahoy! before bfield import" << std::endl;
   if (world_rank == 0) {
     importVectorField(cfg, input_path, f.bfield_interp, bfieldCfg, nR_Bfield,
                       nY_Bfield, nZ_Bfield, bfieldGridr.front(),
                       bfieldGridy.front(), bfieldGridz.front(), br.front(),
                       by.front(), bz.front(), bfieldFile);
   }
-  std::cout << "code has made it to this point 1!" << std::endl;
 #if USE_MPI > 0
   MPI_Bcast(br.data(), n_Bfield, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Bcast(by.data(), n_Bfield, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -282,6 +281,7 @@ int main(int argc, char **argv, char **envp)
   std::string profiles_folder = "output/profiles";
 
   // Geometry Definition
+  std::cout << "Ahoy! before geometry import" << std::endl;
   std::cout << "Start of geometry import" << std::endl;
   int nLines = 1;
   int nSurfaces = 0;
