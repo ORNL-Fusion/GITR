@@ -254,11 +254,12 @@ int main(int argc, char **argv, char **envp)
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-  std::cout << "Ahoy! after importVectorFieldNs, before importVectorField" << std::endl;
+  std::cout << "Ahoy! allocating space for bfield grids" << std::endl;
   sim::Array<gitr_precision> bfieldGridr(nR_Bfield), bfieldGridy(nY_Bfield),
       bfieldGridz(nZ_Bfield);
   n_Bfield = nR_Bfield * nY_Bfield * nZ_Bfield;
   sim::Array<gitr_precision> br(n_Bfield), by(n_Bfield), bz(n_Bfield);
+  std::cout << "Ahoy! after bfield grids allocated but before importVectorField" << std::endl;
 
   if (world_rank == 0) {
     importVectorField(cfg, input_path, f.bfield_interp, bfieldCfg, nR_Bfield,
