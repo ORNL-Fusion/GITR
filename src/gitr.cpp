@@ -225,21 +225,18 @@ int main(int argc, char **argv, char **envp)
     getVariable(cfg, "backgroundPlasmaProfiles.Z", background_Z);
     getVariable(cfg, "backgroundPlasmaProfiles.amu", background_amu);
   }
-  std::cout << "Ahoy! after amu and Z are printed" << std::endl;
 #if USE_MPI > 0
   MPI_Bcast(&background_Z, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&background_amu, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-  std::cout << "Ahoy! before clock timer" << std::endl;
   auto finish_clock0nc = gitr_time::now();
   typedef std::chrono::duration<gitr_precision> fsec0nc;
   fsec0nc fs0nc = finish_clock0nc - gitr_start_clock;
   //printf("Time taken for geometry import is %6.3f (secs) \n", fs0nc.count());
   
   
-  std::cout << "Ahoy! before importVectorFieldNs" << std::endl;
   int nR_Bfield = 1, nY_Bfield = 1, nZ_Bfield = 1, n_Bfield = 1;
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   std::string bfieldFile;
@@ -254,12 +251,10 @@ int main(int argc, char **argv, char **envp)
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-  std::cout << "Ahoy! allocating space for bfield grids" << std::endl;
   sim::Array<gitr_precision> bfieldGridr(nR_Bfield), bfieldGridy(nY_Bfield),
       bfieldGridz(nZ_Bfield);
   n_Bfield = nR_Bfield * nY_Bfield * nZ_Bfield;
   sim::Array<gitr_precision> br(n_Bfield), by(n_Bfield), bz(n_Bfield);
-  std::cout << "Ahoy! after bfield grids allocated but before importVectorField" << std::endl;
 
   if (world_rank == 0) {
     importVectorField(cfg, input_path, f.bfield_interp, bfieldCfg, nR_Bfield,
@@ -267,7 +262,6 @@ int main(int argc, char **argv, char **envp)
                       bfieldGridy.front(), bfieldGridz.front(), br.front(),
                       by.front(), bz.front(), bfieldFile);
   }
-  std::cout << "Ahoy! after importVectorField" << std::endl;
 #if USE_MPI > 0
   MPI_Bcast(br.data(), n_Bfield, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Bcast(by.data(), n_Bfield, MPI_FLOAT, 0, MPI_COMM_WORLD);
