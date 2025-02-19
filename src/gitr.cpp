@@ -183,7 +183,7 @@ int main(int argc, char **argv, char **envp)
 
 // check binary compatibility with input file
   }
-  auto gitr_flags = new Flags(cfg);
+  //auto gitr_flags = new Flags(cfg);
 
   std::cout << "code has made it to this point 0!" << std::endl;
     //auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
