@@ -184,6 +184,8 @@ int main(int argc, char **argv, char **envp)
 // check binary compatibility with input file
   }
   auto gitr_flags = new Flags(cfg);
+
+  std::cout << "code has made it to this point 0!" << std::endl;
     //auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     //FIXME: work on new field struct
     //auto field1 = new Field();
@@ -261,6 +263,7 @@ int main(int argc, char **argv, char **envp)
                       bfieldGridy.front(), bfieldGridz.front(), br.front(),
                       by.front(), bz.front(), bfieldFile);
   }
+  std::cout << "code has made it to this point 1!" << std::endl;
 #if USE_MPI > 0
   MPI_Bcast(br.data(), n_Bfield, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Bcast(by.data(), n_Bfield, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -438,6 +441,8 @@ int main(int argc, char **argv, char **envp)
   int nHashPointsTotal = 1;
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
+
+  std::cout << "code has made it to this point 1!" << std::endl;
 
   if( f.geom_hash == 1 )
   {
@@ -1612,7 +1617,6 @@ if(f.temp_interp > 0 )
 
   sim::Array<gitr_precision> TempGridr(nR_Temp), TempGridz(nZ_Temp), TempGridy(nY_Temp);
   n_Temp = nR_Temp * nY_Temp * nZ_Temp;
-  /* Captain! These arrays are the tensors that you should create */
   sim::Array<gitr_precision> ti(n_Temp), te(n_Temp);
 
 #if USE_MPI > 0
@@ -1656,8 +1660,6 @@ if(f.temp_interp > 0 )
   testVec = interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),
                              TempGridz.data(), ti.data(), f.cylsymm );
   std::cout << "Finished Temperature import " << testVec << std::endl;
-
-  /* Captain! end */
 
   // Background Plasma Density Initialization
   int nR_Dens = 1;
@@ -2243,7 +2245,6 @@ if( f.flowv_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-  /* Captain! ti/te used in boundary_init */
   // Applying background values at material boundaries
   std::for_each(boundaries.begin(), boundaries.end() - 1,
                 boundary_init(f, background_Z, background_amu, nR_Dens, nZ_Dens,
@@ -2784,6 +2785,8 @@ if( f.efield_interp == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
   }
+
+  // Captain! surface model distributions here!
   sim::Array<gitr_precision> E_sputtRefCoeff(nE_sputtRefCoeff),
       A_sputtRefCoeff(nA_sputtRefCoeff), Elog_sputtRefCoeff(nE_sputtRefCoeff),
       energyDistGrid01(nE_sputtRefDistOut),
