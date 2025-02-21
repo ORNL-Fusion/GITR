@@ -269,6 +269,11 @@ Navigate to this directory and run:
 
 > /path/to/build/GITR
 
+# GITR configuration flags extended description
+
+GITR accepts a multitude of input configuration flags; please refer to the GITR wiki pages and navigate to the `flags` section for an in-depth reference of configuration options and their meanings.
+The bottom of the `flags` wiki section includes a short section for developers describing how configuration flags are handled in the code and the process developers can use to add or remove flags.
+
 ## Canonical Example
 
 The default configuration options in GITR are compatible with the input deck in:
