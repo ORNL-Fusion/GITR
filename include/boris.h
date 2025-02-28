@@ -14,7 +14,7 @@
 #include "Particles.h"
 #include "Boundary.h"
 #include "interp2d.hpp"
-#include "flags.hpp"
+#include "utils.h"
 #include <algorithm>
 #include "interpolator.h"
 #include "config_interface.h"
@@ -111,7 +111,6 @@ struct move_boris {
     gitr_precision* closeGeomGridy_sheath;
     gitr_precision* closeGeomGridz_sheath;
     int* closeGeom_sheath; 
-    Flags* gitr_flags;
     flags f;
     gitr_precision max_dt;
 

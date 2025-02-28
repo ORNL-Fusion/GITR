@@ -2,7 +2,6 @@
 #include "catch2/catch_all.hpp"
 //Captain! added utils below
 #include "utils.h"
-#include "flags.hpp"
 #include "Particles.h"
 #include "Fields.h"
 #include <thrust/execution_policy.h>

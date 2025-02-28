@@ -11,7 +11,6 @@
 
 #include "Particles.h"
 #include "ionize.h"
-#include "flags.hpp"
 #ifdef __CUDACC__
 #include <thrust/random.h>
 #include <curand_kernel.h>

@@ -10,7 +10,6 @@
 
 #include "Particles.h"
 #include "Fields.h"
-#include "flags.hpp"
 #ifdef __CUDACC__
 #include <curand_kernel.h>
 #include <thrust/random.h>
