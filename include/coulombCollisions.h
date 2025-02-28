@@ -474,7 +474,6 @@ void operator()(std::size_t indx) {
   //bool use_bca = false;
   if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->charge[indx] != 0.0)
   {
-    //if(gitr_flags->USE_ADAPTIVE_DT)
     if(f.adaptive_dt)
     {
       dt = particlesPointer->dt[indx];	   
@@ -507,7 +506,6 @@ void operator()(std::size_t indx) {
     // Interpolate ion density
     gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni,f.cylsymm);
   
-    //if( gitr_flags->USE_SHEATH_DENSITY )
     if( f.sheath_density )
     {
      density = density*particlesPointer->f_psi[indx];
@@ -592,7 +590,6 @@ void operator()(std::size_t indx) {
              d_uz = -u_perp*std::sin(chi)*std::cos(psi) - uz*(1.0-std::cos(chi));
     }
     
-    //if(gitr_flags->USE_ADAPTIVE_DT)
     if(f.adaptive_dt)
       {
         if (particlesPointer->advance[indx])
@@ -719,7 +716,6 @@ void operator()(std::size_t indx) {
     gitr_precision vy_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[1] + std::abs(n2)*(coeff_perp1 * perp_direction1[1] + coeff_perp2 * perp_direction2[1])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[1];
     gitr_precision vz_relative = velocityRelativeNorm*(1.0-0.5*nuEdt)*((1.0 + coeff_par) * parallel_direction[2] + std::abs(n2)*(coeff_perp1 * perp_direction1[2] + coeff_perp2 * perp_direction2[2])) - velocityRelativeNorm*dt*nu_friction*parallel_direction[2];
       
-    //if(gitr_flags->USE_ADAPTIVE_DT)
     if(f.adaptive_dt)
       {
         if (particlesPointer->advance[indx])
@@ -874,7 +870,6 @@ gitr_precision dvx = w1x*term1 + w1x*term2 + w2x*term3 + w3x*term4;
 gitr_precision dvy = w1y*term1 + w1y*term2 + w2y*term3 + w3y*term4;
 gitr_precision dvz = w1z*term1 + w1z*term2 + w2z*term3 + w3z*term4;
 
-    //if(gitr_flags->USE_ADAPTIVE_DT)
     if(f.adaptive_dt)
       {
         if (particlesPointer->advance[indx])

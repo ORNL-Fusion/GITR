@@ -88,7 +88,6 @@ struct recombine {
     gitr_precision P1 = 0.0;
     gitr_precision r1 = 1.0;
       
-    //if (gitr_flags->USE_ADAPTIVE_DT)
     if (f.adaptive_dt)
     {
       dt = particlesPointer->dt[indx];
@@ -102,7 +101,6 @@ struct recombine {
       r1 = get_rand_double(state,indx);
     }
 
-    //if (gitr_flags->USE_ADAPTIVE_DT)
     if (f.adaptive_dt)
     {
       if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx])
