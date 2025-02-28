@@ -183,7 +183,6 @@ int main(int argc, char **argv, char **envp)
 
 // check binary compatibility with input file
   }
-  //auto gitr_flags = new Flags(cfg);
 
     //auto field1 = new Field(cfg,"backgroundPlasmaProfiles.Bfield");
     //FIXME: work on new field struct
@@ -3608,7 +3607,6 @@ if( f.efield_interp == 1 )
   gitr_precision bin_edge_dtheta;
   int n_bins_angle;
 
-  //if (gitr_flags->USE_PARTICLE_DIAGNOSTICS)
   if( f.particle_diagnostics )
   {
       std::cout << "Starting particle diagnostics initialization" << std::endl;
@@ -3659,7 +3657,6 @@ if( f.efield_interp == 1 )
   sim::Array<gitr_precision> bin_edges_time( n_bins_time + 1 , 0.0 );
   sim::Array<gitr_precision> bin_edges_angle( n_bins_angle + 1 , 0.0 );
 
-  //if ( gitr_flags->USE_PARTICLE_DIAGNOSTICS )
   if( f.particle_diagnostics )
   {
     //creating histogram vector for all surfaces and bins
@@ -4253,7 +4250,6 @@ std::cout << "here 2" << std::endl;
       }
 
       
-      //if (gitr_flags->USE_PARTICLE_DIAGNOSTICS)
       if( f.particle_diagnostics )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd, particle_diagnostics0);
@@ -4806,7 +4802,6 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // std::cout << "weights "  << " " << weights1[i] << " " <<
     // weightThreshold[0] << std::endl;
     //}
-  //if (gitr_flags->USE_PARTICLE_DIAGNOSTICS)
   if( f.particle_diagnostics )
 {
     netCDF::NcFile ncFile_particle_hist("output/particle_histograms.nc", netCDF::NcFile::replace);
