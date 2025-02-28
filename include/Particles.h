@@ -9,7 +9,7 @@
 #endif
 
 #include "array.h"
-#include "flags.hpp"
+#include "utils.h"
 #include <libconfig.h++>
 
 #include <cstdlib>
