@@ -7,8 +7,6 @@ target_link_libraries( ionize interpRateCoeff config_interface )
 
 target_link_libraries( interp2d thrust )
 
-target_link_libraries( flags libconfig_cxx libconfig_c thrust )
-
 
 target_link_libraries( utils 
                        libconfig_cxx
@@ -25,13 +23,11 @@ target_link_libraries( config_interface
 
 target_link_libraries( boris_data_broker 
                        boris 
-                       flags 
                        config_interface
                        )
 
 target_link_libraries( cross_field_diffusion_broker
                        utils 
-                       flags 
                        libconfig_cxx
                        libconfig_c
                        spectroscopy 
@@ -46,14 +42,13 @@ target_link_libraries( coulomb_data_broker
                        thrust
                        interp2d
                        utils
-                       flags
                        netcdf_cxx
                        netcdf_c
                        boris
                        config_interface
                        fields )
 
-target_link_libraries( atomic_data_broker ionize interp2d utils flags config_interface )
+target_link_libraries( atomic_data_broker ionize interp2d utils config_interface )
 
 if( OpenMP_CXX_FOUND )
 
@@ -83,7 +78,6 @@ target_link_libraries( GITR
                        utils
                        boris
                        surface_model
-                       flags
                        hashGeom
                        geometry_check
                        config_interface )
@@ -119,7 +113,6 @@ endif()
 
 target_link_libraries( boris_tests 
                        boris_data_broker 
-                       flags 
                        libconfig_cxx 
                        libconfig_c 
                        utils 
@@ -130,7 +123,6 @@ target_link_libraries( boris_tests
 target_link_libraries( cross_field_diffusion_tests
                        cross_field_diffusion_broker
                        utils
-                       flags
                        libconfig_cxx
                        libconfig_c
                        boris
@@ -146,7 +138,6 @@ target_link_libraries( atomic_tests
                        ionize 
                        interp2d 
                        utils 
-                       flags
                        Catch2::Catch2WithMain
                        libconfig_cxx
                        libconfig_c
@@ -159,7 +150,6 @@ target_link_libraries( coulomb_tests
                        thrust
                        interp2d
                        utils
-                       flags
                        boris
                        fields
                        Catch2::Catch2WithMain
@@ -168,7 +158,6 @@ target_link_libraries( coulomb_tests
 #target_link_libraries( file_io_tests
 #                       libconfig_cxx
 #                       libconfig_c
-#                       flags
 #                       utils
 #                       boris
 #                       geometry_check

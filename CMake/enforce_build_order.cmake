@@ -16,7 +16,7 @@ add_dependencies( boris particle_diagnostics )
 # ensure that all source targets are built before GITR
 add_dependencies( GITR ${non_gpu_targets} ${gpu_targets} )
 
-add_dependencies( boris_data_broker boris flags )
+add_dependencies( boris_data_broker boris )
 
 if( GITR_USE_CUDA )
 

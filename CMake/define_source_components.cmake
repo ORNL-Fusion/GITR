@@ -24,7 +24,6 @@ set( non_gpu_targets
      efield_interp
      particle
      utils
-     flags
      config_interface
      slow_math
      setup)
