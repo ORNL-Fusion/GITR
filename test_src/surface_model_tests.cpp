@@ -7,7 +7,6 @@
 #include "config_interface.h"
 #include "test_data_filepath.hpp"
 #include "utils.h"
-#include "flags.hpp"
 #include "Particles.h"
 #include "boris.h"
 #include "Surfaces.h"

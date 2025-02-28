@@ -29,8 +29,6 @@ std::vector< double > atomic_data_broker::run_2()
 
   importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
 
-  auto gitr_flags = new Flags(cfg);
-
   int nParticles = getVariable_cfg<int> (cfg,"impurityParticleSource.nP");
 
   auto particleArray = new Particles(nParticles,nParticles,cfg);
@@ -220,8 +218,6 @@ void atomic_data_broker::run_1()
 
   importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
 
-  auto gitr_flags = new Flags(cfg);
-
   auto particleArray = new Particles(nParticles,nParticles,cfg);
 #ifdef __CUDACC__
   typedef curandState rand_type;
@@ -400,8 +396,6 @@ void atomic_data_broker::run()
   std::string file = "ionize.cfg";
 
   importLibConfig(cfg, FIELD_UNIT_TEST_FILE_0 );
-
-  auto gitr_flags = new Flags(cfg);
 
   auto particleArray = new Particles(nParticles,nParticles,cfg);
 

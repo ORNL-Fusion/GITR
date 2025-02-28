@@ -14,7 +14,6 @@
 #include "interp2d.hpp"
 #include "boris.h"
 #include "array.h"
-#include "flags.hpp"
 #include <iomanip>
 
 #ifdef __CUDACC__

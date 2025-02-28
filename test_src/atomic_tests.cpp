@@ -6,7 +6,6 @@
 
 #include "utils.h"
 #include "Fields.h"
-#include "flags.hpp"
 #include "Particles.h"
 
 #if USE_DOUBLE

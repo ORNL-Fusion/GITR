@@ -50,7 +50,6 @@ double cross_field_diffusion_broker::run_1()
 
   importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE_1 );
 
-  auto gitr_flags = new Flags( cfg_geom );
 
   int nLines = 0;
 
@@ -296,7 +295,6 @@ double cross_field_diffusion_broker::run()
 
   importLibConfig(cfg_geom, CROSS_FIELD_GEOM_FILE);
 
-  auto gitr_flags = new Flags( cfg_geom );
 
   int nLines = 0;
 

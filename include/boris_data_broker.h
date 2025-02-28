@@ -1,7 +1,6 @@
 #include "array.h"
 #include "boris.h"
 #include "Particles.h"
-#include "flags.hpp"
 #include <vector>
 #include "config_interface.h"
 
