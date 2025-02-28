@@ -54,13 +54,12 @@ TEST_CASE( "surface model" )
 
     importLibConfig(cfg, SURFACE_MODEL_TEST_FILE );
 
-    auto gitr_flags = new Flags( cfg );
 
     libconfig::Setting &impurity = cfg.lookup( "impurityParticleSource" );
 
     int nParticles = 1000;
     /* 2nd argument is deprecated - random number stream related */
-    auto particleArray = new Particles( nParticles, 1, cfg, gitr_flags );
+    auto particleArray = new Particles( nParticles, 1, cfg );
 
     /* equation to convert eV energy to vector velocity components */
     gitr_precision E = 200;
@@ -183,7 +182,7 @@ TEST_CASE( "surface model" )
                       nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
                       n_closeGeomElements_sheath, closeGeomGridr_sheath.data(),
                       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-                      &closeGeom_sheath.front(), gitr_flags );
+                      &closeGeom_sheath.front() );
 
     geometry_check geometry_check0(
         particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
