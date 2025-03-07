@@ -346,7 +346,7 @@ int main(int argc, char **argv, char **envp)
   int nAdist = 1;
   gitr_precision A0dist = 0.0;
   gitr_precision Adist = 0.0;
-  if(f.flux_ea)
+  if(f.FLUX_EA)
   {
   if (world_rank == 0) {
     getVariable(cfg, "surfaces.flux.nE", nEdist);
@@ -2735,7 +2735,7 @@ if( f.efield_interp == 1 )
   int nDistE_surfaceModel = 1, nDistA_surfaceModel = 1;
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
-  if( f.surface_model > 0 )
+  if( f.USESURFACEMODEL > 0 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -2812,7 +2812,7 @@ if( f.efield_interp == 1 )
       AthetaDist_CDF_R_regrid(nDistA_surfaceModel),
       EDist_CDF_R_regrid(nDistE_surfaceModelRef);
 
-  if( f.surface_model > 0 )
+  if( f.USESURFACEMODEL > 0 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -3779,9 +3779,9 @@ if( f.efield_interp == 1 )
   sim::Array<rand_type> state1(nParticles);
 #endif
     if( f.IONIZATION > 0 ||
-        f.perp_diffusion > 0 ||
-        f.coulomb_collisions > 0 ||
-        f.surface_model > 0 )
+        f.USEPERPDIFFUSION > 0 ||
+        f.USECOULOMBCOLLISIONS > 0 ||
+        f.USESURFACEMODEL > 0 )
     {
 #if USE_CUDA
 
@@ -3986,7 +3986,7 @@ if( f.efield_interp == 1 )
 	        thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
         }
 
-        if( f.coulomb_collisions > 0 )
+        if( f.USECOULOMBCOLLISIONS > 0 )
         {
         thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
         }
@@ -4008,7 +4008,7 @@ if( f.efield_interp == 1 )
           tRecomb[j * nR_force + i] = recombine0.tion;
         }
 
-        if( f.coulomb_collisions > 0 )
+        if( f.USECOULOMBCOLLISIONS > 0 )
         {
         dvCollr[j * nR_force + i] = coulombCollisions0.dv[0];
         dvCollz[j * nR_force + i] = coulombCollisions0.dv[2];
@@ -4229,7 +4229,7 @@ std::cout << "here 2" << std::endl;
         thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
       }
 
-      if( f.perp_diffusion > 0 )
+      if( f.USEPERPDIFFUSION > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        crossFieldDiffusion0);
@@ -4237,7 +4237,7 @@ std::cout << "here 2" << std::endl;
                        geometry_check0);
       }
 
-      if( f.coulomb_collisions > 0 )
+      if( f.USECOULOMBCOLLISIONS > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        coulombCollisions0);
@@ -4254,7 +4254,7 @@ std::cout << "here 2" << std::endl;
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd, particle_diagnostics0);
       }
-  if( f.surface_model > 0 )
+  if( f.USESURFACEMODEL > 0 )
   {
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
   }
@@ -4501,7 +4501,7 @@ for(int i=0; i<nP ; i++)
   MPI_Barrier(MPI_COMM_WORLD);
   }
   
-  if( f.surface_model > 0 || f.flux_ea > 0 )
+  if( f.USESURFACEMODEL > 0 || f.FLUX_EA > 0 )
   {
   // MPI_Barrier(MPI_COMM_WORLD);
   std::cout << "Starting surface reduce " << std::endl;
@@ -4831,7 +4831,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     ncFile_particle_hist.close();
 }
   
-  if( f.surface_model > 0 || f.flux_ea > 0 )
+  if( f.USESURFACEMODEL > 0 || f.FLUX_EA > 0 )
   {
 #if USE_MPI > 0
     std::vector<int> surfaceNumbers(nSurfaces, 0);

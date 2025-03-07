@@ -74,7 +74,7 @@ struct sortParticles {
        
        for(int i=0;i<nPonRank;i++)
        {
-if (f.surface_model > 0)
+if (f.USESURFACEMODEL > 0)
 {
 }
 else

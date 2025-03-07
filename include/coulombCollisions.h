@@ -479,7 +479,7 @@ void operator()(std::size_t indx) {
       dt = particlesPointer->dt[indx];	   
     }
 
-  if ( f.coulomb_collisions == 2)
+  if ( f.USECOULOMBCOLLISIONS == 2)
   {
     // Physical constants (should be replaced with system/better precision values)
     double ME = 9.10938356e-31;
@@ -610,7 +610,7 @@ void operator()(std::size_t indx) {
     }
     
   }
-  else if (f.coulomb_collisions == 1)
+  else if (f.USECOULOMBCOLLISIONS == 1)
   {
      
     gitr_precision pi = 3.14159265;   
@@ -736,7 +736,7 @@ void operator()(std::size_t indx) {
       this->dv[1] = velocityCollisions[1];
       this->dv[2] = velocityCollisions[2];
     }
-    else if (f.coulomb_collisions == 3)
+    else if (f.USECOULOMBCOLLISIONS == 3)
     {
     // Physical constants (should be replaced with system/better precision values)
     double ME = 9.10938356e-31;

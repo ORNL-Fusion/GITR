@@ -995,7 +995,7 @@ else top_limit = nLines;
     }
     if (particlesPointer->hitWall[indx] == 1.0) {
 
-      if( f.flux_ea > 0 && f.surface_model == 0 )
+      if( f.FLUX_EA > 0 && f.USESURFACEMODEL == 0 )
       {
       gitr_precision E0 = 0.0;
       gitr_precision thetaImpact = 0.0;
@@ -1086,7 +1086,7 @@ else top_limit = nLines;
         }
       }
       }
-      else if( f.flux_ea == 0 && f.surface_model == 0 )
+      else if( f.FLUX_EA == 0 && f.USESURFACEMODEL == 0 )
       {
         particlesPointer->weight[indx] = 0.0;
       }
