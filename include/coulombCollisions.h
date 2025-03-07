@@ -506,7 +506,7 @@ void operator()(std::size_t indx) {
     // Interpolate ion density
     gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni,f.USECYLSYMM);
   
-    if( f.sheath_density )
+    if( f.USE_SHEATH_DENSITY )
     {
      density = density*particlesPointer->f_psi[indx];
     }
@@ -687,7 +687,7 @@ void operator()(std::size_t indx) {
                              BfieldR,
                              BfieldZ,
                              BfieldT, T_background, f.FLOWV_INTERP, f.USECYLSYMM,
-                             f.sheath_density,particlesPointer->f_psi[indx]  );
+                             f.USE_SHEATH_DENSITY,particlesPointer->f_psi[indx]  );
 
     getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );
@@ -845,7 +845,7 @@ void operator()(std::size_t indx) {
                              BfieldR,
                              BfieldZ,
                              BfieldT, T_background, f.FLOWV_INTERP, f.USECYLSYMM,
-                             f.sheath_density,particlesPointer->f_psi[indx]  );
+                             f.USE_SHEATH_DENSITY,particlesPointer->f_psi[indx]  );
 
 
 //gamma1 = normrnd(0,1,nP,1);

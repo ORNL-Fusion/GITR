@@ -545,7 +545,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
        boundaries[i].area = geom["area"][i];
        boundaries[i].surface = geom["surface"][i];
        boundaries[i].inDir = geom["inDir"][i];
-  if( f.surface_potential > 0 )
+  if( f.USE_SURFACE_POTENTIAL > 0 )
   {
     boundaries[i].potential = geom["potential"][i];
   }
@@ -604,7 +604,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
        boundaries[i].intercept_z = geom["intercept"][i];
        boundaries[i].length = geom["length"][i];
        //std::cout << "got Z slope length " << std::endl;
-       if( f.surface_potential > 0 )
+       if( f.USE_SURFACE_POTENTIAL > 0 )
        {
        boundaries[i].potential = geom["potential"][i];
        }
