@@ -3263,7 +3263,7 @@ if( f.EFIELD_INTERP == 1 )
   std::cout << "Starting psourcefile import " << std::endl;
   vector<gitr_precision> xpfile(nP), ypfile(nP), zpfile(nP), vxpfile(nP), vypfile(nP),
       vzpfile(nP);
-      if( f.particle_source_file > 0 )
+      if( f.PARTICLE_SOURCE_FILE > 0 )
       {
   libconfig::Config cfg_particles;
   std::string ncParticleSourceFile;
@@ -3519,7 +3519,7 @@ if( f.EFIELD_INTERP == 1 )
     // particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
     */
 
-   if( f.particle_source_file > 0 ) 
+   if( f.PARTICLE_SOURCE_FILE > 0 ) 
    {
     x = xpfile[i];
     y = ypfile[i];
@@ -3702,7 +3702,7 @@ if( f.EFIELD_INTERP == 1 )
   int nHistoriesPerParticle = (nT / subSampleFac) + 1;
   int nHistories = nHistoriesPerParticle * nP;
 	
-  if(f.particle_tracks == 0) nHistories = 1;
+  if(f.PARTICLE_TRACKS == 0) nHistories = 1;
 	
   sim::Array<gitr_precision> positionHistoryX(nHistories);
   sim::Array<gitr_precision> positionHistoryXgather(nHistories, 0.0);
@@ -3725,7 +3725,7 @@ if( f.EFIELD_INTERP == 1 )
   sim::Array<gitr_precision> perpDistanceToSurfaceHistory(nHistories);
   sim::Array<gitr_precision> perpDistanceToSurfaceGather(nHistories);
 
-  if( f.particle_tracks > 0 )
+  if( f.PARTICLE_TRACKS > 0 )
   {
 
   for (int i = 0; i < world_size; i++) {
@@ -3794,7 +3794,7 @@ if( f.EFIELD_INTERP == 1 )
                    // world_rank*nP/world_size,particleBegin +
                    // (world_rank+1)*nP/world_size-10,
                    // curandInitialize(&state1[0],randDeviceInit,0));
-                   curandInitialize<>( &state1.front(), bool(f.fixed_seeds) ));
+                   curandInitialize<>( &state1.front(), bool(f.FIXED_SEEDS) ));
   std::cout << " finished curandInit" << std::endl;
 #else
   std::random_device randDeviceInit;
@@ -3803,7 +3803,7 @@ if( f.EFIELD_INTERP == 1 )
   //                     curandInitialize(&state1[0],randDeviceInit,0));
   // std::mt19937 s0(randDeviceInit);
   thrust::for_each( thrust::device, particleBegin, particleEnd,
-                    curandInitialize<>( &state1.front(), bool(f.fixed_seeds) ) );
+                    curandInitialize<>( &state1.front(), bool(f.FIXED_SEEDS) ) );
   /*
   for (int i = world_rank * nP / world_size;
        i < (world_rank + 1) * nP / world_size; i++) {
@@ -4199,7 +4199,7 @@ std::cout << "here 2" << std::endl;
 #endif
        }
 
-      if( f.particle_tracks > 0 )
+      if( f.PARTICLE_TRACKS > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd, history0);
       }
@@ -4259,7 +4259,7 @@ std::cout << "here 2" << std::endl;
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
   }
     }
-    if( f.particle_tracks > 0 )
+    if( f.PARTICLE_TRACKS > 0 )
     {
     tt = nT;
     // dev_tt[0] = tt;
@@ -4414,7 +4414,7 @@ for(int i=0; i<nP ; i++)
              MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 
-  if( f.particle_tracks > 0 )
+  if( f.PARTICLE_TRACKS > 0 )
   {
 
   std::vector<gitr_precision> exampleArray(4, 0.0);
@@ -4956,7 +4956,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     ncFile1.close();
   }
 #endif
-  if( f.particle_tracks > 0 )
+  if( f.PARTICLE_TRACKS > 0 )
   {
 
     // Write netCDF output for histories

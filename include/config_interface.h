@@ -176,11 +176,11 @@ class flags
   int FLOWV_INTERP = -1;
   int GRADT_INTERP = -1;
   int FLUX_EA = -1;
-  int particle_source_file  = -1;
+  int PARTICLE_SOURCE_FILE  = -1;
   int SPECTROSCOPY = -1;
   int USE3DTETGEOM  = -1;
-  int particle_tracks = -1;
-  int fixed_seeds = -1;
+  int PARTICLE_TRACKS = -1;
+  int FIXED_SEEDS = -1;
   int geom_hash= -1;
   int geom_hash_sheath= -1;
   int USECYLSYMM = -1;
@@ -241,10 +241,10 @@ class flags
     query_metadata( module_name + "." + gradt_interp_str ,  GRADT_INTERP );
 
     std::string particle_tracks_str = "PARTICLE_TRACKS";
-    query_metadata( module_name + "." + particle_tracks_str , particle_tracks );
+    query_metadata( module_name + "." + particle_tracks_str , PARTICLE_TRACKS );
 
     std::string particle_source_file_str  = "PARTICLE_SOURCE_FILE";
-    query_metadata( module_name + "." + particle_source_file_str  , particle_source_file  );
+    query_metadata( module_name + "." + particle_source_file_str  , PARTICLE_SOURCE_FILE  );
 
     std::string spectroscopy_str  = "SPECTROSCOPY";
     query_metadata( module_name + "." + spectroscopy_str  , SPECTROSCOPY );
@@ -256,7 +256,7 @@ class flags
     query_metadata( module_name + "." + flux_ea_str , FLUX_EA  );
 
     std::string fixed_seeds_str = "FIXED_SEEDS";
-    query_metadata( module_name + "." + fixed_seeds_str , fixed_seeds );
+    query_metadata( module_name + "." + fixed_seeds_str , FIXED_SEEDS );
 
     std::string geom_hash_str = "GEOM_HASH";
     query_metadata( module_name + "." + geom_hash_str , geom_hash );
