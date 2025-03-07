@@ -508,7 +508,7 @@ int importVectorField(libconfig::Config &cfg,std::string input_path,int interpDi
   }
   return 0;
 }
-int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries )
+int importGeometry(class flags config_flags, libconfig::Config &cfg_geom, sim::Array<Boundary> &boundaries )
 {
     Setting& geom = cfg_geom.lookup("geom");
     std::cout << "Boundary import routine " << int(boundaries.size()) << std::endl;
@@ -521,7 +521,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
 
   std::string full_path = geom_folder + "/" + geom_outname;
   outfile.open (full_path );
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
     std::cout << "Reading 3D geometry file " << std::endl;
     for(int i=0 ; i<nLines ; i++)
@@ -545,7 +545,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
        boundaries[i].area = geom["area"][i];
        boundaries[i].surface = geom["surface"][i];
        boundaries[i].inDir = geom["inDir"][i];
-  if( f.USE_SURFACE_POTENTIAL > 0 )
+  if( config_flags.USE_SURFACE_POTENTIAL > 0 )
   {
     boundaries[i].potential = geom["potential"][i];
   }
@@ -564,7 +564,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
        boundaries[nLines].y1 = geom["theta0"];
        boundaries[nLines].y2 = geom["theta1"];
        boundaries[nLines].periodic = geom["periodic"];
-     if( f.USECYLSYMM )
+     if( config_flags.USECYLSYMM )
      {
           std::cout << "Reading cylindrically symmetric boundary characteristics " << std::endl;
        boundaries[nLines].y1 = geom["theta0"];
@@ -604,7 +604,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
        boundaries[i].intercept_z = geom["intercept"][i];
        boundaries[i].length = geom["length"][i];
        //std::cout << "got Z slope length " << std::endl;
-       if( f.USE_SURFACE_POTENTIAL > 0 )
+       if( config_flags.USE_SURFACE_POTENTIAL > 0 )
        {
        boundaries[i].potential = geom["potential"][i];
        }
@@ -638,7 +638,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
     }
     return nZSurfs;
 }
-int importHashNs(class flags f, libconfig::Config &cfg,std::string input_path,int nHashes,std::string fieldCfgString,int *nR, int *nY,int *nZ,int *n,int &nRTotal,int &nYTotal,int &nZTotal,int *nHashPoints, int &nHashPointsTotal,int &nGeomHash )
+int importHashNs(class flags config_flags, libconfig::Config &cfg,std::string input_path,int nHashes,std::string fieldCfgString,int *nR, int *nY,int *nZ,int *n,int &nRTotal,int &nYTotal,int &nZTotal,int *nHashPoints, int &nHashPointsTotal,int &nGeomHash )
 {
       Setting& geomHash = cfg.lookup(fieldCfgString);
       if(nHashes > 1)
@@ -662,7 +662,7 @@ int importHashNs(class flags f, libconfig::Config &cfg,std::string input_path,in
         nRTotal = nRTotal + nR[j];
         nZTotal = nZTotal + nZ[j];
       }
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
       if(nHashes > 1)
       {
@@ -687,7 +687,7 @@ int importHashNs(class flags f, libconfig::Config &cfg,std::string input_path,in
       nGeomHash = 0;
       for(int j=0;j<nHashes;j++)
       {
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
        // if(nHashes > 1)
         //{

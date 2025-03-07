@@ -4,7 +4,7 @@ spec_bin::spec_bin(class flags &f_init, Particles *_particlesPointer, int _nBins
            gitr_precision* _bins, gitr_precision _dt,
            gitr_precision* _bins_vx, gitr_precision* _bins_vy, gitr_precision* _bins_vz,
            gitr_precision* _bins_E ) : 
-        f(f_init), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
+        config_flags(f_init), particlesPointer(_particlesPointer), nBins(_nBins),nX(_nX),nY(_nY), nZ(_nZ), gridX(_gridX),gridY(_gridY),gridZ(_gridZ), bins(_bins),
         dt(_dt), 
         bins_vx(_bins_vx), bins_vy(_bins_vy), bins_vz(_bins_vz), bins_E(_bins_E) {}
 
@@ -42,7 +42,7 @@ void spec_bin::operator()(std::size_t indx) const {
 
     // Determine particle dt and relative contribution
     //if (flags->USE_ADAPTIVE_DT)
-    if (f.ADAPTIVE_DT)
+    if (config_flags.ADAPTIVE_DT)
     {
       if(particlesPointer->advance[indx])
       {
@@ -56,13 +56,13 @@ void spec_bin::operator()(std::size_t indx) const {
     }
 
     // Determine dimension 1 variable
-    if( f.SPECTROSCOPY > 2 )
+    if( config_flags.SPECTROSCOPY > 2 )
     {
       dim1 = x;
     }
     else
     {
-      if( f.USECYLSYMM > 0 )
+      if( config_flags.USECYLSYMM > 0 )
       {
         dim1 = std::sqrt(x*x + y*y);
       }
@@ -85,13 +85,13 @@ void spec_bin::operator()(std::size_t indx) const {
         indx_Y = 0;
         nnYY=1;
 
-        if(f.SPECTROSCOPY < 3) add = true;
+        if(config_flags.SPECTROSCOPY < 3) add = true;
         
         if (indx_X < 0 || indx_X >= nX) indx_X = 0;
 
         if (indx_Z < 0 || indx_Z >= nZ) indx_Z = 0;
 
-        if( f.SPECTROSCOPY > 2 )
+        if( config_flags.SPECTROSCOPY > 2 )
         {
         
           if((y > gridY[0]) && (y < gridY[nY-1]))
@@ -114,7 +114,7 @@ void spec_bin::operator()(std::size_t indx) const {
     gitr_precision vr = vx;
     gitr_precision vt = vy;
 
-    if( f.SPECTROSCOPY == 2 && f.USECYLSYMM > 0)
+    if( config_flags.SPECTROSCOPY == 2 && config_flags.USECYLSYMM > 0)
     {
           gitr_precision theta_position = std::atan2(y,x);
           gitr_precision theta_velocity = std::atan2(vy,vx);

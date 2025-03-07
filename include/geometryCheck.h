@@ -37,7 +37,7 @@ findT( gitr_precision x0,
 
   //template<int HOST=1>
 struct geometry_check {
-  class flags f;
+  class flags config_flags;
   Particles *particlesPointer;
   const int nLines;
   Boundary *boundaryVector;

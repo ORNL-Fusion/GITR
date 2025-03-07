@@ -17,7 +17,7 @@ typedef float gitr_precision;
 #endif
 
 struct thermalForce { 
-    class flags f; 
+    class flags config_flags; 
     Particles *p;
     const gitr_precision dt;
     gitr_precision background_amu;
@@ -54,7 +54,7 @@ struct thermalForce {
             gitr_precision * _BfieldZDevicePointer,
             gitr_precision * _BfieldTDevicePointer )
         
-            : f( f_init ),p(_p), dt(_dt), background_amu(_background_amu),nR_gradT(_nR_gradT),nZ_gradT(_nZ_gradT),
+            : config_flags( f_init ),p(_p), dt(_dt), background_amu(_background_amu),nR_gradT(_nR_gradT),nZ_gradT(_nZ_gradT),
         gradTGridr(_gradTGridr), gradTGridz(_gradTGridz),
         gradTiR(_gradTiR), gradTiZ(_gradTiZ),gradTiT(_gradTiT), gradTeR(_gradTeR), gradTeZ(_gradTeZ),gradTeT(_gradTeT), 
              nR_Bfield(_nR_Bfield), nZ_Bfield(_nZ_Bfield), BfieldGridRDevicePointer(_BfieldGridRDevicePointer), BfieldGridZDevicePointer(_BfieldGridZDevicePointer),
@@ -79,7 +79,7 @@ void operator()(std::size_t indx)  {
       gitr_precision vNorm2 = 0.0;
       gitr_precision dt_step = dt;
                 //if (flags->USE_ADAPTIVE_DT) {
-                if (f.ADAPTIVE_DT) {
+                if (config_flags.ADAPTIVE_DT) {
 	          if(p->advance[indx])
 		  {
 	            dt_step = p->dt[indx];
@@ -91,17 +91,17 @@ void operator()(std::size_t indx)  {
                 }
       // std:cout << " grad Ti interp " << std::endl;
       interp2dVector(&gradTi[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,
-                     gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT, f.USECYLSYMM );
+                     gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT, config_flags.USECYLSYMM );
       //std::cout << "Position r z" << sqrt(p->xprevious*p->xprevious + p->yprevious*p->yprevious) << " " << p->zprevious << std::endl;
       //std::cout << "grad Ti " << std::copysign(1.0,gradTi[0])*sqrt(gradTi[0]*gradTi[0] + gradTi[1]*gradTi[1]) << " " << gradTi[2] << std::endl;
       interp2dVector(&gradTe[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,
-                     gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT, f.USECYLSYMM );
+                     gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT, config_flags.USECYLSYMM );
       mu = p->amu[indx] / (background_amu + p->amu[indx]);
       alpha = p->charge[indx] * p->charge[indx] * 0.71;
       beta = 3 * (mu + 5 * std::sqrt(2.0) * p->charge[indx] * p->charge[indx] * (1.1 * std::pow(mu, (5 / 2)) - 0.35 * std::pow(mu, (3 / 2))) - 1) / (2.6 - 2 * mu + 5.4 * std::pow(mu, 2));
        
        interp2dVector(&B[0],p->xprevious[indx],p->yprevious[indx],p->zprevious[indx],nR_Bfield,nZ_Bfield,
-             BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer, f.USECYLSYMM );    
+             BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer, config_flags.USECYLSYMM );    
         Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1]+ B[2]*B[2]);
         /* Captain! These are not checked for zero! Check them for zero! */
         B_unit[0] = B[0]/Bmag;

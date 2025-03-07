@@ -33,7 +33,7 @@ typedef float gitr_precision;
 #endif
 
 struct reflection {
-    class flags f;
+    class flags config_flags;
     Particles * particles;
     const double dt;
     int nLines;

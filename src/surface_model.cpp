@@ -38,7 +38,7 @@
     int _nAdist,
     gitr_precision _A0dist,
     gitr_precision _Adist ) :
-                             f( f_init ),
+                             config_flags( f_init ),
                              particles(_particles),
                              dt(_dt),
                              nLines(_nLines),
@@ -115,7 +115,7 @@ void reflection::operator()(std::size_t indx) const {
     gitr_precision dEdist;
     gitr_precision dAdist;
 
-    if( f.FLUX_EA > 0 )
+    if( config_flags.FLUX_EA > 0 )
     {
       dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
       dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
@@ -138,7 +138,7 @@ void reflection::operator()(std::size_t indx) const {
       
     wallIndex = particles->wallIndex[indx];
     
-    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx], f.USE3DTETGEOM, f.USECYLSYMM );
+    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx], config_flags.USE3DTETGEOM, config_flags.USECYLSYMM );
     
     particleTrackVector[0] = particleTrackVector[0] / norm_part;
     particleTrackVector[1] = particleTrackVector[1] / norm_part;
@@ -213,7 +213,7 @@ void reflection::operator()(std::size_t indx) const {
 
         newWeight = weight*(totalYR);
 
-        if( f.FLUX_EA > 0 )
+        if( config_flags.FLUX_EA > 0 )
         {
           EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
           AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
@@ -256,7 +256,7 @@ void reflection::operator()(std::size_t indx) const {
 		    
         newWeight=weight*totalYR;
       
-        if( f.FLUX_EA > 0 )
+        if( config_flags.FLUX_EA > 0 )
         {
           EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
           AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
@@ -348,7 +348,7 @@ void reflection::operator()(std::size_t indx) const {
       surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
     #endif
     
-      if( f.FLUX_EA > 0 )
+      if( config_flags.FLUX_EA > 0 )
       {
         EdistInd = std::floor((E0_for_flux_binning-E0dist)/dEdist);
         AdistInd = std::floor((thetaImpact-A0dist)/dAdist);
@@ -381,8 +381,8 @@ void reflection::operator()(std::size_t indx) const {
       vSampled[1] = V0 * std::sin(aInterpVal * 3.1415 / 180) * std::sin(2.0 * 3.1415 * r10);
       vSampled[2] = V0 * std::cos(aInterpVal * 3.1415 / 180);
       boundaryVector[wallHit].transformToSurface(vSampled, particles->y[indx],
-                                                 particles->x[indx], f.USE3DTETGEOM,
-                                                 f.USECYLSYMM );
+                                                 particles->x[indx], config_flags.USE3DTETGEOM,
+                                                 config_flags.USECYLSYMM );
       particles->vx[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[0];
       particles->vy[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[1];
       particles->vz[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[2];
