@@ -80,7 +80,7 @@ struct boundary_init {
         gitr_precision midpointx;
         gitr_precision midpointy;
         gitr_precision midpointz;
-    if( f.use_3d_geom )
+    if( f.USE3DTETGEOM )
     {
         midpointx = b.x1 + 0.666666667*(b.x2 + 0.5*(b.x3-b.x2)-b.x1);
         midpointy = b.y1 + 0.666666667*(b.y2 + 0.5*(b.y3-b.y2)-b.y1);
@@ -93,19 +93,19 @@ struct boundary_init {
         midpointy = 0.0;
         midpointz = 0.5*(b.z2 - b.z1) + b.z1;
     }
-        b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density, f.cylsymm );
-        b.ne = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,ne, f.cylsymm );
-        b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, f.cylsymm );
-        b.te = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, f.cylsymm );
+        b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density, f.USECYLSYMM );
+        b.ne = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,ne, f.USECYLSYMM );
+        b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, f.USECYLSYMM );
+        b.te = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, f.USECYLSYMM );
         gitr_precision B[3] = {0.0,0.0,0.0};
 interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
-                 bfieldGridz,bfieldR,bfieldZ,bfieldT, f.cylsymm );
+                 bfieldGridz,bfieldR,bfieldZ,bfieldT, f.USECYLSYMM );
         gitr_precision norm_B = vectorNorm(B);
         gitr_precision theta;
-    if( f.use_3d_geom )
+    if( f.USE3DTETGEOM )
     {
         gitr_precision surfNorm[3] = {0.0,0.0,0.0};
-        b.getSurfaceNormal(surfNorm,0.0,0.0, f.use_3d_geom, f.cylsymm );
+        b.getSurfaceNormal(surfNorm,0.0,0.0, f.USE3DTETGEOM, f.USECYLSYMM );
         theta = std::acos(vectorDotProduct(B,surfNorm)/(vectorNorm(B)*vectorNorm(surfNorm)));
         if (theta > 3.14159265359*0.5)
         {

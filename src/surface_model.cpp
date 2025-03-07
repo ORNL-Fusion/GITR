@@ -138,7 +138,7 @@ void reflection::operator()(std::size_t indx) const {
       
     wallIndex = particles->wallIndex[indx];
     
-    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx], f.use_3d_geom, f.cylsymm );
+    boundaryVector[wallHit].getSurfaceNormal(surfaceNormalVector, particles->y[indx], particles->x[indx], f.USE3DTETGEOM, f.USECYLSYMM );
     
     particleTrackVector[0] = particleTrackVector[0] / norm_part;
     particleTrackVector[1] = particleTrackVector[1] / norm_part;
@@ -381,8 +381,8 @@ void reflection::operator()(std::size_t indx) const {
       vSampled[1] = V0 * std::sin(aInterpVal * 3.1415 / 180) * std::sin(2.0 * 3.1415 * r10);
       vSampled[2] = V0 * std::cos(aInterpVal * 3.1415 / 180);
       boundaryVector[wallHit].transformToSurface(vSampled, particles->y[indx],
-                                                 particles->x[indx], f.use_3d_geom,
-                                                 f.cylsymm );
+                                                 particles->x[indx], f.USE3DTETGEOM,
+                                                 f.USECYLSYMM );
       particles->vx[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[0];
       particles->vy[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[1];
       particles->vz[indx] = -static_cast<gitr_precision>(boundaryVector[wallHit].inDir)  * vSampled[2];

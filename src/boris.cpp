@@ -15,7 +15,7 @@
 
 CUDA_CALLABLE_MEMBER
 gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y, gitr_precision z,int nx, int nz,
-    gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data, int cylsymm ) {
+    gitr_precision* gridx,gitr_precision* gridz,gitr_precision* data, int USECYLSYMM ) {
 
     gitr_precision fxz = 0.0;
     gitr_precision fx_z1 = 0.0;
@@ -26,7 +26,7 @@ gitr_precision move_boris::interp2dCombined ( gitr_precision x, gitr_precision y
     }
     else{
     gitr_precision dim1;
-     if( cylsymm )
+     if( USECYLSYMM )
      {
     dim1 = std::sqrt(x*x + y*y);
     }
@@ -75,10 +75,10 @@ CUDA_CALLABLE_MEMBER
 void move_boris::interp2dVector (gitr_precision* field, gitr_precision x, gitr_precision y, gitr_precision z,
 int nx, int nz,
 gitr_precision* gridx,gitr_precision* gridz,gitr_precision* datar, gitr_precision* dataz, 
-gitr_precision* datat, int cylsymm ) {
+gitr_precision* datat, int USECYLSYMM ) {
 
-   gitr_precision Ar = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, cylsymm );
-   gitr_precision At = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, cylsymm );
+   gitr_precision Ar = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datar, USECYLSYMM );
+   gitr_precision At = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, datat, USECYLSYMM );
 
    /* Captain! new code begin - this needs to be gotten rid of... */
    long long unsigned int dims[ 2 ] = { nz, nx };
@@ -90,7 +90,7 @@ gitr_precision* datat, int cylsymm ) {
    ifield( dataz, dims, max_range_init, min_range_init, n_dims_init );
 
    double dim1;
-   if( cylsymm )
+   if( USECYLSYMM )
    {
      dim1 = std::sqrt(x*x + y*y);
    }
@@ -106,15 +106,15 @@ gitr_precision* datat, int cylsymm ) {
    //field[2] = ifield( coordinates );
    // potentially transform coordinates here using an object?
    // break 0
-   double right = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
+   double right = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, USECYLSYMM );
    //double wrong = ifield( coordinates );
    //double diff = right - wrong;
    //std::cout << std::setprecision( 10 ) << "wrong: " << wrong << " right: " << right << "percent diff: " << diff / right * 100 << std::endl;
    /* new code end */
 
-   field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, cylsymm );
+   field[2] = this->interp2dCombined(x,y,z,nx,nz,gridx,gridz, dataz, USECYLSYMM );
 
-     if( cylsymm )
+     if( USECYLSYMM )
      {
             gitr_precision theta = std::atan2(y,x);   
             field[0] = std::cos(theta)*Ar - std::sin(theta)*At;
@@ -231,7 +231,7 @@ gitr_precision getE ( class flags f,
     gitr_precision Er = 0.0;
     gitr_precision Et = 0.0;
 
-    if( f.use_3d_geom > 0 )
+    if( f.USE3DTETGEOM > 0 )
     {
     gitr_precision p0[3] = {x0,y,z};
       gitr_precision a = 0.0;
@@ -531,7 +531,7 @@ gitr_precision getE ( class flags f,
     gitr_precision distanceToParticle = 0.0;
     int pointLine=0;
     gitr_precision x;
-     if( f.cylsymm > 0 )
+     if( f.USECYLSYMM > 0 )
      {
     x = std::sqrt(x0*x0 + y*y);
     }
@@ -708,14 +708,14 @@ gitr_precision getE ( class flags f,
         //std::cout << "direction unit vector " << directionUnitVector[0] << " " << directionUnitVector[1] << " " << directionUnitVector[2] << std::endl;
     
     //std::cout << "pos " << x << " " << y << " "<< z << " min Dist" << minDistance << "Efield " << Emag << std::endl;
-    if( f.use_3d_geom > 0 )
+    if( f.USE3DTETGEOM > 0 )
     {
             E[0] = Er;
             E[1] = Et;
     }
     else
     {
-     if( f.cylsymm > 0 )
+     if( f.USECYLSYMM > 0 )
      {
             //if cylindrical geometry
             gitr_precision theta = std::atan2(y,x0);
@@ -850,7 +850,7 @@ void move_boris::operator()(std::size_t indx)
   gitr_precision new_dt = 0.0;
   gitr_precision new_advance = false;
   gitr_precision f_psi = 1.0;
-  if( f.sheath_efield > 0 )
+  if( f.USESHEATHEFIELD > 0 )
   {
   minDist = getE(f, position[0], position[1], position[2],
 		  E,boundaryVector,nLines,nR_closeGeom_sheath,
@@ -888,14 +888,14 @@ void move_boris::operator()(std::size_t indx)
 */
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-                     EfieldZDevicePointer,EfieldTDevicePointer, f.cylsymm );
+                     EfieldZDevicePointer,EfieldTDevicePointer, f.USECYLSYMM );
                  
   vectorAdd(E,PSE,E);
               //std::cout << "Efield in boris " <<E[0] << " " << E[1] << " " <<  E[2] << std::endl;
   }
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                    BfieldZDevicePointer,BfieldTDevicePointer, f.cylsymm );        
+                    BfieldZDevicePointer,BfieldTDevicePointer, f.USECYLSYMM );        
   Bmag = vectorNorm(B);
   gyrofrequency = particlesPointer->charge[indx]*1.60217662e-19*Bmag/(particlesPointer->amu[indx]*1.6737236e-27);
 
@@ -986,7 +986,7 @@ void move_boris::operator()(std::size_t indx)
      position[2] = position[2] + v[2] * half_dt;
     
      // second step of half_dt
-  if( f.sheath_efield > 0 )
+  if( f.USESHEATHEFIELD > 0 )
   {
   minDist = getE(f, position[0], position[1], position[2],
 		  E,boundaryVector,nLines,nR_closeGeom_sheath,
@@ -1001,13 +1001,13 @@ void move_boris::operator()(std::size_t indx)
   {
   interp2dVector(&PSE[0],position[0], position[1], position[2],nR_Efield,nZ_Efield,
                      EfieldGridRDevicePointer,EfieldGridZDevicePointer,EfieldRDevicePointer,
-                     EfieldZDevicePointer,EfieldTDevicePointer, f.cylsymm );
+                     EfieldZDevicePointer,EfieldTDevicePointer, f.USECYLSYMM );
                  
   vectorAdd(E,PSE,E);
   }
   interp2dVector(&B[0],position[0], position[1], position[2],nR_Bfield,nZ_Bfield,
                     BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,
-                    BfieldZDevicePointer,BfieldTDevicePointer, f.cylsymm );        
+                    BfieldZDevicePointer,BfieldTDevicePointer, f.USECYLSYMM );        
   Bmag = vectorNorm(B);
     q_prime = particlesPointer->charge[indx]*1.60217662e-19/(particlesPointer->amu[indx]*1.6737236e-27)*half_dt*0.5;
     coeff = 2.0*q_prime/(1.0+(q_prime*Bmag)*(q_prime*Bmag));
@@ -1154,7 +1154,7 @@ for ( int s=0; s<nSteps; s++ )
 #ifdef __CUDACC__
 #else
 #endif
-    if( f.sheath_efield > 0 )
+    if( f.USESHEATHEFIELD > 0 )
     {
     minDist = getE(r[0],r[1],r[2],E,boundaryVector,nLines);
     }
@@ -1213,7 +1213,7 @@ for ( int s=0; s<nSteps; s++ )
 #else
 #endif
 
-if( f.sheath_efield > 0 )
+if( f.USESHEATHEFIELD > 0 )
 {
     minDist = getE(r2[0],r2[1],r2[2],E,boundaryVector,nLines);
 }
@@ -1271,7 +1271,7 @@ if( f.presheath_efield > 0 )
 #else
 #endif
 
-if( f.sheath_efield > 0 )
+if( f.USESHEATHEFIELD > 0 )
 {
     minDist = getE(r3[0],r3[1],r3[2],E,boundaryVector,nLines);
 }
@@ -1328,7 +1328,7 @@ if( f.presheath_efield > 0 )
 #else
 #endif
 
-  if( f.sheath_efield > 0 )
+  if( f.USESHEATHEFIELD > 0 )
   {
 	minDist = getE(r4[0],r4[1],r4[2],E,boundaryVector,nLines);
   }

@@ -91,17 +91,17 @@ void operator()(std::size_t indx)  {
                 }
       // std:cout << " grad Ti interp " << std::endl;
       interp2dVector(&gradTi[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,
-                     gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT, f.cylsymm );
+                     gradTGridr, gradTGridz, gradTiR, gradTiZ, gradTiT, f.USECYLSYMM );
       //std::cout << "Position r z" << sqrt(p->xprevious*p->xprevious + p->yprevious*p->yprevious) << " " << p->zprevious << std::endl;
       //std::cout << "grad Ti " << std::copysign(1.0,gradTi[0])*sqrt(gradTi[0]*gradTi[0] + gradTi[1]*gradTi[1]) << " " << gradTi[2] << std::endl;
       interp2dVector(&gradTe[0], p->xprevious[indx], p->yprevious[indx], p->zprevious[indx], nR_gradT, nZ_gradT,
-                     gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT, f.cylsymm );
+                     gradTGridr, gradTGridz, gradTeR, gradTeZ, gradTeT, f.USECYLSYMM );
       mu = p->amu[indx] / (background_amu + p->amu[indx]);
       alpha = p->charge[indx] * p->charge[indx] * 0.71;
       beta = 3 * (mu + 5 * std::sqrt(2.0) * p->charge[indx] * p->charge[indx] * (1.1 * std::pow(mu, (5 / 2)) - 0.35 * std::pow(mu, (3 / 2))) - 1) / (2.6 - 2 * mu + 5.4 * std::pow(mu, 2));
        
        interp2dVector(&B[0],p->xprevious[indx],p->yprevious[indx],p->zprevious[indx],nR_Bfield,nZ_Bfield,
-             BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer, f.cylsymm );    
+             BfieldGridRDevicePointer,BfieldGridZDevicePointer,BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer, f.USECYLSYMM );    
         Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1]+ B[2]*B[2]);
         /* Captain! These are not checked for zero! Check them for zero! */
         B_unit[0] = B[0]/Bmag;

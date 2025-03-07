@@ -20,27 +20,13 @@ double cross_field_diffusion_broker::run_1()
   class libconfig_string_query query( CROSS_FIELD_GEOM_FILE_1 );
   class flags f_in( query );
 
-  int const flux_ea = f_in.flux_ea;
-  int const bfield_interp = f_in.bfield_interp;
-  int const use_3d_geom = f_in.use_3d_geom;
-  int const geom_hash = f_in.geom_hash;
-  int const surface_potential = f_in.surface_potential;
-  int const perp_diffusion = f_in.perp_diffusion;
-
   /*
-  int const flux_ea = 1;
   int const surface_model = 1;
-  int const bfield_interp = 0;
-  int const use_3d_geom = 0;
-  int const geom_hash = 0;
   int const spectroscopy = 2;
-  int const surface_potential = 0;
-  int const perp_diffusion = 2;
   */
 
   // timesteps
   int nT = 200000;
-  int const cylsymm = 1;
 
   gitr_precision dt = 1.0e-7;
 
@@ -179,7 +165,7 @@ double cross_field_diffusion_broker::run_1()
   gitr_precision zero = 0;
   std::string empty = "";
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
-  importVectorField(cfg_geom, "", bfield_interp, bfieldCfg, nR_Bfield,
+  importVectorField(cfg_geom, "", f_in.bfield_interp, bfieldCfg, nR_Bfield,
       0, nZ_Bfield, bfieldGridr.front(),
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );
@@ -264,24 +250,9 @@ double cross_field_diffusion_broker::run()
   class libconfig_string_query query( CROSS_FIELD_GEOM_FILE );
   class flags f_in( query );
 
-  int const flux_ea = f_in.flux_ea;
-  int const bfield_interp = f_in.bfield_interp;
-  int const use_3d_geom = f_in.use_3d_geom;
-  int const geom_hash = f_in.geom_hash;
-  int const surface_potential = f_in.surface_potential;
-  int const perp_diffusion = f_in.perp_diffusion;
-  int const cylsymm = f_in.cylsymm;
-
   /*
-  int const flux_ea = 1;
   int const surface_model = 1;
-  int const bfield_interp = 0;
-  int const use_3d_geom = 0;
-  int const geom_hash = 0;
   int const spectroscopy = 2;
-  int const surface_potential = 0;
-  int const perp_diffusion = 1;
-  int const cylsymm = 0;
   */
 
   /* timesteps */
@@ -435,7 +406,7 @@ double cross_field_diffusion_broker::run()
   gitr_precision zero = 0;
   std::string empty = "";
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
-  importVectorField(cfg_geom, "", bfield_interp, bfieldCfg, nR_Bfield,
+  importVectorField(cfg_geom, "", f_in.bfield_interp, bfieldCfg, nR_Bfield,
       0, nZ_Bfield, bfieldGridr.front(),
       zero, bfieldGridz.front(), br.front(),
       by.front(), bz.front(), empty );

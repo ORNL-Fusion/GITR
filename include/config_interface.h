@@ -163,12 +163,12 @@ class flags
 {
   public:
 
-  int ionization = -1;
+  int IONIZATION = -1;
   int perp_diffusion = -1;
   int coulomb_collisions = -1;
   int thermal_force = -1;
   int surface_model = -1; 
-  int sheath_efield = -1;
+  int USESHEATHEFIELD = -1;
   int bfield_interp = -1;
   int efield_interp = -1;
   int density_interp = -1;
@@ -177,13 +177,13 @@ class flags
   int gradt_interp = -1;
   int flux_ea = -1;
   int particle_source_file  = -1;
-  int spectroscopy = -1;
-  int use_3d_geom  = -1;
+  int SPECTROSCOPY = -1;
+  int USE3DTETGEOM  = -1;
   int particle_tracks = -1;
   int fixed_seeds = -1;
   int geom_hash= -1;
   int geom_hash_sheath= -1;
-  int cylsymm = -1;
+  int USECYLSYMM = -1;
   int force_eval = -1;
   int sort = -1;
   int adaptive_dt = -1;
@@ -205,7 +205,7 @@ class flags
     query_metadata( module_name + "." + particle_diagnostics_str, particle_diagnostics );
 
     std::string ionization_str = "USE_IONIZATION";
-    query_metadata( module_name + "." + ionization_str, ionization );
+    query_metadata( module_name + "." + ionization_str, IONIZATION );
 
     std::string perp_diffusion_str = "USEPERPDIFFUSION";
     query_metadata( module_name + "." + perp_diffusion_str, perp_diffusion );
@@ -220,7 +220,7 @@ class flags
     query_metadata( module_name + "." + surface_model_str, surface_model );
 
     std::string sheath_efield_str = "USESHEATHEFIELD";
-    query_metadata( module_name + "." + sheath_efield_str, sheath_efield );
+    query_metadata( module_name + "." + sheath_efield_str, USESHEATHEFIELD );
 
     std::string bfield_interp_str = "BFIELD_INTERP";
     query_metadata( module_name + "." + bfield_interp_str, bfield_interp );
@@ -247,10 +247,10 @@ class flags
     query_metadata( module_name + "." + particle_source_file_str  , particle_source_file  );
 
     std::string spectroscopy_str  = "SPECTROSCOPY";
-    query_metadata( module_name + "." + spectroscopy_str  , spectroscopy );
+    query_metadata( module_name + "." + spectroscopy_str  , SPECTROSCOPY );
 
     std::string use_3d_geom_str  = "USE3DTETGEOM";
-    query_metadata( module_name + "." + use_3d_geom_str  , use_3d_geom  );
+    query_metadata( module_name + "." + use_3d_geom_str  , USE3DTETGEOM  );
 
     std::string flux_ea_str = "FLUX_EA";
     query_metadata( module_name + "." + flux_ea_str , flux_ea  );
@@ -265,7 +265,7 @@ class flags
     query_metadata( module_name + "." + geom_hash_sheath_str , geom_hash_sheath );
 
     std::string cylsymm_str = "USECYLSYMM";
-    query_metadata( module_name + "." + cylsymm_str , cylsymm );
+    query_metadata( module_name + "." + cylsymm_str , USECYLSYMM );
     
     std::string force_eval_str  = "FORCE_EVAL";
     query_metadata( module_name + "." + force_eval_str  , force_eval  );
