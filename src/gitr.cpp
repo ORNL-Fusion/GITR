@@ -2106,7 +2106,7 @@ if( config_flags.FLOWV_INTERP == 1 )
   std::cout << "thermal gradient interpolation gradTi " << gradTi[0] << " "
             << gradTi[1] << " " << gradTi[2] << " " << std::endl;
 
-  // Initialization of IONIZATION and recombination coefficients
+  // Initialization of USE_IONIZATION and recombination coefficients
   int nCS_Ionize = 1, nCS_Recombine = 1;
   const char *ionizeNcs, *ionizeNDens, *ionizeNTemp, *ionizeDensGrid,
       *ionizeTempGrid, *ionizeRCvarChar, *recombNcs, *recombNDens, *recombNTemp,
@@ -2125,7 +2125,7 @@ if( config_flags.FLOWV_INTERP == 1 )
   sim::Array<gitr_precision> gridTemperature_Recombination(nTemperaturesRecombine),
       gridDensity_Recombination(nDensitiesRecombine);
 
-  if( config_flags.IONIZATION > 0 )
+  if( config_flags.USE_IONIZATION > 0 )
   {
   if (world_rank == 0) {
 
@@ -3778,7 +3778,7 @@ if( config_flags.EFIELD_INTERP == 1 )
 #else
   sim::Array<rand_type> state1(nParticles);
 #endif
-    if( config_flags.IONIZATION > 0 ||
+    if( config_flags.USE_IONIZATION > 0 ||
         config_flags.USEPERPDIFFUSION > 0 ||
         config_flags.USECOULOMBCOLLISIONS > 0 ||
         config_flags.USESURFACEMODEL > 0 )
@@ -3863,7 +3863,7 @@ if( config_flags.EFIELD_INTERP == 1 )
 
   gitr_precision *uni;
 
-  if( config_flags.IONIZATION > 0 )
+  if( config_flags.USE_IONIZATION > 0 )
   {
 #if USE_CUDA > 0
   cudaMallocManaged(&uni, sizeof(gitr_precision));
@@ -3980,7 +3980,7 @@ if( config_flags.EFIELD_INTERP == 1 )
                                    0.0, Z, amu, charge + 1.0);
         move_boris0(0);
 
-        if( config_flags.IONIZATION > 0 )
+        if( config_flags.USE_IONIZATION > 0 )
         {
           thrust::for_each(thrust::device,particleBegin,particleBegin,ionize0);
 	        thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
@@ -4002,7 +4002,7 @@ if( config_flags.EFIELD_INTERP == 1 )
         dvBz[j * nR_force + i] = move_boris0.magneticForce[2];
         dvBt[j * nR_force + i] = move_boris0.magneticForce[1];
 
-        if( config_flags.IONIZATION > 0 )
+        if( config_flags.USE_IONIZATION > 0 )
         {
           tIon[j * nR_force + i] = ionize0.tion;
           tRecomb[j * nR_force + i] = recombine0.tion;
@@ -4223,7 +4223,7 @@ std::cout << "here 2" << std::endl;
       thrust::for_each(thrust::device, particleBegin, particleEnd, spec_bin0);
       }
 
-      if( config_flags.IONIZATION > 0 )
+      if( config_flags.USE_IONIZATION > 0 )
       {
         thrust::for_each(thrust::device, particleBegin, particleEnd,ionize0);
         thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
@@ -5089,7 +5089,7 @@ particleArray->test4[i] << std::endl;
 }
     for(int i=0;i<100;i++)
 {
-    //std::cout << "particle IONIZATION z and t " << firstIonizationZGather[i]
+    //std::cout << "particle USE_IONIZATION z and t " << firstIonizationZGather[i]
 << " " << firstIonizationTGather[i] << " " << xGather[i] << " " <<
       //vxGather[i] << " " << chargeGather[i] << std::endl;
 }

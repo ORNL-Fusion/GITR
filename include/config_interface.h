@@ -163,7 +163,7 @@ class flags
 {
   public:
 
-  int IONIZATION = -1;
+  int USE_IONIZATION = -1;
   int USEPERPDIFFUSION = -1;
   int USECOULOMBCOLLISIONS = -1;
   int USETHERMALFORCE = -1;
@@ -205,7 +205,7 @@ class flags
     query_metadata( module_name + "." + particle_diagnostics_str, USE_PARTICLE_DIAGNOSTICS );
 
     std::string ionization_str = "USE_IONIZATION";
-    query_metadata( module_name + "." + ionization_str, IONIZATION );
+    query_metadata( module_name + "." + ionization_str, USE_IONIZATION );
 
     std::string perp_diffusion_str = "USEPERPDIFFUSION";
     query_metadata( module_name + "." + perp_diffusion_str, USEPERPDIFFUSION );

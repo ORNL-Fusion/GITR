@@ -87,8 +87,7 @@ template< typename T >
 CUDA_CALLABLE_MEMBER_DEVICE
 void ionize< T >::operator()(std::size_t indx)
 {
-  //if (flags->USE_IONIZATION)
-  if (f_config.IONIZATION)
+  if (f_config.USE_IONIZATION)
   {
     //if (flags->USE_ADAPTIVE_DT)
     if (f_config.ADAPTIVE_DT)
