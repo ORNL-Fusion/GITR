@@ -138,7 +138,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
     gitr_precision* BfieldGridR ,gitr_precision* BfieldGridZ ,
     gitr_precision* BfieldR ,gitr_precision* BfieldZ ,
     gitr_precision* BfieldT,gitr_precision &T_background,
-    int flowv_interp, int USECYLSYMM, bool use_sheath_density, gitr_precision f_psi )
+    int FLOWV_INTERP, int USECYLSYMM, bool use_sheath_density, gitr_precision f_psi )
 {
   //int feenableexcept(FE_INVALID | FE_OVERFLOW); //enables trapping of the floating-point exceptions
   gitr_precision Q = 1.60217662e-19;
@@ -190,7 +190,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   gitr_precision nu_parallel_e;
   gitr_precision nu_energy_e;
                 
-  if( flowv_interp == 3 )
+  if( FLOWV_INTERP == 3 )
   {
     exit( 0 );
     /*
@@ -198,7 +198,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
                    flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
     */
   }
-  else if( flowv_interp < 3 )
+  else if( FLOWV_INTERP < 3 )
   {
   interp2dVector(&flowVelocity[0],x,y,z,
            nR_flowV,nZ_flowV,
@@ -635,12 +635,12 @@ void operator()(std::size_t indx) {
     gitr_precision vy = particlesPointer->vy[indx];
     gitr_precision vz = particlesPointer->vz[indx];
 
-    if( f.flowv_interp == 3 )
+    if( f.FLOWV_INTERP == 3 )
     {
     interp3dVector (&flowVelocity[0], particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],nR_flowV,nY_flowV,nZ_flowV,
                 flowVGridr,flowVGridy,flowVGridz,flowVr,flowVz,flowVt);
     }
-    else if( f.flowv_interp < 3 )
+    else if( f.FLOWV_INTERP < 3 )
     {
     interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
@@ -686,7 +686,7 @@ void operator()(std::size_t indx) {
                              BfieldGridZ,
                              BfieldR,
                              BfieldZ,
-                             BfieldT, T_background, f.flowv_interp, f.USECYLSYMM,
+                             BfieldT, T_background, f.FLOWV_INTERP, f.USECYLSYMM,
                              f.sheath_density,particlesPointer->f_psi[indx]  );
 
     getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
@@ -844,7 +844,7 @@ void operator()(std::size_t indx) {
                              BfieldGridZ,
                              BfieldR,
                              BfieldZ,
-                             BfieldT, T_background, f.flowv_interp, f.USECYLSYMM,
+                             BfieldT, T_background, f.FLOWV_INTERP, f.USECYLSYMM,
                              f.sheath_density,particlesPointer->f_psi[indx]  );
 
 
