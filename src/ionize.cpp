@@ -91,7 +91,7 @@ void ionize< T >::operator()(std::size_t indx)
   if (f_config.IONIZATION)
   {
     //if (flags->USE_ADAPTIVE_DT)
-    if (f_config.adaptive_dt)
+    if (f_config.ADAPTIVE_DT)
     {
       dt = particlesPointer->dt[indx];
     }
@@ -110,7 +110,7 @@ void ionize< T >::operator()(std::size_t indx)
     random_uniform_number[0] = r1;
     
     //if (flags->USE_ADAPTIVE_DT) 
-    if (f_config.adaptive_dt)
+    if (f_config.ADAPTIVE_DT)
     {
       if (particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx])
       {

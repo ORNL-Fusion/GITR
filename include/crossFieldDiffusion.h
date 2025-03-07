@@ -169,7 +169,7 @@ void operator()(std::size_t indx) const {
       gitr_precision dt_step = dt;
 
       //if ( flags->USE_ADAPTIVE_DT ) 
-      if ( f_config.adaptive_dt == 1 ) 
+      if ( f_config.ADAPTIVE_DT == 1 ) 
       {
         if(particlesPointer->advance[indx])
         {
