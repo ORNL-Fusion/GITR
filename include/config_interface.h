@@ -166,15 +166,15 @@ class flags
   int IONIZATION = -1;
   int USEPERPDIFFUSION = -1;
   int USECOULOMBCOLLISIONS = -1;
-  int thermal_force = -1;
+  int USETHERMALFORCE = -1;
   int USESURFACEMODEL = -1; 
   int USESHEATHEFIELD = -1;
-  int bfield_interp = -1;
-  int efield_interp = -1;
-  int density_interp = -1;
-  int temp_interp = -1;
-  int flowv_interp = -1;
-  int gradt_interp = -1;
+  int BFIELD_INTERP = -1;
+  int EFIELD_INTERP = -1;
+  int DENSITY_INTERP = -1;
+  int TEMP_INTERP = -1;
+  int FLOWV_INTERP = -1;
+  int GRADT_INTERP = -1;
   int FLUX_EA = -1;
   int particle_source_file  = -1;
   int SPECTROSCOPY = -1;
@@ -214,7 +214,7 @@ class flags
     query_metadata( module_name + "." + coulomb_collisions_str, USECOULOMBCOLLISIONS );
 
     std::string thermal_force_str = "USETHERMALFORCE";
-    query_metadata( module_name + "." + thermal_force_str, thermal_force );
+    query_metadata( module_name + "." + thermal_force_str, USETHERMALFORCE );
 
     std::string surface_model_str = "USESURFACEMODEL";
     query_metadata( module_name + "." + surface_model_str, USESURFACEMODEL );
@@ -223,22 +223,22 @@ class flags
     query_metadata( module_name + "." + sheath_efield_str, USESHEATHEFIELD );
 
     std::string bfield_interp_str = "BFIELD_INTERP";
-    query_metadata( module_name + "." + bfield_interp_str, bfield_interp );
+    query_metadata( module_name + "." + bfield_interp_str, BFIELD_INTERP );
 
     std::string efield_interp_str =  "EFIELD_INTERP";
-    query_metadata( module_name + "." + efield_interp_str,  efield_interp );
+    query_metadata( module_name + "." + efield_interp_str,  EFIELD_INTERP );
 
     std::string density_interp_str = "DENSITY_INTERP";
-    query_metadata( module_name + "." + density_interp_str ,  density_interp );
+    query_metadata( module_name + "." + density_interp_str ,  DENSITY_INTERP );
 
     std::string temp_interp_str = "TEMP_INTERP";
-    query_metadata( module_name + "." + temp_interp_str ,  temp_interp );
+    query_metadata( module_name + "." + temp_interp_str ,  TEMP_INTERP );
 
     std::string flowv_interp_str = "FLOWV_INTERP";
-    query_metadata( module_name + "." + flowv_interp_str ,  flowv_interp );
+    query_metadata( module_name + "." + flowv_interp_str ,  FLOWV_INTERP );
 
     std::string gradt_interp_str = "GRADT_INTERP";
-    query_metadata( module_name + "." + gradt_interp_str ,  gradt_interp );
+    query_metadata( module_name + "." + gradt_interp_str ,  GRADT_INTERP );
 
     std::string particle_tracks_str = "PARTICLE_TRACKS";
     query_metadata( module_name + "." + particle_tracks_str , particle_tracks );
