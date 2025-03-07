@@ -56,13 +56,13 @@ void spec_bin::operator()(std::size_t indx) const {
     }
 
     // Determine dimension 1 variable
-    if( f.spectroscopy > 2 )
+    if( f.SPECTROSCOPY > 2 )
     {
       dim1 = x;
     }
     else
     {
-      if( f.cylsymm > 0 )
+      if( f.USECYLSYMM > 0 )
       {
         dim1 = std::sqrt(x*x + y*y);
       }
@@ -85,13 +85,13 @@ void spec_bin::operator()(std::size_t indx) const {
         indx_Y = 0;
         nnYY=1;
 
-        if(f.spectroscopy < 3) add = true;
+        if(f.SPECTROSCOPY < 3) add = true;
         
         if (indx_X < 0 || indx_X >= nX) indx_X = 0;
 
         if (indx_Z < 0 || indx_Z >= nZ) indx_Z = 0;
 
-        if( f.spectroscopy > 2 )
+        if( f.SPECTROSCOPY > 2 )
         {
         
           if((y > gridY[0]) && (y < gridY[nY-1]))
@@ -114,7 +114,7 @@ void spec_bin::operator()(std::size_t indx) const {
     gitr_precision vr = vx;
     gitr_precision vt = vy;
 
-    if( f.spectroscopy == 2 && f.cylsymm > 0)
+    if( f.SPECTROSCOPY == 2 && f.USECYLSYMM > 0)
     {
           gitr_precision theta_position = std::atan2(y,x);
           gitr_precision theta_velocity = std::atan2(vy,vx);

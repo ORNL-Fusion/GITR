@@ -120,7 +120,7 @@ struct crossFieldDiffusion {
 #endif
         int perp_diffusion;
 
-        int cylsymm;
+        int USECYLSYMM;
 
     crossFieldDiffusion(flags &f_init, Particles *_particlesPointer, gitr_precision _dt,
 #if __CUDACC__
@@ -145,7 +145,7 @@ struct crossFieldDiffusion {
         BfieldTDevicePointer(_BfieldTDevicePointer),
         state(_state),
         perp_diffusion( f_config.perp_diffusion ),
-        cylsymm( f_config.cylsymm )
+        USECYLSYMM( f_config.USECYLSYMM )
         { }
 
 /* Monte Carlo solution to diffusion equation - we need this tested */
@@ -191,7 +191,7 @@ void operator()(std::size_t indx) const {
                           nR_Bfield,nZ_Bfield,
                           BfieldGridRDevicePointer,BfieldGridZDevicePointer,
                           BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer,
-                          cylsymm );
+                          USECYLSYMM );
         
       Bmag = std::sqrt(B[0]*B[0] + B[1]*B[1] + B[2]*B[2]);
       if(Bmag < 1.0e-12) 
@@ -236,7 +236,7 @@ void operator()(std::size_t indx) const {
       interp2dVector(&B_plus[0],x_plus,y_plus,z_plus,nR_Bfield,nZ_Bfield,
                      BfieldGridRDevicePointer,BfieldGridZDevicePointer,
                      BfieldRDevicePointer,BfieldZDevicePointer,BfieldTDevicePointer,
-                     cylsymm );
+                     USECYLSYMM );
 
         gitr_precision Bmag_plus = std::sqrt(B_plus[0]*B_plus[0] + B_plus[1]*B_plus[1] + B_plus[2]*B_plus[2]);
     

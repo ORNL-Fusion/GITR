@@ -88,7 +88,7 @@ CUDA_CALLABLE_MEMBER_DEVICE
 void ionize< T >::operator()(std::size_t indx)
 {
   //if (flags->USE_IONIZATION)
-  if (f_config.ionization)
+  if (f_config.IONIZATION)
   {
     //if (flags->USE_ADAPTIVE_DT)
     if (f_config.adaptive_dt)
@@ -101,7 +101,7 @@ void ionize< T >::operator()(std::size_t indx)
           particlesPointer->y[indx], particlesPointer->z[indx], nR_Temp,
           nZ_Temp, TempGridr, TempGridz, te, DensGridr, DensGridz, ne,
           nTemperaturesIonize, nDensitiesIonize, gridTemperature_Ionization,
-          gridDensity_Ionization, rateCoeff_Ionization, f_config.cylsymm,
+          gridDensity_Ionization, rateCoeff_Ionization, f_config.USECYLSYMM,
           particlesPointer->f_psi[indx] );
     
     gitr_precision P = exp(-dt / tion);

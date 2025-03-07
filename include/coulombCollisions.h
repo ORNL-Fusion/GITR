@@ -39,7 +39,7 @@ gitr_precision intorp(
   gitr_precision* gridx,
   gitr_precision* gridz,
   gitr_precision* data,
-  int cylsymm )
+  int USECYLSYMM )
 {
     gitr_precision fxz = 0.0;
     gitr_precision fx_z1 = 0.0;
@@ -50,7 +50,7 @@ gitr_precision intorp(
     }
     else{
     gitr_precision dim1;
-     if( cylsymm )
+     if( USECYLSYMM )
      {
     dim1 = std::sqrt(x*x + y*y);
     }
@@ -138,7 +138,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
     gitr_precision* BfieldGridR ,gitr_precision* BfieldGridZ ,
     gitr_precision* BfieldR ,gitr_precision* BfieldZ ,
     gitr_precision* BfieldT,gitr_precision &T_background,
-    int flowv_interp, int cylsymm, bool use_sheath_density, gitr_precision f_psi )
+    int flowv_interp, int USECYLSYMM, bool use_sheath_density, gitr_precision f_psi )
 {
   //int feenableexcept(FE_INVALID | FE_OVERFLOW); //enables trapping of the floating-point exceptions
   gitr_precision Q = 1.60217662e-19;
@@ -148,13 +148,13 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   gitr_precision ME = 9.10938356e-31;
         
   gitr_precision te_eV = intorp(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, 
-                                          cylsymm );
+                                          USECYLSYMM );
   gitr_precision ti_eV = intorp(x,y,z,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, 
-                         cylsymm );
+                         USECYLSYMM );
 
   T_background = ti_eV;
   gitr_precision density = interp2dCombined( x,y,z,nR_Dens,nZ_Dens,DensGridr,DensGridz,ni,
-                                             cylsymm );
+                                             USECYLSYMM );
 
   if( use_sheath_density )
   {
@@ -202,7 +202,7 @@ void getSlowDownFrequencies ( gitr_precision& nu_friction, gitr_precision& nu_de
   {
   interp2dVector(&flowVelocity[0],x,y,z,
            nR_flowV,nZ_flowV,
-           flowVGridr,flowVGridz,flowVr,flowVz,flowVt, cylsymm );
+           flowVGridr,flowVGridz,flowVr,flowVz,flowVt, USECYLSYMM );
   }
   relativeVelocity[0] = vx - flowVelocity[0];
   relativeVelocity[1] = vy - flowVelocity[1];
@@ -501,10 +501,10 @@ void operator()(std::size_t indx) {
     gitr_precision flowVelocity[3]= {0.0};
     
     // Interpolate ion temperature
-    gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti,f.cylsymm);
+    gitr_precision ti_eV = interp2dCombined(x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti,f.USECYLSYMM);
     
     // Interpolate ion density
-    gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni,f.cylsymm);
+    gitr_precision density = interp2dCombined(x, y, z, nR_Dens, nZ_Dens, DensGridr, DensGridz, ni,f.USECYLSYMM);
   
     if( f.sheath_density )
     {
@@ -537,7 +537,7 @@ void operator()(std::size_t indx) {
     // Interpolate flow velocity - for this problem, it is set to zero
     interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
-                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, f.cylsymm );
+                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, f.USECYLSYMM );
              
     // Shift background ion velocities by bulk flow velocities
     ux_gas = ux_gas + flowVelocity[0];
@@ -644,7 +644,7 @@ void operator()(std::size_t indx) {
     {
     interp2dVector(flowVelocity,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
-                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, f.cylsymm );
+                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, f.USECYLSYMM );
     }
 
     relativeVelocity[0] = vx - flowVelocity[0];
@@ -686,17 +686,17 @@ void operator()(std::size_t indx) {
                              BfieldGridZ,
                              BfieldR,
                              BfieldZ,
-                             BfieldT, T_background, f.flowv_interp, f.cylsymm,
+                             BfieldT, T_background, f.flowv_interp, f.USECYLSYMM,
                              f.sheath_density,particlesPointer->f_psi[indx]  );
 
     getSlowDownDirections2(parallel_direction, perp_direction1, perp_direction2,
                             relativeVelocity[0] , relativeVelocity[1] , relativeVelocity[2] );
       
     gitr_precision ti_eV = interp2dCombined( x, y, z, nR_Temp, nZ_Temp, TempGridr, TempGridz, ti,
-                                             f.cylsymm );
+                                             f.USECYLSYMM );
 
     gitr_precision density = interp2dCombined( x, y, z, nR_Dens, nZ_Dens, DensGridr, 
-                                               DensGridz, ni, f.cylsymm );
+                                               DensGridz, ni, f.USECYLSYMM );
     
     //printf("speed %f temp %f density %4.3e charge %2.2f nu_slowing_down %4.3e \n",velocityRelativeNorm,ti_eV,density,particlesPointer->charge[indx], nu_friction);
     //printf("nu_deflection %4.3e nu_parallel %4.3e nu_energy %4.3e \n",nu_deflection, nu_parallel, nu_energy);
@@ -777,7 +777,7 @@ void operator()(std::size_t indx) {
     
     interp2dVector(v_flow,particlesPointer->xprevious[indx],particlesPointer->yprevious[indx],particlesPointer->zprevious[indx],
                         nR_flowV,nZ_flowV,
-                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, f.cylsymm );
+                        flowVGridr,flowVGridz,flowVr,flowVz,flowVt, f.USECYLSYMM );
     
     gitr_precision wx = vx - v_flow[0];
     gitr_precision wy = vy - v_flow[1];
@@ -844,7 +844,7 @@ void operator()(std::size_t indx) {
                              BfieldGridZ,
                              BfieldR,
                              BfieldZ,
-                             BfieldT, T_background, f.flowv_interp, f.cylsymm,
+                             BfieldT, T_background, f.flowv_interp, f.USECYLSYMM,
                              f.sheath_density,particlesPointer->f_psi[indx]  );
 
 

@@ -521,7 +521,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
 
   std::string full_path = geom_folder + "/" + geom_outname;
   outfile.open (full_path );
-    if( f.use_3d_geom > 0 )
+    if( f.USE3DTETGEOM > 0 )
     {
     std::cout << "Reading 3D geometry file " << std::endl;
     for(int i=0 ; i<nLines ; i++)
@@ -564,7 +564,7 @@ int importGeometry(class flags f, libconfig::Config &cfg_geom, sim::Array<Bounda
        boundaries[nLines].y1 = geom["theta0"];
        boundaries[nLines].y2 = geom["theta1"];
        boundaries[nLines].periodic = geom["periodic"];
-     if( f.cylsymm )
+     if( f.USECYLSYMM )
      {
           std::cout << "Reading cylindrically symmetric boundary characteristics " << std::endl;
        boundaries[nLines].y1 = geom["theta0"];
@@ -662,7 +662,7 @@ int importHashNs(class flags f, libconfig::Config &cfg,std::string input_path,in
         nRTotal = nRTotal + nR[j];
         nZTotal = nZTotal + nZ[j];
       }
-    if( f.use_3d_geom > 0 )
+    if( f.USE3DTETGEOM > 0 )
     {
       if(nHashes > 1)
       {
@@ -687,7 +687,7 @@ int importHashNs(class flags f, libconfig::Config &cfg,std::string input_path,in
       nGeomHash = 0;
       for(int j=0;j<nHashes;j++)
       {
-    if( f.use_3d_geom > 0 )
+    if( f.USE3DTETGEOM > 0 )
     {
        // if(nHashes > 1)
         //{
