@@ -28,7 +28,7 @@ typedef float gitr_precision;
 #endif
 
 struct spec_bin { 
-    class flags f;
+    class flags config_flags;
     Particles *particlesPointer;
     const int nBins;
     int nX;

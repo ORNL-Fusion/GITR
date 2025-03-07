@@ -32,7 +32,7 @@ typedef float gitr_precision;
 
 template <typename T=std::mt19937>
 struct recombine {
-  class flags f;
+  class flags config_flags;
   Particles *particlesPointer;
   int nR_Dens;
   int nZ_Dens;
@@ -60,7 +60,7 @@ struct recombine {
      gitr_precision* _TempGridr, gitr_precision* _TempGridz,gitr_precision* _te,int _nTemperaturesRecomb,
      int _nDensitiesRecomb,gitr_precision* _gridTemperature_Recombination,gitr_precision* _gridDensity_Recombination,
      gitr_precision* _rateCoeff_Recombination ) : 
-     f( f_init ),
+     config_flags( f_init ),
      particlesPointer(_particlesPointer),
 
      nR_Dens(_nR_Dens),
@@ -88,20 +88,20 @@ struct recombine {
     gitr_precision P1 = 0.0;
     gitr_precision r1 = 1.0;
       
-    if (f.ADAPTIVE_DT)
+    if (config_flags.ADAPTIVE_DT)
     {
       dt = particlesPointer->dt[indx];
     }
     
     if(particlesPointer->charge[indx] > 0)
     {
-      tion = interpRateCoeff2d ( particlesPointer->charge[indx]-1, particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination, f.USECYLSYMM, particlesPointer->f_psi[indx] );
+      tion = interpRateCoeff2d ( particlesPointer->charge[indx]-1, particlesPointer->x[indx], particlesPointer->y[indx], particlesPointer->z[indx],nR_Temp,nZ_Temp, TempGridr,TempGridz,te,DensGridr,DensGridz, ne,nTemperaturesRecomb,nDensitiesRecomb,gridTemperature_Recombination,gridDensity_Recombination,rateCoeff_Recombination, config_flags.USECYLSYMM, particlesPointer->f_psi[indx] );
       gitr_precision P = exp(-dt/tion);
       P1 = 1.0-P;
       r1 = get_rand_double(state,indx);
     }
 
-    if (f.ADAPTIVE_DT)
+    if (config_flags.ADAPTIVE_DT)
     {
       if(particlesPointer->hitWall[indx] == 0.0 && particlesPointer->advance[indx])
       {

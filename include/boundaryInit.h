@@ -22,7 +22,7 @@ typedef float gitr_precision;
 #endif
 
 struct boundary_init {
-    class flags f;
+    class flags config_flags;
     gitr_precision background_Z;
     gitr_precision background_amu;
     int nR_Temp;
@@ -52,7 +52,7 @@ struct boundary_init {
           gitr_precision* _bfieldZ,gitr_precision* _bfieldT,int _nR_Temp, int _nZ_Temp,
           gitr_precision* _TempGridr, gitr_precision* _TempGridz, gitr_precision* _ti, gitr_precision* _te, gitr_precision _potential )
 
-     :  f( f_init ), background_Z(_background_Z),
+     :  config_flags( f_init ), background_Z(_background_Z),
         background_amu(_background_amu),
         nR_Temp(_nR_Temp),
         nZ_Temp(_nZ_Temp),
@@ -80,7 +80,7 @@ struct boundary_init {
         gitr_precision midpointx;
         gitr_precision midpointy;
         gitr_precision midpointz;
-    if( f.USE3DTETGEOM )
+    if( config_flags.USE3DTETGEOM )
     {
         midpointx = b.x1 + 0.666666667*(b.x2 + 0.5*(b.x3-b.x2)-b.x1);
         midpointy = b.y1 + 0.666666667*(b.y2 + 0.5*(b.y3-b.y2)-b.y1);
@@ -93,19 +93,19 @@ struct boundary_init {
         midpointy = 0.0;
         midpointz = 0.5*(b.z2 - b.z1) + b.z1;
     }
-        b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density, f.USECYLSYMM );
-        b.ne = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,ne, f.USECYLSYMM );
-        b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, f.USECYLSYMM );
-        b.te = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, f.USECYLSYMM );
+        b.density = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,density, config_flags.USECYLSYMM );
+        b.ne = interp2dCombined(midpointx,midpointy,midpointz,nx,nz,densityGridx,densityGridz,ne, config_flags.USECYLSYMM );
+        b.ti = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,ti, config_flags.USECYLSYMM );
+        b.te = interp2dCombined(midpointx,midpointy,midpointz,nR_Temp,nZ_Temp,TempGridr,TempGridz,te, config_flags.USECYLSYMM );
         gitr_precision B[3] = {0.0,0.0,0.0};
 interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
-                 bfieldGridz,bfieldR,bfieldZ,bfieldT, f.USECYLSYMM );
+                 bfieldGridz,bfieldR,bfieldZ,bfieldT, config_flags.USECYLSYMM );
         gitr_precision norm_B = vectorNorm(B);
         gitr_precision theta;
-    if( f.USE3DTETGEOM )
+    if( config_flags.USE3DTETGEOM )
     {
         gitr_precision surfNorm[3] = {0.0,0.0,0.0};
-        b.getSurfaceNormal(surfNorm,0.0,0.0, f.USE3DTETGEOM, f.USECYLSYMM );
+        b.getSurfaceNormal(surfNorm,0.0,0.0, config_flags.USE3DTETGEOM, config_flags.USECYLSYMM );
         theta = std::acos(vectorDotProduct(B,surfNorm)/(vectorNorm(B)*vectorNorm(surfNorm)));
         if (theta > 3.14159265359*0.5)
         {
@@ -145,7 +145,7 @@ interp2dVector(&B[0],midpointx,midpointy,midpointz,nxB,nzB,bfieldGridr,
         b.larmorRadius = 1.44e-4*std::sqrt(background_amu*b.ti/2)/(background_Z*norm_B);
         b.flux = 0.25*b.density*std::sqrt(8.0*b.ti*1.602e-19/(3.1415*background_amu));
         b.impacts = 0.0;
-        if( f.USE_SURFACE_POTENTIAL <= 0 )
+        if( config_flags.USE_SURFACE_POTENTIAL <= 0 )
         {
         b.potential = sheath_fac*b.te;
         std::cout << "Surface number " << b.surfaceNumber << " has te and potential " 

@@ -19,7 +19,7 @@ atomic_data_broker::atomic_data_broker()
 std::vector< double > atomic_data_broker::run_2()
 {
   libconfig_string_query query_metadata( FIELD_UNIT_TEST_FILE_0 );
-  flags f( query_metadata );
+  flags config_flags( query_metadata );
 
   libconfig::Config cfg;
   cfg.setAutoConvert(true);
@@ -161,13 +161,13 @@ std::vector< double > atomic_data_broker::run_2()
   sim::Array<gitr_precision> dev_f(1,-1.0);
 
   ionize<rand_type> ionize0(
-      f,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
+      config_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
       &rateCoeff_Ionization.front(),&dev_f.front() );
 
-  recombine<rand_type> recombine0( f,
+  recombine<rand_type> recombine0( config_flags,
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
@@ -204,7 +204,7 @@ std::vector< double > atomic_data_broker::run_2()
 void atomic_data_broker::run_1()
 {
   libconfig_string_query query_metadata( FIELD_UNIT_TEST_FILE_0 );
-  flags f( query_metadata );
+  flags config_flags( query_metadata );
 
   int nParticles = 10;
   values.resize(nParticles,0.0);
@@ -340,7 +340,7 @@ void atomic_data_broker::run_1()
   sim::Array<gitr_precision> dev_f(1,-1.0);
 
   ionize<rand_type> ionize0(
-      f,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
+      config_flags,particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
@@ -381,7 +381,7 @@ void atomic_data_broker::run_1()
 void atomic_data_broker::run()
 {
   libconfig_string_query query_metadata( FIELD_UNIT_TEST_FILE_0 );
-  flags f( query_metadata );
+  flags config_flags( query_metadata );
 
   int nParticles = 10;
   values.resize(nParticles,0.0);
@@ -511,7 +511,7 @@ void atomic_data_broker::run()
 
   // Ionize functor instance
   ionize<rand_type> ionize0(
-      f,
+      config_flags,
       particleArray,
       dt,
       &state1.front(),
