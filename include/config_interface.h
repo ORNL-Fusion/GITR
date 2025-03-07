@@ -187,10 +187,10 @@ class flags
   int FORCE_EVAL = -1;
   int USE_SORT = -1;
   int ADAPTIVE_DT = -1;
-  int surface_potential = -1;
-  int particle_diagnostics = 0;
-  int sheath_density = 0;
-  int presheath_efield = 1;
+  int USE_SURFACE_POTENTIAL = -1;
+  int USE_PARTICLE_DIAGNOSTICS = 0;
+  int USE_SHEATH_DENSITY = 0;
+  int PRESHEATH_EFIELD = 1;
   
   // seems like CUDA_CALLABLE_MEMBER is not needed
   //CUDA_CALLABLE_MEMBER
@@ -199,10 +199,10 @@ class flags
     std::string const module_name = "flags";
 
     std::string sheath_density_str = "USE_SHEATH_DENSITY";
-    query_metadata( module_name + "." + sheath_density_str, sheath_density );
+    query_metadata( module_name + "." + sheath_density_str, USE_SHEATH_DENSITY );
 
     std::string particle_diagnostics_str = "USE_PARTICLE_DIAGNOSTICS";
-    query_metadata( module_name + "." + particle_diagnostics_str, particle_diagnostics );
+    query_metadata( module_name + "." + particle_diagnostics_str, USE_PARTICLE_DIAGNOSTICS );
 
     std::string ionization_str = "USE_IONIZATION";
     query_metadata( module_name + "." + ionization_str, IONIZATION );
@@ -277,6 +277,6 @@ class flags
     query_metadata( module_name + "." + adaptive_dt_str , ADAPTIVE_DT );
 
     std::string surface_potential_str = "USE_SURFACE_POTENTIAL";
-    query_metadata( module_name + "." + surface_potential_str, surface_potential );
+    query_metadata( module_name + "." + surface_potential_str, USE_SURFACE_POTENTIAL );
   }
 };

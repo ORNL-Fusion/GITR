@@ -3607,7 +3607,7 @@ if( f.EFIELD_INTERP == 1 )
   gitr_precision bin_edge_dtheta;
   int n_bins_angle;
 
-  if( f.particle_diagnostics )
+  if( f.USE_PARTICLE_DIAGNOSTICS )
   {
       std::cout << "Starting particle diagnostics initialization" << std::endl;
     
@@ -3657,7 +3657,7 @@ if( f.EFIELD_INTERP == 1 )
   sim::Array<gitr_precision> bin_edges_time( n_bins_time + 1 , 0.0 );
   sim::Array<gitr_precision> bin_edges_angle( n_bins_angle + 1 , 0.0 );
 
-  if( f.particle_diagnostics )
+  if( f.USE_PARTICLE_DIAGNOSTICS )
   {
     //creating histogram vector for all surfaces and bins
     bin_edge_dt = (bin_edge_1_time - bin_edge_0_time)/n_bins_time;
@@ -4250,7 +4250,7 @@ std::cout << "here 2" << std::endl;
       }
 
       
-      if( f.particle_diagnostics )
+      if( f.USE_PARTICLE_DIAGNOSTICS )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd, particle_diagnostics0);
       }
@@ -4802,7 +4802,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // std::cout << "weights "  << " " << weights1[i] << " " <<
     // weightThreshold[0] << std::endl;
     //}
-  if( f.particle_diagnostics )
+  if( f.USE_PARTICLE_DIAGNOSTICS )
 {
     netCDF::NcFile ncFile_particle_hist("output/particle_histograms.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_ph_nSurfs = ncFile_particle_hist.addDim("nSurfaces", nSurfaces);
