@@ -309,7 +309,7 @@ gitr_precision getE ( class flags f,
   int yInd;
   int zInd;
 
-  if( f.geom_hash_sheath > 0 )
+  if( f.GEOM_HASH_SHEATH > 0 )
   {
     dr = closeGeomGridr[1] - closeGeomGridr[0];
     dy = closeGeomGridy[1] - closeGeomGridy[0];
@@ -333,7 +333,7 @@ gitr_precision getE ( class flags f,
   {
     int i = -1;
 
-    if( f.geom_hash_sheath > 0 )
+    if( f.GEOM_HASH_SHEATH > 0 )
     {
        i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements 
                    + yInd*nR_closeGeom*n_closeGeomElements
@@ -547,7 +547,7 @@ gitr_precision getE ( class flags f,
     int rInd;
     int zInd;
 
-  if( f.geom_hash_sheath > 0 )
+  if( f.GEOM_HASH_SHEATH > 0 )
   {
   dr = closeGeomGridr[1] - closeGeomGridr[0];
 
@@ -574,7 +574,7 @@ gitr_precision getE ( class flags f,
     {
       int j = -1;
 
-      if( f.geom_hash_sheath > 0 )
+      if( f.GEOM_HASH_SHEATH > 0 )
        j = closeGeom[zInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + k];
 
       else j = k;
@@ -953,7 +953,7 @@ void move_boris::operator()(std::size_t indx)
   ////printf("c_vpxBxyz %.16e %.16e %.16e \n",c_vpxB[0], c_vpxB[1], c_vpxB[2]);
   //}
 	       
-  if(f.adaptive_dt)
+  if(f.ADAPTIVE_DT)
   {
     vectorAssign(v[0],v[1],v[2],v_dt);
     vMag_dt = vectorNorm(v_dt);

@@ -42,7 +42,7 @@ void spec_bin::operator()(std::size_t indx) const {
 
     // Determine particle dt and relative contribution
     //if (flags->USE_ADAPTIVE_DT)
-    if (f.adaptive_dt)
+    if (f.ADAPTIVE_DT)
     {
       if(particlesPointer->advance[indx])
       {

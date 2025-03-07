@@ -79,7 +79,7 @@ void operator()(std::size_t indx)  {
       gitr_precision vNorm2 = 0.0;
       gitr_precision dt_step = dt;
                 //if (flags->USE_ADAPTIVE_DT) {
-                if (f.adaptive_dt) {
+                if (f.ADAPTIVE_DT) {
 	          if(p->advance[indx])
 		  {
 	            dt_step = p->dt[indx];

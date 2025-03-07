@@ -282,7 +282,7 @@ void geometry_check::operator()(std::size_t indx) const {
     int yInd;
     int nHash = 0;
 
-    if( f.geom_hash > 0 )
+    if( f.GEOM_HASH > 0 )
     {
     int rHashInd = 0;
     int yHashInd = 0;
@@ -379,7 +379,7 @@ void geometry_check::operator()(std::size_t indx) const {
     {
       int i = -1;
 
-      if( f.geom_hash > 0 )
+      if( f.GEOM_HASH > 0 )
       {
 
       i = closeGeom[buffIndx +
@@ -620,7 +620,7 @@ int closeIndx = 0;
 int rInd;
 int zInd;
 
-if( f.geom_hash > 0 )
+if( f.GEOM_HASH > 0 )
 {
     gitr_precision r_position;
 
@@ -657,7 +657,7 @@ else top_limit = nLines;
 
       int i = -1;
 
-      if( f.geom_hash > 0 )
+      if( f.GEOM_HASH > 0 )
       {
 
       closeIndx = zInd * nR_closeGeom[0] * n_closeGeomElements[0] +

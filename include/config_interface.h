@@ -181,12 +181,12 @@ class flags
   int USE3DTETGEOM  = -1;
   int PARTICLE_TRACKS = -1;
   int FIXED_SEEDS = -1;
-  int geom_hash= -1;
-  int geom_hash_sheath= -1;
+  int GEOM_HASH= -1;
+  int GEOM_HASH_SHEATH= -1;
   int USECYLSYMM = -1;
-  int force_eval = -1;
-  int sort = -1;
-  int adaptive_dt = -1;
+  int FORCE_EVAL = -1;
+  int USE_SORT = -1;
+  int ADAPTIVE_DT = -1;
   int surface_potential = -1;
   int particle_diagnostics = 0;
   int sheath_density = 0;
@@ -259,22 +259,22 @@ class flags
     query_metadata( module_name + "." + fixed_seeds_str , FIXED_SEEDS );
 
     std::string geom_hash_str = "GEOM_HASH";
-    query_metadata( module_name + "." + geom_hash_str , geom_hash );
+    query_metadata( module_name + "." + geom_hash_str , GEOM_HASH );
 
     std::string geom_hash_sheath_str = "GEOM_HASH_SHEATH";
-    query_metadata( module_name + "." + geom_hash_sheath_str , geom_hash_sheath );
+    query_metadata( module_name + "." + geom_hash_sheath_str , GEOM_HASH_SHEATH );
 
     std::string cylsymm_str = "USECYLSYMM";
     query_metadata( module_name + "." + cylsymm_str , USECYLSYMM );
     
     std::string force_eval_str  = "FORCE_EVAL";
-    query_metadata( module_name + "." + force_eval_str  , force_eval  );
+    query_metadata( module_name + "." + force_eval_str  , FORCE_EVAL  );
 
     std::string sort_str  = "USE_SORT";
-    query_metadata( module_name + "." + sort_str  , sort  );
+    query_metadata( module_name + "." + sort_str  , USE_SORT  );
 
     std::string adaptive_dt_str = "USE_ADAPTIVE_DT";
-    query_metadata( module_name + "." + adaptive_dt_str , adaptive_dt );
+    query_metadata( module_name + "." + adaptive_dt_str , ADAPTIVE_DT );
 
     std::string surface_potential_str = "USE_SURFACE_POTENTIAL";
     query_metadata( module_name + "." + surface_potential_str, surface_potential );

@@ -441,7 +441,7 @@ int main(int argc, char **argv, char **envp)
 
   std::cout << "code has made it to this point 1!" << std::endl;
 
-  if( f.geom_hash == 1 )
+  if( f.GEOM_HASH == 1 )
   {
   //nR_closeGeomTotal = 0;
   //nY_closeGeomTotal = 0;
@@ -462,7 +462,7 @@ int main(int argc, char **argv, char **envp)
   sim::Array<int> nHashPoints(nHashes, 0);
   sim::Array<int> n_closeGeomElements(nHashes, 0);
 
-  if( f.geom_hash == 1 )
+  if( f.GEOM_HASH == 1 )
   {
   if (world_rank == 0) {
     importHashNs(f, cfg, input_path, nHashes, "geometry_hash", nR_closeGeom.data(),
@@ -547,7 +547,7 @@ int main(int argc, char **argv, char **envp)
   }
 
 std::vector<std::string> hashFile;
-if( f.geom_hash > 1 )
+if( f.GEOM_HASH > 1 )
 {
   if (world_rank == 0) {
     getVariable(cfg, geomHashCfg + "nHashes", nHashes);
@@ -629,7 +629,7 @@ if( f.geom_hash > 1 )
         }
         */
 
-if( f.geom_hash == 1 )
+if( f.GEOM_HASH == 1 )
 {
   sim::Array<gitr_precision> hashX0(nHashes, 0.0), hashX1(nHashes, 0.0),
       hashY0(nHashes, 0.0), hashY1(nHashes, 0.0), hashZ0(nHashes, 0.0),
@@ -917,7 +917,7 @@ if( f.geom_hash == 1 )
       std::cout << "created vars2" << std::endl;
 }
 
-else if( f.geom_hash > 1 )
+else if( f.GEOM_HASH > 1 )
 {
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
@@ -964,7 +964,7 @@ else if( f.geom_hash > 1 )
   int n_closeGeomElements_sheath = 1;
   int nGeomHash_sheath = 1;
   std::string geomHashSheathCfg = "geometry_sheath.";
-if( f.geom_hash_sheath == 1 )
+if( f.GEOM_HASH_SHEATH == 1 )
 {
   if (world_rank == 0) {
     getVariable(cfg, geomHashSheathCfg + "nR_closeGeom", nR_closeGeom_sheath);
@@ -990,7 +990,7 @@ if( f.geom_hash_sheath == 1 )
 }
 
 std::string hashFile_sheath;
-if( f.geom_hash_sheath > 1 )
+if( f.GEOM_HASH_SHEATH > 1 )
 {
   if (world_rank == 0) {
     getVariable(cfg, geomHashSheathCfg + "fileString", hashFile_sheath);
@@ -1025,7 +1025,7 @@ if( f.geom_hash_sheath > 1 )
       closeGeomGridz_sheath(nZ_closeGeom_sheath);
   sim::Array<int> closeGeom_sheath(nGeomHash_sheath);
 
-  if( f.geom_hash_sheath == 1 )
+  if( f.GEOM_HASH_SHEATH == 1 )
   {
   gitr_precision hashX0_s, hashX1_s, hashY0_s, hashY1_s, hashZ0_s, hashZ1_s;
   if (world_rank == 0) {
@@ -1152,7 +1152,7 @@ if( f.geom_hash_sheath > 1 )
   cudaDeviceSynchronize();
 #endif
 }
-else if( f.geom_hash_sheath > 1 )
+else if( f.GEOM_HASH_SHEATH > 1 )
 {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -1357,7 +1357,7 @@ if( GENERATE_LC > 0 )
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
                        &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0,
-                       geom_hash ) );
+                       GEOM_HASH ) );
 
     thrust::for_each(
         thrust::device, lcBegin, lcEnd,
@@ -1367,7 +1367,7 @@ if( GENERATE_LC > 0 )
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
                        &closeGeomGridy.front(), &closeGeomGridz.front(),
                        &closeGeom.front(), 0, 0.0, 0.0, 0, 0.0, 0.0,
-                       geom_hash ) );
+                       GEOM_HASH ) );
   }
   auto finish_clock_trace = Time_trace::now();
   fsec_trace fstrace = finish_clock_trace - start_clock_trace;
@@ -3929,7 +3929,7 @@ if( f.EFIELD_INTERP == 1 )
                    &velocityHistoryZ.front(), &chargeHistory.front(),
                    &weightHistory.front(), &perpDistanceToSurfaceHistory.front());
 
-  if( f.force_eval > 0 )
+  if( f.FORCE_EVAL > 0 )
   {
   if (world_rank == 0) {
     int nR_force, nZ_force;
@@ -4188,7 +4188,7 @@ std::cout << "here 2" << std::endl;
 
        if( tt % 100 == 0 ) std::cout << tt << "/" << nT << std::endl;
 
-       if( f.sort > 0 )
+       if( f.USE_SORT > 0 )
        {
        dev_tt[0] = tt;
       //std::cout << " tt " << tt << std::endl;
