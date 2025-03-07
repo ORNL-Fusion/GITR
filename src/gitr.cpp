@@ -115,7 +115,7 @@ int main(int argc, char **argv, char **envp)
   auto gitr_start_clock = gitr_time::now();
   class libconfig_string_query query_metadata( file_name );
 
-  class flags f( query_metadata );
+  class flags config_flags( query_metadata );
 
   // Set default processes per node to 1
   int ppn = 1;
@@ -240,7 +240,7 @@ int main(int argc, char **argv, char **envp)
   std::string bfieldCfg = "backgroundPlasmaProfiles.Bfield.";
   std::string bfieldFile;
   if (world_rank == 0) {
-    importVectorFieldNs(cfg, input_path, f.BFIELD_INTERP, bfieldCfg, nR_Bfield,
+    importVectorFieldNs(cfg, input_path, config_flags.BFIELD_INTERP, bfieldCfg, nR_Bfield,
                         nY_Bfield, nZ_Bfield, bfieldFile);
   }
 #if USE_MPI > 0
@@ -256,7 +256,7 @@ int main(int argc, char **argv, char **envp)
   sim::Array<gitr_precision> br(n_Bfield), by(n_Bfield), bz(n_Bfield);
 
   if (world_rank == 0) {
-    importVectorField(cfg, input_path, f.BFIELD_INTERP, bfieldCfg, nR_Bfield,
+    importVectorField(cfg, input_path, config_flags.BFIELD_INTERP, bfieldCfg, nR_Bfield,
                       nY_Bfield, nZ_Bfield, bfieldGridr.front(),
                       bfieldGridy.front(), bfieldGridz.front(), br.front(),
                       by.front(), bz.front(), bfieldFile);
@@ -273,7 +273,7 @@ int main(int argc, char **argv, char **envp)
   gitr_precision Btest[3] = {0.0};
   interp2dVector(&Btest[0], 5.5, 0.0, -4.0, nR_Bfield, nZ_Bfield,
                  bfieldGridr.data(), bfieldGridz.data(), br.data(), bz.data(),
-                 by.data(), f.USECYLSYMM );
+                 by.data(), config_flags.USECYLSYMM );
   //std::cout << "node " << world_rank << "Bfield at 5.5 -4 " << Btest[0] << " "
   //          << Btest[1] << " " << Btest[2] << std::endl;
   std::string profiles_folder = "output/profiles";
@@ -302,14 +302,14 @@ int main(int argc, char **argv, char **envp)
 
   sim::Array<Boundary> boundaries(nLines + 1, Boundary());
   if (world_rank == 0) {
-    nSurfaces = importGeometry(f, cfg_geom, boundaries );
+    nSurfaces = importGeometry(config_flags, cfg_geom, boundaries );
     std::cout << "Starting Boundary Init... nSurfaces " << nSurfaces
               << std::endl;
   }
 #if USE_MPI > 0
   MPI_Bcast(&nSurfaces, 1, MPI_INT, 0, MPI_COMM_WORLD);
   int nBoundaryMembers;
-  if(f.USE3DTETGEOM)
+  if(config_flags.USE3DTETGEOM)
   {
     nBoundaryMembers = 41;
   }
@@ -346,7 +346,7 @@ int main(int argc, char **argv, char **envp)
   int nAdist = 1;
   gitr_precision A0dist = 0.0;
   gitr_precision Adist = 0.0;
-  if(f.FLUX_EA)
+  if(config_flags.FLUX_EA)
   {
   if (world_rank == 0) {
     getVariable(cfg, "surfaces.flux.nE", nEdist);
@@ -441,7 +441,7 @@ int main(int argc, char **argv, char **envp)
 
   std::cout << "code has made it to this point 1!" << std::endl;
 
-  if( f.GEOM_HASH == 1 )
+  if( config_flags.GEOM_HASH == 1 )
   {
   //nR_closeGeomTotal = 0;
   //nY_closeGeomTotal = 0;
@@ -462,10 +462,10 @@ int main(int argc, char **argv, char **envp)
   sim::Array<int> nHashPoints(nHashes, 0);
   sim::Array<int> n_closeGeomElements(nHashes, 0);
 
-  if( f.GEOM_HASH == 1 )
+  if( config_flags.GEOM_HASH == 1 )
   {
   if (world_rank == 0) {
-    importHashNs(f, cfg, input_path, nHashes, "geometry_hash", nR_closeGeom.data(),
+    importHashNs(config_flags, cfg, input_path, nHashes, "geometry_hash", nR_closeGeom.data(),
                  nY_closeGeom.data(), nZ_closeGeom.data(),
                  n_closeGeomElements.data(), nR_closeGeomTotal,
                  nY_closeGeomTotal, nZ_closeGeomTotal, nHashPoints.data(),
@@ -498,7 +498,7 @@ int main(int argc, char **argv, char **envp)
       nR_closeGeomTotal = nR_closeGeomTotal + nR_closeGeom[j];
       nZ_closeGeomTotal = nZ_closeGeomTotal + nZ_closeGeom[j];
     }
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
      if(nHashes > 1)
     {
@@ -547,7 +547,7 @@ int main(int argc, char **argv, char **envp)
   }
 
 std::vector<std::string> hashFile;
-if( f.GEOM_HASH > 1 )
+if( config_flags.GEOM_HASH > 1 )
 {
   if (world_rank == 0) {
     getVariable(cfg, geomHashCfg + "nHashes", nHashes);
@@ -574,7 +574,7 @@ if( f.GEOM_HASH > 1 )
       nGeomHash = nGeomHash +
                   nR_closeGeom[i] * nZ_closeGeom[i] * n_closeGeomElements[i];
 
-      if( f.USE3DTETGEOM > 0 )
+      if( config_flags.USE3DTETGEOM > 0 )
       {
         nY_closeGeom[i] = getDimFromFile(cfg, input_path + hashFile[i],
                                          geomHashCfg, "gridNyString");
@@ -629,7 +629,7 @@ if( f.GEOM_HASH > 1 )
         }
         */
 
-if( f.GEOM_HASH == 1 )
+if( config_flags.GEOM_HASH == 1 )
 {
   sim::Array<gitr_precision> hashX0(nHashes, 0.0), hashX1(nHashes, 0.0),
       hashY0(nHashes, 0.0), hashY1(nHashes, 0.0), hashZ0(nHashes, 0.0),
@@ -642,7 +642,7 @@ if( f.GEOM_HASH == 1 )
         hashX1[i] = geomHash["hashX1"][i];
         hashZ0[i] = geomHash["hashZ0"][i];
         hashZ1[i] = geomHash["hashZ1"][i];
-        if( f.USE3DTETGEOM > 0 )
+        if( config_flags.USE3DTETGEOM > 0 )
         {
           hashY0[i] = geomHash["hashY0"][i];
           hashY1[i] = geomHash["hashY1"][i];
@@ -653,7 +653,7 @@ if( f.GEOM_HASH == 1 )
       getVariable(cfg, geomHashCfg + "hashX1", hashX1[0]);
       getVariable(cfg, geomHashCfg + "hashZ0", hashZ0[0]);
       getVariable(cfg, geomHashCfg + "hashZ1", hashZ1[0]);
-      if( f.USE3DTETGEOM > 0 )
+      if( config_flags.USE3DTETGEOM > 0 )
       {
       getVariable(cfg, geomHashCfg + "hashY0", hashY0[0]);
       getVariable(cfg, geomHashCfg + "hashY1", hashY1[0]);
@@ -764,7 +764,7 @@ if( f.GEOM_HASH == 1 )
   hashGeom geo1(nLines, nHashes, boundaries.data(), closeGeomGridr.data(),
                 closeGeomGridy.data(), closeGeomGridz.data(),
                 n_closeGeomElements.data(), closeGeom.data(),
-                nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(), f.USE3DTETGEOM );
+                nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(), config_flags.USE3DTETGEOM );
   std::cout << "nHashPoints start stop " << world_rank * nHashMeshPointsPerProcess << " "
         << world_rank * nHashMeshPointsPerProcess + hashMeshIncrements[world_rank] - 1<< std::endl;
   thrust::for_each(thrust::device,
@@ -813,7 +813,7 @@ if( f.GEOM_HASH == 1 )
           }
         };
 
-        if(f.USE3DTETGEOM)
+        if(config_flags.USE3DTETGEOM)
         {
           for (int j = 0; j < nY_closeGeom[ii]; j++)
           {
@@ -868,7 +868,7 @@ if( f.GEOM_HASH == 1 )
       std::cout << "opened file" << std::endl;
       netCDF::NcDim hashNR = ncFile_hash.addDim("nR", nR_closeGeom[i]);
       netCDF::NcDim hashNY;
-      if( f.USE3DTETGEOM > 0 )
+      if( config_flags.USE3DTETGEOM > 0 )
       {
         hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
       }
@@ -877,7 +877,7 @@ if( f.GEOM_HASH == 1 )
       vector<netCDF::NcDim> geomHashDim;
       geomHashDim.push_back(hashNR);
       std::cout << "created dims" << std::endl;
-      if( f.USE3DTETGEOM > 0 )
+      if( config_flags.USE3DTETGEOM > 0 )
       {
         geomHashDim.push_back(hashNY);
       }
@@ -886,7 +886,7 @@ if( f.GEOM_HASH == 1 )
       netCDF::NcVar hash_gridR = ncFile_hash.addVar("gridR", netcdf_precision, hashNR);
       std::cout << "created dims2" << std::endl;
       netCDF::NcVar hash_gridY;
-      if( f.USE3DTETGEOM > 0 )
+      if( config_flags.USE3DTETGEOM > 0 )
       {
         hash_gridY = ncFile_hash.addVar("gridY", netcdf_precision, hashNY);
       }
@@ -897,7 +897,7 @@ if( f.GEOM_HASH == 1 )
       if (i > 0)
         ncIndex = nR_closeGeom[i - 1];
       hash_gridR.putVar(&closeGeomGridr[ncIndex]);
-      if( f.USE3DTETGEOM > 0 )
+      if( config_flags.USE3DTETGEOM > 0 )
       {
         if (i > 0)
           ncIndex = nY_closeGeom[i - 1];
@@ -917,7 +917,7 @@ if( f.GEOM_HASH == 1 )
       std::cout << "created vars2" << std::endl;
 }
 
-else if( f.GEOM_HASH > 1 )
+else if( config_flags.GEOM_HASH > 1 )
 {
   if (world_rank == 0) {
     for (int i = 0; i < nHashes; i++) {
@@ -931,7 +931,7 @@ else if( f.GEOM_HASH > 1 )
       getVarFromFile(cfg, input_path + hashFile[i], geomHashCfg, "gridZString",
                      closeGeomGridz[dataIndex]);
       std::cout << "created vars3" << std::endl;
-      if( f.USE3DTETGEOM > 0 )
+      if( config_flags.USE3DTETGEOM > 0 )
       {
         if (i > 0)
           dataIndex = nY_closeGeom[0];
@@ -964,7 +964,7 @@ else if( f.GEOM_HASH > 1 )
   int n_closeGeomElements_sheath = 1;
   int nGeomHash_sheath = 1;
   std::string geomHashSheathCfg = "geometry_sheath.";
-if( f.GEOM_HASH_SHEATH == 1 )
+if( config_flags.GEOM_HASH_SHEATH == 1 )
 {
   if (world_rank == 0) {
     getVariable(cfg, geomHashSheathCfg + "nR_closeGeom", nR_closeGeom_sheath);
@@ -973,7 +973,7 @@ if( f.GEOM_HASH_SHEATH == 1 )
                 n_closeGeomElements_sheath);
     nGeomHash_sheath =
         nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
       getVariable(cfg, geomHashSheathCfg + "nY_closeGeom", nY_closeGeom_sheath);
       nGeomHash_sheath = nY_closeGeom_sheath * nGeomHash_sheath;
@@ -990,7 +990,7 @@ if( f.GEOM_HASH_SHEATH == 1 )
 }
 
 std::string hashFile_sheath;
-if( f.GEOM_HASH_SHEATH > 1 )
+if( config_flags.GEOM_HASH_SHEATH > 1 )
 {
   if (world_rank == 0) {
     getVariable(cfg, geomHashSheathCfg + "fileString", hashFile_sheath);
@@ -1003,7 +1003,7 @@ if( f.GEOM_HASH_SHEATH > 1 )
                        "nearestNelementsString");
     nGeomHash_sheath =
         nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
       nY_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
                                            geomHashSheathCfg, "gridNyString");
@@ -1025,7 +1025,7 @@ if( f.GEOM_HASH_SHEATH > 1 )
       closeGeomGridz_sheath(nZ_closeGeom_sheath);
   sim::Array<int> closeGeom_sheath(nGeomHash_sheath);
 
-  if( f.GEOM_HASH_SHEATH == 1 )
+  if( config_flags.GEOM_HASH_SHEATH == 1 )
   {
   gitr_precision hashX0_s, hashX1_s, hashY0_s, hashY1_s, hashZ0_s, hashZ1_s;
   if (world_rank == 0) {
@@ -1033,7 +1033,7 @@ if( f.GEOM_HASH_SHEATH > 1 )
     getVariable(cfg, geomHashSheathCfg + "hashX1", hashX1_s);
     getVariable(cfg, geomHashSheathCfg + "hashZ0", hashZ0_s);
     getVariable(cfg, geomHashSheathCfg + "hashZ1", hashZ1_s);
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
     getVariable(cfg, geomHashSheathCfg + "hashY0", hashY0_s);
     getVariable(cfg, geomHashSheathCfg + "hashY1", hashY1_s);
@@ -1084,7 +1084,7 @@ if( f.GEOM_HASH_SHEATH > 1 )
       nLines, boundaries.data(), closeGeomGridr_sheath.data(),
       closeGeomGridy_sheath.data(), closeGeomGridz_sheath.data(),
       n_closeGeomElements_sheath, closeGeom_sheath.data(), nR_closeGeom_sheath,
-      nY_closeGeom_sheath, nZ_closeGeom_sheath, f.USE3DTETGEOM );
+      nY_closeGeom_sheath, nZ_closeGeom_sheath, config_flags.USE3DTETGEOM );
   thrust::for_each(thrust::device,
                    lines0_s + world_rank * nHashMeshPointsPerProcess_s,
                    lines0_s + world_rank * nHashMeshPointsPerProcess_s +
@@ -1152,7 +1152,7 @@ if( f.GEOM_HASH_SHEATH > 1 )
   cudaDeviceSynchronize();
 #endif
 }
-else if( f.GEOM_HASH_SHEATH > 1 )
+else if( config_flags.GEOM_HASH_SHEATH > 1 )
 {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -1161,7 +1161,7 @@ else if( f.GEOM_HASH_SHEATH > 1 )
                    "gridRString", closeGeomGridr_sheath[0]);
     getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
                    "gridZString", closeGeomGridz_sheath[0]);
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
     getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
                    "gridYString", closeGeomGridy_sheath[0]);
@@ -1240,7 +1240,7 @@ else
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-if( f.USE3DTETGEOM > 0 )
+if( config_flags.USE3DTETGEOM > 0 )
 {
   nTracers = nR_Lc * nY_Lc * nZ_Lc;
 }
@@ -1260,7 +1260,7 @@ if( GENERATE_LC > 0 )
   // if( !boost::filesystem::exists( lcFile ) )
   // {
   //   std::cout << "No pre-existing connection length file found" << std::endl;
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
   gitr_precision dy_Lc = (y1_Lc - y0_Lc) / (nY_Lc - 1);
   for (int j = 0; j < nY_Lc; j++) {
@@ -1300,7 +1300,7 @@ if( GENERATE_LC > 0 )
   for (int i = 0; i < nR_Lc; i++) {
     for (int j = 0; j < nY_Lc; j++) {
       for (int k = 0; k < nZ_Lc; k++) {
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
         addIndex = i + j * nR_Lc + k * nR_Lc * nY_Lc;
     }
@@ -1351,7 +1351,7 @@ if( GENERATE_LC > 0 )
 
     thrust::for_each(
         thrust::device, lcBegin, lcEnd,
-        geometry_check(f, forwardTracerParticles, nLines, &boundaries[0],
+        geometry_check(config_flags forwardTracerParticles, nLines, &boundaries[0],
                        dummy_surfaces, dr, ii, nR_closeGeom.data(),
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
@@ -1361,7 +1361,7 @@ if( GENERATE_LC > 0 )
 
     thrust::for_each(
         thrust::device, lcBegin, lcEnd,
-        geometry_check(f, backwardTracerParticles, nLines, &boundaries[0],
+        geometry_check(config_flags backwardTracerParticles, nLines, &boundaries[0],
                        dummy_surfaces, dr, ii, nR_closeGeom.data(),
                        nY_closeGeom.data(), nZ_closeGeom.data(),
                        n_closeGeomElements.data(), &closeGeomGridr.front(),
@@ -1439,7 +1439,7 @@ if( GENERATE_LC > 0 )
         for (int k = 0; k < nZ_Lc; k++) {
           // std::cout << "hitwall of tracers " <<
           // forwardTracerParticles->hitWall[addIndex] << std::endl;
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
           addIndex = i + j * nR_Lc + k * nR_Lc * nY_Lc;
     }
@@ -1507,7 +1507,7 @@ if( GENERATE_LC > 0 )
     dims_lc.push_back(nc_nRLc);
 
     NcDim nc_nYLc;
-    if( f.USE3DTETGEOM )
+    if( config_flags.USE3DTETGEOM )
     {
     nc_nYLc = ncFileLC.addDim("nY", nY_Lc);
     dims_lc.push_back(nc_nYLc);
@@ -1527,7 +1527,7 @@ if( GENERATE_LC > 0 )
     NcVar nc_nI = ncFileLC.addVar("noIntersection", netcdf_precision, dims_lc);
     NcVar nc_gridRLc = ncFileLC.addVar("gridR", netcdf_precision, nc_nRLc);
     NcVar nc_gridYLc;
-    if( f.USE3DTETGEOM )
+    if( config_flags.USE3DTETGEOM )
     {
     nc_gridYLc = ncFileLC.addVar("gridY", netcdf_precision, nc_nYLc);
     }
@@ -1543,7 +1543,7 @@ if( GENERATE_LC > 0 )
     //nc_btz.putVar(&backwardTracerZ[0]);
     //nc_nI.putVar(&noIntersectionNodes[0]);
     //nc_gridRLc.putVar(&gridRLc[0]);
-    if( f.USE3DTETGEOM )
+    if( config_flags.USE3DTETGEOM )
     {
     nc_gridYLc.putVar(&gridYLc[0]);
 //#endif
@@ -1584,7 +1584,7 @@ if( LC_INTERP > 1 )
   int n_Temp = 1;
   std::string tempCfg = "backgroundPlasmaProfiles.Temperature.";
   std::string tempFile;
-if(f.TEMP_INTERP > 0 )
+if(config_flags.TEMP_INTERP > 0 )
 {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -1593,12 +1593,12 @@ if(f.TEMP_INTERP > 0 )
     getVariable(cfg, tempCfg + "fileString", tempFile);
     nR_Temp =
         getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNrString");
-        if(f.TEMP_INTERP > 1 )
+        if(config_flags.TEMP_INTERP > 1 )
         {
     nZ_Temp =
         getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNzString");
         }
-        if( f.TEMP_INTERP > 2 )
+        if( config_flags.TEMP_INTERP > 2 )
         {
     nY_Temp =
         getDimFromFile(cfg, input_path + tempFile, tempCfg, "gridNyString");
@@ -1619,7 +1619,7 @@ if(f.TEMP_INTERP > 0 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-    if( f.TEMP_INTERP == 0 )
+    if( config_flags.TEMP_INTERP == 0 )
     {
     getVariable(cfg, tempCfg + "ti", ti[0]);
     getVariable(cfg, tempCfg + "te", te[0]);
@@ -1628,12 +1628,12 @@ if(f.TEMP_INTERP > 0 )
     {
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridRString",
                  TempGridr[0]);
-  if( f.TEMP_INTERP > 1 )
+  if( config_flags.TEMP_INTERP > 1 )
   {
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridZString",
                  TempGridz[0]);
   }
-  if( f.TEMP_INTERP > 2 )
+  if( config_flags.TEMP_INTERP > 2 )
   {
   getVarFromFile(cfg, input_path + tempFile, tempCfg, "gridYString",
                  TempGridy[0]);
@@ -1655,7 +1655,7 @@ if(f.TEMP_INTERP > 0 )
 
   gitr_precision testVec = 0.0;
   testVec = interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),
-                             TempGridz.data(), ti.data(), f.USECYLSYMM );
+                             TempGridz.data(), ti.data(), config_flags.USECYLSYMM );
   std::cout << "Finished Temperature import " << testVec << std::endl;
 
   // Background Plasma Density Initialization
@@ -1665,7 +1665,7 @@ if(f.TEMP_INTERP > 0 )
   int n_Dens = 1;
   std::string densCfg = "backgroundPlasmaProfiles.Density.";
   std::string densFile;
-  if( f.DENSITY_INTERP > 0 )
+  if( config_flags.DENSITY_INTERP > 0 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -1673,12 +1673,12 @@ if(f.TEMP_INTERP > 0 )
     getVariable(cfg, densCfg + "fileString", densFile);
     nR_Dens =
         getDimFromFile(cfg, input_path + densFile, densCfg, "gridNrString");
-        if( f.DENSITY_INTERP > 1 )
+        if( config_flags.DENSITY_INTERP > 1 )
         {
     nZ_Dens =
         getDimFromFile(cfg, input_path + densFile, densCfg, "gridNzString");
         }
-        if(f.DENSITY_INTERP > 2 )
+        if(config_flags.DENSITY_INTERP > 2 )
         {
     nY_Dens =
         getDimFromFile(cfg, input_path + densFile, densCfg, "gridNyString");
@@ -1699,19 +1699,19 @@ if(f.TEMP_INTERP > 0 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-if( f.DENSITY_INTERP == 0 )
+if( config_flags.DENSITY_INTERP == 0 )
 {
     getVariable(cfg, densCfg + "ni", ni[0]);
     getVariable(cfg, densCfg + "ne", ne[0]);
     } else {
   getVarFromFile(cfg, input_path + densFile, densCfg, "gridRString",
                  DensGridr[0]);
-  if( f.DENSITY_INTERP > 1 )
+  if( config_flags.DENSITY_INTERP > 1 )
   {
   getVarFromFile(cfg, input_path + densFile, densCfg, "gridZString",
                  DensGridz[0]);
   }
-  if( f.DENSITY_INTERP > 2 )
+  if( config_flags.DENSITY_INTERP > 2 )
   {
   getVarFromFile(cfg, input_path + densFile, densCfg, "gridYString",
                  DensGridy[0]);
@@ -1724,11 +1724,11 @@ if( f.DENSITY_INTERP == 0 )
     std::cout << "Finished density import "
               << interp2dCombined(5.5, 0.0, -4.4, nR_Dens, nZ_Dens,
                                   &DensGridr.front(), &DensGridz.front(),
-                                  &ne.front(), f.USECYLSYMM )
+                                  &ne.front(), config_flags.USECYLSYMM )
               << " "
               << interp2dCombined(0.0, 0.1, 0.0, nR_Dens, nZ_Dens,
                                   &DensGridr.front(), &DensGridz.front(),
-                                  &ne.front(), f.USECYLSYMM )
+                                  &ne.front(), config_flags.USECYLSYMM )
               << std::endl;
 // for(int i=0;i<100;i++)
 //{
@@ -1761,14 +1761,14 @@ if( f.DENSITY_INTERP == 0 )
   int nZ_flowV = 1;
   int n_flowV = 1;
   std::string flowVCfg = "backgroundPlasmaProfiles.FlowVelocity.";
-  if( f.FLOWV_INTERP == 1 )
+  if( config_flags.FLOWV_INTERP == 1 )
   {
   nR_flowV = nR_Lc;
   nY_flowV = nY_Lc;
   nZ_flowV = nZ_Lc;
   }
   std::string flowVFile;
-  if( f.FLOWV_INTERP > 1 )
+  if( config_flags.FLOWV_INTERP > 1 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -1778,7 +1778,7 @@ if( f.DENSITY_INTERP == 0 )
         getDimFromFile(cfg, input_path + flowVFile, flowVCfg, "gridNrString");
     nZ_flowV =
         getDimFromFile(cfg, input_path + flowVFile, flowVCfg, "gridNzString");
-    if( f.FLOWV_INTERP > 2 )
+    if( config_flags.FLOWV_INTERP > 2 )
     {
     nY_flowV =
         getDimFromFile(cfg, input_path + flowVFile, flowVCfg, "gridNyString");
@@ -1799,7 +1799,7 @@ if( f.DENSITY_INTERP == 0 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-  if( f.FLOWV_INTERP == 0 )
+  if( config_flags.FLOWV_INTERP == 0 )
   {
     getVariable(cfg, flowVCfg + "flowVr", flowVr[0]);
     getVariable(cfg, flowVCfg + "flowVy", flowVt[0]);
@@ -1807,7 +1807,7 @@ if( f.DENSITY_INTERP == 0 )
   }
   else
   {
-    if( f.FLOWV_INTERP > 1 )
+    if( config_flags.FLOWV_INTERP > 1 )
     {
   getVarFromFile(cfg, input_path + flowVFile, flowVCfg, "gridRString",
                  flowVGridr[0]);
@@ -1820,7 +1820,7 @@ if( f.DENSITY_INTERP == 0 )
   getVarFromFile(cfg, input_path + flowVFile, flowVCfg, "flowVzString",
                  flowVz[0]);
     }
-    if( f.FLOWV_INTERP > 2 )
+    if( config_flags.FLOWV_INTERP > 2 )
     {
   getVarFromFile(cfg, input_path + flowVFile, flowVCfg, "gridYString",
                  flowVGridy[0]);
@@ -1843,7 +1843,7 @@ if( f.DENSITY_INTERP == 0 )
   int iterIndex = 0;
   int nFlowVs;
 
-if( f.FLOWV_INTERP == 1 )
+if( config_flags.FLOWV_INTERP == 1 )
 {
   for (int i = 0; i < nR_flowV; i++) {
     std::cout << " !!! gridRLc " << gridRLc[i] << std::endl;
@@ -1886,15 +1886,15 @@ if( f.FLOWV_INTERP == 1 )
         //    << flowVGridz[j] << " " << nR_Temp << " "<<nZ_Temp << std::endl;
         teLocal = interp2dCombined(flowVGridr[i], thisY, flowVGridz[j], nR_Temp,
                                    nZ_Temp, &TempGridr.front(),
-                                   &TempGridz.front(), &te.front(), f.USECYLSYMM );
+                                   &TempGridz.front(), &te.front(), config_flags.USECYLSYMM );
         tiLocal = interp2dCombined(flowVGridr[i], thisY, flowVGridz[j], nR_Temp,
                                    nZ_Temp, &TempGridr.front(),
-                                   &TempGridz.front(), &ti.front(), f.USECYLSYMM );
+                                   &TempGridz.front(), &ti.front(), config_flags.USECYLSYMM );
         cs0 =
             std::sqrt((teLocal + tiLocal) * 1.602e-19 / (background_amu * 1.66e-27));
         interp2dVector(&BLocal[0], flowVGridr[i], thisY, flowVGridz[j],
                        nR_Bfield, nZ_Bfield, bfieldGridr.data(),
-                       bfieldGridz.data(), br.data(), bz.data(), by.data(), f.USECYLSYMM );
+                       bfieldGridz.data(), br.data(), bz.data(), by.data(), config_flags.USECYLSYMM );
         Bmag = std::sqrt(BLocal[0] * BLocal[0] + BLocal[1] * BLocal[1] +
                     BLocal[2] * BLocal[2]);
         Bnorm[0] = BLocal[0] / Bmag;
@@ -2011,20 +2011,20 @@ if( f.FLOWV_INTERP == 1 )
   std::string gradTCfg = "backgroundPlasmaProfiles.gradT.";
   std::string gradTFile;
   if (world_rank == 0) {
-    if( f.GRADT_INTERP > 0 )
+    if( config_flags.GRADT_INTERP > 0 )
     {
     getVariable(cfg, gradTCfg + "fileString", gradTFile);
     nR_gradT =
         getDimFromFile(cfg, input_path + gradTFile, gradTCfg, "gridNrString");
     }
 
-    if( f.GRADT_INTERP > 1 )
+    if( config_flags.GRADT_INTERP > 1 )
     {
     nZ_gradT =
         getDimFromFile(cfg, input_path + gradTFile, gradTCfg, "gridNzString");
     }
 
-    if( f.GRADT_INTERP > 2 )
+    if( config_flags.GRADT_INTERP > 2 )
     {
     nY_gradT =
         getDimFromFile(cfg, input_path + gradTFile, gradTCfg, "gridNyString");
@@ -2044,7 +2044,7 @@ if( f.FLOWV_INTERP == 1 )
 
   if (world_rank == 0) {
 
-    if( f.GRADT_INTERP == 0 )
+    if( config_flags.GRADT_INTERP == 0 )
     {
     getVariable(cfg, gradTCfg + "gradTeR", gradTeR[0]);
     getVariable(cfg, gradTCfg + "gradTeY", gradTeY[0]);
@@ -2057,13 +2057,13 @@ if( f.FLOWV_INTERP == 1 )
     {
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gridRString",
                    gradTGridr[0]);
-    if( f.GRADT_INTERP > 1 )
+    if( config_flags.GRADT_INTERP > 1 )
     {
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gridZString",
                    gradTGridz[0]);
     }
 
-    if( f.GRADT_INTERP > 2 )
+    if( config_flags.GRADT_INTERP > 2 )
     {
     getVarFromFile(cfg, input_path + gradTFile, gradTCfg, "gridYString",
                    gradTGridy[0]);
@@ -2102,7 +2102,7 @@ if( f.FLOWV_INTERP == 1 )
   gitr_precision gradTi[3] = {0.0};
   interp2dVector(&gradTi[0], 1.45, 0.0, -1.2, nR_gradT, nZ_gradT,
                  gradTGridr.data(), gradTGridz.data(), gradTiR.data(),
-                 gradTiZ.data(), gradTiY.data(), f.USECYLSYMM );
+                 gradTiZ.data(), gradTiY.data(), config_flags.USECYLSYMM );
   std::cout << "thermal gradient interpolation gradTi " << gradTi[0] << " "
             << gradTi[1] << " " << gradTi[2] << " " << std::endl;
 
@@ -2125,7 +2125,7 @@ if( f.FLOWV_INTERP == 1 )
   sim::Array<gitr_precision> gridTemperature_Recombination(nTemperaturesRecombine),
       gridDensity_Recombination(nDensitiesRecombine);
 
-  if( f.IONIZATION > 0 )
+  if( config_flags.IONIZATION > 0 )
   {
   if (world_rank == 0) {
 
@@ -2244,7 +2244,7 @@ if( f.FLOWV_INTERP == 1 )
 
   // Applying background values at material boundaries
   std::for_each(boundaries.begin(), boundaries.end() - 1,
-                boundary_init(f, background_Z, background_amu, nR_Dens, nZ_Dens,
+                boundary_init(config_flags, background_Z, background_amu, nR_Dens, nZ_Dens,
                               DensGridr.data(), DensGridz.data(), ni.data(),
                               ne.data(), nR_Bfield, nZ_Bfield,
                               bfieldGridr.data(), bfieldGridz.data(), br.data(),
@@ -2294,7 +2294,7 @@ if( f.FLOWV_INTERP == 1 )
   sim::Array< gitr_precision > preSheathEGridz( nZ_PreSheathEfield );
 
   std::cout << "Using presheath Efield " << std::endl;
-  if( f.EFIELD_INTERP == 1 )
+  if( config_flags.EFIELD_INTERP == 1 )
   {
   nR_PreSheathEfield = nR_Lc;
   nY_PreSheathEfield = nY_Lc;
@@ -2303,7 +2303,7 @@ if( f.FLOWV_INTERP == 1 )
 
   std::string efieldFile;
 
-  if( f.EFIELD_INTERP > 1 )
+  if( config_flags.EFIELD_INTERP > 1 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -2314,7 +2314,7 @@ if( f.FLOWV_INTERP == 1 )
     nZ_PreSheathEfield =
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNzString");
 
-    if( f.EFIELD_INTERP > 2 )
+    if( config_flags.EFIELD_INTERP > 2 )
     {
     nY_PreSheathEfield =
         getDimFromFile(cfg, input_path + efieldFile, PSECfg, "gridNyString");
@@ -2342,19 +2342,19 @@ if( f.FLOWV_INTERP == 1 )
 #if USE_MPI > 0
   if (world_rank == 0) {
 #endif
-    if( f.EFIELD_INTERP == 0 )
+    if( config_flags.EFIELD_INTERP == 0 )
     {
     getVariable(cfg, PSECfg + "Er", PSEr[0]);
     getVariable(cfg, PSECfg + "Et", PSEt[0]);
     getVariable(cfg, PSECfg + "Ez", PSEz[0]);
     }
-    else if( f.EFIELD_INTERP > 1 )
+    else if( config_flags.EFIELD_INTERP > 1 )
     {
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridRString",
                  preSheathEGridr[0]);
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridZString",
                  preSheathEGridz[0]);
-  if( f.EFIELD_INTERP > 2 )
+  if( config_flags.EFIELD_INTERP > 2 )
   {
   getVarFromFile(cfg, input_path + efieldFile, PSECfg, "gridYString",
                  preSheathEGridy[0]);
@@ -2382,7 +2382,7 @@ if( f.FLOWV_INTERP == 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-if( f.EFIELD_INTERP == 1 )
+if( config_flags.EFIELD_INTERP == 1 )
 {
 
   for (int i = 0; i < nR_PreSheathEfield; i++) {
@@ -2411,10 +2411,10 @@ if( f.EFIELD_INTERP == 1 )
       for (int j = 0; j < nZ_PreSheathEfield; j++) {
         teLocal1 = interp2dCombined(preSheathEGridr[i], 0.0, preSheathEGridz[j],
                                     nR_Temp, nZ_Temp, &TempGridr.front(),
-                                    &TempGridz.front(), &te.front(), f.USECYLSYMM );
+                                    &TempGridz.front(), &te.front(), config_flags.USECYLSYMM );
         interp2dVector(&BLocal1[0], gridRLc[i], 0.0, gridZLc[j], nR_Bfield,
                        nZ_Bfield, bfieldGridr.data(), bfieldGridz.data(),
-                       br.data(), bz.data(), by.data(), f.USECYLSYMM );
+                       br.data(), bz.data(), by.data(), config_flags.USECYLSYMM );
         Bmag1 = std::sqrt(BLocal1[0] * BLocal1[0] + BLocal1[1] * BLocal1[1] +
                      BLocal1[2] * BLocal1[2]);
         Bnorm1[0] = BLocal1[0] / Bmag1;
@@ -2518,14 +2518,14 @@ if( f.EFIELD_INTERP == 1 )
 
   gitr_precision f_psi = 1.0;
   /* Likely dead block below */
-  if( f.USESHEATHEFIELD > 0 )
+  if( config_flags.USESHEATHEFIELD > 0 )
   {
   gitr_precision thisE0[3] = {0.0, 0.0, 0.0};
   gitr_precision minDist0 = 0.0;
   int minInd_bnd = 0;
   for (int i = 0; i < 1000; i++) {
       minDist0 =
-          getE(f, 0.0,
+          getE(config_flags, 0.0,
                0.0,
                1.0E-6*i,
                thisE0,
@@ -2629,7 +2629,7 @@ if( f.EFIELD_INTERP == 1 )
   sim::Array< gitr_precision > gridY_bins(net_nY);
   sim::Array< gitr_precision > gridZ_bins(net_nZ);
 
-  if( f.SPECTROSCOPY > 0 )
+  if( config_flags.SPECTROSCOPY > 0 )
   {
   if (world_rank == 0) {
     if (cfg.lookupValue("diagnostics.netx0", netX0) &&
@@ -2650,7 +2650,7 @@ if( f.EFIELD_INTERP == 1 )
     }
   }
 
-  if( f.SPECTROSCOPY < 3 )
+  if( config_flags.SPECTROSCOPY < 3 )
   {
     nSpec = (nBins + 1) * net_nX * net_nZ;
   }
@@ -2676,7 +2676,7 @@ if( f.EFIELD_INTERP == 1 )
 
   std::cout << "spec bin Ns " << nBins << " " << net_nX << " " << net_nY << " "
             << net_nZ << std::endl;
-  if( f.SPECTROSCOPY < 3 )
+  if( config_flags.SPECTROSCOPY < 3 )
   {
   net_Bins_size = ((nBins + 1) * net_nX * net_nZ);
   net_BinsTotal_size = ((nBins + 1) * net_nX * net_nZ);
@@ -2735,7 +2735,7 @@ if( f.EFIELD_INTERP == 1 )
   int nDistE_surfaceModel = 1, nDistA_surfaceModel = 1;
   std::string surfaceModelCfg = "surfaceModel.";
   std::string surfaceModelFile;
-  if( f.USESURFACEMODEL > 0 )
+  if( config_flags.USESURFACEMODEL > 0 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -2812,7 +2812,7 @@ if( f.EFIELD_INTERP == 1 )
       AthetaDist_CDF_R_regrid(nDistA_surfaceModel),
       EDist_CDF_R_regrid(nDistE_surfaceModelRef);
 
-  if( f.USESURFACEMODEL > 0 )
+  if( config_flags.USESURFACEMODEL > 0 )
   {
 #if USE_MPI > 0
   if (world_rank == 0) {
@@ -3263,7 +3263,7 @@ if( f.EFIELD_INTERP == 1 )
   std::cout << "Starting psourcefile import " << std::endl;
   vector<gitr_precision> xpfile(nP), ypfile(nP), zpfile(nP), vxpfile(nP), vypfile(nP),
       vzpfile(nP);
-      if( f.PARTICLE_SOURCE_FILE > 0 )
+      if( config_flags.PARTICLE_SOURCE_FILE > 0 )
       {
   libconfig::Config cfg_particles;
   std::string ncParticleSourceFile;
@@ -3519,7 +3519,7 @@ if( f.EFIELD_INTERP == 1 )
     // particleArray->setParticle(i,x, y, z, Ex, Ey,Ez, Z, amu, charge);
     */
 
-   if( f.PARTICLE_SOURCE_FILE > 0 ) 
+   if( config_flags.PARTICLE_SOURCE_FILE > 0 ) 
    {
     x = xpfile[i];
     y = ypfile[i];
@@ -3607,7 +3607,7 @@ if( f.EFIELD_INTERP == 1 )
   gitr_precision bin_edge_dtheta;
   int n_bins_angle;
 
-  if( f.USE_PARTICLE_DIAGNOSTICS )
+  if( config_flags.USE_PARTICLE_DIAGNOSTICS )
   {
       std::cout << "Starting particle diagnostics initialization" << std::endl;
     
@@ -3657,7 +3657,7 @@ if( f.EFIELD_INTERP == 1 )
   sim::Array<gitr_precision> bin_edges_time( n_bins_time + 1 , 0.0 );
   sim::Array<gitr_precision> bin_edges_angle( n_bins_angle + 1 , 0.0 );
 
-  if( f.USE_PARTICLE_DIAGNOSTICS )
+  if( config_flags.USE_PARTICLE_DIAGNOSTICS )
   {
     //creating histogram vector for all surfaces and bins
     bin_edge_dt = (bin_edge_1_time - bin_edge_0_time)/n_bins_time;
@@ -3702,7 +3702,7 @@ if( f.EFIELD_INTERP == 1 )
   int nHistoriesPerParticle = (nT / subSampleFac) + 1;
   int nHistories = nHistoriesPerParticle * nP;
 	
-  if(f.PARTICLE_TRACKS == 0) nHistories = 1;
+  if(config_flags.PARTICLE_TRACKS == 0) nHistories = 1;
 	
   sim::Array<gitr_precision> positionHistoryX(nHistories);
   sim::Array<gitr_precision> positionHistoryXgather(nHistories, 0.0);
@@ -3725,7 +3725,7 @@ if( f.EFIELD_INTERP == 1 )
   sim::Array<gitr_precision> perpDistanceToSurfaceHistory(nHistories);
   sim::Array<gitr_precision> perpDistanceToSurfaceGather(nHistories);
 
-  if( f.PARTICLE_TRACKS > 0 )
+  if( config_flags.PARTICLE_TRACKS > 0 )
   {
 
   for (int i = 0; i < world_size; i++) {
@@ -3778,10 +3778,10 @@ if( f.EFIELD_INTERP == 1 )
 #else
   sim::Array<rand_type> state1(nParticles);
 #endif
-    if( f.IONIZATION > 0 ||
-        f.USEPERPDIFFUSION > 0 ||
-        f.USECOULOMBCOLLISIONS > 0 ||
-        f.USESURFACEMODEL > 0 )
+    if( config_flags.IONIZATION > 0 ||
+        config_flags.USEPERPDIFFUSION > 0 ||
+        config_flags.USECOULOMBCOLLISIONS > 0 ||
+        config_flags.USESURFACEMODEL > 0 )
     {
 #if USE_CUDA
 
@@ -3794,7 +3794,7 @@ if( f.EFIELD_INTERP == 1 )
                    // world_rank*nP/world_size,particleBegin +
                    // (world_rank+1)*nP/world_size-10,
                    // curandInitialize(&state1[0],randDeviceInit,0));
-                   curandInitialize<>( &state1.front(), bool(f.FIXED_SEEDS) ));
+                   curandInitialize<>( &state1.front(), bool(config_flags.FIXED_SEEDS) ));
   std::cout << " finished curandInit" << std::endl;
 #else
   std::random_device randDeviceInit;
@@ -3803,7 +3803,7 @@ if( f.EFIELD_INTERP == 1 )
   //                     curandInitialize(&state1[0],randDeviceInit,0));
   // std::mt19937 s0(randDeviceInit);
   thrust::for_each( thrust::device, particleBegin, particleEnd,
-                    curandInitialize<>( &state1.front(), bool(f.FIXED_SEEDS) ) );
+                    curandInitialize<>( &state1.front(), bool(config_flags.FIXED_SEEDS) ) );
   /*
   for (int i = world_rank * nP / world_size;
        i < (world_rank + 1) * nP / world_size; i++) {
@@ -3842,28 +3842,28 @@ if( f.EFIELD_INTERP == 1 )
       nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
       n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
-      &closeGeom_sheath.front(),f, max_dt);
+      &closeGeom_sheath.front(),config_flags, max_dt);
 
   //void (*bor)(std::size_t) = &move_boris::operator2;
   //auto bor1 = *bor;
-  geometry_check geometry_check0( f,
+  geometry_check geometry_check0( config_flags,
       particleArray, nLines, &boundaries[0], surfaces, dt, nHashes,
       nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(),
       n_closeGeomElements.data(), &closeGeomGridr.front(),
       &closeGeomGridy.front(), &closeGeomGridz.front(), &closeGeom.front(),
       nEdist, E0dist, Edist, nAdist, A0dist, Adist );
 
-  sortParticles sort0(f, particleArray, nP,dev_tt, 10000,
+  sortParticles sort0(config_flags, particleArray, nP,dev_tt, 10000,
                       nActiveParticlesOnRank.data(),nT);
 
-  spec_bin spec_bin0(f,particleArray, nBins, net_nX, net_nY, net_nZ,
+  spec_bin spec_bin0(config_flags,particleArray, nBins, net_nX, net_nY, net_nZ,
                      &gridX_bins.front(), &gridY_bins.front(),
                      &gridZ_bins.front(), &net_Bins.front(), dt,
                      &net_Bins_vx.front(),&net_Bins_vy.front(),&net_Bins_vz.front(), &net_Bins_E.front() );
 
   gitr_precision *uni;
 
-  if( f.IONIZATION > 0 )
+  if( config_flags.IONIZATION > 0 )
   {
 #if USE_CUDA > 0
   cudaMallocManaged(&uni, sizeof(gitr_precision));
@@ -3874,25 +3874,25 @@ if( f.EFIELD_INTERP == 1 )
   }
 
   ionize<rand_type> ionize0(
-      f, particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
+      config_flags, particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesIonize, nDensitiesIonize,
       &gridTemperature_Ionization.front(), &gridDensity_Ionization.front(),
       &rateCoeff_Ionization.front(),uni );
 
-  recombine<rand_type> recombine0( f,
+  recombine<rand_type> recombine0( config_flags,
       particleArray, dt, &state1.front(), nR_Dens, nZ_Dens, &DensGridr.front(),
       &DensGridz.front(), &ne.front(), nR_Temp, nZ_Temp, &TempGridr.front(),
       &TempGridz.front(), &te.front(), nTemperaturesRecombine,
       nDensitiesRecombine, gridTemperature_Recombination.data(),
       gridDensity_Recombination.data(), rateCoeff_Recombination.data() );
 
-  crossFieldDiffusion crossFieldDiffusion0( f,
+  crossFieldDiffusion crossFieldDiffusion0( config_flags,
       particleArray, dt, &state1.front(), perpDiffusionCoeff, nR_Bfield,
       nZ_Bfield, bfieldGridr.data(), &bfieldGridz.front(), &br.front(),
       &bz.front(), &by.front() );
 
-  coulombCollisions coulombCollisions0( f,
+  coulombCollisions coulombCollisions0( config_flags,
       particleArray, dt, &state1.front(), nR_flowV, nY_flowV, nZ_flowV,
       &flowVGridr.front(), &flowVGridy.front(), &flowVGridz.front(),
       &flowVr.front(), &flowVz.front(), &flowVt.front(), nR_Dens, nZ_Dens,
@@ -3901,14 +3901,14 @@ if( f.EFIELD_INTERP == 1 )
       background_Z, background_amu, nR_Bfield, nZ_Bfield, bfieldGridr.data(),
       &bfieldGridz.front(), &br.front(), &bz.front(), &by.front() );
 
-  thermalForce thermalForce0(f,
+  thermalForce thermalForce0(config_flags,
       particleArray, dt, background_amu, nR_gradT, nZ_gradT, gradTGridr.data(),
       gradTGridz.data(), gradTiR.data(), gradTiZ.data(), gradTiY.data(),
       gradTeR.data(), gradTeZ.data(), gradTeY.data(), nR_Bfield, nZ_Bfield,
       bfieldGridr.data(), &bfieldGridz.front(), &br.front(), &bz.front(),
       &by.front() );
 
-  reflection reflection0( f,
+  reflection reflection0( config_flags,
       particleArray, dt, &state1.front(), nLines, &boundaries[0], surfaces,
       nE_sputtRefCoeff, nA_sputtRefCoeff, A_sputtRefCoeff.data(),
       Elog_sputtRefCoeff.data(), spyl_surfaceModel.data(),
@@ -3929,7 +3929,7 @@ if( f.EFIELD_INTERP == 1 )
                    &velocityHistoryZ.front(), &chargeHistory.front(),
                    &weightHistory.front(), &perpDistanceToSurfaceHistory.front());
 
-  if( f.FORCE_EVAL > 0 )
+  if( config_flags.FORCE_EVAL > 0 )
   {
   if (world_rank == 0) {
     int nR_force, nZ_force;
@@ -3967,31 +3967,31 @@ if( f.EFIELD_INTERP == 1 )
       for (int j = 0; j < nZ_force; j++) {
         interp2dVector(&Btest[0], forceR[i], 0.0, forceZ[j], nR_Bfield,
                        nZ_Bfield, bfieldGridr.data(), bfieldGridz.data(),
-                       br.data(), bz.data(), by.data(), f.USECYLSYMM );
+                       br.data(), bz.data(), by.data(), config_flags.USECYLSYMM );
         Btotal = vectorNorm(Btest);
         // std::cout << "node " << world_rank << "Bfield at  "<< forceR[i] << "
         // " << forceZ[j]<< " " << Btest[0] << " " << Btest[1] <<
         gitr_precision testTi =
             interp2dCombined(0.0, 0.1, 0.0, nR_Temp, nZ_Temp, TempGridr.data(),
-                             TempGridz.data(), ti.data(), f.USECYLSYMM );
+                             TempGridz.data(), ti.data(), config_flags.USECYLSYMM );
         //std::cout << "Finished Temperature import " << testVec << std::endl;
         //" " << Btest[2] << " " << Btotal << std::endl;
         particleArray->setParticle(0, forceR[i], 0.0, forceZ[j], testTi, 0.0,
                                    0.0, Z, amu, charge + 1.0);
         move_boris0(0);
 
-        if( f.IONIZATION > 0 )
+        if( config_flags.IONIZATION > 0 )
         {
           thrust::for_each(thrust::device,particleBegin,particleBegin,ionize0);
 	        thrust::for_each(thrust::device,particleBegin,particleBegin,recombine0);
         }
 
-        if( f.USECOULOMBCOLLISIONS > 0 )
+        if( config_flags.USECOULOMBCOLLISIONS > 0 )
         {
         thrust::for_each(thrust::device,particleBegin,particleBegin,coulombCollisions0);
         }
 
-        if( f.USETHERMALFORCE > 0 )
+        if( config_flags.USETHERMALFORCE > 0 )
         {
         thrust::for_each(thrust::device,particleBegin,particleBegin,thermalForce0);
         }
@@ -4002,19 +4002,19 @@ if( f.EFIELD_INTERP == 1 )
         dvBz[j * nR_force + i] = move_boris0.magneticForce[2];
         dvBt[j * nR_force + i] = move_boris0.magneticForce[1];
 
-        if( f.IONIZATION > 0 )
+        if( config_flags.IONIZATION > 0 )
         {
           tIon[j * nR_force + i] = ionize0.tion;
           tRecomb[j * nR_force + i] = recombine0.tion;
         }
 
-        if( f.USECOULOMBCOLLISIONS > 0 )
+        if( config_flags.USECOULOMBCOLLISIONS > 0 )
         {
         dvCollr[j * nR_force + i] = coulombCollisions0.dv[0];
         dvCollz[j * nR_force + i] = coulombCollisions0.dv[2];
         dvCollt[j * nR_force + i] = coulombCollisions0.dv[1];
         }
-        if( f.USETHERMALFORCE > 0 )
+        if( config_flags.USETHERMALFORCE > 0 )
         {
         dvITGr[j * nR_force + i] = thermalForce0.dv_ITGx;
         dvITGz[j * nR_force + i] = thermalForce0.dv_ITGz;
@@ -4084,7 +4084,7 @@ if( f.EFIELD_INTERP == 1 )
 
   interp2dVector(&testFlowVec[0], 1.4981, 0.0, 1.0, nR_flowV, nZ_flowV,
                  flowVGridr.data(), flowVGridz.data(), flowVr.data(),
-                 flowVz.data(), flowVt.data(), f.USECYLSYMM );
+                 flowVz.data(), flowVt.data(), config_flags.USECYLSYMM );
 
   gitr_precision leakZ = 0.0;
   if (world_rank == 0) {
@@ -4188,7 +4188,7 @@ std::cout << "here 2" << std::endl;
 
        if( tt % 100 == 0 ) std::cout << tt << "/" << nT << std::endl;
 
-       if( f.USE_SORT > 0 )
+       if( config_flags.USE_SORT > 0 )
        {
        dev_tt[0] = tt;
       //std::cout << " tt " << tt << std::endl;
@@ -4199,7 +4199,7 @@ std::cout << "here 2" << std::endl;
 #endif
        }
 
-      if( f.PARTICLE_TRACKS > 0 )
+      if( config_flags.PARTICLE_TRACKS > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd, history0);
       }
@@ -4218,18 +4218,18 @@ std::cout << "here 2" << std::endl;
       // cudaThreadSynchronize();
 #endif
 
-      if( f.SPECTROSCOPY > 0 )
+      if( config_flags.SPECTROSCOPY > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd, spec_bin0);
       }
 
-      if( f.IONIZATION > 0 )
+      if( config_flags.IONIZATION > 0 )
       {
         thrust::for_each(thrust::device, particleBegin, particleEnd,ionize0);
         thrust::for_each(thrust::device, particleBegin, particleEnd, recombine0);
       }
 
-      if( f.USEPERPDIFFUSION > 0 )
+      if( config_flags.USEPERPDIFFUSION > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        crossFieldDiffusion0);
@@ -4237,29 +4237,29 @@ std::cout << "here 2" << std::endl;
                        geometry_check0);
       }
 
-      if( f.USECOULOMBCOLLISIONS > 0 )
+      if( config_flags.USECOULOMBCOLLISIONS > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        coulombCollisions0);
       }
 
-      if( f.USETHERMALFORCE > 0 )
+      if( config_flags.USETHERMALFORCE > 0 )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd,
                        thermalForce0);
       }
 
       
-      if( f.USE_PARTICLE_DIAGNOSTICS )
+      if( config_flags.USE_PARTICLE_DIAGNOSTICS )
       {
       thrust::for_each(thrust::device, particleBegin, particleEnd, particle_diagnostics0);
       }
-  if( f.USESURFACEMODEL > 0 )
+  if( config_flags.USESURFACEMODEL > 0 )
   {
       thrust::for_each(thrust::device, particleBegin, particleEnd, reflection0);
   }
     }
-    if( f.PARTICLE_TRACKS > 0 )
+    if( config_flags.PARTICLE_TRACKS > 0 )
     {
     tt = nT;
     // dev_tt[0] = tt;
@@ -4414,7 +4414,7 @@ for(int i=0; i<nP ; i++)
              MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
 
-  if( f.PARTICLE_TRACKS > 0 )
+  if( config_flags.PARTICLE_TRACKS > 0 )
   {
 
   std::vector<gitr_precision> exampleArray(4, 0.0);
@@ -4493,7 +4493,7 @@ for(int i=0; i<nP ; i++)
   MPI_Barrier(MPI_COMM_WORLD);
   }
 
-  if( f.SPECTROSCOPY > 0 )
+  if( config_flags.SPECTROSCOPY > 0 )
   {
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Reduce(&net_Bins[0], &net_BinsTotal[0], nSpec, MPI_DOUBLE, MPI_SUM, 0,
@@ -4501,7 +4501,7 @@ for(int i=0; i<nP ; i++)
   MPI_Barrier(MPI_COMM_WORLD);
   }
   
-  if( f.USESURFACEMODEL > 0 || f.FLUX_EA > 0 )
+  if( config_flags.USESURFACEMODEL > 0 || config_flags.FLUX_EA > 0 )
   {
   // MPI_Barrier(MPI_COMM_WORLD);
   std::cout << "Starting surface reduce " << std::endl;
@@ -4555,7 +4555,7 @@ for(int i=0; i<nP ; i++)
       if (particleArray->hitWall[i] > 0.0)
         totalHitWall++;
     }
-    if( f.USE3DTETGEOM > 0 )
+    if( config_flags.USE3DTETGEOM > 0 )
     {
     gitr_precision meanTransitTime0 = 0.0;
     /*
@@ -4631,7 +4631,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     gitr_precision thisE[3] = {0.0};
     for (int j = 0; j < nP; j++) {
       minDistance =
-          getE(f, px[j], py[j], pz[j], thisE, boundaries.data(), nLines,
+          getE(config_flags, px[j], py[j], pz[j], thisE, boundaries.data(), nLines,
                nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
                n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
@@ -4802,7 +4802,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     // std::cout << "weights "  << " " << weights1[i] << " " <<
     // weightThreshold[0] << std::endl;
     //}
-  if( f.USE_PARTICLE_DIAGNOSTICS )
+  if( config_flags.USE_PARTICLE_DIAGNOSTICS )
 {
     netCDF::NcFile ncFile_particle_hist("output/particle_histograms.nc", netCDF::NcFile::replace);
     netCDF::NcDim nc_ph_nSurfs = ncFile_particle_hist.addDim("nSurfaces", nSurfaces);
@@ -4831,7 +4831,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     ncFile_particle_hist.close();
 }
   
-  if( f.USESURFACEMODEL > 0 || f.FLUX_EA > 0 )
+  if( config_flags.USESURFACEMODEL > 0 || config_flags.FLUX_EA > 0 )
   {
 #if USE_MPI > 0
     std::vector<int> surfaceNumbers(nSurfaces, 0);
@@ -4956,7 +4956,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     ncFile1.close();
   }
 #endif
-  if( f.PARTICLE_TRACKS > 0 )
+  if( config_flags.PARTICLE_TRACKS > 0 )
   {
 
     // Write netCDF output for histories
@@ -5017,7 +5017,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
 #endif
     ncFile_hist.close();
   }
-    if( f.SPECTROSCOPY > 0 )
+    if( config_flags.SPECTROSCOPY > 0 )
     {
     // Write netCDF output for density data
     netCDF::NcFile ncFile("output/spec.nc", netCDF::NcFile::replace);
@@ -5028,7 +5028,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcDim nc_nBins = ncFile.addDim("nBins", nBins + 1);
     netCDF::NcDim nc_nR = ncFile.addDim("nR", net_nX);
     netCDF::NcDim nc_nY;
-    if( f.SPECTROSCOPY > 2 )
+    if( config_flags.SPECTROSCOPY > 2 )
     {
     nc_nY = ncFile.addDim("nY", net_nY);
     }
@@ -5040,7 +5040,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     dims.push_back(nc_nZ);
     dimsrz.push_back(nc_nZ);
 
-    if( f.SPECTROSCOPY > 2 )
+    if( config_flags.SPECTROSCOPY > 2 )
     {
     dims.push_back(nc_nY);
     dimsrz.push_back(nc_nY);
@@ -5058,7 +5058,7 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     netCDF::NcVar nc_gridZ = ncFile.addVar("gridZ", netcdf_precision, nc_nZ);
     nc_gridR.putVar(&gridX_bins[0]);
     nc_gridZ.putVar(&gridZ_bins[0]);
-    if( f.SPECTROSCOPY > 2 )
+    if( config_flags.SPECTROSCOPY > 2 )
     {
     netCDF::NcVar nc_gridY = ncFile.addVar("gridY", netcdf_precision, nc_nY);
     nc_gridY.putVar(&gridY_bins[0]);
