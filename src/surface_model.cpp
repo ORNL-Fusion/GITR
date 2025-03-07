@@ -115,7 +115,7 @@ void reflection::operator()(std::size_t indx) const {
     gitr_precision dEdist;
     gitr_precision dAdist;
 
-    if( f.flux_ea > 0 )
+    if( f.FLUX_EA > 0 )
     {
       dEdist = (Edist - E0dist) / static_cast<gitr_precision>(nEdist);
       dAdist = (Adist - A0dist) / static_cast<gitr_precision>(nAdist);
@@ -213,7 +213,7 @@ void reflection::operator()(std::size_t indx) const {
 
         newWeight = weight*(totalYR);
 
-        if( f.flux_ea > 0 )
+        if( f.FLUX_EA > 0 )
         {
           EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
           AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
@@ -256,7 +256,7 @@ void reflection::operator()(std::size_t indx) const {
 		    
         newWeight=weight*totalYR;
       
-        if( f.flux_ea > 0 )
+        if( f.FLUX_EA > 0 )
         {
           EdistInd = std::floor((eInterpVal-E0dist)/dEdist);
           AdistInd = std::floor((aInterpVal-A0dist)/dAdist);
@@ -348,7 +348,7 @@ void reflection::operator()(std::size_t indx) const {
       surfaces->sumParticlesStrike[surfaceHit] = surfaces->sumParticlesStrike[surfaceHit]+1;
     #endif
     
-      if( f.flux_ea > 0 )
+      if( f.FLUX_EA > 0 )
       {
         EdistInd = std::floor((E0_for_flux_binning-E0dist)/dEdist);
         AdistInd = std::floor((thetaImpact-A0dist)/dAdist);

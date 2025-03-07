@@ -164,10 +164,10 @@ class flags
   public:
 
   int IONIZATION = -1;
-  int perp_diffusion = -1;
-  int coulomb_collisions = -1;
+  int USEPERPDIFFUSION = -1;
+  int USECOULOMBCOLLISIONS = -1;
   int thermal_force = -1;
-  int surface_model = -1; 
+  int USESURFACEMODEL = -1; 
   int USESHEATHEFIELD = -1;
   int bfield_interp = -1;
   int efield_interp = -1;
@@ -175,7 +175,7 @@ class flags
   int temp_interp = -1;
   int flowv_interp = -1;
   int gradt_interp = -1;
-  int flux_ea = -1;
+  int FLUX_EA = -1;
   int particle_source_file  = -1;
   int SPECTROSCOPY = -1;
   int USE3DTETGEOM  = -1;
@@ -208,16 +208,16 @@ class flags
     query_metadata( module_name + "." + ionization_str, IONIZATION );
 
     std::string perp_diffusion_str = "USEPERPDIFFUSION";
-    query_metadata( module_name + "." + perp_diffusion_str, perp_diffusion );
+    query_metadata( module_name + "." + perp_diffusion_str, USEPERPDIFFUSION );
 
     std::string coulomb_collisions_str = "USECOULOMBCOLLISIONS";
-    query_metadata( module_name + "." + coulomb_collisions_str, coulomb_collisions );
+    query_metadata( module_name + "." + coulomb_collisions_str, USECOULOMBCOLLISIONS );
 
     std::string thermal_force_str = "USETHERMALFORCE";
     query_metadata( module_name + "." + thermal_force_str, thermal_force );
 
     std::string surface_model_str = "USESURFACEMODEL";
-    query_metadata( module_name + "." + surface_model_str, surface_model );
+    query_metadata( module_name + "." + surface_model_str, USESURFACEMODEL );
 
     std::string sheath_efield_str = "USESHEATHEFIELD";
     query_metadata( module_name + "." + sheath_efield_str, USESHEATHEFIELD );
@@ -253,7 +253,7 @@ class flags
     query_metadata( module_name + "." + use_3d_geom_str  , USE3DTETGEOM  );
 
     std::string flux_ea_str = "FLUX_EA";
-    query_metadata( module_name + "." + flux_ea_str , flux_ea  );
+    query_metadata( module_name + "." + flux_ea_str , FLUX_EA  );
 
     std::string fixed_seeds_str = "FIXED_SEEDS";
     query_metadata( module_name + "." + fixed_seeds_str , fixed_seeds );

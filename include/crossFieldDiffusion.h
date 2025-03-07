@@ -118,7 +118,7 @@ struct crossFieldDiffusion {
 #else
         std::mt19937 *state;
 #endif
-        int perp_diffusion;
+        int USEPERPDIFFUSION;
 
         int USECYLSYMM;
 
@@ -144,7 +144,7 @@ struct crossFieldDiffusion {
         BfieldZDevicePointer(_BfieldZDevicePointer),
         BfieldTDevicePointer(_BfieldTDevicePointer),
         state(_state),
-        perp_diffusion( f_config.perp_diffusion ),
+        USEPERPDIFFUSION( f_config.USEPERPDIFFUSION ),
         USECYLSYMM( f_config.USECYLSYMM )
         { }
 
@@ -216,7 +216,7 @@ void operator()(std::size_t indx) const {
       /* magnitude of spacial step for 1 particle? */
       /* m^2 / sec units for diffusionCoefficient */
       step = std::sqrt(4*diffusionCoefficient*dt_step);
-      if( perp_diffusion <= 1 )
+      if( USEPERPDIFFUSION <= 1 )
       {
         legacy_code_block_0( particlesPointer, indx, B_unit, step, r3 );
       }
