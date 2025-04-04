@@ -1,7 +1,7 @@
 # find files
 
 find_file( netcdf_cxx_shared_lib 
-              NAMES libnetcdf-cxx4.so libnetcdf_c++4.so
+              NAMES libnetcdf-cxx4${suffix} libnetcdf_c++4${suffix}
               HINTS ${NETCDF_CXX_SHARED_LIB_DIR} )
   
 message( "Captain! netcdf_c_shared_lib: ${netcdf_c_shared_lib}" )
@@ -9,7 +9,7 @@ message( "Captain! netcdf_c_shared_lib: ${netcdf_c_shared_lib}" )
 message( "Captain! netcdf_c_shared_lib dir: ${NETCDF_C_SHARED_LIB_DIR}" )
 
 find_file( netcdf_c_shared_lib 
-              NAMES libnetcdf.so 
+              NAMES libnetcdf${suffix}
               HINTS ${NETCDF_C_SHARED_LIB_DIR} )
 
 find_path( netcdf_c_headers
