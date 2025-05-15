@@ -438,6 +438,7 @@ int main(int argc, char **argv, char **envp)
   int nHashPointsTotal = 1;
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
+  std::string geomHashSheathCfg = "geometry_sheath.";
 
   std::cout << "code has made it to this point 1!" << std::endl;
 
@@ -448,6 +449,7 @@ int main(int argc, char **argv, char **envp)
   //nZ_closeGeomTotal = 0;
   //nHashPointsTotal = 0;
   //nGeomHash = 0;
+ 
   if (world_rank == 0) {
     getVariable(cfg, geomHashCfg + "nHashes", nHashes);
   }
@@ -465,6 +467,7 @@ int main(int argc, char **argv, char **envp)
   if( config_flags.GEOM_HASH == 1 )
   {
   if (world_rank == 0) {
+	  std::cout << "Check3 " << endl;
     importHashNs(config_flags, cfg, input_path, nHashes, "geometry_hash", nR_closeGeom.data(),
                  nY_closeGeom.data(), nZ_closeGeom.data(),
                  n_closeGeomElements.data(), nR_closeGeomTotal,
@@ -476,9 +479,9 @@ int main(int argc, char **argv, char **envp)
     {
       for(int i=0; i<nHashes;i++)
       {
-        nR_closeGeom[i] = geomHash["nR_closeGeom"][i];
-        nZ_closeGeom[i] = geomHash["nZ_closeGeom"][i];
-        n_closeGeomElements[i] = geomHash["n_closeGeomElements"][i];
+        nR_closeGeom[i] = geomHash["nR"][i];
+        nZ_closeGeom[i] = geomHash["nZ"][i];
+        n_closeGeomElements[i] = geomHash["n"][i];
         std::cout << "hash nr ny nz total " << n_closeGeomElements[i] << " "
         << nR_closeGeom[i]  << " " << nZ_closeGeom[i]<< std::endl;
       }
@@ -504,7 +507,7 @@ int main(int argc, char **argv, char **envp)
     {
       for(int i=0; i<nHashes;i++)
       {
-        nY_closeGeom[i] = geomHash["nY_closeGeom"][i];
+        nY_closeGeom[i] = geomHash["nY"][i];
       }
     }
      else
@@ -957,231 +960,531 @@ else if( config_flags.GEOM_HASH > 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }
-
-  int nR_closeGeom_sheath = 1;
-  int nY_closeGeom_sheath = 1;
-  int nZ_closeGeom_sheath = 1;
-  int n_closeGeomElements_sheath = 1;
+  int nHashes_sheath = 1;
+  int nR_closeGeom_sheathTotal = 1;
+  int nY_closeGeom_sheathTotal = 1;
+  int nZ_closeGeom_sheathTotal = 1;
+  int nHashPointsTotal_sheath = 1;
   int nGeomHash_sheath = 1;
-  std::string geomHashSheathCfg = "geometry_sheath.";
+
+  sim::Array<int> nR_closeGeom_sheath(nHashes, 0);
+  sim::Array<int> nY_closeGeom_sheath(nHashes, 0);
+  sim::Array<int> nZ_closeGeom_sheath(nHashes, 0);
+  sim::Array<int> nHashPoints_sheath(nHashes, 0);
+  sim::Array<int> n_closeGeomElements_sheath(nHashes, 0);
+  
+ if( config_flags.GEOM_HASH == 1 )
+  {
+  if (world_rank == 0) {
+    importHashNs(config_flags, cfg, input_path, nHashes_sheath, "geometry_hash_sheath", nR_closeGeom_sheath.data(),
+                 nY_closeGeom_sheath.data(), nZ_closeGeom_sheath.data(),
+                 n_closeGeomElements_sheath.data(), nR_closeGeom_sheathTotal,
+                 nY_closeGeom_sheathTotal, nZ_closeGeom_sheathTotal, nHashPoints_sheath.data(),
+                 nHashPointsTotal_sheath, nGeomHash_sheath);
+    std::cout << "made it here" << std::endl;
+    libconfig::Setting& geomHash_sheath = cfg.lookup("geometry_hash_sheath");
+     if(nHashes > 1)
+    {
+      for(int i=0; i<nHashes_sheath;i++)
+      {
+        nR_closeGeom_sheath[i] = geomHash_sheath["nR"][i];
+        nZ_closeGeom_sheath[i] = geomHash_sheath["nZ"][i];
+        n_closeGeomElements_sheath[i] = geomHash_sheath["n"][i];
+        std::cout << "hash nr ny nz total " << n_closeGeomElements_sheath[i] << " "
+        << nR_closeGeom_sheath[i]  << " " << nZ_closeGeom_sheath[i]<< std::endl;
+      }
+    }
+     else
+    {
+      getVariable(cfg,geomHashSheathCfg+"nR_closeGeom_sheath",nR_closeGeom_sheath[0]);
+      getVariable(cfg,geomHashSheathCfg+"nZ_closeGeom_sheath",nZ_closeGeom_sheath[0]);
+      getVariable(cfg,geomHashSheathCfg+"n_closeGeomElements_sheath",n_closeGeomElements_sheath[0]);
+        std::cout << "else hash nr ny nz total " << n_closeGeomElements_sheath[0] << " "
+        << nR_closeGeom_sheath[0]  << " " << nZ_closeGeom_sheath[0]<< std::endl;
+    }
+     for(int j=0;j<nHashes_sheath;j++)
+    {
+      nGeomHash_sheath = nGeomHash_sheath +
+      nR_closeGeom_sheath[j]*nZ_closeGeom_sheath[j]*n_closeGeomElements_sheath[j];
+      nR_closeGeom_sheathTotal = nR_closeGeom_sheathTotal + nR_closeGeom_sheath[j];
+      nZ_closeGeom_sheathTotal = nZ_closeGeom_sheathTotal + nZ_closeGeom_sheath[j];
+    }
+    if( config_flags.USE3DTETGEOM > 0 )
+    {
+     if(nHashes_sheath > 1)
+    {
+      for(int i=0; i<nHashes;i++)
+      {
+        nY_closeGeom_sheath[i] = geomHash_sheath["nY"][i];
+      }
+    }
+     else
+    {
+      getVariable(cfg,geomHashSheathCfg+"nY",nY_closeGeom_sheath[0]);
+    }
+    }
+     nGeomHash_sheath = 0;
+     nR_closeGeom_sheathTotal = 0;
+     nY_closeGeom_sheathTotal = 0;
+     nZ_closeGeom_sheathTotal = 0;
+     nHashPointsTotal_sheath = 0;
+     for(int j=0;j<nHashes;j++)
+    {
+        nHashPoints_sheath[j] =nR_closeGeom_sheath[j]*nY_closeGeom_sheath[j]*nZ_closeGeom_sheath[j];
+      nHashPointsTotal_sheath = nHashPointsTotal_sheath + nHashPoints_sheath[j];
+      nGeomHash_sheath = nGeomHash_sheath + nHashPoints_sheath[j]*n_closeGeomElements_sheath[j];
+      nR_closeGeom_sheathTotal = nR_closeGeom_sheathTotal + nR_closeGeom_sheath[j];
+      nY_closeGeom_sheathTotal = nY_closeGeom_sheathTotal + nY_closeGeom_sheath[j];
+      nZ_closeGeom_sheathTotal = nZ_closeGeom_sheathTotal + nZ_closeGeom_sheath[j];
+    }
+     std::cout << "hhhash nr ny nz total " << nGeomHash_sheath << " " <<
+     nR_closeGeom_sheathTotal << " " << nY_closeGeom_sheathTotal << " " <<
+     nZ_closeGeom_sheathTotal<< std::endl;
+  }
+#if USE_MPI > 0
+  std::cout << " mpi broadcast hash " << std::endl;
+  MPI_Bcast(&nR_closeGeom_sheath[0], nHashes, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&nY_closeGeom_sheath[0], nHashes, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&nZ_closeGeom_sheath[0], nHashes, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&n_closeGeomElements_sheath[0], nHashes, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&nGeomHash, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&nR_closeGeom_sheathTotal, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&nY_closeGeom_sheathTotal, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&nZ_closeGeom_sheathTotal, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&nHashPointsTotal, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
+  std::cout << " mpi broadcast hash finished" << std::endl;
+#endif
+  }
+//if( config_flags.GEOM_HASH_SHEATH == 1 )
+//{
+//  if (world_rank == 0) {
+//    getVariable(cfg, geomHashSheathCfg + "nR", nR_closeGeom_sheath);
+//    getVariable(cfg, geomHashSheathCfg + "nZ", nZ_closeGeom_sheath);
+//    getVariable(cfg, geomHashSheathCfg + "n",
+//                n_closeGeomElements_sheath);
+//    nGeomHash_sheath =
+//        nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
+//    if( config_flags.USE3DTETGEOM > 0 )
+//    {
+//      getVariable(cfg, geomHashSheathCfg + "nY", nY_closeGeom_sheath);
+//      nGeomHash_sheath = nY_closeGeom_sheath * nGeomHash_sheath;
+//    }
+//  }
+//#if USE_MPI > 0
+//  MPI_Bcast(&nR_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&nY_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&nZ_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&n_closeGeomElements_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&nGeomHash_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Barrier(MPI_COMM_WORLD);
+//#endif
+//}
+//
+//std::string hashFile_sheath;
+//if( config_flags.GEOM_HASH_SHEATH > 1 )
+//{
+//  if (world_rank == 0) {
+//    getVariable(cfg, geomHashSheathCfg + "fileString", hashFile_sheath);
+//    nR_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
+//                                         geomHashSheathCfg, "gridNrString");
+//    nZ_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
+//                                         geomHashSheathCfg, "gridNzString");
+//    n_closeGeomElements_sheath =
+//        getDimFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
+//                       "nearestNelementsString");
+//    nGeomHash_sheath =
+//        nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
+//    if( config_flags.USE3DTETGEOM > 0 )
+//    {
+//      nY_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
+//                                           geomHashSheathCfg, "gridNyString");
+//      nGeomHash_sheath = nY_closeGeom_sheath * nGeomHash_sheath;
+//    }
+//  }
+//#if USE_MPI > 0
+//  MPI_Bcast(&nR_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&nY_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&nZ_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&n_closeGeomElements_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&nGeomHash_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Barrier(MPI_COMM_WORLD);
+//#endif
+//}
+
 if( config_flags.GEOM_HASH_SHEATH == 1 )
 {
+  sim::Array<gitr_precision> hashX0_s(nHashes_sheath, 0.0), hashX1_s(nHashes_sheath, 0.0),
+      hashY0_s(nHashes_sheath, 0.0), hashY1_s(nHashes_sheath, 0.0), hashZ0_s(nHashes_sheath, 0.0),
+      hashZ1_s(nHashes_sheath, 0.0);
   if (world_rank == 0) {
-    getVariable(cfg, geomHashSheathCfg + "nR_closeGeom", nR_closeGeom_sheath);
-    getVariable(cfg, geomHashSheathCfg + "nZ_closeGeom", nZ_closeGeom_sheath);
-    getVariable(cfg, geomHashSheathCfg + "n_closeGeomElements",
-                n_closeGeomElements_sheath);
-    nGeomHash_sheath =
-        nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
-    if( config_flags.USE3DTETGEOM > 0 )
-    {
-      getVariable(cfg, geomHashSheathCfg + "nY_closeGeom", nY_closeGeom_sheath);
-      nGeomHash_sheath = nY_closeGeom_sheath * nGeomHash_sheath;
+    libconfig::Setting &geomHash_s = cfg.lookup("geometry_sheath");
+    if (nHashes_sheath > 1) {
+      for (int i = 0; i < nHashes; i++) {
+        hashX0_s[i] = geomHash_s["hashX0"][i];
+        hashX1_s[i] = geomHash_s["hashX1"][i];
+        hashZ0_s[i] = geomHash_s["hashZ0"][i];
+        hashZ1_s[i] = geomHash_s["hashZ1"][i];
+        if( config_flags.USE3DTETGEOM > 0 )
+        {
+          hashY0_s[i] = geomHash_s["hashY0"][i];
+          hashY1_s[i] = geomHash_s["hashY1"][i];
+        }
+      }
+    } else {
+      getVariable(cfg, geomHashSheathCfg + "hashX0", hashX0_s[0]);
+      getVariable(cfg, geomHashSheathCfg + "hashX1", hashX1_s[0]);
+      getVariable(cfg, geomHashSheathCfg + "hashZ0", hashZ0_s[0]);
+      getVariable(cfg, geomHashSheathCfg + "hashZ1", hashZ1_s[0]);
+      if( config_flags.USE3DTETGEOM > 0 )
+      {
+      getVariable(cfg, geomHashSheathCfg + "hashY0", hashY0_s[0]);
+      getVariable(cfg, geomHashSheathCfg + "hashY1", hashY1_s[0]);
+      }
     }
   }
-#if USE_MPI > 0
-  MPI_Bcast(&nR_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&nY_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&nZ_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&n_closeGeomElements_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&nGeomHash_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-#endif
-}
-
-std::string hashFile_sheath;
-if( config_flags.GEOM_HASH_SHEATH > 1 )
-{
-  if (world_rank == 0) {
-    getVariable(cfg, geomHashSheathCfg + "fileString", hashFile_sheath);
-    nR_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
-                                         geomHashSheathCfg, "gridNrString");
-    nZ_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
-                                         geomHashSheathCfg, "gridNzString");
-    n_closeGeomElements_sheath =
-        getDimFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
-                       "nearestNelementsString");
-    nGeomHash_sheath =
-        nR_closeGeom_sheath * nZ_closeGeom_sheath * n_closeGeomElements_sheath;
-    if( config_flags.USE3DTETGEOM > 0 )
-    {
-      nY_closeGeom_sheath = getDimFromFile(cfg, input_path + hashFile_sheath,
-                                           geomHashSheathCfg, "gridNyString");
-      nGeomHash_sheath = nY_closeGeom_sheath * nGeomHash_sheath;
+  
+  sim::Array<gitr_precision> closeGeomGridr_sheath(nR_closeGeom_sheathTotal),
+      closeGeomGridy_sheath(nY_closeGeom_sheathTotal),
+      closeGeomGridz_sheath(nZ_closeGeom_sheathTotal);
+  sim::Array<int> closeGeom_sheath(nGeomHashTotal_sheath);
+  
+  int nHash_sheath = 0;
+  int hashSum_sheath = 0;
+  for (int i = 0; i < nR_closeGeom_sheathTotal; i++) {
+    if (i == hashSum_sheath + nR_closeGeom_sheath[nHash_sheath]) {
+      hashSum_sheath = hashSum_sheath + nR_closeGeom_sheath[nHash_sheath];
+      nHash_sheath = nHash_sheath + 1;
     }
+    closeGeomGridr_sheath[i] = (hashX1_s[nHash_sheath] - hashX0_s[nHash_sheath]) * (i - hashSum_sheath) /
+                            (nR_closeGeom_sheath[nHash_sheath] - 1) +
+                        hashX0_s[nHash_sheath];
+     //std::cout << "gridX "<< closeGeomGridr[i] << std::endl;
   }
-#if USE_MPI > 0
-  MPI_Bcast(&nR_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&nY_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&nZ_closeGeom_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&n_closeGeomElements_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&nGeomHash_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-#endif
-}
-
-  sim::Array<gitr_precision> closeGeomGridr_sheath(nR_closeGeom_sheath),
-      closeGeomGridy_sheath(nY_closeGeom_sheath),
-      closeGeomGridz_sheath(nZ_closeGeom_sheath);
-  sim::Array<int> closeGeom_sheath(nGeomHash_sheath);
-
-  if( config_flags.GEOM_HASH_SHEATH == 1 )
-  {
-  gitr_precision hashX0_s, hashX1_s, hashY0_s, hashY1_s, hashZ0_s, hashZ1_s;
-  if (world_rank == 0) {
-    getVariable(cfg, geomHashSheathCfg + "hashX0", hashX0_s);
-    getVariable(cfg, geomHashSheathCfg + "hashX1", hashX1_s);
-    getVariable(cfg, geomHashSheathCfg + "hashZ0", hashZ0_s);
-    getVariable(cfg, geomHashSheathCfg + "hashZ1", hashZ1_s);
-    if( config_flags.USE3DTETGEOM > 0 )
-    {
-    getVariable(cfg, geomHashSheathCfg + "hashY0", hashY0_s);
-    getVariable(cfg, geomHashSheathCfg + "hashY1", hashY1_s);
-//#endif
+  nHash_sheath = 0;
+  hashSum_sheath = 0;
+  for (int j = 0; j < nY_closeGeom_sheathTotal; j++) {
+    if (j == hashSum_sheath + nY_closeGeom_sheath[nHash_sheath]) {
+      hashSum_sheath = hashSum_sheath + nY_closeGeom_sheath[nHash_sheath];
+      nHash_sheath = nHash_sheath + 1;
     }
+    closeGeomGridy_sheath[j] = (hashY1_s[nHash_sheath] - hashY0_s[nHash_sheath]) * (j - hashSum_sheath) /
+                            (nY_closeGeom_sheath[nHash_sheath] - 1) +
+                        hashY0_s[nHash_sheath];
+     //std::cout << "gridY "<< closeGeomGridy[j] << std::endl;
   }
-#if USE_MPI > 0
-  MPI_Bcast(&hashX0_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&hashX1_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&hashY0_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&hashY1_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&hashZ0_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&hashZ1_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-#endif
-
-  for (int i = 0; i < nR_closeGeom_sheath; i++) {
-    closeGeomGridr_sheath[i] =
-        (hashX1_s - hashX0_s) * i / (nR_closeGeom_sheath - 1) + hashX0_s;
-  }
-  for (int j = 0; j < nY_closeGeom_sheath; j++) {
-    closeGeomGridy_sheath[j] =
-        (hashY1_s - hashY0_s) * j / (nY_closeGeom_sheath - 1) + hashY0_s;
-  }
-  for (int k = 0; k < nZ_closeGeom_sheath; k++) {
-    closeGeomGridz_sheath[k] =
-        (hashZ1_s - hashZ0_s) * k / (nZ_closeGeom_sheath - 1) + hashZ0_s;
+  nHash_sheath = 0;
+  hashSum_sheath = 0;
+  for (int k = 0; k < nZ_closeGeom_sheathTotal; k++) {
+    if (k == hashSum_sheath + nZ_closeGeom_sheath[nHash_sheath]) {
+      hashSum_sheath = hashSum_sheath + nZ_closeGeom_sheath[nHash_sheath];
+      nHash_sheath = nHash_sheath + 1;
+    }
+    closeGeomGridz_sheath[k] = (hashZ1_s[nHash_sheath] - hashZ0_s[nHash_sheath]) * (k - hashSum_sheath) /
+                            (nZ_closeGeom_sheath[nHash_sheath] - 1) +
+                        hashZ0_s[nHash_sheath];
+     //std::cout << "gridz "<< closeGeomGridz[k] << std::endl;
   }
 
-  thrust::counting_iterator<std::size_t> lines0_s(0);
-  thrust::counting_iterator<std::size_t> lines1_s(nR_closeGeom_sheath *
-                                                  nY_closeGeom_sheath);
-  sim::Array<gitr_precision> minDist1_s(nGeomHash_sheath, 1e6);
-  int nHashMeshPointsPerProcess_s =
-      ceil(nR_closeGeom_sheath * nY_closeGeom_sheath * nZ_closeGeom_sheath /
-           world_size);
-  std::vector<int> hashMeshIncrements_s(world_size);
+  std::cout << "about to create iterator1 " << std::endl;
+  thrust::counting_iterator<std::size_t> lines0(0);
+  std::cout << "iterator2 " << std::endl;
+  thrust::counting_iterator<std::size_t> lines1(nHashPointsTotal_sheath);
+  int nHashMeshPointsPerProcess = ceil(nHashPointsTotal_sheath / world_size);
+  std::cout << "nHashMeshPointsPerProcess " << nHashMeshPointsPerProcess
+            << std::endl;
+  std::vector<int> hashMeshIncrements(world_size);
   for (int j = 0; j < world_size - 1; j++) {
-    hashMeshIncrements_s[j] = nHashMeshPointsPerProcess_s;
+    hashMeshIncrements[j] = nHashMeshPointsPerProcess;
+    std::cout << "hashMeshIncrements " << hashMeshIncrements[j] << std::endl;
   }
-  hashMeshIncrements_s[world_size - 1] =
-      nR_closeGeom_sheath * nY_closeGeom_sheath * nZ_closeGeom_sheath -
-      (world_size - 1) * nHashMeshPointsPerProcess_s;
-  typedef std::chrono::high_resolution_clock Time0_s;
-  typedef std::chrono::duration<gitr_precision> fsec0_s;
-  auto start_clock0_s = Time0_s::now();
+  hashMeshIncrements[world_size - 1] =
+      nHashPointsTotal - (world_size - 1) * nHashMeshPointsPerProcess;
+  std::cout << "minDist1 " << nGeomHash << std::endl;
+  std::cout << "nHashPointsTotal " << nHashPointsTotal << std::endl;
+  int Maxn_closeGeomElements = 0;
+  for (int i = 0; i < nHashes_sheath; i++) {
+    if (n_closeGeomElements[i] > Maxn_closeGeomElements) {
+      Maxn_closeGeomElements = n_closeGeomElements_sheath[i];
+    }
+  }
+
+  std::cout << "Maxn_closeGeomElements " << Maxn_closeGeomElements << std::endl;
+  sim::Array<gitr_precision> minDist1(Maxn_closeGeomElements, 1e6);
+  std::cout << "Generating geometry hash" << sizeof(int) << " bytes per int, "
+            << nGeomHash << " for the entire hash " << std::endl;
+
+#if USE_CUDA > 0
+  // cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
+
+  // if(cudaSuccess != cuda_status )
+  //{
+
+  //  printf("Error: cudaMemGetInfo fails, %s \n",
+  //  cudaGetErrorString(cuda_status) ); exit(1);
+  //}
+
+  // free_db = (double)free_byte ;
+  // total_db = (double)total_byte ;
+  // used_db = total_db - free_db ;
+
+  // printf("GPU memory usage: used = %f, free = %f MB, total = %f MB\n",
+  //  used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
+#endif
+  std::cout << "starting geomhash" << std::endl;
+  typedef std::chrono::high_resolution_clock Time0;
+  typedef std::chrono::duration<gitr_precision> fsec0;
+  auto start_clock0 = Time0::now();
+  
+  std::cout << "geo1 numbers " << nLines << " "
+        << nHashes  << " " << nR_closeGeom[0] <<  " "
+        << nY_closeGeom[0]  << " " << nZ_closeGeom[0] <<" "
+        << n_closeGeomElements[0] << std::endl;
+  
+//  hashGeom_sheath geo_s(nLines, nHashes, boundaries.data(), closeGeomGridr.data(),
+//                closeGeomGridy.data(), closeGeomGridz.data(),
+//                n_closeGeomElements.data(), closeGeom.data(),
+//                nR_closeGeom.data(), nY_closeGeom.data(), nZ_closeGeom.data(), config_flags.USE3DTETGEOM );
   hashGeom_sheath geo_s(
-      nLines, boundaries.data(), closeGeomGridr_sheath.data(),
+      nLines,nHashes_sheath, boundaries.data(), closeGeomGridr_sheath.data(),
       closeGeomGridy_sheath.data(), closeGeomGridz_sheath.data(),
       n_closeGeomElements_sheath, closeGeom_sheath.data(), nR_closeGeom_sheath,
       nY_closeGeom_sheath, nZ_closeGeom_sheath, config_flags.USE3DTETGEOM );
+  std::cout << "nHashPoints start stop " << world_rank * nHashMeshPointsPerProcess << " "
+        << world_rank * nHashMeshPointsPerProcess + hashMeshIncrements[world_rank] - 1<< std::endl;
   thrust::for_each(thrust::device,
-                   lines0_s + world_rank * nHashMeshPointsPerProcess_s,
-                   lines0_s + world_rank * nHashMeshPointsPerProcess_s +
-                       hashMeshIncrements_s[world_rank] - 1,
+                   lines0 + world_rank * nHashMeshPointsPerProcess,
+                   lines0 + world_rank * nHashMeshPointsPerProcess +
+                       hashMeshIncrements[world_rank],
                    geo_s);
+// for(int i=0;i<nR_closeGeom*nY_closeGeom*nZ_closeGeom;i++)
+//{
+// geo1(i);
+//}
 #if USE_CUDA
   cudaDeviceSynchronize();
 #endif
-#if USE_MPI > 0
-  MPI_Barrier(MPI_COMM_WORLD);
-  // Collect stuff
-  for (int rr = 1; rr < world_size; rr++) {
-    if (world_rank == rr) {
-      MPI_Send(&closeGeom_sheath[world_rank * nHashMeshPointsPerProcess_s *
-                                 n_closeGeomElements_sheath],
-               hashMeshIncrements_s[world_rank] * n_closeGeomElements_sheath,
-               MPI_INT, 0, 0, MPI_COMM_WORLD);
-    } else if (world_rank == 0) {
-      MPI_Recv(&closeGeom_sheath[rr * nHashMeshPointsPerProcess_s *
-                                 n_closeGeomElements_sheath],
-               hashMeshIncrements_s[rr] * n_closeGeomElements_sheath, MPI_INT,
-               rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+#if USE_CUDA
+  cudaDeviceSynchronize();
+#endif
+  auto finish_clock0 = Time0::now();
+  fsec0 fs0 = finish_clock0 - start_clock0;
+  printf("Time taken          is %6.3f (secs) \n", fs0.count());
+  if (world_rank == 0) {
+    for (int i = 0; i < nHashes; i++) {
+      std::cout << "opening file" << std::endl;
+      netCDF::NcFile ncFile_hash("output/geomHash" + std::to_string(i) + ".nc",
+                         netCDF::NcFile::replace);
+      std::cout << "opened file" << std::endl;
+      netCDF::NcDim hashNR = ncFile_hash.addDim("nR", nR_closeGeom[i]);
+      netCDF::NcDim hashNY;
+      if( config_flags.USE3DTETGEOM > 0 )
+      {
+        hashNY = ncFile_hash.addDim("nY", nY_closeGeom[i]);
+      }
+      netCDF::NcDim hashNZ = ncFile_hash.addDim("nZ", nZ_closeGeom[i]);
+      netCDF::NcDim hashN = ncFile_hash.addDim("n", n_closeGeomElements[i]);
+      vector<netCDF::NcDim> geomHashDim;
+      geomHashDim.push_back(hashNR);
+      std::cout << "created dims" << std::endl;
+      if( config_flags.USE3DTETGEOM > 0 )
+      {
+        geomHashDim.push_back(hashNY);
+      }
+      geomHashDim.push_back(hashNZ);
+      geomHashDim.push_back(hashN);
+      netCDF::NcVar hash_gridR = ncFile_hash.addVar("gridR", netcdf_precision, hashNR);
+      std::cout << "created dims2" << std::endl;
+      netCDF::NcVar hash_gridY;
+      if( config_flags.USE3DTETGEOM > 0 )
+      {
+        hash_gridY = ncFile_hash.addVar("gridY", netcdf_precision, hashNY);
+      }
+      netCDF::NcVar hash_gridZ = ncFile_hash.addVar("gridZ", netcdf_precision, hashNZ);
+      netCDF::NcVar hash = ncFile_hash.addVar("hash", netCDF::ncInt, geomHashDim);
+      std::cout << "created vars" << std::endl;
+      int ncIndex = 0;
+      if (i > 0)
+        ncIndex = nR_closeGeom[i - 1];
+      hash_gridR.putVar(&closeGeomGridr[ncIndex]);
+      if( config_flags.USE3DTETGEOM > 0 )
+      {
+        if (i > 0)
+          ncIndex = nY_closeGeom[i - 1];
+        hash_gridY.putVar(&closeGeomGridy[ncIndex]);
+      }
+
+      if (i > 0)
+        ncIndex = nZ_closeGeom[i - 1];
+      hash_gridZ.putVar(&closeGeomGridz[ncIndex]);
+      if (i > 0)
+        ncIndex = nR_closeGeom[i - 1] * nY_closeGeom[i - 1] *
+                  nZ_closeGeom[i - 1] * n_closeGeomElements[i - 1];
+      hash.putVar(&closeGeom[ncIndex]);
+      ncFile_hash.close();
     }
   }
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Bcast(closeGeom_sheath.data(),
-            nR_closeGeom_sheath * nY_closeGeom_sheath * nZ_closeGeom_sheath *
-                n_closeGeomElements_sheath,
-            MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-#endif
-#if USE_CUDA
-  cudaDeviceSynchronize();
-#endif
-  auto finish_clock0_s = Time0_s::now();
-  fsec0_s fs0_s = finish_clock0_s - start_clock0_s;
-  printf("Time taken          is %6.3f (secs) \n", fs0_s.count());
-  if (world_rank == 0) {
-    netCDF::NcFile ncFile_hash_sheath("output/geomHash_sheath.nc", netCDF::NcFile::replace);
-    netCDF::NcDim hashNR_sheath = ncFile_hash_sheath.addDim("nR", nR_closeGeom_sheath);
-    netCDF::NcDim hashNY_sheath = ncFile_hash_sheath.addDim("nY", nY_closeGeom_sheath);
-    netCDF::NcDim hashNZ_sheath = ncFile_hash_sheath.addDim("nZ", nZ_closeGeom_sheath);
-    netCDF::NcDim hashN_sheath =
-        ncFile_hash_sheath.addDim("n", n_closeGeomElements_sheath);
-    vector<netCDF::NcDim> geomHashDim_sheath;
-    geomHashDim_sheath.push_back(hashNR_sheath);
-    geomHashDim_sheath.push_back(hashNY_sheath);
-    geomHashDim_sheath.push_back(hashNZ_sheath);
-    geomHashDim_sheath.push_back(hashN_sheath);
-    netCDF::NcVar hash_gridR_sheath =
-        ncFile_hash_sheath.addVar("gridR", netcdf_precision, hashNR_sheath);
-    netCDF::NcVar hash_gridY_sheath =
-        ncFile_hash_sheath.addVar("gridY", netcdf_precision, hashNY_sheath);
-    netCDF::NcVar hash_gridZ_sheath =
-        ncFile_hash_sheath.addVar("gridZ", netcdf_precision, hashNZ_sheath);
-    netCDF::NcVar hash_sheath =
-        ncFile_hash_sheath.addVar("hash", netCDF::ncInt, geomHashDim_sheath);
-    hash_gridR_sheath.putVar(&closeGeomGridr_sheath[0]);
-    hash_gridY_sheath.putVar(&closeGeomGridy_sheath[0]);
-    hash_gridZ_sheath.putVar(&closeGeomGridz_sheath[0]);
-    hash_sheath.putVar(&closeGeom_sheath[0]);
-    ncFile_hash_sheath.close();
-  }
-#if USE_CUDA
-  cudaDeviceSynchronize();
-#endif
+      std::cout << "created vars2" << std::endl;
 }
-else if( config_flags.GEOM_HASH_SHEATH > 1 )
-{
-#if USE_MPI > 0
-  if (world_rank == 0) {
-#endif
-    getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
-                   "gridRString", closeGeomGridr_sheath[0]);
-    getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
-                   "gridZString", closeGeomGridz_sheath[0]);
-    if( config_flags.USE3DTETGEOM > 0 )
-    {
-    getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
-                   "gridYString", closeGeomGridy_sheath[0]);
+// beginning of previous block
+//
+//  if( config_flags.GEOM_HASH_SHEATH == 1 )
+//  {
+//  gitr_precision hashX0_s, hashX1_s, hashY0_s, hashY1_s, hashZ0_s, hashZ1_s;
+//  if (world_rank == 0) {
+//    getVariable(cfg, geomHashSheathCfg + "hashX0", hashX0_s);
+//    getVariable(cfg, geomHashSheathCfg + "hashX1", hashX1_s);
+//    getVariable(cfg, geomHashSheathCfg + "hashZ0", hashZ0_s);
+//    getVariable(cfg, geomHashSheathCfg + "hashZ1", hashZ1_s);
+//    if( config_flags.USE3DTETGEOM > 0 )
+//    {
+//    getVariable(cfg, geomHashSheathCfg + "hashY0", hashY0_s);
+//    getVariable(cfg, geomHashSheathCfg + "hashY1", hashY1_s);
+////#endif
+//    }
+//  }
+//#if USE_MPI > 0
+//  MPI_Bcast(&hashX0_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&hashX1_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&hashY0_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&hashY1_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&hashZ0_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
+//  MPI_Bcast(&hashZ1_s, nHashes, MPI_FLOAT, 0, MPI_COMM_WORLD);
+//  MPI_Barrier(MPI_COMM_WORLD);
 //#endif
-    }
-    getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
-                   "closeGeomString", closeGeom_sheath[0]);
-#if USE_MPI > 0
-  }
-  MPI_Bcast(closeGeomGridr_sheath.data(), nR_closeGeom_sheath, MPI_FLOAT, 0,
-            MPI_COMM_WORLD);
-  MPI_Bcast(closeGeomGridy_sheath.data(), nY_closeGeom_sheath, MPI_FLOAT, 0,
-            MPI_COMM_WORLD);
-  MPI_Bcast(closeGeomGridz_sheath.data(), nZ_closeGeom_sheath, MPI_FLOAT, 0,
-            MPI_COMM_WORLD);
-  MPI_Bcast(closeGeom_sheath.data(), nGeomHash_sheath, MPI_INT, 0,
-            MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-#endif
-}
+//
+//  for (int i = 0; i < nR_closeGeom_sheath; i++) {
+//    closeGeomGridr_sheath[i] =
+//        (hashX1_s - hashX0_s) * i / (nR_closeGeom_sheath - 1) + hashX0_s;
+//  }
+//  for (int j = 0; j < nY_closeGeom_sheath; j++) {
+//    closeGeomGridy_sheath[j] =
+//        (hashY1_s - hashY0_s) * j / (nY_closeGeom_sheath - 1) + hashY0_s;
+//  }
+//  for (int k = 0; k < nZ_closeGeom_sheath; k++) {
+//    closeGeomGridz_sheath[k] =
+//        (hashZ1_s - hashZ0_s) * k / (nZ_closeGeom_sheath - 1) + hashZ0_s;
+//  }
+//
+//  thrust::counting_iterator<std::size_t> lines0_s(0);
+//  thrust::counting_iterator<std::size_t> lines1_s(nR_closeGeom_sheath *
+//                                                  nY_closeGeom_sheath);
+//  sim::Array<gitr_precision> minDist1_s(nGeomHash_sheath, 1e6);
+//  int nHashMeshPointsPerProcess_s =
+//      ceil(nR_closeGeom_sheath * nY_closeGeom_sheath * nZ_closeGeom_sheath /
+//           world_size);
+//  std::vector<int> hashMeshIncrements_s(world_size);
+//  for (int j = 0; j < world_size - 1; j++) {
+//    hashMeshIncrements_s[j] = nHashMeshPointsPerProcess_s;
+//  }
+//  hashMeshIncrements_s[world_size - 1] =
+//      nR_closeGeom_sheath * nY_closeGeom_sheath * nZ_closeGeom_sheath -
+//      (world_size - 1) * nHashMeshPointsPerProcess_s;
+//  typedef std::chrono::high_resolution_clock Time0_s;
+//  typedef std::chrono::duration<gitr_precision> fsec0_s;
+//  auto start_clock0_s = Time0_s::now();
+//  hashGeom_sheath geo_s(
+//      nLines, boundaries.data(), closeGeomGridr_sheath.data(),
+//      closeGeomGridy_sheath.data(), closeGeomGridz_sheath.data(),
+//      n_closeGeomElements_sheath, closeGeom_sheath.data(), nR_closeGeom_sheath,
+//      nY_closeGeom_sheath, nZ_closeGeom_sheath, config_flags.USE3DTETGEOM );
+//  thrust::for_each(thrust::device,
+//                   lines0_s + world_rank * nHashMeshPointsPerProcess_s,
+//                   lines0_s + world_rank * nHashMeshPointsPerProcess_s +
+//                       hashMeshIncrements_s[world_rank] - 1,
+//                   geo_s);
+//#if USE_CUDA
+//  cudaDeviceSynchronize();
+//#endif
+//#if USE_MPI > 0
+//  MPI_Barrier(MPI_COMM_WORLD);
+//  // Collect stuff
+//  for (int rr = 1; rr < world_size; rr++) {
+//    if (world_rank == rr) {
+//      MPI_Send(&closeGeom_sheath[world_rank * nHashMeshPointsPerProcess_s *
+//                                 n_closeGeomElements_sheath],
+//               hashMeshIncrements_s[world_rank] * n_closeGeomElements_sheath,
+//               MPI_INT, 0, 0, MPI_COMM_WORLD);
+//    } else if (world_rank == 0) {
+//      MPI_Recv(&closeGeom_sheath[rr * nHashMeshPointsPerProcess_s *
+//                                 n_closeGeomElements_sheath],
+//               hashMeshIncrements_s[rr] * n_closeGeomElements_sheath, MPI_INT,
+//               rr, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//    }
+//  }
+//  MPI_Barrier(MPI_COMM_WORLD);
+//  MPI_Bcast(closeGeom_sheath.data(),
+//            nR_closeGeom_sheath * nY_closeGeom_sheath * nZ_closeGeom_sheath *
+//                n_closeGeomElements_sheath,
+//            MPI_INT, 0, MPI_COMM_WORLD);
+//  MPI_Barrier(MPI_COMM_WORLD);
+//#endif
+//#if USE_CUDA
+//  cudaDeviceSynchronize();
+//#endif
+//  auto finish_clock0_s = Time0_s::now();
+//  fsec0_s fs0_s = finish_clock0_s - start_clock0_s;
+//  printf("Time taken          is %6.3f (secs) \n", fs0_s.count());
+//  if (world_rank == 0) {
+//    netCDF::NcFile ncFile_hash_sheath("output/geomHash_sheath.nc", netCDF::NcFile::replace);
+//    netCDF::NcDim hashNR_sheath = ncFile_hash_sheath.addDim("nR", nR_closeGeom_sheath);
+//    netCDF::NcDim hashNY_sheath = ncFile_hash_sheath.addDim("nY", nY_closeGeom_sheath);
+//    netCDF::NcDim hashNZ_sheath = ncFile_hash_sheath.addDim("nZ", nZ_closeGeom_sheath);
+//    netCDF::NcDim hashN_sheath =
+//        ncFile_hash_sheath.addDim("n", n_closeGeomElements_sheath);
+//    vector<netCDF::NcDim> geomHashDim_sheath;
+//    geomHashDim_sheath.push_back(hashNR_sheath);
+//    geomHashDim_sheath.push_back(hashNY_sheath);
+//    geomHashDim_sheath.push_back(hashNZ_sheath);
+//    geomHashDim_sheath.push_back(hashN_sheath);
+//    netCDF::NcVar hash_gridR_sheath =
+//        ncFile_hash_sheath.addVar("gridR", netcdf_precision, hashNR_sheath);
+//    netCDF::NcVar hash_gridY_sheath =
+//        ncFile_hash_sheath.addVar("gridY", netcdf_precision, hashNY_sheath);
+//    netCDF::NcVar hash_gridZ_sheath =
+//        ncFile_hash_sheath.addVar("gridZ", netcdf_precision, hashNZ_sheath);
+//    netCDF::NcVar hash_sheath =
+//        ncFile_hash_sheath.addVar("hash", netCDF::ncInt, geomHashDim_sheath);
+//    hash_gridR_sheath.putVar(&closeGeomGridr_sheath[0]);
+//    hash_gridY_sheath.putVar(&closeGeomGridy_sheath[0]);
+//    hash_gridZ_sheath.putVar(&closeGeomGridz_sheath[0]);
+//    hash_sheath.putVar(&closeGeom_sheath[0]);
+//    ncFile_hash_sheath.close();
+//  }
+//#if USE_CUDA
+//  cudaDeviceSynchronize();
+//#endif
+//}
+//else if( config_flags.GEOM_HASH_SHEATH > 1 )
+//{
+//#if USE_MPI > 0
+//  if (world_rank == 0) {
+//#endif
+//    getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
+//                   "gridRString", closeGeomGridr_sheath[0]);
+//    getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
+//                   "gridZString", closeGeomGridz_sheath[0]);
+//    if( config_flags.USE3DTETGEOM > 0 )
+//    {
+//    getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
+//                   "gridYString", closeGeomGridy_sheath[0]);
+////#endif
+//    }
+//    getVarFromFile(cfg, input_path + hashFile_sheath, geomHashSheathCfg,
+//                   "closeGeomString", closeGeom_sheath[0]);
+//#if USE_MPI > 0
+//  }
+//  MPI_Bcast(closeGeomGridr_sheath.data(), nR_closeGeom_sheath, MPI_FLOAT, 0,
+//            MPI_COMM_WORLD);
+//  MPI_Bcast(closeGeomGridy_sheath.data(), nY_closeGeom_sheath, MPI_FLOAT, 0,
+//            MPI_COMM_WORLD);
+//  MPI_Bcast(closeGeomGridz_sheath.data(), nZ_closeGeom_sheath, MPI_FLOAT, 0,
+//            MPI_COMM_WORLD);
+//  MPI_Bcast(closeGeom_sheath.data(), nGeomHash_sheath, MPI_INT, 0,
+//            MPI_COMM_WORLD);
+//  MPI_Barrier(MPI_COMM_WORLD);
+//#endif
+//}
 
   int nR_Lc = 1;
   int nY_Lc = 1;

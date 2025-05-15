@@ -642,12 +642,16 @@ int importHashNs(class flags config_flags, libconfig::Config &cfg,std::string in
 {
       Setting& geomHash = cfg.lookup(fieldCfgString);
       if(nHashes > 1)
-      {
+      { 
         for(int i=0; i<nHashes;i++)
-        {   
+        { 
+	  std::cout << "geomCheck1" << std::endl;    	
           nR[i] = geomHash["nR"][i];
+	  std::cout << "geomCheck2" << std::endl;
           nZ[i] = geomHash["nZ"][i];
+	  std::cout << "geomCheck3" << std::endl;
           n[i] = geomHash["n"][i];
+	  std::cout << "geomCheck4" << std::endl;
         }
       }
       else
@@ -668,7 +672,7 @@ int importHashNs(class flags config_flags, libconfig::Config &cfg,std::string in
       {
         for(int i=0; i<nHashes;i++)
         {   
-          nY[i] = geomHash["nY_closeGeom"][i];
+          nY[i] = geomHash["nY"][i];
         }
       }
       else
