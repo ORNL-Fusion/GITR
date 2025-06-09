@@ -1,5 +1,5 @@
-#ifndef _HASHGEOM_
-#define _HASHGEOM_
+#ifndef _HASHGEOMSHEATH_
+#define _HASHGEOMSHEATH_
 
 #ifdef __CUDACC__
 #define CUDA_CALLABLE_MEMBER_DEVICE __device__

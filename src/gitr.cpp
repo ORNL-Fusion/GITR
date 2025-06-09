@@ -13,7 +13,7 @@
 #include "fieldLineTrace.h"
 #include "geometryCheck.h"
 #include "hashGeom.h"
-#include "hashGeomSheath.h"
+#include "hashGeom_sheath.h"
 #include "history.h"
 #include "interp2d.hpp"
 //#include "interpRateCoeff.hpp"
@@ -431,6 +431,8 @@ int main(int argc, char **argv, char **envp)
   sim::Array<int> sumParticlesStrike(nSurfaces, 0);
   //#endif
 
+
+  // TY begin get hash number and dimensions
   int nHashes = 1;
   int nR_closeGeomTotal = 1;
   int nY_closeGeomTotal = 1;
@@ -548,6 +550,7 @@ int main(int argc, char **argv, char **envp)
   std::cout << " mpi broadcast hash finished" << std::endl;
 #endif
   }
+  // TY end of getting hash number and dimensions
 
 std::vector<std::string> hashFile;
 if( config_flags.GEOM_HASH > 1 )
@@ -608,6 +611,7 @@ if( config_flags.GEOM_HASH > 1 )
 #endif
 }
 
+ // TY initialize grids
   std::cout << "allocating closGeomGrids " << nR_closeGeomTotal << " "
             << nY_closeGeomTotal << " " << nZ_closeGeomTotal << " " << nGeomHash
             << std::endl;
@@ -632,6 +636,7 @@ if( config_flags.GEOM_HASH > 1 )
         }
         */
 
+  // TY geometry hashing
 if( config_flags.GEOM_HASH == 1 )
 {
   sim::Array<gitr_precision> hashX0(nHashes, 0.0), hashX1(nHashes, 0.0),
@@ -960,6 +965,8 @@ else if( config_flags.GEOM_HASH > 1 )
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }
+
+  // TY get hash number and dimensions for sheath
   int nHashes_sheath = 1;
   int nR_closeGeom_sheathTotal = 1;
   int nY_closeGeom_sheathTotal = 1;
@@ -1111,6 +1118,10 @@ else if( config_flags.GEOM_HASH > 1 )
 //  MPI_Barrier(MPI_COMM_WORLD);
 //#endif
 //}
+  sim::Array<gitr_precision> closeGeomGridr_sheath(nR_closeGeom_sheathTotal),
+      closeGeomGridy_sheath(nY_closeGeom_sheathTotal),
+      closeGeomGridz_sheath(nZ_closeGeom_sheathTotal);
+  sim::Array<int> closeGeom_sheath(nHashPointsTotal_sheath);
 
 if( config_flags.GEOM_HASH_SHEATH == 1 )
 {
@@ -1144,10 +1155,6 @@ if( config_flags.GEOM_HASH_SHEATH == 1 )
     }
   }
   
-  sim::Array<gitr_precision> closeGeomGridr_sheath(nR_closeGeom_sheathTotal),
-      closeGeomGridy_sheath(nY_closeGeom_sheathTotal),
-      closeGeomGridz_sheath(nZ_closeGeom_sheathTotal);
-  sim::Array<int> closeGeom_sheath(nGeomHashTotal_sheath);
   
   int nHash_sheath = 0;
   int hashSum_sheath = 0;
@@ -1248,8 +1255,8 @@ if( config_flags.GEOM_HASH_SHEATH == 1 )
   hashGeom_sheath geo_s(
       nLines,nHashes_sheath, boundaries.data(), closeGeomGridr_sheath.data(),
       closeGeomGridy_sheath.data(), closeGeomGridz_sheath.data(),
-      n_closeGeomElements_sheath, closeGeom_sheath.data(), nR_closeGeom_sheath,
-      nY_closeGeom_sheath, nZ_closeGeom_sheath, config_flags.USE3DTETGEOM );
+      n_closeGeomElements_sheath.data(), closeGeom_sheath.data(), nR_closeGeom_sheath.data(),
+      nY_closeGeom_sheath.data(), nZ_closeGeom_sheath.data(), config_flags.USE3DTETGEOM );
   std::cout << "nHashPoints start stop " << world_rank * nHashMeshPointsPerProcess << " "
         << world_rank * nHashMeshPointsPerProcess + hashMeshIncrements[world_rank] - 1<< std::endl;
   thrust::for_each(thrust::device,
@@ -2826,26 +2833,26 @@ if( config_flags.EFIELD_INTERP == 1 )
   gitr_precision thisE0[3] = {0.0, 0.0, 0.0};
   gitr_precision minDist0 = 0.0;
   int minInd_bnd = 0;
-  for (int i = 0; i < 1000; i++) {
-      minDist0 =
-          getE(config_flags, 0.0,
-               0.0,
-               1.0E-6*i,
-               thisE0,
-               boundaries.data(),
-               nLines,
-               nR_closeGeom_sheath,
-               nY_closeGeom_sheath,
-               nZ_closeGeom_sheath,
-               n_closeGeomElements_sheath,
-               &closeGeomGridr_sheath.front(),
-               &closeGeomGridy_sheath.front(), 
-               &closeGeomGridz_sheath.front(),
-               &closeGeom_sheath.front(),
-               minInd_bnd,
-               f_psi );
-      //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
-  }
+  //for (int i = 0; i < 1000; i++) {
+  //    minDist0 =
+  //        getE(config_flags, 0.0,
+  //             0.0,
+  //             1.0E-6*i,
+  //             thisE0,
+  //             boundaries.data(),
+  //             nLines,
+  //             nR_closeGeom_sheath,
+  //             nY_closeGeom_sheath,
+  //             nZ_closeGeom_sheath,
+  //             n_closeGeomElements_sheath,
+  //             &closeGeomGridr_sheath.front(),
+  //             &closeGeomGridy_sheath.front(), 
+  //             &closeGeomGridz_sheath.front(),
+  //             &closeGeom_sheath.front(),
+  //             minInd_bnd,
+  //             f_psi );
+  //    //std::cout << "Efield rzt " << thisE0[0] << " " << thisE0[1] << " " << thisE0[2] << std::endl;
+  //}
   /* Decayed block, leave for reference */
   /*
 

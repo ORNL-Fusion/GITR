@@ -37,6 +37,7 @@ set( gpu_targets
      ionize
      boris
      hashGeom
+     hashGeom_sheath
      fields
      spectroscopy
      atomic_add_1

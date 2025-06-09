@@ -79,6 +79,7 @@ target_link_libraries( GITR
                        boris
                        surface_model
                        hashGeom
+		       hashGeom_sheath
                        geometry_check
                        config_interface )
 
