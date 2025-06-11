@@ -209,10 +209,11 @@ gitr_precision getE ( class flags config_flags,
                       gitr_precision E[],
                       Boundary *boundaryVector,
                       int nLines,
-                      int nR_closeGeom,
-                      int nY_closeGeom,
-                      int nZ_closeGeom, 
-                      int n_closeGeomElements, 
+		      int nHashes,
+                      int *nR_closeGeom,
+                      int *nY_closeGeom,
+                      int *nZ_closeGeom, 
+                      int *n_closeGeomElements, 
                       gitr_precision *closeGeomGridr,
                       gitr_precision *closeGeomGridy,
                       gitr_precision *closeGeomGridz,
@@ -308,24 +309,98 @@ gitr_precision getE ( class flags config_flags,
   int rInd;
   int yInd;
   int zInd;
+  int nHash = 0;
+  int buffIndx = 0;
 
-  if( config_flags.GEOM_HASH_SHEATH > 0 )
-  {
-    dr = closeGeomGridr[1] - closeGeomGridr[0];
-    dy = closeGeomGridy[1] - closeGeomGridy[0];
-    dz = closeGeomGridz[1] - closeGeomGridz[0];
-    rInd = std::floor((x0 - closeGeomGridr[0])/dr + 0.5);
-    yInd = std::floor((y - closeGeomGridy[0])/dy + 0.5);
-    zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
+    if( config_flags.GEOM_HASH_SHEATH > 0 )
+    {
+    int rHashInd = 0;
+    int yHashInd = 0;
+    int zHashInd = 0;
+    int rHashInd1 = 0;
+    int yHashInd1 = 0;
+    int zHashInd1 = 0;
+    gitr_precision r_position = x0;
+    for (int i = 0; i < nHashes; i++) {
+      rHashInd1 = nR_closeGeom[i] - 1;
+      yHashInd1 = nY_closeGeom[i] - 1;
+      zHashInd1 = nZ_closeGeom[i] - 1;
+      if (i > 0)
+        rHashInd = nR_closeGeom[i - 1];
+      if (i > 0)
+        yHashInd = nY_closeGeom[i - 1];
+      if (i > 0)
+        zHashInd = nZ_closeGeom[i - 1];
+      if (i > 0)
+        rHashInd1 = nR_closeGeom[i - 1] + nR_closeGeom[i] - 1;
+      if (i > 0)
+        yHashInd1 = nY_closeGeom[i - 1] + nY_closeGeom[i] - 1;
+      if (i > 0)
+        zHashInd1 = nZ_closeGeom[i - 1] + nZ_closeGeom[i] - 1;
+      // std::cout << "rpos " <<rHashInd<< " " << rHashInd1 << " " <<
+      // closeGeomGridr[rHashInd] << " "
+      //          << closeGeomGridr[rHashInd1] << std::endl;
+      // std::cout << "ypos " << closeGeomGridy[yHashInd] << " "
+      //          << closeGeomGridy[yHashInd1] << std::endl;
+      // std::cout << "zpos " << closeGeomGridz[zHashInd] << " "
+      //         << closeGeomGridz[zHashInd1] << std::endl;
+      if (r_position < closeGeomGridr[rHashInd1] &&
+          r_position > closeGeomGridr[rHashInd] &&
+          y < closeGeomGridy[yHashInd1] &&
+          y > closeGeomGridy[yHashInd] &&
+          z < closeGeomGridz[zHashInd1] &&
+          z > closeGeomGridz[zHashInd]) {
+        nHash = i;
+      }
+    }
+    // std::cout << "nHash " << nHash << std::endl;
+    rHashInd = 0;
+    yHashInd = 0;
+    zHashInd = 0;
+    if (nHash > 0)
+      rHashInd = nR_closeGeom[nHash - 1];
+    if (nHash > 0)
+      yHashInd = nY_closeGeom[nHash - 1];
+    if (nHash > 0)
+      zHashInd = nZ_closeGeom[nHash - 1];
+    gitr_precision dr = closeGeomGridr[rHashInd + 1] - closeGeomGridr[rHashInd];
+    gitr_precision dz = closeGeomGridz[zHashInd + 1] - closeGeomGridz[zHashInd];
+    gitr_precision dy = closeGeomGridy[yHashInd + 1] - closeGeomGridy[yHashInd];
+    rInd = std::floor((r_position - closeGeomGridr[rHashInd]) / dr + 0.5);
+    zInd = std::floor(
+        (z - closeGeomGridz[zHashInd]) / dz +
+        0.5);
+    int i = 0;
+    yInd = std::floor(
+        (y - closeGeomGridy[yHashInd]) / dy +
+        0.5);
+    // std::cout << "rHashInd " << rHashInd << " " << yHashInd << " " <<
+    // zHashInd << std::endl; std::cout << "dr dy dz " << dr << " " << dy << "
+    // " << dz << std::endl; std::cout << "rind y z " << rInd << " " << yInd <<
+    // " " << zInd << std::endl;
+    if (rInd < 0 || yInd < 0 || zInd < 0) {
+      rInd = 0;
+      yInd = 0;
+      zInd = 0;
+#if USE_CUDA
+#else
+      // std::cout << "WARNING: particle outside of geometry hash range (low)"
+      // << std::endl;
+#endif
+    } else if (rInd > nR_closeGeom[nHash] - 1 ||
+               yInd > nY_closeGeom[nHash] - 1 ||
+               zInd > nZ_closeGeom[nHash] - 1) {
+      rInd = 0;
+      yInd = 0;
+      zInd = 0;
+    }
+    buffIndx = 0;
+    if (nHash > 0)
+      buffIndx = nR_closeGeom[nHash - 1] * nY_closeGeom[nHash - 1] *
+                 nZ_closeGeom[nHash - 1] * n_closeGeomElements[nHash - 1];
 
-    if(rInd < 0 || rInd >= nR_closeGeom) rInd =0;
-    
-    if(yInd < 0 || yInd >= nY_closeGeom) yInd =0;
-
-    if(zInd < 0 || zInd >= nZ_closeGeom) zInd =0;
-
-    top_limit = n_closeGeomElements;
-  }
+    top_limit = n_closeGeomElements[ nHash ];
+    }
 
   else top_limit = nLines;
 
@@ -335,9 +410,11 @@ gitr_precision getE ( class flags config_flags,
 
     if( config_flags.GEOM_HASH_SHEATH > 0 )
     {
-       i = closeGeom[zInd*nY_closeGeom*nR_closeGeom*n_closeGeomElements 
-                   + yInd*nR_closeGeom*n_closeGeomElements
-                   + rInd*n_closeGeomElements + k];
+      i = closeGeom[buffIndx +
+                    zInd * nY_closeGeom[nHash] * nR_closeGeom[nHash] *
+                        n_closeGeomElements[nHash] +
+                    yInd * nR_closeGeom[nHash] * n_closeGeomElements[nHash] +
+                    rInd * n_closeGeomElements[nHash] + k];
     }
 
     else
@@ -516,168 +593,168 @@ gitr_precision getE ( class flags config_flags,
       //vectorScalarMult(-1.0,directionUnitVector,directionUnitVector);
       //std::cout << "min dist " << minDistance << std::endl;
     }
-    else
-    {
-                
-    int direction_type;
-    gitr_precision tol = 1e12;
-    gitr_precision point1_dist;
-    gitr_precision point2_dist;
-    gitr_precision perp_dist;
-    gitr_precision vectorMagnitude;
-    gitr_precision max = 0.0;
-    gitr_precision min = 0.0;
-    gitr_precision Bfabsfperp = 0.0;
-    gitr_precision distanceToParticle = 0.0;
-    int pointLine=0;
-    gitr_precision x;
-     if( config_flags.USECYLSYMM > 0 )
-     {
-    x = std::sqrt(x0*x0 + y*y);
-    }
-    else
-    {
-    x = x0;
-    }
-
-    int top_limit = -1;
-    gitr_precision dr;
-    gitr_precision dz;
-
-    int rInd;
-    int zInd;
-
-  if( config_flags.GEOM_HASH_SHEATH > 0 )
-  {
-  dr = closeGeomGridr[1] - closeGeomGridr[0];
-
-  dz = closeGeomGridz[1] - closeGeomGridz[0];
-
-  rInd = std::floor((x - closeGeomGridr[0])/dr + 0.5);
-
-  zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
-
-  if(rInd >= nR_closeGeom) rInd = nR_closeGeom -1;
-
-  if(zInd >= nZ_closeGeom) zInd = nZ_closeGeom -1;
-
-  if(rInd < 0) rInd = 0;
-
-  if(zInd < 0) zInd = 0;
-
-  top_limit = n_closeGeomElements;
-  }
-
-  else top_limit = nLines;
-  
-  for( int k = 0; k < top_limit; k++) //n_closeGeomElements
-    {
-      int j = -1;
-
-      if( config_flags.GEOM_HASH_SHEATH > 0 )
-       j = closeGeom[zInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + k];
-
-      else j = k;
-
-       gitr_precision boundZhere = boundaryVector[j].Z;
-       
-        if (boundZhere != 0.0)
-        {
-            point1_dist = std::sqrt((x - boundaryVector[j].x1)*(x - boundaryVector[j].x1) + 
-                    (z - boundaryVector[j].z1)*(z - boundaryVector[j].z1));
-            point2_dist = std::sqrt((x - boundaryVector[j].x2)*(x - boundaryVector[j].x2) + 
-                                        (z - boundaryVector[j].z2)*(z - boundaryVector[j].z2));
-            perp_dist = (boundaryVector[j].slope_dzdx*x - z + boundaryVector[j].intercept_z)/
-                std::sqrt(boundaryVector[j].slope_dzdx*boundaryVector[j].slope_dzdx + 1.0);   
-	
-	
-          if (std::abs(boundaryVector[j].slope_dzdx) >= tol*0.75)
-	  {
-	   perp_dist = x0 - boundaryVector[j].x1;
-	  }
-            if (point1_dist > point2_dist)
-            {
-                max = point1_dist;
-                min = point2_dist;
-            }
-            else
-            {
-                max = point2_dist;
-                min = point1_dist;
-            }
-            if (boundaryVector[j].length*boundaryVector[j].length + perp_dist*perp_dist >=
-                    max*max)
-            {
-                distanceToParticle = std::abs(perp_dist);
-                pointLine = 1;
-            }
-            else
-            {
-                distanceToParticle = min;
-                if (boundaryVector[j].distanceToParticle == point1_dist)
-                {
-                    pointLine = 2;
-                }
-                else
-                {
-                    pointLine = 3;
-                }
-            }
-
-            if (distanceToParticle < minDistance)
-            {
-                minDistance = distanceToParticle;
-                minIndex = j;
-                closestBoundaryIndex = j;
-                direction_type = pointLine;
-            }
-        }
-        else
-        {
-            distanceToParticle = tol;
-        }
-    }
-    if (direction_type == 1)
-    {
-        if (boundaryVector[minIndex].slope_dzdx == 0)
-        {
-            directionUnitVector[0] = 0.0;
-            directionUnitVector[1] = 0.0;
-            directionUnitVector[2] = 1.0 * std::copysign(1.0,boundaryVector[minIndex].z1 - z);
-        }
-        else if (std::abs(boundaryVector[minIndex].slope_dzdx)>= 0.75*tol)
-        {
-            
-            directionUnitVector[0] = boundaryVector[minIndex].x1 - x;
-            directionUnitVector[1] = 0.0;
-            directionUnitVector[2] = 0.0;
-        }
-        else
-        {
-            directionUnitVector[0] = 1.0 * std::copysign(1.0,(z - boundaryVector[minIndex].intercept_z)/(boundaryVector[minIndex].slope_dzdx) - x0);
-            directionUnitVector[1] = 0.0;
-            directionUnitVector[2] = 1.0 * std::copysign(1.0,perp_dist)/(boundaryVector[minIndex].slope_dzdx);
-        }
-    }
-    else if (direction_type == 2)
-    {
-        directionUnitVector[0] = (boundaryVector[minIndex].x1 - x);
-        directionUnitVector[1] = 0.0;
-        directionUnitVector[2] = (boundaryVector[minIndex].z1 - z);
-    }
-    else
-    {
-        directionUnitVector[0] = (boundaryVector[minIndex].x2 - x);
-        directionUnitVector[1] = 0.0;
-        directionUnitVector[2] = (boundaryVector[minIndex].z2 - z);
-    }
-
-    vectorMagnitude = std::sqrt(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
-                                + directionUnitVector[2]*directionUnitVector[2]);
-    directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
-    directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
-    directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
-    }
+//    else
+//    {
+//                
+//    int direction_type;
+//    gitr_precision tol = 1e12;
+//    gitr_precision point1_dist;
+//    gitr_precision point2_dist;
+//    gitr_precision perp_dist;
+//    gitr_precision vectorMagnitude;
+//    gitr_precision max = 0.0;
+//    gitr_precision min = 0.0;
+//    gitr_precision Bfabsfperp = 0.0;
+//    gitr_precision distanceToParticle = 0.0;
+//    int pointLine=0;
+//    gitr_precision x;
+//     if( config_flags.USECYLSYMM > 0 )
+//     {
+//    x = std::sqrt(x0*x0 + y*y);
+//    }
+//    else
+//    {
+//    x = x0;
+//    }
+//
+//    int top_limit = -1;
+//    gitr_precision dr;
+//    gitr_precision dz;
+//
+//    int rInd;
+//    int zInd;
+//
+//  if( config_flags.GEOM_HASH_SHEATH > 0 )
+//  {
+//  dr = closeGeomGridr[1] - closeGeomGridr[0];
+//
+//  dz = closeGeomGridz[1] - closeGeomGridz[0];
+//
+//  rInd = std::floor((x - closeGeomGridr[0])/dr + 0.5);
+//
+//  zInd = std::floor((z - closeGeomGridz[0])/dz + 0.5);
+//
+//  if(rInd >= nR_closeGeom) rInd = nR_closeGeom -1;
+//
+//  if(zInd >= nZ_closeGeom) zInd = nZ_closeGeom -1;
+//
+//  if(rInd < 0) rInd = 0;
+//
+//  if(zInd < 0) zInd = 0;
+//
+//  top_limit = n_closeGeomElements;
+//  }
+//
+//  else top_limit = nLines;
+//  
+//  for( int k = 0; k < top_limit; k++) //n_closeGeomElements
+//    {
+//      int j = -1;
+//
+//      if( config_flags.GEOM_HASH_SHEATH > 0 )
+//       j = closeGeom[zInd*nR_closeGeom*n_closeGeomElements + rInd*n_closeGeomElements + k];
+//
+//      else j = k;
+//
+//       gitr_precision boundZhere = boundaryVector[j].Z;
+//       
+//        if (boundZhere != 0.0)
+//        {
+//            point1_dist = std::sqrt((x - boundaryVector[j].x1)*(x - boundaryVector[j].x1) + 
+//                    (z - boundaryVector[j].z1)*(z - boundaryVector[j].z1));
+//            point2_dist = std::sqrt((x - boundaryVector[j].x2)*(x - boundaryVector[j].x2) + 
+//                                        (z - boundaryVector[j].z2)*(z - boundaryVector[j].z2));
+//            perp_dist = (boundaryVector[j].slope_dzdx*x - z + boundaryVector[j].intercept_z)/
+//                std::sqrt(boundaryVector[j].slope_dzdx*boundaryVector[j].slope_dzdx + 1.0);   
+//	
+//	
+//          if (std::abs(boundaryVector[j].slope_dzdx) >= tol*0.75)
+//	  {
+//	   perp_dist = x0 - boundaryVector[j].x1;
+//	  }
+//            if (point1_dist > point2_dist)
+//            {
+//                max = point1_dist;
+//                min = point2_dist;
+//            }
+//            else
+//            {
+//                max = point2_dist;
+//                min = point1_dist;
+//            }
+//            if (boundaryVector[j].length*boundaryVector[j].length + perp_dist*perp_dist >=
+//                    max*max)
+//            {
+//                distanceToParticle = std::abs(perp_dist);
+//                pointLine = 1;
+//            }
+//            else
+//            {
+//                distanceToParticle = min;
+//                if (boundaryVector[j].distanceToParticle == point1_dist)
+//                {
+//                    pointLine = 2;
+//                }
+//                else
+//                {
+//                    pointLine = 3;
+//                }
+//            }
+//
+//            if (distanceToParticle < minDistance)
+//            {
+//                minDistance = distanceToParticle;
+//                minIndex = j;
+//                closestBoundaryIndex = j;
+//                direction_type = pointLine;
+//            }
+//        }
+//        else
+//        {
+//            distanceToParticle = tol;
+//        }
+//    }
+//    if (direction_type == 1)
+//    {
+//        if (boundaryVector[minIndex].slope_dzdx == 0)
+//        {
+//            directionUnitVector[0] = 0.0;
+//            directionUnitVector[1] = 0.0;
+//            directionUnitVector[2] = 1.0 * std::copysign(1.0,boundaryVector[minIndex].z1 - z);
+//        }
+//        else if (std::abs(boundaryVector[minIndex].slope_dzdx)>= 0.75*tol)
+//        {
+//            
+//            directionUnitVector[0] = boundaryVector[minIndex].x1 - x;
+//            directionUnitVector[1] = 0.0;
+//            directionUnitVector[2] = 0.0;
+//        }
+//        else
+//        {
+//            directionUnitVector[0] = 1.0 * std::copysign(1.0,(z - boundaryVector[minIndex].intercept_z)/(boundaryVector[minIndex].slope_dzdx) - x0);
+//            directionUnitVector[1] = 0.0;
+//            directionUnitVector[2] = 1.0 * std::copysign(1.0,perp_dist)/(boundaryVector[minIndex].slope_dzdx);
+//        }
+//    }
+//    else if (direction_type == 2)
+//    {
+//        directionUnitVector[0] = (boundaryVector[minIndex].x1 - x);
+//        directionUnitVector[1] = 0.0;
+//        directionUnitVector[2] = (boundaryVector[minIndex].z1 - z);
+//    }
+//    else
+//    {
+//        directionUnitVector[0] = (boundaryVector[minIndex].x2 - x);
+//        directionUnitVector[1] = 0.0;
+//        directionUnitVector[2] = (boundaryVector[minIndex].z2 - z);
+//    }
+//
+//    vectorMagnitude = std::sqrt(directionUnitVector[0]*directionUnitVector[0] + directionUnitVector[1]*directionUnitVector[1]
+//                                + directionUnitVector[2]*directionUnitVector[2]);
+//    directionUnitVector[0] = directionUnitVector[0]/vectorMagnitude;
+//    directionUnitVector[1] = directionUnitVector[1]/vectorMagnitude;
+//    directionUnitVector[2] = directionUnitVector[2]/vectorMagnitude;
+//    }
     angle = boundaryVector[minIndex].angle;    
     fd  = boundaryVector[minIndex].fd;
     pot = boundaryVector[minIndex].potential;
@@ -756,10 +833,11 @@ move_boris::move_boris(
   gitr_precision * _EfieldRDevicePointer,
   gitr_precision * _EfieldZDevicePointer,
   gitr_precision * _EfieldTDevicePointer,
-  int _nR_closeGeom,
-  int _nY_closeGeom,
-  int _nZ_closeGeom,
-  int _n_closeGeomElements,
+  int _nHashes_sheath,
+  int *_nR_closeGeom,
+  int *_nY_closeGeom,
+  int *_nZ_closeGeom,
+  int *_n_closeGeomElements,
   gitr_precision *_closeGeomGridr,
   gitr_precision *_closeGeomGridy,
   gitr_precision *_closeGeomGridz,
@@ -786,6 +864,7 @@ move_boris::move_boris(
         EfieldRDevicePointer(_EfieldRDevicePointer),
         EfieldZDevicePointer(_EfieldZDevicePointer),
         EfieldTDevicePointer(_EfieldTDevicePointer),
+	nHashes_sheath(_nHashes_sheath),
         nR_closeGeom_sheath(_nR_closeGeom),
         nY_closeGeom_sheath(_nY_closeGeom),
         nZ_closeGeom_sheath(_nZ_closeGeom),
@@ -853,7 +932,7 @@ void move_boris::operator()(std::size_t indx)
   if( config_flags.USESHEATHEFIELD > 0 )
   {
   minDist = getE(config_flags, position[0], position[1], position[2],
-		  E,boundaryVector,nLines,nR_closeGeom_sheath,
+		  E,boundaryVector,nLines,nHashes_sheath,nR_closeGeom_sheath,
                   nY_closeGeom_sheath,nZ_closeGeom_sheath,
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,
@@ -989,7 +1068,7 @@ void move_boris::operator()(std::size_t indx)
   if( config_flags.USESHEATHEFIELD > 0 )
   {
   minDist = getE(config_flags, position[0], position[1], position[2],
-		  E,boundaryVector,nLines,nR_closeGeom_sheath,
+		  E,boundaryVector,nLines,nHashes_sheath,nR_closeGeom_sheath,
                   nY_closeGeom_sheath,nZ_closeGeom_sheath,
                   n_closeGeomElements_sheath,closeGeomGridr_sheath,
                   closeGeomGridy_sheath,

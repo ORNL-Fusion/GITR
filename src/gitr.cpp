@@ -440,7 +440,7 @@ int main(int argc, char **argv, char **envp)
   int nHashPointsTotal = 1;
   int nGeomHash = 1;
   std::string geomHashCfg = "geometry_hash.";
-  std::string geomHashSheathCfg = "geometry_sheath.";
+  std::string geomHashSheathCfg = "geometry_hash_sheath.";
 
   std::cout << "code has made it to this point 1!" << std::endl;
 
@@ -973,6 +973,23 @@ else if( config_flags.GEOM_HASH > 1 )
   int nZ_closeGeom_sheathTotal = 1;
   int nHashPointsTotal_sheath = 1;
   int nGeomHash_sheath = 1;
+  
+if( config_flags.GEOM_HASH_SHEATH == 1 )
+  {
+  //nR_closeGeomTotal = 0;
+  //nY_closeGeomTotal = 0;
+  //nZ_closeGeomTotal = 0;
+  //nHashPointsTotal = 0;
+  //nGeomHash = 0;
+ 
+  if (world_rank == 0) {
+    getVariable(cfg, geomHashCfg + "nHashes", nHashes_sheath);
+  }
+#if USE_MPI > 0
+  MPI_Bcast(&nHashes_sheath, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
+  }
 
   sim::Array<int> nR_closeGeom_sheath(nHashes, 0);
   sim::Array<int> nY_closeGeom_sheath(nHashes, 0);
@@ -980,7 +997,7 @@ else if( config_flags.GEOM_HASH > 1 )
   sim::Array<int> nHashPoints_sheath(nHashes, 0);
   sim::Array<int> n_closeGeomElements_sheath(nHashes, 0);
   
- if( config_flags.GEOM_HASH == 1 )
+ if( config_flags.GEOM_HASH_SHEATH == 1 )
   {
   if (world_rank == 0) {
     importHashNs(config_flags, cfg, input_path, nHashes_sheath, "geometry_hash_sheath", nR_closeGeom_sheath.data(),
@@ -1129,7 +1146,7 @@ if( config_flags.GEOM_HASH_SHEATH == 1 )
       hashY0_s(nHashes_sheath, 0.0), hashY1_s(nHashes_sheath, 0.0), hashZ0_s(nHashes_sheath, 0.0),
       hashZ1_s(nHashes_sheath, 0.0);
   if (world_rank == 0) {
-    libconfig::Setting &geomHash_s = cfg.lookup("geometry_sheath");
+    libconfig::Setting &geomHash_s = cfg.lookup("geometry_hash_sheath");
     if (nHashes_sheath > 1) {
       for (int i = 0; i < nHashes; i++) {
         hashX0_s[i] = geomHash_s["hashX0"][i];
@@ -4149,8 +4166,8 @@ if( config_flags.EFIELD_INTERP == 1 )
       &by.front(), nR_PreSheathEfield, nY_PreSheathEfield, nZ_PreSheathEfield,
       &preSheathEGridr.front(), &preSheathEGridy.front(),
       &preSheathEGridz.front(), &PSEr.front(), &PSEz.front(), &PSEt.front(),
-      nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
-      n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
+      nHashes_sheath,&nR_closeGeom_sheath.front(), &nY_closeGeom_sheath.front(), &nZ_closeGeom_sheath.front(),
+      &n_closeGeomElements_sheath.front(), &closeGeomGridr_sheath.front(),
       &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
       &closeGeom_sheath.front(),config_flags, max_dt);
 
@@ -4941,9 +4958,9 @@ std::cout << "bound 255 " << boundaries[255].impacts << std::endl;
     gitr_precision thisE[3] = {0.0};
     for (int j = 0; j < nP; j++) {
       minDistance =
-          getE(config_flags, px[j], py[j], pz[j], thisE, boundaries.data(), nLines,
-               nR_closeGeom_sheath, nY_closeGeom_sheath, nZ_closeGeom_sheath,
-               n_closeGeomElements_sheath, &closeGeomGridr_sheath.front(),
+          getE(config_flags, px[j], py[j], pz[j], thisE, boundaries.data(), nLines,nHashes_sheath,
+               &nR_closeGeom_sheath.front(), &nY_closeGeom_sheath.front(), &nZ_closeGeom_sheath.front(),
+               &n_closeGeomElements_sheath.front(), &closeGeomGridr_sheath.front(),
                &closeGeomGridy_sheath.front(), &closeGeomGridz_sheath.front(),
                &closeGeom_sheath.front(), closestBoundaryIndex,
                f_psi );

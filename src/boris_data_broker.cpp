@@ -80,10 +80,10 @@ std::vector< double > boris_data_broker_0::run_2()
         te.data(), biasPotential ));
 
   int nHashes = 1;
-  int nR_closeGeom_sheath = 1;
-  int nY_closeGeom_sheath = 1;
-  int nZ_closeGeom_sheath = 1;
-  int nHashPoints_sheath = 1;
+  sim::Array<int> nR_closeGeom_sheath(nHashes);
+  sim::Array<int> nY_closeGeom_sheath(nHashes);
+  sim::Array<int> nZ_closeGeom_sheath(nHashes);
+  sim::Array<int> nHashPoints_sheath(nHashes);
   int n_closeGeomElements_sheath = 1;
   sim::Array<gitr_precision> closeGeomGridr_sheath(1),
     closeGeomGridy_sheath(1), closeGeomGridz_sheath(1);
@@ -110,10 +110,11 @@ std::vector< double > boris_data_broker_0::run_2()
            thisE, 
            boundaries.data(), 
            nLines,
-           nR_closeGeom_sheath,
-           nY_closeGeom_sheath,
-           nZ_closeGeom_sheath,
-          n_closeGeomElements_sheath,
+	   nHashes,
+           &nR_closeGeom_sheath.front(),
+           &nY_closeGeom_sheath.front(),
+           &nZ_closeGeom_sheath.front(),
+          &n_closeGeomElements_sheath,
           &closeGeomGridr_sheath.front(),
           &closeGeomGridy_sheath.front(),
           &closeGeomGridz_sheath.front(),
@@ -226,21 +227,25 @@ std::vector< double > boris_data_broker_0::run_1()
 
   int n_closeGeomElements_sheath = 1;
 
-  int nR_closeGeom_sheath = 1;
+ // int nR_closeGeom_sheath = 1;
+  sim::Array<int> nR_closeGeom_sheath(1,1);
 
-  sim::Array<gitr_precision> closeGeomGridr_sheath(nR_closeGeom_sheath);
+  sim::Array<gitr_precision> closeGeomGridr_sheath(nR_closeGeom_sheath[0]);
 
-  int nY_closeGeom_sheath = 1;
+  //int nY_closeGeom_sheath = 1;
+  sim::Array<int> nY_closeGeom_sheath(nHashes);
+  sim::Array<int> nZ_closeGeom_sheath(nHashes);
+  sim::Array<int> nHashPoints_sheath(nHashes);
 
-  sim::Array<gitr_precision> closeGeomGridy_sheath(nY_closeGeom_sheath);
+  sim::Array<gitr_precision> closeGeomGridy_sheath(nY_closeGeom_sheath[0]);
 
-  int nZ_closeGeom_sheath = 1;
+  //int nZ_closeGeom_sheath = 1;
 
-  sim::Array<gitr_precision> closeGeomGridz_sheath(nZ_closeGeom_sheath);
+  sim::Array<gitr_precision> closeGeomGridz_sheath(nZ_closeGeom_sheath[0]);
 
-  int nGeomHash_sheath = 1;
+  //int nGeomHash_sheath = 1;
 
-  sim::Array<int>            closeGeom_sheath(nGeomHash_sheath);
+  sim::Array<int>            closeGeom_sheath(1,1);
 
   // presheath efield is in the bulk plasma and sheath efield is at the surface of the wall
 
@@ -312,10 +317,11 @@ std::vector< double > boris_data_broker_0::run_1()
       &PSEr.front(),
       &PSEz.front(),
       &PSEt.front(),
-      nR_closeGeom_sheath,
-      nY_closeGeom_sheath,
-      nZ_closeGeom_sheath,
-      n_closeGeomElements_sheath,
+      nHashes,
+      &nR_closeGeom_sheath.front(),
+      &nY_closeGeom_sheath.front(),
+      &nZ_closeGeom_sheath.front(),
+      &n_closeGeomElements_sheath.front(),
       closeGeomGridr_sheath.data(),
       &closeGeomGridy_sheath.front(),
       &closeGeomGridz_sheath.front(),

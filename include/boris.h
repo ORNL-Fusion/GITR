@@ -51,7 +51,8 @@ void vectorCrossProduct(gitr_precision A[], gitr_precision B[], gitr_precision C
 
 CUDA_CALLABLE_MEMBER
 gitr_precision getE ( class flags config_flags, gitr_precision x0, gitr_precision y, gitr_precision z, gitr_precision E[], Boundary *boundaryVector, int nLines,
-       int nR_closeGeom, int nY_closeGeom,int nZ_closeGeom, int n_closeGeomElements, 
+		int nHashes,
+       int *nR_closeGeom, int *nY_closeGeom,int *nZ_closeGeom, int *n_closeGeomElements, 
        gitr_precision *closeGeomGridr,gitr_precision *closeGeomGridy, gitr_precision *closeGeomGridz, int *closeGeom, 
          int&  closestBoundaryIndex,
          gitr_precision& f_psi ); 
@@ -103,10 +104,11 @@ struct move_boris {
     gitr_precision * EfieldRDevicePointer;
     gitr_precision * EfieldZDevicePointer;
     gitr_precision * EfieldTDevicePointer;
-    int nR_closeGeom_sheath;
-    int nY_closeGeom_sheath;
-    int nZ_closeGeom_sheath;
-    int n_closeGeomElements_sheath;
+    int nHashes_sheath;
+    int *nR_closeGeom_sheath;
+    int *nY_closeGeom_sheath;
+    int *nZ_closeGeom_sheath;
+    int *n_closeGeomElements_sheath;
     gitr_precision* closeGeomGridr_sheath;
     gitr_precision* closeGeomGridy_sheath;
     gitr_precision* closeGeomGridz_sheath;
@@ -146,8 +148,9 @@ struct move_boris {
             gitr_precision * _EfieldRDevicePointer,
             gitr_precision * _EfieldZDevicePointer,
             gitr_precision * _EfieldTDevicePointer,
-            int _nR_closeGeom, int _nY_closeGeom,int _nZ_closeGeom, 
-            int _n_closeGeomElements, gitr_precision *_closeGeomGridr,
+	    int _nHashes_sheath,
+            int *_nR_closeGeom, int *_nY_closeGeom,int *_nZ_closeGeom, 
+            int *_n_closeGeomElements, gitr_precision *_closeGeomGridr,
             gitr_precision *_closeGeomGridy, gitr_precision *_closeGeomGridz, 
             int *_closeGeom, 
             flags &f_init,
